@@ -18,7 +18,7 @@ class clan_like(Module):
 
 @description('使用体力时，若体力不足，最多允许购买的体力管数。')
 @enumtype([0, 1, 2, 3, 6, 9, 12])
-@default(0)
+@default(6)
 class buy_stamina_passive(Module):
     async def do_task(self, client: pcrclient):
         client.keys['buy_stamina_passive'] = self.value   
@@ -29,7 +29,7 @@ class buy_stamina_passive(Module):
 class buy_stamina_active(Module):
     async def do_task(self, client: pcrclient):
         for i in range(self.value):
-            if client.jewel < 10000: break
+            if client.jewel.free_jewel < 10000: break
             await client.recover_stamina()
 
 @description('收取家园体。')
@@ -75,38 +75,82 @@ class jjc_reward(Module):
 @default(True)
 class xinsui3_sweep(Module):
     async def do_task(self, client: pcrclient):
-        await client.quest_skip_aware(18001003, 5, 15, 5)
+        await client.quest_skip_aware(18001003, 5)
 
 @description('刷取心碎2')
 @booltype
 @default(True)
 class xinsui2_sweep(Module):
     async def do_task(self, client: pcrclient):
-        await client.quest_skip_aware(18001002, 5, 15, 5)
+        await client.quest_skip_aware(18001002, 5)
 
 @description('刷取心碎1')
 @booltype
 @default(True)
 class xinsui1_sweep(Module):
     async def do_task(self, client: pcrclient):
-        await client.quest_skip_aware(18001001, 5, 15, 5)
+        await client.quest_skip_aware(18001001, 5)
 
 @description('刷取星球杯2')
 @booltype
 @default(True)
 class xingqiubei2_sweep(Module):
     async def do_task(self, client: pcrclient):
-        await client.quest_skip_aware(19001002, 5, 15, 5)
+        await client.quest_skip_aware(19001002, 5)
 
 @description('刷取星球杯1')
 @booltype
 @default(True)
 class xingqiubei1_sweep(Module):
     async def do_task(self, client: pcrclient):
-        await client.quest_skip_aware(19001001, 5, 15, 5)
+        await client.quest_skip_aware(19001001, 5)
+
+@description('''
+根据一键扫荡设置自动刷图，具体次数由标签页名字和设置的使用扫荡张数决定
+刷图逻辑：首先按次数逐一刷取名字为start的图，然后循环按次数刷取设置为loop的图
+当被动体力回复完全消耗后，刷图结束
+'''.strip())
+@booltype
+@default(True)
+class smart_sweep(Module):
+    async def do_task(self, client: pcrclient):
+        nloop = []
+        loop = []
+        for tab in client.user_my_quest:
+            for x in tab.skip_list:
+                if tab.tab_name == 'start':
+                    nloop.append((x, tab.skip_count))
+                elif tab.tab_name == 'loop':
+                    loop.append((x, tab.skip_count))
+        def _sweep():
+            for x in nloop:
+                yield x
+            while True:
+                for x in loop:
+                    yield x
+
+        msg = []
+        for quest_id, count in _sweep():
+            try:
+                await client.quest_skip_aware(quest_id, count, True, True)
+            except ValueError as e:
+                m = str(e)
+                if m == '体力不足': break
+                else:
+                    msg.append(m)
+                    if not m.endswith("已达最大次数"):
+                        raise ValueError(';'.join(msg))
+        
+        if msg: raise ValueError(';'.join(msg))
+
+def register_test():
+    ModuleManager._modules = [
+        buy_stamina_passive,
+        smart_sweep
+    ]
 
 def register_all():
-    ModuleManager._modules = {
+    ModuleManager._modules = [
         buy_stamina_passive,
         room_accept_all,
         explore,
@@ -118,5 +162,6 @@ def register_all():
         xinsui1_sweep,
         xingqiubei1_sweep, 
         clan_like,
-        buy_stamina_active
-    }
+        buy_stamina_active,
+        smart_sweep
+    ]

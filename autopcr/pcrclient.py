@@ -107,7 +107,7 @@ class pcrclient(dataclient):
     
     async def recover_stamina(self):
         req = ShopRecoverStaminaRequest()
-        req.current_currency_num = self.jewel
+        req.current_currency_num = self.jewel.free_jewel + self.jewel.jewel
         return await self._request(req)
     
     async def get_arena_info(self):
@@ -135,21 +135,53 @@ class pcrclient(dataclient):
         req.type = 1
         await self._request(req)
     
-    async def quest_skip_aware(self, quest: int, times: int, cost: int, max_num: int = 0):
+    _quest_info_dict = {
+        11: (0, 0, 10), # normal quest has no limit
+        12: (3, 1, 20), # hard quest 3*1
+        13: (3, 1, 20), # very hard quest 3*1
+        18: (5, 3, 15), # xinsui quest 5*3
+        19: (5, 3, 15), # xingqiubei quest 5*3
+    }
+
+    async def recover_challenge(self, quest: int):
+        req = QuestRecoverChallengeRequest()
+        req.quest_id = quest
+        req.current_currency_num = self.jewel.free_jewel + self.jewel.jewel
+        return await self._request(req)
+    
+    async def quest_skip_aware(self, quest: int, times: int, recover: bool = False, is_total: bool = False):
         if not quest in self.quest_dict:
             raise ValueError(f"任务{quest}不存在")
-        if self.quest_dict[quest].clear_flg != 3:
+        qinfo = self.quest_dict[quest]
+        if qinfo.clear_flg != 3:
             raise ValueError(f"任务{quest}未三星")
-        if max_num:
-            times = min(times, max_num - self.quest_dict[quest].daily_clear_count)
-        if times <= 0:
-            raise ValueError(f"任务{quest}已达最大次数")
-        if self.stamina < cost * times:
-            if self.keys.get('buy_stamina_passive', 0) > self.recover_stamina_exec_count:
-                await self.recover_stamina()
-            else:
-                raise ValueError(f"体力不足")
-        await self.quest_skip(quest, times)
+        info = pcrclient._quest_info_dict[quest // 1000000]
+        async def skip(times):
+            if self.stamina < info[2] * times:
+                if self.keys.get('buy_stamina_passive', 0) > self.recover_stamina_exec_count:
+                    await self.recover_stamina()
+                else:
+                    raise ValueError(f"体力不足")
+            await self.quest_skip(quest, times)
+        if info[0]:
+            if is_total:
+                times -= qinfo.daily_clear_count
+            max_times = ((info[1] if recover else 0) + 1) * info[0] - qinfo.daily_clear_count
+            times = min(times, max_times)
+            if times <= 0:
+                raise ValueError(f"任务{quest}已达最大次数")
+            remain = info[0] * qinfo.daily_recovery_count - qinfo.daily_clear_count
+            while times > 0:
+                if remain == 0:
+                    await self.recover_challenge(quest)
+                    remain = info[0]
+                t = min(times, remain)
+                await skip(t)
+                times -= t
+                remain -= t
+        else:
+            await skip(times)
+
     
     async def refresh(self):
         req = HomeIndexRequest()

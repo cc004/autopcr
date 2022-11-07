@@ -11,7 +11,7 @@ class ErrorInfo:
 
 class ResponseBase:
     server_error: ErrorInfo = None
-    def update(self, client: "dataclient"): ...
+    def update(self, client: "dataclient", request): ...
 
 TResponse = TypeVar('TResponse', bound=ResponseBase)
 
