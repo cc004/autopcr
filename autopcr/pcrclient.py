@@ -3,6 +3,7 @@ from .clientbase import *
 class pcrclient(dataclient):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.keys = {}
     
     async def login(self):
         await self._request(None)
@@ -12,6 +13,11 @@ class pcrclient(dataclient):
         req.target_viewer_id = user
         return await self._request(req)
     
+    async def present_receive_all(self):
+        req = PresentReceiveAllRequest()
+        req.time_filter = -1
+        return await self._request(req)
+
     async def accept_clan_invitation(self, clan: int, page: 0):
         req = UserInviteClanListRequest()
         req.page = page
@@ -74,8 +80,15 @@ class pcrclient(dataclient):
     
     async def quest_skip(self, quest: int, times: int):
         req = QuestSkipRequest()
-        req.current_ticket_num = self.get_inventory((eInventoryType.Item, 23001)),
-        req.quest_id = quest,
+        req.current_ticket_num = self.get_inventory((eInventoryType.Item, 23001))
+        req.quest_id = quest
+        req.random_count = times
+        return await self._request(req)
+    
+    async def training_quest_skip(self, quest: int, times: int):
+        req = TrainingQuestSkipRequest()
+        req.current_ticket_num = self.get_inventory((eInventoryType.Item, 23001))
+        req.quest_id = quest
         req.random_count = times
         return await self._request(req)
     
@@ -97,6 +110,14 @@ class pcrclient(dataclient):
         req.current_currency_num = self.jewel
         return await self._request(req)
     
+    async def receive_arena_reward(self):
+        req = ArenaTimeRewardAcceptRequest()
+        return await self._request(req)
+    
+    async def receive_grand_arena_reward(self):
+        req = GrandArenaTimeRewardAcceptRequest()
+        return await self._request(req)
+    
     async def receive_all(self):
         await self._request(RoomReceiveItemAllRequest())
         req = PresentReceiveAllRequest()
@@ -106,8 +127,8 @@ class pcrclient(dataclient):
         req.type = 1
         await self._request(req)
     
-    async def quest_skip_aware(self, quest: int, times: int):
-        if self.stamina < 80:
+    async def quest_skip_aware(self, quest: int, times: int, cost: int):
+        if self.stamina < cost * times and self.keys.get('buy_stamina_passive', 0) > self.recover_stamina_exec_count:
             await self.recover_stamina()
         await self.quest_skip(quest, times)
     
@@ -138,6 +159,10 @@ class pcrclient(dataclient):
         req = ClanLikeRequest()
         req.viewer_id = viewer_id
         req.clan_id = self.clan
+        return await self._request(req)
+
+    async def room_accept_all(self):
+        req = RoomReceiveItemAllRequest()
         return await self._request(req)
 
     async def borrow_dungeon_member(self, viewer_id):

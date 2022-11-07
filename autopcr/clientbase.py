@@ -284,6 +284,7 @@ class dataclient(sessionclient):
     donation_num: int = 0
     team_level: int = 0
     stamina: int = 0
+    recover_stamina_exec_count: int = 0
     name: str = None
     _inventory: Dict[Tuple[eInventoryType, int], int] = {}
 
