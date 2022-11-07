@@ -1038,6 +1038,7 @@ class LoadIndexResponse(ResponseBase):
                 client.update_inventory(inv)
         client.stamina = self.user_info.user_stamina
         client.settings = self.ini_setting
+        client.recover_stamina_exec_count = self.shop.recover_stamina.exec_count
 
 
 class LoadNextDayIndexResponse(ResponseBase):
@@ -1649,6 +1650,7 @@ class ShopRecoverStaminaResponse(ResponseBase):
     def update(self, client: "dataclient"):
         client.jewel = self.user_jewel.free_jewel
         client.stamina = self.user_info.user_stamina
+        client.recover_stamina_exec_count = self.recover_stamina.exec_count
 
 class ShopResetResponse(ResponseBase):
     shop: ShopInfo = None
