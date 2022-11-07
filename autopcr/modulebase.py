@@ -111,7 +111,8 @@ class ModuleManager:
                 'platform': 2
             }, autoValidator)
             await client.login()
-            for name, module in self.modules.items():
+            for name in (x.__name__ for x in ModuleManager._modules):
+                module = self.modules[name]
                 try:
                     await module.do_task(client)
                     result[name] = 'success'
