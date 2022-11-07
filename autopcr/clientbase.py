@@ -272,7 +272,8 @@ class sessionclient(apiclient):
         try:
             return await super()._request(request)
         except ApiException:
-            self._logged = False
+            if self._logging:
+                self._logged = False
             raise
 
 class dataclient(sessionclient):
@@ -285,7 +286,10 @@ class dataclient(sessionclient):
     team_level: int = 0
     stamina: int = 0
     recover_stamina_exec_count: int = 0
+    training_quest_count: TrainingQuestCount = None
+    quest_dict: Dict[int, UserQuestInfo] = None
     name: str = None
+    clan_like_count: int = 0
     _inventory: Dict[Tuple[eInventoryType, int], int] = {}
 
     def clear_inventory(self):

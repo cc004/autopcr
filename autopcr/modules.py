@@ -8,6 +8,8 @@ import random
 @default(True)
 class clan_like(Module):
     async def do_task(self, client: pcrclient):
+        if not client.clan_like_count:
+            raise ValueError('今日点赞次数已用完。')
         info = await client.get_clan_info()
         members = [x.viewer_id for x in info.members if x.viewer_id != client.viewer_id]
         if len(members) == 0: raise ValueError("No other members in clan")
@@ -42,9 +44,11 @@ class room_accept_all(Module):
 @default(True)
 class explore(Module):
     async def do_task(self, client: pcrclient):
-        # 9级
-        await client.training_quest_skip(21001009, 2)
-        await client.training_quest_skip(21002009, 2)
+        # 10级探索
+        if client.training_quest_count.gold_quest:
+            await client.training_quest_skip(21001010, 2 - client.training_quest_count.gold_quest)
+        if client.training_quest_count.exp_quest:
+            await client.training_quest_skip(21002010, 2 - client.training_quest_count.exp_quest)
 
 
 @description('领取礼物箱')
@@ -59,43 +63,47 @@ class present_receive_all(Module):
 @default(True)
 class jjc_reward(Module):
     async def do_task(self, client: pcrclient):
-        await client.receive_arena_reward()
-        await client.receive_grand_arena_reward()
+        info = await client.get_arena_info()
+        if info.reward_info.count:
+            await client.receive_arena_reward()
+        info = await client.get_grand_arena_info()
+        if info.reward_info.count:
+            await client.receive_grand_arena_reward()
 
 @description('刷取心碎3')
 @booltype
 @default(True)
 class xinsui3_sweep(Module):
     async def do_task(self, client: pcrclient):
-        await client.quest_skip_aware(18001003, 5, 15)
+        await client.quest_skip_aware(18001003, 5, 15, 5)
 
 @description('刷取心碎2')
 @booltype
 @default(True)
 class xinsui2_sweep(Module):
     async def do_task(self, client: pcrclient):
-        await client.quest_skip_aware(18001002, 5, 15)
+        await client.quest_skip_aware(18001002, 5, 15, 5)
 
 @description('刷取心碎1')
 @booltype
 @default(True)
 class xinsui1_sweep(Module):
     async def do_task(self, client: pcrclient):
-        await client.quest_skip_aware(18001001, 5, 15)
+        await client.quest_skip_aware(18001001, 5, 15, 5)
 
 @description('刷取星球杯2')
 @booltype
 @default(True)
 class xingqiubei2_sweep(Module):
     async def do_task(self, client: pcrclient):
-        await client.quest_skip_aware(19001002, 5, 15)
+        await client.quest_skip_aware(19001002, 5, 15, 5)
 
 @description('刷取星球杯1')
 @booltype
 @default(True)
 class xingqiubei1_sweep(Module):
     async def do_task(self, client: pcrclient):
-        await client.quest_skip_aware(19001001, 5, 15)
+        await client.quest_skip_aware(19001001, 5, 15, 5)
 
 def register_all():
     ModuleManager._modules = {

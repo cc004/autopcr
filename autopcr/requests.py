@@ -1781,7 +1781,7 @@ class RoomReceiveItemAllRequest(Request[RoomReceiveItemAllResponse]):
 	pass
 	@property
 	def url(self) -> str:
-		return "room/receive_item_all"
+		return "room/receive_all"
 class RoomReceiveItemRequest(Request[RoomReceiveItemResponse]):
 	serial_id: int = None
 	@property

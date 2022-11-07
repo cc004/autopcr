@@ -110,6 +110,14 @@ class pcrclient(dataclient):
         req.current_currency_num = self.jewel
         return await self._request(req)
     
+    async def get_arena_info(self):
+        req = ArenaInfoRequest()
+        return await self._request(req)
+    
+    async def get_grand_arena_info(self):
+        req = GrandArenaInfoRequest()
+        return await self._request(req)
+    
     async def receive_arena_reward(self):
         req = ArenaTimeRewardAcceptRequest()
         return await self._request(req)
@@ -127,9 +135,20 @@ class pcrclient(dataclient):
         req.type = 1
         await self._request(req)
     
-    async def quest_skip_aware(self, quest: int, times: int, cost: int):
-        if self.stamina < cost * times and self.keys.get('buy_stamina_passive', 0) > self.recover_stamina_exec_count:
-            await self.recover_stamina()
+    async def quest_skip_aware(self, quest: int, times: int, cost: int, max_num: int = 0):
+        if not quest in self.quest_dict:
+            raise ValueError(f"任务{quest}不存在")
+        if self.quest_dict[quest].clear_flg != 3:
+            raise ValueError(f"任务{quest}未三星")
+        if max_num:
+            times = min(times, max_num - self.quest_dict[quest].daily_clear_count)
+        if times <= 0:
+            raise ValueError(f"任务{quest}已达最大次数")
+        if self.stamina < cost * times:
+            if self.keys.get('buy_stamina_passive', 0) > self.recover_stamina_exec_count:
+                await self.recover_stamina()
+            else:
+                raise ValueError(f"体力不足")
         await self.quest_skip(quest, times)
     
     async def refresh(self):
