@@ -1,0 +1,1548 @@
+from io import StringIO
+import re
+import os
+
+member = re.compile('(public|private) ([A-Za-z0-9_<>\\[\\]]*?) ([A-Za-z0-9_]*?)\n')
+enum = re.compile('([A-Za-z0-9_]*? = -?[0-9]*),?\n')
+upper = re.compile('([A-Z])')
+addtask = re.compile('this.addTask\(eApiType.(.*?), new ApiManager.(.*?)PostParam')
+list = re.compile('List<(.*)>')
+fp_common = open('common.py', 'w')
+fp_req = open('requests.py', 'w')
+fp_resp = open('responses.py', 'w')
+fp_enum = open('enums.py', 'w')
+
+fp_common.write('from typing import List\nfrom .enums import *\n\n')
+fp_req.write('from typing import List\nfrom .modelbase import Request\nfrom .responses import *\nfrom .common import *\nfrom .enums import *\n\n')
+fp_resp.write('from typing import List\nfrom .modelbase import ResponseBase\nfrom .common import *\nfrom .enums import *\n\n')
+fp_enum.write('from enum import Enum\n\n')
+
+urls = {
+		"ArcadeTop":
+		"arcade/top"
+,
+		"ArcadeBuy":
+		"arcade/buy"
+,
+		"ArcadeSyncStoryList":
+		"arcade/sync_story_list"
+,
+		"ArcadeStoryList":
+		"arcade/story_list"
+,
+		"ArcadeReadStory":
+		"arcade/read_story"
+,
+		"ArenaInfo":
+		"arena/info"
+,
+		"ArenaSearch":
+		"arena/search"
+,
+		"ArenaApply":
+		"arena/apply"
+,
+		"ArenaCancel":
+		"arena/cancel"
+,
+		"ArenaStart":
+		"arena/start"
+,
+		"ArenaFinish":
+		"arena/finish"
+,
+		"ArenaCancelInterval":
+		"arena/cancel_interval"
+,
+		"ArenaResetBattleNumber":
+		"arena/reset_battle_number"
+,
+		"ArenaRanking":
+		"arena/ranking"
+,
+		"ArenaHistory":
+		"arena/history"
+,
+		"ArenaHistoryDetail":
+		"arena/history_detail"
+,
+		"ArenaReplay":
+		"arena/replay"
+,
+		"ArenaMoveGroup":
+		"arena/move_group"
+,
+		"ArenaHistoryDamageRanking":
+		"arena/history_damage_ranking"
+,
+		"ArenaTimeRewardAccept":
+		"arena/time_reward_accept"
+,
+		"CggGachaExec":
+		"cgg/gacha_exec"
+,
+		"CggTop":
+		"cgg/top"
+,
+		"CggGetUserInfo":
+		"cgg/get_user_info"
+,
+		"CggExchangeLuppi":
+		"cgg/exchange_luppi"
+,
+		"CggDeleteNewFlag":
+		"cgg/delete_new_flag"
+,
+		"CggGachaReset":
+		"cgg/gacha_reset"
+,
+		"CharaETicketRewards":
+		"chara_e_ticket/rewards"
+,
+		"CharaETicketExchange":
+		"chara_e_ticket/exchange"
+,
+		"CheckCheckAgreement":
+		"check/check_agreement"
+,
+		"CheckAcceptAgreement":
+		"check/accept_agreement"
+,
+		"ClanInfo":
+		"clan/info"
+,
+		"ClanOthersInfo":
+		"clan/others_info"
+,
+		"ClanCreate":
+		"clan/create"
+,
+		"ClanUpdate":
+		"clan/update"
+,
+		"ClanBreakup":
+		"clan/breakup"
+,
+		"ClanJoin":
+		"clan/join"
+,
+		"ClanLeave":
+		"clan/leave"
+,
+		"ClanRemove":
+		"clan/remove"
+,
+		"ClanSearchClan":
+		"clan/search_clan"
+,
+		"ClanSearchUser":
+		"clan/search_user"
+,
+		"ClanJoinRequestList":
+		"clan/join_request_list"
+,
+		"ClanJoinRequestCancel":
+		"clan/join_request_cancel"
+,
+		"ClanJoinRequestAccept":
+		"clan/join_request_accept"
+,
+		"ClanJoinRequestReject":
+		"clan/join_request_reject"
+,
+		"ClanSetDispatchStatus":
+		"clan/set_dispatch_status"
+,
+		"ClanChangeRole":
+		"clan/change_role"
+,
+		"ClanChat":
+		"clan/chat"
+,
+		"ClanChatDamageReport":
+		"clan/chat_damage_report"
+,
+		"ClanChatInfoList":
+		"clan/chat_info_list"
+,
+		"ClanLike":
+		"clan/like"
+,
+		"ClanCheckExistClan":
+		"clan/check_exist_clan"
+,
+		"ClanClanMemberBattleStart":
+		"clan/clan_member_battle_start"
+,
+		"ClanClanMemberBattleFinish":
+		"clan/clan_member_battle_finish"
+,
+		"ClanBattleBossHistory":
+		"clan_battle/boss_history"
+,
+		"ClanBattleBossInfo":
+		"clan_battle/boss_info"
+,
+		"ClanBattleDamageReport":
+		"clan_battle/damage_report"
+,
+		"ClanBattleFinish":
+		"clan_battle/finish"
+,
+		"ClanBattlePeriodRanking":
+		"clan_battle/period_ranking"
+,
+		"ClanBattleBossRankingInClan":
+		"clan_battle/boss_ranking_in_clan"
+,
+		"ClanBattleResetHp":
+		"clan_battle/reset_hp"
+,
+		"ClanBattleStart":
+		"clan_battle/start"
+,
+		"ClanBattleSupportUnitList":
+		"clan_battle/support_unit_list"
+,
+		"ClanBattleSupportUnitList2":
+		"clan_battle/support_unit_list_2"
+,
+		"ClanBattleTop":
+		"clan_battle/top"
+,
+		"ClanBattleHistoryReport":
+		"clan_battle/history_report"
+,
+		"ClanBattleRehearsalStart":
+		"clan_battle/rehearsal_start"
+,
+		"ClanBattleRehearsalFinish":
+		"clan_battle/rehearsal_finish"
+,
+		"ClanBattleReloadDetailInfo":
+		"clan_battle/reload_detail_info"
+,
+		"ClanBattleMylog":
+		"clan_battle/mylog"
+,
+		"ClanBattleDeleteRehearsalMylog":
+		"clan_battle/delete_rehearsal_mylog"
+,
+		"ClanBattleSaveRehearsalMylog":
+		"clan_battle/save_rehearsal_mylog"
+,
+		"ClanBattleConfirmRehearsalMylog":
+		"clan_battle/confirm_rehearsal_mylog"
+,
+		"ClanBattleMylogDetail":
+		"clan_battle/mylog_detail"
+,
+		"ClanBattleDeleteTrainingMylog":
+		"clan_battle/delete_training_mylog"
+,
+		"ClanBattleSaveTrainingMylog":
+		"clan_battle/save_training_mylog"
+,
+		"ClanBattleConfirmTrainingMylog":
+		"clan_battle/confirm_training_mylog"
+,
+		"ClanBattleTrainingStart":
+		"clan_battle/training_start"
+,
+		"ClanBattleTrainingFinish":
+		"clan_battle/training_finish"
+,
+		"ClanBattleMissionIndex":
+		"clan_battle/mission_index"
+,
+		"ClanBattleSuggestDeckList":
+		"clan_battle/suggest_deck_list"
+,
+		"ClanBattleSuggestDeckReplay":
+		"clan_battle/suggest_deck_replay"
+,
+		"ClanBattleScoreArchiveTop":
+		"clan_battle/score_archive_top"
+,
+		"ClanBattleSuggestDeckReplayReport":
+		"clan_battle/suggest_deck_replay_report"
+,
+		"ClanBattleTimelineReport":
+		"clan_battle/timeline_report"
+,
+		"ClanBattleBattleLogList":
+		"clan_battle/battle_log_list"
+,
+		"ClanBattleBattleLogDeletedFavoriteIds":
+		"clan_battle/battle_log_deleted_favorite_ids"
+,
+		"ClanDetail":
+		"clan/detail"
+,
+		"ClanInvite":
+		"clan/invite"
+,
+		"ClanCancelInvite":
+		"clan/cancel_invite"
+,
+		"ClanBlockInvite":
+		"clan/block_invite"
+,
+		"ClanCancelBlockInvite":
+		"clan/cancel_block_invite"
+,
+		"ClanRejectInvite":
+		"clan/reject_invite"
+,
+		"ClanInvitedClanList":
+		"clan/invited_clan_list"
+,
+		"ClanInviteUserList":
+		"clan/invite_user_list"
+,
+		"ClanBlockList":
+		"clan/block_list"
+,
+		"ClanUpdateInviteAcceptFlag":
+		"clan/update_invite_accept_flag"
+,
+		"DeckUpdate":
+		"deck/update"
+,
+		"DeckUpdateList":
+		"deck/update_list"
+,
+		"DungeonInfo":
+		"dungeon/info"
+,
+		"DungeonEnterArea":
+		"dungeon/enter_area"
+,
+		"DungeonDispatchUnitList2":
+		"dungeon/dispatch_unit_list_2"
+,
+		"DungeonBattleStart":
+		"dungeon/battle_start"
+,
+		"DungeonBattleFinish":
+		"dungeon/battle_finish"
+,
+		"DungeonReset":
+		"dungeon/reset"
+,
+		"DungeonBattleRetire":
+		"dungeon/battle_retire"
+,
+		"DungeonSkip":
+		"dungeon/skip"
+,
+		"DungeonSpecialBattleStart":
+		"dungeon/special_battle_start"
+,
+		"DungeonSpecialBattleFinish":
+		"dungeon/special_battle_finish"
+,
+		"EmblemTop":
+		"emblem/top"
+,
+		"EmblemChange":
+		"emblem/change"
+,
+		"EquipmentAutomaticEnhance":
+		"equipment/automatic_enhance"
+,
+		"EquipmentAutomaticEnhanceUnique":
+		"equipment/automatic_enhance_unique"
+,
+		"EquipmentEnhance":
+		"equipment/enhance"
+,
+		"EquipmentEnhanceUnique":
+		"equipment/enhance_unique"
+,
+		"EquipmentMultiEnhanceUnique":
+		"equipment/multi_enhance_unique"
+,
+		"EquipmentEnhanceMax":
+		"equipment/enhance_max"
+,
+		"EquipmentRequest":
+		"equipment/request"
+,
+		"EquipmentDonate":
+		"equipment/donate"
+,
+		"EquipmentCraft":
+		"equipment/craft"
+,
+		"EquipmentCraftUnique":
+		"equipment/craft_unique"
+,
+		"EquipmentRankupUnique":
+		"equipment/rankup_unique"
+,
+		"EquipmentGetRequest":
+		"equipment/get_request"
+,
+		"EquipmentFreeEnhance":
+		"equipment/free_enhance"
+,
+		"EventHatsuneGachaIndex":
+		"event/hatsune/gacha_index"
+,
+		"EventHatsuneGachaExec":
+		"event/hatsune/gacha_exec"
+,
+		"EventHatsuneGachaReset":
+		"event/hatsune/gacha_reset"
+,
+		"EventHatsuneGachaLineup":
+		"event/hatsune/gacha_lineup"
+,
+		"FkeTop":
+		"fke/top"
+,
+		"FkeSyncTop":
+		"fke/sync_top"
+,
+		"FkeStart":
+		"fke/start"
+,
+		"FkeFinish":
+		"fke/finish"
+,
+		"FriendAccept":
+		"friend/accept"
+,
+		"FriendCancel":
+		"friend/cancel"
+,
+		"FriendFriendList":
+		"friend/friend_list"
+,
+		"FriendPendingList":
+		"friend/pending_list"
+,
+		"FriendReject":
+		"friend/reject"
+,
+		"FriendRemove":
+		"friend/remove"
+,
+		"FriendRequest":
+		"friend/request"
+,
+		"FriendRequestList":
+		"friend/request_list"
+,
+		"FriendSearch":
+		"friend/search"
+,
+		"FriendMissionIndex":
+		"friend/mission_index"
+,
+		"FriendMissionAccept":
+		"friend/mission_accept"
+,
+		"FriendGetMissionTargetFriendCount":
+		"friend/get_mission_target_friend_count"
+,
+		"GachaIndex":
+		"gacha/index"
+,
+		"GachaExec":
+		"gacha/exec"
+,
+		"GachaExchangePoint":
+		"gacha/exchange_point"
+,
+		"GachaPrizeHistory":
+		"gacha/prize_history"
+,
+		"GachaSelectPrize":
+		"gacha/select_prize"
+,
+		"GachaPrizeReward":
+		"gacha/prize_reward"
+,
+		"GachaSpecialFes":
+		"gacha/special_fes"
+,
+		"GrandArenaInfo":
+		"grand_arena/info"
+,
+		"GrandArenaSearch":
+		"grand_arena/search"
+,
+		"GrandArenaApply":
+		"grand_arena/apply"
+,
+		"GrandArenaCancel":
+		"grand_arena/cancel"
+,
+		"GrandArenaStart":
+		"grand_arena/start"
+,
+		"GrandArenaFinish":
+		"grand_arena/finish"
+,
+		"GrandArenaCancelInterval":
+		"grand_arena/cancel_interval"
+,
+		"GrandArenaResetBattleNumber":
+		"grand_arena/reset_battle_number"
+,
+		"GrandArenaRanking":
+		"grand_arena/ranking"
+,
+		"GrandArenaHistory":
+		"grand_arena/history"
+,
+		"GrandArenaHistoryDetail":
+		"grand_arena/history_detail"
+,
+		"GrandArenaReplay":
+		"grand_arena/replay"
+,
+		"GrandArenaGetDestinationGroup":
+		"grand_arena/get_destination_group"
+,
+		"GrandArenaMoveGroup":
+		"grand_arena/move_group"
+,
+		"GrandArenaTimeRewardAccept":
+		"grand_arena/time_reward_accept"
+,
+		"EventHatsuneTop":
+		"event/hatsune/top"
+,
+		"EventHatsuneQuestTop":
+		"event/hatsune/quest_top"
+,
+		"EventHatsuneQuestStart":
+		"event/hatsune/quest_start"
+,
+		"EventHatsuneQuestFinish":
+		"event/hatsune/quest_finish"
+,
+		"EventHatsuneQuestRetire":
+		"event/hatsune/quest_retire"
+,
+		"EventHatsuneQuestSkip":
+		"event/hatsune/quest_skip"
+,
+		"EventHatsuneMissionIndex":
+		"event/hatsune/mission_index"
+,
+		"EventHatsuneMissionAccept":
+		"event/hatsune/mission_accept"
+,
+		"EventHatsuneBossBattleRetire":
+		"event/hatsune/boss_battle_retire"
+,
+		"EventHatsuneBossBattleStart":
+		"event/hatsune/boss_battle_start"
+,
+		"EventHatsuneBossBattleFinish":
+		"event/hatsune/boss_battle_finish"
+,
+		"EventHatsuneBossBattleSkip":
+		"event/hatsune/boss_battle_skip"
+,
+		"EventHatsuneRecoverChallenge":
+		"event/hatsune/recover_challenge"
+,
+		"EventHatsuneSpecialBattleStart":
+		"event/hatsune/special_battle_start"
+,
+		"EventHatsuneSpecialBattleFinish":
+		"event/hatsune/special_battle_finish"
+,
+		"EventHatsuneSpecialBattleRetire":
+		"event/hatsune/special_battle_retire"
+,
+		"EventHatsuneSpecialBattleExStart":
+		"event/hatsune/special_battle_ex_start"
+,
+		"EventHatsuneSpecialBattleExFinish":
+		"event/hatsune/special_battle_ex_finish"
+,
+		"EventHatsuneSpecialBattleExRetire":
+		"event/hatsune/special_battle_ex_retire"
+,
+		"EventHatsuneSpecialBattleExHistory":
+		"event/hatsune/special_battle_ex_history"
+,
+		"EventHatsuneSpecialBattleExReset":
+		"event/hatsune/special_battle_ex_reset"
+,
+		"EventHatsuneQuizAnswer":
+		"event/hatsune/quiz_answer"
+,
+		"EventHatsuneDearTop":
+		"event/hatsune/dear_top"
+,
+		"EventHatsuneDearFinish":
+		"event/hatsune/dear_finish"
+,
+		"EventHatsuneReadDiary":
+		"event/hatsune/read_diary"
+,
+		"EventHatsuneReadRelayStory":
+		"event/hatsune/read_relay_story"
+,
+		"EventHatsuneReadOmpStory":
+		"event/hatsune/read_omp_story"
+,
+		"EventHatsuneReadNyxStory":
+		"event/hatsune/read_nyx_story"
+,
+		"EventHatsuneChangeNyxItemColor":
+		"event/hatsune/change_nyx_item_color"
+,
+		"HomeIndex":
+		"home/index"
+,
+		"ItemExp":
+		"item/exp"
+,
+		"ItemSell":
+		"item/sell"
+,
+		"ItemETicketExchange":
+		"item_e_ticket/exchange"
+,
+		"MusicBuy":
+		"music/buy"
+,
+		"MusicTop":
+		"music/top"
+,
+		"MusicSet":
+		"music/set"
+,
+		"KaiserBattleTop":
+		"kaiser_battle/top"
+,
+		"KaiserBattleUpdateDeck":
+		"kaiser_battle/update_deck"
+,
+		"KaiserBattleSubStart":
+		"kaiser_battle/sub_start"
+,
+		"KaiserBattleSubFinish":
+		"kaiser_battle/sub_finish"
+,
+		"KaiserBattleMainStart":
+		"kaiser_battle/main_start"
+,
+		"KaiserBattleMainFinish":
+		"kaiser_battle/main_finish"
+,
+		"KaiserBattleMainRetire":
+		"kaiser_battle/main_retire"
+,
+		"KaiserBattleSetSupportUnit":
+		"kaiser_battle/set_support_unit"
+,
+		"KaiserBattleSupportList":
+		"kaiser_battle/support_list"
+,
+		"KaiserBattleGetMainBossInfo":
+		"kaiser_battle/get_main_boss_info"
+,
+		"KaiserBattleMySupportList":
+		"kaiser_battle/my_support_list"
+,
+		"KmkTop":
+		"kmk/top"
+,
+		"KmkStart":
+		"kmk/start"
+,
+		"KmkFinish":
+		"kmk/finish"
+,
+		"LegionBattleTop":
+		"legion_battle/top"
+,
+		"LegionBattleUpdateDeck":
+		"legion_battle/update_deck"
+,
+		"LegionBattleSubStart":
+		"legion_battle/sub_start"
+,
+		"LegionBattleSubFinish":
+		"legion_battle/sub_finish"
+,
+		"LegionBattleMainStart":
+		"legion_battle/main_start"
+,
+		"LegionBattleMainFinish":
+		"legion_battle/main_finish"
+,
+		"LegionBattleMainRetire":
+		"legion_battle/main_retire"
+,
+		"LegionBattleSetSupportUnit":
+		"legion_battle/set_support_unit"
+,
+		"LegionBattleSupportList":
+		"legion_battle/support_list"
+,
+		"LegionBattleGetMainBossInfo":
+		"legion_battle/get_main_boss_info"
+,
+		"LegionBattleMissionIndex":
+		"legion_battle/mission_index"
+,
+		"LegionBattleAfterIndex":
+		"legion_battle/after_index"
+,
+		"LegionBattleMissionAccept":
+		"legion_battle/mission_accept"
+,
+		"LoadIndex":
+		"load/index"
+,
+		"LoadNextDayIndex":
+		"load/next_day_index"
+,
+		"LogBattleLog2":
+		"log/battle_log2"
+,
+		"CharaFortuneDraw":
+		"chara_fortune/draw"
+,
+		"MissionIndex":
+		"mission/index"
+,
+		"MissionAccept":
+		"mission/accept"
+,
+		"MyPageSetMyPage":
+		"my_page/set_my_page"
+,
+		"MyPartySetParty":
+		"my_party/set_party"
+,
+		"MyPartySetTab":
+		"my_party/set_tab"
+,
+		"MyQuestUpdateSkipQuestList":
+		"my_quest/update_skip_quest_list"
+,
+		"MyQuestUpdateTab":
+		"my_quest/update_tab"
+,
+		"PctTop":
+		"pct/top"
+,
+		"PctStart":
+		"pct/start"
+,
+		"PctFinish":
+		"pct/finish"
+,
+		"PictureBookIndex":
+		"picture_book/index"
+,
+		"PkbTop":
+		"pkb/top"
+,
+		"PkbStartSolo":
+		"pkb/start_solo"
+,
+		"PkbStartVs":
+		"pkb/start_vs"
+,
+		"PkbFinishSolo":
+		"pkb/finish_solo"
+,
+		"PkbFinishVs":
+		"pkb/finish_vs"
+,
+		"PkbReadCatalog":
+		"pkb/read_catalog"
+,
+		"PkbReadRanking":
+		"pkb/read_ranking"
+,
+		"PracticeFriendBattleTop":
+		"practice/friend_battle_top"
+,
+		"PracticeUpdateDeck":
+		"practice/update_deck"
+,
+		"PracticeFriendBattleStart":
+		"practice/friend_battle_start"
+,
+		"PracticeFriendBattleFinish":
+		"practice/friend_battle_finish"
+,
+		"PresentIndex":
+		"present/index"
+,
+		"PresentReceive":
+		"present/receive"
+,
+		"PresentReceiveAll":
+		"present/receive_all"
+,
+		"PresentHistory":
+		"present/history"
+,
+		"ProfileGetProfile":
+		"profile/get_profile"
+,
+		"ProfileRename":
+		"profile/rename"
+,
+		"ProfileUpdateComment":
+		"profile/update_comment"
+,
+		"ProfileFavoriteUnit":
+		"profile/favorite_unit"
+,
+		"ProfileSetBirthday":
+		"profile/set_birthday"
+,
+		"ProfileMakerGetMyProfile":
+		"profile_maker/get_my_profile"
+,
+		"ProfileMakerSetMyProfile":
+		"profile_maker/set_my_profile"
+,
+		"ProfileMakerGetClanProfile":
+		"profile_maker/get_clan_profile"
+,
+		"ProfileMakerSetClanProfile":
+		"profile_maker/set_clan_profile"
+,
+		"PsyTop":
+		"psy/top"
+,
+		"PsyExchange":
+		"psy/exchange"
+,
+		"PsyReadDrama":
+		"psy/read_drama"
+,
+		"PsyReadPuddingNote":
+		"psy/read_pudding_note"
+,
+		"PsyGetPudding":
+		"psy/get_pudding"
+,
+		"PsyStartCooking":
+		"psy/start_cooking"
+,
+		"QuestStart":
+		"quest/start"
+,
+		"QuestFinish":
+		"quest/finish"
+,
+		"QuestRetire":
+		"quest/retire"
+,
+		"QuestQuestSkip":
+		"quest/quest_skip"
+,
+		"QuestQuestSkipMultiple":
+		"quest/quest_skip_multiple"
+,
+		"QuestRecoverChallenge":
+		"quest/recover_challenge"
+,
+		"QuestRecoverChallengeMultiple":
+		"quest/recover_challenge_multiple"
+,
+		"TrainingQuestStart":
+		"training_quest/start"
+,
+		"TrainingQuestFinish":
+		"training_quest/finish"
+,
+		"TrainingQuestRetire":
+		"training_quest/retire"
+,
+		"TrainingQuestQuestSkip":
+		"training_quest/quest_skip"
+,
+		"QuestReplayList":
+		"quest/replay_list"
+,
+		"QuestReplay":
+		"quest/replay"
+,
+		"QuestReplayReport":
+		"quest/replay_report"
+,
+		"Rarity6QuestStart":
+		"rarity_6_quest/start"
+,
+		"Rarity6QuestFinish":
+		"rarity_6_quest/finish"
+,
+		"RoomStart":
+		"room/start"
+,
+		"RoomUpdate":
+		"room/update"
+,
+		"RoomVisit":
+		"room/visit"
+,
+		"RoomLike":
+		"room/like"
+,
+		"RoomLikeHistory":
+		"room/like_history"
+,
+		"RoomClanMembers":
+		"room/clan_members"
+,
+		"RoomExtendStorage":
+		"room/extend_storage"
+,
+		"RoomBuy":
+		"room/buy"
+,
+		"RoomSell":
+		"room/sell"
+,
+		"RoomGiveGift":
+		"room/give_gift"
+,
+		"RoomLevelUpStart":
+		"room/level_up_start"
+,
+		"RoomLevelUpStop":
+		"room/level_up_stop"
+,
+		"RoomLevelUpEnd":
+		"room/level_up_end"
+,
+		"RoomMultiGiveGift":
+		"room/multi_give_gift"
+,
+		"RoomMultiLevelUpEnd":
+		"room/multi_level_up_end"
+,
+		"RoomLevelUpShortening":
+		"room/level_up_shortening"
+,
+		"RoomReceive":
+		"room/receive"
+,
+		"RoomReceiveAll":
+		"room/receive_all"
+,
+		"RoomGetMysetList":
+		"room/get_myset_list"
+,
+		"RoomSaveMyset":
+		"room/save_myset"
+,
+		"RoomDeleteMyset":
+		"room/delete_myset"
+,
+		"RoomRenameMyset":
+		"room/rename_myset"
+,
+		"RoomFreeGift":
+		"room/free_gift"
+,
+		"SekaiTop":
+		"sekai/top"
+,
+		"SekaiStart":
+		"sekai/start"
+,
+		"SekaiFinish":
+		"sekai/finish"
+,
+		"SekaiHistoryReport":
+		"sekai/history_report"
+,
+		"SekaiRanking":
+		"sekai/ranking"
+,
+		"SekaiRankingInClan":
+		"sekai/ranking_in_clan"
+,
+		"SekaiRetire":
+		"sekai/retire"
+,
+		"SekaiSupportUnitList2":
+		"sekai/support_unit_list_2"
+,
+		"SerialCodeRegister":
+		"serial_code/register"
+,
+		"EventShioriArchiveTop":
+		"event/shiori/archive_top"
+,
+		"EventShioriFavorite":
+		"event/shiori/favorite"
+,
+		"EventShioriEventTop":
+		"event/shiori/event_top"
+,
+		"EventShioriQuestStart":
+		"event/shiori/quest_start"
+,
+		"EventShioriQuestFinish":
+		"event/shiori/quest_finish"
+,
+		"EventShioriQuestRetire":
+		"event/shiori/quest_retire"
+,
+		"EventShioriQuestSkip":
+		"event/shiori/quest_skip"
+,
+		"EventShioriMissionIndex":
+		"event/shiori/mission_index"
+,
+		"EventShioriMissionAccept":
+		"event/shiori/mission_accept"
+,
+		"EventShioriBossBattleStart":
+		"event/shiori/boss_battle_start"
+,
+		"EventShioriBossBattleFinish":
+		"event/shiori/boss_battle_finish"
+,
+		"EventShioriBossBattleRetire":
+		"event/shiori/boss_battle_retire"
+,
+		"EventShioriQuizAnswer":
+		"event/shiori/quiz_answer"
+,
+		"EventShioriDearTop":
+		"event/shiori/dear_top"
+,
+		"EventShioriDearFinish":
+		"event/shiori/dear_finish"
+,
+		"EventShioriReadDiary":
+		"event/shiori/read_diary"
+,
+		"EventShioriReadRelayStory":
+		"event/shiori/read_relay_story"
+,
+		"EventShioriReadNyxStory":
+		"event/shiori/read_nyx_story"
+,
+		"ShopItemList":
+		"shop/item_list"
+,
+		"ShopBuy":
+		"shop/buy"
+,
+		"ShopBuyMultiple":
+		"shop/buy_multiple"
+,
+		"ShopReset":
+		"shop/reset"
+,
+		"ShopAlchemy":
+		"shop/alchemy"
+,
+		"ShopRecoverStamina":
+		"shop/recover_stamina"
+,
+		"ShopCloseLimitedShop":
+		"shop/close_limited_shop"
+,
+		"ShopCloseDailyShop":
+		"shop/close_daily_shop"
+,
+		"ShopComebackTutorialDailyShop":
+		"shop/comeback_tutorial_daily_shop"
+,
+		"ShopDrawFromBank":
+		"shop/draw_from_bank"
+,
+		"SkillSetFree":
+		"skill/set_free"
+,
+		"SkillRemoveFree":
+		"skill/remove_free"
+,
+		"SkillLevelUp":
+		"skill/level_up"
+,
+		"SpaceTop":
+		"space/top"
+,
+		"SpaceStart":
+		"space/start"
+,
+		"SpaceFinish":
+		"space/finish"
+,
+		"SpaceRetire":
+		"space/retire"
+,
+		"SpaceSupportUnitList2":
+		"space/support_unit_list_2"
+,
+		"SpaceStoryCheck":
+		"space/story_check"
+,
+		"SpaceStoryStart":
+		"space/story_start"
+,
+		"SrtTop":
+		"srt/top"
+,
+		"SrtStart":
+		"srt/start"
+,
+		"SrtFinish":
+		"srt/finish"
+,
+		"SrtReadCatalog":
+		"srt/read_catalog"
+,
+		"StoryStart":
+		"story/start"
+,
+		"StoryQuestStart":
+		"story/quest_start"
+,
+		"StoryCheck":
+		"story/check"
+,
+		"StoryForceRelease":
+		"story/force_release"
+,
+		"SubStoryLtoReadStory":
+		"sub_story/lto/read_story"
+,
+		"SubStorySkeConfirm":
+		"sub_story/ske/confirm"
+,
+		"SubStorySkeReadStory":
+		"sub_story/ske/read_story"
+,
+		"SubStorySspReadSspStory":
+		"sub_story/ssp/read_ssp_story"
+,
+		"SubStorySvdReadStory":
+		"sub_story/svd/read_story"
+,
+		"SubStoryMhpReadStory":
+		"sub_story/mhp/read_story"
+,
+		"SubStoryNopReadStory":
+		"sub_story/nop/read_story"
+,
+		"SubStoryYsnReadStory":
+		"sub_story/ysn/read_story"
+,
+		"SupportUnitChangeSetting":
+		"support_unit/change_setting"
+,
+		"SupportUnitGetSetting":
+		"support_unit/get_setting"
+,
+		"SupportUnitGetFriendSupportUnitList":
+		"support_unit/get_friend_support_unit_list"
+,
+		"TaqTop":
+		"taq/top"
+,
+		"TaqSoloStart":
+		"taq/solo_start"
+,
+		"TaqSoloFinish":
+		"taq/solo_finish"
+,
+		"TaqReadQuizStatus":
+		"taq/read_quiz_status"
+,
+		"TaqCoopCreateRoom":
+		"taq/coop_create_room"
+,
+		"TaqCoopChangeEntryType":
+		"taq/coop_change_entry_type"
+,
+		"TaqCoopCancelRoom":
+		"taq/coop_cancel_room"
+,
+		"TaqCoopEnterRoomAuto":
+		"taq/coop_enter_room_auto"
+,
+		"TaqCoopRoomList":
+		"taq/coop_room_list"
+,
+		"TaqCoopEnterRoomById":
+		"taq/coop_enter_room_by_id"
+,
+		"TaqCoopLeaveRoom":
+		"taq/coop_leave_room"
+,
+		"TaqCoopRoomPolling":
+		"taq/coop_room_polling"
+,
+		"TaqCoopQuizFirstInterval":
+		"taq/coop_quiz_first_interval"
+,
+		"TaqCoopQuizStart":
+		"taq/coop_quiz_start"
+,
+		"TaqCoopQuizPolling":
+		"taq/coop_quiz_polling"
+,
+		"TaqCoopAnswer":
+		"taq/coop_answer"
+,
+		"TaqCoopUseHint":
+		"taq/coop_use_hint"
+,
+		"TaqCoopAnswerNpc":
+		"taq/coop_answer_npc"
+,
+		"TaqCoopStartInterval":
+		"taq/coop_start_interval"
+,
+		"TaqCoopNextQuiz":
+		"taq/coop_next_quiz"
+,
+		"TaqCoopQuizFinish":
+		"taq/coop_quiz_finish"
+,
+		"TaqCoopResult":
+		"taq/coop_result"
+,
+		"TaqCoopRetrySameMember":
+		"taq/coop_retry_same_member"
+,
+		"TaqCoopCloseRetrySameMember":
+		"taq/coop_close_retry_same_member"
+,
+		"TipsAddUserTips":
+		"tips/add_user_tips"
+,
+		"TowerTop":
+		"tower/top"
+,
+		"TowerBattleStart":
+		"tower/battle_start"
+,
+		"TowerBattleFinish":
+		"tower/battle_finish"
+,
+		"TowerRehearsalStart":
+		"tower/rehearsal_start"
+,
+		"TowerRehearsalFinish":
+		"tower/rehearsal_finish"
+,
+		"TowerSupportUnitList":
+		"tower/support_unit_list"
+,
+		"TowerSupportUnitList2":
+		"tower/support_unit_list_2"
+,
+		"TowerBattleRetire":
+		"tower/battle_retire"
+,
+		"TowerReset":
+		"tower/reset"
+,
+		"TowerExBattleStart":
+		"tower/ex_battle_start"
+,
+		"TowerExBattleFinish":
+		"tower/ex_battle_finish"
+,
+		"TowerExSupportUnitList":
+		"tower/ex_support_unit_list"
+,
+		"TowerExSupportUnitList2":
+		"tower/ex_support_unit_list_2"
+,
+		"TowerExBattleRetire":
+		"tower/ex_battle_retire"
+,
+		"TowerReplayList":
+		"tower/replay_list"
+,
+		"TowerReplay":
+		"tower/replay"
+,
+		"TowerReplayReport":
+		"tower/replay_report"
+,
+		"TowerCloisterBattleSkip":
+		"tower/cloister_battle_skip"
+,
+		"TowerCloisterBattleStart":
+		"tower/cloister_battle_start"
+,
+		"TowerCloisterBattleFinish":
+		"tower/cloister_battle_finish"
+,
+		"TowerCloisterBattleRetire":
+		"tower/cloister_battle_retire"
+,
+		"TowerBattleSkip":
+		"tower/battle_skip"
+,
+		"TtkTop":
+		"ttk/top"
+,
+		"TtkChooseWeapon":
+		"ttk/choose_weapon"
+,
+		"TtkReadCatalog":
+		"ttk/read_catalog"
+,
+		"TtkReadStory":
+		"ttk/read_story"
+,
+		"TtkStart":
+		"ttk/start"
+,
+		"TtkFinish":
+		"ttk/finish"
+,
+		"TutorialUpdateStep":
+		"tutorial/update_step"
+,
+		"UekUekTop":
+		"uek/uek_top"
+,
+		"UekBossBattleStart":
+		"uek/boss_battle_start"
+,
+		"UekBossBattleFinish":
+		"uek/boss_battle_finish"
+,
+		"UekBossBattleRetire":
+		"uek/boss_battle_retire"
+,
+		"UnitAutomaticEnhance":
+		"unit/automatic_enhance"
+,
+		"UnitChangeSkin":
+		"unit/change_skin"
+,
+		"UnitUnlockUnit":
+		"unit/unlock_unit"
+,
+		"UnitEquip":
+		"unit/equip"
+,
+		"UnitMultiEquip":
+		"unit/multi_equip"
+,
+		"UnitMultiPromotion":
+		"unit/multi_promotion"
+,
+		"UnitEquipUnique":
+		"unit/equip_unique"
+,
+		"UnitPromotion":
+		"unit/promotion"
+,
+		"UnitCraftEquip":
+		"unit/craft_equip"
+,
+		"UnitCraftEquipUnique":
+		"unit/craft_equip_unique"
+,
+		"UnitMultiEvolution":
+		"unit/multi_evolution"
+,
+		"UnitFavorite":
+		"unit/favorite"
+,
+		"UnitEvolutionRarity6":
+		"unit/evolution_rarity_6"
+,
+		"UnitUnlockRarity6Slot":
+		"unit/unlock_rarity_6_slot"
+,
+		"UnitMultiUnlockRarity6Slot":
+		"unit/multi_unlock_rarity_6_slot"
+,
+		"UnitChangeRarity":
+		"unit/change_rarity"
+,
+		"UnitFreeAutomaticEnhance":
+		"unit/free_automatic_enhance"
+,
+		"UnitFreeEquip":
+		"unit/free_equip"
+,
+		"UnitFreeMultiEvolution":
+		"unit/free_multi_evolution"
+,
+		"UnitFreeLevelUp":
+		"unit/free_level_up"
+,
+		"UnitFreePromotion":
+		"unit/free_promotion"
+,
+		"UnitSetGrowthItem":
+		"unit/set_growth_item"
+,
+		"UnitGrowthEnhance":
+		"unit/growth_enhance"
+,
+		"UnitRegisterItem":
+		"unit/register_item"
+,
+		"UnitUnlockRedeemUnit":
+		"unit/unlock_redeem_unit"
+,
+		"UnitExceedLevelLimit":
+		"unit/exceed_level_limit"
+,
+		"UnitExceedLevelLimitWithExceedItem":
+		"unit/exceed_level_limit_with_exceed_item"
+,
+		"VoteExec":
+		"vote/exec"
+,
+		"VoteTop":
+		"vote/top"
+,
+		"WacGetStatus":
+		"wac/get_status"
+,
+		"WacRead":
+		"wac/read"
+	}
+urls2 = dict()
+urls['CheckAgreement'] = 'check/check_agreement'
+urls2['CheckAgreement'] = 'CheckAgreement'
+
+refered_enum = []
+headers = [
+	'Arcade',
+	'Arena',
+	'Check',
+	'ClanBattle',
+	'Dungeon',
+	'Emblem',
+	'Fke',
+	'Friend',
+	'Gacha',
+	'GrandArena',
+	'KaiserBattle',
+	'Kmk',
+	'Music',
+	'Pct',
+	'ProfileMaker',
+	'Room',
+	'SeasonPass',
+	'Sekai',
+	'Shiori',
+	'Shop',
+	'Srt',
+	'SupportUnit',
+	'Test',
+	'Tower',
+	'Ttk',
+	'Unit',
+	'Space'
+]
+with open('ApiManager.cs', 'r', encoding='utf8') as f:
+	text0 = f.read()
+for match in addtask.finditer(text0):
+	urls2[match.group(2)] = match.group(1)
+
+commons = {}
+
+for file in os.listdir('.'):
+	if not file.endswith('.cs'): continue
+	with open(file, 'r', encoding='utf8') as f:
+		text = f.read()
+	classname = file.split('.')[0]
+	if not classname.endswith('PostParam'):
+		if f'void Parse{classname}(JsonData _json)' not in text: continue
+		if f'public {classname}(JsonData _json)' not in text: continue
+
+	is_common = False
+	types = set()
+
+	if f'ReceiveParam' in classname:
+		fp = fp_resp
+		fp.write(f'class {classname[:-12]}Response(ResponseBase):\n')
+	elif f'PostParam' in classname:
+		fp = fp_req
+		fp.write(f'class {classname[:-9]}Request(Request[{classname[:-9]}Response]):\n')
+	else:
+		is_common = True
+		fp = StringIO()
+		fp.write(f'class {classname}:\n')
+	has_member = False
+	for match in member.finditer(text):
+		if match.group(2) == 'class': continue
+		name = match.group(3)
+		name = upper.sub(lambda x: '_' + x.group(1).lower(), name)
+		if name[0] == '_': name = name[1:]
+		if name == 'break' or name == 'from' or name == 'def': name = '_' + name
+		if 'parsed' in name: continue
+		type = match.group(2)
+		type = type.replace('ObscuredInt', 'int')
+		type = type.replace('ObscuredBool', 'bool')
+		type = type.replace('ObscuredLong', 'long')
+		type = type.replace('ObscuredString', 'string')
+		type = type.replace('ObscuredFloat', 'float')
+		type = type.replace('DateTime', 'long')
+		type = list.sub(lambda x: f'List[{x.group(1)}]', type)
+		if type.endswith('[]'): type = f'List[{type[:-2]}]'
+		type = type.replace('long', 'int').replace('double', 'float').replace('string', 'str')
+		fp.write(f'\t{name}: {type} = None\n')
+		has_member = True
+		if type.startswith('e'): refered_enum.append(type)
+		else:
+			if type.startswith('List'): types.add(type[5:-1])
+			else: types.add(type)
+	if not has_member:
+		fp.write('\tpass\n')
+	if is_common:
+		commons[classname] = (fp.getvalue(), types)
+
+	if f'PostParam' in classname:
+		if classname[:-9] in urls2:
+			fp.write(f'	@property\n	def url(self) -> str:\n		return "{urls[urls2[classname[:-9]]]}"\n')
+		else:
+			header_used = []
+			for header in headers:
+				if classname.lower().startswith(header.lower()):
+					header_used.append(header)
+			if len(header_used) > 0:
+				p1 = sorted(header_used, key=lambda x: len(x))[0]
+				p2 = classname[len(p1):-9]
+				p1 = upper.sub(lambda x: '_' + x.group(1).lower(), p1)
+				p2 = upper.sub(lambda x: '_' + x.group(1).lower(), p2)
+				if p1[0] == '_': p1 = p1[1:]
+				if p2[0] == '_': p2 = p2[1:]
+
+				fp.write(f'	@property\n	def url(self) -> str:\n		return "{p1}/{p2}"\n')
+			else:
+				print(classname)
+
+used = set(['int', 'str', 'bool', 'float'])
+while len(commons) > 0:
+	for key in [x for x in commons]:
+		if len(commons[key][1] & used) == len(commons[key][1]):
+			fp_common.write(commons[key][0])
+			used.add(key)
+			commons.pop(key)
+			continue
+for classname in set(refered_enum):
+	fp = fp_enum
+	with open(f'{classname}.cs', 'r', encoding='utf8') as f:
+		text = f.read()
+	fp.write(f'class {classname}(Enum):\n')
+	for match in enum.finditer(text):
+		fp.write(f'    {match.group(1)}\n')
