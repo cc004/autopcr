@@ -311,6 +311,9 @@ class ClanLeaveResponse(ResponseBase):
     add_present_count: int = None
 class ClanLikeResponse(ResponseBase):
     stamina_info: UserStaminaInfo = None
+    def update(self, client: "dataclient"):
+        client.stamina = self.stamina_info.user_stamina
+        client.clan_like_count = 0
 class ClanMemberBattleFinishResponse(ResponseBase):
     pass
 class ClanMemberBattleStartResponse(ResponseBase):
@@ -855,6 +858,8 @@ class HomeIndexResponse(ResponseBase):
         client.clan = self.user_clan.clan_id
         client.donation_num = self.user_clan.donation_num
         client.dungeon_area_id = self.dungeon_info.enter_area_id
+        client.training_quest_count = self.training_quest_count
+        client.quest_dict = {q.quest_id: q for q in self.quest_list}
         type = self.dungeon_info.dungeon_area[0].dungeon_type
         for count in self.dungeon_info.rest_challenge_count:
             if count.dungeon_type == type:
@@ -1026,6 +1031,7 @@ class LoadIndexResponse(ResponseBase):
         client.name = self.user_info.user_name
         client.team_level = self.user_info.team_level
         client.jewel = self.user_jewel.free_jewel
+        client.clan_like_count = self.clan_like_count
         client.clear_inventory()
         if self.item_list:
             for inv in self.item_list:
@@ -1860,6 +1866,8 @@ class TrainingQuestFinishResponse(ResponseBase):
     add_present_count: int = None
     user_info: UserStaminaInfo = None
     user_gold: UserGold = None
+    def update(self, client: "dataclient"):
+        client.training_quest_count = self.quest_challenge_count
 class TrainingQuestRetireResponse(ResponseBase):
     pass
 class TrainingQuestSkipResponse(ResponseBase):
