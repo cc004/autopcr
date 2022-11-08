@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html class="no-js" lang="">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+
+    <title>清日常配置修改</title>
+
+
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link rel="shortcut icon" type="image/x-icon" href="/static/img/icon/favicon.png" />
+
+    <!-- CSS here -->
+
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/static/css/animate.min.css" />
+    <link rel="stylesheet" href="/static/css/magnific-popup.css" />
+    <link rel="stylesheet" href="/static/css/fontawesome-all.min.css" />
+    <link rel="stylesheet" href="/static/css/jquery-ui.css" />
+    <link rel="stylesheet" href="/static/css/flaticon.css" />
+    <link rel="stylesheet" href="/static/css/aos.css" />
+    <link rel="stylesheet" href="/static/css/slick.css" />
+    <link rel="stylesheet" href="/static/css/default.css" />
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <link rel="stylesheet" href="/static/css/responsive.css" />
+    <link rel="stylesheet" href="/static/css/Switch.css" />
+    <!--
+        <link rel="stylesheet" href="/static/css/dropdown.css">
+        <link rel="stylesheet" href="/static/css/member-main.css">
+        <link rel="stylesheet" href="/static/css/init.css">
+        <link rel="stylesheet" href="/static/css/base.css">
+        -->
+
+</head>
+
+<body>
+    <!-- header-area -->
+
+    <header></header>
+
+    <!-- header-area-end -->
+
+    <!-- main-area -->
+
+    <main>
+        <div class="cart-area pt-90 pb-90">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div>
+                        <div><b>配置：</b></div>
+                        <br/>
+                        <div>
+                            <input type="text" id="username" placeholder="用户名"/>
+                            <input type="text" id="password" placeholder="密码" />
+                        </div>
+                        <div>
+                            <input type="button" id="login" value="保存账号信息" onclick="selectOnChange()"/>
+                            <input type="button" id="do_task" value="清日常" onclick="do_task()"/>
+                        </div>
+                        <br/>
+                        <table id="tab" width="100%" cellspacing="0" cellpadding="0" class="table">
+                            <div>
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th></th>
+                                        <th>设置项</th>
+                                        <th>值</th>
+                                        <th>说明</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ta"></tbody>
+                            </div>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- main-area-end -->
+
+    <!-- footer-area -->
+
+    <footer></footer>
+
+    <!-- footer-area-end -->
+
+    <!-- JS here -->
+
+    <script src="/static/js/vendor/jquery-3.6.0.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/isotope.pkgd.min.js"></script>
+    <script src="/static/js/imagesloaded.pkgd.min.js"></script>
+    <script src="/static/js/jquery.magnific-popup.min.js"></script>
+    <script src="/static/js/jquery.countdown.min.js"></script>
+    <script src="/static/js/jquery-ui.min.js"></script>
+    <script src="/static/js/slick.min.js"></script>
+    <script src="/static/js/ajax-form.js"></script>
+    <script src="/static/js/wow.min.js"></script>
+    <script src="/static/js/aos.js"></script>
+    <script src="/static/js/plugins.js"></script>
+    <script src="/static/js/main.js"></script>
+    <script src="/static/js/bootbox.min.js"></script>
+    <!--<script src="/static/js/dropdown.js"></script>-->
+    <script type="text/javascript">
+        tt = "10px";
+        $(function () {
+            $(window).scroll(function () {
+                tt = $(window).scrollTop() + 10 + "px";
+            });
+        });
+        var prompt = function (message, style, time) {
+            style = style === undefined ? "alert-success" : style;
+            time = time === undefined ? 1200 : time;
+            $('<div id="promptModal">')
+                .appendTo("body")
+                .addClass("alert " + style)
+                .css({
+                    display: "block",
+                    "z-index": 99999,
+                    width: "75%",
+                    left: ($(document.body).outerWidth(true) - 120) / 8,
+                    top: tt,
+                    position: "absolute",
+                    padding: "20px",
+                    "border-radius": "5px",
+                })
+                .html(message)
+                .hide()
+                .fadeIn(200, function () {
+                    $("#promptModal").show();
+                })
+                .delay(time)
+                .fadeOut(200, function () {
+                    $("#promptModal").remove();
+                });
+        };
+        // 成功提示
+        var success_prompt = function (message, time) {
+            prompt(message, "alert-success", time);
+        };
+
+        // 失败提示
+        var fail_prompt = function (message, time) {
+            prompt(message, "alert-danger", time);
+        };
+
+        // 提醒
+        var warning_prompt = function (message, time) {
+            prompt(message, "alert-warning", time);
+        };
+
+        // 信息提示
+        var info_prompt = function (message, time) {
+            prompt(message, "alert-info", time);
+        };
+
+        // 信息提示
+        var alert_prompt = function (message, time) {
+            prompt(message, "alert-primary", time);
+        };
+
+        function suspend(str, message = "") {
+            // document.scrollingElement.scrollTop = 0; //让页面滚动到最顶部
+            switch (str) {
+                case "alert-success":
+                    success_prompt(message != "" ? message : "提交成功");
+                    break;
+                case "alert-warning":
+                    warning_prompt(message != "" ? message : "错误警告");
+                    break;
+                case "alert-danger":
+                    fail_prompt(message != "" ? message : "提交失败");
+                    break;
+                case "alert-info":
+                    info_prompt(message != "" ? message : "未查询到数据");
+                    break;
+                case "alert-info2":
+                    info_prompt(message != "" ? message : "未查询到数据");
+                    break;
+                default:
+                    alert_prompt("未查询到数据");
+            }
+        }
+    </script>
+
+
+    <script type="text/javascript" charset="utf-8">
+        $(document).ready(function () {
+            $.ajax({
+                url: "/api/config" + window.location.search,
+                type: "get",
+                processData: false,
+                success: function (ret) {
+                    cnt = 0;
+                    let ta_tab = $("#ta");
+                    $("#username").val(ret.username);
+                    $("#password").val(ret.password);
+                    ret = ret.data;
+                    for (name in ret) {
+                        cnt += 1;
+                        item = ret[name];
+                        ta_tab.append(`<tr id="tr${cnt}"></tr>`); //添加一列
+                        let tab = $(`#tr${cnt}`); //把这一列的内容添加上
+                        tab.append(`<td>${item["implemented"] ? "" : "未实装"}</td>`);
+                        tab.append(`<td id='name${cnt}'>${name}</td>`);
+
+                        now_config = item["value"];
+                        typ = item["type"];
+                        if (typ == "bool") tab.append(`<td>${get_bool_text(cnt, now_config, name, item.name)}</td>`);
+                        else tab.append(`<td id='enum${cnt}'>${get_enum_text(cnt, now_config, item["candidate_value"])}</td>`);
+
+                        tab.append(`<td id='description${cnt}'>${item["description"]}</td>`);
+                    }
+                },
+                error: function (ret) {
+                    suspend("alert-danger", "获取配置失败");
+                },
+            });
+        }
+        );
+        
+        function do_task() {
+            $("#do_task").attr('disabled', true);
+            $.ajax({
+                url: '/api/do_task' + window.location.search,
+                type: 'get',
+                processData: false,
+                success: function (ret) {
+                    prompt(JSON.stringify(ret), "alert-success", 60000);
+                    $("#do_task").attr('disabled', false);
+                },
+                error: function (ret) {
+                    suspend("alert-danger", "执行任务失败");
+                    $("#do_task").attr('disabled', false);
+                }
+            })
+        }
+
+        function selectOnChange() {
+            update_new();
+        }
+
+        function checkboxOnclick(checkbox) {
+            if (checkbox.checked) {
+                $(`[name=${checkbox.name}]`).each(function () {
+                    $(this)[0].checked = false;
+                });
+                $(`#${checkbox.id}`)[0].checked = true;
+            }
+            update_new();
+        }
+
+        function get_enum_text(id, value, branchs) {
+            let res = `<select class="custom-select" id=enum${id} onchange="selectOnChange(this)">`;
+            for (let i = 0; i < branchs.length; i++) res += `<option value='select${i}' ${value == branchs[i] ? "selected" : ""}>${branchs[i]}</option>`;
+            res += "</select>";
+            return res;
+        }
+        function get_bool_text(cnt, value, name, clas) {
+            return `<input type="checkbox" class="switch" ${value ? 'checked="checked"' : ""} id='bool${cnt}_${name}' name=${clas ? clas : cnt} onclick="checkboxOnclick(this)" />`;
+        }
+
+        function update_new() {
+            let config = {}; // 可以用referrer解决问题
+            id = 1;
+            config['username'] = $("#username").val();
+            config['password'] = $("#password").val();
+
+            while ($(`#name${id}`).length) {
+                config[$(`#name${id}`).text()] = ($(`#enum${id} option:selected`).length ? $(`#enum${id} option:selected`).text() : $(`[id^=bool${id}]`)[0].checked);
+                id += 1;
+            }
+            $.ajax({
+                url: "/api/config" + window.location.search,
+                type: "post",
+                data: JSON.stringify(config),
+                contentType: "application/json;charset=utf-8",
+                processData: false,
+                success: function (ret) {
+                    if (ret.statusCode == 200) {
+                        suspend("alert-success", ret.message);
+                    } else {
+                        alert("本次修改保存失败：" + ret.message + "\n如有需要，请联系管理员\n点击确定将为您刷新页面");
+                        location.reload(true);
+                    }
+                },
+                error: function (ret) {
+                    suspend("alert-danger", "本次修改保存失败");
+                },
+            });
+        }
+    </script>
+
+</body>
+
+</html>

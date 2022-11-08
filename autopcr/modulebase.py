@@ -1,5 +1,5 @@
 from .pcrclient import pcrclient
-from typing import List
+from typing import List, Dict
 
 def _wrap_init(cls, setter):
     old = cls.__init__
@@ -69,7 +69,7 @@ class ModuleManager:
 
     def __init__(self, filename):
         self._filename = filename
-        self.modules: List[Module] = {clazz.__name__: clazz(self) for clazz in self._modules}
+        self.modules: Dict[str, Module] = {clazz.__name__: clazz(self) for clazz in self._modules}
         self._load_config()
     
     def _load_config(self):
@@ -99,7 +99,11 @@ class ModuleManager:
         self._save_config()
 
     def generate_config(self):
-        return {m.name(): m.generate_config() for m in self.modules}
+        return {
+            'username': self.data['username'],
+            'password': self.data['password'],
+            'data': {m.name: m.generate_config() for m in self.modules.values()}
+        }
     
     async def do_task(self):
         result = {}
