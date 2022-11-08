@@ -1,8 +1,7 @@
 from asyncio import Lock
 from traceback import print_exc
 from typing import Dict, Set, Tuple, TypeVar
-
-from torch import os
+import os
 from msgpack import packb, unpackb
 from .aiorequests import post
 from random import randint
@@ -185,7 +184,7 @@ class sessionclient(apiclient):
 
     def __init__(self, account, validator):
         super().__init__()
-        self.cacheDir = os.path.join(__file__, '..', 'cache')
+        self.cacheDir = os.path.join(os.path.dirname(__file__), 'cache')
         self.bsdk = bsdkclient(account, validator, sessionclient._logger)
         self._headers['PLATFORM'] = str(account['platform'])
         self._headers['PLATFORM-ID'] = str(account['platform'])
