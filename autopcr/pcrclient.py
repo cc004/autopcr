@@ -170,7 +170,7 @@ class pcrclient(dataclient):
             times = min(times, max_times)
             if times <= 0:
                 raise ValueError(f"任务{quest}已达最大次数")
-            remain = info[0] * qinfo.daily_recovery_count - qinfo.daily_clear_count
+            remain = info[0] * (qinfo.daily_recovery_count + 1) - qinfo.daily_clear_count
             while times > 0:
                 if remain == 0:
                     await self.recover_challenge(quest)
