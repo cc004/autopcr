@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/static/css/animate.min.css" />
+    <link rel="stylesheet" href="/static/css/magnific-popup.css" />
+    <link rel="stylesheet" href="/static/css/fontawesome-all.min.css" />
+    <link rel="stylesheet" href="/static/css/jquery-ui.css" />
+    <link rel="stylesheet" href="/static/css/flaticon.css" />
+    <link rel="stylesheet" href="/static/css/aos.css" />
+    <link rel="stylesheet" href="/static/css/slick.css" />
+    <link rel="stylesheet" href="/static/css/default.css" />
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <link rel="stylesheet" href="/static/css/responsive.css" />
+    <link rel="stylesheet" href="/static/css/Switch.css" />
+    
+    <script src="/static/js/vendor/jquery-3.6.0.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/isotope.pkgd.min.js"></script>
+    <script src="/static/js/imagesloaded.pkgd.min.js"></script>
+    <script src="/static/js/jquery.magnific-popup.min.js"></script>
+    <script src="/static/js/jquery.countdown.min.js"></script>
+    <script src="/static/js/jquery-ui.min.js"></script>
+    <script src="/static/js/slick.min.js"></script>
+    <script src="/static/js/ajax-form.js"></script>
+    <script src="/static/js/wow.min.js"></script>
+    <script src="/static/js/aos.js"></script>
+    <script src="/static/js/plugins.js"></script>
+    <script src="/static/js/main.js"></script>
+    <script src="/static/js/bootbox.min.js"></script>
+</head>
+<body>
+    <script>
+        function register() {
+            $.ajax({
+                url: "/api/config?account=" + $("#account").val(),
+                type: "put",
+                data: {
+                    username: "",
+                    password: ""
+                },
+                processData: false,
+                success: function (ret) {
+                    login();
+                },
+                error: function (ret) {
+                    alert(ret.responseText);
+                }
+            });
+        }
+        function login() {
+            window.location.href = "/config.html?account=" + $("#account").val();
+        }
+    </script>
+    <div>
+        <p>账号：（账号为唯一凭据，请勿泄露给他人）1~32位字母数字下划线</p>
+        <input type="text" id="account" placeholder="[a-zA-Z0-9_]{1,32}"/>
+    </div>
+    <div>
+        <input type="button" value="注册" onclick="register()" />
+        <input type="button" value="登录" onclick="login()" />
+    </div>
+</body>
+</html>
