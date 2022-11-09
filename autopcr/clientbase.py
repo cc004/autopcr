@@ -98,6 +98,8 @@ class apiclient:
         for key in defaultHeaders.keys():
             self._headers[key] = defaultHeaders[key]
     
+    def errordbg(self): ...
+
     @staticmethod
     def _createkey() -> bytes:
         return bytes([ord('0123456789abcdef'[randint(0, 15)]) for _ in range(32)])
@@ -141,6 +143,10 @@ class apiclient:
 
         response: Response[cls] = load(response, Response[cls])
 
+        with open('req.log', 'a') as fp:
+            fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
+            fp.write(json.dumps(dump(request), indent=4, ensure_ascii=False) + '\n')
+            fp.write(json.dumps(dump(response), indent=4, ensure_ascii=False) + '\n')
         if response.data_headers.servertime:
             self.server_time = response.data_headers.servertime
 
@@ -157,6 +163,9 @@ class apiclient:
         # 傻逼python这个类型提示都做不出来？
         if response.data.server_error:
             print(f'pcrclient: /{request.url} api failed {response.data.server_error}')
+            self.errordbg()
+            if response.data.server_error.status == 10054:
+                raise Exception("server error 10054")
             raise ApiException(response.data.server_error.message, response.data.server_error.status)
         return response.data
 
