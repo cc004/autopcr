@@ -21,7 +21,7 @@ class clan_like(Module):
 @default(6)
 class buy_stamina_passive(Module):
     async def do_task(self, client: pcrclient):
-        client.keys['buy_stamina_passive'] = self.value   
+        client.keys['buy_stamina_passive'] = self.value
      
 @description('每天主动购买的体力管数。钻石数量<1w强制不触发。')
 @enumtype([0, 1, 2, 3, 6, 9, 12])
@@ -37,7 +37,12 @@ class buy_stamina_active(Module):
 @default(True)
 class room_accept_all(Module):
     async def do_task(self, client: pcrclient):
-        await client.room_accept_all()
+        room = await client.room_start()
+        for x in room.user_room_item_list:
+            if x.item_count:
+                await client.room_accept_all()
+                return
+        raise ValueError('没有可收取的家园物品。')
 
 @description('EXP探索和MANA探索。')
 @booltype
@@ -56,6 +61,9 @@ class explore(Module):
 @default(True)
 class present_receive_all(Module):
     async def do_task(self, client: pcrclient):
+        present = await client.present_index()
+        if not present.present_count:
+            raise ValueError("No present to receive")
         await client.present_receive_all()
 
 @description('领取双场币')
