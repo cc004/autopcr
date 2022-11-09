@@ -5,6 +5,9 @@ class pcrclient(dataclient):
         super().__init__(*args, **kwargs)
         self.keys = {}
     
+    def errordbg(self):
+        print('error')
+
     async def login(self):
         await self._request(None)
 
@@ -149,6 +152,11 @@ class pcrclient(dataclient):
         req.current_currency_num = self.jewel.free_jewel + self.jewel.jewel
         return await self._request(req)
     
+    async def present_index(self) -> PresentIndexResponse:
+        req = PresentIndexRequest()
+        req.time_filter = -1
+        return await self._request(req)
+
     async def quest_skip_aware(self, quest: int, times: int, recover: bool = False, is_total: bool = False):
         if not quest in self.quest_dict:
             raise ValueError(f"任务{quest}不存在")
@@ -214,6 +222,10 @@ class pcrclient(dataclient):
 
     async def room_accept_all(self):
         req = RoomReceiveItemAllRequest()
+        return await self._request(req)
+
+    async def room_start(self) -> RoomStartResponse:
+        req = RoomStartRequest()
         return await self._request(req)
 
     async def borrow_dungeon_member(self, viewer_id):

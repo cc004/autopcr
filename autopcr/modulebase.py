@@ -13,7 +13,7 @@ def default(val):
     return lambda cls:_wrap_init(cls, lambda self: setattr(self, 'val', val))
 def description(desc: str):
     return lambda cls:_wrap_init(cls, lambda self: setattr(self, 'description', desc))
-def enumtype(candidates: List[str]):
+def enumtype(candidates: list):
     return lambda cls:_wrap_init(cls, lambda self: (setattr(self, 'type', 'enum'), setattr(self, 'candidates', candidates)))
 def booltype(cls):
     cls = _wrap_init(cls, lambda self: (setattr(self, 'type', 'bool'), setattr(self, 'candidates', [True, False])))
@@ -29,7 +29,7 @@ def notimplemented(cls):
 # refers to a schudule to be done
 class Module:
     def __init__(self, parent: "ModuleManager"):
-        self.val = None
+        self._val = None
         self.candidates: list = []
         self.name: str = self.__class__.__name__
         self.description: str = self.name
@@ -38,12 +38,17 @@ class Module:
         self._parent = parent
     @property
     def value(self):
-        return self.val
+        return self._val
     @value.setter
-    def set_value(self, val):
+    def value(self, val):
+        try:
+            iv = int(val)
+            if iv in self.candidates: val = iv
+        except:
+            pass
         if val in self.candidates:
-            msg = f'{self.name()}: {self.val} => {val}'
-            self.val = val
+            msg = f'{self.name}: {self._val} => {val}'
+            self._val = val
             return msg
         else:
             raise ValueError(f"Invalid value for module {self.name()}")
@@ -53,7 +58,7 @@ class Module:
         return self._parent.get_config(name)
     def generate_config(self):
         return {
-            'value': self.val,
+            'value': self.value,
             'description': self.description,
             'candidates': self.candidates,
             'type': self.type,
@@ -63,7 +68,7 @@ class Module:
 
 import json
 from .validator import autoValidator
-
+import traceback
 class ModuleManager:
     _modules: List[type] = []
 
@@ -78,12 +83,13 @@ class ModuleManager:
                 data = json.load(f)
             self._load_from(data)
         except:
-            data = {}
+            traceback.print_exc()
+            self.data = {'username': '', 'password': ''}
     
     def _load_from(self, data):
         for name, module in self.modules.items():
             if name in data:
-                module.val = data[name]
+                module.value = data[name]
         self.data = data
     
     def _save_config(self):
