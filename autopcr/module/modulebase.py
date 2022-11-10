@@ -1,4 +1,4 @@
-from .pcrclient import pcrclient
+from ..core.pcrclient import pcrclient
 from typing import List, Dict
 
 def _wrap_init(cls, setter):
@@ -67,7 +67,6 @@ class Module:
         }
 
 import json
-from .validator import autoValidator
 import traceback
 class ModuleManager:
     _modules: List[type] = []
@@ -119,7 +118,7 @@ class ModuleManager:
                 'password': self.data['password'],
                 'channel': 1,
                 'platform': 2
-            }, autoValidator)
+            })
             await client.login()
             for name in (x.__name__ for x in ModuleManager._modules):
                 module = self.modules[name]

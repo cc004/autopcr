@@ -2,6 +2,7 @@ from typing import List
 from .modelbase import ResponseBase
 from .common import *
 from .enums import *
+from ..core.datamgr import datamgr
 
 class AcceptAgreementResponse(ResponseBase):
     pass
@@ -248,8 +249,8 @@ class ClanCreateResponse(ResponseBase):
     clan_id: int = None
     clan_status: eUserClanJoinStatus = None
 
-    def update(self, client: "dataclient", request):
-        client.clan = self.clan_id
+    def update(self, mgr: datamgr, request):
+        mgr.clan = self.clan_id
 
 class ClanDamageReportResponse(ResponseBase):
     damage_report: List[HistoryReport] = None
@@ -278,8 +279,8 @@ class ClanInfoResponse(ResponseBase):
     clan_point: int = None
     remaining_count: int = None
 
-    def update(self, client: "dataclient", request):
-        client.clan = self.clan.detail.clan_id
+    def update(self, mgr: datamgr, request):
+        mgr.clan = self.clan.detail.clan_id
 
 class ClanInviteBlockResponse(ResponseBase):
     pass
@@ -311,9 +312,9 @@ class ClanLeaveResponse(ResponseBase):
     add_present_count: int = None
 class ClanLikeResponse(ResponseBase):
     stamina_info: UserStaminaInfo = None
-    def update(self, client: "dataclient", request):
-        client.stamina = self.stamina_info.user_stamina
-        client.clan_like_count = 0
+    def update(self, mgr: datamgr, request):
+        mgr.stamina = self.stamina_info.user_stamina
+        mgr.clan_like_count = 0
 class ClanMemberBattleFinishResponse(ResponseBase):
     pass
 class ClanMemberBattleStartResponse(ResponseBase):
@@ -379,8 +380,8 @@ class DungeonEnterAreaResponse(ResponseBase):
     current_battle_mission_list: List[DungeonBattleMission] = None
     enter_reset_time: int = None
 
-    def update(self, client: "dataclient", request):
-        client.dungeon_area_id = self.quest_id / 1000
+    def update(self, mgr: datamgr, request):
+        mgr.dungeon_area_id = self.quest_id / 1000
 
 class DungeonInfoResponse(ResponseBase):
     enter_area_id: int = None
@@ -393,12 +394,12 @@ class DungeonResetResponse(ResponseBase):
     dungeon_area: List[DungeonArea] = None
     season_pack_rate: int = None
 
-    def update(self, client: "dataclient", request):
-        client.dungeon_area_id = 0
+    def update(self, mgr: datamgr, request):
+        mgr.dungeon_area_id = 0
         type = self.dungeon_area[0].dungeon_type
         for count in self.rest_challenge_count:
             if count.dungeon_type == type:
-                client.dungeon_avaliable = count.count > 0
+                mgr.dungeon_avaliable = count.count > 0
                 break
 
 class DungeonSkipResponse(ResponseBase):
@@ -423,13 +424,13 @@ class EquipDonateResponse(ResponseBase):
     rewards: List[InventoryInfo] = None
     add_present_count: int = None
 
-    def update(self, client: "dataclient", request):
-        client.donation_num = self.donation_num
+    def update(self, mgr: datamgr, request):
+        mgr.donation_num = self.donation_num
         if self.donate_equip:
-            client.update_inventory(self.donate_equip)
+            mgr.update_inventory(self.donate_equip)
         if self.rewards:
             for item in self.rewards:
-                client.update_inventory(item)
+                mgr.update_inventory(item)
 
 class EquipEnhanceMaxResponse(ResponseBase):
     unit_data: UnitData = None
@@ -853,17 +854,17 @@ class HomeIndexResponse(ResponseBase):
     custom_season_pack_alert: List[int] = None
     custom_season_pack_end_time: List[int] = None
 
-    def update(self, client: "dataclient", request):
-        client.finishedQuest = [q.quest_id for q in self.quest_list if q.result_type > 0]
-        client.clan = self.user_clan.clan_id
-        client.donation_num = self.user_clan.donation_num
-        client.dungeon_area_id = self.dungeon_info.enter_area_id
-        client.training_quest_count = self.training_quest_count
-        client.quest_dict = {q.quest_id: q for q in self.quest_list}
+    def update(self, mgr: datamgr, request):
+        mgr.finishedQuest = [q.quest_id for q in self.quest_list if q.result_type > 0]
+        mgr.clan = self.user_clan.clan_id
+        mgr.donation_num = self.user_clan.donation_num
+        mgr.dungeon_area_id = self.dungeon_info.enter_area_id
+        mgr.training_quest_count = self.training_quest_count
+        mgr.quest_dict = {q.quest_id: q for q in self.quest_list}
         type = self.dungeon_info.dungeon_area[0].dungeon_type
         for count in self.dungeon_info.rest_challenge_count:
             if count.dungeon_type == type:
-                client.dungeon_avaliable = count.count > 0
+                mgr.dungeon_avaliable = count.count > 0
                 break
 
 class ItemETicketExchangeResponse(ResponseBase):
@@ -1027,25 +1028,25 @@ class LoadIndexResponse(ResponseBase):
     erdr: int = None
     lbme: int = None
 
-    def update(self, client: "dataclient", request):
-        client.name = self.user_info.user_name
-        client.team_level = self.user_info.team_level
-        client.jewel = self.user_jewel
-        client.clan_like_count = self.clan_like_count
-        client.user_my_quest = self.user_my_quest
-        client.clear_inventory()
+    def update(self, mgr: datamgr, request):
+        mgr.name = self.user_info.user_name
+        mgr.team_level = self.user_info.team_level
+        mgr.jewel = self.user_jewel
+        mgr.clan_like_count = self.clan_like_count
+        mgr.user_my_quest = self.user_my_quest
+        mgr.clear_inventory()
         if self.item_list:
             for inv in self.item_list:
-                client.update_inventory(inv)
+                mgr.update_inventory(inv)
         if self.material_list:
             for inv in self.material_list:
-                client.update_inventory(inv)
+                mgr.update_inventory(inv)
         if self.user_equip:
             for inv in self.user_equip:
-                client.update_inventory(inv)
-        client.stamina = self.user_info.user_stamina
-        client.settings = self.ini_setting
-        client.recover_stamina_exec_count = self.shop.recover_stamina.exec_count
+                mgr.update_inventory(inv)
+        mgr.stamina = self.user_info.user_stamina
+        mgr.settings = self.ini_setting
+        mgr.recover_stamina_exec_count = self.shop.recover_stamina.exec_count
 
 
 class LoadNextDayIndexResponse(ResponseBase):
@@ -1076,11 +1077,11 @@ class MissionAcceptResponse(ResponseBase):
     release_contents: List[ReleaseContentData] = None
     room_item_level_mission: List[int] = None
 
-    def update(self, client: "dataclient", request):
+    def update(self, mgr: datamgr, request):
         if self.rewards:
             for item in self.rewards:
-                client.update_inventory(item)
-        client.stamina = self.stamina_info.user_stamina
+                mgr.update_inventory(item)
+        mgr.stamina = self.stamina_info.user_stamina
 
 class MissionIndexResponse(ResponseBase):
     missions: List[UserMissionInfo] = None
@@ -1166,11 +1167,11 @@ class PresentReceiveAllResponse(ResponseBase):
     arena_count_info: ArenaCountInfo = None
     grand_arena_count_info: GrandArenaCountInfo = None
 
-    def update(self, client: "dataclient", request):
+    def update(self, mgr: datamgr, request):
         if self.rewards:
             for item in self.rewards:
-                client.update_inventory(item)
-        client.stamina = self.stamina_info.user_stamina
+                mgr.update_inventory(item)
+        mgr.stamina = self.stamina_info.user_stamina
 
 class PresentReceiveSingleResponse(ResponseBase):
     rewards: List[InventoryInfo] = None
@@ -1234,9 +1235,9 @@ class QuestRecoverChallengeMultipleResponse(ResponseBase):
 class QuestRecoverChallengeResponse(ResponseBase):
     user_jewel: UserJewel = None
     user_quest: QuestRecoverInfo = None
-    def update(self, client: "dataclient", request):
-        client.jewel = self.user_jewel
-        client.quest_dict[self.user_quest.quest_id].daily_recovery_count = self.user_quest.daily_recovery_count
+    def update(self, mgr: datamgr, request):
+        mgr.jewel = self.user_jewel
+        mgr.quest_dict[self.user_quest.quest_id].daily_recovery_count = self.user_quest.daily_recovery_count
 class QuestReplayListResponse(ResponseBase):
     replay_list: List[QuestReplayData] = None
 class QuestReplayResponse(ResponseBase):
@@ -1280,24 +1281,22 @@ class QuestSkipResponse(ResponseBase):
     clan_point: ClanPoint = None
     state_exchange_stamina: eExchangeStaminaState = None
 
-    def update(self, client: "dataclient", request):
-        if self.item_list:
-            for item in self.item_list:
-                client.update_inventory(item)
-        if self.bonus_reward_list:
-            for item in self.bonus_reward_list:
-                client.update_inventory(item)
-        if self.item_data:
-            for item in self.item_data:
-                client.update_inventory(item)
+    def update(self, mgr: datamgr, request):
         if self.quest_result_list:
             for result in self.quest_result_list:
                 for item in result.reward_list:
-                    client.update_inventory(item)
-        client.quest_dict[request.quest_id].daily_clear_count = self.daily_clear_count
-        client.stamina = self.user_info.user_stamina
-        # ticket = (eInventoryType.Item, 23001)
-        # client.set_inventory(ticket, client.get_inventory(ticket) - request.random_count)
+                    mgr.update_inventory(item)
+        if self.bonus_reward_list:
+            for item in self.bonus_reward_list:
+                mgr.update_inventory(item)
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        if self.item_data:
+            for item in self.item_data:
+                mgr.update_inventory(item)
+        mgr.quest_dict[request.quest_id].daily_clear_count = self.daily_clear_count
+        mgr.stamina = self.user_info.user_stamina
 
 class QuestStartResponse(ResponseBase):
     quest_wave_info: List[WaveEnemyInfoList] = None
@@ -1395,8 +1394,9 @@ class RoomReceiveItemAllResponse(ResponseBase):
     stamina_info: UserStaminaInfo = None
     add_present_count: int = None
 
-    def update(self, client: "dataclient", request):
-        client.stamina = self.stamina_info.user_stamina
+    def update(self, mgr: datamgr, request):
+        if self.stamina_info:
+            mgr.stamina = self.stamina_info.user_stamina
 
 class RoomReceiveItemResponse(ResponseBase):
     user_room_item: RoomUserItem = None
@@ -1660,10 +1660,10 @@ class ShopRecoverStaminaResponse(ResponseBase):
     user_jewel: UserJewel = None
     user_info: UserStaminaInfo = None
 
-    def update(self, client: "dataclient", request):
-        client.jewel = self.user_jewel
-        client.stamina = self.user_info.user_stamina
-        client.recover_stamina_exec_count = self.recover_stamina.exec_count
+    def update(self, mgr: datamgr, request):
+        mgr.jewel = self.user_jewel
+        mgr.stamina = self.user_info.user_stamina
+        mgr.recover_stamina_exec_count = self.recover_stamina.exec_count
 
 class ShopResetResponse(ResponseBase):
     shop: ShopInfo = None
@@ -1873,8 +1873,8 @@ class TrainingQuestFinishResponse(ResponseBase):
     add_present_count: int = None
     user_info: UserStaminaInfo = None
     user_gold: UserGold = None
-    def update(self, client: "dataclient", request):
-        client.training_quest_count = self.quest_challenge_count
+    def update(self, mgr: datamgr, request):
+        mgr.training_quest_count = self.quest_challenge_count
 class TrainingQuestRetireResponse(ResponseBase):
     pass
 class TrainingQuestSkipResponse(ResponseBase):

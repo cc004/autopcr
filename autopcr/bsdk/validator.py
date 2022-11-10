@@ -1,4 +1,4 @@
-from requests import post, get
+from ..util import aiorequests
 from json import dumps, loads
 import asyncio
 
@@ -11,7 +11,7 @@ async def autoValidator(gt, challenge, userid):
     #await bot.send_private_msg(user_id=acinfo['admin'], message=f"thread{ordd}: Auto verifying\n欲手动过码，请发送 validate{ordd} manual")
     print(f"farm: Auto verifying")
     try:
-        res = await (await post(url="http://pcrd.tencentbot.top/validate", data=dumps({"url": url}), headers=header)).content
+        res = await (await aiorequests.post(url="http://pcrd.tencentbot.top/validate", data=dumps({"url": url}), headers=header)).content
         #if str(res.status_code) != "200":
         #    continue
         res = loads(res)
@@ -20,7 +20,7 @@ async def autoValidator(gt, challenge, userid):
         ccnt = 0
         while ccnt < 10 and succ == 0 and validate == "":
             ccnt += 1
-            res = await (await get(url=f"https://pcrd.tencentbot.top/check/{uuid}")).content
+            res = await (await aiorequests.get(url=f"https://pcrd.tencentbot.top/check/{uuid}")).content
             #if str(res.status_code) != "200":
             #    continue
             res = loads(res)
