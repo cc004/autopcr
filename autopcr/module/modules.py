@@ -1,4 +1,4 @@
-from .pcrclient import pcrclient
+from ..core import pcrclient
 from .modulebase import *
 
 import random
@@ -8,7 +8,7 @@ import random
 @default(True)
 class clan_like(Module):
     async def do_task(self, client: pcrclient):
-        if not client.clan_like_count:
+        if not client.data.clan_like_count:
             raise ValueError('今日点赞次数已用完。')
         info = await client.get_clan_info()
         members = [x.viewer_id for x in info.members if x.viewer_id != client.viewer_id]
@@ -50,10 +50,10 @@ class room_accept_all(Module):
 class explore(Module):
     async def do_task(self, client: pcrclient):
         # 10级探索
-        if client.training_quest_count.gold_quest:
-            await client.training_quest_skip(21001010, 2 - client.training_quest_count.gold_quest)
-        if client.training_quest_count.exp_quest:
-            await client.training_quest_skip(21002010, 2 - client.training_quest_count.exp_quest)
+        if client.data.training_quest_count.gold_quest:
+            await client.training_quest_skip(21001010, 2 - client.data.training_quest_count.gold_quest)
+        if client.data.training_quest_count.exp_quest:
+            await client.training_quest_skip(21002010, 2 - client.data.training_quest_count.exp_quest)
 
 
 @description('领取礼物箱')
@@ -124,7 +124,7 @@ class smart_sweep(Module):
     async def do_task(self, client: pcrclient):
         nloop = []
         loop = []
-        for tab in client.user_my_quest:
+        for tab in client.data.user_my_quest:
             for x in tab.skip_list:
                 if tab.tab_name == 'start':
                     nloop.append((x, tab.skip_count))

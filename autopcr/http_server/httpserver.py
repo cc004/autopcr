@@ -1,10 +1,9 @@
 import quart
-import asyncio
-from quart import request, jsonify, render_template
+from quart import request, render_template
 import os
 import re
 import json
-from autopcr.modules import ModuleManager
+from ..module.modulebase import ModuleManager
 
 class HttpServer:
     pathsyntax = re.compile(r'[a-zA-Z0-9_]{1,32}')

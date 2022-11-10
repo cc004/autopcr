@@ -1,3 +1,4 @@
 config/
 __pycache__/
 req.log
+cache/

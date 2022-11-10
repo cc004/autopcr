@@ -5,7 +5,7 @@ import time
 import hashlib
 from . import rsacr
 import urllib
-from .aiorequests import post
+from ..util import aiorequests
 
 bililogin="https://line1-sdk-center-login-sh.biligame.net/"
 
@@ -15,7 +15,7 @@ async def sendpost(url,data):
         "Content-Type": "application/x-www-form-urlencoded",
         "Host": "line1-sdk-center-login-sh.biligame.net"
     }
-    res = await (await post(url=url,data=data,headers=header)).content
+    res = await (await aiorequests.post(url=url,data=data,headers=header)).content
     return json.loads(res)
 
 def setsign(data):
