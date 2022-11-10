@@ -1236,7 +1236,7 @@ class QuestRecoverChallengeResponse(ResponseBase):
     user_quest: QuestRecoverInfo = None
     def update(self, client: "dataclient", request):
         client.jewel = self.user_jewel
-        client.quest_dict[self.user_quest.quest_id] = self.user_quest.daily_recovery_count
+        client.quest_dict[self.user_quest.quest_id].daily_recovery_count = self.user_quest.daily_recovery_count
 class QuestReplayListResponse(ResponseBase):
     replay_list: List[QuestReplayData] = None
 class QuestReplayResponse(ResponseBase):
@@ -1296,8 +1296,8 @@ class QuestSkipResponse(ResponseBase):
                     client.update_inventory(item)
         client.quest_dict[request.quest_id].daily_clear_count = self.daily_clear_count
         client.stamina = self.user_info.user_stamina
-        ticket = (eInventoryType.Item, 23001)
-        client.set_inventory(ticket, client.get_inventory(ticket) - request.random_count)
+        # ticket = (eInventoryType.Item, 23001)
+        # client.set_inventory(ticket, client.get_inventory(ticket) - request.random_count)
 
 class QuestStartResponse(ResponseBase):
     quest_wave_info: List[WaveEnemyInfoList] = None

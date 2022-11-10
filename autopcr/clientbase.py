@@ -143,12 +143,12 @@ class apiclient:
 
         response: Response[cls] = load(response, Response[cls])
 
-        '''
+        
         with open('req.log', 'a') as fp:
             fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
             fp.write(json.dumps(dump(request), indent=4, ensure_ascii=False) + '\n')
             fp.write(json.dumps(dump(response), indent=4, ensure_ascii=False) + '\n')
-        '''
+        
         
         if response.data_headers.servertime:
             self.server_time = response.data_headers.servertime
