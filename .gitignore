@@ -2,3 +2,5 @@ config/
 __pycache__/
 req.log
 cache/
+clan_scanner.py
+table.csv
