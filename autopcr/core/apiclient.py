@@ -9,7 +9,7 @@ from json import loads
 from hashlib import md5
 from Crypto.Cipher import AES
 from base64 import b64encode, b64decode
-from ..util.serializer import dump, load
+
 import json
 from enum import Enum
 
@@ -114,20 +114,19 @@ class apiclient(Container["apiclient"]):
         key = apiclient._createkey()
         request.viewer_id = b64encode(apiclient._encrypt(str(self.viewer_id).encode('utf8'), key)).decode('ascii') if request.crypted else str(self.viewer_id)
 
-        response = await (await aiorequests.post(self.urlroot + request.url, data=apiclient._pack(dump(request), key) if request.crypted else
-            str(request).encode('utf8'), headers=self._headers, timeout=10)).content
+        response0 = await (await aiorequests.post(self.urlroot + request.url, data=apiclient._pack(request.dict(by_alias=True), key) if request.crypted else
+            request.json(by_alias=True).encode('utf8'), headers=self._headers, timeout=10)).content
 
-        response = apiclient._unpack(response)[0] if request.crypted else loads(response)
+        response0 = apiclient._unpack(response0)[0] if request.crypted else loads(response0)
 
         cls = request.__class__.__orig_bases__[0].__args__[0]
 
-        response: Response[TResponse] = load(response, Response[cls])
-
+        response: Response[TResponse] = Response[cls].parse_obj(response0)
         
         with open('req.log', 'a') as fp:
             fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
-            fp.write(json.dumps(dump(request), indent=4, ensure_ascii=False) + '\n')
-            fp.write(json.dumps(dump(response), indent=4, ensure_ascii=False) + '\n')
+            fp.write(json.dumps(request.dict(by_alias=True), indent=4, ensure_ascii=False) + '\n')
+            fp.write(json.dumps(response.dict(by_alias=True), indent=4, ensure_ascii=False) + '\n')
         
         
         if response.data_headers.servertime:
