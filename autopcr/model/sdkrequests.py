@@ -1,5 +1,6 @@
-from typing import List
+from typing import List, Optional
 from .modelbase import *
+from pydantic import Field
 
 class ToolSdkLoginResponse(ResponseBase):
     is_risk: bool = False
@@ -9,7 +10,7 @@ class ToolSdkLoginRequest(Request[ToolSdkLoginResponse]):
     platform: str = None
     channel_id: str = None
     challenge: str = None
-    validate: str = None
+    validate_: Optional[str] = Field(alias='validate')
     seccode: str = None
     captcha_type: str = None
     image_token: str = None
@@ -39,7 +40,7 @@ class SourceIniIndexRequest(Request[SourceIniIndexResponse]):
         return False
 
 class SourceIniGetMaintenanceStatusResponse(ResponseBase):
-    json: int = None
+    _json: int = Field(alias='json')
     encrypt: int = None
     res_http_type: int = None
     node_type: int = None
