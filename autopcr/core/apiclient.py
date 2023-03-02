@@ -13,7 +13,7 @@ from ..util.serializer import dump, load
 import json
 from enum import Enum
 
-version = "4.9.6"
+version = "4.9.7"
 
 defaultHeaders = {
     'Accept-Encoding': 'gzip',
@@ -58,8 +58,10 @@ class ApiException(Exception):
     def __init__(self, message, status, result_code):
         super().__init__(message)
         self.status = status
-        self.result_code = CuteResultCode(result_code)
-
+        try:
+            self.result_code = CuteResultCode(result_code)
+        except ValueError:
+            self.result_code = result_code
 
 TResponse = TypeVar('TResponse', bound=ResponseBase)
 
@@ -119,7 +121,7 @@ class apiclient(Container["apiclient"]):
 
         cls = request.__class__.__orig_bases__[0].__args__[0]
 
-        response: Response[cls] = load(response, Response[cls])
+        response: Response[TResponse] = load(response, Response[cls])
 
         
         with open('req.log', 'a') as fp:
@@ -141,7 +143,7 @@ class apiclient(Container["apiclient"]):
 
         if response.data_headers.viewer_id:
             self.viewer_id = int(response.data_headers.viewer_id)
-        # 傻逼python这个类型提示都做不出来？
+
         if response.data.server_error:
             print(f'pcrclient: /{request.url} api failed {response.data.server_error}')
             raise ApiException(response.data.server_error.message,
@@ -151,6 +153,6 @@ class apiclient(Container["apiclient"]):
         return response.data
 
     _lck: Lock = Lock()
-    async def _request(self, request: Request[TResponse]) -> TResponse:
+    async def request(self, request: Request[TResponse]) -> TResponse:
         async with self._lck:
             return await self._request_internal(request)
