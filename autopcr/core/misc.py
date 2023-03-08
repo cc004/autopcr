@@ -14,3 +14,10 @@ class errorhandler(Component[apiclient]):
                 raise
             except Exception:
                 print_exc()
+
+class ratelimiter(Component[apiclient]):
+    pass
+
+class code213handler(Component[apiclient]):
+    pass
+
