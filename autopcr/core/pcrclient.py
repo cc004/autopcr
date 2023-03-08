@@ -1,7 +1,7 @@
 from ..model.models import *
 from .apiclient import apiclient
 from .sessionmgr import sessionmgr
-from .misc import errorhandler, ratelimiter, code213handler
+from .misc import errorhandler
 from .datamgr import datamgr
 
 class pcrclient(apiclient):

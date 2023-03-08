@@ -60,11 +60,12 @@ class sessionmgr(Component[apiclient]):
                         if not self._sdkaccount or not self._sdkaccount['access_key']:
                             self._sdkaccount = None
                             continue
-                        req = ToolSdkLoginRequest()
-                        req.uid = self._sdkaccount['uid']
-                        req.access_key = self._sdkaccount['access_key']
-                        req.platform = str(self._platform)
-                        req.channel_id = str(self._channel)
+                        req = ToolSdkLoginRequest(
+                            uid=self._sdkaccount['uid'],
+                            access_key=self._sdkaccount['access_key'],
+                            platform=str(self._platform),
+                            channel_id=str(self._channel)
+                        )
                         if not (await next(req)).is_risk:
                             break
                         self._sdkaccount = None
@@ -73,7 +74,7 @@ class sessionmgr(Component[apiclient]):
                     req.apptype = 0
                     req.campaign_data = ''
                     req.campaign_user = random.randint(0, 100000) & ~1
-                    if (await next(req)).now_tutorial:
+                    if not (await next(req)).now_tutorial:
                         raise Exception("账号未过完教程")
                     
                     await next(CheckAgreementRequest())
