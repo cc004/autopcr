@@ -1,6 +1,6 @@
-from enum import Enum
+from enum import IntEnum
 
-class eClanChatMessageType(Enum):
+class eClanChatMessageType(IntEnum):
     MESSAGE = 0
     STAMP = 1
     DONATION = 2
@@ -17,18 +17,18 @@ class eClanChatMessageType(Enum):
     UNREAD = 14
     MINI_GAME_SCORE = 0xF
     INVALID_VALUE = -1
-class eBGMKey(Enum):
+class eBGMKey(IntEnum):
     HOME = 200
     ROOM_1F = 210
     ROOM_2F = 211
     ROOM_3F = 212
     INVALID_VALUE = -1
-class eShopItemBannerType(Enum):
+class eShopItemBannerType(IntEnum):
     NONE = 0
     RED_RIBBON = 1
     BLUE_RIBBON = 2
     INVALID_VALUE = -1
-class eClanChatPlayButtonCondition(Enum):
+class eClanChatPlayButtonCondition(IntEnum):
     NONE = 0
     UNOPENED_MINI_GAME_IN_EVENT = 1
     OPENED_MINI_GAME_IN_EVENT = 2
@@ -36,7 +36,7 @@ class eClanChatPlayButtonCondition(Enum):
     GAME_TABLE_PURCHASED_AFTER_GAME_TABLE_ADD = 4
     GAME_TABLE_UNPURCHASED_AFTER_GAME_TABLE_ADD = 5
     INVALID_VALUE = -1
-class eClanActivityGuideline(Enum):
+class eClanActivityGuideline(IntEnum):
     GUIDELINE_NONE = 0
     GUIDELINE_1 = 1
     GUIDELINE_2 = 2
@@ -56,7 +56,7 @@ class eClanActivityGuideline(Enum):
     GUIDELINE_16 = 0x10
     GUIDELINE_17 = 17
     INVALID_VALUE = -1
-class eItemType(Enum):
+class eItemType(IntEnum):
     Experience = 1
     Cashing = 2
     Enhancement = 3
@@ -80,16 +80,16 @@ class eItemType(Enum):
     GrowthItem = 21
     Tutorial = 99
     INVALID_VALUE = -1
-class eStoryStatus(Enum):
+class eStoryStatus(IntEnum):
     LOCKED = 1
     UNVIEWED = 2
     VIEWING = 3
     INVALID_VALUE = -1
-class eRewardLimitType(Enum):
+class eRewardLimitType(IntEnum):
     NO_LIMIT = 0
     HAS_LIMIT = 1
     INVALID_VALUE = -1
-class eInventoryType(Enum):
+class eInventoryType(IntEnum):
     TreasureBox = 0
     Unit = 1
     Item = 2
@@ -102,8 +102,8 @@ class eInventoryType(Enum):
     Design = 10
     Piece = 11
     Gold = 12
-    ArenaBattleNumber = 13
-    GrandArenaBattleNumber = 14
+    ArenaBattlIntEnumber = 13
+    GrandArenaBattlIntEnumber = 14
     Emblem = 0xF
     CustomMypage = 0x10
     EquipmentBox = 50
@@ -113,17 +113,17 @@ class eInventoryType(Enum):
     SeasonPassLevel = 1002
     Other = 9999
     INVALID_VALUE = -1
-class eSrtCatalogStatus(Enum):
+class eSrtCatalogStatus(IntEnum):
     EnemyUnlock = 1
     EnemyReaded = 2
     PlayerUnlock = 3
     PlayerReaded = 4
     INVALID_VALUE = -1
-class ePkbHappenMode(Enum):
+class ePkbHappenMode(IntEnum):
     DRAMATIC = 1
     SIMPLE = 2
     INVALID_VALUE = -1
-class eSystemId(Enum):
+class eSystemId(IntEnum):
     ERROR = 0
     NORMAL_QUEST = 101
     HARD_QUEST = 102
@@ -224,29 +224,29 @@ class eSystemId(Enum):
     SHIORI_EVENT_VERY_HARD_BOSS = 8010
     SEASON_PASS = 90001
     INVALID_VALUE = -1
-class eClanRole(Enum):
+class eClanRole(IntEnum):
     MEMBER = 0
     SUB_LEADER = 30
     LEADER = 40
     INVALID_VALUE = -1
-class eMissionStatusType(Enum):
+class eMissionStatusType(IntEnum):
     NoClear = 0
     EnableReceive = 1
     AlreadyReceive = 2
     ChallengePeriodEnd = 101
     INVALID_VALUE = -1
-class eEventSubStoryStatus(Enum):
+class eEventSubStoryStatus(IntEnum):
     UNREAD = 1
     READED = 2
     ADDED = 3
     INVALID_VALUE = -1
-class eClanJoinCondition(Enum):
+class eClanJoinCondition(IntEnum):
     CONDITION_NONE = 0
     EVERYONE = 1
     ONLY_INVITATION = 2
     DISABLE = 3
     INVALID_VALUE = -1
-class eUserClanJoinStatus(Enum):
+class eUserClanJoinStatus(IntEnum):
     NONE = 0
     REQUEST = 1
     JOINING = 2
@@ -256,18 +256,18 @@ class eUserClanJoinStatus(Enum):
     CANCEL = 6
     EXPULSION = 7
     INVALID_VALUE = -1
-class eGachaType(Enum):
+class eGachaType(IntEnum):
     Gold = 1
     Payment = 2
     FreeOnly = 3
     INVALID_VALUE = -1
-class eExchangeStaminaState(Enum):
+class eExchangeStaminaState(IntEnum):
     NONE = 0
     ALL_EXCHANGE = 1
     PART_EXCHANGE = 2
     NOT_EXCHANGE = 3
     INVALID_VALUE = -1
-class ePartyType(Enum):
+class ePartyType(IntEnum):
     QUEST = 1
     ARENA = 2
     ARENA_DEF = 3
@@ -307,7 +307,7 @@ class ePartyType(Enum):
     KAISER_BATTLE_SUB_3 = 1003
     KAISER_BATTLE_SUB_4 = 1004
     INVALID_VALUE = -1
-class ePromotionLevel(Enum):
+class ePromotionLevel(IntEnum):
     Bronze = 1
     Copper1 = 2
     Copper2 = 3
