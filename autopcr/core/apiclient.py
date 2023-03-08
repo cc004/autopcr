@@ -13,7 +13,7 @@ from ..util.serializer import dump, load
 import json
 from enum import Enum
 
-version = "4.9.6"
+version = "4.9.7"
 
 defaultHeaders = {
     'Accept-Encoding': 'gzip',
