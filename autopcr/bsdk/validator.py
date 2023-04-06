@@ -3,7 +3,7 @@ from json import dumps, loads
 import asyncio
 
 async def autoValidator(gt, challenge, userid):
-    url = f"https://help.tencentbot.top/geetest/?captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
+    url = f"http://pcrd.tencentbot.top/geetest_renew?captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
     validate = ""
     header = {"Content-Type": "application/json"}
     succ = 0
