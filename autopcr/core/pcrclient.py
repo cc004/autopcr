@@ -85,7 +85,7 @@ class pcrclient(apiclient):
     
     async def donate_equip(self, request: EquipRequests, times: int):
         req = EquipDonateRequest()
-        req.clan_id = self.clan
+        req.clan_id = self.data.clan
         req.current_equip_num = self.data.get_inventory((eInventoryType.Equip, request.equip_id))
         req.donation_num = times
         req.message_id = request.message_id
@@ -227,7 +227,7 @@ class pcrclient(apiclient):
     async def clan_like(self, viewer_id):
         req = ClanLikeRequest()
         req.viewer_id = viewer_id
-        req.clan_id = self.clan
+        req.clan_id = self.data.clan
         return await self.request(req)
 
     async def room_accept_all(self):
