@@ -4,14 +4,16 @@ import asyncio
 
 async def autoValidator(gt, challenge, userid):
     url = f"https://help.tencentbot.top/geetest/?captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
-    validate = ""
-    header = {"Content-Type": "application/json"}
+    print(url)
+    validate = input()
+    return validate
+    header = {"Content-Type": "application/json", "User-Agent": "autopcr/1.0.0"}
     succ = 0
     info = ""
     #await bot.send_private_msg(user_id=acinfo['admin'], message=f"thread{ordd}: Auto verifying\n欲手动过码，请发送 validate{ordd} manual")
     print(f"farm: Auto verifying")
     try:
-        res = await (await aiorequests.post(url="http://pcrd.tencentbot.top/validate", data=dumps({"url": url}), headers=header)).content
+        res = await (await aiorequests.get(url="http://pcrd.tencentbot.top/geetest_renew", headers=header)).content
         #if str(res.status_code) != "200":
         #    continue
         res = loads(res)
@@ -32,6 +34,7 @@ async def autoValidator(gt, challenge, userid):
                 #await bot.send_private_msg(user_id=acinfo['admin'], message=f"thread{ordd}: \n" + "\n".join(msg))
                 print(f"farm:\n" + "\n".join(msg))
                 msg = []
+                print(f'farm: {uuid} in queue, sleep {tim} seconds')
                 await asyncio.sleep(tim)
             else:
                 info = res["info"]

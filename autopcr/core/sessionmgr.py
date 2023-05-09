@@ -14,6 +14,7 @@ class sessionmgr(Component[apiclient]):
         self.bsdk = bsdkclient(account, *arg, **kwargs)
         self._account = account
         self._logged = False
+        self.auto_relogin = True
         if not os.path.exists(self.cacheDir):
             os.makedirs(self.cacheDir)
         self.cacheFile = os.path.join(self.cacheDir, account['account'])
@@ -99,6 +100,6 @@ class sessionmgr(Component[apiclient]):
         try:
             return await next(request)
         except ApiException as ex:
-            if ex.status == 3:
+            if ex.status == 3 and self.auto_relogin:
                 self._logged = False
             raise
