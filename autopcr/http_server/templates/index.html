@@ -33,12 +33,15 @@
     <script>
         function register() {
             $.ajax({
-                url: "/api/config?account=" + $("#account").val(),
-                type: "put",
-                data: {
+                url: "/daily/api/config?account=" + $("#account").val(),
+                type: "post",
+                contentType: "application/json;charset=utf-8",
+                data: JSON.stringify({
                     username: "",
-                    password: ""
-                },
+                    password: "",
+                    alian: "",
+                    qq: ""
+                }),
                 processData: false,
                 success: function (ret) {
                     login();
@@ -49,7 +52,7 @@
             });
         }
         function login() {
-            window.location.href = "/config.html?account=" + $("#account").val();
+            window.location.href = "/daily/config.html?account=" + $("#account").val();
         }
     </script>
     <div>

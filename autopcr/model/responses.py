@@ -70,6 +70,11 @@ class ArenaStartResponse(ResponseBase):
 class ArenaTimeRewardAcceptResponse(ResponseBase):
     reward_info: InventoryInfo = None
     add_present_count: int = None
+
+    def update(self, mgr: datamgr, request):
+        if self.reward_info:
+            mgr.update_inventory(self.reward_info)
+
 class AutomaticEnhanceResponse(ResponseBase):
     unit_data: UnitData = None
     equip_list: List[InventoryInfo] = None
@@ -314,7 +319,7 @@ class ClanLikeResponse(ResponseBase):
     stamina_info: UserStaminaInfo = None
     def update(self, mgr: datamgr, request):
         mgr.stamina = self.stamina_info.user_stamina
-        mgr.clan_like_count = 0
+        mgr.clan_like_count = 1
 class ClanMemberBattleFinishResponse(ResponseBase):
     pass
 class ClanMemberBattleStartResponse(ResponseBase):
@@ -340,6 +345,22 @@ class CloisterBattleSkipResponse(ResponseBase):
     item_list: List[InventoryInfo] = None
     cloister_remain_clear_count: int = None
     add_present_count: int = None
+
+    def update(self, mgr: datamgr, request):
+        if self.quest_result_list:
+            for result in self.quest_result_list:
+                for item in result.reward_list:
+                    mgr.update_inventory(item)
+        if self.bonus_reward_list:
+            for item in self.bonus_reward_list:
+                mgr.update_inventory(item)
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+
+        if self.user_gold:
+            mgr.gold = self.user_gold
+
 class DeckUpdateListResponse(ResponseBase):
     pass
 class DeckUpdateResponse(ResponseBase):
@@ -410,6 +431,16 @@ class DungeonSkipResponse(ResponseBase):
     user_gold: UserGold = None
     add_present_count: int = None
     upper_limit_flag: bool = None
+
+    def update(self, mgr: datamgr, request):
+        if self.skip_result_list:
+            for result in self.skip_result_list:
+                for reward in result.reward_list:
+                    mgr.update_inventory(reward)
+
+        if self.user_gold:
+            mgr.gold = self.user_gold
+
 class EmblemChangeResponse(ResponseBase):
     pass
 class EmblemTopResponse(ResponseBase):
@@ -454,6 +485,12 @@ class EventGachaExecResponse(ResponseBase):
     reward_info_list: List[InventoryInfo] = None
     add_present_count: int = None
     unlock_bosses: List[HatsuneEventBossStatus] = None
+
+    def update(self, mgr: datamgr, request):
+        if self.reward_info_list:
+            for item in self.reward_info_list:
+                mgr.update_inventory(item)
+
 class EventGachaIndexResponse(ResponseBase):
     event_gacha_info: EventGachaInfo = None
 class EventGachaLineupResponse(ResponseBase):
@@ -535,6 +572,37 @@ class GachaExecResponse(ResponseBase):
     add_present_count: int = None
     bonus_reward_info: GachaBonusResult = None
     growth_unit_info: GachaGrowthUnitInfo = None
+    def update(self, mgr: datamgr, request):
+        if self.reward_info_list:
+            for item in self.reward_info_list:
+                mgr.update_inventory(item)
+
+        if self.bonus_reward_info:
+            if self.bonus_reward_info.bonus1:
+                mgr.update_inventory(self.bonus_reward_info.bonus1)
+            if self.bonus_reward_info.bonus2:
+                mgr.update_inventory(self.bonus_reward_info.bonus2)
+            if self.bonus_reward_info.bonus3:
+                mgr.update_inventory(self.bonus_reward_info.bonus3)
+            if self.bonus_reward_info.bonus4:
+                mgr.update_inventory(self.bonus_reward_info.bonus4)
+            if self.bonus_reward_info.bonus5:
+                mgr.update_inventory(self.bonus_reward_info.bonus5)
+            if self.bonus_reward_info.bonus6:
+                mgr.update_inventory(self.bonus_reward_info.bonus6)
+            if self.bonus_reward_info.bonus7:
+                mgr.update_inventory(self.bonus_reward_info.bonus7)
+            if self.bonus_reward_info.bonus8:
+                mgr.update_inventory(self.bonus_reward_info.bonus8)
+            if self.bonus_reward_info.bonus9:
+                mgr.update_inventory(self.bonus_reward_info.bonus9)
+            if self.bonus_reward_info.bonus10:
+                mgr.update_inventory(self.bonus_reward_info.bonus10)
+
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        # bonus not set
+
 class GachaIndexResponse(ResponseBase):
     gacha_info: List[GachaParameter] = None
     nngtime: int = None
@@ -610,6 +678,11 @@ class GrandArenaStartResponse(ResponseBase):
 class GrandArenaTimeRewardAcceptResponse(ResponseBase):
     reward_info: InventoryInfo = None
     add_present_count: int = None
+
+    def update(self, mgr: datamgr, request):
+        if self.reward_info:
+            mgr.update_inventory(self.reward_info)
+
 class HatsuneBossBattleFinishResponse(ResponseBase):
     level_info: LevelInfo = None
     result_type: int = None
@@ -645,6 +718,22 @@ class HatsuneBossBattleSkipResponse(ResponseBase):
     unlock_dear_story_id: int = None
     release_diary_ids: List[int] = None
     release_nyx_story_ids: List[int] = None
+
+    def update(self, mgr: datamgr, request):
+        if self.crush_reward_list:
+            for result in self.crush_reward_list:
+                for item in result.reward_list:
+                    mgr.update_inventory(item)
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        if self.quest_result_list:
+            for result in self.quest_result_list:
+                for item in result.reward_list:
+                    mgr.update_inventory(item)
+        if self.user_gold:
+            mgr.gold = self.user_gold
+
 class HatsuneBossBattleStartResponse(ResponseBase):
     limit_time: int = None
     battle_log_id: int = None
@@ -669,6 +758,18 @@ class HatsuneMissionAcceptResponse(ResponseBase):
     flag_exchange_team_exp: bool = None
     add_present_count: int = None
     release_contents: List[ReleaseContentData] = None
+
+    def update(self, mgr: datamgr, request):
+        if self.rewards:
+            for item in self.rewards:
+                mgr.update_inventory(item)
+
+        if self.team_level:
+            mgr.team_level = self.team_level
+
+        if self.stamina_info:
+            mgr.stamina = self.stamina_info.user_stamina
+
 class HatsuneMissionIndexResponse(ResponseBase):
     missions: List[UserMissionInfo] = None
     season_pack: List[UserSeasonPackInfo] = None
@@ -724,6 +825,24 @@ class HatsuneQuestSkipResponse(ResponseBase):
     unlock_dear_story_id: int = None
     release_diary_ids: List[int] = None
     release_nyx_story_ids: List[int] = None
+
+    def update(self, mgr: datamgr, request):
+        if self.quest_result_list:
+            for result in self.quest_result_list:
+                for item in result.reward_list:
+                    mgr.update_inventory(item)
+        if self.bonus_reward_list:
+            for item in self.bonus_reward_list:
+                mgr.update_inventory(item)
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        mgr.hatsune_quest_dict[request.event_id][request.quest_id].daily_clear_count = self.daily_clear_count
+        mgr.stamina = self.user_info.user_stamina
+
+        if self.user_gold:
+            mgr.gold = self.user_gold
+
 class HatsuneQuestStartResponse(ResponseBase):
     quest_wave_info: List[WaveEnemyInfoList] = None
     user_info: UserStaminaInfo = None
@@ -740,6 +859,10 @@ class HatsuneQuestTopResponse(ResponseBase):
     bosses: List[HatsuneEventBossStatus] = None
     boss_battle_info: List[HatsuneEventBossStatus] = None
     boss_enemy_info: List[HatsuneEventBossEnemyInfo] = None
+
+    def update(self, mgr: datamgr, request):
+        mgr.hatsune_quest_dict[self.quest_list[0].quest_id // 1000] = {q.quest_id: q for q in self.quest_list}
+
 class HatsuneQuizAnswerResponse(ResponseBase):
     is_correct: int = None
     unlock_quest_list: List[int] = None
@@ -797,8 +920,12 @@ class HatsuneSpecialBattleStartResponse(ResponseBase):
     hit_treasure_nums: List[int] = None
     hit_treasure_list: List[EventHitTreasureInfo] = None
 class HatsuneTopResponse(ResponseBase):
-    event_status: List[HatsuneEventStatus] = None
+    event_status: HatsuneEventStatus = None
+    # event_status: List[HatsuneEventStatus] = None
     additional_stories: List[HatsuneEventStoryState] = None
+    opening: HatsuneEventStoryState = None
+    ending: HatsuneEventStoryState = None
+    stories: List[HatsuneEventStoryState] = None
     boss_ticket_info: InventoryInfo = None
     event_decks: List[DeckData] = None
     login_bonus: HatsuneLoginBonusData = None
@@ -860,12 +987,13 @@ class HomeIndexResponse(ResponseBase):
         mgr.donation_num = self.user_clan.donation_num
         mgr.dungeon_area_id = self.dungeon_info.enter_area_id
         mgr.training_quest_count = self.training_quest_count
+        mgr.training_quest_max_count = self.training_quest_max_count
         mgr.quest_dict = {q.quest_id: q for q in self.quest_list}
-        type = self.dungeon_info.dungeon_area[0].dungeon_type
-        for count in self.dungeon_info.rest_challenge_count:
-            if count.dungeon_type == type:
-                mgr.dungeon_avaliable = count.count > 0
-                break
+        # type = self.dungeon_info.dungeon_area[0].dungeon_type
+        # for count in self.dungeon_info.rest_challenge_count:
+        #     if count.dungeon_type == type:
+        #         mgr.dungeon_avaliable = count.count > 0
+        #         break
 
 class ItemETicketExchangeResponse(ResponseBase):
     reward_list: List[InventoryInfo] = None
@@ -1032,9 +1160,11 @@ class LoadIndexResponse(ResponseBase):
         mgr.name = self.user_info.user_name
         mgr.team_level = self.user_info.team_level
         mgr.jewel = self.user_jewel
+        mgr.gold = self.user_gold
         mgr.clan_like_count = self.clan_like_count
         mgr.user_my_quest = self.user_my_quest
         mgr.clear_inventory()
+        mgr.cf = self.cf
         if self.item_list:
             for inv in self.item_list:
                 mgr.update_inventory(inv)
@@ -1044,9 +1174,16 @@ class LoadIndexResponse(ResponseBase):
         if self.user_equip:
             for inv in self.user_equip:
                 mgr.update_inventory(inv)
+        if self.unit_list:
+            mgr.unit = {unit.id: unit for unit in self.unit_list}
+        if self.user_chara_info:
+            mgr.unit_love = {unit.chara_id: unit for unit in self.user_chara_info}
         mgr.stamina = self.user_info.user_stamina
         mgr.settings = self.ini_setting
         mgr.recover_stamina_exec_count = self.shop.recover_stamina.exec_count
+        mgr.read_story_ids = self.read_story_ids
+        mgr.event_statuses = self.event_statuses
+        mgr.tower_status = self.tower_status
 
 
 class LoadNextDayIndexResponse(ResponseBase):
@@ -1081,7 +1218,8 @@ class MissionAcceptResponse(ResponseBase):
         if self.rewards:
             for item in self.rewards:
                 mgr.update_inventory(item)
-        mgr.stamina = self.stamina_info.user_stamina
+        if self.stamina_info:
+            mgr.stamina = self.stamina_info.user_stamina
 
 class MissionIndexResponse(ResponseBase):
     missions: List[UserMissionInfo] = None
@@ -1171,7 +1309,8 @@ class PresentReceiveAllResponse(ResponseBase):
         if self.rewards:
             for item in self.rewards:
                 mgr.update_inventory(item)
-        mgr.stamina = self.stamina_info.user_stamina
+        if self.stamina_info:
+            mgr.stamina = self.stamina_info.user_stamina
 
 class PresentReceiveSingleResponse(ResponseBase):
     rewards: List[InventoryInfo] = None
@@ -1264,6 +1403,28 @@ class QuestSkipMultipleResponse(ResponseBase):
     add_present_count: int = None
     clan_point: ClanPoint = None
     state_exchange_stamina: eExchangeStaminaState = None
+
+
+    def update(self, mgr: datamgr, request):
+
+        if self.quest_result_list:
+            for result in self.quest_result_list:
+                for item in result.reward_list:
+                    mgr.update_inventory(item)
+        if self.bonus_reward_list:
+            for item in self.bonus_reward_list:
+                mgr.update_inventory(item)
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        if self.item_data:
+            for item in self.item_data:
+                mgr.update_inventory(item)
+        if self.user_info:
+            mgr.stamina = self.user_info.user_stamina
+        if self.user_gold:
+            mgr.gold = self.user_gold
+
 class QuestSkipResponse(ResponseBase):
     quest_result_list: List[QuestResult] = None
     bonus_reward_list: List[InventoryInfo] = None
@@ -1296,7 +1457,10 @@ class QuestSkipResponse(ResponseBase):
             for item in self.item_data:
                 mgr.update_inventory(item)
         mgr.quest_dict[request.quest_id].daily_clear_count = self.daily_clear_count
-        mgr.stamina = self.user_info.user_stamina
+        if self.user_info:
+            mgr.stamina = self.user_info.user_stamina
+        if self.user_gold:
+            mgr.gold = self.user_gold
 
 class QuestStartResponse(ResponseBase):
     quest_wave_info: List[WaveEnemyInfoList] = None
@@ -1355,6 +1519,14 @@ class RoomLevelUpStartResponse(ResponseBase):
     user_room_item: RoomUserItem = None
     user_gold: UserGold = None
     item_data: List[InventoryInfo] = None
+
+    def update(self, mgr: datamgr, request):
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        if self.item_data:
+            for item in self.item_data:
+                mgr.update_inventory(item)
+
 class RoomLevelUpStopResponse(ResponseBase):
     user_room_item: RoomUserItem = None
     user_gold: UserGold = None
@@ -1378,6 +1550,17 @@ class RoomLikeResponse(ResponseBase):
 class RoomMultiGiveGiftResponse(ResponseBase):
     level_info: LevelInfo = None
     user_gift_item_list: List[InventoryInfo] = None
+
+    def update(self, mgr: datamgr, request):
+        if self.user_gift_item_list:
+            for item in self.user_gift_item_list:
+                mgr.update_inventory(item)
+
+        if self.level_info:
+            for info in self.level_info.love:
+                mgr.unit_love[info.chara_id].love_level = info.current_level
+                mgr.unit_love[info.chara_id].chara_love = info.total
+
 class RoomMultiLevelUpEndResponse(ResponseBase):
     user_room_item_list: List[RoomUserItem] = None
 class RoomMysetDeleteResponse(ResponseBase):
@@ -1397,6 +1580,9 @@ class RoomReceiveItemAllResponse(ResponseBase):
     def update(self, mgr: datamgr, request):
         if self.stamina_info:
             mgr.stamina = self.stamina_info.user_stamina
+        if self.reward_list:
+            for item in self.reward_list:
+                mgr.update_inventory(item)
 
 class RoomReceiveItemResponse(ResponseBase):
     user_room_item: RoomUserItem = None
@@ -1404,6 +1590,7 @@ class RoomReceiveItemResponse(ResponseBase):
     stamina_info: UserStaminaInfo = None
     add_present_count: int = None
 class RoomStartResponse(ResponseBase):
+    taq_is_new : int = None
     room_layout: RoomWholeLayout = None
     max_storage_num: int = None
     unread_count: int = None
@@ -1641,11 +1828,29 @@ class ShopBuyMultipleResponse(ResponseBase):
     purchase_list: List[InventoryInfo] = None
     item_data: List[InventoryInfo] = None
     user_gold: UserGold = None
+
+    def update(self, mgr: datamgr, request):
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        if self.item_data:
+            for item in self.item_data:
+                mgr.update_inventory(item)
+
 class ShopBuyResponse(ResponseBase):
     purchase_list: List[InventoryInfo] = None
     item_data: List[InventoryInfo] = None
     user_gold: UserGold = None
     user_jewel: UserJewel = None
+
+    def update(self, mgr: datamgr, request):
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        if self.item_data:
+            for item in self.item_data:
+                mgr.update_inventory(item)
+        if self.user_jewel:
+            mgr.jewel = self.user_jewel
+
 class ShopCloseDailyShopResponse(ResponseBase):
     pass
 class ShopCloseLimitedShopResponse(ResponseBase):
@@ -1670,6 +1875,16 @@ class ShopResetResponse(ResponseBase):
     item_data: List[InventoryInfo] = None
     user_gold: UserGold = None
     user_jewel: UserJewel = None
+
+    def update(self, mgr: datamgr, request):
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        if self.item_data:
+            for item in self.item_data:
+                mgr.update_inventory(item)
+        if self.user_jewel:
+            mgr.jewel = self.user_jewel
+
 class SkillLevelUpResponse(ResponseBase):
     unit_data: UnitData = None
     user_gold: UserGold = None
@@ -1737,6 +1952,12 @@ class StoryViewingResponse(ResponseBase):
     unlock_story_ids: List[int] = None
     event_id: int = None
     unlocked_sub_story_list: List[int] = None
+
+    def update(self, mgr: datamgr, request):
+        if self.reward_info:
+            for item in self.reward_info:
+                mgr.update_inventory(item)
+
 class SubStoryLtoReadStoryResponse(ResponseBase):
     reward_info: List[InventoryInfo] = None
 class SubStorySkeConfirmResponse(ResponseBase):
@@ -1888,6 +2109,20 @@ class TrainingQuestSkipResponse(ResponseBase):
     daily_clear_count: int = None
     quest_challenge_count: TrainingQuestCount = None
     add_present_count: int = None
+    def update(self, mgr: datamgr, request):
+        if self.quest_result_list:
+            for result in self.quest_result_list:
+                for item in result.reward_list:
+                    mgr.update_inventory(item)
+        if self.bonus_reward_list:
+            for item in self.bonus_reward_list:
+                mgr.update_inventory(item)
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        mgr.quest_dict[request.quest_id].daily_clear_count = self.daily_clear_count
+        mgr.stamina = self.user_info.user_stamina
+
 class TrainingQuestStartResponse(ResponseBase):
     quest_wave_info: List[WaveEnemyInfoList] = None
     limit_time: int = None

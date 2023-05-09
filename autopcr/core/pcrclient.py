@@ -3,6 +3,8 @@ from .apiclient import apiclient
 from .sessionmgr import sessionmgr
 from .misc import errorhandler
 from .datamgr import datamgr
+from .database import db
+from typing import Tuple
 
 class pcrclient(apiclient):
     def __init__(self, *args, **kwargs):
@@ -21,17 +23,163 @@ class pcrclient(apiclient):
     async def login(self):
         await self.request(None)
 
+    async def multi_give_gift(self, unit_id: int, cakes: List[SendGiftData]):
+        req = RoomMultiGiveGiftRequest()
+        req.unit_id = unit_id
+        req.item_info = cakes
+        return await self.request(req)
+
+    async def get_gacha_index(self):
+        req = GachaIndexRequest()
+        return await self.request(req)
+
+    async def exec_gacha(self, gacha_id: int, gacha_times: int, exchange_id: int, draw_type: int, current_cost_num: int, campaign_id: int):
+        req = GachaExecRequest()
+        req.gacha_id = gacha_id
+        req.gacha_times = gacha_times
+        req.exchange_id = exchange_id
+        req.draw_type = draw_type
+        req.current_cost_num = current_cost_num
+        req.campaign_id = campaign_id
+        return await self.request(req)
+
+    async def exec_hatsune_gacha(self, event_id: int, gacha_id: int, gacha_times: int, current_cost_num: int, loop_box_multi_gacha_flag: int):
+        req = EventGachaExecRequest()
+        req.event_id = event_id
+        req.gacha_id = gacha_id
+        req.gacha_times = gacha_times
+        req.current_cost_num = current_cost_num
+        req.loop_box_multi_gacha_flag = loop_box_multi_gacha_flag
+        return await self.request(req)
+
+    async def reset_hatsune_gacha(self, event_id: int, gacha_id: int):
+        req = EventGachaResetRequest()
+        req.event_id = event_id
+        req.gacha_id = gacha_id
+        return await self.request(req)
+
+    async def read_story(self, story_id: int):
+        req = StoryMaintenanceCheckRequest()
+        req.story_id = story_id
+        await self.request(req)
+        req = StoryViewingRequest()
+        req.story_id = story_id
+        return await self.request(req)
+
+    async def read_dear(self, event_id: int, story_id: int):
+        req = HatsuneDearFinishRequest()
+        req.event_id = event_id
+        req.story_id = story_id
+        req.choice = 1
+        return await self.request(req)
+
+    async def mission_index(self):
+        req = MissionIndexRequest()
+        request_flag = MissionRequestFlag()
+        request_flag.quest_clear_rank = 0
+        req.request_flag = request_flag
+        return await self.request(req)
+
+    async def room_level_up_item(self, floor_number: int, item: RoomUserItem):
+        req = RoomLevelUpStartRequest()
+        req.floor_number = floor_number
+        req.serial_id = item.serial_id
+        return await self.request(req)
+
+    async def draw_chara_fortune(self):
+        req = RaceLoginBonusCharaSelectDataRequest()
+        req.fortune_id = self.data.cf.fortune_id
+        req.unit_id = self.data.cf.unit_list[0]
+        return await self.request(req)
+
+    async def get_shop_item_list(self):
+        req = ShopItemListRequest()
+        return await self.request(req)
+
+    async def shop_buy_item(self, shop_id, bought_list):
+        req = ShopBuyMultipleRequest()
+        req.system_id = shop_id
+        req.slot_ids = bought_list
+        req.current_currency_num = self.data.get_shop_gold(shop_id)
+        return await self.request(req)
+
+    async def mission_receive(self):
+        req = MissionAcceptRequest()
+        req.type = 1
+        req.buy_id = 0
+        req.id = 0
+        return await self.request(req)
+
+    async def get_tower_top(self):
+        req = TowerTopRequest()
+        req.is_first = 1
+        req.return_cleared_ex_quest = 0
+        return await self.request(req)
+
+    async def tower_cloister_battle_skip(self, times: int):
+        req = CloisterBattleSkipRequest()
+        req.skip_count = times
+        req.quest_id = 73310520
+        req.current_ticket_num = self.data.get_inventory((eInventoryType.Item, 23001))
+        return await self.request(req)
+
+    async def hatsune_mission_index(self, event_id: int):
+        req = HatsuneMissionIndexRequest()
+        req.event_id = event_id
+        return await self.request(req)
+
+    async def hatsune_mission_receive(self, event_id: int, type: int):
+        req = HatsuneMissionAcceptRequest()
+        req.event_id = event_id
+        req.type = type 
+        req.buy_id = 0
+        req.id = 0
+        return await self.request(req)
+
+    async def get_hatsune_dear_top(self, event_id: int):
+        req = HatsuneDearTopRequest()
+        req.event_id = event_id
+        return await self.request(req)
+
+    async def get_hatsune_gacha_index(self, event_id: int, gacha_id: int):
+        req = EventGachaIndexRequest()
+        req.event_id = event_id
+        req.gacha_id = gacha_id
+        return await self.request(req)
+
+    async def hatsune_boss_skip(self, event_id: int, boss_id: int, times: int, ticket: int):
+        req = HatsuneBossBattleSkipRequest()
+        req.event_id = event_id
+        req.boss_id = boss_id
+        req.exec_skip_num = times
+        req.current_boss_ticket_num = ticket
+        req.current_skip_ticket_num = self.data.get_inventory((eInventoryType.Item, 23001))
+        return await self.request(req)
+
     async def get_profile(self, user: int):
         req = ProfileGetRequest()
         req.target_viewer_id = user
         return await self.request(req)
-    
-    async def present_receive_all(self):
-        req = PresentReceiveAllRequest()
-        req.time_filter = -1
+
+    async def get_hatsune_top(self, event: int):
+        req = HatsuneTopRequest()
+        req.event_id = event
         return await self.request(req)
 
-    async def accept_clan_invitation(self, clan: int, page: 0):
+    async def get_hatsune_quest_top(self, event: int):
+        req = HatsuneQuestTopRequest()
+        req.event_id = event
+        return await self.request(req)
+    
+    async def present_receive_all(self, is_exclude_stamina: bool):
+        req = PresentReceiveAllRequest()
+        req.time_filter = -1
+        req.type_filter = 0
+        req.desc_flag = True
+        req.is_exclude_stamina = is_exclude_stamina
+        return await self.request(req)
+
+    async def accept_clan_invitation(self, clan: int, page: int = 0):
         req = UserInviteClanListRequest()
         req.page = page
         for inv in (await self.request(req)).list:
@@ -97,6 +245,14 @@ class pcrclient(apiclient):
         req.quest_id = quest
         req.random_count = times
         return await self.request(req)
+
+    async def hatsune_quest_skip(self, event: int, quest: int, times: int):
+        req = HatsuneQuestSkipRequest()
+        req.event_id = event
+        req.quest_id = quest
+        req.use_ticket_num = times
+        req.current_ticket_num = self.data.get_inventory((eInventoryType.Item, 23001))
+        return await self.request(req)
     
     async def training_quest_skip(self, quest: int, times: int):
         req = TrainingQuestSkipRequest()
@@ -134,6 +290,15 @@ class pcrclient(apiclient):
     async def receive_arena_reward(self):
         req = ArenaTimeRewardAcceptRequest()
         return await self.request(req)
+
+    async def get_dungeon_info(self):
+        req = DungeonInfoRequest()
+        return await self.request(req)
+
+    async def skip_dungeon(self, dungeon_area_id: int):
+        req = DungeonSkipRequest()
+        req.dungeon_area_id = dungeon_area_id
+        return await self.request(req)
     
     async def receive_grand_arena_reward(self):
         req = GrandArenaTimeRewardAcceptRequest()
@@ -156,6 +321,56 @@ class pcrclient(apiclient):
         19: (5, 3, 15), # xingqiubei quest 5*3
     }
 
+    _hatsune_quest_info_dict = {
+        201: (3, 0, 16), 
+        202: (3, 0, 16), 
+        203: (3, 0, 18), 
+        204: (3, 0, 18), 
+        205: (3, 0, 20), 
+    }
+
+    async def serlize_reward(self, reward_list: List[InventoryInfo], target: Tuple[eInventoryType, int] = None):
+        result = []
+        rewards = {}
+        for reward in reward_list:
+            if target is None or (reward.type == target[0] and reward.id == target[1]):
+                if (reward.id, reward.type) not in rewards:
+                    rewards[(reward.id, reward.type)] = [reward.count, reward.stock, reward]
+                else:
+                    rewards[(reward.id, reward.type)][0] += reward.count
+        for _, value in rewards.items():
+            try:
+                result.append(f"{db.get_inventory_name(value[2])}x{value[0]}({value[1]})")
+            except:
+                result.append(f"未知物品({value[2],type},{value[2].id})x{value[0]}({value[1]})")
+        if target is not None and len(result) == 0:
+            result.append(f"{db.get_inventory_name_san(target)}x0({self.data.get_inventory(target)})")
+        return '\n'.join(result)
+
+    async def gacha_exec(self, gacha: GachaParameter, times: int):
+        req = GachaExecRequest()
+        req.gacha_id = gacha.id
+        req.gacha_times = times
+        req.exchange_id = 0
+        req.draw_type = 1
+        req.current_cost_num = -1
+        req.campaign_id = 0
+        return await self.request(req)
+
+
+    async def normal_gacha(self):
+        req = GachaIndexRequest()
+        resp = (await self.request(req))
+        normal_gacha: GachaParameter = None
+        for gacha in resp.gacha_info:
+            if gacha.type == eGachaType.FreeOnly and gacha.cost_num_single == 0:
+                normal_gacha = gacha 
+                break
+        if normal_gacha.free_exec_times != 0:
+            raise SkipError("已进行过普通扭蛋")
+        return await self.gacha_exec(normal_gacha, 10)
+
+
     async def recover_challenge(self, quest: int):
         req = QuestRecoverChallengeRequest()
         req.quest_id = quest
@@ -165,7 +380,13 @@ class pcrclient(apiclient):
     async def present_index(self) -> PresentIndexResponse:
         req = PresentIndexRequest()
         req.time_filter = -1
+        req.type_filter = 0
+        req.desc_flag = True
+        req.offset = 0
         return await self.request(req)
+
+    async def unlock_quest_id(self, quest: int):
+        return (quest in self.data.quest_dict and self.data.quest_dict[quest].clear_flg > 0) or (quest in db.tower2floor and self.data.tower_status.cleared_floor_num >= db.tower2floor[quest])
 
     async def quest_skip_aware(self, quest: int, times: int, recover: bool = False, is_total: bool = False):
         if not quest in self.data.quest_dict:
@@ -173,32 +394,93 @@ class pcrclient(apiclient):
         qinfo = self.data.quest_dict[quest]
         if qinfo.clear_flg != 3:
             raise ValueError(f"任务{quest}未三星")
-        info = pcrclient._quest_info_dict[quest // 1000000]
+        info = self._quest_info_dict[quest // 1000000]
+        result: List[InventoryInfo] = []
         async def skip(times):
             if self.data.stamina < info[2] * times:
                 if self.keys.get('buy_stamina_passive', 0) > self.data.recover_stamina_exec_count:
                     await self.recover_stamina()
                 else:
-                    raise ValueError(f"体力不足")
-            await self.quest_skip(quest, times)
+                    raise SkipError(f"任务{quest}体力不足")
+            return await self.quest_skip(quest, times)
         if info[0]:
             if is_total:
                 times -= qinfo.daily_clear_count
             max_times = ((info[1] if recover else 0) + 1) * info[0] - qinfo.daily_clear_count
             times = min(times, max_times)
             if times <= 0:
-                raise ValueError(f"任务{quest}已达最大次数")
+                raise SkipError(f"任务{quest}已达最大次数")
             remain = info[0] * (qinfo.daily_recovery_count + 1) - qinfo.daily_clear_count
             while times > 0:
                 if remain == 0:
                     await self.recover_challenge(quest)
                     remain = info[0]
                 t = min(times, remain)
-                await skip(t)
+                resp = await skip(t)
+                if resp.quest_result_list:
+                    for result_list in resp.quest_result_list:
+                        result = result + result_list.reward_list
+                if resp.bonus_reward_list:
+                    result = result + resp.bonus_reward_list
+                    
                 times -= t
                 remain -= t
         else:
-            await skip(times)
+            resp = await skip(times)
+            if resp.quest_result_list:
+                for result_list in resp.quest_result_list:
+                    result = result + result_list.reward_list
+            if resp.bonus_reward_list:
+                result = result + resp.bonus_reward_list
+
+        return result
+
+    async def hatsune_quest_skip_aware(self, event: int, quest: int, times: int, recover: bool = False, is_total: bool = False):
+        if not quest in self.data.hatsune_quest_dict[event]:
+            raise ValueError(f"任务{quest}不存在")
+        qinfo = self.data.hatsune_quest_dict[event][quest]
+        if qinfo.clear_flag != 3:
+            raise ValueError(f"任务{quest}未三星")
+        info = pcrclient._hatsune_quest_info_dict[quest % 1000]
+        async def skip(times):
+            print(f"skip {times} {event} {quest}")
+            if self.data.stamina < info[2] * times:
+                if self.keys.get('buy_stamina_passive', 0) > self.data.recover_stamina_exec_count:
+                    await self.recover_stamina()
+                else:
+                    raise SkipError(f"任务{quest}体力不足")
+            return await self.hatsune_quest_skip(event, quest, times)
+        result: List[InventoryInfo] = []
+        if info[0]:
+            if is_total:
+                times -= qinfo.daily_clear_count
+            max_times = ((info[1] if recover else 0) + 1) * info[0] - qinfo.daily_clear_count
+            times = min(times, max_times)
+            if times <= 0:
+                raise SkipError(f"任务{quest}已达最大次数")
+            remain = info[0] * (qinfo.daily_recovery_count + 1) - qinfo.daily_clear_count
+            while times > 0:
+                if remain == 0:
+                    await self.recover_challenge(quest)
+                    remain = info[0]
+                t = min(times, remain)
+                resp = await skip(t)
+                if resp.quest_result_list:
+                    for result_list in resp.quest_result_list:
+                        result = result + result_list.reward_list
+                if resp.bonus_reward_list:
+                    result = result + resp.bonus_reward_list
+                times -= t
+                remain -= t
+        else:
+            resp = await skip(times)
+            if resp.quest_result_list:
+                for result_list in resp.quest_result_list:
+                    result = result + result_list.reward_list
+            if resp.bonus_reward_list:
+                result = result + resp.bonus_reward_list
+
+        return result
 
     
     async def refresh(self):
@@ -226,7 +508,7 @@ class pcrclient(apiclient):
 
     async def clan_like(self, viewer_id):
         req = ClanLikeRequest()
-        req.viewer_id = viewer_id
+        req.target_viewer_id = viewer_id
         req.clan_id = self.data.clan
         return await self.request(req)
 
@@ -236,6 +518,7 @@ class pcrclient(apiclient):
 
     async def room_start(self) -> RoomStartResponse:
         req = RoomStartRequest()
+        req.wac_auto_option_flag = 1
         return await self.request(req)
 
     async def borrow_dungeon_member(self, viewer_id):

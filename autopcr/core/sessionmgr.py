@@ -6,6 +6,7 @@ import asyncio, json, re, os, random
 import dateutil.parser
 from datetime import datetime
 from ..model.models import *
+from traceback import print_exc
 
 class sessionmgr(Component[apiclient]):
     def __init__(self, account, *arg, **kwargs):
@@ -50,6 +51,7 @@ class sessionmgr(Component[apiclient]):
                         match = re.search(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}', manifest.maintenance_message)
                         if match is not None:
                             end = dateutil.parser.parse(match.group())
+                            raise ValueError(f"当前处于维护期间，维护至{end}")
                             while datetime.now() < end:
                                 await asyncio.sleep(1)
                         else:

@@ -4,3 +4,4 @@ req.log
 cache/
 clan_scanner.py
 table.csv
+.DS_Store

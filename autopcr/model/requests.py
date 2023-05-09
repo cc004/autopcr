@@ -1521,6 +1521,7 @@ class PresentReceiveAllRequest(Request[PresentReceiveAllResponse]):
 	time_filter: int = None
 	type_filter: int = None
 	desc_flag: bool = None
+	is_exclude_stamina: bool = None
 	@property
 	def url(self) -> str:
 		return "present/receive_all"
@@ -1788,7 +1789,7 @@ class RoomReceiveItemRequest(Request[RoomReceiveItemResponse]):
 	def url(self) -> str:
 		return "room/receive"
 class RoomStartRequest(Request[RoomStartResponse]):
-	pass
+	wac_auto_option_flag: int = None
 	@property
 	def url(self) -> str:
 		return "room/start"

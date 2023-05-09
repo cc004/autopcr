@@ -91,7 +91,8 @@ def make_captch(gt,challenge,gt_user):
 async def login(bili_account,bili_pwd, make_captch):
     print(f'logging in with acc={bili_account}, pwd = {bili_pwd}')
     login_sta= await login1(bili_account,bili_pwd)
-    if "access_key" not in login_sta:
+    # if "access_key" not in login_sta:
+    if login_sta['code'] == 200000:
         cap=await captch()
         captch_done=await make_captch(cap['gt'],cap['challenge'],cap['gt_user_id'])
         login_sta=await login2(bili_account,bili_pwd,cap["challenge"],cap['gt_user_id'],captch_done)
