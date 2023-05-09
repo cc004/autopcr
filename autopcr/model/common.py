@@ -369,6 +369,7 @@ class GaugeInfo(BaseModel):
 	total: int = None
 	unit_id: int = None
 	chara_id: int = None
+	current_level: int = None
 class GrandArenaCountInfo(BaseModel):
 	battle_number: int = None
 class GrandArenaInfo(BaseModel):
@@ -1301,6 +1302,7 @@ class DungeonInfo(BaseModel):
 	enter_area_id: int = None
 	rest_challenge_count: List[RestChallengeInfo] = None
 	dungeon_area: List[DungeonArea] = None
+	dungeon_cleared_area_id_list: List[int] = None
 class DungeonQueryUnit(BaseModel):
 	owner_viewer_id: int = None
 	unit_id: int = None
@@ -1403,6 +1405,7 @@ class GrandArenaOppnentUserInfo(BaseModel):
 	total_power: int = None
 	emblem: EmblemData = None
 class GrandArenaSearchOpponent(BaseModel):
+	null: int = None
 	viewer_id: int = None
 	rank: int = None
 	winning_number: int = None

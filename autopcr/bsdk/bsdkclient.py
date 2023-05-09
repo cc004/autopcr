@@ -30,5 +30,6 @@ class bsdkclient:
                 await self.errlogger("geetest or captcha succeed")
                 break
             await self.errlogger(resp['message'])
+            raise ValueError(resp['message'])
 
         return resp['uid'], resp['access_key']
