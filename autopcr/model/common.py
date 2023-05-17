@@ -754,7 +754,7 @@ class RefundItem(BaseModel):
 	type: eItemType = None
 	number: int = None
 class ReleaseContentData(BaseModel):
-	system_id: eSystemId = None
+	system_id: str = None
 	deck_list: List[DeckData] = None
 class RestChallengeInfo(BaseModel):
 	dungeon_type: int = None
