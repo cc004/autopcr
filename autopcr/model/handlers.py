@@ -1,5 +1,6 @@
 from typing import List
 from . import responses
+from .common import *
 from ..core.datamgr import datamgr
 
 def handles(cls):
@@ -84,6 +85,7 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         mgr.stamina = self.user_info.user_stamina
         mgr.settings = self.ini_setting
         mgr.recover_stamina_exec_count = self.shop.recover_stamina.exec_count
+        mgr.deck_list = {deck.deck_number:deck for deck in self.deck_list}
 
 @handles
 class MissionAcceptResponse(responses.MissionAcceptResponse):
@@ -143,3 +145,13 @@ class ShopRecoverStaminaResponse(responses.ShopRecoverStaminaResponse):
 class TrainingQuestFinishResponse(responses.TrainingQuestFinishResponse):
     def update(self, mgr: datamgr, request):
         mgr.training_quest_count = self.quest_challenge_count
+
+@handles
+class DeckUpdateResponse(responses.DeckUpdateResponse):
+    def update(self, mgr: datamgr, request):
+        deck = mgr.deck_list[ePartyType(request.deck_number)]
+        deck.unit_id1 = request.unit_id_1
+        deck.unit_id2 = request.unit_id_2
+        deck.unit_id3 = request.unit_id_3
+        deck.unit_id4 = request.unit_id_4
+        deck.unit_id5 = request.unit_id_5

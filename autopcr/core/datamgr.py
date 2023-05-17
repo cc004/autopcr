@@ -21,6 +21,7 @@ class datamgr(Component[apiclient]):
     clan_like_count: int = 0
     user_my_quest: List[UserMyQuest] = None
     _inventory: Dict[Tuple[eInventoryType, int], int] = {}
+    deck_list: Dict[ePartyType, LoadDeckData] = []
 
     def clear_inventory(self):
         self._inventory.clear()

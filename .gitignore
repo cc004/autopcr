@@ -4,8 +4,8 @@ req.log
 cache/
 clan_scanner.py
 clan_iter.py
-clan_iterator.py
 clan_scanner1.py
+dismissed.json
 clans/*
 farm_config.json
 table.csv

@@ -76,6 +76,7 @@ class apiclient(Container["apiclient"]):
         self._headers = {}
         for key in defaultHeaders.keys():
             self._headers[key] = defaultHeaders[key]
+        self._lck = Lock()
     
     @property
     def name(self) -> str:
@@ -152,7 +153,6 @@ class apiclient(Container["apiclient"]):
             )
         return response.data
 
-    _lck: Lock = Lock()
     async def request(self, request: Request[TResponse]) -> TResponse:
         async with self._lck:
             return await self._request_internal(request)
