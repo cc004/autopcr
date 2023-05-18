@@ -91,7 +91,7 @@ TResponse = TypeVar('TResponse', bound=ResponseBase)
 class apiclient(Container["apiclient"]):
     server_time: int = 0
     viewer_id: int = 0
-    urlroot: str = 'http://l3-prod-all-gs-gzlj.bilibiligame.net/'
+    urlroot: str = 'https://l3-prod-all-gs-gzlj.bilibiligame.net/'
     _requestid: str = ''
     _sessionid: str=  ''
     def __init__(self):
@@ -99,6 +99,8 @@ class apiclient(Container["apiclient"]):
         self._headers = {}
         for key in defaultHeaders.keys():
             self._headers[key] = defaultHeaders[key]
+        # for key in iosHeaders.keys():
+        #     self._headers[key] = iosHeaders[key]
     
     @property
     def name(self) -> str:
