@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import IntEnum as Enum
 
 class eInventoryType(Enum):
     TreasureBox = 0

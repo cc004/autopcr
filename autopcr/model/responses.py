@@ -762,7 +762,8 @@ class HatsuneSpecialBattleStartResponse(ResponseBase):
 	hit_treasure_nums: List[int] = None
 	hit_treasure_list: List[EventHitTreasureInfo] = None
 class HatsuneTopResponse(ResponseBase):
-	event_status: List[HatsuneEventStatus] = None
+	event_status: HatsuneEventStatus = None
+	# event_status: List[HatsuneEventStatus] = None
 	additional_stories: List[HatsuneEventStoryState] = None
 	boss_ticket_info: InventoryInfo = None
 	event_decks: List[DeckData] = None
