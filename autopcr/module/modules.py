@@ -8,7 +8,7 @@ import random
 @default(True)
 class clan_like(Module):
     async def do_task(self, client: pcrclient):
-        if not client.data.clan_like_count:
+        if client.data.clan_like_count == 1:
             raise ValueError('今日点赞次数已用完。')
         info = await client.get_clan_info()
         members = [x.viewer_id for x in info.members if x.viewer_id != client.viewer_id]

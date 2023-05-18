@@ -21,12 +21,12 @@ class ClanInfoResponse(responses.ClanInfoResponse):
 class ClanLikeResponse(responses.ClanLikeResponse):
     def update(self, mgr: datamgr, request):
         mgr.stamina = self.stamina_info.user_stamina
-        mgr.clan_like_count = 0
+        mgr.clan_like_count = 1
 
 @handles
 class DungeonEnterAreaResponse(responses.DungeonEnterAreaResponse):
     def update(self, mgr: datamgr, request):
-        mgr.dungeon_area_id = self.quest_id / 1000
+        mgr.dungeon_area_id = self.quest_id // 1000
 
 @handles
 class DungeonResetResponse(responses.DungeonResetResponse):
