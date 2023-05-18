@@ -147,14 +147,14 @@ class apiclient(Container["apiclient"]):
 
         cls = request.__class__.__orig_bases__[0].__args__[0]
 
+        # with open('req.log', 'a') as fp:
+        #     fp.write(json.dumps(response0))
         response: Response[TResponse] = Response[cls].parse_obj(response0)
         
-        '''
         with open('req.log', 'a') as fp:
             fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
             fp.write(json.dumps(request.dict(by_alias=True), indent=4, ensure_ascii=False) + '\n')
             fp.write(json.dumps(response.dict(by_alias=True), indent=4, ensure_ascii=False) + '\n')
-        '''
         
         if response.data_headers.servertime:
             self.server_time = response.data_headers.servertime
