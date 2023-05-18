@@ -17,7 +17,7 @@ class RecordDAO:
     def get_tower_story_detail(self):
         with self.connect() as conn:
             r = conn.execute(
-                f"SELECT story_id, pre_story_id, unlock_quest_id, title FROM tower_story_detail",
+                f"SELECT story_id, pre_story_id, unlock_quest_id, title, start_time FROM tower_story_detail",
             ).fetchall()
         return r
 

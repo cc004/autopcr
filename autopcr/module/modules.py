@@ -387,7 +387,11 @@ class tower_story_reading(Module):
         read_story = set(client.data.read_story_ids)
         result = []
         msg = ""
-        for story_id, pre_story_id, unlock_quest_id, title in db.tower_story:
+        for story_id, pre_story_id, unlock_quest_id, title, start_time in db.tower_story:
+            now = datetime.datetime.now()
+            start_time = datetime.datetime.strptime(start_time, '%Y/%m/%d %H:%M:%S')
+            if now < start_time:
+                continue
             if story_id not in read_story and pre_story_id in read_story:
                 if not await client.unlock_quest_id(unlock_quest_id):
                     msg = f"层数{db.tower2floor[unlock_quest_id]}未通关，无法观看{title}\n"
