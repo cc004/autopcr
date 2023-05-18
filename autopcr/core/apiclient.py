@@ -101,6 +101,7 @@ class apiclient(Container["apiclient"]):
             self._headers[key] = defaultHeaders[key]
         # for key in iosHeaders.keys():
         #     self._headers[key] = iosHeaders[key]
+        self._lck = Lock()
     
     @property
     def name(self) -> str:
@@ -148,11 +149,12 @@ class apiclient(Container["apiclient"]):
 
         response: Response[TResponse] = Response[cls].parse_obj(response0)
         
+        '''
         with open('req.log', 'a') as fp:
             fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
             fp.write(json.dumps(request.dict(by_alias=True), indent=4, ensure_ascii=False) + '\n')
             fp.write(json.dumps(response.dict(by_alias=True), indent=4, ensure_ascii=False) + '\n')
-        
+        '''
         
         if response.data_headers.servertime:
             self.server_time = response.data_headers.servertime
@@ -177,7 +179,6 @@ class apiclient(Container["apiclient"]):
             )
         return response.data
 
-    _lck: Lock = Lock()
     async def request(self, request: Request[TResponse]) -> TResponse:
         async with self._lck:
             return await self._request_internal(request)

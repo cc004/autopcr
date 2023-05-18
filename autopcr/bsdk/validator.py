@@ -16,6 +16,12 @@ async def autoValidator(gt, challenge, userid):
     url = f"https://pcrd.tencentbot.top/geetest_renew?captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
     # url = f"http://help.tencentbot.top/geetest?captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
     validate = ""
+    '''
+    url = f"https://help.tencentbot.top/geetest/?captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
+    print(url)
+    validate = input()
+    return validate
+    '''
     header = {"Content-Type": "application/json", "User-Agent": "autopcr/1.0.0"}
     succ = 0
     info = ""
@@ -47,6 +53,7 @@ async def autoValidator(gt, challenge, userid):
                 #await bot.send_private_msg(user_id=acinfo['admin'], message=f"thread{ordd}: \n" + "\n".join(msg))
                 print(f"farm:\n" + "\n".join(msg))
                 msg = []
+                print(f'farm: {uuid} in queue, sleep {tim} seconds')
                 await asyncio.sleep(tim)
             else:
                 info = res["info"]
