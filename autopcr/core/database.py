@@ -13,7 +13,7 @@ class database(Container["database"]):
     tower: Dict[int, Tuple[str, str]] = {}
     daily_mission: Set[int] = set()
     main_story: List[Tuple[int, int, int, str]] = []
-    tower_story: List[Tuple[int, int, int, str]] = []
+    tower_story: List[Tuple[int, int, int, str, str]] = []
     tower2floor: Dict[int, int] = {}
     event_story: List[Tuple[int, int, str]] = []
     unit_story: List[Tuple[int, int, int, int, str]] = []
@@ -47,7 +47,8 @@ class database(Container["database"]):
             pre_id = story[1]
             unlock_quest_id = story[2]
             title = story[3]
-            self.tower_story.append((id, pre_id, unlock_quest_id, title))
+            start_time = story[4]
+            self.tower_story.append((id, pre_id, unlock_quest_id, title, start_time))
 
         for quest in db.get_tower_quest_detail():
             quest_id = quest[0]
