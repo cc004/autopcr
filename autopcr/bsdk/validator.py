@@ -13,7 +13,7 @@ async def manualValidator(gt, challenge, userid):
     return validate
 
 async def autoValidator(gt, challenge, userid):
-    url = f"http://pcrd.tencentbot.top/geetest_renew?captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
+    url = f"https://pcrd.tencentbot.top/geetest_renew?captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
     # url = f"http://help.tencentbot.top/geetest?captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
     validate = ""
     header = {"Content-Type": "application/json", "User-Agent": "autopcr/1.0.0"}
@@ -37,8 +37,8 @@ async def autoValidator(gt, challenge, userid):
             res = await (await aiorequests.get(url=f"https://pcrd.tencentbot.top/check/{uuid}")).content
             #if str(res.status_code) != "200":
             #    continue
-            res = loads(res)
             print(res)
+            res = loads(res)
             if "queue_num" in res:
                 nu = res["queue_num"]
                 msg.append(f"queue_num={nu}")
