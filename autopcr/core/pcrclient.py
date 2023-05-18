@@ -512,6 +512,20 @@ class pcrclient(apiclient):
         req.clan_id = self.data.clan
         return await self.request(req)
 
+    async def room_like(self, viewer_id: int):
+        req = RoomLikeRequest()
+        req.target_viewer_id = viewer_id
+        return await self.request(req)
+
+    async def room_visit(self, viewer_id: int):
+        req = RoomVisitRequest()
+        req.target_viewer_id = viewer_id
+        return await self.request(req)
+
+    async def room_like_history(self):
+        req = RoomLikeHistoryRequest()
+        return await self.request(req)
+
     async def room_accept_all(self):
         req = RoomReceiveItemAllRequest()
         return await self.request(req)
