@@ -2,11 +2,21 @@ from ..util import aiorequests
 from json import dumps, loads
 import asyncio
 
+validate_queue = asyncio.Queue()
+validate_ok_queue = asyncio.Queue()
+
+async def manualValidator(gt, challenge, userid):
+    await validate_queue.put((challenge, gt, userid))
+    validate = await validate_ok_queue.get()
+    if validate == "xcwcancle":
+        raise ValueError("登录被终止")
+    return validate
+
 async def autoValidator(gt, challenge, userid):
     url = f"http://pcrd.tencentbot.top/geetest_renew?captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
     # url = f"http://help.tencentbot.top/geetest?captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
     validate = ""
-    header = {"Content-Type": "application/json"}
+    header = {"Content-Type": "application/json", "User-Agent": "autopcr/1.0.0"}
     succ = 0
     info = ""
     print(url)
