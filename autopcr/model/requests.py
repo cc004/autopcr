@@ -1585,6 +1585,7 @@ class PresentReceiveAllRequest(Request[PresentReceiveAllResponse]):
 	time_filter: int = None
 	type_filter: int = None
 	desc_flag: bool = None
+	is_exclude_stamina: bool = None
 	@property
 	def url(self) -> str:
 		return "present/receive_all"
@@ -1759,6 +1760,7 @@ class RaritySixQuestFinishRequest(Request[RaritySixQuestFinishResponse]):
 	def url(self) -> str:
 		return "rarity_6_quest/finish"
 class RoomStartRequest(Request[RoomStartResponse]):
+	wac_auto_option_flag: int = None
 	@property
 	def url(self) -> str:
 		return "room/start"
@@ -1862,7 +1864,7 @@ class RoomReceiveItemRequest(Request[RoomReceiveItemResponse]):
 class RoomReceiveItemAllRequest(Request[RoomReceiveItemAllResponse]):
 	@property
 	def url(self) -> str:
-		return "room/receive_item_all"
+		return "room/receive_all"
 class RoomMysetListRequest(Request[RoomMysetListResponse]):
 	@property
 	def url(self) -> str:
@@ -2287,6 +2289,12 @@ class AddUserTipsRequest(Request[AddUserTipsResponse]):
 	@property
 	def url(self) -> str:
 		return "tips/add_user_tips"
+class TowerTopRequest(Request[TowerTopResponse]):
+	is_first: int = None
+	return_cleared_ex_quest: int = None
+	@property
+	def url(self) -> str:
+		return "tower/top"
 class TowerBattleStartRequest(Request[TowerBattleStartResponse]):
 	quest_id: int = None
 	token: str = None
