@@ -236,6 +236,7 @@ class pcrclient(apiclient):
 
     async def room_start(self) -> RoomStartResponse:
         req = RoomStartRequest()
+        req.wac_auto_option_flag = 1
         return await self.request(req)
 
     async def borrow_dungeon_member(self, viewer_id):
