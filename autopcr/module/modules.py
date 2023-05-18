@@ -692,6 +692,34 @@ class room_upper_all(Module):
         result = '\n'.join(result)
         self.set_result(result)
 
+@description('公会小屋点赞，先回赞，再随机点赞')
+@booltype
+@default(True)
+class room_like_back(Module):
+    async def do_task(self, client: pcrclient):
+        await client.room_start()
+        result = []
+        like_user = []
+        like_history = await client.room_like_history()
+        cnt = like_history.today_like_count
+        pos = 0
+        while pos < like_history.today_be_liked_count or cnt < 10:
+            viewer_id = 0
+            if pos < like_history.today_be_liked_count:
+                viewer_id = like_history.like_history[pos].viewer_id
+            user = await client.room_visit(viewer_id)
+            pos += 1
+            if user.room_user_info.today_like_flag:
+                continue
+            resp = await client.room_like(user.room_user_info.viewer_id)
+            result += resp.reward_list
+            like_user.append(user.room_user_info.name)
+            cnt += 1
+
+        result = await client.serlize_reward(result)
+        msg = f"为【{'|'.join(like_user)}】点赞，获得了:\n" + result
+        self.set_result(msg)
+
 @description('EXP探索')
 @booltype
 @default(True)
@@ -916,15 +944,10 @@ def register_all():
         mission_receive,
         buy_stamina_passive,
         clan_like,
-        room_accept_all,
-        room_upper_all,
+        room_like_back,
         free_gacha,
         normal_gacha,
-        love_up,
-        main_story_reading,
-        tower_story_reading,
-        hatsune_story_reading,
-        unit_story_reading,
+        room_accept_all,
         explore_exp,
         explore_mana,
         underground_skip,
@@ -951,5 +974,11 @@ def register_all():
         underground_shop,
         jjc_shop,
         pjjc_shop,
+        love_up,
+        main_story_reading,
+        tower_story_reading,
+        hatsune_story_reading,
+        unit_story_reading,
+        room_upper_all,
         user_info,
     ]
