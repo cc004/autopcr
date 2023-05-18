@@ -1863,7 +1863,7 @@ class RoomReceiveItemRequest(Request[RoomReceiveItemResponse]):
 class RoomReceiveItemAllRequest(Request[RoomReceiveItemAllResponse]):
 	@property
 	def url(self) -> str:
-		return "room/receive_item_all"
+		return "room/receive_all"
 class RoomMysetListRequest(Request[RoomMysetListResponse]):
 	@property
 	def url(self) -> str:
@@ -2288,6 +2288,12 @@ class AddUserTipsRequest(Request[AddUserTipsResponse]):
 	@property
 	def url(self) -> str:
 		return "tips/add_user_tips"
+class TowerTopRequest(Request[TowerTopResponse]):
+	is_first: int = None
+	return_cleared_ex_quest: int = None
+	@property
+	def url(self) -> str:
+		return "tower/top"
 class TowerBattleStartRequest(Request[TowerBattleStartResponse]):
 	quest_id: int = None
 	token: str = None
