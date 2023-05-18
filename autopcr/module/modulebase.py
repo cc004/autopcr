@@ -127,6 +127,8 @@ class ModuleManager:
                 'password': self.data['password'],
                 'channel': 1,
                 'platform': 2
+                # 'channel': 1000,
+                # 'platform': 1
             })
             await client.login()
             cnt = 0
