@@ -13,8 +13,12 @@ class sessionmgr(Component[apiclient]):
         super().__init__()
         self.cacheDir = os.path.join(os.path.dirname(__file__), 'cache')
         self.bsdk = bsdkclient(account, *arg, **kwargs)
+        self._platform = self.bsdk.platform
+        self._channel = self.bsdk.channel
         self._account = account
         self._logged = False
+        self.auto_relogin = True
+        self._sdkaccount = None
         if not os.path.exists(self.cacheDir):
             os.makedirs(self.cacheDir)
         self.cacheFile = os.path.join(self.cacheDir, account['account'])
@@ -31,8 +35,6 @@ class sessionmgr(Component[apiclient]):
                 'uid': uid,
                 'access_key': access_key
         }
-        self._platform = self.bsdk.platform
-        self._channel = self.bsdk.channel
         with open(self.cacheFile, 'w') as fp:
             json.dump(self._sdkaccount, fp)
     
@@ -58,19 +60,18 @@ class sessionmgr(Component[apiclient]):
                             await asyncio.sleep(60)
 
                     while True:
-                        await self._bililogin()
-                        if not self._sdkaccount or not self._sdkaccount['access_key']:
-                            self._sdkaccount = None
-                            continue
-                        req = ToolSdkLoginRequest(
-                            uid=self._sdkaccount['uid'],
-                            access_key=self._sdkaccount['access_key'],
-                            platform=str(self._platform),
-                            channel_id=str(self._channel)
-                        )
-                        if not (await next(req)).is_risk:
-                            break
+                        if self._sdkaccount and self._sdkaccount['access_key']:
+                            req = ToolSdkLoginRequest(
+                                uid=self._sdkaccount['uid'],
+                                access_key=self._sdkaccount['access_key'],
+                                platform=str(self._platform),
+                                channel_id=str(self._channel)
+                            )
+                            if not (await next(req)).is_risk:
+                                break
+                        
                         self._sdkaccount = None
+                        await self._bililogin()
 
                     req = CheckGameStartRequest()
                     req.apptype = 0
@@ -101,6 +102,6 @@ class sessionmgr(Component[apiclient]):
         try:
             return await next(request)
         except ApiException as ex:
-            if ex.status == 3:
+            if ex.status == 3 and self.auto_relogin:
                 self._logged = False
             raise

@@ -325,12 +325,6 @@ class EventStatus(BaseModel):
 class EventSubStoryInfo(BaseModel):
 	sub_story_id: int = None
 	status: eEventSubStoryStatus = None
-class ExchangeRewards(BaseModel):
-	id: int = None
-	type: int = None
-	count: int = None
-	stock: int = None
-	received: int = None
 class FriendSetting(BaseModel):
 	limit_accept: int = None
 	limit_request: int = None
@@ -668,7 +662,6 @@ class PresentHistoryInfo(BaseModel):
 	message_param_value3: int = None
 	message_param_value4: int = None
 	create_time: int = None
-	message_text: str = None
 class PresentParameter(BaseModel):
 	present_id: int = None
 	reward_type: eInventoryType = None
@@ -683,7 +676,6 @@ class PresentParameter(BaseModel):
 	reward_limit_flag: eRewardLimitType = None
 	reward_limit_time: int = None
 	create_time: int = None
-	message_text: str = None
 class Price(BaseModel):
 	currency_id: int = None
 	currency_num: int = None
@@ -763,7 +755,7 @@ class RefundItem(BaseModel):
 	type: eItemType = None
 	number: int = None
 class ReleaseContentData(BaseModel):
-	system_id: eSystemId = None
+	system_id: str = None
 	deck_list: List[DeckData] = None
 class RestChallengeInfo(BaseModel):
 	dungeon_type: int = None
@@ -1128,7 +1120,6 @@ class UserInfo(BaseModel):
 	stamina_full_recovery_time: int = None
 	arena_rank: int = None
 	invite_accept_flag: int = None
-	reg_time: int = None
 class UserItemParameter(BaseModel):
 	item_id: int = None
 	item_count: int = None
@@ -1607,15 +1598,6 @@ class SpecialBattleInfo(BaseModel):
 	enemy_point: int = None
 	mode: int = None
 	kill_limit: int = None
-class TotalRanking(BaseModel):
-	clan_name: str = None
-	member_num: int = None
-	leader_viewer_id: int = None
-	leader_name: str = None
-	leader_favorite_unit: UnitDataForView = None
-	rank: int = None
-	period_rank: List[int] = None
-	grade_rank: int = None
 class TowerClearedUserInfo(BaseModel):
 	viewer_id: int = None
 	user_name: str = None
@@ -1896,17 +1878,6 @@ class SearchOpponent(BaseModel):
 	favorite_unit: UnitDataForView = None
 	arena_deck: List[UnitData] = None
 	emblem: EmblemData = None
-class SeasonPassData(BaseModel):
-	has_buy: bool = None
-	point_limit_flag: int = None
-	exchange_rewards: List[InventoryInfo] = None
-	season_id: int = None
-	is_buy: int = None
-	seasonpass_level: int = None
-	user_point: int = None
-	weekly_point: int = None
-	missions: List[UserMissionInfo] = None
-	received_rewards: List[int] = None
 class SupportUnitForProfile(BaseModel):
 	position: int = None
 	unit_data: UnitDataLight = None
@@ -1983,7 +1954,6 @@ class BossRankingInClanSummary(BaseModel):
 	phases: List[BossRankingInClanSummaryPhase] = None
 class BossReward(BaseModel):
 	clan_battle_id: int = None
-	period: int = None
 	lap_num: int = None
 	id: int = None
 	kill_time: int = None

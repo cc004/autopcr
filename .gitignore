@@ -3,5 +3,10 @@ __pycache__/
 req.log
 cache/
 clan_scanner.py
-table.csv
 .DS_Store
+clan_iter.py
+clan_scanner1.py
+dismissed.json
+clans/*
+farm_config.json
+table.csv
