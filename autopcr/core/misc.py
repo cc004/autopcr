@@ -12,8 +12,12 @@ class errorhandler(Component[apiclient]):
             try:
                 return await next(request)
             except ValidationError as e:
+                # print(e)
+                # print_exc()
                 pass
-            except ApiException:
+            except ApiException as e:
+                # print(e)
+                # print_exc()
                 raise
             except Exception:
                 print_exc()
