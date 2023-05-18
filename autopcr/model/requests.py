@@ -1760,10 +1760,10 @@ class RaritySixQuestFinishRequest(Request[RaritySixQuestFinishResponse]):
 	def url(self) -> str:
 		return "rarity_6_quest/finish"
 class RoomStartRequest(Request[RoomStartResponse]):
+	wac_auto_option_flag: int = None
 	@property
 	def url(self) -> str:
 		return "room/start"
-	pass
 class RoomUpdateRequest(Request[RoomUpdateResponse]):
 	floor_number: int = None
 	layout: RoomFloorLayout = None
