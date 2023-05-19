@@ -1,5 +1,6 @@
 from ..core.pcrclient import pcrclient
-from typing import List, Dict
+from typing import List, Dict, Iterator
+from abc import abstractmethod
 
 def _wrap_init(cls, setter):
     old = cls.__init__
@@ -52,8 +53,10 @@ class Module:
             return msg
         else:
             raise ValueError(f"Invalid value for module {self.name()}")
-    async def do_task(self, client: pcrclient):
-        pass
+
+    @abstractmethod
+    async def do_task(self, client: pcrclient) -> List[str]: ...
+
     def get_config(self, name):
         return self._parent.get_config(name)
     def generate_config(self):
