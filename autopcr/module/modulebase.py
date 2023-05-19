@@ -1,6 +1,7 @@
 from ..core.pcrclient import pcrclient
 from typing import List, Dict, Iterator
 from abc import abstractmethod
+from ..model.error import *
 
 def _wrap_init(cls, setter):
     old = cls.__init__
@@ -21,7 +22,7 @@ def booltype(cls):
     old = cls.do_task
     async def do_task(self, client: pcrclient):
         if self.value: await old(self, client)
-        else: raise ValueError('not enabled')
+        else: raise SkipError('not enabled')
     cls.do_task = do_task
     return cls
 def notimplemented(cls):
@@ -53,7 +54,7 @@ class Module:
             self._val = val
             return msg
         else:
-            raise ValueError(f"Invalid value for module {self.name()}")
+            raise AbortError(f"Invalid value for module {self.name()}")
 
     @abstractmethod
     async def do_task(self, client: pcrclient): ...
@@ -150,5 +151,6 @@ class ModuleManager:
                 'status': 'failed',
                 'error': str(e)
             }
+        print(json.dumps(result, indent=4))
         return result
 
