@@ -77,7 +77,7 @@ class present_receive_all(Module):
         present = await client.present_index()
         if not present.present_count:
             raise SkipError("No present to receive")
-        await client.present_receive_all()
+        await client.present_receive_all(False)
         self._log('礼物已领取完成')
 
 @description('领取双场币')
@@ -313,10 +313,12 @@ class hatsune_mission_receive_all(Module):
     async def do_task(self, client: pcrclient):
         for event in client.data.event_statuses:
             index = await client.hatsune_mission_index(event.event_id)
-            if not [x for x in index.missions if x.mission_status == eMissionStatusType.EnableReceive]:
+            types = set(x // 10000000 + 5 for x in index.missions if x.mission_status == eMissionStatusType.EnableReceive)
+            if not types:
                 self._log(f"活动{event.event_id}任务已领取")
             else:
-                await client.hatsune_mission_receive()
+                for type in types:
+                    await client.hatsune_mission_receive(event.event_id, type)
                 self._log(f'活动{event.event_id}任务领取完成')
 
 @description('活动Boss扫荡')
@@ -326,16 +328,16 @@ class hatsune_boss_sweep(Module):
     async def do_task(self, client: pcrclient):
         for event in client.data.event_statuses:
             index = await client.get_hatsune_top(event.event_id)
-            item_count = index.boss_ticket_info.count
+            item_count = client.data.get_inventory((eInventoryType.Item, db.hatsune_item[event.event_id][0]))
             times_to_sweep = max(0, item_count // 30 if self.value == 'max' else item_count // 30 - 1 if self.value == 'max - 1' else 0)
             if not times_to_sweep:
                 self._log(f"活动{event.event_id}Boss券不足")
                 continue
-            boss_id = [x for x in index.bosses if x.boss_id % 100 == 2 and x.is_unlocked]
+            boss_id = [x.boss_id for x in index.boss_battle_info if x.boss_id % 100 == 2]
             if not boss_id:
                 self._log(f"活动{event.event_id}Boss未解锁")
                 continue
-            await client.hatsune_boss_skip(event.event_id, boss_id[0], times_to_sweep, index.boss_ticket_info.id)
+            await client.hatsune_boss_skip(event.event_id, boss_id[0], times_to_sweep, item_count)
             self._log(f"活动{event.event_id}Boss扫荡{times_to_sweep}次")
 
 @description('活动一键兑换')
