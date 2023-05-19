@@ -4,6 +4,7 @@ from typing import Set, Dict, Tuple
 from ..model.common import *
 from .base import Container
 import os
+import datetime
 
 db_path = os.path.join(os.path.dirname(__file__), "../../", "redive_cn.db")
 
@@ -27,6 +28,8 @@ class database(Container["database"]):
     campaign: Dict[int, Tuple[str, str, List[int]]] = {}
     love_cake: List[Tuple[int, int]] = []
     love_char: Dict[int, Tuple[int, int]] = {}
+    quest_info: Dict[int, Tuple[int, int, int]] = {}
+    clan_battle_period: Dict[int, Tuple[str, str]] = {}
 
     def __init__(self, path):
         db = RecordDAO(path)
@@ -34,6 +37,18 @@ class database(Container["database"]):
         self.inventory_name[(eInventoryType.TeamExp, 92001)] = "经验"
         self.inventory_name[(eInventoryType.Jewel, 91002)] = "宝石"
         self.inventory_name[(eInventoryType.Gold, 94002)] = "mana"
+
+        for clan_battle in db.get_clan_battle_period():
+            id = clan_battle[0]
+            start_time = clan_battle[1]
+            end_time = clan_battle[2]
+            self.clan_battle_period[id] = (start_time, end_time) 
+
+        for quest in db.get_quest_data():
+            id = quest[0]
+            stamina = quest[1]
+            daily_limit = quest[2]
+            self.quest_info[id] = (daily_limit, 0, stamina) # recovery time TODO
 
         for story in db.get_main_story_detail():
             id = story[0]
@@ -182,6 +197,17 @@ class database(Container["database"]):
             if rarity >= key:
                 love_info = max(love_info, value)
         return love_info
+
+    def is_clan_battle_time(self) -> bool:
+        now = datetime.datetime.now()
+        for key, (start_time, end_time) in list(self.clan_battle_period.items()):
+            start_time = datetime.datetime.strptime(start_time, '%Y/%m/%d %H:%M:%S')
+            end_time = datetime.datetime.strptime(end_time, '%Y/%m/%d %H:%M:%S')
+            if now > end_time:
+                self.clan_battle_period.pop(key)
+            elif now >= start_time:
+                return True
+        return False
 
 db = database(db_path)
 

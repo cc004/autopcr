@@ -317,8 +317,9 @@ class pcrclient(apiclient):
         11: (0, 0, 10), # normal quest has no limit
         12: (3, 1, 20), # hard quest 3*1
         13: (3, 1, 20), # very hard quest 3*1
-        18: (5, 3, 15), # xinsui quest 5*3
-        19: (5, 3, 15), # xingqiubei quest 5*3
+        18: (5, 3, 15), # heart piece quest 5*3
+        19: (5, 3, 15), # 6star quest 5*3
+        20: (5, 0, 15), # shiori quest 5*3
     }
 
     _hatsune_quest_info_dict = {
@@ -357,7 +358,6 @@ class pcrclient(apiclient):
         req.campaign_id = 0
         return await self.request(req)
 
-
     async def normal_gacha(self):
         req = GachaIndexRequest()
         resp = (await self.request(req))
@@ -390,11 +390,12 @@ class pcrclient(apiclient):
 
     async def quest_skip_aware(self, quest: int, times: int, recover: bool = False, is_total: bool = False):
         if not quest in self.data.quest_dict:
-            raise ValueError(f"任务{quest}不存在")
+            raise AbortError(f"任务{quest}未通关或不存在")
         qinfo = self.data.quest_dict[quest]
         if qinfo.clear_flg != 3:
-            raise ValueError(f"任务{quest}未三星")
-        info = self._quest_info_dict[quest // 1000000]
+            raise AbortError(f"任务{quest}未三星")
+        # info = self._quest_info_dict[quest // 1000000]
+        info = db.quest_info[quest]
         result: List[InventoryInfo] = []
         async def skip(times):
             if self.data.stamina < info[2] * times:
@@ -437,11 +438,11 @@ class pcrclient(apiclient):
 
     async def hatsune_quest_skip_aware(self, event: int, quest: int, times: int, recover: bool = False, is_total: bool = False):
         if not quest in self.data.hatsune_quest_dict[event]:
-            raise ValueError(f"任务{quest}不存在")
+            raise AbortError(f"任务{quest}未通关或不存在")
         qinfo = self.data.hatsune_quest_dict[event][quest]
         if qinfo.clear_flag != 3:
-            raise ValueError(f"任务{quest}未三星")
-        info = pcrclient._hatsune_quest_info_dict[quest % 1000]
+            raise AbortError(f"任务{quest}未三星")
+        info = db.quest_info[quest]
         async def skip(times):
             print(f"skip {times} {event} {quest}")
             if self.data.stamina < info[2] * times:

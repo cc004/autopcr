@@ -100,7 +100,7 @@ class free_gacha(Module):
 class normal_shop(Module):
     async def do_task(self, client: pcrclient):
         if self.value == "none":
-            raise SkipError("不购买通用商店")
+            raise SkipError("未启用")
         res = await client.get_shop_item_list()
         items: ShopInfo = None
         exp = True if self.value == "all" or self.value == "经验药水" else False
@@ -129,7 +129,7 @@ class normal_shop(Module):
 class limit_shop(Module):
     async def do_task(self, client: pcrclient):
         if self.value == "none":
-            raise SkipError("不购买限定商店")
+            raise SkipError("未启用")
         res = await client.get_shop_item_list()
         items: ShopInfo = None
         exp = True if self.value == "all" or self.value == "经验药水" else False
@@ -161,7 +161,7 @@ class limit_shop(Module):
 class underground_shop(Module):
     async def do_task(self, client: pcrclient):
         if self.value == "none":
-            raise SkipError("不购买地下城商店")
+            raise SkipError("未启用")
         res = await client.get_shop_item_list()
         items: ShopInfo = None
         memory = True if self.value == "all" or self.value == "记忆碎片" else False
@@ -190,7 +190,7 @@ class underground_shop(Module):
 class jjc_shop(Module):
     async def do_task(self, client: pcrclient):
         if self.value == "none":
-            raise SkipError("不购买jjc商店")
+            raise SkipError("未启用")
         res = await client.get_shop_item_list()
         items: ShopInfo = None
         memory = True if self.value == "all" or self.value == "记忆碎片" else False
@@ -219,7 +219,7 @@ class jjc_shop(Module):
 class pjjc_shop(Module):
     async def do_task(self, client: pcrclient):
         if self.value == "none":
-            raise SkipError("不购买pjjc商店")
+            raise SkipError("未启用")
         res = await client.get_shop_item_list()
         items: ShopInfo = None
         memory = True if self.value == "all" or self.value == "记忆碎片" else False
@@ -263,6 +263,7 @@ class six_star(Module):
     async def do_task(self, client: pcrclient):
         result: List[str] = []
         is_error = False
+        is_abort = False
         for quest_id, (pure_memory, unit_id) in db.six_area.items():
             if client.data.unit[unit_id].unit_rarity != 6 and client.data.get_inventory((eInventoryType.Item, pure_memory)) < 50:
                 try:
@@ -271,14 +272,20 @@ class six_star(Module):
                     result.append(f"{db.inventory_name[(eInventoryType.Unit, unit_id)]}六星本: {msg}")
                 except SkipError as e:
                     result.append(f"{db.inventory_name[(eInventoryType.Unit, unit_id)]}六星本: {str(e)}")
+                except AbortError as e:
+                    is_abort = True
+                    result.append(f"{db.inventory_name[(eInventoryType.Unit, unit_id)]}六星本: {str(e)}")
+                    break
                 except Exception as e:
                     is_error = True
                     result.append(f"{db.inventory_name[(eInventoryType.Unit, unit_id)]}六星本: {str(e)}")
+                    break
             else:
                 pass
                 # result.append(f"{quest_id}: 材料已够，无需刷取")
         msg = '\n'.join(result)
         if is_error: raise ValueError(msg)
+        if is_abort: raise AbortError(msg)
         if len(result) == 0:
             raise SkipError("六星碎片均已足够，无需刷取")
         self.set_result(msg)
@@ -293,7 +300,7 @@ class underground_skip(Module):
         rest = infos.rest_challenge_count[0].count
         if infos.enter_area_id != 0:
             dungeon_name = db.dungeon_name[infos.enter_area_id]
-            raise ValueError(f"当前以位于{dungeon_name}，将不进行扫荡")
+            raise AbortError(f"当前以位于{dungeon_name}，将不进行扫荡")
         
         if rest:
             id = 0
@@ -309,7 +316,7 @@ class underground_skip(Module):
                 self.set_result(f"扫荡了【{dungeon_name}】")
                 # self.set_result(f"扫荡了{dungeon_name}，获得了：\n{result}")
             else:
-                raise ValueError("不存在已完成讨伐的地下城")
+                raise AbortError("不存在已完成讨伐的地下城")
         else:
             raise SkipError("今日已扫荡地下城")
 
@@ -318,7 +325,8 @@ class underground_skip(Module):
 @default(True)
 class user_info(Module):
     async def do_task(self, client: pcrclient):
-        result = f"{client.data.name} 体力{client.data.stamina}({db.team_max_stamina[client.data.team_level]}) 等级{client.data.team_level} 钻石{client.data.jewel.free_jewel} mana{client.data.gold.gold_id_free} 扫荡券{client.data.get_inventory((eInventoryType.Item, 23001))} 母猪石{client.data.get_inventory((eInventoryType.Item, 90005))}"
+        now = datetime.datetime.now().strftime("%Y-%m-%d, %H:%M:%S")
+        result = f"{client.data.name} 体力{client.data.stamina}({db.team_max_stamina[client.data.team_level]}) 等级{client.data.team_level} 钻石{client.data.jewel.free_jewel} mana{client.data.gold.gold_id_free} 扫荡券{client.data.get_inventory((eInventoryType.Item, 23001))} 母猪石{client.data.get_inventory((eInventoryType.Item, 90005))}\n清日常时间:{now}"
         self.set_result(result)
 
 @description('阅读角色剧情')
@@ -371,9 +379,9 @@ class main_story_reading(Module):
         client.data.read_story_ids = list(read_story)
         if msg != "":
             if len(result) != 0:
-                raise ValueError("已阅读" + '|'.join(result) + "，但" + msg)
+                raise AbortError("已阅读" + '|'.join(result) + "，但" + msg)
             else:
-                raise ValueError(msg)
+                raise AbortError(msg)
         if len(result) == 0:
             raise SkipError("不存在未阅读的主线剧情")
         msg = f"阅读了{len(result)}篇：" + '|'.join(result) 
@@ -402,9 +410,9 @@ class tower_story_reading(Module):
         client.data.read_story_ids = list(read_story)
         if msg != "":
             if len(result) != 0:
-                raise ValueError("已阅读" + '|'.join(result) + "，但" + msg)
+                raise AbortError("已阅读" + '|'.join(result) + "，但" + msg)
             else:
-                raise ValueError(msg)
+                raise AbortError(msg)
         if len(result) == 0:
             raise SkipError("不存在未阅读的露娜塔剧情")
         msg = f"阅读了{len(result)}篇：" + '|'.join(result) 
@@ -508,7 +516,7 @@ class clan_like(Module):
             raise SkipError('今日点赞次数已用完。')
         info = await client.get_clan_info()
         members = [(x.viewer_id, x.name) for x in info.members if x.viewer_id != client.viewer_id]
-        if len(members) == 0: raise ValueError("No other members in clan")
+        if len(members) == 0: raise AbortError("No other members in clan")
         rnd = random.choice(members)
         await client.clan_like(rnd[0])
         self.set_result(f"为【{rnd[1]}】点赞")
@@ -521,7 +529,10 @@ class hatsune_h_sweep(Module):
         result: List[str] = []
         area = []
         hard = 200
+        status = 0
         is_error = False
+        is_abort = False
+        is_skip = True
         if self.value == "none":
             raise SkipError("未启用")
         if self.value == "odd":
@@ -542,16 +553,23 @@ class hatsune_h_sweep(Module):
                 try: 
                     times = 3 - client.data.hatsune_quest_dict[event.event_id][quest_id].daily_clear_count
                     await client.hatsune_quest_skip_aware(event.event_id, quest_id, 3, False, True)
+                    is_skip = False
                     result.append(f"{quest_id}: 扫荡{times}次")
                 except SkipError as e:
                     result.append(f"{quest_id}: {str(e)}")
+                except AbortError as e:
+                    is_abort = True
+                    result.append(f"{quest_id}: {str(e)}")
+                    break
                 except Exception as e: 
                     is_error = True
                     result.append(f"{quest_id}: {str(e)}")
-        if not event_active:
-            raise SkipError("当前无进行中的活动")
+                    break
+        if not event_active: raise SkipError("当前无进行中的活动")
         msg = '\n'.join(result)
         if is_error: raise ValueError(msg)
+        if is_abort: raise AbortError(msg)
+        if is_skip: raise SkipError(msg)
         self.set_result(msg)
 
 @description('领取活动任务奖励')
@@ -561,6 +579,8 @@ class hatsune_mission_accept(Module):
     async def do_task(self, client: pcrclient):
         result: List[str] = []
         is_error = False
+        is_abort = False
+        is_skip = True
         event_active = False
         for event in client.data.event_statuses:
             if event.event_type != 1 or event.period != 2:
@@ -577,19 +597,24 @@ class hatsune_mission_accept(Module):
                             reward = await client.serlize_reward(res.rewards)
                             have = True
                             result.append(f"{event.event_id}: 领取了任务奖励，获得了:\n" + reward)
+                            is_skip = False
                             break
                 if not have:
                     raise SkipError("没有可领取的任务奖励")
             except SkipError as e:
                 result.append(f"{event.event_id}: {str(e)}")
+            except AbortError as e:
+                is_abort = True
+                result.append(f"{event.event_id}: {str(e)}")
             except Exception as e:
                 is_error = True
                 result.append(f"{event.event_id}: {str(e)}")
 
-        if not event_active:
-            raise SkipError("当前无进行中的活动")
+        if not event_active: raise SkipError("当前无进行中的活动")
         msg = '\n'.join(result)
         if is_error: raise ValueError(msg)
+        if is_abort: raise AbortError(msg)
+        if is_skip: raise SkipError(msg)
         self.set_result(msg)
 
 @description('活动h本boss')
@@ -599,8 +624,10 @@ class hatsune_hboss_sweep(Module):
     async def do_task(self, client: pcrclient):
         result: List[str] = []
         is_error = False
+        is_abort = False
+        is_skip = True
         if self.value == "none":
-            raise SkipError("不扫荡活动h本boss")
+            raise SkipError("未启用")
         event_active = False
         for event in client.data.event_statuses:
             if event.event_type != 1 or event.period != 2:
@@ -618,12 +645,16 @@ class hatsune_hboss_sweep(Module):
             try: 
                 for boss_battle_info in resp.boss_battle_info:
                     if boss_battle_info.boss_id == boss_id and not boss_battle_info.is_unlocked:
-                        raise ValueError(f"h本boss未解锁")
+                        raise AbortError(f"h本boss未解锁")
                 if times <= 0:
                     raise SkipError(f"boss券不足 {ticket}")
+                is_skip = False
                 resp = await client.hatsune_boss_skip(event.event_id, boss_id, times, ticket)
                 result.append(f"{event.event_id} h boss: 扫荡{times}次")
             except SkipError as e:
+                result.append(f"{event.event_id}: {str(e)}")
+            except AbortError as e:
+                is_abort = True
                 result.append(f"{event.event_id}: {str(e)}")
             except Exception as e: 
                 is_error = True
@@ -632,6 +663,8 @@ class hatsune_hboss_sweep(Module):
             raise SkipError("当前无进行中的活动")
         msg = '\n'.join(result)
         if is_error: raise ValueError(msg)
+        if is_abort: raise AbortError(msg)
+        if is_skip: raise SkipError(msg)
         self.set_result(msg)
 
 @description('使用体力时，若体力不足，最多允许购买的体力管数。')
@@ -703,6 +736,8 @@ class room_like_back(Module):
         like_history = await client.room_like_history()
         cnt = like_history.today_like_count
         pos = 0
+        if cnt >= 10:
+            raise SkipError(f"今日已点赞{cnt}次")
         while pos < like_history.today_be_liked_count or cnt < 10:
             viewer_id = 0
             if pos < like_history.today_be_liked_count:
@@ -742,7 +777,7 @@ class normal_gacha(Module):
     async def do_task(self, client: pcrclient):
         resp = await client.normal_gacha()
         memory = [i for i in resp.reward_info_list if db.is_unit_memory((i.type, i.id))]
-        result = "无记忆碎片，全是装备"
+        result = "全是装备"
         if memory:
             result = await client.serlize_reward(memory)
         self.set_result(result)
@@ -779,7 +814,7 @@ class tower_cloister_sweep(Module):
             raise SkipError("露娜塔已结束")
         top = await client.get_tower_top()
         if top.cloister_first_cleared_flag != 1:
-            raise ValueError("回廊未通关")
+            raise AbortError("回廊未通关")
         if top.cloister_remain_clear_count:
             times = top.cloister_remain_clear_count
             res = await client.tower_cloister_battle_skip(times)
@@ -798,7 +833,7 @@ class tower_cloister_sweep(Module):
 class present_receive(Module):
     async def do_task(self, client: pcrclient):
         if self.value == "none":
-            raise SkipError("不收取礼物")
+            raise SkipError("未启用")
         elif self.value == "非体力":
             is_exclude_stamina = True
             op = "领取了非体力物品：\n"
@@ -915,7 +950,7 @@ class smart_sweep(Module):
         msg = []
         result = []
         if nloop == [] and loop == []:
-            raise ValueError("未找到start和loop")
+            raise AbortError("未找到start和loop")
         for quest_id, count in _sweep():
             try:
                 result += await client.quest_skip_aware(quest_id, count, True, True)
@@ -923,11 +958,11 @@ class smart_sweep(Module):
                 m = str(e)
                 if m.endswith('体力不足'): 
                     break
-            except ValueError as e:
+            except AbortError as e:
                 m = str(e)
                 msg.append(m)
                 if not m.endswith("已达最大次数"):
-                    raise ValueError('\n'.join(msg))
+                    raise AbortError('\n'.join(msg))
         
         msg = await client.serlize_reward(result)
         self.set_result(msg)
@@ -952,7 +987,7 @@ def register_all():
         explore_mana,
         underground_skip,
         tower_cloister_sweep,
-        buy_stamina_active,
+        # buy_stamina_active,
         six_star,
         jjc_reward,
         xinsui3_sweep,
