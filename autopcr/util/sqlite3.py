@@ -166,4 +166,11 @@ class RecordDAO:
                 f"SELECT quest_id, stamina, daily_limit FROM shiori_quest",
             ).fetchall()
         return r
+    
+    def get_hatsune_item(self):
+        with self.connect() as conn:
+            r = conn.execute(
+                f"SELECT event_id, boss_ticket_id, gacha_ticket_id FROM hatsune_item",
+            ).fetchall()
+        return r
 

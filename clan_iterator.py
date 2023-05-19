@@ -73,6 +73,9 @@ async def worker(account):
             comp.auto_relogin = False
 
     await client.login()
+
+   # print((await client.get_hatsune_top(client.data.event_statuses[0].event_id)).json())
+   # exit(0)
     while True:
         async with id_lck:
             id = ids[current]
