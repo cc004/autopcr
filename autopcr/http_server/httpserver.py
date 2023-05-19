@@ -71,6 +71,6 @@ class HttpServer:
             return await render_template('config.html')
         
 
-    def run_forever(self):
-        self.app.run(host=self.host, port=self.port)
+    def run_forever(self, loop):
+        self.app.run(host=self.host, port=self.port, loop=loop)
     
