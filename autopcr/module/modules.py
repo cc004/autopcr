@@ -4,6 +4,7 @@ from ..model.error import *
 from ..core.database import db
 from ..model.models import *
 import random
+from abc import abstractmethod
 
 @description('在公会中自动随机选择一位成员点赞。')
 @booltype
@@ -54,15 +55,15 @@ class room_accept_all(Module):
 @default(True)
 class explore(Module):
     async def do_task(self, client: pcrclient):
-        # 10级探索
+        # 11级探索
         if client.data.training_quest_count.gold_quest:
             self._log(f'Mana探索: {2 - client.data.training_quest_count.gold_quest}次')
-            await client.training_quest_skip(21001010, 2 - client.data.training_quest_count.gold_quest)
+            await client.training_quest_skip(21001011, 2 - client.data.training_quest_count.gold_quest)
         else:
             self._log(f'Mana探索：已完成')
         if client.data.training_quest_count.exp_quest:
             self._log(f'Exp探索: {2 - client.data.training_quest_count.exp_quest}次')
-            await client.training_quest_skip(21002010, 2 - client.data.training_quest_count.exp_quest)
+            await client.training_quest_skip(21002011, 2 - client.data.training_quest_count.exp_quest)
         else:
             self._log(f'Exp探索：已完成')
 
@@ -182,6 +183,10 @@ class receive_mission_reward(Module):
         await client.mission_receive()
         self._log('任务奖励已领取完成')
 
+@description('领取任务奖励2')
+class receive_mission_reward2(receive_mission_reward):
+    pass
+
 @description('探索露娜塔回廊')
 @booltype
 @default(True)
@@ -192,6 +197,87 @@ class tower_explore(Module):
             raise AbortError("露娜塔回廊未开启")
         await client.tower_cloister_battle_skip(top.cloister_remain_clear_count)
         self._log('露娜塔回廊已探索完成')
+
+@description('普通扭蛋')
+@booltype
+@default(True)
+class gacha_normal(Module):
+    async def do_task(self, client: pcrclient):
+        await client.normal_gacha()
+        self._log('普通扭蛋已完成')
+
+
+@description('商店购买最大碎片量')
+@enumtype([0, 100, 300, 600, 900, 99999])
+@default(300)
+class shop_buy_limit(Module):
+    async def do_task(self, client: pcrclient):
+        client.keys['shop_buy_limit'] = self.value
+
+class shop_buy(Module):
+    @abstractmethod
+    def system_id(self) -> int: ...
+    @abstractmethod
+    def coin_limit(self) -> int: ...
+
+    async def _get_shop_content(self, client: pcrclient):
+        for shop in (await client.get_shop_item_list()).shop_list:
+            if shop.system_id == self.system_id():
+                return shop
+        raise AbortError("商店未开启")
+
+    async def do_task(self, client: pcrclient):
+        shop_content = await self._get_shop_content(client)
+
+        prev = client.data.get_shop_gold(self.system_id())
+
+        while shop_content.reset_count <= self.value:
+            slots_to_buy = []
+            for item in shop_content.item_list:
+                if item.available_num and client.data.get_inventory((item.type, item.item_id)) < self.coin_limit():
+                    slots_to_buy.append(item.slot_id)
+
+            if slots_to_buy:
+                await client.shop_buy_item(shop_content.system_id, slots_to_buy)
+
+            if shop_content.reset_count == self.value:
+                break
+            
+            if client.data.get_shop_gold(self.system_id()) < self.coin_limit():
+                raise AbortError(f"商店金币小于{self.coin_limit()}，无法继续购买")
+
+            await client.shop_reset(shop_content.system_id)
+            shop_content = await self._get_shop_content(client)
+
+        self._log(f"已花费{client.data.get_shop_gold(self.system_id()) - prev}代币购买装备")
+
+@description('购买地下城币刷新次数, -1为不购买')
+@enumtype([-1, 0, 1, 2, 3, 4, 7, 10])
+@default(0)
+class dungeon_shop(shop_buy):
+    def system_id(self) -> int:
+        return 204
+    def coin_limit(self) -> int:
+        return 100000
+
+@description('购买jjc币刷新次数, -1为不购买')
+@enumtype([-1, 0, 1, 2, 3, 4, 7, 10])
+@default(0)
+class jjc_shop(shop_buy):
+    def system_id(self) -> int:
+        return 202
+    def coin_limit(self) -> int:
+        return 100000
+
+@description('购买pjjc币刷新次数, -1为不购买')
+@enumtype([-1, 0, 1, 2, 3, 4, 7, 10])
+@default(0)
+class pjjc_shop(shop_buy):
+    def system_id(self) -> int:
+        return 203
+    def coin_limit(self) -> int:
+        return 100000
+
 
 def register_test():
     ModuleManager._modules = [
@@ -206,14 +292,27 @@ def register_all():
         clan_like,
         room_accept_all,
         explore,
-        tower_explore,
-        present_receive_all,
+        gacha_normal,
+        dungeon_shop,
+        jjc_shop,
+        pjjc_shop,
+        dungeon_sweep,
+        sixstar_sweep,
+        hatsune135_sweep,
+        hatsune24_sweep,
         jjc_reward,
+        tower_explore,
         xinsui3_sweep,
         xinsui2_sweep,
         xingqiubei2_sweep,
         xinsui1_sweep,
-        xingqiubei1_sweep, 
+        xingqiubei1_sweep,
+        hatsune_hboss_sweep,
+        hatsune_present_receive_all,
+        hatsune_exchange,
+        daily_shop,
         buy_stamina_active,
-        smart_sweep
+        present_receive_all,
+        smart_sweep,
+        receive_mission_reward2,
     ]

@@ -103,6 +103,12 @@ class pcrclient(apiclient):
         req.current_currency_num = self.data.get_shop_gold(shop_id)
         return await self.request(req)
 
+    async def shop_reset(self, shop_id):
+        req = ShopResetRequest()
+        req.system_id = shop_id
+        req.current_currency_num = self.data.get_shop_gold(shop_id)
+        return await self.request(req)
+
     async def mission_receive(self):
         req = MissionAcceptRequest()
         req.type = 1
