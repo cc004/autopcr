@@ -14,6 +14,7 @@ class database(Container["database"]):
     tower: Dict[int, Tuple[str, str]] = {}
     daily_mission: Set[int] = set()
     main_story: List[Tuple[int, int, int, str]] = []
+    floor2clositer: Dict[int, int] = {}
     tower_story: List[Tuple[int, int, int, str, str]] = []
     tower2floor: Dict[int, int] = {}
     event_story: List[Tuple[int, int, str]] = []
@@ -64,6 +65,11 @@ class database(Container["database"]):
             title = story[3]
             start_time = story[4]
             self.tower_story.append((id, pre_id, unlock_quest_id, title, start_time))
+
+        for quest in db.get_tower_area_data():
+            floor_num = quest[0]
+            cloister_quest_id = quest[1]
+            self.floor2clositer[floor_num] = cloister_quest_id
 
         for quest in db.get_tower_quest_detail():
             quest_id = quest[0]

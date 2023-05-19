@@ -37,6 +37,7 @@ class Module:
         self.type = 'invalid'
         self.implmented = True
         self._parent = parent
+        self.log = []
     @property
     def value(self):
         return self._val
@@ -55,7 +56,7 @@ class Module:
             raise ValueError(f"Invalid value for module {self.name()}")
 
     @abstractmethod
-    async def do_task(self, client: pcrclient) -> List[str]: ...
+    async def do_task(self, client: pcrclient): ...
 
     def get_config(self, name):
         return self._parent.get_config(name)
@@ -68,6 +69,9 @@ class Module:
             'candidate_value': self.candidates,
             'implemented': self.implmented
         }
+
+    def _log(self, msg):
+        self.log.append(msg)
 
 import json
 import traceback
@@ -126,12 +130,25 @@ class ModuleManager:
             for name in (x.__name__ for x in ModuleManager._modules):
                 module = self.modules[name]
                 try:
+                    module.log.clear()
                     await module.do_task(client)
-                    result[name] = 'success'
+                    result[name] = {
+                        'status': 'success',
+                        'log': module.log
+                    }
                 except Exception as e:
-                    result[name] = str(e)
-            result['main'] = 'success'
+                    result[name] = {
+                        'status': 'failed',
+                        'log': module.log,
+                        'error': str(e)
+                    }
+            result['main'] = {
+                'status': 'success'
+            }
         except Exception as e:
-            result['main'] = str(e)
+            result['main'] = {
+                'status': 'failed',
+                'error': str(e)
+            }
         return result
 

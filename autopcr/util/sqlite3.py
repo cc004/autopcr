@@ -42,6 +42,13 @@ class RecordDAO:
             ).fetchall()
         return r
 
+    def get_tower_area_data(self):
+        with self.connect() as conn:
+            r = conn.execute(
+                f"SELECT max_floor_num, cloister_quest_id FROM tower_area_data",
+            ).fetchall()
+        return r
+
     def get_event_story_detail(self):
         with self.connect() as conn:
             r = conn.execute(
