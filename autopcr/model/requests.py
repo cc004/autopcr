@@ -713,22 +713,6 @@ class UniqueEquipEnhanceRequest(Request[UniqueEquipEnhanceResponse]):
 	@property
 	def url(self) -> str:
 		return "equipment/enhance_unique"
-class UniqueEquipMultiEnhanceRequest(Request[UniqueEquipMultiEnhanceResponse]):
-	unit_id: int = None
-	equip_slot_num: int = None
-	current_gold_num: int = None
-	craft_equip_recipe_list: List[EnhanceRecipe] = None
-	craft_item_recipe_list: List[EnhanceRecipe] = None
-	rank_up_equip_recipe_list: List[EnhanceRecipe] = None
-	rank_up_item_recipe_list: List[EnhanceRecipe] = None
-	rank_up_exp_potion_list: List[EnhanceRecipe] = None
-	current_rank: int = None
-	after_rank: int = None
-	enhancement_item_list: List[EnhanceRecipe] = None
-	current_enhancement_pt: int = None
-	@property
-	def url(self) -> str:
-		return "equipment/multi_enhance_unique"
 class EquipEnhanceMaxRequest(Request[EquipEnhanceMaxResponse]):
 	unit_id: int = None
 	equip_slot_num: int = None
@@ -1585,6 +1569,7 @@ class PresentReceiveAllRequest(Request[PresentReceiveAllResponse]):
 	time_filter: int = None
 	type_filter: int = None
 	desc_flag: bool = None
+	is_exclude_stamina: bool = None
 	@property
 	def url(self) -> str:
 		return "present/receive_all"
@@ -1759,6 +1744,7 @@ class RaritySixQuestFinishRequest(Request[RaritySixQuestFinishResponse]):
 	def url(self) -> str:
 		return "rarity_6_quest/finish"
 class RoomStartRequest(Request[RoomStartResponse]):
+	wac_auto_option_flag: int = None
 	@property
 	def url(self) -> str:
 		return "room/start"
@@ -1862,7 +1848,7 @@ class RoomReceiveItemRequest(Request[RoomReceiveItemResponse]):
 class RoomReceiveItemAllRequest(Request[RoomReceiveItemAllResponse]):
 	@property
 	def url(self) -> str:
-		return "room/receive_item_all"
+		return "room/receive_all"
 class RoomMysetListRequest(Request[RoomMysetListResponse]):
 	@property
 	def url(self) -> str:
@@ -2287,6 +2273,12 @@ class AddUserTipsRequest(Request[AddUserTipsResponse]):
 	@property
 	def url(self) -> str:
 		return "tips/add_user_tips"
+class TowerTopRequest(Request[TowerTopResponse]):
+	is_first: int = None
+	return_cleared_ex_quest: int = None
+	@property
+	def url(self) -> str:
+		return "tower/top"
 class TowerBattleStartRequest(Request[TowerBattleStartResponse]):
 	quest_id: int = None
 	token: str = None

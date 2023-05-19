@@ -8,7 +8,7 @@ import random
 @default(True)
 class clan_like(Module):
     async def do_task(self, client: pcrclient):
-        if not client.data.clan_like_count:
+        if client.data.clan_like_count == 1:
             raise ValueError('今日点赞次数已用完。')
         info = await client.get_clan_info()
         members = [x.viewer_id for x in info.members if x.viewer_id != client.viewer_id]
@@ -29,7 +29,7 @@ class buy_stamina_passive(Module):
 class buy_stamina_active(Module):
     async def do_task(self, client: pcrclient):
         for i in range(self.value):
-            if client.jewel.free_jewel < 10000: break
+            if client.data.jewel.free_jewel < 10000: break
             await client.recover_stamina()
 
 @description('收取家园体。')
@@ -64,7 +64,7 @@ class present_receive_all(Module):
         present = await client.present_index()
         if not present.present_count:
             raise ValueError("No present to receive")
-        await client.present_receive_all()
+        await client.present_receive_all(True)
 
 @description('领取双场币')
 @booltype
