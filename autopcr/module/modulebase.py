@@ -22,7 +22,7 @@ def booltype(cls):
     old = cls.do_task
     async def do_task(self, client: pcrclient):
         if self.value: await old(self, client)
-        else: raise SkipError('not enabled')
+        else: raise SkipError('功能未启用')
     cls.do_task = do_task
     return cls
 def notimplemented(cls):
@@ -151,6 +151,5 @@ class ModuleManager:
                 'status': 'failed',
                 'error': str(e)
             }
-        print(json.dumps(result, indent=4))
         return result
 

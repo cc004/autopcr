@@ -173,7 +173,7 @@ class smart_sweep(Module):
                     if not m.endswith("已达最大次数"):
                         raise
 
-@description('领取任务奖励')
+@description('开始时领取任务奖励')
 @booltype
 @default(True)
 class receive_mission_reward(Module):
@@ -184,7 +184,7 @@ class receive_mission_reward(Module):
         await client.mission_receive()
         self._log('任务奖励已领取完成')
 
-@description('领取任务奖励2')
+@description('结束时领取任务奖励')
 class receive_mission_reward2(receive_mission_reward):
     pass
 
@@ -196,8 +196,10 @@ class tower_explore(Module):
         top = await client.get_tower_top()
         if not top.cloister_first_cleared_flag:
             raise AbortError("露娜塔回廊未开启")
+        if not top.cloister_remain_clear_count:
+            raise SkipError("露娜塔回廊已探索完成")
         await client.tower_cloister_battle_skip(top.cloister_remain_clear_count)
-        self._log('露娜塔回廊已探索完成')
+        self._log(f'露娜塔回廊探索完成{top.cloister_remain_clear_count}次')
 
 @description('普通扭蛋')
 @booltype
@@ -231,26 +233,31 @@ class shop_buy(Module):
         shop_content = await self._get_shop_content(client)
 
         prev = client.data.get_shop_gold(self.system_id())
+        
+        buy_limit = client.keys.get('shop_buy_limit', 300)
 
         while shop_content.reset_count <= self.value:
-            slots_to_buy = []
-            for item in shop_content.item_list:
-                if item.available_num and client.data.get_inventory((item.type, item.item_id)) < self.coin_limit():
-                    slots_to_buy.append(item.slot_id)
+            
+            if client.data.get_shop_gold(self.system_id()) < self.coin_limit():
+                raise AbortError(f"商店金币小于{self.coin_limit()}，无法继续购买")
 
+            slots_to_buy = [
+                item.slot_id for item in shop_content.item_list if 
+                    item.available_num and 
+                    client.data.get_inventory((item.type, item.item_id)) < buy_limit and 
+                    not item.sold
+            ]
+            
             if slots_to_buy:
                 await client.shop_buy_item(shop_content.system_id, slots_to_buy)
 
             if shop_content.reset_count == self.value:
                 break
             
-            if client.data.get_shop_gold(self.system_id()) < self.coin_limit():
-                raise AbortError(f"商店金币小于{self.coin_limit()}，无法继续购买")
-
             await client.shop_reset(shop_content.system_id)
             shop_content = await self._get_shop_content(client)
 
-        self._log(f"已花费{client.data.get_shop_gold(self.system_id()) - prev}代币购买装备")
+        self._log(f"已花费{prev - client.data.get_shop_gold(self.system_id())}代币购买装备")
 
 @description('购买地下城币刷新次数, -1为不购买')
 @enumtype([-1, 0, 1, 2, 3, 4, 7, 10])
@@ -291,6 +298,10 @@ class dungeon_sweep(Module):
                 self._log(f"地下城{db.dungeon_name[info.enter_area_id]}已扫荡完成")
                 return
             raise AbortError("地下城进入了不可扫荡的区域")
+        if not [
+            x for x in info.rest_challenge_count if x.dungeon_type == 1 and x.count > 0
+        ]:
+            raise AbortError("地下城挑战次数不足")
         
         await client.skip_dungeon(max(info.dungeon_cleared_area_id_list))
         self._log(f'地下城{db.dungeon_name[max(info.dungeon_cleared_area_id_list)]}扫荡已完成')
@@ -384,10 +395,11 @@ class vh_sweep(Module):
     async def do_task(self, client: pcrclient):
         for quest, (item, unit) in db.six_area.items():
             data = client.data.unit[unit]
-            if data.rarity == 6 or data.unlock_rarity6_item and data.unlock_rarity6_item.status1 or client.data.get_inventory(
-                (eInventoryType.Piece, item)):
+            if data.unit_rarity == 6 or data.unlock_rarity6_item and data.unlock_rarity6_item.status1 or client.data.get_inventory(
+                (eInventoryType.Piece, item)) >= 50:
                 continue
             await client.quest_skip_aware(quest, self.value, True, True)
+            self._log(f"为角色{unit}扫荡六星碎片图")
 
 
 @description('购买限时商店')
@@ -415,6 +427,7 @@ def register_all():
         room_accept_all,
         explore,
         gacha_normal,
+        shop_buy_limit,
         dungeon_shop,
         jjc_shop,
         pjjc_shop,
