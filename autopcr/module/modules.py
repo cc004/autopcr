@@ -313,7 +313,7 @@ class hatsune_mission_receive_all(Module):
     async def do_task(self, client: pcrclient):
         for event in client.data.event_statuses:
             index = await client.hatsune_mission_index(event.event_id)
-            types = set(x // 10000000 + 5 for x in index.missions if x.mission_status == eMissionStatusType.EnableReceive)
+            types = set(x.mission_id // 10000000 - 5 for x in index.missions if x.mission_status == eMissionStatusType.EnableReceive)
             if not types:
                 self._log(f"活动{event.event_id}任务已领取")
             else:
