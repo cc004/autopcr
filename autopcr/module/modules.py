@@ -310,7 +310,7 @@ class hatsune_mission_receive_all(Module):
 @description('活动Boss扫荡')
 @enumtype(['0', 'max - 1', 'max'])
 @default(True)
-class hatsune_mission_receive_all(Module):
+class hatsune_boss_sweep(Module):
     async def do_task(self, client: pcrclient):
         for event in client.data.event_statuses:
             index = await client.get_hatsune_top(event.event_id)
