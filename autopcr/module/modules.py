@@ -4,6 +4,7 @@ from ..model.error import *
 from ..core.database import db
 from ..model.models import *
 import random
+import itertools
 from abc import abstractmethod
 
 @description('在公会中自动随机选择一位成员点赞。')
@@ -56,12 +57,12 @@ class room_accept_all(Module):
 class explore(Module):
     async def do_task(self, client: pcrclient):
         # 11级探索
-        if client.data.training_quest_count.gold_quest:
+        if client.data.training_quest_count.gold_quest != 2:
             self._log(f'Mana探索: {2 - client.data.training_quest_count.gold_quest}次')
             await client.training_quest_skip(21001011, 2 - client.data.training_quest_count.gold_quest)
         else:
             self._log(f'Mana探索：已完成')
-        if client.data.training_quest_count.exp_quest:
+        if client.data.training_quest_count.exp_quest != 2:
             self._log(f'Exp探索: {2 - client.data.training_quest_count.exp_quest}次')
             await client.training_quest_skip(21002011, 2 - client.data.training_quest_count.exp_quest)
         else:
@@ -267,7 +268,7 @@ class jjc_shop(shop_buy):
     def system_id(self) -> int:
         return 202
     def coin_limit(self) -> int:
-        return 100000
+        return 30000
 
 @description('购买pjjc币刷新次数, -1为不购买')
 @enumtype([-1, 0, 1, 2, 3, 4, 7, 10])
@@ -276,7 +277,7 @@ class pjjc_shop(shop_buy):
     def system_id(self) -> int:
         return 203
     def coin_limit(self) -> int:
-        return 100000
+        return 30000
 
 @description('地下城扫荡')
 @booltype
@@ -309,7 +310,7 @@ class hatsune_mission_receive_all(Module):
 
 @description('活动Boss扫荡')
 @enumtype(['0', 'max - 1', 'max'])
-@default(True)
+@default('max - 1')
 class hatsune_boss_sweep(Module):
     async def do_task(self, client: pcrclient):
         for event in client.data.event_statuses:
@@ -325,6 +326,80 @@ class hatsune_boss_sweep(Module):
                 continue
             await client.hatsune_boss_skip(event.event_id, boss_id[0], times_to_sweep, index.boss_ticket_info.id)
             self._log(f"活动{event.event_id}Boss扫荡{times_to_sweep}次")
+
+@description('活动一键兑换')
+@booltype
+@default(True)
+class hatsune_exchange(Module):
+    async def do_task(self, client: pcrclient):
+        for event in client.data.event_statuses:
+            top = await client.get_hatsune_top(event.event_id)
+            index = await client.get_hatsune_gacha_index(event.event_id, event.event_id)
+            if len([x for x in index.event_gacha_info.box_set_list if x.remain_inbox_count]) > 1:
+                self._log(f"活动{event.event_id}尚未进入循环兑换")
+                continue
+            await client.exec_hatsune_gacha_all(event.event_id, event.event_id)
+
+class hatsune_sweep(Module):
+    @abstractmethod
+    def quest_tails(self) -> List[int]: ...
+    @abstractmethod
+    def kwargs(self) -> dict: ...
+
+    async def do_task(self, client: pcrclient):
+        for (tail, event) in itertools.product(self.quest_tails(), client.data.event_statuses):
+            await client.get_hatsune_quest_top(event.event_id) # refresh hatsune quest cache
+            try:
+                await client.hatsune_quest_skip_aware(event.event_id, (1000 * event.event_id + tail), **self.kwargs())
+                self._log(f"活动{event.event_id}扫荡{tail}图")
+            except SkipError as e:
+                self._log(f"活动{event.event_id}扫荡{tail}图失败: {e}")
+                break
+            except AbortError as e:
+                self._log(f"活动{event.event_id}扫荡{tail}图失败: {e}")
+                continue
+
+@description('活动扫荡h135图')
+@booltype
+@default(True)
+class hatsune135_sweep(hatsune_sweep):
+    def quest_tails(self) -> List[int]:
+        return [205, 203, 201]
+    def kwargs(self) -> dict:
+        return {'times': 3, 'is_total': True}
+
+@description('活动扫荡h24图')
+@booltype
+@default(True)
+class hatsune24_sweep(hatsune_sweep):
+    def quest_tails(self) -> List[int]:
+        return [204, 202]
+    def kwargs(self) -> dict:
+        return {'times': 3, 'is_total': True}
+
+@description('扫荡六星碎片')
+@enumtype([0, 3, 6])
+@default(3)
+class vh_sweep(Module):
+    async def do_task(self, client: pcrclient):
+        for quest, (item, unit) in db.six_area.items():
+            data = client.data.unit[unit]
+            if data.rarity == 6 or data.unlock_rarity6_item and data.unlock_rarity6_item.status1 or client.data.get_inventory(
+                (eInventoryType.Piece, item)):
+                continue
+            await client.quest_skip_aware(quest, self.value, True, True)
+
+
+@description('购买限时商店')
+@booltype
+@default(True)
+class daily_shop(Module):
+    async def do_task(self, client: pcrclient):
+        items_to_buy = [x.slot_id for x in client.data.daily_shop.item_list if x.available_num]
+        if not items_to_buy:
+            raise SkipError(f"限时商店已购买")
+        await client.shop_buy_item(client.data.daily_shop.system_id, items_to_buy)
+        self._log(f"已购买限时商店")
 
 def register_test():
     ModuleManager._modules = [

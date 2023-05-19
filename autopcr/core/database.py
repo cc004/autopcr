@@ -31,6 +31,7 @@ class database(Container["database"]):
     love_char: Dict[int, Tuple[int, int]] = {}
     quest_info: Dict[int, Tuple[int, int, int]] = {}
     clan_battle_period: Dict[int, Tuple[str, str]] = {}
+    hatsune_item: Dict[int, Tuple[int, int]] = {}
 
     def __init__(self, path):
         db = RecordDAO(path)
@@ -161,6 +162,12 @@ class database(Container["database"]):
             self.love_cake.append((cake_id, cake_value))
         self.love_cake = self.love_cake[::-1]
 
+        for hatsune_item in db.get_hatsune_item():
+            event_id = hatsune_item[0]
+            boss_ticket_id = hatsune_item[1]
+            gacha_ticket_id = hatsune_item[2]
+            self.hatsune_item[event_id] = (boss_ticket_id, gacha_ticket_id)
+            
     def get_inventory_name(self, item: InventoryInfo):
         try:
             return self.inventory_name[(item.type, item.id)]

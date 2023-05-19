@@ -43,12 +43,18 @@ class pcrclient(apiclient):
         req.campaign_id = campaign_id
         return await self.request(req)
 
-    async def exec_hatsune_gacha(self, event_id: int, gacha_id: int, gacha_times: int, current_cost_num: int, loop_box_multi_gacha_flag: int):
+    async def exec_hatsune_gacha_all(self, event_id: int, gacha_id: int):
+        await self.exec_hatsune_gacha(event_id, gacha_id,
+            self.data.get_inventory((eInventoryType.Item, db.hatsune_item[event_id][1])),
+            1)
+
+    async def exec_hatsune_gacha(self, event_id: int, gacha_id: int, gacha_times: int, loop_box_multi_gacha_flag: int):
         req = EventGachaExecRequest()
         req.event_id = event_id
         req.gacha_id = gacha_id
         req.gacha_times = gacha_times
-        req.current_cost_num = current_cost_num
+        req.current_cost_num = self.data.get_inventory((eInventoryType.Item,
+                                                        db.hatsune_item[event_id][1]))
         req.loop_box_multi_gacha_flag = loop_box_multi_gacha_flag
         return await self.request(req)
 

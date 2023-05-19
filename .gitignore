@@ -1,6 +1,6 @@
 config/
 __pycache__/
-req.log
+*.log
 cache/
 clan_scanner.py
 clan_iter.py
