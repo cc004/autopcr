@@ -713,22 +713,6 @@ class UniqueEquipEnhanceRequest(Request[UniqueEquipEnhanceResponse]):
 	@property
 	def url(self) -> str:
 		return "equipment/enhance_unique"
-class UniqueEquipMultiEnhanceRequest(Request[UniqueEquipMultiEnhanceResponse]):
-	unit_id: int = None
-	equip_slot_num: int = None
-	current_gold_num: int = None
-	craft_equip_recipe_list: List[EnhanceRecipe] = None
-	craft_item_recipe_list: List[EnhanceRecipe] = None
-	rank_up_equip_recipe_list: List[EnhanceRecipe] = None
-	rank_up_item_recipe_list: List[EnhanceRecipe] = None
-	rank_up_exp_potion_list: List[EnhanceRecipe] = None
-	current_rank: int = None
-	after_rank: int = None
-	enhancement_item_list: List[EnhanceRecipe] = None
-	current_enhancement_pt: int = None
-	@property
-	def url(self) -> str:
-		return "equipment/multi_enhance_unique"
 class EquipEnhanceMaxRequest(Request[EquipEnhanceMaxResponse]):
 	unit_id: int = None
 	equip_slot_num: int = None
