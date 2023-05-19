@@ -368,7 +368,7 @@ class pcrclient(apiclient):
             if gacha.type == eGachaType.FreeOnly and gacha.cost_num_single == 0:
                 normal_gacha = gacha 
                 break
-        if normal_gacha.free_exec_times != 0:
+        if not normal_gacha.free_exec_times:
             raise SkipError("已进行过普通扭蛋")
         return await self.exec_gacha(normal_gacha, 10, 0, 1, -1, 0)
 
@@ -446,7 +446,7 @@ class pcrclient(apiclient):
             raise AbortError(f"任务{quest}未三星")
         info = db.quest_info[quest]
         async def skip(times):
-            print(f"skip {times} {event} {quest}")
+            # print(f"skip {times} {event} {quest}")
             if self.data.stamina < info[2] * times:
                 if self.keys.get('buy_stamina_passive', 0) > self.data.recover_stamina_exec_count:
                     await self.recover_stamina()
