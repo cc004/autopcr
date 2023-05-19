@@ -1,7 +1,7 @@
 from ..core.pcrclient import pcrclient
 from typing import DefaultDict, List, Dict, Tuple
 from collections import defaultdict
-from ..model.error import SkipError
+from ..model.error import AbortError, SkipError
 
 def _wrap_init(cls, setter):
     old = cls.__init__
@@ -22,7 +22,7 @@ def booltype(cls):
     old = cls.do_task
     async def do_task(self, client: pcrclient):
         if self.value: await old(self, client)
-        else: raise SkipError('not enabled')
+        else: raise SkipError('未启用')
     cls.do_task = do_task
     return cls
 def notimplemented(cls):
@@ -116,6 +116,10 @@ class ModuleManager:
             'qq': "",
             'username': "",
             'password': "",
+            'time1': self.data['time1'] if 'time1' in self.data else None,
+            'time2': self.data['time2'] if 'time2' in self.data else None,
+            'time1open': self.data['time1open'] if 'time1open' in self.data else None,
+            'time2open': self.data['time2open'] if 'time2open' in self.data else None,
             'data': {m.name: m.generate_config() for m in self.modules.values()}
         }
     
@@ -142,6 +146,9 @@ class ModuleManager:
                 except SkipError as e:
                     result[cnt]["msg"] = str(e)
                     result[cnt]["status"] = "skip"
+                except AbortError as e:
+                    result[cnt]["msg"] = str(e)
+                    result[cnt]["status"] = "abort"
                 except Exception as e:
                     traceback.print_exc()
                     result[cnt]["msg"] = str(e)

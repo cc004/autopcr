@@ -74,7 +74,29 @@
                                         <th>结果</th>
                                     </tr>
                                 </thead>
-                                <tbody id="ta"></tbody>
+                                <tbody id="ta">
+                                    <tr>
+                                        <td></td>
+                                        <td>自动执行时间1</td>
+                                        <td>
+                                            <input type="checkbox" class="switch" id="time1open" onchange="selectOnChange(this)"/>
+                                            <input type="time" id="time1" onchange="selectOnChange(this)" />
+                                         </td>
+                                        <td>会战期间不执行（待测）</td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>自动执行时间2</td>
+                                        <td>
+                                            <input type="checkbox" class="switch" id="time2open" onchange="selectOnChange(this)"/>
+                                            <input type="time" id="time2" onchange="selectOnChange(this)" />
+                                        </td>
+                                        <td>会战期间不执行（待测）</td>
+                                        <td></td>
+                                    </tr>
+
+                                </tbody>
                             </div>
                         </table>
                     </div>
@@ -204,6 +226,10 @@
                     $("#qq").val(ret.qq);
                     $("#username").val(ret.username);
                     $("#password").val(ret.password);
+                    $("#time1open").prop("checked",ret.time1open);
+                    $("#time2open").prop("checked",ret.time2open);
+                    $("#time1").val(ret.time1);
+                    $("#time2").val(ret.time2);
                     ret = ret.data;
                     for (name in ret) {
                         cnt += 1;
@@ -281,6 +307,10 @@
             config['qq'] = $("#qq").val();
             config['username'] = $("#username").val();
             config['password'] = $("#password").val();
+            config['time1'] = $("#time1").val();
+            config['time2'] = $("#time2").val();
+            config['time1open'] = $("#time1open").prop('checked')
+            config['time2open'] = $("#time2open").prop('checked')
 
             while ($(`#name${id}`).length) {
                 config[$(`#name${id}`).text()] = ($(`#enum${id} option:selected`).length ? $(`#enum${id} option:selected`).text() : $(`[id^=bool${id}]`)[0].checked);

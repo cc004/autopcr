@@ -7,6 +7,13 @@ class RecordDAO:
     def connect(self):
         return sqlite3.connect(self.db_path)
 
+    def get_clan_battle_period(self):
+        with self.connect() as conn:
+            r = conn.execute(
+                f"SELECT clan_battle_id, start_time, end_time FROM clan_battle_period",
+            ).fetchall()
+        return r
+
     def get_main_story_detail(self):
         with self.connect() as conn:
             r = conn.execute(
@@ -137,5 +144,18 @@ class RecordDAO:
         with self.connect() as conn:
             r = conn.execute(
                 f"SELECT item_id, value FROM item_data WHERE item_id >= 50000 AND item_id < 51000",
+            ).fetchall()
+        return r
+
+    def get_quest_data(self):
+        with self.connect() as conn:
+            r = conn.execute(
+                f"SELECT quest_id, stamina, daily_limit FROM quest_data",
+            ).fetchall()
+            r += conn.execute(
+                f"SELECT quest_id, stamina, daily_limit FROM hatsune_quest",
+            ).fetchall()
+            r += conn.execute(
+                f"SELECT quest_id, stamina, daily_limit FROM shiori_quest",
             ).fetchall()
         return r
