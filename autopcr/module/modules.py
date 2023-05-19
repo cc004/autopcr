@@ -1,6 +1,8 @@
 from ..core import pcrclient
 from .modulebase import *
-
+from ..model.error import *
+from ..core.database import db
+from ..model.models import *
 import random
 
 @description('在公会中自动随机选择一位成员点赞。')
@@ -8,11 +10,11 @@ import random
 @default(True)
 class clan_like(Module):
     async def do_task(self, client: pcrclient):
-        if client.data.clan_like_count == 1:
-            raise ValueError('今日点赞次数已用完。')
+        if not client.data.clan_like_count:
+            raise SkipError('今日点赞次数已用完。')
         info = await client.get_clan_info()
         members = [x.viewer_id for x in info.members if x.viewer_id != client.viewer_id]
-        if len(members) == 0: raise ValueError("No other members in clan")
+        if len(members) == 0: raise AbortError("No other members in clan")
         rnd = random.choice(members)
         await client.clan_like(rnd)
 
@@ -29,7 +31,8 @@ class buy_stamina_passive(Module):
 class buy_stamina_active(Module):
     async def do_task(self, client: pcrclient):
         for i in range(self.value):
-            if client.data.jewel.free_jewel < 10000: break
+            if client.jewel.free_jewel < 10000:
+                raise AbortError('钻石数量不足。中止购买体力。')
             await client.recover_stamina()
 
 @description('收取家园体。')
@@ -38,11 +41,13 @@ class buy_stamina_active(Module):
 class room_accept_all(Module):
     async def do_task(self, client: pcrclient):
         room = await client.room_start()
+        t = client.data.stamina
         for x in room.user_room_item_list:
             if x.item_count:
                 await client.room_accept_all()
                 return
-        raise ValueError('没有可收取的家园物品。')
+        self._log(f'收取家园体力：{t} => {client.data.stamina}')
+        raise SkipError('没有可收取的家园物品。')
 
 @description('EXP探索和MANA探索。')
 @booltype
@@ -51,9 +56,15 @@ class explore(Module):
     async def do_task(self, client: pcrclient):
         # 10级探索
         if client.data.training_quest_count.gold_quest:
+            self._log(f'Mana探索: {2 - client.data.training_quest_count.gold_quest}次')
             await client.training_quest_skip(21001010, 2 - client.data.training_quest_count.gold_quest)
+        else:
+            self._log(f'Mana探索：已完成')
         if client.data.training_quest_count.exp_quest:
+            self._log(f'Exp探索: {2 - client.data.training_quest_count.exp_quest}次')
             await client.training_quest_skip(21002010, 2 - client.data.training_quest_count.exp_quest)
+        else:
+            self._log(f'Exp探索：已完成')
 
 
 @description('领取礼物箱')
@@ -63,8 +74,9 @@ class present_receive_all(Module):
     async def do_task(self, client: pcrclient):
         present = await client.present_index()
         if not present.present_count:
-            raise ValueError("No present to receive")
-        await client.present_receive_all(True)
+            raise SkipError("No present to receive")
+        await client.present_receive_all()
+        self._log('礼物已领取完成')
 
 @description('领取双场币')
 @booltype
@@ -74,9 +86,15 @@ class jjc_reward(Module):
         info = await client.get_arena_info()
         if info.reward_info.count:
             await client.receive_arena_reward()
+            self._log(f'领取jjc币x{info.reward_info.count}')
+        else:
+            self._log('jjc币已领取完成')
         info = await client.get_grand_arena_info()
         if info.reward_info.count:
             await client.receive_grand_arena_reward()
+            self._log(f'领取pjjc币x{info.reward_info.count}')
+        else:
+            self._log('pjjc币已领取完成')
 
 @description('刷取心碎3')
 @booltype
@@ -84,6 +102,7 @@ class jjc_reward(Module):
 class xinsui3_sweep(Module):
     async def do_task(self, client: pcrclient):
         await client.quest_skip_aware(18001003, 5)
+        self._log('心碎3已刷取完成')
 
 @description('刷取心碎2')
 @booltype
@@ -91,6 +110,7 @@ class xinsui3_sweep(Module):
 class xinsui2_sweep(Module):
     async def do_task(self, client: pcrclient):
         await client.quest_skip_aware(18001002, 5)
+        self._log('心碎2已刷取完成')
 
 @description('刷取心碎1')
 @booltype
@@ -98,6 +118,7 @@ class xinsui2_sweep(Module):
 class xinsui1_sweep(Module):
     async def do_task(self, client: pcrclient):
         await client.quest_skip_aware(18001001, 5)
+        self._log('心碎1已刷取完成')
 
 @description('刷取星球杯2')
 @booltype
@@ -105,6 +126,7 @@ class xinsui1_sweep(Module):
 class xingqiubei2_sweep(Module):
     async def do_task(self, client: pcrclient):
         await client.quest_skip_aware(19001002, 5)
+        self._log('星球杯2已刷取完成')
 
 @description('刷取星球杯1')
 @booltype
@@ -112,6 +134,7 @@ class xingqiubei2_sweep(Module):
 class xingqiubei1_sweep(Module):
     async def do_task(self, client: pcrclient):
         await client.quest_skip_aware(19001001, 5)
+        self._log('星球杯1已刷取完成')
 
 @description('''
 根据一键扫荡设置自动刷图，具体次数由标签页名字和设置的使用扫荡张数决定
@@ -137,19 +160,38 @@ class smart_sweep(Module):
                 for x in loop:
                     yield x
 
-        msg = []
         for quest_id, count in _sweep():
             try:
                 await client.quest_skip_aware(quest_id, count, True, True)
-            except ValueError as e:
+            except SkipError as e:
                 m = str(e)
                 if m == '体力不足': break
                 else:
-                    msg.append(m)
+                    self._log(m)
                     if not m.endswith("已达最大次数"):
-                        raise ValueError(';'.join(msg))
-        
-        if msg: raise ValueError(';'.join(msg))
+                        raise
+
+@description('领取任务奖励')
+@booltype
+@default(True)
+class receive_mission_reward(Module):
+    async def do_task(self, client: pcrclient):
+        index = await client.mission_index()
+        if not [x for x in index.missions if x.mission_status == eMissionStatusType.EnableReceive]:
+            raise SkipError("没有要领取的任务奖励")
+        await client.mission_receive()
+        self._log('任务奖励已领取完成')
+
+@description('探索露娜塔回廊')
+@booltype
+@default(True)
+class tower_explore(Module):
+    async def do_task(self, client: pcrclient):
+        top = await client.get_tower_top()
+        if not top.cloister_first_cleared_flag:
+            raise AbortError("露娜塔回廊未开启")
+        await client.tower_cloister_battle_skip(top.cloister_remain_clear_count)
+        self._log('露娜塔回廊已探索完成')
 
 def register_test():
     ModuleManager._modules = [
@@ -160,8 +202,11 @@ def register_test():
 def register_all():
     ModuleManager._modules = [
         buy_stamina_passive,
+        receive_mission_reward,
+        clan_like,
         room_accept_all,
         explore,
+        tower_explore,
         present_receive_all,
         jjc_reward,
         xinsui3_sweep,
@@ -169,7 +214,6 @@ def register_all():
         xingqiubei2_sweep,
         xinsui1_sweep,
         xingqiubei1_sweep, 
-        clan_like,
         buy_stamina_active,
         smart_sweep
     ]
