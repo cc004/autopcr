@@ -59,6 +59,9 @@ class Module:
     @abstractmethod
     async def do_task(self, client: pcrclient): ...
 
+    def cron_hook(self) -> int:
+        return None
+
     def get_config(self, name):
         return self._parent.get_config(name)
     def generate_config(self):
@@ -82,6 +85,7 @@ class ModuleManager:
     def __init__(self, filename):
         self._filename = filename
         self.modules: Dict[str, Module] = {clazz.__name__: clazz(self) for clazz in self._modules}
+        self._crons = []
         self._load_config()
     
     def _load_config(self):
@@ -94,9 +98,12 @@ class ModuleManager:
             self.data = {'username': '', 'password': ''}
     
     def _load_from(self, data):
+        self._crons.clear()
         for name, module in self.modules.items():
             if name in data:
                 module.value = data[name]
+            cron = module.cron_hook()
+            if cron: self._crons.append(cron)
         self.data = data
     
     def _save_config(self):
@@ -118,6 +125,10 @@ class ModuleManager:
             'data': {m.name: m.generate_config() for m in self.modules.values()}
         }
     
+    async def do_cron(self, hour):
+        if hour in self._crons:
+            await self.do_task()
+
     async def do_task(self):
         result = {}
         try:

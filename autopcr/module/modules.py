@@ -7,6 +7,24 @@ import random
 import itertools
 from abc import abstractmethod
 
+@enumtype([x for x in range(-1, 24)])
+@default(-1)
+class cron(Module):
+    def cron_hook(self) -> int:
+        return self.value
+
+@description('定时清日常1')
+class cron1(cron): ...
+
+@description('定时清日常2')
+class cron2(cron): ...
+
+@description('定时清日常3')
+class cron3(cron): ...
+
+@description('定时清日常4')
+class cron4(cron): ...
+
 @description('在公会中自动随机选择一位成员点赞。')
 @booltype
 @default(True)
@@ -423,6 +441,10 @@ def register_test():
 
 def register_all():
     ModuleManager._modules = [
+        cron1,
+        cron2,
+        cron3,
+        cron4,
         buy_stamina_passive,
         receive_mission_reward,
         clan_like,
