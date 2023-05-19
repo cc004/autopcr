@@ -278,6 +278,53 @@ class pjjc_shop(shop_buy):
     def coin_limit(self) -> int:
         return 100000
 
+@description('地下城扫荡')
+@booltype
+@default(True)
+class dungeon_sweep(Module):
+    async def do_task(self, client: pcrclient):
+        info = await client.get_dungeon_info()
+        if info.enter_area_id:
+            if info.enter_area_id in info.dungeon_cleared_area_id_list:
+                await client.skip_dungeon(info.enter_area_id)
+                self._log(f"地下城{db.dungeon_name[info.enter_area_id]}已扫荡完成")
+                return
+            raise AbortError("地下城进入了不可扫荡的区域")
+        
+        await client.skip_dungeon(max(info.dungeon_cleared_area_id_list))
+        self._log(f'地下城{db.dungeon_name[max(info.dungeon_cleared_area_id_list)]}扫荡已完成')
+
+@description('活动任务领取')
+@booltype
+@default(True)
+class hatsune_mission_receive_all(Module):
+    async def do_task(self, client: pcrclient):
+        for event in client.data.event_statuses:
+            index = await client.hatsune_mission_index(event.event_id)
+            if not [x for x in index.missions if x.mission_status == eMissionStatusType.EnableReceive]:
+                self._log(f"活动{event.event_id}任务已领取")
+            else:
+                await client.hatsune_mission_receive()
+                self._log(f'活动{event.event_id}任务领取完成')
+
+@description('活动Boss扫荡')
+@enumtype(['0', 'max - 1', 'max'])
+@default(True)
+class hatsune_mission_receive_all(Module):
+    async def do_task(self, client: pcrclient):
+        for event in client.data.event_statuses:
+            index = await client.get_hatsune_top(event.event_id)
+            item_count = index.boss_ticket_info.count
+            times_to_sweep = max(0, item_count // 30 if self.value == 'max' else item_count // 30 - 1 if self.value == 'max - 1' else 0)
+            if not times_to_sweep:
+                self._log(f"活动{event.event_id}Boss券不足")
+                continue
+            boss_id = [x for x in index.bosses if x.boss_id % 100 == 2 and x.is_unlocked]
+            if not boss_id:
+                self._log(f"活动{event.event_id}Boss未解锁")
+                continue
+            await client.hatsune_boss_skip(event.event_id, boss_id[0], times_to_sweep, index.boss_ticket_info.id)
+            self._log(f"活动{event.event_id}Boss扫荡{times_to_sweep}次")
 
 def register_test():
     ModuleManager._modules = [
@@ -297,7 +344,7 @@ def register_all():
         jjc_shop,
         pjjc_shop,
         dungeon_sweep,
-        sixstar_sweep,
+        vh_sweep,
         hatsune135_sweep,
         hatsune24_sweep,
         jjc_reward,
@@ -307,8 +354,8 @@ def register_all():
         xingqiubei2_sweep,
         xinsui1_sweep,
         xingqiubei1_sweep,
-        hatsune_hboss_sweep,
-        hatsune_present_receive_all,
+        hatsune_boss_sweep,
+        hatsune_mission_receive_all,
         hatsune_exchange,
         daily_shop,
         buy_stamina_active,
