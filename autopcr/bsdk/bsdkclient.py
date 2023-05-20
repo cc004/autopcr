@@ -1,6 +1,6 @@
 
 from .bsgamesdk import login
-from .validator import autoValidator
+from .validator import autoValidator, manualValidator
 
 async def _defaultLogger(msg):
     print(msg)
@@ -15,7 +15,8 @@ class bsdkclient:
         }
     '''
 
-    def __init__(self, acccountinfo, captchaVerifier=autoValidator, errlogger=_defaultLogger):
+    # def __init__(self, acccountinfo, captchaVerifier=autoValidator, errlogger=_defaultLogger):
+    def __init__(self, acccountinfo, captchaVerifier=manualValidator, errlogger=_defaultLogger):
         self.account = acccountinfo['account']
         self.pwd = acccountinfo['password']
         self.platform = acccountinfo['platform']
@@ -30,5 +31,6 @@ class bsdkclient:
                 await self.errlogger("geetest or captcha succeed")
                 break
             await self.errlogger(resp['message'])
+            raise ValueError(resp['message'])
 
         return resp['uid'], resp['access_key']

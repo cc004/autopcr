@@ -43,18 +43,12 @@ class pcrclient(apiclient):
         req.campaign_id = campaign_id
         return await self.request(req)
 
-    async def exec_hatsune_gacha_all(self, event_id: int, gacha_id: int):
-        await self.exec_hatsune_gacha(event_id, gacha_id,
-            self.data.get_inventory((eInventoryType.Item, db.hatsune_item[event_id][1])),
-            1)
-
-    async def exec_hatsune_gacha(self, event_id: int, gacha_id: int, gacha_times: int, loop_box_multi_gacha_flag: int):
+    async def exec_hatsune_gacha(self, event_id: int, gacha_id: int, gacha_times: int, current_cost_num: int, loop_box_multi_gacha_flag: int):
         req = EventGachaExecRequest()
         req.event_id = event_id
         req.gacha_id = gacha_id
         req.gacha_times = gacha_times
-        req.current_cost_num = self.data.get_inventory((eInventoryType.Item,
-                                                        db.hatsune_item[event_id][1]))
+        req.current_cost_num = current_cost_num
         req.loop_box_multi_gacha_flag = loop_box_multi_gacha_flag
         return await self.request(req)
 
@@ -258,6 +252,14 @@ class pcrclient(apiclient):
         req.random_count = times
         return await self.request(req)
 
+    async def shiori_quest_skip(self, event: int, quest: int, times: int):
+        req = ShioriQuestSkipRequest()
+        req.event_id = event
+        req.quest_id = quest
+        req.use_ticket_num = times
+        req.current_ticket_num = self.data.get_inventory((eInventoryType.Item, 23001))
+        return await self.request(req)
+
     async def hatsune_quest_skip(self, event: int, quest: int, times: int):
         req = HatsuneQuestSkipRequest()
         req.event_id = event
@@ -405,7 +407,10 @@ class pcrclient(apiclient):
                     await self.recover_stamina()
                 else:
                     raise SkipError(f"任务{quest}体力不足")
-            return await self.quest_skip(quest, times)
+            if quest // 1000000 == 20: # shiori
+                return await self.shiori_quest_skip(quest // 1000, quest, times)
+            else:
+                return await self.quest_skip(quest, times)
         if info[0]:
             if is_total:
                 times -= qinfo.daily_clear_count
@@ -446,7 +451,6 @@ class pcrclient(apiclient):
             raise AbortError(f"任务{quest}未三星")
         info = db.quest_info[quest]
         async def skip(times):
-            # print(f"skip {times} {event} {quest}")
             if self.data.stamina < info[2] * times:
                 if self.keys.get('buy_stamina_passive', 0) > self.data.recover_stamina_exec_count:
                     await self.recover_stamina()
@@ -578,4 +582,3 @@ class pcrclient(apiclient):
                 await self.request(req)
                 break
         await self.reset_dungeon()
-

@@ -9,6 +9,7 @@ from json import loads
 from hashlib import md5
 from Crypto.Cipher import AES
 from base64 import b64encode, b64decode
+from traceback import print_exc
 
 import json
 from enum import Enum
@@ -31,6 +32,28 @@ defaultHeaders = {
     'KEYCHAIN': '',
     'LOCALE': 'CN',
     'PLATFORM-OS-VERSION': 'Android OS 5.1.1 / API-22 (LMY48Z/rel.se.infra.20200612.100533)',
+    'REGION-CODE': '',
+    'RES-KEY': 'ab00a0a6dd915a052a2ef7fd649083e5',
+    'RES-VER': '10002200',
+    'SHORT-UDID': '0'
+}
+
+iosHeaders = {
+    'Accept-Encoding': 'gzip',
+    'User-Agent': 'priconne/4 CFNetwork/1399.4 Darwin/22.1.0',
+    'X-Unity-Version': '2018.4.30f1',
+    'APP-VER': version,
+    'BATTLE-LOGIC-VERSION': '4',
+    'BUNDLE-VER': '',
+    'DEVICE': '1',
+    'DEVICE-ID': 'CB03A1AC-B27D-5E96-9422-CBF0F4D333D7',
+    'DEVICE-NAME': 'iPad13,8',
+    'EXCEL-VER': '1.0.0',
+    'GRAPHICS-DEVICE-NAME': 'Apple M1',
+    'IP-ADDRESS': '172.26.62.98',
+    'KEYCHAIN': '',
+    'LOCALE': 'CN',
+    'PLATFORM-OS-VERSION': 'iOS 16.1',
     'REGION-CODE': '',
     'RES-KEY': 'ab00a0a6dd915a052a2ef7fd649083e5',
     'RES-VER': '10002200',
@@ -68,7 +91,7 @@ TResponse = TypeVar('TResponse', bound=ResponseBase)
 class apiclient(Container["apiclient"]):
     server_time: int = 0
     viewer_id: int = 0
-    urlroot: str = 'http://l3-prod-all-gs-gzlj.bilibiligame.net/'
+    urlroot: str = 'https://l3-prod-all-gs-gzlj.bilibiligame.net/'
     _requestid: str = ''
     _sessionid: str=  ''
     def __init__(self):
@@ -76,6 +99,8 @@ class apiclient(Container["apiclient"]):
         self._headers = {}
         for key in defaultHeaders.keys():
             self._headers[key] = defaultHeaders[key]
+        # for key in iosHeaders.keys():
+        #     self._headers[key] = iosHeaders[key]
         self._lck = Lock()
     
     @property
@@ -122,6 +147,8 @@ class apiclient(Container["apiclient"]):
 
         cls = request.__class__.__orig_bases__[0].__args__[0]
 
+        # with open('req.log', 'a') as fp:
+        #     fp.write(json.dumps(response0))
         response: Response[TResponse] = Response[cls].parse_obj(response0)
         
         with open('req.log', 'a') as fp:
@@ -143,7 +170,8 @@ class apiclient(Container["apiclient"]):
         if response.data_headers.viewer_id:
             self.viewer_id = int(response.data_headers.viewer_id)
 
-        if response.data.server_error:
+        
+        if response.data.server_error and "维护" not in response.data.server_error.message:
             print(f'pcrclient: /{request.url} api failed {response.data.server_error}')
             raise ApiException(response.data.server_error.message,
                 response.data.server_error.status,

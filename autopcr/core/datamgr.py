@@ -49,7 +49,7 @@ class datamgr(Component[apiclient]):
         else:
             self._inventory[token] = item.stock
 
-    def get_inventory(self, item: Tuple[eInventoryType, int]):
+    def get_inventory(self, item: Tuple[eInventoryType, int]) -> int:
         return self._inventory.get(item, 0)
 
     def set_inventory(self, item: Tuple[eInventoryType, int], value: int):
