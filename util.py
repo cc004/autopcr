@@ -50,7 +50,7 @@ async def draw(data: dict, alian: str):
     for _, value in data.items():
         # tmp["id"].append(key)
         # tmp["name"].append(value['name'])
-        if value['msg'] == "未启用":
+        if value['msg'] == "功能未启用":
             continue
         tmp["desc"].append(value['desc'])
         tmp["value"].append(value['value'])

@@ -84,7 +84,7 @@ class HttpServer:
             return await render_template('config.html')
         
 
-    def run_forever(self):
+    def run_forever(self, loop):
         self.quart.register_blueprint(self.app)
-        self.quart.run(host=self.host, port=self.port)
+        self.quart.run(host=self.host, port=self.port, loop=loop)
     

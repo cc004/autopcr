@@ -1,6 +1,6 @@
 config/
 __pycache__/
-req.log
+*.log
 cache/
 clan_scanner.py
 .DS_Store
@@ -10,3 +10,4 @@ dismissed.json
 clans/*
 farm_config.json
 table.csv
+.DS_Store

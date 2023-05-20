@@ -103,6 +103,12 @@ class pcrclient(apiclient):
         req.current_currency_num = self.data.get_shop_gold(shop_id)
         return await self.request(req)
 
+    async def shop_reset(self, shop_id):
+        req = ShopResetRequest()
+        req.system_id = shop_id
+        req.current_currency_num = self.data.get_shop_gold(shop_id)
+        return await self.request(req)
+
     async def mission_receive(self):
         req = MissionAcceptRequest()
         req.type = 1
@@ -119,7 +125,7 @@ class pcrclient(apiclient):
     async def tower_cloister_battle_skip(self, times: int):
         req = CloisterBattleSkipRequest()
         req.skip_count = times
-        req.quest_id = 73330540
+        req.quest_id = db.floor2clositer[self.data.tower_status.cleared_floor_num] # TODO
         req.current_ticket_num = self.data.get_inventory((eInventoryType.Item, 23001))
         return await self.request(req)
 
@@ -327,7 +333,7 @@ class pcrclient(apiclient):
         13: (3, 1, 20), # very hard quest 3*1
         18: (5, 3, 15), # heart piece quest 5*3
         19: (5, 3, 15), # 6star quest 5*3
-        20: (5, 0, 15), # shiori quest 5*3
+        20: (5, 0, 15), # shiori quest 5*3 // nono
     }
 
     _hatsune_quest_info_dict = {
@@ -356,16 +362,6 @@ class pcrclient(apiclient):
             result.append(f"{db.get_inventory_name_san(target)}x0({self.data.get_inventory(target)})")
         return '\n'.join(result)
 
-    async def gacha_exec(self, gacha: GachaParameter, times: int):
-        req = GachaExecRequest()
-        req.gacha_id = gacha.id
-        req.gacha_times = times
-        req.exchange_id = 0
-        req.draw_type = 1
-        req.current_cost_num = -1
-        req.campaign_id = 0
-        return await self.request(req)
-
     async def normal_gacha(self):
         req = GachaIndexRequest()
         resp = (await self.request(req))
@@ -374,9 +370,9 @@ class pcrclient(apiclient):
             if gacha.type == eGachaType.FreeOnly and gacha.cost_num_single == 0:
                 normal_gacha = gacha 
                 break
-        if normal_gacha.free_exec_times != 0:
+        if not normal_gacha.free_exec_times:
             raise SkipError("已进行过普通扭蛋")
-        return await self.gacha_exec(normal_gacha, 10)
+        return await self.exec_gacha(normal_gacha, 10, 0, 1, -1, 0)
 
 
     async def recover_challenge(self, quest: int):
@@ -455,7 +451,6 @@ class pcrclient(apiclient):
             raise AbortError(f"任务{quest}未三星")
         info = db.quest_info[quest]
         async def skip(times):
-            print(f"skip {times} {event} {quest}")
             if self.data.stamina < info[2] * times:
                 if self.keys.get('buy_stamina_passive', 0) > self.data.recover_stamina_exec_count:
                     await self.recover_stamina()

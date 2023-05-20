@@ -14,6 +14,7 @@ class database(Container["database"]):
     tower: Dict[int, Tuple[str, str]] = {}
     daily_mission: Set[int] = set()
     main_story: List[Tuple[int, int, int, str]] = []
+    floor2clositer: Dict[int, int] = {}
     tower_story: List[Tuple[int, int, int, str, str]] = []
     tower2floor: Dict[int, int] = {}
     event_story: List[Tuple[int, int, str]] = []
@@ -30,6 +31,7 @@ class database(Container["database"]):
     love_char: Dict[int, Tuple[int, int]] = {}
     quest_info: Dict[int, Tuple[int, int, int]] = {}
     clan_battle_period: Dict[int, Tuple[str, str]] = {}
+    hatsune_item: Dict[int, Tuple[int, int]] = {}
 
     def __init__(self, path):
         db = RecordDAO(path)
@@ -64,6 +66,11 @@ class database(Container["database"]):
             title = story[3]
             start_time = story[4]
             self.tower_story.append((id, pre_id, unlock_quest_id, title, start_time))
+
+        for quest in db.get_tower_area_data():
+            floor_num = quest[0]
+            cloister_quest_id = quest[1]
+            self.floor2clositer[floor_num] = cloister_quest_id
 
         for quest in db.get_tower_quest_detail():
             quest_id = quest[0]
@@ -155,6 +162,12 @@ class database(Container["database"]):
             self.love_cake.append((cake_id, cake_value))
         self.love_cake = self.love_cake[::-1]
 
+        for hatsune_item in db.get_hatsune_item():
+            event_id = hatsune_item[0]
+            boss_ticket_id = hatsune_item[1]
+            gacha_ticket_id = hatsune_item[2]
+            self.hatsune_item[event_id] = (boss_ticket_id, gacha_ticket_id)
+            
     def get_inventory_name(self, item: InventoryInfo):
         try:
             return self.inventory_name[(item.type, item.id)]
@@ -214,4 +227,3 @@ db = database(db_path)
 def init_db():
     global db
     db = database(db_path)
-

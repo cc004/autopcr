@@ -10,7 +10,7 @@ async def manualValidator(gt, challenge, userid):
     validate = await validate_ok_queue.get()
     if validate == "xcwcancle":
         raise ValueError("登录被终止")
-    return validate
+    return {"validate" : validate}
 
 async def autoValidator(gt, challenge, userid):
     url = f"https://pcrd.tencentbot.top/geetest_renew?captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
@@ -38,9 +38,9 @@ async def autoValidator(gt, challenge, userid):
         uuid = res["uuid"]
         msg = [f"uuid={uuid}"]
         ccnt = 0
-        while ccnt < 10 and succ == 0 and validate == "":
+        while ccnt < 10:
             ccnt += 1
-            res = await (await aiorequests.get(url=f"https://pcrd.tencentbot.top/check/{uuid}")).content
+            res = await (await aiorequests.get(url=f"https://pcrd.tencentbot.top/check/{uuid}", headers=header)).content
             #if str(res.status_code) != "200":
             #    continue
             print(res)
@@ -48,7 +48,7 @@ async def autoValidator(gt, challenge, userid):
             if "queue_num" in res:
                 nu = res["queue_num"]
                 msg.append(f"queue_num={nu}")
-                tim = min(int(nu), 3) * 20
+                tim = min(int(nu), 3) * 10
                 msg.append(f"sleep={tim}")
                 #await bot.send_private_msg(user_id=acinfo['admin'], message=f"thread{ordd}: \n" + "\n".join(msg))
                 print(f"farm:\n" + "\n".join(msg))
@@ -61,18 +61,15 @@ async def autoValidator(gt, challenge, userid):
                     break
                 elif info == "in running":
                     await asyncio.sleep(8)
-                elif "validate" in info:
-                    succ = 1
-                    info = info["validate"]
+                elif 'validate' in info:
+                    return info
             if ccnt >= 10:
                 raise Exception("Captcha failed")
     except:
         raise
-    if succ:
-        validate = info
     #await bot.send_private_msg(user_id=acinfo['admin'], message=f"thread{ordd}: succ={succ} validate={validate}")
-    print(f"farm: succ={succ} validate={validate}")
+    print(f"farm: failed")
 
     # captcha_lck.release()
     # await captcha_lck.acquire()
-    return validate
+    return None
