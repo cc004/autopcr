@@ -95,8 +95,8 @@ class ModuleManager:
     def _load_config(self):
         try:
             with open(self._filename, 'r') as f:
-                data = json.load(f)
-            self._load_from(data)
+                self.data = json.load(f)
+            self._load_from(self.data)
         except:
             traceback.print_exc()
             self.data = {'username': '', 'password': '', 'alian': ''}
@@ -106,9 +106,9 @@ class ModuleManager:
         for name, module in self.modules.items():
             if name in data:
                 module.value = data[name]
+                self.data[name] = data[name]
             cron = module.cron_hook()
             if cron: self._crons.append(cron)
-        self.data = data
         # 这里对time1和time2进行兼容
         if data['time1open']: self._crons.append(int(data['time1'].split(':')[0]))
         if data['time2open']: self._crons.append(int(data['time2'].split(':')[0]))
