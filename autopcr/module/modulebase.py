@@ -1,7 +1,8 @@
 from ..core.pcrclient import pcrclient
-from typing import DefaultDict, List, Dict, Tuple
+from typing import DefaultDict, List, Dict, Tuple, Iterator
 from collections import defaultdict
-from ..model.error import AbortError, SkipError
+from abc import abstractmethod
+from ..model.error import *
 
 def _wrap_init(cls, setter):
     old = cls.__init__
@@ -22,7 +23,7 @@ def booltype(cls):
     old = cls.do_task
     async def do_task(self, client: pcrclient):
         if self.value: await old(self, client)
-        else: raise SkipError('未启用')
+        else: raise SkipError('功能未启用')
     cls.do_task = do_task
     return cls
 def notimplemented(cls):
@@ -39,6 +40,7 @@ class Module:
         self.implmented = True
         self._parent = parent
         self.result = ""
+        self.log = []
     @property
     def value(self):
         return self._val
@@ -54,9 +56,14 @@ class Module:
             self._val = val
             return msg
         else:
-            raise ValueError(f"Invalid value for module {self.name}")
-    async def do_task(self, client: pcrclient):
-        pass
+            raise AbortError(f"Invalid value for module {self.name}")
+
+    @abstractmethod
+    async def do_task(self, client: pcrclient): ...
+
+    def cron_hook(self) -> int:
+        return None
+
     def get_config(self, name):
         return self._parent.get_config(name)
     def set_result(self, msg):
@@ -71,6 +78,9 @@ class Module:
             'implemented': self.implmented
         }
 
+    def _log(self, msg):
+        self.log.append(msg)
+
 import json
 import traceback
 class ModuleManager:
@@ -79,6 +89,7 @@ class ModuleManager:
     def __init__(self, filename):
         self._filename = filename
         self.modules: Dict[str, Module] = {clazz.__name__: clazz(self) for clazz in self._modules}
+        self._crons = []
         self._load_config()
     
     def _load_config(self):
@@ -91,9 +102,12 @@ class ModuleManager:
             self.data = {'username': '', 'password': ''}
     
     def _load_from(self, data):
+        self._crons.clear()
         for name, module in self.modules.items():
             if name in data:
                 module.value = data[name]
+            cron = module.cron_hook()
+            if cron: self._crons.append(cron)
         self.data = data
     
     def _save_config(self):
@@ -123,6 +137,10 @@ class ModuleManager:
             'data': {m.name: m.generate_config() for m in self.modules.values()}
         }
     
+    async def do_cron(self, hour):
+        if hour in self._crons:
+            await self.do_task()
+
     async def do_task(self):
         result: Dict[int, Dict[str, str]] = {}
         try:
@@ -140,6 +158,7 @@ class ModuleManager:
                 module = self.modules[name]
                 result[cnt] = {"name": name, "value": module.value if module.type != "bool" else "", "desc": module.description, "msg": "", "status": ""}
                 try:
+                    module.log.clear()
                     await module.do_task(client)
                     result[cnt]["msg"] = module.result or "ok"
                     result[cnt]["status"] = "success"
@@ -157,12 +176,4 @@ class ModuleManager:
         except Exception as e:
             traceback.print_exc()
             raise(e)
-        # cnt = 0
-        # for name in (x.__name__ for x in ModuleManager._modules):
-        #     module = self.modules[name]
-        #     if module.result:
-        #         result[cnt] = {"name": name, "msg": module.result, "status": "success"}
-        #     elif name not in result:
-        #         result[cnt] = {"name": name, "msg": "success", "status": "success"}
-        #     cnt += 1
         return result

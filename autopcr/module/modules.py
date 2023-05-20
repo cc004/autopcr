@@ -1,10 +1,32 @@
 from ..core import pcrclient
 from ..model.models import *
 from .modulebase import *
-from ..core.database import db
 
 import datetime
+from ..model.error import *
+from ..core.database import db
+from ..model.models import *
 import random
+import itertools
+from abc import abstractmethod
+
+@enumtype([x for x in range(-1, 24)])
+@default(-1)
+class cron(Module):
+    def cron_hook(self) -> int:
+        return self.value
+
+@description('定时清日常1')
+class cron1(cron): ...
+
+@description('定时清日常2')
+class cron2(cron): ...
+
+@description('定时清日常3')
+class cron3(cron): ...
+
+@description('定时清日常4')
+class cron4(cron): ...
 
 @description('赛马')
 @booltype
@@ -100,7 +122,7 @@ class free_gacha(Module):
 class normal_shop(Module):
     async def do_task(self, client: pcrclient):
         if self.value == "none":
-            raise SkipError("未启用")
+            raise SkipError('功能未启用')
         res = await client.get_shop_item_list()
         items: ShopInfo = None
         exp = True if self.value == "all" or self.value == "经验药水" else False
@@ -129,7 +151,7 @@ class normal_shop(Module):
 class limit_shop(Module):
     async def do_task(self, client: pcrclient):
         if self.value == "none":
-            raise SkipError("未启用")
+            raise SkipError("功能未启用")
         res = await client.get_shop_item_list()
         items: ShopInfo = None
         exp = True if self.value == "all" or self.value == "经验药水" else False
@@ -161,7 +183,7 @@ class limit_shop(Module):
 class underground_shop(Module):
     async def do_task(self, client: pcrclient):
         if self.value == "none":
-            raise SkipError("未启用")
+            raise SkipError("功能未启用")
         res = await client.get_shop_item_list()
         items: ShopInfo = None
         memory = True if self.value == "all" or self.value == "记忆碎片" else False
@@ -190,7 +212,7 @@ class underground_shop(Module):
 class jjc_shop(Module):
     async def do_task(self, client: pcrclient):
         if self.value == "none":
-            raise SkipError("未启用")
+            raise SkipError("功能未启用")
         res = await client.get_shop_item_list()
         items: ShopInfo = None
         memory = True if self.value == "all" or self.value == "记忆碎片" else False
@@ -219,7 +241,7 @@ class jjc_shop(Module):
 class pjjc_shop(Module):
     async def do_task(self, client: pcrclient):
         if self.value == "none":
-            raise SkipError("未启用")
+            raise SkipError("功能未启用")
         res = await client.get_shop_item_list()
         items: ShopInfo = None
         memory = True if self.value == "all" or self.value == "记忆碎片" else False
@@ -257,17 +279,19 @@ class mission_receive(Module):
         raise SkipError("没有可领取的任务奖励")
 
 @description('六星碎片')
-@booltype
-@default(True)
+@enumtype([0, 3, 6])
+@default(3)
 class six_star(Module):
     async def do_task(self, client: pcrclient):
         result: List[str] = []
         is_error = False
         is_abort = False
+        times = int(self.value)
         for quest_id, (pure_memory, unit_id) in db.six_area.items():
-            if client.data.unit[unit_id].unit_rarity != 6 and client.data.get_inventory((eInventoryType.Item, pure_memory)) < 50:
+            data = client.data.unit[unit_id]
+            if data.unit_rarity != 6 and data.unlock_rarity6_item and data.unlock_rarity6_item.status1 and client.data.get_inventory((eInventoryType.Item, pure_memory)) < 50:
                 try:
-                    rewards = await client.quest_skip_aware(quest_id, 3, False, True)
+                    rewards = await client.quest_skip_aware(quest_id, times, True, True)
                     msg = await client.serlize_reward(rewards, (eInventoryType.Item, pure_memory))
                     result.append(f"{db.inventory_name[(eInventoryType.Unit, unit_id)]}六星本: {msg}")
                 except SkipError as e:
@@ -303,9 +327,7 @@ class underground_skip(Module):
             raise AbortError(f"当前以位于{dungeon_name}，将不进行扫荡")
         
         if rest:
-            id = 0
-            for underground_id in infos.dungeon_cleared_area_id_list:
-                id = underground_id if underground_id > id else id
+            id = max([0] + infos.dungeon_cleared_area_id_list)
             if id > 0:
                 reward_list = await client.skip_dungeon(id)
                 # rewards = []
@@ -335,7 +357,7 @@ class user_info(Module):
 class unit_story_reading(Module):
     async def do_task(self, client: pcrclient):
         if self.value is None or self.value == "none":
-            raise SkipError("未启用")
+            raise SkipError("功能未启用")
         ignore = True if self.value != "all" else False
         read_story = set(client.data.read_story_ids)
         read_story.add(0) # no pre story
@@ -468,7 +490,7 @@ class hatsune_dear_reading(Module):
 class hatsune_gacha_exchange(Module):
     async def do_task(self, client: pcrclient):
         if self.value is None or self.value == "none":
-            raise SkipError("未启用")
+            raise SkipError("功能未启用")
         early_stop = False if self.value == "all" else True
         event_active = False
         result = []
@@ -477,7 +499,7 @@ class hatsune_gacha_exchange(Module):
                 continue
             event_active = True
             res = (await client.get_hatsune_top(event.event_id))
-            exchange_ticket_id = res.boss_ticket_info.id + 1
+            exchange_ticket_id = db.hatsune_item[event.event_id][1]
             res = (await client.get_hatsune_gacha_index(event.event_id, event.event_id))
             box_item = {item.box_set_id: item for item in res.event_gacha_info.box_set_list}
             ticket = client.data.get_inventory((eInventoryType.Item, exchange_ticket_id))
@@ -512,7 +534,7 @@ class hatsune_gacha_exchange(Module):
 @default(True)
 class clan_like(Module):
     async def do_task(self, client: pcrclient):
-        if client.data.clan_like_count == 1:
+        if client.data.clan_like_count:
             raise SkipError('今日点赞次数已用完。')
         info = await client.get_clan_info()
         members = [(x.viewer_id, x.name) for x in info.members if x.viewer_id != client.viewer_id]
@@ -529,12 +551,11 @@ class hatsune_h_sweep(Module):
         result: List[str] = []
         area = []
         hard = 200
-        status = 0
         is_error = False
         is_abort = False
         is_skip = True
         if self.value == "none":
-            raise SkipError("未启用")
+            raise SkipError("功能未启用")
         if self.value == "odd":
             area = [1, 3, 5]
         elif self.value == "even":
@@ -543,7 +564,7 @@ class hatsune_h_sweep(Module):
             area = [1, 2, 3, 4, 5]
         event_active = False
         for event in client.data.event_statuses:
-            if event.event_type != 1 or event.period != 2:
+            if event.event_type != 1 or event.period != 2: # 不知道其他类型的是什么
                 continue
             event_active = True
             await client.get_hatsune_top(event.event_id)
@@ -588,19 +609,16 @@ class hatsune_mission_accept(Module):
             event_active = True
             await client.get_hatsune_top(event.event_id)
             resp = await client.hatsune_mission_index(event.event_id)
-            have = False
+            types = set(x.mission_id // 10000000 - 5 for x in resp.missions if x.mission_status == eMissionStatusType.EnableReceive)
             try:
-                for first_num in [6,7,8,9]:
-                    for mission in resp.missions:
-                        if mission.mission_id // 10000000 == first_num and mission.mission_status == eMissionStatusType.EnableReceive:
-                            res = await client.hatsune_mission_receive(event.event_id, first_num - 5)
-                            reward = await client.serlize_reward(res.rewards)
-                            have = True
-                            result.append(f"{event.event_id}: 领取了任务奖励，获得了:\n" + reward)
-                            is_skip = False
-                            break
-                if not have:
+                if not types:
                     raise SkipError("没有可领取的任务奖励")
+                else:
+                    is_skip = False
+                    for type in types:
+                        res = await client.hatsune_mission_receive(event.event_id, type)
+                        reward = await client.serlize_reward(res.rewards)
+                        result.append(f"{event.event_id}: 领取了任务奖励，获得了:\n" + reward)
             except SkipError as e:
                 result.append(f"{event.event_id}: {str(e)}")
             except AbortError as e:
@@ -627,7 +645,7 @@ class hatsune_hboss_sweep(Module):
         is_abort = False
         is_skip = True
         if self.value == "none":
-            raise SkipError("未启用")
+            raise SkipError("功能未启用")
         event_active = False
         for event in client.data.event_statuses:
             if event.event_type != 1 or event.period != 2:
@@ -681,8 +699,10 @@ class buy_stamina_active(Module):
     async def do_task(self, client: pcrclient):
         cnt = 0
         for _ in range(self.value):
-            if client.data.jewel.free_jewel < 10000: break
-            if client.data.stamina + 120 > 999: break
+            if client.data.jewel.free_jewel < 10000:
+                raise AbortError('钻石数量不足。中止购买体力。')
+            if client.data.stamina + 120 > 999:
+                raise AbortError('体力恢复将超过999。中止购买体力')
             await client.recover_stamina()
             cnt += 1
         self.set_result(f"购买了{str(cnt)}次体力")
@@ -693,12 +713,14 @@ class buy_stamina_active(Module):
 class room_accept_all(Module):
     async def do_task(self, client: pcrclient):
         room = await client.room_start()
+        t = client.data.stamina
         for x in room.user_room_item_list:
             if x.item_count:
                 res = await client.room_accept_all()
                 result = await client.serlize_reward(res.reward_list)
                 self.set_result(result)
                 return
+        self._log(f'收取家园体力：{t} => {client.data.stamina}')
         raise SkipError('没有可收取的家园物品。')
 
 @description('升级家园家具')
@@ -826,14 +848,13 @@ class tower_cloister_sweep(Module):
         else:
             raise SkipError("回廊已扫荡")
 
-
 @description('领取礼物箱')
 @enumtype(["none", "非体力", "all"])
 @default("非体力")
 class present_receive(Module):
     async def do_task(self, client: pcrclient):
         if self.value == "none":
-            raise SkipError("未启用")
+            raise SkipError("功能未启用")
         elif self.value == "非体力":
             is_exclude_stamina = True
             op = "领取了非体力物品：\n"
@@ -859,6 +880,7 @@ class present_receive(Module):
             raise SkipError(f"不存在未领取{'的非体力的' if is_exclude_stamina == True else '的'}礼物")
         msg = await client.serlize_reward(result)
         self.set_result(op + msg)
+        self._log('礼物已领取完成')
 
 @description('领取双场币')
 @booltype
@@ -885,6 +907,7 @@ class xinsui3_sweep(Module):
         result = await client.quest_skip_aware(18001003, 5)
         msg = await client.serlize_reward(result, db.xinsui)
         self.set_result(msg)
+        self._log('心碎3已刷取完成')
 
 @description('刷取心碎2')
 @booltype
@@ -894,6 +917,7 @@ class xinsui2_sweep(Module):
         result = await client.quest_skip_aware(18001002, 5)
         msg = await client.serlize_reward(result, db.xinsui)
         self.set_result(msg)
+        self._log('心碎2已刷取完成')
 
 @description('刷取心碎1')
 @booltype
@@ -903,6 +927,7 @@ class xinsui1_sweep(Module):
         result = await client.quest_skip_aware(18001001, 5)
         msg = await client.serlize_reward(result, db.xinsui)
         self.set_result(msg)
+        self._log('心碎1已刷取完成')
 
 @description('刷取星球杯2')
 @booltype
@@ -912,6 +937,7 @@ class xingqiubei2_sweep(Module):
         result = await client.quest_skip_aware(19001002, 5)
         msg = await client.serlize_reward(result, db.xingqiubei)
         self.set_result(msg)
+        self._log('星球杯2已刷取完成')
 
 @description('刷取星球杯1')
 @booltype
@@ -921,6 +947,7 @@ class xingqiubei1_sweep(Module):
         result = await client.quest_skip_aware(19001001, 5)
         msg = await client.serlize_reward(result, db.xingqiubei)
         self.set_result(msg)
+        self._log('星球杯1已刷取完成')
 
 @description('''
 首先按次数逐一刷取名字为start的图
@@ -951,7 +978,7 @@ class smart_sweep(Module):
         result = []
         if nloop == [] and loop == []:
             raise AbortError("未找到start和loop")
-        for quest_id, count in _sweep():
+        for quest_id, count in _sweep(): # loop 全是hard very hard时会死循环
             try:
                 result += await client.quest_skip_aware(quest_id, count, True, True)
             except SkipError as e:
@@ -966,6 +993,93 @@ class smart_sweep(Module):
         
         msg = await client.serlize_reward(result)
         self.set_result(msg)
+
+@description('商店购买最大碎片量')
+@enumtype([0, 100, 300, 600, 900, 99999])
+@default(300)
+class shop_buy_limit(Module):
+    async def do_task(self, client: pcrclient):
+        client.keys['shop_buy_limit'] = self.value
+
+class shop_buy(Module):
+    @abstractmethod
+    def system_id(self) -> int: ...
+    @abstractmethod
+    def coin_limit(self) -> int: ...
+
+    async def _get_shop_content(self, client: pcrclient):
+        for shop in (await client.get_shop_item_list()).shop_list:
+            if shop.system_id == self.system_id():
+                return shop
+        raise AbortError("商店未开启")
+
+    async def do_task(self, client: pcrclient):
+        shop_content = await self._get_shop_content(client)
+
+        prev = client.data.get_shop_gold(self.system_id())
+        
+        buy_limit = client.keys.get('shop_buy_limit', 300)
+
+        while shop_content.reset_count <= self.value:
+            
+            if client.data.get_shop_gold(self.system_id()) < self.coin_limit():
+                raise AbortError(f"商店金币小于{self.coin_limit()}，无法继续购买")
+
+            slots_to_buy = [
+                item.slot_id for item in shop_content.item_list if 
+                    item.available_num and 
+                    client.data.get_inventory((item.type, item.item_id)) < buy_limit and 
+                    not item.sold
+            ]
+            
+            if slots_to_buy:
+                await client.shop_buy_item(shop_content.system_id, slots_to_buy)
+
+            if shop_content.reset_count == self.value:
+                break
+            
+            await client.shop_reset(shop_content.system_id)
+            shop_content = await self._get_shop_content(client)
+
+        self._log(f"已花费{prev - client.data.get_shop_gold(self.system_id())}代币购买装备")
+
+@description('购买地下城币刷新次数, -1为不购买')
+@enumtype([-1, 0, 1, 2, 3, 4, 7, 10])
+@default(0)
+class dungeon_shop(shop_buy):
+    def system_id(self) -> int:
+        return 204
+    def coin_limit(self) -> int:
+        return 100000
+
+@description('购买jjc币刷新次数, -1为不购买')
+@enumtype([-1, 0, 1, 2, 3, 4, 7, 10])
+@default(0)
+class new_jjc_shop(shop_buy):
+    def system_id(self) -> int:
+        return 202
+    def coin_limit(self) -> int:
+        return 30000
+
+@description('购买pjjc币刷新次数, -1为不购买')
+@enumtype([-1, 0, 1, 2, 3, 4, 7, 10])
+@default(0)
+class new_pjjc_shop(shop_buy):
+    def system_id(self) -> int:
+        return 203
+    def coin_limit(self) -> int:
+        return 30000
+
+@description('购买限时商店')
+@booltype
+@default(True)
+class new_daily_shop(Module):
+    async def do_task(self, client: pcrclient):
+        items_to_buy = [x.slot_id for x in client.data.daily_shop.item_list if x.available_num]
+        if not items_to_buy:
+            raise SkipError(f"限时商店已购买")
+        await client.shop_buy_item(client.data.daily_shop.system_id, items_to_buy)
+        self._log(f"已购买限时商店")
 
 def register_test():
     ModuleManager._modules = [

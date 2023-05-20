@@ -61,14 +61,17 @@ class sessionmgr(Component[apiclient]):
 
                     while True:
                         if self._sdkaccount and self._sdkaccount['access_key']:
-                            req = ToolSdkLoginRequest(
-                                uid=self._sdkaccount['uid'],
-                                access_key=self._sdkaccount['access_key'],
-                                platform=str(self._platform),
-                                channel_id=str(self._channel)
-                            )
-                            if not (await next(req)).is_risk:
-                                break
+                            try:
+                                req = ToolSdkLoginRequest(
+                                    uid=self._sdkaccount['uid'],
+                                    access_key=self._sdkaccount['access_key'],
+                                    platform=str(self._platform),
+                                    channel_id=str(self._channel)
+                                )
+                                if not (await next(req)).is_risk:
+                                    break
+                            except ApiException:
+                                pass
                         
                         self._sdkaccount = None
                         await self._bililogin()

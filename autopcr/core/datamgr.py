@@ -31,7 +31,8 @@ class datamgr(Component[apiclient]):
     read_story_ids: List[int] = None
     event_statuses: List[EventStatus] = None
     tower_status: TowerStatus = None
-    deck_list: Dict[ePartyType, LoadDeckData] = []
+    deck_list: Dict[ePartyType, LoadDeckData] = {}
+    daily_shop: DailyShop = None
 
     def clear_inventory(self):
         self._inventory.clear()
