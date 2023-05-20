@@ -99,7 +99,7 @@ class ModuleManager:
             self._load_from(data)
         except:
             traceback.print_exc()
-            self.data = {'username': '', 'password': ''}
+            self.data = {'username': '', 'password': '', 'alian': ''}
     
     def _load_from(self, data):
         self._crons.clear()
@@ -112,8 +112,10 @@ class ModuleManager:
     
     def _save_config(self):
         data = {m.name: m.value for m in self.modules.values()}
+        for k, v in data.items():
+            self.data[k] = v
         with open(self._filename, 'w') as f:
-            json.dump(data, f)
+            json.dump(self.data, f)
     
     def get_config(self, name):
         return self.modules[name].value
@@ -134,7 +136,8 @@ class ModuleManager:
             'time2': self.data['time2'] if 'time2' in self.data else None,
             'time1open': self.data['time1open'] if 'time1open' in self.data else None,
             'time2open': self.data['time2open'] if 'time2open' in self.data else None,
-            'data': {m.name: m.generate_config() for m in self.modules.values()}
+            'data': {m.name: m.generate_config() for m in self.modules.values()},
+            'last_result': self.data.get('_last_result', None)
         }
     
     async def do_cron(self, hour):
@@ -176,4 +179,7 @@ class ModuleManager:
         except Exception as e:
             traceback.print_exc()
             raise(e)
+        finally:
+            self.data['_last_result'] = result
+            self._save_config()
         return result

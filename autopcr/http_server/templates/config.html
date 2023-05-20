@@ -230,6 +230,7 @@
                     $("#time2open").prop("checked",ret.time2open);
                     $("#time1").val(ret.time1);
                     $("#time2").val(ret.time2);
+                    res = ret.last_result;
                     ret = ret.data;
                     for (name in ret) {
                         cnt += 1;
@@ -247,6 +248,7 @@
                         tab.append(`<td id='description_${name}'>${item["description"].replace(/\n/g, '<br>')}</td>`);
                         tab.append(`<td id='result_${name}'></td>`);
                     }
+                    load_result(res);
                 },
                 error: function (ret) {
                     suspend("alert-danger", "获取配置失败");
@@ -255,6 +257,13 @@
         }
         );
         
+        function load_result(ret) {
+            for (id in ret) {
+                let name = ret[id]['name']
+                $(`#result_${name}`).html(ret[id]["msg"].replace(/\n/g, '<br>'))
+            }
+        }
+
         function do_task() {
             $("#do_task").attr('disabled', true);
             $.ajax({
@@ -262,12 +271,9 @@
                 type: 'get',
                 processData: false,
                 success: function (ret) {
-                    <!-- prompt(JSON.stringify(ret), "alert-success", 60000); -->
+                    // <!-- prompt(JSON.stringify(ret), "alert-success", 60000); -->
                     $("#do_task").attr('disabled', false);
-                    for (id in ret){
-                        let name = ret[id]['name']
-                        $(`#result_${name}`).html(ret[id]["msg"].replace(/\n/g, '<br>'))
-                    }
+                    load_result(ret);
                 },
                 error: function (ret) {
                     suspend("alert-danger", "执行任务失败: " + ret.responseText);
