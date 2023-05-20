@@ -289,7 +289,8 @@ class six_star(Module):
         times = int(self.value)
         for quest_id, (pure_memory, unit_id) in db.six_area.items():
             data = client.data.unit[unit_id]
-            if data.unit_rarity != 6 and data.unlock_rarity6_item and data.unlock_rarity6_item.status1 and client.data.get_inventory((eInventoryType.Item, pure_memory)) < 50:
+            if data.unit_rarity != 6 and data.unlock_rarity6_item and not data.unlock_rarity6_item.status1 and client.data.get_inventory((eInventoryType.Item, pure_memory)) < 50:
+                # unlock_rarity6_item有时候明明有数据，但服务端返回了null
                 try:
                     rewards = await client.quest_skip_aware(quest_id, times, True, True)
                     msg = await client.serlize_reward(rewards, (eInventoryType.Item, pure_memory))
@@ -797,7 +798,15 @@ class explore_exp(Module):
 @default(True)
 class normal_gacha(Module):
     async def do_task(self, client: pcrclient):
-        resp = await client.normal_gacha()
+        resp = await client.get_gacha_index()
+        normal_gacha: GachaParameter = None
+        for gacha in resp.gacha_info:
+            if gacha.type == eGachaType.FreeOnly and gacha.cost_num_single == 0:
+                normal_gacha = gacha 
+                break
+        if normal_gacha.free_exec_times != 0:
+            raise SkipError("已进行过普通扭蛋")
+        resp = await client.exec_gacha(normal_gacha.id, 10, 0, 1, -1, 0)
         memory = [i for i in resp.reward_info_list if db.is_unit_memory((i.type, i.id))]
         result = "全是装备"
         if memory:
