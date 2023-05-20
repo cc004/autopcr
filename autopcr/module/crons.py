@@ -4,17 +4,19 @@ import os
 from ..module.modulebase import ModuleManager
 
 async def _cron(task):
-    hour = None
+    hour = datetime.datetime.now().hour
     while True:
-        if datetime.datetime.now().hour != hour:
-            await task(hour)
         await asyncio.sleep(60)
+        t = datetime.datetime.now().hour
+        if t != hour:
+            await task(hour)
+            hour = t
 
 async def _run_crons(path, hour):
     for file in os.listdir(path):
         if file.endswith('.json'):
             mgr = ModuleManager(os.path.join(path, file))
-            print(f'Running cron for {file}, crons = {mgr._crons}')
+            print(f'Running cron#{hour} for {file}, crons = {mgr._crons}')
             await mgr.do_cron(hour)
 
 def queue_crons(path):
