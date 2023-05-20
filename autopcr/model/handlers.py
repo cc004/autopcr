@@ -7,6 +7,27 @@ def handles(cls):
     return None
 
 @handles
+class ShioriQuestSkipResponse(responses.ShioriQuestSkipResponse):
+    def update(self, mgr: datamgr, request):
+        if self.quest_result_list:
+            for result in self.quest_result_list:
+                for item in result.reward_list:
+                    mgr.update_inventory(item)
+        if self.bonus_reward_list:
+            for item in self.bonus_reward_list:
+                mgr.update_inventory(item)
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        if self.level_info:
+            mgr.team_level = self.level_info.team.start_level
+        if self.user_info:
+            mgr.stamina = self.user_info.user_stamina
+        mgr.quest_dict[request.quest_id].daily_clear_count = self.daily_clear_count
+
+@handles
 class TrainingQuestSkipResponse(responses.TrainingQuestSkipResponse):
     def update(self, mgr: datamgr, request):
         if self.quest_result_list:
@@ -132,6 +153,8 @@ class QuestSkipResponse(responses.QuestSkipResponse):
             mgr.stamina = self.user_info.user_stamina
         if self.user_gold:
             mgr.gold = self.user_gold
+        if self.level_info:
+            mgr.team_level = self.level_info.team.start_level
 
 
 @handles
@@ -261,6 +284,8 @@ class HatsuneQuestSkipResponse(responses.HatsuneQuestSkipResponse):
 
         if self.user_gold:
             mgr.gold = self.user_gold
+        if self.level_info:
+            mgr.team_level = self.level_info.team.start_level
 
 
 @handles

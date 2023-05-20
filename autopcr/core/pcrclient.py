@@ -119,7 +119,7 @@ class pcrclient(apiclient):
     async def tower_cloister_battle_skip(self, times: int):
         req = CloisterBattleSkipRequest()
         req.skip_count = times
-        req.quest_id = 73310520
+        req.quest_id = 73330540
         req.current_ticket_num = self.data.get_inventory((eInventoryType.Item, 23001))
         return await self.request(req)
 
@@ -244,6 +244,14 @@ class pcrclient(apiclient):
         req.current_ticket_num = self.data.get_inventory((eInventoryType.Item, 23001))
         req.quest_id = quest
         req.random_count = times
+        return await self.request(req)
+
+    async def shiori_quest_skip(self, event: int, quest: int, times: int):
+        req = ShioriQuestSkipRequest()
+        req.event_id = event
+        req.quest_id = quest
+        req.use_ticket_num = times
+        req.current_ticket_num = self.data.get_inventory((eInventoryType.Item, 23001))
         return await self.request(req)
 
     async def hatsune_quest_skip(self, event: int, quest: int, times: int):
@@ -403,7 +411,10 @@ class pcrclient(apiclient):
                     await self.recover_stamina()
                 else:
                     raise SkipError(f"任务{quest}体力不足")
-            return await self.quest_skip(quest, times)
+            if quest // 1000000 == 20: # shiori
+                return await self.shiori_quest_skip(quest // 1000, quest, times)
+            else:
+                return await self.quest_skip(quest, times)
         if info[0]:
             if is_total:
                 times -= qinfo.daily_clear_count
