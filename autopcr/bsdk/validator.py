@@ -10,7 +10,7 @@ async def manualValidator(gt, challenge, userid):
     validate = await validate_ok_queue.get()
     if validate == "xcwcancle":
         raise ValueError("登录被终止")
-    return {"validate" : validate}
+    return {"challenge": challenge, "gt_user_id": userid, "validate" : validate}
 
 async def autoValidator(gt, challenge, userid):
     url = f"https://pcrd.tencentbot.top/geetest_renew?captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
