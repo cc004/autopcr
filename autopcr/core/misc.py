@@ -1,3 +1,4 @@
+import traceback
 from .base import Component
 from .apiclient import apiclient, ApiException, CuteResultCode
 from ..model.modelbase import *
@@ -10,9 +11,21 @@ class errorhandler(Component[apiclient]):
         while True:
             try:
                 return await next(request)
-            except ValidationError:
+            except ValidationError as e:
+                # print(e)
+                # print_exc()
                 pass
-            except ApiException:
+            except ApiException as e:
+                # print(e)
+                # print_exc()
                 raise
             except Exception:
                 print_exc()
+                raise
+
+class ratelimiter(Component[apiclient]):
+    pass
+
+class code213handler(Component[apiclient]):
+    pass
+

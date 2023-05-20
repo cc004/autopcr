@@ -1,5 +1,6 @@
 from ..core.pcrclient import pcrclient
-from typing import List, Dict, Iterator
+from typing import DefaultDict, List, Dict, Tuple, Iterator
+from collections import defaultdict
 from abc import abstractmethod
 from ..model.error import *
 
@@ -38,6 +39,7 @@ class Module:
         self.type = 'invalid'
         self.implmented = True
         self._parent = parent
+        self.result = ""
         self.log = []
     @property
     def value(self):
@@ -54,7 +56,7 @@ class Module:
             self._val = val
             return msg
         else:
-            raise AbortError(f"Invalid value for module {self.name()}")
+            raise AbortError(f"Invalid value for module {self.name}")
 
     @abstractmethod
     async def do_task(self, client: pcrclient): ...
@@ -64,6 +66,8 @@ class Module:
 
     def get_config(self, name):
         return self._parent.get_config(name)
+    def set_result(self, msg):
+        self.result = msg
     def generate_config(self):
         return {
             'value': self.value,
@@ -107,7 +111,7 @@ class ModuleManager:
         self.data = data
     
     def _save_config(self):
-        data = {m.name(): m.value for m in self.modules.values()}
+        data = {m.name: m.value for m in self.modules.values()}
         with open(self._filename, 'w') as f:
             json.dump(data, f)
     
@@ -120,8 +124,16 @@ class ModuleManager:
 
     def generate_config(self):
         return {
-            'username': self.data['username'],
-            'password': self.data['password'],
+            # 'username': self.data['username'],
+            # 'password': self.data['password'],
+            'alian': self.data['alian'],
+            'qq': "",
+            'username': "",
+            'password': "",
+            'time1': self.data['time1'] if 'time1' in self.data else None,
+            'time2': self.data['time2'] if 'time2' in self.data else None,
+            'time1open': self.data['time1open'] if 'time1open' in self.data else None,
+            'time2open': self.data['time2open'] if 'time2open' in self.data else None,
             'data': {m.name: m.generate_config() for m in self.modules.values()}
         }
     
@@ -130,37 +142,38 @@ class ModuleManager:
             await self.do_task()
 
     async def do_task(self):
-        result = {}
+        result: Dict[int, Dict[str, str]] = {}
         try:
             client = pcrclient({
                 'account': self.data['username'],
                 'password': self.data['password'],
                 'channel': 1,
                 'platform': 2
+                # 'channel': 1000,
+                # 'platform': 1
             })
             await client.login()
+            cnt = 0
             for name in (x.__name__ for x in ModuleManager._modules):
                 module = self.modules[name]
+                result[cnt] = {"name": name, "value": module.value if module.type != "bool" else "", "desc": module.description, "msg": "", "status": ""}
                 try:
                     module.log.clear()
                     await module.do_task(client)
-                    result[name] = {
-                        'status': 'success',
-                        'log': module.log
-                    }
+                    result[cnt]["msg"] = module.result or "ok"
+                    result[cnt]["status"] = "success"
+                except SkipError as e:
+                    result[cnt]["msg"] = str(e)
+                    result[cnt]["status"] = "skip"
+                except AbortError as e:
+                    result[cnt]["msg"] = str(e)
+                    result[cnt]["status"] = "abort"
                 except Exception as e:
-                    result[name] = {
-                        'status': 'failed',
-                        'log': module.log,
-                        'error': str(e)
-                    }
-            result['main'] = {
-                'status': 'success'
-            }
+                    traceback.print_exc()
+                    result[cnt]["msg"] = str(e)
+                    result[cnt]["status"] = "error"
+                cnt += 1
         except Exception as e:
-            result['main'] = {
-                'status': 'failed',
-                'error': str(e)
-            }
+            traceback.print_exc()
+            raise(e)
         return result
-

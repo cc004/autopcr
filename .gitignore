@@ -3,6 +3,7 @@ __pycache__/
 *.log
 cache/
 clan_scanner.py
+.DS_Store
 clan_iter.py
 clan_scanner1.py
 dismissed.json

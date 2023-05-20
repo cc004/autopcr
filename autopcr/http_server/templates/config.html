@@ -53,6 +53,8 @@
                         <div><b>配置：</b></div>
                         <br/>
                         <div>
+                            <input type="text" id="alian" placeholder="昵称"/>
+                            <input type="text" id="qq" placeholder="qq"/>
                             <input type="text" id="username" placeholder="用户名"/>
                             <input type="text" id="password" placeholder="密码" />
                         </div>
@@ -69,9 +71,32 @@
                                         <th>设置项</th>
                                         <th>值</th>
                                         <th>说明</th>
+                                        <th>结果</th>
                                     </tr>
                                 </thead>
-                                <tbody id="ta"></tbody>
+                                <tbody id="ta">
+                                    <tr>
+                                        <td></td>
+                                        <td>自动执行时间1</td>
+                                        <td>
+                                            <input type="checkbox" class="switch" id="time1open" onchange="selectOnChange(this)"/>
+                                            <input type="time" id="time1" onchange="selectOnChange(this)" />
+                                         </td>
+                                        <td>会战期间不执行（待测）</td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>自动执行时间2</td>
+                                        <td>
+                                            <input type="checkbox" class="switch" id="time2open" onchange="selectOnChange(this)"/>
+                                            <input type="time" id="time2" onchange="selectOnChange(this)" />
+                                        </td>
+                                        <td>会战期间不执行（待测）</td>
+                                        <td></td>
+                                    </tr>
+
+                                </tbody>
                             </div>
                         </table>
                     </div>
@@ -191,29 +216,36 @@
     <script type="text/javascript" charset="utf-8">
         $(document).ready(function () {
             $.ajax({
-                url: "/api/config" + window.location.search,
+                url: "/daily/api/config" + window.location.search,
                 type: "get",
                 processData: false,
                 success: function (ret) {
                     cnt = 0;
                     let ta_tab = $("#ta");
+                    $("#alian").val(ret.alian);
+                    $("#qq").val(ret.qq);
                     $("#username").val(ret.username);
                     $("#password").val(ret.password);
+                    $("#time1open").prop("checked",ret.time1open);
+                    $("#time2open").prop("checked",ret.time2open);
+                    $("#time1").val(ret.time1);
+                    $("#time2").val(ret.time2);
                     ret = ret.data;
                     for (name in ret) {
                         cnt += 1;
                         item = ret[name];
-                        ta_tab.append(`<tr id="tr${cnt}"></tr>`); //添加一列
-                        let tab = $(`#tr${cnt}`); //把这一列的内容添加上
+                        ta_tab.append(`<tr id="tr_${name}"></tr>`); //添加一列
+                        let tab = $(`#tr_${name}`); //把这一列的内容添加上
                         tab.append(`<td>${item["implemented"] ? "" : "未实装"}</td>`);
                         tab.append(`<td id='name${cnt}'>${name}</td>`);
 
                         now_config = item["value"];
                         typ = item["type"];
                         if (typ == "bool") tab.append(`<td>${get_bool_text(cnt, now_config, name, item.name)}</td>`);
-                        else tab.append(`<td id='enum${cnt}'>${get_enum_text(cnt, now_config, item["candidate_value"])}</td>`);
+                        else tab.append(`<td id='enum_${name}'>${get_enum_text(cnt, now_config, item["candidate_value"])}</td>`);
 
-                        tab.append(`<td id='description${cnt}'>${item["description"]}</td>`);
+                        tab.append(`<td id='description_${name}'>${item["description"].replace(/\n/g, '<br>')}</td>`);
+                        tab.append(`<td id='result_${name}'></td>`);
                     }
                 },
                 error: function (ret) {
@@ -226,15 +258,19 @@
         function do_task() {
             $("#do_task").attr('disabled', true);
             $.ajax({
-                url: '/api/do_task' + window.location.search,
+                url: '/daily/api/do_task' + window.location.search,
                 type: 'get',
                 processData: false,
                 success: function (ret) {
-                    prompt(JSON.stringify(ret), "alert-success", 60000);
+                    <!-- prompt(JSON.stringify(ret), "alert-success", 60000); -->
                     $("#do_task").attr('disabled', false);
+                    for (id in ret){
+                        let name = ret[id]['name']
+                        $(`#result_${name}`).html(ret[id]["msg"].replace(/\n/g, '<br>'))
+                    }
                 },
                 error: function (ret) {
-                    suspend("alert-danger", "执行任务失败");
+                    suspend("alert-danger", "执行任务失败: " + ret.responseText);
                     $("#do_task").attr('disabled', false);
                 }
             })
@@ -267,16 +303,22 @@
         function update_new() {
             let config = {}; // 可以用referrer解决问题
             id = 1;
+            config['alian'] = $("#alian").val();
+            config['qq'] = $("#qq").val();
             config['username'] = $("#username").val();
             config['password'] = $("#password").val();
+            config['time1'] = $("#time1").val();
+            config['time2'] = $("#time2").val();
+            config['time1open'] = $("#time1open").prop('checked')
+            config['time2open'] = $("#time2open").prop('checked')
 
             while ($(`#name${id}`).length) {
                 config[$(`#name${id}`).text()] = ($(`#enum${id} option:selected`).length ? $(`#enum${id} option:selected`).text() : $(`[id^=bool${id}]`)[0].checked);
                 id += 1;
             }
             $.ajax({
-                url: "/api/config" + window.location.search,
-                type: "post",
+                url: "/daily/api/config" + window.location.search,
+                type: "put",
                 data: JSON.stringify(config),
                 contentType: "application/json;charset=utf-8",
                 processData: false,

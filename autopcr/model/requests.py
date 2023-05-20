@@ -1748,7 +1748,6 @@ class RoomStartRequest(Request[RoomStartResponse]):
 	@property
 	def url(self) -> str:
 		return "room/start"
-	pass
 class RoomUpdateRequest(Request[RoomUpdateResponse]):
 	floor_number: int = None
 	layout: RoomFloorLayout = None
