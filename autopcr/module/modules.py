@@ -1090,6 +1090,35 @@ class new_daily_shop(Module):
         await client.shop_buy_item(client.data.daily_shop.system_id, items_to_buy)
         self._log(f"已购买限时商店")
 
+@description('剩余体力全部刷活动图')
+@enumtype(['disabled', 'n-5', 'n-10', 'n-15'])
+@default('disabled')
+class all_in_hatsune(Module):
+    async def do_task(self, client: pcrclient):
+        if self.value == 'disabled':
+            return
+        quest = event_id = 0
+        for event in client.data.event_statuses:
+            if event.event_type != 1 or event.period != 2:
+                continue
+            if self.value == 'n-5':
+                quest = 1000 * event.event_id + 105
+            elif self.value == 'n-10':
+                quest = 1000 * event.event_id + 110
+            elif self.value == 'n-15':
+                quest = 1000 * event.event_id + 115
+            event_id = event.event_id
+            
+            break
+        
+        if not quest: raise AbortError("未找到活动")
+        
+        count = client.data.stamina // 10
+
+        if count == 0: raise AbortError("体力不足")
+        await client.hatsune_quest_skip_aware(event_id, quest, count)
+        self._log(f"已刷{quest}图{count}次")
+
 def register_test():
     ModuleManager._modules = [
         buy_stamina_passive,
@@ -1110,7 +1139,6 @@ def register_all():
         explore_mana,
         underground_skip,
         tower_cloister_sweep,
-        # buy_stamina_active,
         six_star,
         jjc_reward,
         xinsui3_sweep,
@@ -1126,12 +1154,17 @@ def register_all():
         hatsune_gacha_exchange,
         hatsune_mission_accept,
         smart_sweep,
+
+        buy_stamina_active,
+        all_in_hatsune,
+
         mission_receive,
         normal_shop,
         limit_shop,
         underground_shop,
         jjc_shop,
         pjjc_shop,
+        
         love_up,
         main_story_reading,
         tower_story_reading,

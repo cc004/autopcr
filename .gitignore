@@ -1,4 +1,4 @@
-config/
+autopcr/http_server/config/*.json
 __pycache__/
 *.log
 cache/
