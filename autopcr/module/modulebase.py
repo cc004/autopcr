@@ -166,7 +166,7 @@ class ModuleManager:
                 try:
                     module.log.clear()
                     await module.do_task(client)
-                    result[cnt]["msg"] = module.result or "ok"
+                    result[cnt]["msg"] = module.result or '\n'.join(module.log) or "ok" # 哈哈，这下屎山了
                     result[cnt]["status"] = "success"
                 except SkipError as e:
                     result[cnt]["msg"] = str(e)
