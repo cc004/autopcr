@@ -9,7 +9,7 @@ async def _cron(task):
         await asyncio.sleep(60)
         t = datetime.datetime.now().hour
         if t != hour:
-            await task(hour)
+            await task(t)
             hour = t
 
 async def _run_crons(path, hour):

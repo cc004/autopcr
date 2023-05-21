@@ -110,8 +110,8 @@ class ModuleManager:
             cron = module.cron_hook()
             if cron: self._crons.append(cron)
         # 这里对time1和time2进行兼容
-        if data['time1open']: self._crons.append(int(data['time1'].split(':')[0]))
-        if data['time2open']: self._crons.append(int(data['time2'].split(':')[0]))
+        if data.get('time1open', False): self._crons.append(int(data['time1'].split(':')[0]))
+        if data.get('time2open', False): self._crons.append(int(data['time2'].split(':')[0]))
     
     def _save_config(self):
         data = {m.name: m.value for m in self.modules.values()}
