@@ -139,7 +139,7 @@ class ModuleManager:
             'time2': self.data['time2'] if 'time2' in self.data else None,
             'time1open': self.data['time1open'] if 'time1open' in self.data else None,
             'time2open': self.data['time2open'] if 'time2open' in self.data else None,
-            'data': {m.name: m.generate_config() for m in self.modules.values()},
+            'data': [{'name': m.name, 'value': m.generate_config()} for m in self.modules.values()],
             'last_result': self.data.get('_last_result', None)
         }
     
