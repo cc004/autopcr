@@ -232,9 +232,11 @@
                     $("#time2").val(ret.time2);
                     res = ret.last_result;
                     ret = ret.data;
-                    for (name in ret) {
+                    for (let i = 0; i < ret.length; ++i) {
+                        let val = ret[i];
                         cnt += 1;
-                        item = ret[name];
+                        name = val.name;
+                        item = val.value;
                         ta_tab.append(`<tr id="tr_${name}"></tr>`); //添加一列
                         let tab = $(`#tr_${name}`); //把这一列的内容添加上
                         tab.append(`<td>${item["implemented"] ? "" : "未实装"}</td>`);
