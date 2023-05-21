@@ -362,19 +362,6 @@ class pcrclient(apiclient):
             result.append(f"{db.get_inventory_name_san(target)}x0({self.data.get_inventory(target)})")
         return '\n'.join(result)
 
-    async def normal_gacha(self):
-        req = GachaIndexRequest()
-        resp = (await self.request(req))
-        normal_gacha: GachaParameter = None
-        for gacha in resp.gacha_info:
-            if gacha.type == eGachaType.FreeOnly and gacha.cost_num_single == 0:
-                normal_gacha = gacha 
-                break
-        if not normal_gacha.free_exec_times:
-            raise SkipError("已进行过普通扭蛋")
-        return await self.exec_gacha(normal_gacha, 10, 0, 1, -1, 0)
-
-
     async def recover_challenge(self, quest: int):
         req = QuestRecoverChallengeRequest()
         req.quest_id = quest
