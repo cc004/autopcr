@@ -183,10 +183,10 @@ async def clear_daily_all(bot: HoshinoBot, ev: CQEvent):
         user_id = str(ev.user_id)
     else:   #指定对象
         if not priv.check_priv(ev,priv.ADMIN):
-            await bot.finish(ev, '[CQ:reply,id={ev.message_id}]指定用户清日常需要管理员权限')
+            await bot.finish(ev, f'[CQ:reply,id={ev.message_id}]指定用户清日常需要管理员权限')
 
     if user_id not in data:
-        await bot.finish(ev, "[CQ:reply,id={ev.message_id}]请发送【配置清日常】配置")
+        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]请发送【配置清日常】配置")
     for config, target in data[user_id]:
         alian = config['alian'] 
         token = (ev.user_id, target)
