@@ -29,10 +29,10 @@ class datamgr(Component[apiclient]):
     user_my_quest: List[UserMyQuest] = None
     _inventory: Dict[Tuple[eInventoryType, int], int] = {}
     read_story_ids: List[int] = None
+    unlock_story_ids: List[int] = None
     event_statuses: List[EventStatus] = None
     tower_status: TowerStatus = None
     deck_list: Dict[ePartyType, LoadDeckData] = {}
-    daily_shop: DailyShop = None
 
     def clear_inventory(self):
         self._inventory.clear()
@@ -56,21 +56,21 @@ class datamgr(Component[apiclient]):
         self._inventory[item] = value
 
     def get_shop_gold(self, shop_id: int) -> int:
-        if shop_id == 201: # 正常商店
+        if shop_id == eSystemId.NORMAL_SHOP: # 正常商店
             return self.gold.gold_id_free
-        if shop_id == 212: # 限定商店
+        if shop_id == eSystemId.LIMITED_SHOP: # 限定商店
             return self.gold.gold_id_free
-        elif shop_id == 202: # jjc店
+        elif shop_id == eSystemId.ARENA_SHOP: # jjc店
             return self.get_inventory((eInventoryType.Item, 90003))
-        elif shop_id == 203: # pjjc店
+        elif shop_id == eSystemId.GRAND_ARENA_SHOP: # pjjc店
             return self.get_inventory((eInventoryType.Item, 90004))
-        elif shop_id == 204: # 地下城店
+        elif shop_id == eSystemId.EXPEDITION_SHOP: # 地下城店
             return self.get_inventory((eInventoryType.Item, 90002))
-        elif shop_id == 205: # 会战店
+        elif shop_id == eSystemId.CLAN_BATTLE_SHOP: # 会战店
             return self.get_inventory((eInventoryType.Item, 90006))
-        elif shop_id == 207: # 女神店
+        elif shop_id == eSystemId.MEMORY_PIECE_SHOP: # 女神店
             return self.get_inventory((eInventoryType.Item, 90005))
-        elif shop_id == 210: # 大师店
+        elif shop_id == eSystemId.COUNTER_STOP_SHOP: # 大师店
             return self.get_inventory((eInventoryType.Item, 90008))
         else:
             raise ValueError(f"未知的商店{shop_id}")

@@ -17,13 +17,28 @@ def default(val):
 def description(desc: str):
     return lambda cls:_wrap_init(cls, lambda self: setattr(self, 'description', desc))
 def enumtype(candidates: list):
-    return lambda cls:_wrap_init(cls, lambda self: (setattr(self, 'type', 'enum'), setattr(self, 'candidates', candidates)))
+    def wrapper(cls):
+        cls = _wrap_init(cls, lambda self: (setattr(self, 'type', 'enum'), setattr(self, 'candidates', candidates)))
+        old = cls.do_task
+        async def do_task(self, client: pcrclient):
+            if self.value is None or self.value == "none":
+                raise SkipError('功能未启用')
+            elif self.value not in self.candidates: 
+                raise ValueError(f"未知的选项{self.value}")
+            else: 
+                return await old(self, client)
+        cls.do_task = do_task
+        return cls
+
+    return wrapper
 def booltype(cls):
     cls = _wrap_init(cls, lambda self: (setattr(self, 'type', 'bool'), setattr(self, 'candidates', [True, False])))
     old = cls.do_task
     async def do_task(self, client: pcrclient):
-        if self.value: await old(self, client)
-        else: raise SkipError('功能未启用')
+        if self.value: 
+            return await old(self, client)
+        else: 
+            raise SkipError('功能未启用')
     cls.do_task = do_task
     return cls
 def notimplemented(cls):
@@ -39,7 +54,6 @@ class Module:
         self.type = 'invalid'
         self.implmented = True
         self._parent = parent
-        self.result = ""
         self.log = []
     @property
     def value(self):
@@ -67,8 +81,6 @@ class Module:
 
     def get_config(self, name):
         return self._parent.get_config(name)
-    def set_result(self, msg):
-        self.result = msg
     def generate_config(self):
         return {
             'value': self.value,
@@ -166,8 +178,8 @@ class ModuleManager:
                 result[cnt] = {"name": name, "value": module.value if module.type != "bool" else "", "desc": module.description, "msg": "", "status": ""}
                 try:
                     module.log.clear()
-                    await module.do_task(client)
-                    result[cnt]["msg"] = module.result or '\n'.join(module.log) or "ok" # 哈哈，这下屎山了
+                    msg = await module.do_task(client)
+                    result[cnt]["msg"] = msg or '\n'.join(module.log) or "ok" # 哈哈，这下屎山了
                     result[cnt]["status"] = "success"
                 except SkipError as e:
                     result[cnt]["msg"] = str(e)

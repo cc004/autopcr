@@ -155,9 +155,6 @@ class QuestSkipResponse(responses.QuestSkipResponse):
             mgr.gold = self.user_gold
         if self.level_info:
             mgr.team_level = self.level_info.team.start_level
-        
-        if self.daily_shop:
-            mgr.daily_shop = self.daily_shop
 
 
 @handles
@@ -181,9 +178,6 @@ class QuestSkipMultipleResponse(responses.QuestSkipMultipleResponse):
             mgr.stamina = self.user_info.user_stamina
         if self.user_gold:
             mgr.gold = self.user_gold
-        
-        if self.daily_shop:
-            mgr.daily_shop = self.daily_shop
 
 
 @handles
@@ -240,6 +234,7 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         mgr.settings = self.ini_setting
         mgr.recover_stamina_exec_count = self.shop.recover_stamina.exec_count
         mgr.read_story_ids = self.read_story_ids
+        mgr.unlock_story_ids = self.unlock_story_ids
         mgr.event_statuses = self.event_statuses
         mgr.tower_status = self.tower_status
         mgr.deck_list = {deck.deck_number:deck for deck in self.deck_list}
@@ -264,9 +259,6 @@ class HomeIndexResponse(responses.HomeIndexResponse):
                 if count.dungeon_type == type:
                     mgr.dungeon_avaliable = count.count > 0
                     break
-        
-        if self.daily_shop:
-            mgr.daily_shop = self.daily_shop
 
 
 @handles
@@ -295,9 +287,6 @@ class HatsuneQuestSkipResponse(responses.HatsuneQuestSkipResponse):
             mgr.gold = self.user_gold
         if self.level_info:
             mgr.team_level = self.level_info.team.start_level
-        
-        if self.daily_shop:
-            mgr.daily_shop = self.daily_shop
 
 
 @handles
