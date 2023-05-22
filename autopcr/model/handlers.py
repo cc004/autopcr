@@ -155,9 +155,6 @@ class QuestSkipResponse(responses.QuestSkipResponse):
             mgr.gold = self.user_gold
         if self.level_info:
             mgr.team_level = self.level_info.team.start_level
-        
-        if self.daily_shop:
-            mgr.daily_shop = self.daily_shop
 
 
 @handles
@@ -181,9 +178,6 @@ class QuestSkipMultipleResponse(responses.QuestSkipMultipleResponse):
             mgr.stamina = self.user_info.user_stamina
         if self.user_gold:
             mgr.gold = self.user_gold
-        
-        if self.daily_shop:
-            mgr.daily_shop = self.daily_shop
 
 
 @handles
@@ -264,9 +258,6 @@ class HomeIndexResponse(responses.HomeIndexResponse):
                 if count.dungeon_type == type:
                     mgr.dungeon_avaliable = count.count > 0
                     break
-        
-        if self.daily_shop:
-            mgr.daily_shop = self.daily_shop
 
 
 @handles
@@ -295,9 +286,6 @@ class HatsuneQuestSkipResponse(responses.HatsuneQuestSkipResponse):
             mgr.gold = self.user_gold
         if self.level_info:
             mgr.team_level = self.level_info.team.start_level
-        
-        if self.daily_shop:
-            mgr.daily_shop = self.daily_shop
 
 
 @handles

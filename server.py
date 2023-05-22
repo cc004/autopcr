@@ -28,7 +28,7 @@ app = nonebot.get_bot().server_app
 app.register_blueprint(server.app)
 
 ROOT_PATH = os.path.dirname(__file__)
-
+cron_group = "" # 定时任务的通知群
 
 sv_help = """
 [#清日常 [昵称]] 开始清日常，当该qq下有多个账号时需指定昵称
@@ -44,6 +44,7 @@ inqueue = set({})
 comsuming = False
 cur_task: Task = None
 validate = ""
+gid = ""
 
 sv = Service(
         name="自动清日常",
@@ -112,11 +113,16 @@ async def start_daily():
     loop = asyncio.get_event_loop()
     loop.create_task(comsumer())
     loop.create_task(manual_validate())
+    global gid
+    global cron_group
+    gid = list((await sv.get_enable_groups()).keys())[0]
+    if cron_group:
+        gid = cron_group
 
 @sv.scheduled_job('cron', hour='14', minute='15')
 async def auto_update_database():
     bot = hoshino.get_bot()
-    gid = list((await sv.get_enable_groups()).keys())[1]
+    global gid
     msg = await do_update_database()
     if msg.startswith("未发现新版本数据库"):
         return
@@ -128,7 +134,7 @@ async def timing():
     if db.is_clan_battle_time():
         return
 
-    gid = list((await sv.get_enable_groups()).keys())[1]
+    global gid
     hour = datetime.datetime.now().hour
     minute = datetime.datetime.now().minute
     now = f"{hour}".rjust(2, '0') + ":" + f"{minute}".rjust(2, '0')
