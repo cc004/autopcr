@@ -137,8 +137,8 @@ class apiclient(Container["apiclient"]):
     @staticmethod
     def _no_null_key(obj):
         if type(obj) == dict:
-            if None in obj and not [1 for k in obj if type(k) is not int]:
-                return [v1 for k1, v1 in sorted(((k, v) for k, v in obj.items() if k is not None), key=lambda x: x[0])]
+            if None in obj and not [1 for k in obj if type(k) is not int and k is not None]:
+                return [apiclient._no_null_key(v1) for k1, v1 in sorted(((k, v) for k, v in obj.items() if k is not None), key=lambda x: x[0])]
             return {k: apiclient._no_null_key(v) for k, v in obj.items() if k is not None}
         elif type(obj) == list:
             return [apiclient._no_null_key(v) for v in obj]
@@ -162,9 +162,12 @@ class apiclient(Container["apiclient"]):
         
         # with open('req.log', 'a') as fp:
         #     fp.write(json.dumps(response0))
+        #     fp.write("\n-------\n")
+        #     fp.write(json.dumps(response1))
+
         response: Response[TResponse] = Response[cls].parse_obj(response1)
         
-        #with open('req.log', 'a') as fp:
+        # with open('req.log', 'a') as fp:
         #    fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
         #    fp.write(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
         #    fp.write(json.dumps(json.loads(response.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
