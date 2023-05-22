@@ -677,6 +677,7 @@ class PresentParameter(BaseModel):
 	reward_limit_time: int = None
 	create_time: int = None
 class Price(BaseModel):
+	currency_type: eInventoryType = None
 	currency_id: int = None
 	currency_num: int = None
 class ProfileQuestInfo(BaseModel):
