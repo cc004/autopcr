@@ -234,6 +234,7 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         mgr.settings = self.ini_setting
         mgr.recover_stamina_exec_count = self.shop.recover_stamina.exec_count
         mgr.read_story_ids = self.read_story_ids
+        mgr.unlock_story_ids = self.unlock_story_ids
         mgr.event_statuses = self.event_statuses
         mgr.tower_status = self.tower_status
         mgr.deck_list = {deck.deck_number:deck for deck in self.deck_list}

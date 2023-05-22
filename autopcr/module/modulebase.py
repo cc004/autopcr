@@ -13,7 +13,7 @@ def _wrap_init(cls, setter):
     return cls
 
 def default(val):
-    return lambda cls:_wrap_init(cls, lambda self: setattr(self, 'val', val))
+    return lambda cls:_wrap_init(cls, lambda self: setattr(self, '_val', val))
 def description(desc: str):
     return lambda cls:_wrap_init(cls, lambda self: setattr(self, 'description', desc))
 def enumtype(candidates: List[int|str]):
@@ -70,7 +70,8 @@ class Module:
             self._val = val
             return msg
         else:
-            raise AbortError(f"Invalid value for module {self.name}")
+            return self.candidates[0]
+            # raise AbortError(f"Invalid value for module {self.name}")
 
     @abstractmethod
     async def do_task(self, client: pcrclient): ...

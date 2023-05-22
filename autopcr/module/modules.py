@@ -116,214 +116,182 @@ class free_gacha(Module):
         result += await client.serlize_reward(reward_list)
         return result
 
-@description('商店强化石最大购买量')
-@enumtype([0, 100, 500, 1000, 5000, 9999])
-@default(1000)
-class shop_stone_limit(Module):
+@description('商店购买最大经验药水量')
+@enumtype([0, 1000, 5000, 20000, 50000, 99999])
+@default(0)
+class shop_buy_exp_count_limit(Module):
     async def do_task(self, client: pcrclient):
-        client.keys['shop_stone_limit'] = self.value
+        client.keys['exp_count_limit'] = self.value
 
-@description('商店经验药水最大购买量')
-@enumtype([0, 1000, 5000, 10000, 50000, 99999])
-@default(10000)
-class shop_exp_limit(Module):
-    async def do_task(self, client: pcrclient):
-        client.keys['shop_exp_limit'] = self.value
-
-@description('商店角色碎片最大购买量')
-@enumtype([0, 120, 270, 520, 999])
-@default(120)
-class shop_unit_piece_limit(Module):
-    async def do_task(self, client: pcrclient):
-        client.keys['shop_unit_piece_limit'] = self.value
-
-@description('商店装备最大购买量')
+@description('商店购买最大装备量')
 @enumtype([0, 100, 300, 600, 1000, 9999])
 @default(300)
-class shop_equip_limit(Module):
+class shop_buy_equip_count_limit(Module):
     async def do_task(self, client: pcrclient):
-        client.keys['shop_equip_limit'] = self.value
+        client.keys['equip_count_limit'] = self.value
 
-class shop_buy(Module):
-    @abstractproperty
-    def system_id(self) -> int: ...
-    @abstractproperty
+@description('商店购买最大强化石量')
+@enumtype([0, 100, 500, 2000, 5000, 99999])
+@default(0)
+class shop_buy_equip_upper_count_limit(Module):
+    async def do_task(self, client: pcrclient):
+        client.keys['equip_upper_count_limit'] = self.value
+
+@description('商店购买最大记忆碎片量')
+@enumtype([0, 15, 50, 120, 150, 270, 9999])
+@default(15)
+class shop_buy_unit_memory_count_limit(Module):
+    async def do_task(self, client: pcrclient):
+        client.keys['unit_memory_count_limit'] = self.value
+
+class shop_buyer(Module):
+    def _get_count(self, client: pcrclient, name: str, key: str):
+        if self.value != name and self.value != 'all':
+            return 0
+        return client.keys.get(key, 0)
+    def _exp_count(self, client: pcrclient):
+        return self._get_count(client, '经验药水', 'exp_count_limit')
+    def _equip_count(self, client: pcrclient):
+        return self._get_count(client, '装备', 'equip_count_limit')
+    def _equip_upper_count(self, client: pcrclient):
+        return self._get_count(client, '强化石', 'equip_upper_count_limit')
+    def _unit_memory_count(self, client: pcrclient):
+        return self._get_count(client, '记忆碎片', 'unit_memory_count_limit')
+
+    @abstractmethod
     def coin_limit(self) -> int: ...
-    @abstractproperty
-    def shop_name(self) -> str: ...
     @abstractmethod
-    def target_item1(self, item) -> bool: ...
+    def system_id(self) -> eSystemId: ...
     @abstractmethod
-    def target_item2(self, item) -> bool: ...
+    def reset_count_key(self) -> str: ...
 
-    async def _get_shop_content(self, client: pcrclient):
-        for shop in (await client.get_shop_item_list()).shop_list:
-            print(shop.system_id, self.system_id)
-            if shop.system_id == self.system_id:
+    async def _get_shop(self, client: pcrclient):
+        res = await client.get_shop_item_list()
+        for shop in res.shop_list:
+            if shop.system_id == self.system_id().value:
                 return shop
         raise SkipError("商店未开启")
 
-    def shop_buy_limit(self, client: pcrclient, item: ShopItem):
-        token = (item.type, item.item_id)
-        if db.is_exp_upper(token):
-            return client.keys['shop_exp_limit'] < item.stock_count
-        elif db.is_equip_upper(token):
-            return client.keys['shop_stone_limit'] < item.stock_count
-        elif db.is_unit_memory(token):
-            return client.keys['shop_unit_piece_limit'] < item.stock_count
-        elif db.is_equip(token):
-            return client.keys['shop_equip_limit'] < item.stock_count
-        else:
-            raise ValueError(f"未知的商品类型{token}:{db.get_inventory_name_san(token)}")
-
     async def do_task(self, client: pcrclient):
-        shop_content = await self._get_shop_content(client)
+        lmt = self.coin_limit()
+        reset_cnt = client.keys.get(self.reset_count_key(), 0)
 
-        prev = client.data.get_shop_gold(self.system_id)
+        shop_content = await self._get_shop(client)
 
-        reset_limit = client.keys[self.shop_name]
-
+        prev = client.data.get_shop_gold(shop_content.system_id)
         result = []
 
-        while shop_content.reset_count <= reset_limit:
-            
-            if client.data.get_shop_gold(self.system_id) < self.coin_limit:
-                raise AbortError(f"商店代币小于{self.coin_limit}，无法继续购买")
+        while True:
+            gold = client.data.get_shop_gold(shop_content.system_id)
+            if gold < lmt:
+                raise SkipError(f"商店货币{gold}不足{lmt}，将不进行购买")
 
             target = [
-                (item.slot_id, item.price.currency_num) for item in shop_content.item_list if 
-                    item.available_num and 
-                    not self.shop_buy_limit(client, item) and
-                    not item.sold and 
-                    (self.target_item1(item) or self.target_item2(item))
+                (item.slot_id, item.price.currency_num) for item in shop_content.item_list if not item.sold and
+                    (
+                        db.is_exp_upper((item.type, item.item_id)) and client.data.get_inventory((item.type, item.item_id)) < self._exp_count(client) or
+                        db.is_equip((item.type, item.item_id)) and client.data.get_inventory((item.type, item.item_id)) < self._equip_count(client) or
+                        db.is_equip_upper((item.type, item.item_id)) and client.data.get_inventory((item.type, item.item_id)) < self._equip_upper_count(client) or
+                        db.is_unit_memory((item.type, item.item_id)) and client.data.get_inventory((item.type, item.item_id)) < self._unit_memory_count(client)
+                    )
             ]
 
             slots_to_buy = [item[0] for item in target]
             cost_gold = sum([item[1] for item in target])
-            if cost_gold >= client.data.get_shop_gold(self.system_id):
+
+            if cost_gold > gold: # 货币不足
                 break
             
             if slots_to_buy:
                 res = await client.shop_buy_item(shop_content.system_id, slots_to_buy)
                 result.extend(res.purchase_list)
 
-            if shop_content.reset_count >= reset_limit:
+            if shop_content.reset_count >= reset_cnt:
                 break
             
             await client.shop_reset(shop_content.system_id)
-            shop_content = await self._get_shop_content(client)
+            shop_content = await self._get_shop(client)
 
-        if result:
-            result = await client.serlize_reward(result)
-            msg = f"花费{prev - client.data.get_shop_gold(self.system_id)}代币购买了\n:{result}"
-            print(msg)
-            return msg
+        cost_gold = prev - client.data.get_shop_gold(shop_content.system_id)
+        if cost_gold == 0:
+            raise SkipError("无对应商品购买")
         else:
-            prefix = "" if prev == prev - client.data.get_shop_gold(self.system_id) else f"花费了{prev - client.data.get_shop_gold(self.system_id)}代币重置，"
-            raise SkipError(f"{prefix}但无对应商品购买")
+            self._log(f"花费了{cost_gold}货币,购买了:")
+            msg = await client.serlize_reward(result)
+            self._log(msg)
 
-@description('地下城商店重置次数')
-@enumtype([0, 1, 2, 3, 4, 7, 10])
+@description('通用商店重置次数')
+@enumtype([0, 1, 2, 3, 4, 6, 11, 20])
 @default(0)
-class dungeon_shop_reset(Module):
+class normal_shop_reset_count(Module):
     async def do_task(self, client: pcrclient):
-        client.keys['dungeon_shop'] = self.value
+        client.keys['normal_shop_reset_count'] = self.value
 
-@description('jjc商店重置次数')
-@enumtype([0, 1, 2, 3, 4, 7, 10])
-@default(0)
-class jjc_shop_reset(Module):
-    async def do_task(self, client: pcrclient):
-        client.keys['jjc_shop'] = self.value
-
-@description('pjjc商店重置次数')
-@enumtype([0, 1, 2, 3, 4, 7, 10])
-@default(0)
-class pjjc_shop_reset(Module):
-    async def do_task(self, client: pcrclient):
-        client.keys['pjjc_shop'] = self.value
-
-@description('普通商店重置次数')
-@enumtype([0, 1, 2, 3, 4, 7, 10])
-@default(0)
-class normal_shop_reset(Module):
-    async def do_task(self, client: pcrclient):
-        client.keys['normal_shop'] = self.value
-
-@description('普通商店购买')
+@description('通用商店购买')
 @enumtype(["none", "经验药水", "强化石", "all"])
 @default("none")
-class normal_shop(shop_buy):
-    def system_id(self) -> int:
-        return 201
-    def coin_limit(self) -> int:
-        return 5000000
-    def shop_name(self) -> str:
-        return "normal_shop"
-    def item1(self, item) -> bool:
-        return (self.value == "经验药水" or self.value == "all") and db.is_exp_upper((item.type, item.item_id))
-    def item2(self, item) -> bool:
-        return (self.value == "强化石" or self.value == "all") and db.is_equip_upper((item.type, item.item_id))
+class normal_shop(shop_buyer):
+    def coin_limit(self) -> int: return 5000000
+    def system_id(self) -> eSystemId: return eSystemId.NORMAL_SHOP
+    def reset_count_key(self) -> str: return 'normal_shop_reset_count'
 
-@description('限定商店购买')
+@description('限定商店购买（此项购买不使用最大值）')
 @enumtype(["none", "经验药水", "装备", "all"])
 @default("none")
-class limit_shop(Module):
-    def system_id(self) -> int:
-        return 212
-    def coin_limit(self) -> int:
-        return 5000000
-    def shop_name(self) -> str:
-        return "limit_shop"
-    def item1(self, item) -> bool:
-        return (self.value == "经验药水" or self.value == "all") and db.is_exp_upper((item.type, item.item_id))
-    def item2(self, item) -> bool:
-        return (self.value == "装备" or self.value == "all") and db.is_equip((item.type, item.item_id))
+class limit_shop(shop_buyer):
+    def _exp_count(self, client: pcrclient): return 99999
+    def _equip_count(self, client: pcrclient): return 9999
+    def coin_limit(self) -> int: return 5000000
+    def system_id(self) -> eSystemId: return eSystemId.LIMITED_SHOP
+    def reset_count_key(self) -> str: return 'limited_shop_reset_count'
+    async def do_task(self, client: pcrclient):
+        client.keys['limited_shop_reset_count'] = 0
+        return await super().do_task(client)
 
-@description('地下城商店购买，记忆碎片+少于1000的装备')
+@description('地下城商店重置次数')
+@enumtype([0, 1, 2, 3, 4, 7, 11, 20])
+@default(0)
+class underground_shop_reset_count(Module):
+    async def do_task(self, client: pcrclient):
+        client.keys['expedition_shop_reset_count'] = self.value
+
+@description('地下城商店购买，记忆碎片+装备')
 @enumtype(["none", "记忆碎片", "装备", "all"])
 @default("none")
-class dungeon_shop(Module):
-    def system_id(self) -> int:
-        return 204
-    def coin_limit(self) -> int:
-        return 20000
-    def shop_name(self) -> str:
-        return "limit_shop"
-    def item1(self, item) -> bool:
-        return (self.value == "记忆碎片" or self.value == "all") and db.is_unit_memory((item.type, item.item_id))
-    def item2(self, item) -> bool:
-        return (self.value == "装备" or self.value == "all") and db.is_equip((item.type, item.item_id))
+class underground_shop(shop_buyer):
+    def coin_limit(self) -> int: return 20000
+    def system_id(self) -> eSystemId: return eSystemId.EXPEDITION_SHOP
+    def reset_count_key(self) -> str: return 'expedition_shop_reset_count'
 
-@description('jjc商店购买，记忆碎片+少于1000的装备')
+@description('jjc商店重置次数')
+@enumtype([0, 1, 2, 3, 4, 7, 11, 20])
+@default(0)
+class jjc_shop_reset_count(Module):
+    async def do_task(self, client: pcrclient):
+        client.keys['arena_shop_reset_count'] = self.value
+
+@description('jjc商店购买，记忆碎片+装备')
 @enumtype(["none", "记忆碎片", "装备", "all"])
 @default("none")
-class jjc_shop(Module):
-    def system_id(self) -> int:
-        return 202
-    def coin_limit(self) -> int:
-        return 20000
-    def shop_name(self) -> str:
-        return "limit_shop"
-    def item1(self, item) -> bool:
-        return (self.value == "记忆碎片" or self.value == "all") and db.is_unit_memory((item.type, item.item_id))
-    def item2(self, item) -> bool:
-        return (self.value == "装备" or self.value == "all") and db.is_equip((item.type, item.item_id))
+class jjc_shop(shop_buyer):
+    def coin_limit(self) -> int: return 20000
+    def system_id(self) -> eSystemId: return eSystemId.ARENA_SHOP
+    def reset_count_key(self) -> str: return 'arena_shop_reset_count'
 
-@description('pjjc商店购买，记忆碎片+少于1000的装备')
+@description('pjjc商店重置次数')
+@enumtype([0, 1, 2, 3, 4, 7, 11, 20])
+@default(0)
+class pjjc_shop_reset_count(Module):
+    async def do_task(self, client: pcrclient):
+        client.keys['grand_arena_shop_reset_count'] = self.value
+
+@description('pjjc商店购买，记忆碎片+装备')
 @enumtype(["none", "记忆碎片", "装备", "all"])
 @default("none")
-class pjjc_shop(Module):
-    def system_id(self) -> int:
-        return 203
-    def coin_limit(self) -> int:
-        return 20000
-    def shop_name(self) -> str:
-        return "limit_shop"
-    def item1(self, item) -> bool:
-        return (self.value == "记忆碎片" or self.value == "all") and db.is_unit_memory((item.type, item.item_id))
-    def item2(self, item) -> bool:
-        return (self.value == "装备" or self.value == "all") and db.is_equip((item.type, item.item_id))
+class pjjc_shop(shop_buyer):
+    def coin_limit(self) -> int: return 20000
+    def system_id(self) -> eSystemId: return eSystemId.GRAND_ARENA_SHOP
+    def reset_count_key(self) -> str: return 'grand_arena_shop_reset_count'
 
 @description('开始时领取任务奖励')
 @booltype
@@ -443,7 +411,7 @@ class unit_story_reading(Module):
             1042, # 千歌
             1059, # 普妈
             1084, # 圣千
-            ])
+        ])
         for story_id, pre_story_id, chara_id, love_level, title in db.unit_story:
             if ignore and chara_id in ignore_chara_id:
                 continue
@@ -463,6 +431,7 @@ class unit_story_reading(Module):
 class main_story_reading(Module):
     async def do_task(self, client: pcrclient):
         read_story = set(client.data.read_story_ids)
+        read_story.add(0) # no pre story
         result = []
         msg = ""
         for story_id, pre_story_id, unlock_quest_id, title in db.main_story:
@@ -490,6 +459,7 @@ class main_story_reading(Module):
 class tower_story_reading(Module):
     async def do_task(self, client: pcrclient):
         read_story = set(client.data.read_story_ids)
+        read_story.add(0) # no pre story
         result = []
         msg = ""
         for story_id, pre_story_id, unlock_quest_id, title, start_time in db.tower_story:
@@ -522,8 +492,10 @@ class hatsune_story_reading(Module):
     async def do_task(self, client: pcrclient):
         result = []
         read_story = set(client.data.read_story_ids)
+        read_story.add(0) # no pre story
+        unlock_story = set(client.data.unlock_story_ids)
         for story_id, pre_story_id, title in db.event_story:
-            if story_id not in read_story and pre_story_id in read_story:
+            if story_id not in read_story and pre_story_id in read_story and story_id in unlock_story:
                 await client.read_story(story_id)
                 result.append(title)
                 read_story.add(story_id)
@@ -1071,6 +1043,87 @@ class smart_sweep(Module):
         msg = await client.serlize_reward(result)
         return msg
 
+'''
+class shop_buy(Module):
+    @abstractmethod
+    def system_id(self) -> int: ...
+    @abstractmethod
+    def coin_limit(self) -> int: ...
+
+    async def _get_shop_content(self, client: pcrclient):
+        for shop in (await client.get_shop_item_list()).shop_list:
+            if shop.system_id == self.system_id():
+                return shop
+        raise AbortError("商店未开启")
+
+    async def do_task(self, client: pcrclient):
+        shop_content = await self._get_shop_content(client)
+
+        prev = client.data.get_shop_gold(self.system_id())
+        
+        buy_limit = client.keys.get('shop_buy_limit', 300)
+
+        while shop_content.reset_count <= self.value:
+            
+            if client.data.get_shop_gold(self.system_id()) < self.coin_limit():
+                raise AbortError(f"商店金币小于{self.coin_limit()}，无法继续购买")
+
+            slots_to_buy = [
+                item.slot_id for item in shop_content.item_list if 
+                    item.available_num and 
+                    client.data.get_inventory((item.type, item.item_id)) < buy_limit and 
+                    not item.sold
+            ]
+            
+            if slots_to_buy:
+                await client.shop_buy_item(shop_content.system_id, slots_to_buy)
+
+            if shop_content.reset_count == self.value:
+                break
+            
+            await client.shop_reset(shop_content.system_id)
+            shop_content = await self._get_shop_content(client)
+
+        self._log(f"已花费{prev - client.data.get_shop_gold(self.system_id())}代币购买装备")
+
+@description('购买地下城币刷新次数, -1为不购买')
+@enumtype([-1, 0, 1, 2, 3, 4, 7, 10])
+@default(0)
+class dungeon_shop(shop_buy):
+    def system_id(self) -> int:
+        return 204
+    def coin_limit(self) -> int:
+        return 100000
+
+@description('购买jjc币刷新次数, -1为不购买')
+@enumtype([-1, 0, 1, 2, 3, 4, 7, 10])
+@default(0)
+class new_jjc_shop(shop_buy):
+    def system_id(self) -> int:
+        return 202
+    def coin_limit(self) -> int:
+        return 30000
+
+@description('购买pjjc币刷新次数, -1为不购买')
+@enumtype([-1, 0, 1, 2, 3, 4, 7, 10])
+@default(0)
+class new_pjjc_shop(shop_buy):
+    def system_id(self) -> int:
+        return 203
+    def coin_limit(self) -> int:
+        return 30000
+
+@description('购买限时商店')
+@booltype
+@default(True)
+class new_daily_shop(Module):
+    async def do_task(self, client: pcrclient):
+        items_to_buy = [x.slot_id for x in client.data.daily_shop.item_list if x.available_num]
+        if not items_to_buy:
+            raise SkipError(f"限时商店已购买")
+        await client.shop_buy_item(client.data.daily_shop.system_id, items_to_buy)
+        self._log(f"已购买限时商店")
+'''
 
 @description('剩余体力全部刷活动图')
 @enumtype(['none', 'n-5', 'n-10', 'n-15'])
@@ -1141,15 +1194,18 @@ def register_all():
 
         mission_receive_last,
 
-        normal_shop_reset,
-        dungeon_shop_reset,
-        jjc_shop_reset,
-        pjjc_shop_reset,
-
+        shop_buy_exp_count_limit,
+        shop_buy_equip_count_limit,
+        shop_buy_equip_upper_count_limit,
+        shop_buy_unit_memory_count_limit,
+        normal_shop_reset_count,
         normal_shop,
         limit_shop,
-        dungeon_shop,
+        underground_shop_reset_count,
+        underground_shop,
+        jjc_shop_reset_count,
         jjc_shop,
+        pjjc_shop_reset_count,
         pjjc_shop,
         
         love_up,
