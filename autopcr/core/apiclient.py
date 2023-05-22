@@ -134,6 +134,15 @@ class apiclient(Container["apiclient"]):
         dec, key = apiclient._decrypt(data)
         return unpackb(dec[:-dec[-1]], strict_map_key=False), key
 
+    @staticmethod
+    def _no_null_key(obj):
+        if type(obj) == dict:
+            return {k: apiclient._no_null_key(v) for k, v in obj.items() if k is not None}
+        elif type(obj) == list:
+            return [apiclient._no_null_key(v) for v in obj]
+        else:
+            return obj
+
     async def _request_internal(self, request: Request[TResponse]) -> TResponse:
         if not request: return None
         print(f'{self.name} requested {request.__class__.__name__} at /{request.url}')
@@ -147,6 +156,8 @@ class apiclient(Container["apiclient"]):
 
         cls = request.__class__.__orig_bases__[0].__args__[0]
 
+        response0 = apiclient._no_null_key(response0)
+        
         # with open('req.log', 'a') as fp:
         #     fp.write(json.dumps(response0))
         response: Response[TResponse] = Response[cls].parse_obj(response0)
