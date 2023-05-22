@@ -16,7 +16,7 @@ def default(val):
     return lambda cls:_wrap_init(cls, lambda self: setattr(self, '_val', val))
 def description(desc: str):
     return lambda cls:_wrap_init(cls, lambda self: setattr(self, 'description', desc))
-def enumtype(candidates: List[int|str]):
+def enumtype(candidates: list):
     def wrapper(cls):
         cls = _wrap_init(cls, lambda self: (setattr(self, 'type', 'enum'), setattr(self, 'candidates', candidates)))
         old = cls.do_task
