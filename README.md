@@ -15,6 +15,8 @@ url前缀为`/daily`
 
 适配`hoshino`，同时`hoshino`下的网页版无法调用清日常，只能在群聊调用。
 
+需要把http_server里的static和templates文件夹放到与hoshino的run.py同目录下
+
 图片生成依赖于`imgkit`库，`linux`需要配置一下`x server`啥的
 
 ## Credits
