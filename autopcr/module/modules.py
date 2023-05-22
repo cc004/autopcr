@@ -179,6 +179,7 @@ class shop_buyer(Module):
         shop_content = await self._get_shop(client)
 
         prev = client.data.get_shop_gold(shop_content.system_id)
+        old_reset_cnt = shop_content.reset_count
         result = []
 
         while True:
@@ -216,7 +217,7 @@ class shop_buyer(Module):
         if cost_gold == 0:
             raise SkipError("无对应商品购买")
         else:
-            self._log(f"花费了{cost_gold}货币,购买了:")
+            self._log(f"花费了{cost_gold}货币，重置了{shop_content.reset_count - old_reset_cnt}次，购买了:")
             msg = await client.serlize_reward(result)
             self._log(msg)
 
