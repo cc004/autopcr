@@ -240,8 +240,8 @@ class normal_shop(shop_buyer):
 @enumtype(["none", "经验药水", "装备", "all"])
 @default("none")
 class limit_shop(shop_buyer):
-    def _exp_count(self, client: pcrclient): return 99999
-    def _equip_count(self, client: pcrclient): return 9999
+    def _exp_count(self, client: pcrclient): return 99999 if self.value == "经验药水" or self.value == "all" else 0
+    def _equip_count(self, client: pcrclient): return 9999 if self.value == "装备" or self.value == "all" else 0
     def coin_limit(self) -> int: return 5000000
     def system_id(self) -> eSystemId: return eSystemId.LIMITED_SHOP
     def reset_count_key(self) -> str: return 'limited_shop_reset_count'
