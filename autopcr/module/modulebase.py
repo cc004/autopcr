@@ -13,7 +13,7 @@ def _wrap_init(cls, setter):
     return cls
 
 def default(val):
-    return lambda cls:_wrap_init(cls, lambda self: setattr(self, 'val', val))
+    return lambda cls:_wrap_init(cls, lambda self: setattr(self, '_val', val))
 def description(desc: str):
     return lambda cls:_wrap_init(cls, lambda self: setattr(self, 'description', desc))
 def enumtype(candidates: list):
