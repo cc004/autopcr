@@ -17,7 +17,7 @@ url前缀为`/daily`
 
 需要把http_server里的static和templates文件夹放到与hoshino的run.py同目录下
 
-图片生成依赖于`imgkit`库，`linux`需要配置一下`x server`啥的
+图片生成依赖于`imgkit`库，需要安装`wkhtmItoimage`，`linux`可能还需要安装`xvfb`啥的，可自行google~~最好也能pr一下~~
 
 ## Credits
 - aiorequests 来自 [HoshinoBot](https://github.com/Ice-Cirno/HoshinoBot)
