@@ -10,7 +10,6 @@ class pcrclient(apiclient):
     def __init__(self, *args, **kwargs):
         super().__init__()
         self.keys = {}
-        self.keys["limit_shop"] = -1
         self.data = datamgr()
         self.session = sessionmgr(*args, **kwargs)
         self.register(errorhandler())
