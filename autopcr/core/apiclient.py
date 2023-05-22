@@ -137,6 +137,8 @@ class apiclient(Container["apiclient"]):
     @staticmethod
     def _no_null_key(obj):
         if type(obj) == dict:
+            if None in obj and not [1 for k in obj if type(k) is not int]:
+                return [v1 for k1, v1 in sorted(((k, v) for k, v in obj.items() if k is not None), key=lambda x: x[0])]
             return {k: apiclient._no_null_key(v) for k, v in obj.items() if k is not None}
         elif type(obj) == list:
             return [apiclient._no_null_key(v) for v in obj]
@@ -156,11 +158,11 @@ class apiclient(Container["apiclient"]):
 
         cls = request.__class__.__orig_bases__[0].__args__[0]
 
-        response0 = apiclient._no_null_key(response0)
+        response1 = apiclient._no_null_key(response0)
         
         # with open('req.log', 'a') as fp:
         #     fp.write(json.dumps(response0))
-        response: Response[TResponse] = Response[cls].parse_obj(response0)
+        response: Response[TResponse] = Response[cls].parse_obj(response1)
         
         #with open('req.log', 'a') as fp:
         #    fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
