@@ -32,6 +32,16 @@ quests = [int(x) for x in '''
 11002011
 11002012
 11003001
+11003002
+11003003
+11003004
+11003005
+11003006
+11003007
+11003008
+11003009
+11003010
+11003011
 '''.strip().splitlines()]
 
 import random
@@ -89,9 +99,9 @@ async def quest_pass(client: pcrclient, quest_id: int):
 
     resp = await client.request(req)
 
-async def main(client):
+async def main(client: pcrclient):
     await client.login()
-    
+
     req = DeckUpdateRequest()
     req.deck_number = ePartyType.QUEST.value
     req.unit_id_1 = 100101
@@ -110,6 +120,8 @@ async def main(client):
                 await asyncio.sleep(10)
                 pass
 
+    await client.request(ArenaInfoRequest())
+    
 accounts = []
 
 with open('farm_config.json', 'r') as fp:
