@@ -117,7 +117,7 @@ class free_gacha(Module):
         self.set_result(result)
 
 @description('商店购买最大经验药水量')
-@enumtype([0, 100, 300, 600, 900, 9999])
+@enumtype([0, 100, 300, 600, 900, 99999])
 @default(0)
 class shop_buy_exp_count_limit(Module):
     async def do_task(self, client: pcrclient):
@@ -131,7 +131,7 @@ class shop_buy_equip_count_limit(Module):
         client.keys['equip_count_limit'] = self.value
 
 @description('商店购买最大强化石量')
-@enumtype([0, 100, 300, 600, 900, 9999])
+@enumtype([0, 100, 300, 600, 900, 99999])
 @default(0)
 class shop_buy_equip_upper_count_limit(Module):
     async def do_task(self, client: pcrclient):
@@ -180,13 +180,13 @@ class shop_buyer(Module):
         
         shop_content = await self._get_shop(client)
 
-        while shop_content.reset_count <= reset_cnt:
+        while True:
             gold = client.data.get_shop_gold(shop_content.system_id)
             if gold < lmt:
                 raise SkipError(f"商店货币{gold}不足{lmt}，将不进行购买")
 
             slots_to_buy = [
-                item.slot_id for item in shop_content.item_list if item.available_num and not item.sold and
+                item.slot_id for item in shop_content.item_list if not item.sold and
                     (
                         db.is_exp_upper((item.type, item.item_id)) and client.data.get_inventory((item.type, item.item_id)) < self._exp_count(client) or
                         db.is_equip((item.type, item.item_id)) and client.data.get_inventory((item.type, item.item_id)) < self._equip_count(client) or
@@ -200,7 +200,7 @@ class shop_buyer(Module):
                 result = await client.serlize_reward(res.purchase_list)
                 self._log(result)
 
-            if shop_content.reset_count == self.value:
+            if shop_content.reset_count >= reset_cnt:
                 break
             
             await client.shop_reset(shop_content.system_id)
@@ -221,10 +221,11 @@ class normal_shop(shop_buyer):
     def system_id(self) -> eSystemId: return eSystemId.NORMAL_SHOP
     def reset_count_key(self) -> str: return 'normal_shop_reset_count'
 
-@description('限定商店购买（此项装备购买不使用最大值）')
+@description('限定商店购买（此项购买不使用最大值）')
 @enumtype(["none", "经验药水", "装备", "all"])
 @default("none")
 class limit_shop(shop_buyer):
+    def _exp_count(self, client: pcrclient): return 99999
     def _equip_count(self, client: pcrclient): return 9999
     def coin_limit(self) -> int: return 5000000
     def system_id(self) -> eSystemId: return eSystemId.LIMITED_SHOP

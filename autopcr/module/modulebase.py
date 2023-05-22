@@ -56,7 +56,8 @@ class Module:
             self._val = val
             return msg
         else:
-            raise AbortError(f"Invalid value for module {self.name}")
+            return self.candidates[0]
+            # raise AbortError(f"Invalid value for module {self.name}")
 
     @abstractmethod
     async def do_task(self, client: pcrclient): ...
