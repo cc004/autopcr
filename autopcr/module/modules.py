@@ -221,7 +221,7 @@ class shop_buyer(Module):
             self._log(msg)
 
 @description('通用商店重置次数')
-@enumtype([0, 1, 2, 3, 4, 6, 11, 20])
+@enumtype([0, 1, 2, 3, 4, 7, 11, 20])
 @default(0)
 class normal_shop_reset_count(Module):
     async def do_task(self, client: pcrclient):
