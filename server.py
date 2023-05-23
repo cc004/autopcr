@@ -187,7 +187,7 @@ async def clear_daily_all(bot: HoshinoBot, ev: CQEvent):
             await bot.finish(ev, f'[CQ:reply,id={ev.message_id}]指定用户清日常需要管理员权限')
 
     if user_id not in data:
-        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]请发送【配置清日常】配置")
+        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]请发送【#配置日常】配置")
     for config, target in data[user_id]:
         alian = config['alian'] 
         token = (ev.user_id, target)
@@ -248,7 +248,7 @@ async def get_config(bot, ev):
             return False, '[CQ:reply,id={ev.message_id}]指定用户清日常需要管理员权限', alian, target
 
     if user_id not in data:
-        return False, "[CQ:reply,id={ev.message_id}]请发送【配置清日常】配置", alian, target
+        return False, "[CQ:reply,id={ev.message_id}]请发送【#配置日常】配置", alian, target
 
     if len(data[user_id]) != 1 and not alian:
         name = ' '.join([i[0]['alian'] for i in data[user_id]])
