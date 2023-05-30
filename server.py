@@ -128,8 +128,6 @@ async def auto_update_database():
 
 @sv.scheduled_job('interval', minutes=1)
 async def timing():
-    if db.is_clan_battle_time():
-        return
 
     global cron_group
     gid = list((await sv.get_enable_groups()).keys())[0]
@@ -147,7 +145,7 @@ async def timing():
             if "time1" not in config or "time2" not in config:
                 continue
             if config['time1open'] and config['time1'] == now or  \
-            config['time2open'] and config['time2'] == now:
+            config['time2open'] and config['time2'] == now and not db.is_clan_battle_time():
 
                 alian = config['alian']
                 token = (user_id, target)
