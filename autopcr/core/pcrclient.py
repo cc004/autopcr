@@ -353,6 +353,7 @@ class pcrclient(apiclient):
                     rewards[(reward.id, reward.type)] = [reward.count, reward.stock, reward]
                 else:
                     rewards[(reward.id, reward.type)][0] += reward.count
+                    rewards[(reward.id, reward.type)][1] = max(reward.stock, rewards[(reward.id, reward.type)][1])
         for _, value in rewards.items():
             try:
                 result.append(f"{db.get_inventory_name(value[2])}x{value[0]}({value[1]})")
