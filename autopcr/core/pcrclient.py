@@ -327,23 +327,6 @@ class pcrclient(apiclient):
         req.type = 1
         await self.request(req)
     
-    _quest_info_dict = {
-        11: (0, 0, 10), # normal quest has no limit
-        12: (3, 1, 20), # hard quest 3*1
-        13: (3, 1, 20), # very hard quest 3*1
-        18: (5, 3, 15), # heart piece quest 5*3
-        19: (5, 3, 15), # 6star quest 5*3
-        20: (5, 0, 15), # shiori quest 5*3 // nono
-    }
-
-    _hatsune_quest_info_dict = {
-        201: (3, 0, 16), 
-        202: (3, 0, 16), 
-        203: (3, 0, 18), 
-        204: (3, 0, 18), 
-        205: (3, 0, 20), 
-    }
-
     async def serlize_reward(self, reward_list: List[InventoryInfo], target: Tuple[eInventoryType, int] = None):
         result = []
         rewards = {}
@@ -353,6 +336,7 @@ class pcrclient(apiclient):
                     rewards[(reward.id, reward.type)] = [reward.count, reward.stock, reward]
                 else:
                     rewards[(reward.id, reward.type)][0] += reward.count
+                    rewards[(reward.id, reward.type)][1] = max(reward.stock, rewards[(reward.id, reward.type)][1])
         for _, value in rewards.items():
             try:
                 result.append(f"{db.get_inventory_name(value[2])}x{value[0]}({value[1]})")
@@ -380,31 +364,49 @@ class pcrclient(apiclient):
         return (quest in self.data.quest_dict and self.data.quest_dict[quest].clear_flg > 0) or (quest in db.tower2floor and self.data.tower_status.cleared_floor_num >= db.tower2floor[quest])
 
     async def quest_skip_aware(self, quest: int, times: int, recover: bool = False, is_total: bool = False):
-        if not quest in self.data.quest_dict:
-            raise AbortError(f"任务{quest}未通关或不存在")
-        qinfo = self.data.quest_dict[quest]
-        if qinfo.clear_flg != 3:
-            raise AbortError(f"任务{quest}未三星")
-        # info = self._quest_info_dict[quest // 1000000]
+        name = db.quest_name[quest] if quest in db.quest_name else f"未知关卡{quest}"
+        if db.is_hatsune_quest(quest):
+            event = db.quest_to_event_id[quest]
+            if not quest in self.data.hatsune_quest_dict[event]:
+                raise AbortError(f"任务{name}未通关或不存在")
+
+            qinfo = self.data.hatsune_quest_dict[event][quest]
+
+            if qinfo.clear_flag != 3:
+                raise AbortError(f"任务{name}未三星")
+
+        else:
+            if not quest in self.data.quest_dict:
+                raise AbortError(f"任务{name}未通关或不存在")
+            qinfo = self.data.quest_dict[quest]
+
+            if qinfo.clear_flg != 3: # 怎么会少一个a
+                raise AbortError(f"任务{name}未三星")
+
+
         info = db.quest_info[quest]
         result: List[InventoryInfo] = []
         async def skip(times):
-            if self.data.stamina < info[2] * times:
+            if self.data.stamina < info[1] * times:
                 if self.keys.get('buy_stamina_passive', 0) > self.data.recover_stamina_exec_count:
                     await self.recover_stamina()
                 else:
-                    raise SkipError(f"任务{quest}体力不足")
-            if quest // 1000000 == 20: # shiori
-                return await self.shiori_quest_skip(quest // 1000, quest, times)
+                    raise SkipError(f"任务{name}体力不足")
+            if db.is_shiori_quest(quest):
+                event = db.quest_to_event_id[quest]
+                return await self.shiori_quest_skip(event, quest, times)
+            elif db.is_hatsune_quest(quest):
+                event = db.quest_to_event_id[quest]
+                return await self.hatsune_quest_skip(event, quest, times)
             else:
                 return await self.quest_skip(quest, times)
         if info[0]:
             if is_total:
                 times -= qinfo.daily_clear_count
-            max_times = ((info[1] if recover else 0) + 1) * info[0] - qinfo.daily_clear_count
+            max_times = ((self.data.recover_max_time(quest) if recover else 0) + 1) * info[0] - qinfo.daily_clear_count
             times = min(times, max_times)
             if times <= 0:
-                raise SkipError(f"任务{quest}已达最大次数")
+                raise SkipError(f"任务{name}已达最大次数")
             remain = info[0] * (qinfo.daily_recovery_count + 1) - qinfo.daily_clear_count
             while times > 0:
                 if remain == 0:
@@ -430,28 +432,30 @@ class pcrclient(apiclient):
 
         return result
 
+    '''
     async def hatsune_quest_skip_aware(self, event: int, quest: int, times: int, recover: bool = False, is_total: bool = False):
+        name = db.quest_name[quest]
         if not quest in self.data.hatsune_quest_dict[event]:
-            raise AbortError(f"任务{quest}未通关或不存在")
+            raise AbortError(f"任务{name}未通关或不存在")
         qinfo = self.data.hatsune_quest_dict[event][quest]
         if qinfo.clear_flag != 3:
-            raise AbortError(f"任务{quest}未三星")
+            raise AbortError(f"任务{name}未三星")
         info = db.quest_info[quest]
         async def skip(times):
-            if self.data.stamina < info[2] * times:
+            if self.data.stamina < info[1] * times:
                 if self.keys.get('buy_stamina_passive', 0) > self.data.recover_stamina_exec_count:
                     await self.recover_stamina()
                 else:
-                    raise SkipError(f"任务{quest}体力不足")
+                    raise SkipError(f"任务{name}体力不足")
             return await self.hatsune_quest_skip(event, quest, times)
         result: List[InventoryInfo] = []
         if info[0]:
             if is_total:
                 times -= qinfo.daily_clear_count
-            max_times = ((info[1] if recover else 0) + 1) * info[0] - qinfo.daily_clear_count
+            max_times = ((self.data.recover_max_time(quest) if recover else 0) + 1) * info[0] - qinfo.daily_clear_count
             times = min(times, max_times)
             if times <= 0:
-                raise SkipError(f"任务{quest}已达最大次数")
+                raise SkipError(f"任务{name}已达最大次数")
             remain = info[0] * (qinfo.daily_recovery_count + 1) - qinfo.daily_clear_count
             while times > 0:
                 if remain == 0:
@@ -475,7 +479,7 @@ class pcrclient(apiclient):
                 result = result + resp.bonus_reward_list
 
         return result
-
+    '''
     
     async def refresh(self):
         req = HomeIndexRequest()
