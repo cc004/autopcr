@@ -858,6 +858,8 @@ class explore_exp(Module):
         msg: str = ""
         if exp_quest_remain:
             quest_id = client.data.get_max_avaliable_quest_exp()
+            if not quest_id:
+                raise AbortError("不存在可扫荡的exp探索")
             name = db.quest_name[quest_id]
             await client.training_quest_skip(quest_id, exp_quest_remain)
             msg = f"{name}扫荡{exp_quest_remain}次"
@@ -875,8 +877,10 @@ class explore_mana(Module):
         result: List[str] = []
         if gold_quest_remain:
             quest_id = client.data.get_max_avaliable_quest_mana()
+            if not quest_id:
+                raise AbortError("不存在可扫荡的mana探索")
             name = db.quest_name[quest_id]
-            await client.training_quest_skip(21001011, gold_quest_remain)
+            await client.training_quest_skip(quest_id, gold_quest_remain)
             result.append(f"{name}扫荡{gold_quest_remain}次")
         else:
             raise SkipError("mana已扫荡")
