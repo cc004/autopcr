@@ -4,6 +4,7 @@ from ..model.modelbase import *
 from typing import Callable, Coroutine, Any, Set, Dict, Tuple
 from ..model.common import *
 from .database import db
+import datetime
 
 class datamgr(Component[apiclient]):
     settings: IniSetting = None
@@ -38,6 +39,23 @@ class datamgr(Component[apiclient]):
         self._inventory.clear()
         self.hatsune_quest_dict.clear()
 
+    def get_max_avaliable_quest(self, quests: Dict[int, str]):
+        now = datetime.datetime.now()
+        result = 0
+        for quest_id, start_time in quests.items():
+            start_time = db.parse_time(start_time)
+            if now < start_time:
+                continue
+            if quest_id in self.quest_dict and self.quest_dict[quest_id].clear_flg == 3:
+                result = max(result, quest_id)
+        return result
+
+    def get_max_avaliable_quest_exp(self):
+        return self.get_max_avaliable_quest(db.training_quest_exp)
+
+    def get_max_avaliable_quest_mana(self):
+        return self.get_max_avaliable_quest(db.training_quest_mana)
+
     def update_inventory(self, item: InventoryInfo):
         token = (item.type, item.id)
         if token == db.mana:
@@ -48,6 +66,20 @@ class datamgr(Component[apiclient]):
             self.unit[item.id] = item.unit_data
         else:
             self._inventory[token] = item.stock
+
+    def recover_max_time(self, quest: int):
+        if db.is_normal_quest(quest):
+            return 0
+        elif db.is_hard_quest(quest):
+            return self.settings.recover_challenge_count.recovery_max_count
+        elif db.is_very_hard_quest(quest):
+            return self.settings.very_hard_recover_challenge_count.recovery_max_count
+        elif db.is_heart_piece_quest(quest):
+            return self.settings.equip_recover_challenge_count.recovery_max_count
+        elif db.is_star_cup_quest(quest):
+            return self.settings.high_rarity_equip_recover_challenge_count.recovery_max_count
+        else: # hatsune, shiori 0
+            return self.settings.hatsune_recover_challenge_count.recovery_max_count
 
     def get_inventory(self, item: Tuple[eInventoryType, int]) -> int:
         return self._inventory.get(item, 0)
