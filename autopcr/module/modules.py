@@ -33,8 +33,10 @@ class cron4(cron): ...
 @default(True)
 class chara_fortune(Module):
     async def do_task(self, client: pcrclient):
+        if not db.is_cf_time():
+            raise SkipError("今日无赛马")
         if client.data.cf is None:
-            raise SkipError("今日无赛马或已赛马")
+            raise SkipError("今日已赛马")
         res = await client.draw_chara_fortune()
         result = f"赛马第{client.data.cf.rank}名，获得了宝石x{res.reward_list[0].received}" 
         return result
@@ -83,8 +85,8 @@ class free_gacha(Module):
         if res.campaign_info is None:
             raise SkipError("免费十连已结束")
         start_time, end_time, gacha_list = db.campaign_info(res.campaign_info.campaign_id)
-        start_time = datetime.datetime.strptime(start_time, '%Y/%m/%d %H:%M:%S')
-        end_time = datetime.datetime.strptime(end_time, '%Y/%m/%d %H:%M:%S')
+        start_time = db.parse_time(start_time)
+        end_time = db.parse_time(end_time)
         if datetime.datetime.now() >= end_time:
             raise SkipError("免费十连已结束")
         if datetime.datetime.now() < start_time:
@@ -328,16 +330,21 @@ class mission_receive_last(Module):
 class six_star(Module):
     async def do_task(self, client: pcrclient):
         result: List[str] = []
+        is_skip = True
         is_error = False
         is_abort = False
         times = self.value
         for quest_id, (pure_memory, unit_id) in db.six_area.items():
             data = client.data.unit[unit_id]
-            if data.unit_rarity != 6 and data.unlock_rarity6_item and not data.unlock_rarity6_item.status1 and client.data.get_inventory((eInventoryType.Item, pure_memory)) < 50:
+            if data.unit_rarity != 6 and \
+            (not data.unlock_rarity6_item or 
+             data.unlock_rarity6_item and not data.unlock_rarity6_item.status1) and \
+            client.data.get_inventory((eInventoryType.Item, pure_memory)) < 50:
                 # unlock_rarity6_item有时候明明有数据，但服务端返回了null
                 try:
                     rewards = await client.quest_skip_aware(quest_id, times, True, True)
                     msg = await client.serlize_reward(rewards, (eInventoryType.Item, pure_memory))
+                    is_skip = False
                     result.append(f"{db.inventory_name[(eInventoryType.Unit, unit_id)]}六星本: {msg}")
                 except SkipError as e:
                     result.append(f"{db.inventory_name[(eInventoryType.Unit, unit_id)]}六星本: {str(e)}")
@@ -355,6 +362,7 @@ class six_star(Module):
         msg = '\n'.join(result)
         if is_error: raise ValueError(msg)
         if is_abort: raise AbortError(msg)
+        if is_skip: raise SkipError(msg)
         if len(result) == 0:
             raise SkipError("六星碎片均已足够，无需刷取")
         return msg
@@ -465,7 +473,7 @@ class tower_story_reading(Module):
         msg = ""
         for story_id, pre_story_id, unlock_quest_id, title, start_time in db.tower_story:
             now = datetime.datetime.now()
-            start_time = datetime.datetime.strptime(start_time, '%Y/%m/%d %H:%M:%S')
+            start_time = db.parse_time(start_time)
             if now < start_time:
                 continue
             if story_id not in read_story and pre_story_id in read_story:
@@ -618,7 +626,7 @@ class hatsune_h_sweep(Module):
                 quest_id = event.event_id * 1000 + hard + i
                 try: 
                     times = 3 - client.data.hatsune_quest_dict[event.event_id][quest_id].daily_clear_count
-                    await client.hatsune_quest_skip_aware(event.event_id, quest_id, 3, False, True)
+                    await client.quest_skip_aware(quest_id, 3, False, True)
                     is_skip = False
                     result.append(f"{quest_id}: 扫荡{times}次")
                 except SkipError as e:
@@ -709,8 +717,8 @@ class hatsune_hboss_sweep(Module):
                         raise AbortError(f"h本boss未解锁")
                 if times <= 0:
                     raise SkipError(f"boss券不足 {ticket}")
-                is_skip = False
                 resp = await client.hatsune_boss_skip(event.event_id, boss_id, times, ticket)
+                is_skip = False
                 result.append(f"{event.event_id} h boss: 扫荡{times}次")
             except SkipError as e:
                 result.append(f"{event.event_id}: {str(e)}")
@@ -820,21 +828,6 @@ class room_like_back(Module):
         msg = f"为【{'|'.join(like_user)}】点赞，获得了:\n" + result
         return msg
 
-@description('EXP探索')
-@booltype
-@default(True)
-class explore_exp(Module):
-    async def do_task(self, client: pcrclient):
-        # 11级探索
-        exp_quest_remain = client.data.training_quest_max_count.exp_quest - client.data.training_quest_count.exp_quest
-        msg: str = ""
-        if exp_quest_remain:
-            await client.training_quest_skip(21002011, exp_quest_remain)
-            msg = f"11级exp探索扫荡{exp_quest_remain}次"
-        else:
-            raise SkipError("11级exp探索已扫荡")
-        return msg
-
 @description('普通扭蛋')
 @booltype
 @default(True)
@@ -850,9 +843,26 @@ class normal_gacha(Module):
             raise SkipError("已进行过普通扭蛋")
         resp = await client.exec_gacha(normal_gacha.id, 10, 0, 1, -1, 0)
         memory = [i for i in resp.reward_info_list if db.is_unit_memory((i.type, i.id))]
-        msg = "全是装备"
+        msg = "10件装备"
         if memory:
-            msg = await client.serlize_reward(memory)
+            msg = await client.serlize_reward(memory) + f"\n{10 - len(memory)}件装备"
+        return msg
+
+@description('EXP探索')
+@booltype
+@default(True)
+class explore_exp(Module):
+    async def do_task(self, client: pcrclient):
+        # 11级探索
+        exp_quest_remain = client.data.training_quest_max_count.exp_quest - client.data.training_quest_count.exp_quest
+        msg: str = ""
+        if exp_quest_remain:
+            quest_id = client.data.get_max_avaliable_quest_exp()
+            name = db.quest_name[quest_id]
+            await client.training_quest_skip(quest_id, exp_quest_remain)
+            msg = f"{name}扫荡{exp_quest_remain}次"
+        else:
+            raise SkipError("exp已扫荡")
         return msg
 
 @description('MANA探索')
@@ -864,10 +874,12 @@ class explore_mana(Module):
         gold_quest_remain = client.data.training_quest_max_count.gold_quest - client.data.training_quest_count.gold_quest
         result: List[str] = []
         if gold_quest_remain:
+            quest_id = client.data.get_max_avaliable_quest_mana()
+            name = db.quest_name[quest_id]
             await client.training_quest_skip(21001011, gold_quest_remain)
-            result.append(f"11级mana探索扫荡{gold_quest_remain}次")
+            result.append(f"{name}扫荡{gold_quest_remain}次")
         else:
-            raise SkipError("11级mana探索已扫荡")
+            raise SkipError("mana已扫荡")
         msg = ' '.join(result)
         return msg
 
@@ -877,10 +889,10 @@ class explore_mana(Module):
 class tower_cloister_sweep(Module):
     async def do_task(self, client: pcrclient):
         now = datetime.datetime.now()
-        tower_id = client.data.tower_status.last_login_schedule_id
+        tower_id = db.get_newest_tower_id()
         start_time, end_time = db.tower[tower_id]
-        start_time = datetime.datetime.strptime(start_time, '%Y/%m/%d %H:%M:%S')
-        end_time = datetime.datetime.strptime(end_time, '%Y/%m/%d %H:%M:%S')
+        start_time = db.parse_time(start_time)
+        end_time = db.parse_time(end_time)
         if now < start_time:
             raise SkipError("露娜塔未开启")
         if now > end_time:
@@ -1008,14 +1020,15 @@ class xingqiubei1_sweep(Module):
 @default(True)
 class smart_sweep(Module):
     async def do_task(self, client: pcrclient):
-        nloop = []
-        loop = []
+        nloop: List[Tuple[int, int]] = []
+        loop: List[Tuple[int, int]] = []
         for tab in client.data.user_my_quest:
             for x in tab.skip_list:
                 if tab.tab_name == 'start':
                     nloop.append((x, tab.skip_count))
                 elif tab.tab_name == 'loop':
                     loop.append((x, tab.skip_count))
+        have_normal = any(db.is_normal_quest(quest[0]) for quest in loop)
         def _sweep():
             for x in nloop:
                 yield x
@@ -1023,6 +1036,8 @@ class smart_sweep(Module):
                 while True:
                     for x in loop:
                         yield x
+                    if not have_normal:
+                        raise AbortError("no normal, stop")
 
         msg = []
         result = []
@@ -1038,10 +1053,9 @@ class smart_sweep(Module):
             except AbortError as e:
                 m = str(e)
                 msg.append(m)
-                if not m.endswith("已达最大次数"):
-                    raise AbortError('\n'.join(msg))
+                break
         
-        msg = await client.serlize_reward(result)
+        msg = '\n'.join(msg) + await client.serlize_reward(result)
         return msg
 
 '''
@@ -1147,10 +1161,10 @@ class all_in_hatsune(Module):
         
         if not quest: raise SkipError("当前无进行中的活动")
         
-        count = client.data.stamina // db.quest_info[quest][2]
+        count = client.data.stamina // db.quest_info[quest][1]
 
-        if count == 0: raise AbortError("体力不足")
-        await client.hatsune_quest_skip_aware(event_id, quest, count)
+        if count == 0: raise SkipError("体力不足")
+        await client.quest_skip_aware(quest, count)
         self._log(f"已刷{quest}图{count}次")
         return "已刷{quest}图{count}次"
 
@@ -1181,8 +1195,8 @@ def register_all():
         xinsui1_sweep,
         xingqiubei2_sweep,
         xingqiubei1_sweep, 
-        hatsune_dear_reading,
         hatsune_h_sweep,
+        hatsune_dear_reading,
         present_receive,
         hatsune_hboss_sweep,
         hatsune_mission_accept,
