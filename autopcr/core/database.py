@@ -29,9 +29,14 @@ class database(Container["database"]):
     campaign: Dict[int, Tuple[str, str, List[int]]] = {}
     love_cake: List[Tuple[int, int]] = []
     love_char: Dict[int, Tuple[int, int]] = {}
-    quest_info: Dict[int, Tuple[int, int, int]] = {}
+    quest_info: Dict[int, Tuple[int, int]] = {}
     clan_battle_period: Dict[int, Tuple[str, str]] = {}
+    chara_fortune_schedule: Dict[int, Tuple[str, str]] = {}
     hatsune_item: Dict[int, Tuple[int, int]] = {}
+    quest_to_event_id: Dict[int, int] = {}
+    quest_name: Dict[int, str] = {}
+    training_quest_exp: Dict[int, str] = {}
+    training_quest_mana: Dict[int, str] = {}
 
     def __init__(self, path):
         db = RecordDAO(path)
@@ -39,6 +44,22 @@ class database(Container["database"]):
         self.inventory_name[(eInventoryType.TeamExp, 92001)] = "经验"
         self.inventory_name[(eInventoryType.Jewel, 91002)] = "宝石"
         self.inventory_name[(eInventoryType.Gold, 94002)] = "mana"
+
+        for quest in db.get_training_quest_exp():
+            id = quest[0]
+            start_time = quest[1]
+            self.training_quest_exp[id] = start_time
+
+        for quest in db.get_training_quest_mana():
+            id = quest[0]
+            start_time = quest[1]
+            self.training_quest_mana[id] = start_time
+
+        for chara_fortune in db.get_chara_fortune_schedule():
+            id = chara_fortune[0]
+            start_time = chara_fortune[1]
+            end_time = chara_fortune[2]
+            self.chara_fortune_schedule[id] = (start_time, end_time) 
 
         for clan_battle in db.get_clan_battle_period():
             id = clan_battle[0]
@@ -50,7 +71,12 @@ class database(Container["database"]):
             id = quest[0]
             stamina = quest[1]
             daily_limit = quest[2]
-            self.quest_info[id] = (daily_limit, 0, stamina) # recovery time TODO
+            self.quest_info[id] = (daily_limit, stamina) 
+
+        for quest in db.get_quest_name():
+            id = quest[0]
+            name = quest[1]
+            self.quest_name[id] = name
 
         for story in db.get_main_story_detail():
             id = story[0]
@@ -162,12 +188,17 @@ class database(Container["database"]):
             self.love_cake.append((cake_id, cake_value))
         self.love_cake = self.love_cake[::-1]
 
+        for quest in db.get_quest_to_event():
+            quest_id = quest[0]
+            event_id = quest[1]
+            self.quest_to_event_id[quest_id] = event_id
+
         for hatsune_item in db.get_hatsune_item():
             event_id = hatsune_item[0]
             boss_ticket_id = hatsune_item[1]
             gacha_ticket_id = hatsune_item[2]
             self.hatsune_item[event_id] = (boss_ticket_id, gacha_ticket_id)
-            
+
     def get_inventory_name(self, item: InventoryInfo):
         try:
             return self.inventory_name[(item.type, item.id)]
@@ -201,8 +232,32 @@ class database(Container["database"]):
     def is_room_item_level_upable(self, team_level: int, item: RoomUserItem):
         return item.room_item_level < self.room_item_max_level[item.room_item_id] and team_level // 10 >= item.room_item_level and (item.level_up_end_time is None or item.level_up_end_time < time.time())
 
+    def is_normal_quest(self, quest_id: int):
+        return quest_id // 1000000 == 11
+
+    def is_hard_quest(self, quest_id: int):
+        return quest_id // 1000000 == 12
+
+    def is_very_hard_quest(self, quest_id: int):
+        return quest_id // 1000000 == 13
+
+    def is_heart_piece_quest(self, quest_id: int):
+        return quest_id // 1000000 == 18
+
+    def is_star_cup_quest(self, quest_id: int):
+        return quest_id // 1000000 == 19
+
+    def is_hatsune_quest(self, quest_id: int):
+        return quest_id // 1000000 == 10
+
+    def is_shiori_quest(self, quest_id: int):
+        return quest_id // 1000000 == 20
+
     def campaign_info(self, campaign_id: int):
         return self.campaign[campaign_id]
+
+    def get_newest_tower_id(self):
+        return max(self.tower, key = lambda x: self.tower[x][0])
 
     def max_total_love(self, rarity: int):
         love_info: Tuple[int, int] = (0, 0)
@@ -214,13 +269,29 @@ class database(Container["database"]):
     def is_clan_battle_time(self) -> bool:
         now = datetime.datetime.now()
         for key, (start_time, end_time) in list(self.clan_battle_period.items()):
-            start_time = datetime.datetime.strptime(start_time, '%Y/%m/%d %H:%M:%S')
-            end_time = datetime.datetime.strptime(end_time, '%Y/%m/%d %H:%M:%S')
+            start_time = self.parse_time(start_time)
+            end_time = self.parse_time(end_time)
             if now > end_time:
                 self.clan_battle_period.pop(key)
             elif now >= start_time:
                 return True
         return False
+
+    def is_cf_time(self) -> bool:
+        now = datetime.datetime.now()
+        for key, (start_time, end_time) in list(self.chara_fortune_schedule.items()):
+            start_time = self.parse_time(start_time)
+            end_time = self.parse_time(end_time)
+            if now > end_time:
+                self.chara_fortune_schedule.pop(key)
+            elif now >= start_time:
+                return True
+        return False
+
+    def parse_time(self, time: str) -> datetime.datetime:
+        if time.count(':') == 1: # 怎么以前没有秒的
+            time += ":00"
+        return datetime.datetime.strptime(time, '%Y/%m/%d %H:%M:%S')
 
 db = database(db_path)
 
