@@ -7,10 +7,31 @@ class RecordDAO:
     def connect(self):
         return sqlite3.connect(self.db_path)
 
+    def get_training_quest_mana(self):
+        with self.connect() as conn:
+            r = conn.execute(
+                f"SELECT quest_id, start_time FROM training_quest_data WHERE area_id=21001",
+            ).fetchall()
+        return r
+
+    def get_training_quest_exp(self):
+        with self.connect() as conn:
+            r = conn.execute(
+                f"SELECT quest_id, start_time FROM training_quest_data WHERE area_id=21002",
+            ).fetchall()
+        return r
+
     def get_clan_battle_period(self):
         with self.connect() as conn:
             r = conn.execute(
                 f"SELECT clan_battle_id, start_time, end_time FROM clan_battle_period",
+            ).fetchall()
+        return r
+
+    def get_chara_fortune_schedule(self):
+        with self.connect() as conn:
+            r = conn.execute(
+                f"SELECT fortune_id, start_time, end_time FROM chara_fortune_schedule",
             ).fetchall()
         return r
 
@@ -166,11 +187,37 @@ class RecordDAO:
                 f"SELECT quest_id, stamina, daily_limit FROM shiori_quest",
             ).fetchall()
         return r
+
+    def get_quest_name(self):
+        with self.connect() as conn:
+            r = conn.execute(
+                f"SELECT quest_id, quest_name FROM quest_data",
+            ).fetchall()
+            r += conn.execute(
+                f"SELECT quest_id, quest_name FROM hatsune_quest",
+            ).fetchall()
+            r += conn.execute(
+                f"SELECT quest_id, quest_name FROM shiori_quest",
+            ).fetchall()
+            r += conn.execute(
+                f"SELECT quest_id, quest_name FROM training_quest_data",
+            ).fetchall()
+        return r
     
     def get_hatsune_item(self):
         with self.connect() as conn:
             r = conn.execute(
                 f"SELECT event_id, boss_ticket_id, gacha_ticket_id FROM hatsune_item",
+            ).fetchall()
+        return r
+
+    def get_quest_to_event(self):
+        with self.connect() as conn:
+            r = conn.execute(
+                f"SELECT quest_id, event_id FROM hatsune_quest",
+            ).fetchall()
+            r += conn.execute(
+                f"SELECT quest_id, event_id FROM shiori_quest",
             ).fetchall()
         return r
 
