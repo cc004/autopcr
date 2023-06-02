@@ -15,7 +15,7 @@ from hoshino import HoshinoBot, Service, priv
 from hoshino.typing import CQEvent, MessageSegment
 from hoshino.config import PUBLIC_ADDRESS
 from .util import get_info, get_result
-from .task import Task
+from .task import DailyClean, FindMemory, FindXinsui, Task
 from .autopcr.bsdk.validator import validate_ok_queue, validate_queue
 import datetime
 import random
@@ -158,7 +158,7 @@ async def timing():
                 if not queue.empty() or comsuming:
                     await bot.send_group_msg(group_id = gid, message = f"【定时任务】当前有人正在清日常，已将{alian}加入等待队列中")
 
-                await queue.put(Task(alian, target, bot, None, user_id, gid))
+                await queue.put(DailyClean(alian, target, bot, None, user_id, gid))
 
 @sv.on_fullmatch("#cron")
 async def check_schedule(bot, ev):
@@ -198,7 +198,7 @@ async def clear_daily_all(bot: HoshinoBot, ev: CQEvent):
         if not queue.empty() or comsuming:
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]当前有人正在清日常，已将{alian}加入等待队列中")
 
-        await queue.put(Task(alian, target, bot, ev))
+        await queue.put(DailyClean(alian, target, bot, ev))
 
 @sv.on_prefix("#日常报告")
 async def clear_daily_result(bot: HoshinoBot, ev: CQEvent):
@@ -209,6 +209,40 @@ async def clear_daily_result(bot: HoshinoBot, ev: CQEvent):
     if not ok:
         await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + img)
     await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
+
+@sv.on_prefix("#查心碎")
+async def find_xinsui(bot: HoshinoBot, ev: CQEvent):
+    ok, msg, alian, target = await get_config(bot, ev)
+    if not ok:
+        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + msg)
+
+    token = (ev.user_id, target)
+    if token in inqueue:
+        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]{alian}已在队列里，请耐心等待")
+
+    inqueue.add(token)
+    global comsuming, queue
+    if not queue.empty() or comsuming:
+        await bot.send(ev, f"[CQ:reply,id={ev.message_id}]当前有人正在清日常，已将{alian}加入等待队列中")
+
+    await queue.put(FindXinsui(alian, target, bot, ev))
+
+@sv.on_prefix("#查记忆碎片")
+async def find_xinsui(bot: HoshinoBot, ev: CQEvent):
+    ok, msg, alian, target = await get_config(bot, ev)
+    if not ok:
+        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + msg)
+
+    token = (ev.user_id, target)
+    if token in inqueue:
+        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]{alian}已在队列里，请耐心等待")
+
+    inqueue.add(token)
+    global comsuming, queue
+    if not queue.empty() or comsuming:
+        await bot.send(ev, f"[CQ:reply,id={ev.message_id}]当前有人正在清日常，已将{alian}加入等待队列中")
+
+    await queue.put(FindMemory(alian, target, bot, ev))
 
 @sv.on_prefix("#清日常")
 async def clear_daily(bot: HoshinoBot, ev: CQEvent):
@@ -225,7 +259,7 @@ async def clear_daily(bot: HoshinoBot, ev: CQEvent):
     if not queue.empty() or comsuming:
         await bot.send(ev, f"[CQ:reply,id={ev.message_id}]当前有人正在清日常，已将{alian}加入等待队列中")
 
-    await queue.put(Task(alian, target, bot, ev))
+    await queue.put(DailyClean(alian, target, bot, ev))
 
 
 async def get_config(bot, ev):

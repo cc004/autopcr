@@ -112,6 +112,13 @@ class RecordDAO:
             ).fetchall()
         return r
 
+    def get_unit_memory(self):
+        with self.connect() as conn:
+            r = conn.execute(
+                f"SELECT unit_id, unit_material_id FROM unit_rarity WHERE unit_id < 190000 GROUP BY unit_material_id"
+            ).fetchall()
+        return r
+
     def get_unlock_rarity_six(self):
         with self.connect() as conn:
             r = conn.execute(
@@ -119,10 +126,21 @@ class RecordDAO:
             ).fetchall()
         return r
 
+    def get_memory_quest_data(self):
+        with self.connect() as conn:
+            r = conn.execute(
+                f"SELECT quest_id, reward_image_1 FROM quest_data WHERE quest_id>=12000000 and quest_id<13000000",
+            ).fetchall()
+            # shiori wait for stamina half and odd up
+            # r += conn.execute(
+            #     f"SELECT quest_id, drop_reward_id FROM shiori_quest WHERE drop_reward_id != 0",
+            # ).fetchall()
+        return r
+
     def get_six_area_data(self):
         with self.connect() as conn:
             r = conn.execute(
-                f"SELECT quest_id, reward_image_1 FROM quest_data WHERE quest_id>13018000 and quest_id<13999999",
+                f"SELECT quest_id, reward_image_1 FROM quest_data WHERE quest_id>=13000000 and quest_id<14000000",
             ).fetchall()
         return r
 
@@ -221,3 +239,38 @@ class RecordDAO:
             ).fetchall()
         return r
 
+    def get_unit_rarity_consume(self):
+        with self.connect() as conn:
+            r = conn.execute(
+                f"SELECT unit_id, rarity, unit_material_id, consume_num FROM unit_rarity",
+            ).fetchall()
+            r += conn.execute(
+                f"SELECT unit_id, 6, material_id, material_count FROM unlock_rarity_6 WHERE material_id!=25001",
+            ).fetchall()
+            r += conn.execute(
+                f"SELECT unit_id, 6, material_id, SUM(material_count) FROM unlock_rarity_6 WHERE material_id=25001 GROUP BY unit_id",
+            ).fetchall()
+        return r
+
+    def get_unit_unique_equip_id(self):
+        with self.connect() as conn:
+            r = conn.execute(
+                f"SELECT unit_id, equip_id FROM unit_unique_equip",
+            ).fetchall()
+        return r
+
+    def get_unique_equip_consume(self):
+        with self.connect() as conn:
+            r = conn.execute(
+                f"SELECT equip_id, 0, reward_type_1, item_id_1, consume_num_1, reward_type_2, item_id_2, consume_num_2 FROM unique_equipment_craft",
+            ).fetchall()
+            r += conn.execute(
+                f"SELECT equip_id, 0, reward_type_2, item_id_2, consume_num_2 FROM unique_equipment_craft",
+            ).fetchall()
+            r += conn.execute(
+                f"SELECT equip_id, unique_equip_rank, reward_type_1, item_id_1, consume_num_1, reward_type_2, item_id_2, consume_num_2 FROM unique_equipment_rankup",
+            ).fetchall()
+            r += conn.execute(
+                f"SELECT equip_id, unique_equip_rank, reward_type_2, item_id_2, consume_num_2 FROM unique_equipment_rankup",
+            ).fetchall()
+        return r
