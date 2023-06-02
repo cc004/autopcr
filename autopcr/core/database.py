@@ -5,8 +5,14 @@ from ..model.common import *
 from .base import Container
 import os
 import datetime
+from collections import defaultdict
 
 db_path = os.path.join(os.path.dirname(__file__), "../../", "redive_cn.db")
+def rec_intdict(deep: int):
+    if not deep:
+        return 0
+    else:
+        return defaultdict(lambda: rec_intdict(deep - 1))
 
 class database(Container["database"]):
     six_area: Dict[int, Tuple[int, int]] = {}
@@ -21,6 +27,7 @@ class database(Container["database"]):
     unit_story: List[Tuple[int, int, int, int, str]] = []
     dungeon_name: Dict[int, str] = {}
     team_max_stamina: Dict[int, int] = {}
+    heart: Tuple[eInventoryType, int] = (eInventoryType.Equip, 140000)
     xinsui: Tuple[eInventoryType, int] = (eInventoryType.Equip, 140001)
     xingqiubei: Tuple[eInventoryType, int] = (eInventoryType.Item, 25001)
     mana: Tuple[eInventoryType, int] = (eInventoryType.Gold, 94002)
@@ -37,6 +44,12 @@ class database(Container["database"]):
     quest_name: Dict[int, str] = {}
     training_quest_exp: Dict[int, str] = {}
     training_quest_mana: Dict[int, str] = {}
+    unit_unique_equip_id: Dict[int, int] = {}
+    unique_equip_required: Dict[int, Dict[int, Dict[Tuple[eInventoryType, int], int]]] = rec_intdict(3)
+    rarity_up_required: Dict[int, Dict[int, Dict[Tuple[eInventoryType, int], int]]] = rec_intdict(3)
+    pure_memory_to_unit: Dict[int, int] = {}
+    memory_to_unit: Dict[int, int] = {}
+    memory_quest: Dict[int, List[int]] = {}
 
     def __init__(self, path):
         db = RecordDAO(path)
@@ -44,6 +57,52 @@ class database(Container["database"]):
         self.inventory_name[(eInventoryType.TeamExp, 92001)] = "经验"
         self.inventory_name[(eInventoryType.Jewel, 91002)] = "宝石"
         self.inventory_name[(eInventoryType.Gold, 94002)] = "mana"
+
+        for quest in db.get_memory_quest_data():
+            quest_id = quest[0]
+            memory_id = quest[1]
+            if memory_id not in self.memory_quest:
+                self.memory_quest[memory_id] = []
+            self.memory_quest[memory_id].append(quest_id)
+
+        for info in db.get_unit_unique_equip_id():
+            unit_id = info[0]
+            equip_id = info[1]
+            self.unit_unique_equip_id[unit_id] = equip_id
+
+        max_rank = 0
+        for info in db.get_unit_rarity_consume():
+            unit_id = info[0]
+            rarity = info[1] - 1
+            item_type = eInventoryType.Item
+            item_id = info[2]
+            item_cnt = info[3]
+            token = (item_type, item_id)
+            max_rank = max(max_rank, rarity)
+
+            self.rarity_up_required[unit_id][rarity][token] += item_cnt
+        for unit_id in self.rarity_up_required:
+            for rarity in range(max_rank - 1, -1, -1):
+                for token in set(self.rarity_up_required[unit_id][rarity]) | set(self.rarity_up_required[unit_id][rarity + 1]):
+                    self.rarity_up_required[unit_id][rarity][token] += self.rarity_up_required[unit_id][rarity + 1][token]
+
+        max_rank = 0
+        for info in db.get_unique_equip_consume():
+            equip_id = info[0]
+            rank = info[1]
+            item_type = info[2]
+            item_id = info[3]
+            item_cnt = info[4]
+            max_rank = max(max_rank, rank)
+            token = (item_type, item_id)
+            if token == self.heart:
+                token = self.xinsui
+                item_cnt *= 10
+            self.unique_equip_required[equip_id][rank][token] = item_cnt
+        for equip_id in self.unique_equip_required:
+            for rank in range(max_rank - 1, -1, -1):
+                for token in set(self.unique_equip_required[equip_id][rank]) | set(self.unique_equip_required[equip_id][rank + 1]):
+                    self.unique_equip_required[equip_id][rank][token] += self.unique_equip_required[equip_id][rank + 1][token]
 
         for quest in db.get_training_quest_exp():
             id = quest[0]
@@ -145,15 +204,20 @@ class database(Container["database"]):
             mission_id = daily_mission[0]
             self.daily_mission.add(mission_id)
 
-        memory2unit = {}
+        for material in db.get_unit_memory():
+            unitid = material[0]
+            memory = material[1]
+            self.memory_to_unit[memory] = unitid
+
         for material in db.get_unlock_rarity_six():
             unitid = material[0]
             pure_memory = material[1]
-            memory2unit[pure_memory] = unitid
+            self.pure_memory_to_unit[pure_memory] = unitid
+
         for area in db.get_six_area_data():
             id = area[0]
             pure_memory = area[1]
-            self.six_area[id] = (pure_memory, memory2unit[pure_memory])
+            self.six_area[id] = (pure_memory, self.pure_memory_to_unit[pure_memory])
 
         for tower in db.get_tower_schedule():
             tower_id = tower[0]

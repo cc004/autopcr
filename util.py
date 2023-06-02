@@ -38,6 +38,19 @@ def hightlight_rule(value):
         color = "#FFFFFF"
     return f"background-color: {color}"
 
+async def draw_line(data: list, alian: str):
+    tmp = {
+            "msg": [],
+            }
+    for value in data:
+        tmp["msg"].append(value)
+
+    df = pd.DataFrame(tmp)
+    df = df.style.set_table_styles([{'selector' : 'thead tr', 'props' : [('background-color', '#F5F5D5!important')]}, {'selector' : 'tr:nth-child(odd)', 'props' : [('background-color', '#E0E0FF')]}, {'selector' : 'tr:nth-child(even)', 'props' : [('background-color', '#F8F8F8')]}])
+    file = os.path.join(RESULT, f"{alian}_tmp.jpg")
+    imgkit.from_string(df.to_html(index=False, escape=False), file)
+    return file
+
 async def draw(data: dict, alian: str):
     tmp = {
             # "id": [],
