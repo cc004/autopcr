@@ -35,6 +35,8 @@ sv_help = """
 [#清日常所有] 开始清该qq号下所有号的日常
 [#配置日常] 配置日常
 [#日常报告] 获取最近一次清日常的报告
+[#查心碎 [昵称]] 查询缺口心碎
+[#查记忆碎片 [昵称]] 查询缺口记忆碎片
 """
 
 address = "https://" + PUBLIC_ADDRESS + "/daily/"
@@ -228,7 +230,7 @@ async def find_xinsui(bot: HoshinoBot, ev: CQEvent):
     await queue.put(FindXinsui(alian, target, bot, ev))
 
 @sv.on_prefix("#查记忆碎片")
-async def find_xinsui(bot: HoshinoBot, ev: CQEvent):
+async def find_memory(bot: HoshinoBot, ev: CQEvent):
     ok, msg, alian, target = await get_config(bot, ev)
     if not ok:
         await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + msg)
