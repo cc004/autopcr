@@ -3,6 +3,7 @@ from typing import DefaultDict, List, Dict, Tuple, Iterator
 from collections import defaultdict
 from abc import abstractmethod
 from ..model.error import *
+from ..core.database import db
 
 def _wrap_init(cls, setter):
     old = cls.__init__
@@ -160,17 +161,65 @@ class ModuleManager:
         if hour in self._crons:
             await self.do_task()
 
+    def get_ios_client(self) -> pcrclient: # Header TODO
+        client = pcrclient({
+            'account': self.data['username'],
+            'password': self.data['password'],
+            'channel': 1000,
+            'platform': 1
+        })
+        return client
+
+    def get_android_client(self) -> pcrclient:
+        client = pcrclient({
+            'account': self.data['username'],
+            'password': self.data['password'],
+            'channel': 1,
+            'platform': 2
+            # 'channel': 1000,
+            # 'platform': 1
+        })
+        return client
+
+    async def get_need_xinsui(self):
+        try:
+            client = self.get_android_client()
+            await client.login()
+            result, need = client.data.get_need_suixin()
+            store = client.data.get_inventory(db.xinsui) + client.data.get_inventory(db.heart) * 10
+            cnt = need - store
+            msg = f"当前心碎数量为{store}(大心自动转换成10心碎)，需要{need}，"
+            if cnt > 0:
+                msg += f"缺口数量为:{cnt}"
+            elif cnt < 0:
+                msg += f"盈余数量为:{-cnt}"
+            else:
+                msg += "当前心碎储备刚刚好！"
+            return msg
+        except Exception as e:
+            traceback.print_exc()
+            raise(e)
+
+    async def get_need_memory(self):
+        try:
+            client = self.get_android_client()
+            await client.login()
+            result, need = client.data.get_need_memory()
+            msg = []
+            result = [(token, client.data.get_inventory(token) - need) for token, need in result]
+            result = sorted(result, key=lambda x: x[1])
+            for token, num in result:
+                text = "缺少" if num < 0 else "盈余"
+                msg.append(f"{db.get_inventory_name_san(token)}: {text}{abs(num)}片")
+            return msg
+        except Exception as e:
+            traceback.print_exc()
+            raise(e)
+
     async def do_task(self):
         result: Dict[int, Dict[str, str]] = {}
         try:
-            client = pcrclient({
-                'account': self.data['username'],
-                'password': self.data['password'],
-                'channel': 1,
-                'platform': 2
-                # 'channel': 1000,
-                # 'platform': 1
-            })
+            client = self.get_android_client()
             await client.login()
             cnt = 0
             for name in (x.__name__ for x in ModuleManager._modules):
@@ -178,8 +227,8 @@ class ModuleManager:
                 result[cnt] = {"name": name, "value": module.value if module.type != "bool" else "", "desc": module.description, "msg": "", "status": ""}
                 try:
                     module.log.clear()
-                    msg = await module.do_task(client)
-                    result[cnt]["msg"] = msg or '\n'.join(module.log) or "ok" # 哈哈，这下屎山了
+                    await module.do_task(client)
+                    result[cnt]["msg"] = ""
                     result[cnt]["status"] = "success"
                 except SkipError as e:
                     result[cnt]["msg"] = str(e)
@@ -191,6 +240,8 @@ class ModuleManager:
                     traceback.print_exc()
                     result[cnt]["msg"] = str(e)
                     result[cnt]["status"] = "error"
+                finally:
+                    result[cnt]['msg'] = ('\n'.join(module.log) + "\n" + result[cnt]['msg']).strip() or "ok"
                 cnt += 1
         except Exception as e:
             traceback.print_exc()
