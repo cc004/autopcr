@@ -39,6 +39,52 @@ class datamgr(Component[apiclient]):
         self._inventory.clear()
         self.hatsune_quest_dict.clear()
 
+    def get_need_unique_equip_material(self, unit_id: int, token: Tuple[eInventoryType, int]):
+        if unit_id not in db.unit_unique_equip_id:
+            return 0
+        equip_id = db.unit_unique_equip_id[unit_id]
+        rank = self.unit[unit_id].unique_equip_slot[0].rank if unit_id in self.unit and self.unit[unit_id].unique_equip_slot else 0
+        return db.unique_equip_required[equip_id][rank][token]
+
+    def get_need_suixin(self):
+        cnt = 0
+        result = []
+        for unit_id in self.unit:
+            need = self.get_need_unique_equip_material(unit_id, db.xinsui)
+            if need:
+                cnt += need
+                result.append((unit_id, cnt))
+        return result, cnt 
+
+    def get_need_rarity_memory(self, unit_id: int, token: Tuple[eInventoryType, int]):
+        rarity = 0
+        cnt = 0
+        if unit_id in self.unit:
+            unit_data = self.unit[unit_id]
+            rarity = unit_data.unit_rarity
+            if unit_data.unlock_rarity6_item and unit_data.unlock_rarity6_item.slot2:
+                rarity = 6
+        cnt += db.rarity_up_required[unit_id][rarity][token]
+        return cnt
+
+    def get_need_unique_equip_memory(self, unit_id: int, token: Tuple[eInventoryType, int]):
+        return self.get_need_unique_equip_material(unit_id, token)
+
+    def get_need_memory(self):
+        cnt = 0
+        result = []
+        for memory_id, unit_id in db.memory_to_unit.items():
+            token = (eInventoryType.Item, memory_id)
+            if token not in db.inventory_name: # 未来角色
+                continue
+
+            need = self.get_need_rarity_memory(unit_id, token) + self.get_need_unique_equip_memory(unit_id, token)
+            if need:
+                cnt += need
+                result.append((token, need))
+
+        return result, cnt 
+
     def get_max_avaliable_quest(self, quests: Dict[int, str]):
         now = datetime.datetime.now()
         result = 0

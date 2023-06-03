@@ -391,7 +391,7 @@ class pcrclient(apiclient):
                 if self.keys.get('buy_stamina_passive', 0) > self.data.recover_stamina_exec_count:
                     await self.recover_stamina()
                 else:
-                    raise SkipError(f"任务{name}体力不足")
+                    raise AbortError(f"任务{name}体力不足")
             if db.is_shiori_quest(quest):
                 event = db.quest_to_event_id[quest]
                 return await self.shiori_quest_skip(event, quest, times)
