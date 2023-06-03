@@ -62,7 +62,7 @@ class datamgr(Component[apiclient]):
         if unit_id in self.unit:
             unit_data = self.unit[unit_id]
             rarity = unit_data.unit_rarity
-            if unit_data.unlock_rarity6_item and unit_data.unlock_rarity6_item.slot2:
+            if unit_data.unlock_rarity_6_item and unit_data.unlock_rarity_6_item.slot_2:
                 rarity = 6
         cnt += db.rarity_up_required[unit_id][rarity][token]
         return cnt
