@@ -364,8 +364,8 @@ class six_star(Module):
         for quest_id, (pure_memory, unit_id) in db.six_area.items():
             data = client.data.unit[unit_id]
             if data.unit_rarity != 6 and \
-            (not data.unlock_rarity6_item or 
-             data.unlock_rarity6_item and not data.unlock_rarity6_item.status1) and \
+            (not data.unlock_rarity_6_item or 
+             data.unlock_rarity_6_item and not data.unlock_rarity_6_item.slot_1) and \
             client.data.get_inventory((eInventoryType.Item, pure_memory)) < 50:
                 # unlock_rarity6_item有时候明明有数据，但服务端返回了null
                 try:

@@ -1066,12 +1066,12 @@ class UnitSetting(BaseModel):
 	change_to_material: List[IniPair] = None
 class UnlockRarity6Slot(BaseModel):
 	quest_clear: int = None
-	slot1: int = None
-	slot2: int = None
-	slot3: int = None
-	status1: int = None
-	status2: int = None
-	status3: int = None
+	slot_1: int = None
+	slot_2: int = None
+	slot_3: int = None
+	status_1: int = None
+	status_2: int = None
+	status_3: int = None
 class UnreadMessageList(BaseModel):
 	equip_requests: List[EquipRequests] = None
 class UnreadStoryNoticeSetting(BaseModel):
@@ -1653,7 +1653,7 @@ class UnitData(BaseModel):
 	skin_data: SkinData = None
 	identify_num: int = None
 	favorite_flag: int = None
-	unlock_rarity6_item: UnlockRarity6Slot = None
+	unlock_rarity_6_item: UnlockRarity6Slot = None
 	total_hp: int = None
 	total_atk: int = None
 	total_def: int = None
