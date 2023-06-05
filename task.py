@@ -8,6 +8,7 @@ from .util import draw, draw_line
 class Task():
     def __init__(self, alian, target, bot, ev, qid = None, gid = None):
         self.info = (alian, target, bot, ev, qid, gid)
+        self.token = (ev.user_id if ev else qid, target)
 
     @abstractclassmethod
     async def do_task(self): ...
@@ -16,20 +17,16 @@ class FindXinsui(Task):
     async def do_task(self):
         alian, target, bot, ev, qid, gid = self.info 
         mgr = ModuleManager(target)
-        user_id = ev.user_id if ev else qid
         try:
             resp = await mgr.get_need_xinsui()
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + resp)
         except Exception as e:
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + str(e))
 
-        return user_id, target
-
 class FindMemory(Task):
     async def do_task(self):
         alian, target, bot, ev, qid, gid = self.info 
         mgr = ModuleManager(target)
-        user_id = ev.user_id if ev else qid
         try:
             resp = await mgr.get_need_memory()
             img = await draw_line(resp, alian)
@@ -37,13 +34,10 @@ class FindMemory(Task):
         except Exception as e:
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + str(e))
 
-        return user_id, target
-
 class DailyClean(Task):
     async def do_task(self):
         alian, target, bot, ev, qid, gid = self.info 
         mgr = ModuleManager(target)
-        user_id = ev.user_id if ev else qid
 
         if ev:
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]开始为{alian}清理日常")
@@ -61,6 +55,4 @@ class DailyClean(Task):
                 await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + str(e))
             else:
                 await bot.send_group_msg(group_id = gid, message = "【定时任务】" + str(e))
-
-        return user_id, target
 

@@ -6,12 +6,14 @@ from .autopcr.core.database import init_db, db
 import asyncio
 import os
 import aiocqhttp
+from traceback import print_exc
 
 import nonebot
 from nonebot import MessageSegment
 from nonebot import on_startup
 import hoshino
 from hoshino import HoshinoBot, Service, priv
+from hoshino.config import SUPERUSERS
 from hoshino.typing import CQEvent, MessageSegment
 from hoshino.config import PUBLIC_ADDRESS
 from .util import get_info, get_result
@@ -43,7 +45,7 @@ address = "https://" + PUBLIC_ADDRESS + "/daily/"
 
 queue = asyncio.Queue()
 inqueue = set({})
-comsuming = False
+consuming = False
 cur_task: Task = None
 validate = ""
 
@@ -61,19 +63,26 @@ sv = Service(
 async def bangzhu_text(bot, ev):
     await bot.finish(ev, sv_help, at_sender=True)
 
-async def comsumer():
+async def consumer():
     global inqueue
-    global comsuming
+    global consuming
     global queue
     global cur_task
     while True:
         task = await queue.get()
-        comsuming = True
+        consuming = True
         cur_task = task
-        token = await task.do_task()
-        inqueue.remove(token)
-        queue.task_done()
-        comsuming = False
+        token = task.token
+        try:
+            await task.do_task()
+        except Exception as e:
+            sv.logger.error(f"执行清日常出错:" + str(e))
+            print_exc()
+            await report_to_su(None, "", "执行清日常出错:" + str(e))
+        finally:
+            inqueue.remove(token)
+            queue.task_done()
+            consuming = False
 
 async def manual_validate():
     global cur_task
@@ -90,16 +99,16 @@ async def manual_validate():
 
 @sv.on_prefix("#pcrval")
 async def receive_validate(bot, ev):
-    global comsuming
-    if not comsuming:
+    global consuming
+    if not consuming:
         await bot.finish(ev, "[CQ:reply,id={ev.message_id}]你在干什么？")
     validate = ev.message.extract_plain_text().strip()
     await validate_ok_queue.put(validate)
 
 @sv.on_prefix("#取消")
 async def cancle_validate(bot, ev):
-    global comsuming
-    if not comsuming:
+    global consuming
+    if not consuming:
         await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]你在干什么？")
     alian, _, _, c_ev, _, _ = cur_task.info 
     await validate_ok_queue.put("xcwcancle")
@@ -112,7 +121,7 @@ async def cancle_validate(bot, ev):
 async def start_daily():
     global queue
     loop = asyncio.get_event_loop()
-    loop.create_task(comsumer())
+    loop.create_task(consumer())
     loop.create_task(manual_validate())
 
 @sv.scheduled_job('cron', hour='14', minute='15')
@@ -156,8 +165,8 @@ async def timing():
                     continue
 
                 inqueue.add(token)
-                global comsuming, queue
-                if not queue.empty() or comsuming:
+                global consuming, queue
+                if not queue.empty() or consuming:
                     await bot.send_group_msg(group_id = gid, message = f"【定时任务】当前有人正在清日常，已将{alian}加入等待队列中")
 
                 await queue.put(DailyClean(alian, target, bot, None, user_id, gid))
@@ -196,8 +205,8 @@ async def clear_daily_all(bot: HoshinoBot, ev: CQEvent):
             continue
 
         inqueue.add(token)
-        global comsuming, queue
-        if not queue.empty() or comsuming:
+        global consuming, queue
+        if not queue.empty() or consuming:
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]当前有人正在清日常，已将{alian}加入等待队列中")
 
         await queue.put(DailyClean(alian, target, bot, ev))
@@ -223,8 +232,8 @@ async def find_xinsui(bot: HoshinoBot, ev: CQEvent):
         await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]{alian}已在队列里，请耐心等待")
 
     inqueue.add(token)
-    global comsuming, queue
-    if not queue.empty() or comsuming:
+    global consuming, queue
+    if not queue.empty() or consuming:
         await bot.send(ev, f"[CQ:reply,id={ev.message_id}]当前有人正在清日常，已将{alian}加入等待队列中")
 
     await queue.put(FindXinsui(alian, target, bot, ev))
@@ -240,8 +249,8 @@ async def find_memory(bot: HoshinoBot, ev: CQEvent):
         await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]{alian}已在队列里，请耐心等待")
 
     inqueue.add(token)
-    global comsuming, queue
-    if not queue.empty() or comsuming:
+    global consuming, queue
+    if not queue.empty() or consuming:
         await bot.send(ev, f"[CQ:reply,id={ev.message_id}]当前有人正在清日常，已将{alian}加入等待队列中")
 
     await queue.put(FindMemory(alian, target, bot, ev))
@@ -257,8 +266,8 @@ async def clear_daily(bot: HoshinoBot, ev: CQEvent):
         await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]{alian}已在清日常队列里，请耐心等待")
 
     inqueue.add(token)
-    global comsuming, queue
-    if not queue.empty() or comsuming:
+    global consuming, queue
+    if not queue.empty() or consuming:
         await bot.send(ev, f"[CQ:reply,id={ev.message_id}]当前有人正在清日常，已将{alian}加入等待队列中")
 
     await queue.put(DailyClean(alian, target, bot, ev))
@@ -354,3 +363,13 @@ async def do_update_database(force: bool = False):
     with open(version, "w") as f:
         f.write(update_time)
     return f"更新成功至：{update_time} 版本"
+
+async def report_to_su(sess, msg_with_sess, msg_wo_sess):
+    if sess:
+        await sess.send(msg_with_sess)
+    else:
+        bot = hoshino.get_bot()
+        sid = bot.get_self_ids()
+        if len(sid) > 0:
+            sid = random.choice(sid)
+            await bot.send_private_msg(self_id=sid, user_id=SUPERUSERS[0], message=msg_wo_sess)
