@@ -419,7 +419,7 @@ class underground_skip(Module):
 @default(True)
 class user_info(Module):
     async def do_task(self, client: pcrclient):
-        now = datetime.datetime.now().strftime("%Y-%m-%d, %H:%M:%S")
+        now = db.format_time(datetime.datetime.now())
         self._log(f"{client.data.name} 体力{client.data.stamina}({db.team_max_stamina[client.data.team_level]}) 等级{client.data.team_level} 钻石{client.data.jewel.free_jewel} mana{client.data.gold.gold_id_free} 扫荡券{client.data.get_inventory((eInventoryType.Item, 23001))} 母猪石{client.data.get_inventory((eInventoryType.Item, 90005))}\n清日常时间:{now}")
 
 @description('阅读角色剧情')
@@ -732,20 +732,27 @@ class buy_stamina_passive(Module):
     async def do_task(self, client: pcrclient):
         client.keys['buy_stamina_passive'] = self.value
      
-@description('每天主动购买的体力管数。钻石数量<1w强制不触发。')
+@description('每天主动购买的体力管数。仅一天第一次清日常触发。钻石数量<1w强制不触发。')
 @enumtype([0, 1, 2, 3, 6, 9, 12])
 @default(0)
 class buy_stamina_active(Module):
     async def do_task(self, client: pcrclient):
         cnt = 0
+        last_clean_time = db.parse_time(client.keys['_last_clean_time']) if client.keys['_last_clean_time'] else None
+        today = db.get_today_start_time()
+        self._log(f"上一次清日常时间:{last_clean_time}，今日起始时间:{db.format_time(today)}")
+        if last_clean_time and last_clean_time >= today:
+            raise SkipError("非今天首次清日常，不主动购买体力")
         for _ in range(self.value):
             if client.data.jewel.free_jewel < 10000:
+                self._log(f"今天首次清日常，购买了{str(cnt)}次体力")
                 raise AbortError('钻石数量不足。中止购买体力。')
             if client.data.stamina + 120 > 999:
+                self._log(f"今天首次清日常，购买了{str(cnt)}次体力")
                 raise AbortError('体力恢复将超过999。中止购买体力')
             await client.recover_stamina()
             cnt += 1
-        self._log(f"购买了{str(cnt)}次体力")
+        self._log(f"今天首次清日常，购买了{str(cnt)}次体力")
 
 @description('收取家园体')
 @booltype
