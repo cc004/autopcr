@@ -357,6 +357,19 @@ class database(Container["database"]):
             time += ":00"
         return datetime.datetime.strptime(time, '%Y/%m/%d %H:%M:%S')
 
+    def format_time(self, time: datetime.datetime) -> str:
+        return time.strftime("%Y/%m/%d %H:%M:%S")
+
+    def get_today_start_time(self) -> datetime.datetime:
+        shift_time = datetime.timedelta(hours = 5);
+        now = datetime.datetime.now() 
+
+        now -= shift_time
+        now -= datetime.timedelta(hours = now.hour, minutes = now.minute, seconds = now.second)
+        now += shift_time
+
+        return now
+
 db = database(db_path)
 
 def init_db():
