@@ -15,7 +15,8 @@ async def get_info():
     for file in glob.glob(os.path.join(CONFIG, "*.json")):
         with open(file, "r") as f:
             data = json.load(f)
-            tmp[data['qq']].append((data, file))
+            if 'qq' in data:
+                tmp[data['qq']].append((data, file))
     return tmp
 
 async def get_result(alian):

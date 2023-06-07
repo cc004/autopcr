@@ -4,6 +4,7 @@ from collections import defaultdict
 from abc import abstractmethod
 from ..model.error import *
 from ..core.database import db
+import datetime
 
 def _wrap_init(cls, setter):
     old = cls.__init__
@@ -113,7 +114,7 @@ class ModuleManager:
             self._load_from(self.data)
         except:
             traceback.print_exc()
-            self.data = {'username': '', 'password': '', 'alian': ''}
+            self.data = {'username': '', 'password': '', 'alian': '', 'qq': ''}
     
     def _load_from(self, data):
         self._crons.clear()
@@ -222,6 +223,7 @@ class ModuleManager:
             client = self.get_android_client()
             await client.login()
             cnt = 0
+            client.keys['_last_clean_time'] = self.data['_last_clean_time'] if '_last_clean_time' in self.data else None
             for name in (x.__name__ for x in ModuleManager._modules):
                 module = self.modules[name]
                 result[cnt] = {"name": name, "value": module.value if module.type != "bool" else "", "desc": module.description, "msg": "", "status": ""}
@@ -248,5 +250,6 @@ class ModuleManager:
             raise(e)
         finally:
             self.data['_last_result'] = result
+            self.data['_last_clean_time'] = db.format_time(datetime.datetime.now())
             self._save_config()
         return result
