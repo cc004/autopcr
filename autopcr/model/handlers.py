@@ -1,5 +1,6 @@
 from . import responses
 from .common import *
+from .requests import *
 from ..core.datamgr import datamgr
 
 def handles(cls):
@@ -29,7 +30,7 @@ class ShioriQuestSkipResponse(responses.ShioriQuestSkipResponse):
 
 @handles
 class TrainingQuestSkipResponse(responses.TrainingQuestSkipResponse):
-    def update(self, mgr: datamgr, request):
+    def update(self, mgr: datamgr, request: TrainingQuestSkipRequest):
         if self.quest_result_list:
             for result in self.quest_result_list:
                 for item in result.reward_list:
@@ -269,7 +270,7 @@ class HatsuneQuestTopResponse(responses.HatsuneQuestTopResponse):
 
 @handles
 class HatsuneQuestSkipResponse(responses.HatsuneQuestSkipResponse):
-    def update(self, mgr: datamgr, request):
+    def update(self, mgr: datamgr, request: HatsuneQuestSkipRequest):
         if self.quest_result_list:
             for result in self.quest_result_list:
                 for item in result.reward_list:
@@ -454,7 +455,7 @@ class ArenaTimeRewardAcceptResponse(responses.ArenaTimeRewardAcceptResponse):
 
 @handles
 class DeckUpdateResponse(responses.DeckUpdateResponse):
-    def update(self, mgr: datamgr, request):
+    def update(self, mgr: datamgr, request: DeckUpdateRequest):
         deck = mgr.deck_list[ePartyType(request.deck_number)]
         deck.unit_id1 = request.unit_id_1
         deck.unit_id2 = request.unit_id_2
