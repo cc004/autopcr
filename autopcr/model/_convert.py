@@ -4,7 +4,7 @@ import os
 
 member = re.compile(r'(public|private) ([A-Za-z0-9_<>\[\\\]]*?) ([A-Za-z0-9_]*?)( \{ get; set; \})?\n')
 enum = re.compile('\n\s*([A-Za-z0-9_]+?)( = (-?[0-9]*))?,?\n')
-upper = re.compile('([A-Z])')
+upper = re.compile('([A-Z]|(?<!\d)\d)')
 addtask = re.compile('addTask\(eApiType\.(.*?), (new ApiManager.)?([^ ]*?)PostParam')
 list = re.compile('List<(.*)>')
 fp_common = open('common.py', 'w')
