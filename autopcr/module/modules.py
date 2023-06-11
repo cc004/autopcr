@@ -90,6 +90,8 @@ class love_up(Module):
                 cakes: List[SendGiftData] = []
                 for cake_id, cake_value in db.love_cake:
                     current_num = client.data.get_inventory((eInventoryType.Item, cake_id))
+                    if not current_num:
+                        continue
                     item_num = min(current_num, (dis + cake_value - 1) // cake_value)
                     dis -= item_num * cake_value
                     use_cake = SendGiftData()
@@ -591,6 +593,8 @@ class clan_like(Module):
         if client.data.clan_like_count:
             raise SkipError('今日点赞次数已用完。')
         info = await client.get_clan_info()
+        if not info:
+            raise AbortError("未加入公会")
         members = [(x.viewer_id, x.name) for x in info.members if x.viewer_id != client.viewer_id]
         if len(members) == 0: raise AbortError("No other members in clan")
         rnd = random.choice(members)
@@ -1161,10 +1165,14 @@ class all_in_hatsune(Module):
             elif self.value == 'n-15':
                 quest = 1000 * event.event_id + 115
             
+            await client.get_hatsune_top(event.event_id)
+            await client.get_hatsune_quest_top(event.event_id)
+
             break
         
         if not quest: raise SkipError("当前无进行中的活动")
         
+
         count = client.data.stamina // db.quest_info[quest][1]
 
         if count == 0: raise AbortError("体力不足")
