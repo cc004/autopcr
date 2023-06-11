@@ -42,6 +42,18 @@ class datamgr(Component[apiclient]):
     def is_star_cup_double(self):
         return any(db.is_star_cup_double(campaign_id) for campaign_id in self.campaign_list)
 
+    def is_normal_quest_double(self):
+        return any(db.is_normal_quest_double(campaign_id) for campaign_id in self.campaign_list)
+
+    def is_hard_quest_double(self):
+        return any(db.is_hard_quest_double(campaign_id) for campaign_id in self.campaign_list)
+
+    def is_very_hard_quest_double(self):
+        return any(db.is_very_hard_quest_double(campaign_id) for campaign_id in self.campaign_list)
+
+    def is_dungeon_mana_double(self):
+        return any(db.is_dungeon_mana_double(campaign_id) for campaign_id in self.campaign_list)
+
     def clear_inventory(self):
         self._inventory.clear()
         self.hatsune_quest_dict.clear()
