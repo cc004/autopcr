@@ -1,5 +1,4 @@
 from re import T
-from ..core import datamgr
 from typing import Generic, TypeVar, Optional
 from pydantic import BaseModel
 from pydantic.generics import GenericModel
@@ -14,7 +13,7 @@ class ErrorInfo(BaseModel):
 
 class ResponseBase(BaseModel):
     server_error: ErrorInfo = None
-    def update(self, mgr: datamgr, request): ...
+    def update(self, mgr: "datamgr", request): ...
 
 TResponse = TypeVar('TResponse', bound=ResponseBase)
 
