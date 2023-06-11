@@ -330,10 +330,25 @@ class database(Container["database"]):
         return self.campaign_gacha[campaign_id]
 
     def is_heart_piece_double(self, campaign_id: int):
-        return self.campaign_schedule[campaign_id] == eCampaignCategory.ITEM_DROP_AMOUNT_UNIQUE_EQUIP
+        return self.campaign_schedule[campaign_id][0] == eCampaignCategory.ITEM_DROP_AMOUNT_UNIQUE_EQUIP
 
     def is_star_cup_double(self, campaign_id: int):
-        return self.campaign_schedule[campaign_id] == eCampaignCategory.ITEM_DROP_AMOUNT_HIGH_RARITY_EQUIP
+        return self.campaign_schedule[campaign_id][0] == eCampaignCategory.ITEM_DROP_AMOUNT_HIGH_RARITY_EQUIP
+
+    def is_normal_quest_double(self, campaign_id: int):
+        return self.campaign_schedule[campaign_id][0] == eCampaignCategory.ITEM_DROP_AMOUNT_NORMAL
+
+    def is_hard_quest_double(self, campaign_id: int):
+        return self.campaign_schedule[campaign_id][0] == eCampaignCategory.ITEM_DROP_AMOUNT_HARD
+
+    def is_very_hard_quest_double(self, campaign_id: int):
+        return self.campaign_schedule[campaign_id][0] == eCampaignCategory.ITEM_DROP_AMOUNT_VERY_HARD
+
+    def is_dungeon_mana_double(self, campaign_id: int):
+        return self.campaign_schedule[campaign_id][0] == eCampaignCategory.GOLD_DROP_AMOUNT_DUNGEON
+
+    def is_dungeon_mana_before(self, campaign_id: int):
+        pass
 
     def get_newest_tower_id(self):
         return max(self.tower, key = lambda x: self.tower[x][0])
