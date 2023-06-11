@@ -34,6 +34,13 @@ class datamgr(Component[apiclient]):
     event_statuses: List[EventStatus] = None
     tower_status: TowerStatus = None
     deck_list: Dict[ePartyType, LoadDeckData] = {}
+    campaign_list: List[int] = []
+
+    def is_heart_piece_double(self):
+        return any(db.is_heart_piece_double(campaign_id) for campaign_id in self.campaign_list)
+
+    def is_star_cup_double(self):
+        return any(db.is_star_cup_double(campaign_id) for campaign_id in self.campaign_list)
 
     def clear_inventory(self):
         self._inventory.clear()
