@@ -238,6 +238,7 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         mgr.event_statuses = self.event_statuses
         mgr.tower_status = self.tower_status
         mgr.deck_list = {deck.deck_number:deck for deck in self.deck_list}
+        mgr.campaign_list = self.campaign_list
 
 
 @handles

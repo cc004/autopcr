@@ -733,8 +733,8 @@ class buy_stamina_passive(Module):
         client.keys['buy_stamina_passive'] = self.value
      
 @description('每天主动购买的体力管数。仅一天第一次清日常触发。钻石数量<1w强制不触发。')
-@enumtype([0, 1, 2, 3, 6, 9, 12])
-@default(0)
+@enumtype(["none", 1, 2, 3, 6, 9, 12])
+@default("none")
 class buy_stamina_active(Module):
     async def do_task(self, client: pcrclient):
         cnt = 0
@@ -946,50 +946,80 @@ class jjc_reward(Module):
             await client.receive_grand_arena_reward()
         self._log(f"pjjc币x{info.reward_info.count}")
 
-@description('刷取心碎3')
-@booltype
-@default(True)
-class xinsui3_sweep(Module):
+
+class investigate_sweep(Module):
+    @abstractmethod
+    def quest_id(self) -> int: ...
+    @abstractmethod
+    def is_double_drop(self, client: pcrclient) -> bool: ...
+    @abstractmethod
+    def target_item(self) -> Tuple[eInventoryType, int]: ...
+
     async def do_task(self, client: pcrclient):
-        result = await client.quest_skip_aware(18001003, 5)
-        msg = await client.serlize_reward(result, db.xinsui)
+        if self.is_double_drop(client):
+            times = int(self.value.split(':')[1])
+            self._log(f"今日庆典")
+        else:
+            times = int(self.value.split(':')[0])
+        result = await client.quest_skip_aware(self.quest_id(), times, True, True)
+        msg = await client.serlize_reward(result, self.target_item())
+        self._log(f"重置{times // 5 - 1}次")
         self._log(msg)
 
-@description('刷取心碎2')
-@booltype
-@default(True)
-class xinsui2_sweep(Module):
-    async def do_task(self, client: pcrclient):
-        result = await client.quest_skip_aware(18001002, 5)
-        msg = await client.serlize_reward(result, db.xinsui)
-        self._log(msg)
+@description('刷取心碎3，平时次数:庆典次数')
+@enumtype(["none"] + [f"{i}:{j}" for i in range(0, 25, 5) for j in range(i, 25, 5) if i or j])
+@default("none")
+class xinsui3_sweep(investigate_sweep):
+    def quest_id(self) -> int:
+        return 18001003
+    def is_double_drop(self, client: pcrclient) -> bool:
+        return client.data.is_heart_piece_double()
+    def target_item(self) -> Tuple[eInventoryType, int]:
+        return db.xinsui
 
-@description('刷取心碎1')
-@booltype
-@default(True)
-class xinsui1_sweep(Module):
-    async def do_task(self, client: pcrclient):
-        result = await client.quest_skip_aware(18001001, 5)
-        msg = await client.serlize_reward(result, db.xinsui)
-        self._log(msg)
+@description('刷取心碎2，平时次数:庆典次数')
+@enumtype(["none"] + [f"{i}:{j}" for i in range(0, 25, 5) for j in range(i, 25, 5) if i or j])
+@default("none")
+class xinsui2_sweep(investigate_sweep):
+    def quest_id(self) -> int:
+        return 18001002
+    def is_double_drop(self, client: pcrclient) -> bool:
+        return client.data.is_heart_piece_double()
+    def target_item(self) -> Tuple[eInventoryType, int]:
+        return db.xinsui
 
-@description('刷取星球杯2')
-@booltype
-@default(True)
-class xingqiubei2_sweep(Module):
-    async def do_task(self, client: pcrclient):
-        result = await client.quest_skip_aware(19001002, 5)
-        msg = await client.serlize_reward(result, db.xingqiubei)
-        self._log(msg)
+@description('刷取心碎1，平时次数:庆典次数')
+@enumtype(["none"] + [f"{i}:{j}" for i in range(0, 25, 5) for j in range(i, 25, 5) if i or j])
+@default("none")
+class xinsui1_sweep(investigate_sweep):
+    def quest_id(self) -> int:
+        return 18001001
+    def is_double_drop(self, client: pcrclient) -> bool:
+        return client.data.is_heart_piece_double()
+    def target_item(self) -> Tuple[eInventoryType, int]:
+        return db.xinsui
 
-@description('刷取星球杯1')
-@booltype
-@default(True)
-class xingqiubei1_sweep(Module):
-    async def do_task(self, client: pcrclient):
-        result = await client.quest_skip_aware(19001001, 5)
-        msg = await client.serlize_reward(result, db.xingqiubei)
-        self._log(msg)
+@description('刷取星球杯2，平时次数:庆典次数')
+@enumtype(["none"] + [f"{i}:{j}" for i in range(0, 25, 5) for j in range(i, 25, 5) if i or j])
+@default("none")
+class xingqiubei2_sweep(investigate_sweep):
+    def quest_id(self) -> int:
+        return 19001002
+    def is_double_drop(self, client: pcrclient) -> bool:
+        return client.data.is_star_cup_double()
+    def target_item(self) -> Tuple[eInventoryType, int]:
+        return db.xingqiubei
+
+@description('刷取星球杯1，平时次数:庆典次数')
+@enumtype(["none"] + [f"{i}:{j}" for i in range(0, 25, 5) for j in range(i, 25, 5) if i or j])
+@default("none")
+class xingqiubei1_sweep(investigate_sweep):
+    def quest_id(self) -> int:
+        return 19001001
+    def is_double_drop(self, client: pcrclient) -> bool:
+        return client.data.is_star_cup_double()
+    def target_item(self) -> Tuple[eInventoryType, int]:
+        return db.xingqiubei
 
 @description('''
 首先按次数逐一刷取名字为start的图

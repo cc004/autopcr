@@ -165,14 +165,14 @@ class RecordDAO:
             ).fetchall()
         return r
 
-    def get_campaign(self):
+    def get_campaign_gacha(self):
         with self.connect() as conn:
             r = conn.execute(
                 f"SELECT campaign_id, start_time, end_time FROM campaign_freegacha",
             ).fetchall()
         return r
 
-    def get_campaign_gacha(self, campaign_id: int):
+    def get_campaign_gacha_info(self, campaign_id: int):
         with self.connect() as conn:
             r = conn.execute(
                 f"SELECT gacha_id FROM campaign_freegacha_data WHERE campaign_id={campaign_id}",
@@ -272,5 +272,12 @@ class RecordDAO:
             ).fetchall()
             r += conn.execute(
                 f"SELECT equip_id, unique_equip_rank, reward_type_2, item_id_2, consume_num_2 FROM unique_equipment_rankup",
+            ).fetchall()
+        return r
+
+    def get_campaign_schedule(self):
+        with self.connect() as conn:
+            r = conn.execute(
+                f"SELECT id, campaign_category, value, start_time, end_time FROM campaign_schedule",
             ).fetchall()
         return r
