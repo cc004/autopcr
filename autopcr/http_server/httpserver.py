@@ -36,12 +36,18 @@ class HttpServer:
 
             if not HttpServer.pathsyntax.match(file) or not os.path.exists(fn):
                 return 'Invalid account', 400
-            if data['username'] == "" and data['password'] == "" and data['qq'] == "":
-                with open(fn, 'r') as f:
-                    old_data = json.load(f)
+
+            with open(fn, 'r') as f:
+                old_data = json.load(f)
+                if data['username'] == "" and data['password'] == "" and data['qq'] == "":
                     data['qq'] = old_data['qq']
                     data['username'] = old_data['username']
                     data['password'] = old_data['password']
+                if '_last_result' in old_data:
+                    data['_last_result'] = old_data['_last_result']
+                if '_last_clean_time' in old_data:
+                    data['_last_clean_time'] = old_data['_last_clean_time']
+
             with open(fn, 'w') as f:
                 f.write(json.dumps(data))
             return '', 204
