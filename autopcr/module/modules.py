@@ -366,12 +366,7 @@ class mission_receive_last(Module):
 @default("3:3")
 class six_star(Module):
     async def do_task(self, client: pcrclient):
-        times = 0
-        if client.data.is_very_hard_quest_double():
-            times = int(self.value.split(":")[1])
-        else:
-            times = int(self.value.split(":")[0])
-
+        times = int(self.value.split(':')[client.data.is_very_hard_quest_double()])
         is_skip = True
         for quest_id, (pure_memory, unit_id) in db.six_area.items():
             data = client.data.unit[unit_id]
@@ -413,7 +408,10 @@ class underground_skip(Module):
             id = max([0] + infos.dungeon_cleared_area_id_list)
             if id > 0:
                 reward_list = await client.skip_dungeon(id)
-                rewards = [reward for reward_item in reward_list.skip_result_list for reward in reward_item.reward_list if not db.is_equip((reward.type, reward.id))]
+                rewards = [reward for reward_item in reward_list.skip_result_list for reward in reward_item.reward_list 
+                           if db.is_unit_memory((reward.type, reward.id)) 
+                           or db.xinsui == (reward.type, reward.id)
+                           or db.xingqiubei == (reward.type, reward.id)]
                 result = await client.serlize_reward(rewards)
                 dungeon_name = db.dungeon_name[id]
                 self._log(f"扫荡了【{dungeon_name}】,获得了:\n{result}")
@@ -586,7 +584,7 @@ class hatsune_gacha_exchange(Module):
                     ticket -= exchange_times
                     for item in resp.draw_result:
                         box_item[item.box_set_id].remain_inbox_count -= item.hit_reward_count
-            self._log(f"{event.event_id}: 已交换至" + f"第{res.event_gacha_info.gacha_step}轮" if res.event_gacha_info.gacha_step < 6 else "第六轮及以上")
+            self._log(f"{event.event_id}: 已交换至" + (f"第{res.event_gacha_info.gacha_step}轮" if res.event_gacha_info.gacha_step < 6 else "第六轮及以上"))
             
         if not event_active:
             raise SkipError("当前无进行中的活动")
@@ -963,11 +961,7 @@ class investigate_sweep(Module):
     def target_item(self) -> Tuple[eInventoryType, int]: ...
 
     async def do_task(self, client: pcrclient):
-        if self.is_double_drop(client):
-            times = int(self.value.split(':')[1])
-            self._log(f"今日庆典")
-        else:
-            times = int(self.value.split(':')[0])
+        times = int(self.value.split(':')[self.is_double_drop(client)])
         result = await client.quest_skip_aware(self.quest_id(), times, True, True)
         msg = await client.serlize_reward(result, self.target_item())
         self._log(f"重置{times // 5 - 1}次，获得了{msg}")
