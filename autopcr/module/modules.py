@@ -28,10 +28,15 @@ class cron3(cron): ...
 class cron4(cron): ...
 
 @description('智能刷hard图')
-@booltype
-@default(False)
+@enumtype(["none", "h庆典", "非n庆典", "always"])
+@default("none")
 class smart_hard_sweep(Module):
     async def do_task(self, client: pcrclient):
+        if self.value == "h庆典" and not client.data.is_hard_quest_double():
+            raise SkipError("今日非hard庆典，不刷取")
+        if self.value == "非n庆典" and client.data.is_normal_quest_double():
+            raise SkipError("今日normal庆典，不刷取")
+
         need_list, _ = client.data.get_need_memory()
         need_list = [(token, need - client.data.get_inventory(token)) for token, need in need_list if need > client.data.get_inventory(token)]
 
@@ -90,6 +95,8 @@ class love_up(Module):
                 cakes: List[SendGiftData] = []
                 for cake_id, cake_value in db.love_cake:
                     current_num = client.data.get_inventory((eInventoryType.Item, cake_id))
+                    if not current_num:
+                        continue
                     item_num = min(current_num, (dis + cake_value - 1) // cake_value)
                     dis -= item_num * cake_value
                     use_cake = SendGiftData()
@@ -354,20 +361,19 @@ class mission_receive_last(Module):
                 return
         raise SkipError("没有可领取的任务奖励")
 
-@description('六星碎片')
-@enumtype(["none", 3, 6])
-@default(3)
+@description('六星碎片，平时次数:庆典次数')
+@enumtype(["none"] + [f"{i}:{j}" for i in range(0, 9, 3) for j in range(i, 9, 3) if i or j])
+@default("3:3")
 class six_star(Module):
     async def do_task(self, client: pcrclient):
+        times = int(self.value.split(':')[client.data.is_very_hard_quest_double()])
         is_skip = True
-        times = self.value
         for quest_id, (pure_memory, unit_id) in db.six_area.items():
             data = client.data.unit[unit_id]
             if data.unit_rarity != 6 and \
             (not data.unlock_rarity_6_item or 
              data.unlock_rarity_6_item and not data.unlock_rarity_6_item.slot_1) and \
             client.data.get_inventory((eInventoryType.Item, pure_memory)) < 50:
-                # unlock_rarity6_item有时候明明有数据，但服务端返回了null
                 try:
                     rewards = await client.quest_skip_aware(quest_id, times, True, True)
                     msg = await client.serlize_reward(rewards, (eInventoryType.Item, pure_memory))
@@ -402,13 +408,13 @@ class underground_skip(Module):
             id = max([0] + infos.dungeon_cleared_area_id_list)
             if id > 0:
                 reward_list = await client.skip_dungeon(id)
-                # rewards = []
-                # for reward in reward_list.skip_result_list:
-                #     rewards += reward.reward_list
-                # result = await client.serlize_reward(rewards)
+                rewards = [reward for reward_item in reward_list.skip_result_list for reward in reward_item.reward_list 
+                           if db.is_unit_memory((reward.type, reward.id)) 
+                           or db.xinsui == (reward.type, reward.id)
+                           or db.xingqiubei == (reward.type, reward.id)]
+                result = await client.serlize_reward(rewards)
                 dungeon_name = db.dungeon_name[id]
-                self._log(f"扫荡了【{dungeon_name}】")
-                # self.set_result(f"扫荡了{dungeon_name}，获得了：\n{result}")
+                self._log(f"扫荡了【{dungeon_name}】,获得了:\n{result}")
             else:
                 raise AbortError("不存在已完成讨伐的地下城")
         else:
@@ -561,7 +567,7 @@ class hatsune_gacha_exchange(Module):
                     break
                 if res.event_gacha_info.gacha_step >= 6:
                     exchange_times = min(client.data.settings.loop_box_multi_gacha_count, ticket)
-                    self._log(f"{event.event_id}: 当前处于第{res.event_gacha_info.gacha_step}轮，一键交换{exchange_times}次")
+                    self._log(f"{event.event_id}: 当前处于第六轮及以上，一键交换{exchange_times}次")
                     await client.exec_hatsune_gacha(event.event_id, event.event_id, exchange_times, ticket, 1)
                     ticket -= exchange_times
                 else:
@@ -578,7 +584,7 @@ class hatsune_gacha_exchange(Module):
                     ticket -= exchange_times
                     for item in resp.draw_result:
                         box_item[item.box_set_id].remain_inbox_count -= item.hit_reward_count
-            self._log(f"{event.event_id}: 已交换至第{res.event_gacha_info.gacha_step}轮")
+            self._log(f"{event.event_id}: 已交换至" + (f"第{res.event_gacha_info.gacha_step}轮" if res.event_gacha_info.gacha_step < 6 else "第六轮及以上"))
             
         if not event_active:
             raise SkipError("当前无进行中的活动")
@@ -591,6 +597,8 @@ class clan_like(Module):
         if client.data.clan_like_count:
             raise SkipError('今日点赞次数已用完。')
         info = await client.get_clan_info()
+        if not info:
+            raise AbortError("未加入公会")
         members = [(x.viewer_id, x.name) for x in info.members if x.viewer_id != client.viewer_id]
         if len(members) == 0: raise AbortError("No other members in clan")
         rnd = random.choice(members)
@@ -733,8 +741,8 @@ class buy_stamina_passive(Module):
         client.keys['buy_stamina_passive'] = self.value
      
 @description('每天主动购买的体力管数。仅一天第一次清日常触发。钻石数量<1w强制不触发。')
-@enumtype([0, 1, 2, 3, 6, 9, 12])
-@default(0)
+@enumtype(["none", 1, 2, 3, 6, 9, 12])
+@default("none")
 class buy_stamina_active(Module):
     async def do_task(self, client: pcrclient):
         cnt = 0
@@ -843,7 +851,6 @@ class normal_gacha(Module):
 @default(True)
 class explore_exp(Module):
     async def do_task(self, client: pcrclient):
-        # 11级探索
         exp_quest_remain = client.data.training_quest_max_count.exp_quest - client.data.training_quest_count.exp_quest
         if exp_quest_remain:
             quest_id = client.data.get_max_avaliable_quest_exp()
@@ -860,7 +867,6 @@ class explore_exp(Module):
 @default(True)
 class explore_mana(Module):
     async def do_task(self, client: pcrclient):
-        # 11级探索
         gold_quest_remain = client.data.training_quest_max_count.gold_quest - client.data.training_quest_count.gold_quest
         if gold_quest_remain:
             quest_id = client.data.get_max_avaliable_quest_mana()
@@ -946,50 +952,74 @@ class jjc_reward(Module):
             await client.receive_grand_arena_reward()
         self._log(f"pjjc币x{info.reward_info.count}")
 
-@description('刷取心碎3')
-@booltype
-@default(True)
-class xinsui3_sweep(Module):
-    async def do_task(self, client: pcrclient):
-        result = await client.quest_skip_aware(18001003, 5)
-        msg = await client.serlize_reward(result, db.xinsui)
-        self._log(msg)
+class investigate_sweep(Module):
+    @abstractmethod
+    def quest_id(self) -> int: ...
+    @abstractmethod
+    def is_double_drop(self, client: pcrclient) -> bool: ...
+    @abstractmethod
+    def target_item(self) -> Tuple[eInventoryType, int]: ...
 
-@description('刷取心碎2')
-@booltype
-@default(True)
-class xinsui2_sweep(Module):
     async def do_task(self, client: pcrclient):
-        result = await client.quest_skip_aware(18001002, 5)
-        msg = await client.serlize_reward(result, db.xinsui)
-        self._log(msg)
+        times = int(self.value.split(':')[self.is_double_drop(client)])
+        result = await client.quest_skip_aware(self.quest_id(), times, True, True)
+        msg = await client.serlize_reward(result, self.target_item())
+        self._log(f"重置{times // 5 - 1}次，获得了{msg}")
 
-@description('刷取心碎1')
-@booltype
-@default(True)
-class xinsui1_sweep(Module):
-    async def do_task(self, client: pcrclient):
-        result = await client.quest_skip_aware(18001001, 5)
-        msg = await client.serlize_reward(result, db.xinsui)
-        self._log(msg)
+@description('刷取心碎3，平时次数:庆典次数')
+@enumtype(["none"] + [f"{i}:{j}" for i in range(0, 25, 5) for j in range(i, 25, 5) if i or j])
+@default("none")
+class xinsui3_sweep(investigate_sweep):
+    def quest_id(self) -> int:
+        return 18001003
+    def is_double_drop(self, client: pcrclient) -> bool:
+        return client.data.is_heart_piece_double()
+    def target_item(self) -> Tuple[eInventoryType, int]:
+        return db.xinsui
 
-@description('刷取星球杯2')
-@booltype
-@default(True)
-class xingqiubei2_sweep(Module):
-    async def do_task(self, client: pcrclient):
-        result = await client.quest_skip_aware(19001002, 5)
-        msg = await client.serlize_reward(result, db.xingqiubei)
-        self._log(msg)
+@description('刷取心碎2，平时次数:庆典次数')
+@enumtype(["none"] + [f"{i}:{j}" for i in range(0, 25, 5) for j in range(i, 25, 5) if i or j])
+@default("none")
+class xinsui2_sweep(investigate_sweep):
+    def quest_id(self) -> int:
+        return 18001002
+    def is_double_drop(self, client: pcrclient) -> bool:
+        return client.data.is_heart_piece_double()
+    def target_item(self) -> Tuple[eInventoryType, int]:
+        return db.xinsui
 
-@description('刷取星球杯1')
-@booltype
-@default(True)
-class xingqiubei1_sweep(Module):
-    async def do_task(self, client: pcrclient):
-        result = await client.quest_skip_aware(19001001, 5)
-        msg = await client.serlize_reward(result, db.xingqiubei)
-        self._log(msg)
+@description('刷取心碎1，平时次数:庆典次数')
+@enumtype(["none"] + [f"{i}:{j}" for i in range(0, 25, 5) for j in range(i, 25, 5) if i or j])
+@default("none")
+class xinsui1_sweep(investigate_sweep):
+    def quest_id(self) -> int:
+        return 18001001
+    def is_double_drop(self, client: pcrclient) -> bool:
+        return client.data.is_heart_piece_double()
+    def target_item(self) -> Tuple[eInventoryType, int]:
+        return db.xinsui
+
+@description('刷取星球杯2，平时次数:庆典次数')
+@enumtype(["none"] + [f"{i}:{j}" for i in range(0, 25, 5) for j in range(i, 25, 5) if i or j])
+@default("none")
+class xingqiubei2_sweep(investigate_sweep):
+    def quest_id(self) -> int:
+        return 19001002
+    def is_double_drop(self, client: pcrclient) -> bool:
+        return client.data.is_star_cup_double()
+    def target_item(self) -> Tuple[eInventoryType, int]:
+        return db.xingqiubei
+
+@description('刷取星球杯1，平时次数:庆典次数')
+@enumtype(["none"] + [f"{i}:{j}" for i in range(0, 25, 5) for j in range(i, 25, 5) if i or j])
+@default("none")
+class xingqiubei1_sweep(investigate_sweep):
+    def quest_id(self) -> int:
+        return 19001001
+    def is_double_drop(self, client: pcrclient) -> bool:
+        return client.data.is_star_cup_double()
+    def target_item(self) -> Tuple[eInventoryType, int]:
+        return db.xingqiubei
 
 @description('''
 首先按次数逐一刷取名字为start的图
@@ -1131,10 +1161,14 @@ class all_in_hatsune(Module):
             elif self.value == 'n-15':
                 quest = 1000 * event.event_id + 115
             
+            await client.get_hatsune_top(event.event_id)
+            await client.get_hatsune_quest_top(event.event_id)
+
             break
         
         if not quest: raise SkipError("当前无进行中的活动")
         
+
         count = client.data.stamina // db.quest_info[quest][1]
 
         if count == 0: raise AbortError("体力不足")

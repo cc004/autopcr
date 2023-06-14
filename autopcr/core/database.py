@@ -33,7 +33,7 @@ class database(Container["database"]):
     mana: Tuple[eInventoryType, int] = (eInventoryType.Gold, 94002)
     jewel: Tuple[eInventoryType, int] = (eInventoryType.Jewel, 91002)
     room_item_max_level: Dict[int, int] = {}
-    campaign: Dict[int, Tuple[str, str, List[int]]] = {}
+    campaign_gacha: Dict[int, Tuple[str, str, List[int]]] = {}
     love_cake: List[Tuple[int, int]] = []
     love_char: Dict[int, Tuple[int, int]] = {}
     quest_info: Dict[int, Tuple[int, int]] = {}
@@ -50,6 +50,7 @@ class database(Container["database"]):
     pure_memory_to_unit: Dict[int, int] = {}
     memory_to_unit: Dict[int, int] = {}
     memory_quest: Dict[int, List[int]] = {}
+    campaign_schedule: Dict[int, Tuple[int, int, str, str]] = {}
 
     def __init__(self, path):
         db = RecordDAO(path)
@@ -57,6 +58,14 @@ class database(Container["database"]):
         self.inventory_name[(eInventoryType.TeamExp, 92001)] = "经验"
         self.inventory_name[(eInventoryType.Jewel, 91002)] = "宝石"
         self.inventory_name[(eInventoryType.Gold, 94002)] = "mana"
+
+        for campaign in db.get_campaign_schedule():
+            campaign_id = campaign[0]
+            campaign_category = campaign[1]
+            value = campaign[2]
+            start_time = campaign[3]
+            end_time = campaign[4]
+            self.campaign_schedule[campaign_id] = (campaign_category, value, start_time, end_time)
 
         for quest in db.get_memory_quest_data():
             quest_id = quest[0]
@@ -230,12 +239,12 @@ class database(Container["database"]):
             dungeon_name = dungeon[1]
             self.dungeon_name[dungeon_id] = dungeon_name
 
-        for campaign in db.get_campaign():
-            campaign_id = campaign[0]
-            start_time = campaign[1]
-            end_time = campaign[2]
-            gacha_list = [i[0] for i in db.get_campaign_gacha(campaign_id)]
-            self.campaign[campaign_id] = (start_time, end_time, gacha_list)
+        for campaign_gacha in db.get_campaign_gacha():
+            campaign_id = campaign_gacha[0]
+            start_time = campaign_gacha[1]
+            end_time = campaign_gacha[2]
+            gacha_list = [i[0] for i in db.get_campaign_gacha_info(campaign_id)]
+            self.campaign_gacha[campaign_id] = (start_time, end_time, gacha_list)
 
         for love_chara in db.get_love_chara():
             love_level = love_chara[0]
@@ -318,7 +327,28 @@ class database(Container["database"]):
         return quest_id // 1000000 == 20
 
     def campaign_info(self, campaign_id: int):
-        return self.campaign[campaign_id]
+        return self.campaign_gacha[campaign_id]
+
+    def is_heart_piece_double(self, campaign_id: int):
+        return self.campaign_schedule[campaign_id][0] == eCampaignCategory.ITEM_DROP_AMOUNT_UNIQUE_EQUIP
+
+    def is_star_cup_double(self, campaign_id: int):
+        return self.campaign_schedule[campaign_id][0] == eCampaignCategory.ITEM_DROP_AMOUNT_HIGH_RARITY_EQUIP
+
+    def is_normal_quest_double(self, campaign_id: int):
+        return self.campaign_schedule[campaign_id][0] == eCampaignCategory.ITEM_DROP_AMOUNT_NORMAL
+
+    def is_hard_quest_double(self, campaign_id: int):
+        return self.campaign_schedule[campaign_id][0] == eCampaignCategory.ITEM_DROP_AMOUNT_HARD
+
+    def is_very_hard_quest_double(self, campaign_id: int):
+        return self.campaign_schedule[campaign_id][0] == eCampaignCategory.ITEM_DROP_AMOUNT_VERY_HARD
+
+    def is_dungeon_mana_double(self, campaign_id: int):
+        return self.campaign_schedule[campaign_id][0] == eCampaignCategory.GOLD_DROP_AMOUNT_DUNGEON
+
+    def is_dungeon_mana_before(self, campaign_id: int):
+        pass
 
     def get_newest_tower_id(self):
         return max(self.tower, key = lambda x: self.tower[x][0])

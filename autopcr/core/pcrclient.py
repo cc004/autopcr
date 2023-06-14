@@ -387,7 +387,7 @@ class pcrclient(apiclient):
         info = db.quest_info[quest]
         result: List[InventoryInfo] = []
         async def skip(times):
-            if self.data.stamina < info[1] * times:
+            while self.data.stamina < info[1] * times:
                 if self.keys.get('buy_stamina_passive', 0) > self.data.recover_stamina_exec_count:
                     await self.recover_stamina()
                 else:
