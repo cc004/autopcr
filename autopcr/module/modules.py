@@ -689,8 +689,8 @@ class hatsune_mission_accept(Module):
         if is_abort: raise AbortError("")
         if is_skip: raise SkipError("")
 
-@description('活动h本boss')
-@enumtype(["none", "max", "max - 1"])
+@description('活动h本boss，未打vh保留30+未打sp保留90')
+@enumtype(["none", "保留当日vh份", "保留当日及未来vh份"])
 @default("none")
 class hatsune_hboss_sweep(Module):
     async def do_task(self, client: pcrclient):
@@ -704,20 +704,31 @@ class hatsune_hboss_sweep(Module):
             event_active = True
             resp = await client.get_hatsune_top(event.event_id)
             ticket = resp.boss_ticket_info.stock
-            if self.value == "max":
-                times = ticket // 30
-            elif self.value == "max - 1":
-                times = ticket // 30 - 1
-            else:
-                raise ValueError(f"Unknown option: {self.value}")
-            boss_id = event.event_id * 100 + 2
+
+            times = ticket // 30
+            hboss_id = event.event_id * 100 + 2
+            vhboss_id = event.event_id * 100 + 3
+            spboss_id = event.event_id * 100 + 4
+
+            boss_info = {boss.boss_id: boss for boss in resp.boss_battle_info}
+
             try: 
-                for boss_battle_info in resp.boss_battle_info:
-                    if boss_battle_info.boss_id == boss_id and not boss_battle_info.is_unlocked:
-                        raise AbortError(f"h本boss未解锁")
+                if not boss_info[hboss_id].is_unlocked:
+                    raise AbortError(f"h本boss未解锁")
+                if not boss_info[spboss_id].kill_num:
+                    self._log("sp未通关，保留90张")
+                    times -= 3
+                if not boss_info[vhboss_id].daily_kill_count:
+                    self._log("今日vh未通关，保留30张")
+                    times -= 1
+                if self.value == "保留当日及未来vh份":
+                    left_day = (db.get_start_time(db.parse_time(db.hatsune_schedule[event.event_id][1])) - db.get_today_start_time()).days 
+                    self._log(f"距离活动结束还有{left_day}天，保留{left_day * 30}张")
+                    times -= left_day
+
                 if times <= 0:
-                    raise SkipError(f"boss券不足 {ticket}")
-                resp = await client.hatsune_boss_skip(event.event_id, boss_id, times, ticket)
+                    raise SkipError(f"boss券不足")
+                resp = await client.hatsune_boss_skip(event.event_id, hboss_id, times, ticket)
                 is_skip = False
                 self._log(f"{event.event_id} h boss: 扫荡{times}次")
             except SkipError as e:

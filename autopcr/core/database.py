@@ -51,6 +51,7 @@ class database(Container["database"]):
     memory_to_unit: Dict[int, int] = {}
     memory_quest: Dict[int, List[int]] = {}
     campaign_schedule: Dict[int, Tuple[int, int, str, str]] = {}
+    hatsune_schedule: Dict[int, Tuple[str, str]] = {}
 
     def __init__(self, path):
         db = RecordDAO(path)
@@ -58,6 +59,12 @@ class database(Container["database"]):
         self.inventory_name[(eInventoryType.TeamExp, 92001)] = "经验"
         self.inventory_name[(eInventoryType.Jewel, 91002)] = "宝石"
         self.inventory_name[(eInventoryType.Gold, 94002)] = "mana"
+
+        for hatsune in db.get_hatsune_schedule():
+            hatsune_id = hatsune[0]
+            start_time = hatsune[1]
+            end_time = hatsune[2]
+            self.hatsune_schedule[hatsune_id] = (start_time, end_time)
 
         for campaign in db.get_campaign_schedule():
             campaign_id = campaign[0]
@@ -390,15 +397,17 @@ class database(Container["database"]):
     def format_time(self, time: datetime.datetime) -> str:
         return time.strftime("%Y/%m/%d %H:%M:%S")
 
-    def get_today_start_time(self) -> datetime.datetime:
+    def get_start_time(self, time: datetime.datetime) -> datetime.datetime:
         shift_time = datetime.timedelta(hours = 5);
-        now = datetime.datetime.now() 
 
-        now -= shift_time
-        now -= datetime.timedelta(hours = now.hour, minutes = now.minute, seconds = now.second)
-        now += shift_time
+        time -= shift_time
+        time -= datetime.timedelta(hours = time.hour, minutes = time.minute, seconds = time.second, microseconds = time.microsecond)
+        time += shift_time
 
-        return now
+        return time
+
+    def get_today_start_time(self) -> datetime.datetime:
+        return self.get_start_time(datetime.datetime.now())
 
 db = database(db_path)
 

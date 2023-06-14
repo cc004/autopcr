@@ -281,3 +281,10 @@ class RecordDAO:
                 f"SELECT id, campaign_category, value, start_time, end_time FROM campaign_schedule",
             ).fetchall()
         return r
+
+    def get_hatsune_schedule(self):
+        with self.connect() as conn:
+            r = conn.execute(
+                f"SELECT event_id, start_time, end_time FROM hatsune_schedule",
+            ).fetchall()
+        return r
