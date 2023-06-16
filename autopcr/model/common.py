@@ -1639,6 +1639,7 @@ class UnitData(BaseModel):
 	battle_rarity: int = None
 	unit_level: int = None
 	unit_exp: int = None
+	exceed_stage: int = None
 	promotion_level: ePromotionLevel = None
 	union_burst: List[SkillLevelInfo] = None
 	main_skill: List[SkillLevelInfo] = None

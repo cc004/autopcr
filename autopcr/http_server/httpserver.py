@@ -27,7 +27,7 @@ class HttpServer:
                 return 'Invalid account', 400
             mgr = ModuleManager(fn)
             return mgr.generate_config()
-        
+
         @self.app.route('/api/config', methods = ['PUT'])
         async def update_config():
             data = await request.get_json()
@@ -80,6 +80,17 @@ class HttpServer:
             mgr = ModuleManager(fn)
 
             return await mgr.do_task()
+
+        @self.app.route('/api/library_import', methods = ['GET'])
+        async def get_library():
+            file = request.args.get('account')
+            fn = os.path.join(self.config_path, file) + '.json'
+
+            if not HttpServer.pathsyntax.match(file) or not os.path.exists(fn):
+                return 'Invalid account', 400
+            mgr = ModuleManager(fn)
+            return await mgr.get_library_import_data()
+
         # frontend
         @self.app.route('/', methods = ['GET'])
         async def index():
