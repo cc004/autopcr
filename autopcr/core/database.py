@@ -1,18 +1,26 @@
 from ..util.sqlite3 import RecordDAO
 import time
-from typing import Set, Dict, Tuple
+from typing import DefaultDict, Set, Dict, Tuple, Union
+import typing
 from ..model.common import *
 from .base import Container
 import os
 import datetime
-from collections import defaultdict
+from collections import defaultdict, Counter
+from functools import reduce
 
 db_path = os.path.join(os.path.dirname(__file__), "../../", "redive_cn.db")
-def rec_intdict(deep: int):
+def rec_intdict(deep: int) -> Union[int, DefaultDict]:
     if not deep:
         return 0
     else:
         return defaultdict(lambda: rec_intdict(deep - 1))
+
+def rec_counter(deep: int) -> Union[typing.Counter, DefaultDict]:
+    if deep == 1:
+        return Counter()
+    else:
+        return defaultdict(lambda: rec_counter(deep - 1))
 
 class database(Container["database"]):
     six_area: Dict[int, Tuple[int, int]] = {}
@@ -45,13 +53,18 @@ class database(Container["database"]):
     training_quest_exp: Dict[int, str] = {}
     training_quest_mana: Dict[int, str] = {}
     unit_unique_equip_id: Dict[int, int] = {}
-    unique_equip_required: Dict[int, Dict[int, Dict[Tuple[eInventoryType, int], int]]] = rec_intdict(3)
-    rarity_up_required: Dict[int, Dict[int, Dict[Tuple[eInventoryType, int], int]]] = rec_intdict(3)
+    unique_equip_required: Dict[int, Dict[int, typing.Counter[Tuple[eInventoryType, int]]]] = rec_counter(3)
+    unique_equip_rank_max_level: Dict[int, int] = rec_intdict(1)
+    rarity_up_required: Dict[int, Dict[int, typing.Counter[Tuple[eInventoryType, int]]]] = rec_counter(3)
     pure_memory_to_unit: Dict[int, int] = {}
     memory_to_unit: Dict[int, int] = {}
     memory_quest: Dict[int, List[int]] = {}
     campaign_schedule: Dict[int, Tuple[int, int, str, str]] = {}
     hatsune_schedule: Dict[int, Tuple[str, str]] = {}
+    unit_promotion: Dict[int, Dict[int, typing.Counter[Tuple[eInventoryType, int]]]] = rec_counter(3)
+    equip_craft: Dict[Tuple[eInventoryType, int], List[Tuple[Tuple[eInventoryType, int], int]]] = {}
+    equip_max_rank: int = 0
+    equip_max_rank_equip_num: int = 0
 
     def __init__(self, path):
         db = RecordDAO(path)
@@ -59,6 +72,31 @@ class database(Container["database"]):
         self.inventory_name[(eInventoryType.TeamExp, 92001)] = "经验"
         self.inventory_name[(eInventoryType.Jewel, 91002)] = "宝石"
         self.inventory_name[(eInventoryType.Gold, 94002)] = "mana"
+
+        for info in db.get_unique_equipment_enhance_data():
+            rank = info[0]
+            level = info[1]
+            self.unique_equip_rank_max_level[rank] = max(self.unique_equip_rank_max_level[rank], level)
+
+        for craft in db.get_equipment_craft():
+            equip_id = craft[0]
+            self.equip_craft[(eInventoryType.Equip, equip_id)] = [((eInventoryType.Equip, craft[i]), craft[i + 1]) for i in range(2, len(craft), 2) if craft[i]]
+
+        for unit_promotion in db.get_unit_promotion():
+            unit_id = unit_promotion[0]
+            promotion_level = unit_promotion[1]
+            self.equip_max_rank = max(self.equip_max_rank, promotion_level)
+            cnt = 0
+            for i in range(2, 8):
+                equip_slot = (eInventoryType.Equip, unit_promotion[i])
+                if unit_promotion[i] != 999999:
+                    self.unit_promotion[unit_id][promotion_level][equip_slot] += 1
+                    cnt += 1
+            if promotion_level == self.equip_max_rank:
+                self.equip_max_rank_equip_num = cnt
+        for unit_id in self.unit_promotion:
+            for rank in range(self.equip_max_rank - 1, 0, -1):
+                self.unit_promotion[unit_id][rank] += self.unit_promotion[unit_id][rank + 1]
 
         for hatsune in db.get_hatsune_schedule():
             hatsune_id = hatsune[0]
@@ -99,8 +137,7 @@ class database(Container["database"]):
             self.rarity_up_required[unit_id][rarity][token] += item_cnt
         for unit_id in self.rarity_up_required:
             for rarity in range(max_rank - 1, -1, -1):
-                for token in set(self.rarity_up_required[unit_id][rarity]) | set(self.rarity_up_required[unit_id][rarity + 1]):
-                    self.rarity_up_required[unit_id][rarity][token] += self.rarity_up_required[unit_id][rarity + 1][token]
+                self.rarity_up_required[unit_id][rarity] += self.rarity_up_required[unit_id][rarity + 1]
 
         max_rank = 0
         for info in db.get_unique_equip_consume():
@@ -117,8 +154,7 @@ class database(Container["database"]):
             self.unique_equip_required[equip_id][rank][token] = item_cnt
         for equip_id in self.unique_equip_required:
             for rank in range(max_rank - 1, -1, -1):
-                for token in set(self.unique_equip_required[equip_id][rank]) | set(self.unique_equip_required[equip_id][rank + 1]):
-                    self.unique_equip_required[equip_id][rank][token] += self.unique_equip_required[equip_id][rank + 1][token]
+                self.unique_equip_required[equip_id][rank] += self.unique_equip_required[equip_id][rank + 1]
 
         for quest in db.get_training_quest_exp():
             id = quest[0]
@@ -408,6 +444,13 @@ class database(Container["database"]):
 
     def get_today_start_time(self) -> datetime.datetime:
         return self.get_start_time(datetime.datetime.now())
+
+    def craft_equip(self, equip: Tuple[eInventoryType, int], num: int) -> typing.Counter[Tuple[eInventoryType, int]]:
+        if equip not in self.equip_craft:
+            return Counter({equip: num})
+        sub_results = map(lambda token: self.craft_equip(token[0], token[1] * num), self.equip_craft[equip])
+        res = reduce(lambda x, y: x + y, sub_results, Counter())
+        return res
 
 db = database(db_path)
 

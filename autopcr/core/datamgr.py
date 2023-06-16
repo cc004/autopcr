@@ -1,10 +1,14 @@
+from collections import Counter
 from .base import Component
 from .apiclient import apiclient
 from ..model.modelbase import *
 from typing import Callable, Coroutine, Any, Set, Dict, Tuple
+import typing
 from ..model.common import *
 from .database import db
 import datetime
+from functools import reduce
+import json, base64, gzip
 
 class datamgr(Component[apiclient]):
     settings: IniSetting = None
@@ -36,46 +40,127 @@ class datamgr(Component[apiclient]):
     deck_list: Dict[ePartyType, LoadDeckData] = {}
     campaign_list: List[int] = []
 
-    def is_heart_piece_double(self):
+    def is_heart_piece_double(self) -> bool:
         return any(db.is_heart_piece_double(campaign_id) for campaign_id in self.campaign_list)
 
-    def is_star_cup_double(self):
+    def is_star_cup_double(self) -> bool:
         return any(db.is_star_cup_double(campaign_id) for campaign_id in self.campaign_list)
 
-    def is_normal_quest_double(self):
+    def is_normal_quest_double(self) -> bool:
         return any(db.is_normal_quest_double(campaign_id) for campaign_id in self.campaign_list)
 
-    def is_hard_quest_double(self):
+    def is_hard_quest_double(self) -> bool:
         return any(db.is_hard_quest_double(campaign_id) for campaign_id in self.campaign_list)
 
-    def is_very_hard_quest_double(self):
+    def is_very_hard_quest_double(self) -> bool:
         return any(db.is_very_hard_quest_double(campaign_id) for campaign_id in self.campaign_list)
 
-    def is_dungeon_mana_double(self):
+    def is_dungeon_mana_double(self) -> bool:
         return any(db.is_dungeon_mana_double(campaign_id) for campaign_id in self.campaign_list)
 
     def clear_inventory(self):
         self._inventory.clear()
         self.hatsune_quest_dict.clear()
 
-    def get_need_unique_equip_material(self, unit_id: int, token: Tuple[eInventoryType, int]):
+    def get_need_unique_equip_material(self, unit_id: int, token: Tuple[eInventoryType, int]) -> int:
         if unit_id not in db.unit_unique_equip_id:
             return 0
         equip_id = db.unit_unique_equip_id[unit_id]
         rank = self.unit[unit_id].unique_equip_slot[0].rank if unit_id in self.unit and self.unit[unit_id].unique_equip_slot else 0
         return db.unique_equip_required[equip_id][rank][token]
 
-    def get_need_suixin(self):
-        cnt = 0
+    def get_need_unit_need_eqiup(self, unit_id: int) -> typing.Counter[Tuple[eInventoryType, int]]:
+        unit = self.unit[unit_id]
+        rank = unit.promotion_level
+        need = Counter(db.unit_promotion[unit_id][rank])
+        for equip in unit.equip_slot:
+            if equip.is_slot:
+                need[(eInventoryType.Equip, equip.id)] -= 1
+
+        cnt = reduce(lambda acc, equip_num: acc + db.craft_equip(equip_num[0], equip_num[1]), need.items(), Counter())
+        return cnt
+
+    def get_library_unit_data(self) -> List:
         result = []
+        for unit in self.unit.values():
+            if unit.id == 170101 or unit.id == 170201:
+                continue
+            equip_slot = ""
+            for equip in unit.equip_slot:
+                equip_slot += "1" if equip.is_slot else "0"
+            result.append({ 
+                "e": equip_slot,
+                "p": unit.promotion_level,
+                "r": str(unit.unit_rarity),
+                "u": hex(unit.id // 100)[2:],
+                "t": f"{db.equip_max_rank}.{db.equip_max_rank_equip_num}",
+                "q": str(db.unique_equip_rank_max_level[unit.unique_equip_slot[0].rank]) if unit.unique_equip_slot else "0",
+                "b": "true" if unit.exceed_stage else "false",
+                "f": False
+            })
+        return result
+
+
+    def get_library_equip_data(self) -> List:
+        result = []
+        candidate = [item for item in db.inventory_name if db.is_equip(item) and item not in db.equip_craft] + [db.xinsui]
+        for equip in candidate:
+            result.append({
+                "c": hex(self.get_inventory(equip))[2:],
+                "e": hex(equip[1])[2:],
+                "a": "1",
+            })
+        return result
+
+    def get_library_memory_data(self) -> List:
+        result = []
+        for memory_id, unit_id in db.memory_to_unit.items():
+            if unit_id == 170101 or unit_id == 170201:
+                continue
+            result.append({
+                "c": hex(self.get_inventory((eInventoryType.Item, memory_id)))[2:],
+                "u": hex(unit_id)[2:],
+            })
+
+        return result
+
+    def get_library_import_data(self) -> str:
+        result = []
+        result.append(self.get_library_unit_data()) 
+        result.append(self.get_library_equip_data())
+        result.append(self.get_library_memory_data())
+        json_str = json.dumps(result)
+        with open("tmp.txt", "w") as f:
+            f.write(json_str)
+        compressed_data = gzip.compress(json_str.encode('utf-8'))
+        encoded_data = base64.b64encode(compressed_data).decode('utf-8')
+        return encoded_data
+
+    def get_need_equip(self, start_rank: int) -> Tuple[List[Tuple[Tuple[eInventoryType, int], List[Tuple[Tuple[eInventoryType, int], int]]]], typing.Counter[Tuple[eInventoryType, int]]]:
+        cnt: typing.Counter[Tuple[eInventoryType, int]] = Counter()
+        result: List[Tuple[Tuple[eInventoryType, int], List[Tuple[Tuple[eInventoryType, int], int]]]] = []
         for unit_id in self.unit:
+            if start_rank and self.unit[unit_id].promotion_level < start_rank:
+                continue
+            token = (eInventoryType.Unit, unit_id)
+            need = self.get_need_unit_need_eqiup(unit_id)
+            if need:
+                cnt += need
+                result.append((token, list(need.items())))
+        return result, cnt 
+
+    def get_need_suixin(self) -> Tuple[List[Tuple[Tuple[eInventoryType, int], int]], int]:
+        cnt = 0
+        result: List[Tuple[Tuple[eInventoryType, int], int]] = []
+        for unit_id in self.unit:
+            token = (eInventoryType.Unit, unit_id)
             need = self.get_need_unique_equip_material(unit_id, db.xinsui)
             if need:
                 cnt += need
-                result.append((unit_id, cnt))
+                result.append((token, need))
         return result, cnt 
 
-    def get_need_rarity_memory(self, unit_id: int, token: Tuple[eInventoryType, int]):
+    def get_need_rarity_memory(self, unit_id: int, token: Tuple[eInventoryType, int]) -> int:
         rarity = 0
         cnt = 0
         if unit_id in self.unit:
@@ -86,25 +171,24 @@ class datamgr(Component[apiclient]):
         cnt += db.rarity_up_required[unit_id][rarity][token]
         return cnt
 
-    def get_need_unique_equip_memory(self, unit_id: int, token: Tuple[eInventoryType, int]):
+    def get_need_unique_equip_memory(self, unit_id: int, token: Tuple[eInventoryType, int]) -> int:
         return self.get_need_unique_equip_material(unit_id, token)
 
-    def get_need_memory(self):
+    def get_need_memory(self) -> Tuple[List[Tuple[Tuple[eInventoryType, int], int]], int]:
         cnt = 0
-        result = []
+        result: List[Tuple[Tuple[eInventoryType, int], int]] = []
         for memory_id, unit_id in db.memory_to_unit.items():
             token = (eInventoryType.Item, memory_id)
             if token not in db.inventory_name: # 未来角色
                 continue
 
             need = self.get_need_rarity_memory(unit_id, token) + self.get_need_unique_equip_memory(unit_id, token)
-            if need:
-                cnt += need
-                result.append((token, need))
+            cnt += need
+            result.append((token, need))
 
         return result, cnt 
 
-    def get_max_avaliable_quest(self, quests: Dict[int, str]):
+    def get_max_avaliable_quest(self, quests: Dict[int, str]) -> int:
         now = datetime.datetime.now()
         result = 0
         for quest_id, start_time in quests.items():
@@ -115,10 +199,10 @@ class datamgr(Component[apiclient]):
                 result = max(result, quest_id)
         return result
 
-    def get_max_avaliable_quest_exp(self):
+    def get_max_avaliable_quest_exp(self) -> int:
         return self.get_max_avaliable_quest(db.training_quest_exp)
 
-    def get_max_avaliable_quest_mana(self):
+    def get_max_avaliable_quest_mana(self) -> int:
         return self.get_max_avaliable_quest(db.training_quest_mana)
 
     def update_inventory(self, item: InventoryInfo):
@@ -132,7 +216,7 @@ class datamgr(Component[apiclient]):
         else:
             self._inventory[token] = item.stock
 
-    def recover_max_time(self, quest: int):
+    def recover_max_time(self, quest: int) -> int:
         if db.is_normal_quest(quest):
             return 0
         elif db.is_hard_quest(quest):

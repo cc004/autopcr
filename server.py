@@ -17,7 +17,7 @@ from hoshino.config import SUPERUSERS
 from hoshino.typing import CQEvent, MessageSegment
 from hoshino.config import PUBLIC_ADDRESS
 from .util import get_info, get_result
-from .task import DailyClean, FindMemory, FindXinsui, Task
+from .task import DailyClean, FindEquip, FindMemory, FindXinsui, Task, GetLibraryImport
 from .autopcr.bsdk.validator import validate_ok_queue, validate_queue
 import datetime
 import random
@@ -255,6 +255,44 @@ async def find_memory(bot: HoshinoBot, ev: CQEvent):
 
     await queue.put(FindMemory(alian, target, bot, ev))
 
+@sv.on_prefix("#查装备")
+async def find_equip(bot: HoshinoBot, ev: CQEvent):
+    ok, msg, alian, target = await get_config(bot, ev)
+    if not ok:
+        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + msg)
+
+    token = (ev.user_id, target)
+    if token in inqueue:
+        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]{alian}已在队列里，请耐心等待")
+
+    inqueue.add(token)
+    global consuming, queue
+    if not queue.empty() or consuming:
+        await bot.send(ev, f"[CQ:reply,id={ev.message_id}]当前有人正在清日常，已将{alian}加入等待队列中")
+
+    try:
+        start_rank = int(ev.message.extract_plain_text().split(' ')[-1]) 
+    except:
+        start_rank = None
+    await queue.put(FindEquip(start_rank = start_rank, alian = alian, target = target, bot = bot, ev = ev))
+
+# @sv.on_prefix("#获取导入")
+# async def get_library_import(bot: HoshinoBot, ev: CQEvent):
+#     ok, msg, alian, target = await get_config(bot, ev)
+#     if not ok:
+#         await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + msg)
+#
+#     token = (ev.user_id, target)
+#     if token in inqueue:
+#         await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]{alian}已在队列里，请耐心等待")
+#
+#     inqueue.add(token)
+#     global consuming, queue
+#     if not queue.empty() or consuming:
+#         await bot.send(ev, f"[CQ:reply,id={ev.message_id}]当前有人正在清日常，已将{alian}加入等待队列中")
+#
+#     await queue.put(GetLibraryImport(alian = alian, target = target, bot = bot, ev = ev))
+
 @sv.on_prefix("#清日常")
 async def clear_daily(bot: HoshinoBot, ev: CQEvent):
     ok, msg, alian, target = await get_config(bot, ev)
@@ -283,7 +321,7 @@ async def get_config(bot, ev):
         if m.type == 'at' and m.data['qq'] != 'all':
             user_id = str(m.data['qq'])
         elif m.type == 'text':
-            alian = str(m.data['text']).strip()
+            alian = str(m.data['text']).strip().split(' ')[0]
     if user_id is None: #本人
         user_id = str(ev.user_id)
     else:   #指定对象
