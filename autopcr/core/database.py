@@ -315,83 +315,86 @@ class database(Container["database"]):
             gacha_ticket_id = hatsune_item[2]
             self.hatsune_item[event_id] = (boss_ticket_id, gacha_ticket_id)
 
-    def get_inventory_name(self, item: InventoryInfo):
+    def get_inventory_name(self, item: InventoryInfo) -> str:
         try:
             return self.inventory_name[(item.type, item.id)]
         except:
             return f"未知物品({item.id})"
 
-    def get_inventory_name_san(self, item: Tuple[eInventoryType, int]):
+    def get_inventory_name_san(self, item: Tuple[eInventoryType, int]) -> str:
         try:
             return self.inventory_name[(item[0], item[1])]
         except:
             return f"未知物品({item[1]})"
 
-    def is_daily_mission(self, mission_id: int):
+    def is_daily_mission(self, mission_id: int) -> bool:
         return mission_id in self.daily_mission
 
-    def is_exp_upper(self, item: Tuple[eInventoryType, int]):
+    def is_exp_upper(self, item: Tuple[eInventoryType, int]) -> bool:
         return item[0] == eInventoryType.Item and item[1] >= 20000 and item[1] < 21000
 
-    def is_equip_upper(self, item: Tuple[eInventoryType, int]):
+    def is_equip_upper(self, item: Tuple[eInventoryType, int]) -> bool:
         return item[0] == eInventoryType.Item and item[1] >= 22000 and item[1] < 23000
 
-    def is_unit_memory(self, item: Tuple[eInventoryType, int]):
+    def is_unit_memory(self, item: Tuple[eInventoryType, int]) -> bool:
         return item[0] == eInventoryType.Item and item[1] >= 31000 and item[1] < 32000
 
-    def is_unit_pure_memory(self, item: Tuple[eInventoryType, int]):
+    def is_unit_pure_memory(self, item: Tuple[eInventoryType, int]) -> bool:
         return item[0] == eInventoryType.Item and item[1] >= 32000 and item[1] < 33000
 
-    def is_equip(self, item: Tuple[eInventoryType, int]):
+    def is_equip(self, item: Tuple[eInventoryType, int]) -> bool:
         return item[0] == eInventoryType.Equip and item[1] >= 101000 and item[1] < 140000
 
-    def is_room_item_level_upable(self, team_level: int, item: RoomUserItem):
+    def is_room_item_level_upable(self, team_level: int, item: RoomUserItem) -> bool:
         return item.room_item_level < self.room_item_max_level[item.room_item_id] and team_level // 10 >= item.room_item_level and (item.level_up_end_time is None or item.level_up_end_time < time.time())
 
-    def is_normal_quest(self, quest_id: int):
+    def is_normal_quest(self, quest_id: int) -> bool:
         return quest_id // 1000000 == 11
 
-    def is_hard_quest(self, quest_id: int):
+    def is_hard_quest(self, quest_id: int) -> bool:
         return quest_id // 1000000 == 12
 
-    def is_very_hard_quest(self, quest_id: int):
+    def is_very_hard_quest(self, quest_id: int) -> bool:
         return quest_id // 1000000 == 13
 
-    def is_heart_piece_quest(self, quest_id: int):
+    def is_heart_piece_quest(self, quest_id: int) -> bool:
         return quest_id // 1000000 == 18
 
-    def is_star_cup_quest(self, quest_id: int):
+    def is_star_cup_quest(self, quest_id: int) -> bool:
         return quest_id // 1000000 == 19
 
-    def is_hatsune_quest(self, quest_id: int):
+    def is_hatsune_quest(self, quest_id: int) -> bool:
         return quest_id // 1000000 == 10
 
-    def is_shiori_quest(self, quest_id: int):
+    def is_shiori_quest(self, quest_id: int) -> bool:
         return quest_id // 1000000 == 20
 
-    def campaign_info(self, campaign_id: int):
+    def campaign_info(self, campaign_id: int) -> Tuple[str, str, List[int]]:
         return self.campaign_gacha[campaign_id]
 
-    def is_heart_piece_double(self, campaign_id: int):
+    def is_heart_piece_double(self, campaign_id: int) -> bool:
         return self.campaign_schedule[campaign_id][0] == eCampaignCategory.ITEM_DROP_AMOUNT_UNIQUE_EQUIP
 
-    def is_star_cup_double(self, campaign_id: int):
+    def is_star_cup_double(self, campaign_id: int) -> bool:
         return self.campaign_schedule[campaign_id][0] == eCampaignCategory.ITEM_DROP_AMOUNT_HIGH_RARITY_EQUIP
 
-    def is_normal_quest_double(self, campaign_id: int):
+    def is_normal_quest_double(self, campaign_id: int) -> bool:
         return self.campaign_schedule[campaign_id][0] == eCampaignCategory.ITEM_DROP_AMOUNT_NORMAL
 
-    def is_hard_quest_double(self, campaign_id: int):
+    def is_hard_quest_double(self, campaign_id: int) -> bool:
         return self.campaign_schedule[campaign_id][0] == eCampaignCategory.ITEM_DROP_AMOUNT_HARD
 
-    def is_very_hard_quest_double(self, campaign_id: int):
+    def is_very_hard_quest_double(self, campaign_id: int) -> bool:
         return self.campaign_schedule[campaign_id][0] == eCampaignCategory.ITEM_DROP_AMOUNT_VERY_HARD
 
-    def is_dungeon_mana_double(self, campaign_id: int):
+    def is_dungeon_mana_double(self, campaign_id: int) -> bool:
         return self.campaign_schedule[campaign_id][0] == eCampaignCategory.GOLD_DROP_AMOUNT_DUNGEON
 
-    def is_dungeon_mana_before(self, campaign_id: int):
-        pass
+    def get_dungeon_mana_before_day(self) -> int:
+        dungeon = min([schedule for schedule in self.campaign_schedule.values() if schedule[0] == eCampaignCategory.GOLD_DROP_AMOUNT_DUNGEON and db.parse_time(schedule[2]) > datetime.datetime.now()], key=lambda x: x[2])
+        today = self.get_today_start_time()
+        dungeon = self.get_start_time(db.parse_time(dungeon[2]))
+        return (dungeon - today).days
 
     def get_newest_tower_id(self):
         return max(self.tower, key = lambda x: self.tower[x][0])

@@ -83,7 +83,7 @@ class datamgr(Component[apiclient]):
     def get_library_unit_data(self) -> List:
         result = []
         for unit in self.unit.values():
-            if unit.id == 170101 or unit.id == 170201:
+            if unit.id == 170101 or unit.id == 170201: # 竟然没有春环
                 continue
             equip_slot = ""
             for equip in unit.equip_slot:

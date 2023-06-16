@@ -8,3 +8,4 @@ imgkit~=1.2.3
 pandas~=1.5.2
 Jinja2~=3.0.1
 markupsafe~=2.0.1
+Brotli~=1.0.9
