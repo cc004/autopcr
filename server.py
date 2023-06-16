@@ -22,6 +22,7 @@ from .autopcr.bsdk.validator import validate_ok_queue, validate_queue
 import datetime
 import random
 import asyncio
+import brotli
 
 register_all()
 
@@ -365,42 +366,35 @@ async def force_update_database(bot: HoshinoBot, ev: CQEvent):
     await bot.finish(ev, msg)
 
 async def do_update_database(force: bool = False):
-    info = f'https://redive.estertion.win/db'
+    info = f'https://redive.estertion.win/last_version_cn.json'
 
     rsp = requests.get(info, stream=True, timeout=20)
-    pos = rsp.text.find("redive_cn.db</a>")
-    end = rsp.text.find("\n", pos)
-    update_time = ""
-    for t in rsp.text[pos:end].split(' '):
-        if "-" in t:
-            update_time += t + " "
-        elif ":" in t:
-            update_time += t
+    data = rsp.json()
 
     version = os.path.join(ROOT_PATH, "db.version")
     try:
         now_version = open(version, "r").read().strip()
     except FileNotFoundError:
         now_version = None
-    if not force and now_version == update_time:
+    if not force and now_version == data['TruthVersion']:
         return f"未发现新版本数据库，当前版本{now_version}"
 
-    url = f'https://redive.estertion.win/db/redive_cn.db'
+    url = f'https://redive.estertion.win/db/redive_cn.db.br'
     save_path = os.path.join(ROOT_PATH, "redive_cn.db")
     sv.logger.info(f'Downloading newest database from {url}')
     try:
-        rsp = requests.get(url, stream=True, timeout=20)
+        rsp = requests.get(url, headers={'Accept-Encoding': 'br'}, stream=True, timeout=20)
         if 200 == rsp.status_code:
             with open(save_path, "wb") as f:
-                f.write(rsp.content)
+                f.write(brotli.decompress(rsp.content))
             init_db()
         else:
             return f"下载失败：{rsp.status_code}"
     except Exception as e:
         return str(e)
     with open(version, "w") as f:
-        f.write(update_time)
-    return f"更新成功至：{update_time} 版本"
+        f.write(data['TruthVersion'])
+    return f"更新成功至：{data['TruthVersion']} 版本"
 
 async def report_to_su(sess, msg_with_sess, msg_wo_sess):
     if sess:
