@@ -448,7 +448,7 @@ class database(Container["database"]):
     def get_today_start_time(self) -> datetime.datetime:
         return self.get_start_time(datetime.datetime.now())
 
-    def craft_equip(self, equip: Tuple[eInventoryType, int], num: int) -> typing.Counter[Tuple[eInventoryType, int]]:
+    def craft_equip(self, equip: Tuple[eInventoryType, int], num: int) -> typing.Counter[Tuple[eInventoryType, int]]: # 依赖关系不深，没必要写成拓扑图求解
         if equip not in self.equip_craft:
             return Counter({equip: num})
         sub_results = map(lambda token: self.craft_equip(token[0], token[1] * num), self.equip_craft[equip])

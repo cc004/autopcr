@@ -49,7 +49,7 @@ def notimplemented(cls):
 # refers to a schudule to be done
 class Module:
     def __init__(self, parent: "ModuleManager"):
-        self._val: Union[str, int, None] = None
+        self._val: Union[str, int, bool, None] = None
         self.candidates: list = []
         self.name: str = self.__class__.__name__
         self.description: str = self.name

@@ -4,7 +4,7 @@ from .sessionmgr import sessionmgr
 from .misc import errorhandler
 from .datamgr import datamgr
 from .database import db
-from typing import Tuple
+from typing import Tuple, Union
 
 class pcrclient(apiclient):
     def __init__(self, *args, **kwargs):
@@ -327,7 +327,7 @@ class pcrclient(apiclient):
         req.type = 1
         await self.request(req)
     
-    async def serlize_reward(self, reward_list: List[InventoryInfo], target: Tuple[eInventoryType, int] = None):
+    async def serlize_reward(self, reward_list: List[InventoryInfo], target: Union[Tuple[eInventoryType, int], None] = None):
         result = []
         rewards = {}
         for reward in reward_list:
@@ -337,7 +337,9 @@ class pcrclient(apiclient):
                 else:
                     rewards[(reward.id, reward.type)][0] += reward.count
                     rewards[(reward.id, reward.type)][1] = max(reward.stock, rewards[(reward.id, reward.type)][1])
-        for _, value in rewards.items():
+        reward_item = list(rewards.values())
+        reward_item = sorted(reward_item, key = lambda x: x[0], reverse = True)
+        for value in reward_item:
             try:
                 result.append(f"{db.get_inventory_name(value[2])}x{value[0]}({value[1]})")
             except:
