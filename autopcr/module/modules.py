@@ -393,30 +393,60 @@ class six_star(Module):
             raise SkipError("六星碎片均已足够，无需刷取")
 
 @description('最高级地下城扫荡')
-@booltype
-@default(True)
+@enumtype(["none", "非双倍留一次数", "always"])
+@default("always")
 class underground_skip(Module):
     async def do_task(self, client: pcrclient):
         infos = await client.get_dungeon_info()
-        result = ""
-        rest = infos.rest_challenge_count[0].count
-        if infos.enter_area_id != 0:
-            dungeon_name = db.dungeon_name[infos.enter_area_id]
-            raise AbortError(f"当前以位于{dungeon_name}，将不进行扫荡")
-        
-        if rest:
-            id = max([0] + infos.dungeon_cleared_area_id_list)
+
+        async def do_enter(now_id = None):
+            id = max([0] + infos.dungeon_cleared_area_id_list) if not now_id else now_id
             if id > 0:
+                await client.enter_dungeon(id)
+                dungeon_name = db.dungeon_name[id]
+                self._log(f"已进入【{dungeon_name}】")
+            else:
+                raise AbortError("不存在已完成讨伐的地下城")
+
+        async def do_sweep(now_id = None):
+            id = max([0] + infos.dungeon_cleared_area_id_list) if not now_id else now_id
+            dungeon_name = db.dungeon_name[id]
+            if id > 0:
+                if id not in infos.dungeon_cleared_area_id_list:
+                    raise AbortError(f"{dungeon_name}未讨伐，无法扫荡")
                 reward_list = await client.skip_dungeon(id)
                 rewards = [reward for reward_item in reward_list.skip_result_list for reward in reward_item.reward_list 
                            if db.is_unit_memory((reward.type, reward.id)) 
                            or db.xinsui == (reward.type, reward.id)
                            or db.xingqiubei == (reward.type, reward.id)]
                 result = await client.serlize_reward(rewards)
-                dungeon_name = db.dungeon_name[id]
                 self._log(f"扫荡了【{dungeon_name}】,获得了:\n{result}")
+                return reward_list.rest_challenge_count[0].count
             else:
                 raise AbortError("不存在已完成讨伐的地下城")
+
+        double_mana = client.data.is_dungeon_mana_double()
+        rest = infos.rest_challenge_count[0].count
+        if infos.enter_area_id != 0:
+            dungeon_name = db.dungeon_name[infos.enter_area_id]
+            self._log(f"当前位于【{dungeon_name}】")
+            if double_mana:
+                self._log(f"今日地下城双倍mana")
+                rest = await do_sweep(infos.enter_area_id)
+            else:
+                self._log(f"今日地下城非双倍mana")
+                if rest:
+                    self._log(f"还有{rest}次挑战次数，进行扫荡")
+                    rest = await do_sweep(infos.enter_area_id)
+                else:
+                    if self.value == "always":
+                        rest = await do_sweep(infos.enter_area_id)
+                        
+        if rest:
+            if double_mana or self.value == "always":
+                await do_sweep()
+            else:
+                await do_enter()
         else:
             raise SkipError("今日已扫荡地下城")
 
