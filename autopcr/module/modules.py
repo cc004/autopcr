@@ -393,30 +393,60 @@ class six_star(Module):
             raise SkipError("六星碎片均已足够，无需刷取")
 
 @description('最高级地下城扫荡')
-@booltype
-@default(True)
+@enumtype(["none", "非双倍留一次数", "always"])
+@default("always")
 class underground_skip(Module):
     async def do_task(self, client: pcrclient):
         infos = await client.get_dungeon_info()
-        result = ""
-        rest = infos.rest_challenge_count[0].count
-        if infos.enter_area_id != 0:
-            dungeon_name = db.dungeon_name[infos.enter_area_id]
-            raise AbortError(f"当前以位于{dungeon_name}，将不进行扫荡")
-        
-        if rest:
-            id = max([0] + infos.dungeon_cleared_area_id_list)
+
+        async def do_enter(now_id = None):
+            id = max([0] + infos.dungeon_cleared_area_id_list) if not now_id else now_id
             if id > 0:
+                await client.enter_dungeon(id)
+                dungeon_name = db.dungeon_name[id]
+                self._log(f"已进入【{dungeon_name}】")
+            else:
+                raise AbortError("不存在已完成讨伐的地下城")
+
+        async def do_sweep(now_id = None):
+            id = max([0] + infos.dungeon_cleared_area_id_list) if not now_id else now_id
+            dungeon_name = db.dungeon_name[id]
+            if id > 0:
+                if id not in infos.dungeon_cleared_area_id_list:
+                    raise AbortError(f"{dungeon_name}未讨伐，无法扫荡")
                 reward_list = await client.skip_dungeon(id)
                 rewards = [reward for reward_item in reward_list.skip_result_list for reward in reward_item.reward_list 
                            if db.is_unit_memory((reward.type, reward.id)) 
                            or db.xinsui == (reward.type, reward.id)
                            or db.xingqiubei == (reward.type, reward.id)]
                 result = await client.serlize_reward(rewards)
-                dungeon_name = db.dungeon_name[id]
                 self._log(f"扫荡了【{dungeon_name}】,获得了:\n{result}")
+                return reward_list.rest_challenge_count[0].count
             else:
                 raise AbortError("不存在已完成讨伐的地下城")
+
+        double_mana = client.data.is_dungeon_mana_double()
+        rest = infos.rest_challenge_count[0].count
+        if infos.enter_area_id != 0:
+            dungeon_name = db.dungeon_name[infos.enter_area_id]
+            self._log(f"当前位于【{dungeon_name}】")
+            if double_mana:
+                self._log(f"今日地下城双倍mana")
+                rest = await do_sweep(infos.enter_area_id)
+            else:
+                self._log(f"今日地下城非双倍mana")
+                if rest:
+                    self._log(f"还有{rest}次挑战次数，进行扫荡")
+                    rest = await do_sweep(infos.enter_area_id)
+                else:
+                    if self.value == "always":
+                        rest = await do_sweep(infos.enter_area_id)
+                        
+        if rest:
+            if double_mana or self.value == "always":
+                await do_sweep()
+            else:
+                await do_enter()
         else:
             raise SkipError("今日已扫荡地下城")
 
@@ -689,8 +719,8 @@ class hatsune_mission_accept(Module):
         if is_abort: raise AbortError("")
         if is_skip: raise SkipError("")
 
-@description('活动h本boss')
-@enumtype(["none", "max", "max - 1"])
+@description('活动h本boss，未打vh保留30+未打sp保留90')
+@enumtype(["none", "保留当日vh份", "保留当日及未来vh份"])
 @default("none")
 class hatsune_hboss_sweep(Module):
     async def do_task(self, client: pcrclient):
@@ -704,20 +734,31 @@ class hatsune_hboss_sweep(Module):
             event_active = True
             resp = await client.get_hatsune_top(event.event_id)
             ticket = resp.boss_ticket_info.stock
-            if self.value == "max":
-                times = ticket // 30
-            elif self.value == "max - 1":
-                times = ticket // 30 - 1
-            else:
-                raise ValueError(f"Unknown option: {self.value}")
-            boss_id = event.event_id * 100 + 2
+
+            times = ticket // 30
+            hboss_id = event.event_id * 100 + 2
+            vhboss_id = event.event_id * 100 + 3
+            spboss_id = event.event_id * 100 + 4
+
+            boss_info = {boss.boss_id: boss for boss in resp.boss_battle_info}
+
             try: 
-                for boss_battle_info in resp.boss_battle_info:
-                    if boss_battle_info.boss_id == boss_id and not boss_battle_info.is_unlocked:
-                        raise AbortError(f"h本boss未解锁")
+                if not boss_info[hboss_id].is_unlocked:
+                    raise AbortError(f"h本boss未解锁")
+                if not boss_info[spboss_id].kill_num:
+                    self._log("sp未通关，保留90张")
+                    times -= 3
+                if not boss_info[vhboss_id].daily_kill_count:
+                    self._log("今日vh未通关，保留30张")
+                    times -= 1
+                if self.value == "保留当日及未来vh份":
+                    left_day = (db.get_start_time(db.parse_time(db.hatsune_schedule[event.event_id][1])) - db.get_today_start_time()).days 
+                    self._log(f"距离活动结束还有{left_day}天，保留{left_day * 30}张")
+                    times -= left_day
+
                 if times <= 0:
-                    raise SkipError(f"boss券不足 {ticket}")
-                resp = await client.hatsune_boss_skip(event.event_id, boss_id, times, ticket)
+                    raise SkipError(f"boss券不足")
+                resp = await client.hatsune_boss_skip(event.event_id, hboss_id, times, ticket)
                 is_skip = False
                 self._log(f"{event.event_id} h boss: 扫荡{times}次")
             except SkipError as e:

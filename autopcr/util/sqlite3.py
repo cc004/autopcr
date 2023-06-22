@@ -281,3 +281,31 @@ class RecordDAO:
                 f"SELECT id, campaign_category, value, start_time, end_time FROM campaign_schedule",
             ).fetchall()
         return r
+
+    def get_hatsune_schedule(self):
+        with self.connect() as conn:
+            r = conn.execute(
+                f"SELECT event_id, start_time, end_time FROM hatsune_schedule",
+            ).fetchall()
+        return r
+
+    def get_unit_promotion(self):
+        with self.connect() as conn:
+            r = conn.execute(
+                f"SELECT unit_id, promotion_level, equip_slot_1, equip_slot_2, equip_slot_3, equip_slot_4, equip_slot_5, equip_slot_6 FROM unit_promotion",
+            ).fetchall()
+        return r
+
+    def get_equipment_craft(self):
+        with self.connect() as conn:
+            r = conn.execute(
+                f"SELECT * FROM equipment_craft",
+            ).fetchall()
+        return r
+
+    def get_unique_equipment_enhance_data(self):
+        with self.connect() as conn:
+            r = conn.execute(
+                f"SELECT rank, enhance_level FROM unique_equipment_enhance_data",
+            ).fetchall()
+        return r
