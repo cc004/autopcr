@@ -61,8 +61,12 @@
                         <div>
                             <input type="button" id="login" value="保存账号信息" onclick="selectOnChange()"/>
                             <input type="button" id="do_task" value="清日常" onclick="do_task()"/>
+                            <input type="button" id="library_import" value="兰德索尔图书馆导入" onclick="library_import()"/>
                         </div>
                         <br/>
+                        <div class="container" width="100%" >
+                            <div id="msg" style="word-wrap: break-word;"></div>
+                        </div>
                         <table id="tab" width="100%" cellspacing="0" cellpadding="0" class="table">
                             <div>
                                 <thead class="thead-light">
@@ -264,6 +268,23 @@
                 let name = ret[id]['name']
                 $(`#result_${name}`).html(ret[id]["msg"].replace(/\n/g, '<br>'))
             }
+        }
+
+        function library_import() {
+            $("#library_import").attr('disabled', true);
+            $.ajax({
+                url: '/daily/api/library_import' + window.location.search,
+                type: 'get',
+                processData: false,
+                success: function (ret) {
+                    $("#msg").text(ret)
+                    $("#library_import").attr('disabled', false);
+                },
+                error: function (ret) {
+                    suspend("alert-danger", "执行任务失败: " + ret.responseText);
+                    $("#library_import").attr('disabled', false);
+                }
+            })
         }
 
         function do_task() {

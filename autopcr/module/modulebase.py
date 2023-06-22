@@ -1,5 +1,5 @@
 from ..core.pcrclient import pcrclient
-from typing import DefaultDict, List, Dict, Tuple, Iterator
+from typing import DefaultDict, List, Dict, Tuple, Iterator, Union
 from collections import defaultdict
 from abc import abstractmethod
 from ..model.error import *
@@ -49,7 +49,7 @@ def notimplemented(cls):
 # refers to a schudule to be done
 class Module:
     def __init__(self, parent: "ModuleManager"):
-        self._val = None
+        self._val: Union[str, int, bool, None] = None
         self.candidates: list = []
         self.name: str = self.__class__.__name__
         self.description: str = self.name
@@ -182,20 +182,53 @@ class ModuleManager:
         })
         return client
 
+    async def get_library_import_data(self):
+        try:
+            client = self.get_android_client()
+            await client.login()
+            msg = client.data.get_library_import_data()
+            return msg
+        except Exception as e:
+            traceback.print_exc()
+            raise(e)
+
+    async def get_need_equip(self, start_rank: int):
+        try:
+            client = self.get_android_client()
+            await client.login()
+            result, need = client.data.get_need_equip(start_rank)
+            result = sorted(result, key=lambda x: -client.data.unit[x[0][1]].promotion_level)
+            msg = [db.get_inventory_name_san(token) + ":\n" + '\n'.join([db.get_inventory_name_san(equip[0]) + "x" + str(equip[1]) for equip in equips]) for token, equips in result]
+
+
+            total = [(token, client.data.get_inventory(token) - num) for token, num in need.items()]
+            total = sorted(total, key=lambda x: x[1])
+
+            title = [f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] < 0 else "盈余"}{abs(item[1])}片' for item in total]
+            return title
+            # return title + msg
+        except Exception as e:
+            traceback.print_exc()
+            raise(e)
+
     async def get_need_xinsui(self):
         try:
             client = self.get_android_client()
             await client.login()
             result, need = client.data.get_need_suixin()
+            result = sorted(result, key=lambda x: x[1])
+            msg = [f"{db.get_inventory_name_san(item[0])}: 需要{item[1]}片" for item in result]
+
             store = client.data.get_inventory(db.xinsui) + client.data.get_inventory(db.heart) * 10
             cnt = need - store
-            msg = f"当前心碎数量为{store}(大心自动转换成10心碎)，需要{need}，"
+            tot = f"当前心碎数量为{store}(大心自动转换成10心碎)，需要{need}，"
             if cnt > 0:
-                msg += f"缺口数量为:{cnt}"
+                tot += f"缺口数量为:{cnt}"
             elif cnt < 0:
-                msg += f"盈余数量为:{-cnt}"
+                tot += f"盈余数量为:{-cnt}"
             else:
-                msg += "当前心碎储备刚刚好！"
+                tot += "当前心碎储备刚刚好！"
+            msg = [tot] + msg
             return msg
         except Exception as e:
             traceback.print_exc()
@@ -206,12 +239,10 @@ class ModuleManager:
             client = self.get_android_client()
             await client.login()
             result, need = client.data.get_need_memory()
-            msg = []
             result = [(token, client.data.get_inventory(token) - need) for token, need in result]
             result = sorted(result, key=lambda x: x[1])
-            for token, num in result:
-                text = "缺少" if num < 0 else "盈余"
-                msg.append(f"{db.get_inventory_name_san(token)}: {text}{abs(num)}片")
+
+            msg = [f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] < 0 else "盈余"}{abs(item[1])}片' for item in result]
             return msg
         except Exception as e:
             traceback.print_exc()

@@ -77,6 +77,19 @@ async def draw(data: dict, alian: str):
     imgkit.from_string(df.to_html(index=False, escape=False), file)
     return file
 
+def render_forward_msg(msg_list: list, uid=244115379, name='兰德索尔图书馆管理员'):
+    forward_msg = []
+    for msg in msg_list:
+        forward_msg.append({
+            "type": "node",
+            "data": {
+                "name": str(name),
+                "uin": str(uid),
+                "content": msg
+            }
+        })
+    return forward_msg
+
 if __name__ == "__main__":
     asyncio.run(draw(json.loads(open("test.json" ,"r").read()), "test"))
 
