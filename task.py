@@ -67,10 +67,14 @@ class DailyClean(Task):
         alian, target, bot, ev, qid, gid = self.info 
         mgr = ModuleManager(target)
 
-        if ev:
-            await bot.send(ev, f"[CQ:reply,id={ev.message_id}]开始为{alian}清理日常")
-        else:
-            await bot.send_group_msg(group_id = gid, message = f"【定时任务】开始为{alian}清理日常")
+        try:
+            if ev:
+                await bot.send(ev, f"[CQ:reply,id={ev.message_id}]开始为{alian}清理日常")
+            else:
+                await bot.send_group_msg(group_id = gid, message = f"【定时任务】开始为{alian}清理日常")
+        except Exception as e: # 风控，怕report_to_su还失败，就不整了
+            print(e)
+
         try:
             resp = await mgr.do_task()
             img = await draw(resp, alian)
