@@ -1307,7 +1307,7 @@ class DungeonUnit(BaseModel):
 	unit_id: int = None
 	hp: int = None
 	energy: int = None
-	skill_limit_counter: List[SkillLimitCounter] = None
+	skill_limit_counter: int = None
 	max_hp: int = None
 	power: int = None
 	level: int = None
@@ -1746,10 +1746,13 @@ class ClanDispatchUnitLight(BaseModel):
 	unit_data: UnitDataLight = None
 class DungeonQuest(BaseModel):
 	quest_id: int = None
+	open_chest: int = None
 	limit_time: int = None
 	background: int = None
 	chest_id: int = None
 	versus_viewer_id: int = None
+	team_level: int = None
+	clan_name: str = None
 	name: str = None
 	versus_unit_list: List[DungeonUnit] = None
 class EventSpecialBattleExHistory(BaseModel):
