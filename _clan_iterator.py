@@ -1,5 +1,4 @@
-﻿
-from autopcr.model.requests import *
+﻿from autopcr.model.requests import *
 from autopcr.model.responses import *
 from autopcr.core import pcrclient, ApiException, sessionmgr
 

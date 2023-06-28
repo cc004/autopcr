@@ -2,7 +2,7 @@ import requests
 import os
 from .autopcr.http_server.httpserver import HttpServer
 from .autopcr.module.modules import register_all
-from .autopcr.core.database import init_db, db
+from .autopcr.db.database import db
 import asyncio
 import os
 import aiocqhttp
@@ -16,8 +16,8 @@ from hoshino import HoshinoBot, Service, priv
 from hoshino.config import SUPERUSERS
 from hoshino.typing import CQEvent, MessageSegment
 from hoshino.config import PUBLIC_ADDRESS
-from .util import get_info, get_result
-from .task import DailyClean, FindEquip, FindMemory, FindXinsui, Task, GetLibraryImport
+from ._util import get_info, get_result
+from ._task import DailyClean, FindEquip, FindMemory, FindXinsui, Task, GetLibraryImport
 from .autopcr.bsdk.validator import validate_ok_queue, validate_queue
 import datetime
 import random
@@ -354,6 +354,7 @@ async def get_config(bot, ev):
 async def config_clear_daily(bot: HoshinoBot, ev: CQEvent):
     await bot.finish(ev, address)
 
+'''
 @sv.on_fullmatch("#更新数据库")
 async def update_database(bot: HoshinoBot, ev: CQEvent):
     await bot.send(ev, f"开始更新数据库...")
@@ -396,6 +397,7 @@ async def do_update_database(force: bool = False):
     with open(version, "w") as f:
         f.write(data['TruthVersion'])
     return f"更新成功至：{data['TruthVersion']} 版本"
+'''
 
 async def report_to_su(sess, msg_with_sess, msg_wo_sess):
     if sess:

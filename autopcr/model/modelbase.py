@@ -13,7 +13,7 @@ class ErrorInfo(BaseModel):
 
 class ResponseBase(BaseModel):
     server_error: ErrorInfo = None
-    def update(self, mgr: "datamgr", request): ...
+    async def update(self, mgr: "datamgr", request): ...
 
 TResponse = TypeVar('TResponse', bound=ResponseBase)
 

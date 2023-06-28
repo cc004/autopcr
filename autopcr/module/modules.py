@@ -4,7 +4,7 @@ from .modulebase import *
 
 import datetime
 from ..model.error import *
-from ..core.database import db
+from ..db.database import db
 from ..model.models import *
 import random
 from abc import abstractmethod

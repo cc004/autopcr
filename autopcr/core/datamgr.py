@@ -5,15 +5,16 @@ from ..model.modelbase import *
 from typing import Callable, Coroutine, Any, Set, Dict, Tuple
 import typing
 from ..model.common import *
-from .database import db
 import datetime
 from functools import reduce
 import json, base64, gzip
+from ..db.assetmgr import instance as assetmgr
+from ..db.database import db
 
 class datamgr(Component[apiclient]):
     settings: IniSetting = None
     dungeon_avaliable: bool = False
-    finishedQuest: Set[int] = set()
+    finishedQuest: Set[int] = None
     jewel: UserJewel = None
     gold: UserGold = None
     clan: int = 0
@@ -28,17 +29,29 @@ class datamgr(Component[apiclient]):
     training_quest_count: TrainingQuestCount = None
     training_quest_max_count: TrainingQuestCount = None
     quest_dict: Dict[int, UserQuestInfo] = None
-    hatsune_quest_dict: Dict[int, Dict[int, HatsuneUserEventQuest]] = {}
+    hatsune_quest_dict: Dict[int, Dict[int, HatsuneUserEventQuest]] = None
     name: str = None
     clan_like_count: int = 0
     user_my_quest: List[UserMyQuest] = None
-    _inventory: Dict[Tuple[eInventoryType, int], int] = {}
+    _inventory: Dict[Tuple[eInventoryType, int], int] = None
     read_story_ids: List[int] = None
     unlock_story_ids: List[int] = None
     event_statuses: List[EventStatus] = None
     tower_status: TowerStatus = None
-    deck_list: Dict[ePartyType, LoadDeckData] = {}
-    campaign_list: List[int] = []
+    deck_list: Dict[ePartyType, LoadDeckData] = None
+    campaign_list: List[int] = None
+
+    def __init__(self):
+        self.finishedQuest = set()
+        self.hatsune_quest_dict = {}
+        self._inventory = {}
+        self.deck_list = {}
+        self.campaign_list = []
+
+
+    async def try_update_database(self, ver: int):
+        if assetmgr.ver < ver:
+            await assetmgr.init(ver)
 
     def is_heart_piece_double(self) -> bool:
         return any(db.is_heart_piece_double(campaign_id) for campaign_id in self.campaign_list)
@@ -258,5 +271,5 @@ class datamgr(Component[apiclient]):
 
     async def request(self, request: Request[TResponse], next: Callable[[Request[TResponse]], Coroutine[Any, Any, TResponse]]) -> TResponse:
         resp = await next(request)
-        if resp: resp.update(self, request)
+        if resp: await resp.update(self, request)
         return resp

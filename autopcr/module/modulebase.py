@@ -3,7 +3,7 @@ from typing import DefaultDict, List, Dict, Tuple, Iterator, Union
 from collections import defaultdict
 from abc import abstractmethod
 from ..model.error import *
-from ..core.database import db
+from ..db.database import db
 import datetime
 
 def _wrap_init(cls, setter):
