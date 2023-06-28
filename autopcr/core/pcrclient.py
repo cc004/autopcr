@@ -3,7 +3,7 @@ from .apiclient import apiclient
 from .sessionmgr import sessionmgr
 from .misc import errorhandler
 from .datamgr import datamgr
-from .database import db
+from ..db.database import db
 from typing import Tuple, Union
 
 class pcrclient(apiclient):
