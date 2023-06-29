@@ -867,7 +867,13 @@ class room_like_back(Module):
             pos += 1
             if user.room_user_info.today_like_flag:
                 continue
-            resp = await client.room_like(user.room_user_info.viewer_id)
+            try:
+                resp = await client.room_like(user.room_user_info.viewer_id)
+            except Exception as e:
+                if str(e).startswith("此玩家未读取的点赞数"):
+                    continue
+                else:
+                    raise(e)
             result += resp.reward_list
             like_user.append(user.room_user_info.name)
             cnt += 1
