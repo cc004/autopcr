@@ -10,6 +10,7 @@ from functools import reduce
 import json, base64, gzip
 from ..db.assetmgr import instance as assetmgr
 from ..db.database import db
+from ..db.models import TrainingQuestDatum
 
 class datamgr(Component[apiclient]):
     settings: IniSetting = None
@@ -76,9 +77,9 @@ class datamgr(Component[apiclient]):
         self.hatsune_quest_dict.clear()
 
     def get_need_unique_equip_material(self, unit_id: int, token: Tuple[eInventoryType, int]) -> int:
-        if unit_id not in db.unit_unique_equip_id:
+        if unit_id not in db.unit_unique_equip:
             return 0
-        equip_id = db.unit_unique_equip_id[unit_id]
+        equip_id = db.unit_unique_equip[unit_id].equip_id
         rank = self.unit[unit_id].unique_equip_slot[0].rank if unit_id in self.unit and self.unit[unit_id].unique_equip_slot else 0
         return db.unique_equip_required[equip_id][rank][token]
 
@@ -107,7 +108,7 @@ class datamgr(Component[apiclient]):
                 "r": str(unit.unit_rarity),
                 "u": hex(unit.id // 100)[2:],
                 "t": f"{db.equip_max_rank}.{db.equip_max_rank_equip_num}",
-                "q": str(db.unique_equip_rank_max_level[unit.unique_equip_slot[0].rank]) if unit.unique_equip_slot else "0",
+                "q": str(db.unique_equip_rank[unit.unique_equip_slot[0].rank].enhance_level) if unit.unique_equip_slot else "0",
                 "b": "true" if unit.exceed_stage else "false",
                 "f": False
             })
@@ -201,11 +202,11 @@ class datamgr(Component[apiclient]):
 
         return result, cnt 
 
-    def get_max_avaliable_quest(self, quests: Dict[int, str]) -> int:
+    def get_max_avaliable_quest(self, quests: Dict[int, TrainingQuestDatum]) -> int:
         now = datetime.datetime.now()
         result = 0
-        for quest_id, start_time in quests.items():
-            start_time = db.parse_time(start_time)
+        for quest_id, quest in quests.items():
+            start_time = db.parse_time(quest.start_time)
             if now < start_time:
                 continue
             if quest_id in self.quest_dict and self.quest_dict[quest_id].clear_flg == 3:
