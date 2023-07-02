@@ -35,10 +35,10 @@ class database():
     def update(self, dbmgr: dbmgr):
         
         with dbmgr.session() as db:
-            self.unique_equip_rank: Dict[int, UniqueEquipmentEnhanceDatum] = (
+            self.unique_equip_rank: Dict[int, UniqueEquipmentEnhanceDatum] = ( # 第二维是int？
                 UniqueEquipmentEnhanceDatum.query(db)
                 .group_by(lambda x: x.rank)
-                .to_dict(lambda x: x.key, lambda x: x.max(lambda y: y))
+                .to_dict(lambda x: x.key, lambda x: x.max(lambda y: y.enhance_level))
             )
 
             self.equip_craft: Dict[Tuple[eInventoryType, int], List[Tuple[Tuple[eInventoryType, int], int]]] = (
@@ -77,7 +77,7 @@ class database():
             
             self.campaign_schedule: Dict[int, CampaignSchedule] = (
                 CampaignSchedule.query(db)
-                .to_dict(lambda x: x.id, lambda x: (x.campaign_category, x.value, x.start_time, x.end_time))
+                .to_dict(lambda x: x.id, lambda x: x)
             )
 
             self.memory_quest: Dict[int, List[QuestDatum]] = (
@@ -91,7 +91,7 @@ class database():
 
             self.unit_unique_equip: Dict[int, UnitUniqueEquip] = (
                 UnitUniqueEquip.query(db)
-                .to_dict(lambda x: x.unit_id, lambda x: x.x)
+                .to_dict(lambda x: x.unit_id, lambda x: x)
             )
             
             self.rarity_up_required: Dict[int, Dict[int, typing.Counter[Tuple[eInventoryType, int]]]] = (
@@ -345,12 +345,12 @@ class database():
             self.quest_to_event: Dict[int, HatsuneQuest] = (
                 HatsuneQuest.query(db)
                 .concat(ShioriQuest.query(db))
-                #.to_dict(lambda x: x.quest_id, lambda x: x.event_id)
+                .to_dict(lambda x: x.quest_id, lambda x: x) # 类型不一致，Hatsune和Shiori是否分开？
             )
             
             self.hatsune_item: Dict[int, HatsuneItem] = (
                 HatsuneItem.query(db)
-                .to_dict(lambda x: x.event_id, lambda x: (x.boss_ticket_id, x.gacha_ticket_id))
+                .to_dict(lambda x: x.event_id, lambda x: x)
             )
 
     def get_inventory_name(self, item: InventoryInfo) -> str:

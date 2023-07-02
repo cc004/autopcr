@@ -6,7 +6,7 @@ T3 = TypeVar('T3')
 
 class flow(Iterable[T], Generic[T]):
     def __init__(self, iterable: Iterable[T]):
-        self.iterable: Iterable = iterable
+        self.iterable: Iterable = iter(iterable)
     
     def __iter__(self) -> Iterable[T]:
         return iter(self.iterable)
@@ -63,8 +63,12 @@ class flow(Iterable[T], Generic[T]):
     def max(self, func: Callable[[T], T2] = None) -> T2:
         return max(self.iterable, key=func)
     
-    def sum(self, func: Callable[[T], T2]) -> T2:
-        return sum(func(item) for item in self.iterable)
+    def sum(self, func: Callable[[T], T2] = lambda x: x) -> T2:
+        try:
+            seed = next(self.iterable)
+        except StopIteration:
+            return 0 # ?不如把初始值放到参数里
+        return sum((func(item) for item in self.iterable), func(seed))
     
     def _select_many(self, func: Callable[[T], Iterable[T2]]) -> Iterable[T2]:
         for item in self.iterable:

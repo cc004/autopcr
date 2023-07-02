@@ -1,11 +1,13 @@
 # coding: utf-8
 from sqlalchemy import Column, Float, Index, Integer, Table, Text, UniqueConstraint
 from sqlalchemy.sql.sqltypes import NullType
-from sqlalchemy.orm import Session, DeclarativeBase
+from sqlalchemy.orm import Session, declarative_base
 from typing import Generic, TypeVar, List
 from ..util.linq import flow
 
 T = TypeVar('T')
+
+DeclarativeBase = declarative_base()
 
 class Base(Generic[T]):
     @classmethod

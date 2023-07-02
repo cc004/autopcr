@@ -477,13 +477,13 @@ class unit_story_reading(Module):
             1084, # 圣千
         ])
         for story in db.unit_story:
-            if ignore and story.chara_id in ignore_chara_id:
+            if ignore and story.story_group_id in ignore_chara_id:
                 continue
             if (
                 story.story_id not in read_story and
                 story.pre_story_id in read_story and
-                story.chara_id in client.data.unit_love and 
-                client.data.unit_love[story.chara_id].love_level >= story.love_level
+                story.story_group_id in client.data.unit_love and 
+                client.data.unit_love[story.story_group_id].love_level >= story.love_level
                 ):
                 await client.read_story(story.story_id)
                 read_story.add(story.story_id)
