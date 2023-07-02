@@ -132,12 +132,11 @@ class datamgr(Component[apiclient]):
                 "r": str(unit.unit_rarity),
                 "u": hex(unit.id // 100)[2:],
                 "t": f"{db.equip_max_rank}.{db.equip_max_rank_equip_num}",
-                "q": str(db.unique_equip_rank[unit.unique_equip_slot[0].rank].enhance_level) if unit.unique_equip_slot else "0",
+                "q": str(db.unique_equip_rank[unit.unique_equip_slot[0].rank].enhance_level) if unit.unique_equip_slot and unit.unique_equip_slot[0].rank > 0 else "0",
                 "b": "true" if unit.exceed_stage else "false",
                 "f": False
             })
         return result
-
 
     def get_library_equip_data(self) -> List:
         result = []
@@ -168,8 +167,6 @@ class datamgr(Component[apiclient]):
         result.append(self.get_library_equip_data())
         result.append(self.get_library_memory_data())
         json_str = json.dumps(result)
-        with open("tmp.txt", "w") as f:
-            f.write(json_str)
         compressed_data = gzip.compress(json_str.encode('utf-8'))
         encoded_data = base64.b64encode(compressed_data).decode('utf-8')
         return encoded_data

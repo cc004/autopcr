@@ -1,4 +1,5 @@
-CACHE_DIR = './cache/'
+import os
+CACHE_DIR = os.path.join(os.path.dirname(__file__), '..', './cache/')
 
 VERSION = "6.2.0"
 
