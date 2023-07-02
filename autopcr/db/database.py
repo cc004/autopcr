@@ -30,53 +30,14 @@ class database():
     xingqiubei: Tuple[eInventoryType, int] = (eInventoryType.Item, 25001)
     mana: Tuple[eInventoryType, int] = (eInventoryType.Gold, 94002)
     jewel: Tuple[eInventoryType, int] = (eInventoryType.Jewel, 91002)
-    '''
-    six_area: Dict[int, Tuple[int, int]] = {}
-    inventory_name: Dict[Tuple[eInventoryType, int], str] = {}
-    tower: Dict[int, Tuple[str, str]] = {}
-    daily_mission: Set[int] = set()
-    main_story: List[Tuple[int, int, int, str]] = []
-    floor2clositer: Dict[int, int] = {}
-    tower_story: List[Tuple[int, int, int, str, str]] = []
-    tower2floor: Dict[int, int] = {}
-    event_story: List[Tuple[int, int, str]] = []
-    unit_story: List[Tuple[int, int, int, int, str]] = []
-    dungeon_name: Dict[int, str] = {}
-    team_max_stamina: Dict[int, int] = {}
-    room_item_max_level: Dict[int, int] = {}
-    campaign_gacha: Dict[int, Tuple[str, str, List[int]]] = {}
-    love_cake: List[Tuple[int, int]] = []
-    love_char: Dict[int, Tuple[int, int]] = {}
-    quest_info: Dict[int, Tuple[int, int]] = {}
-    clan_battle_period: Dict[int, Tuple[str, str]] = {}
-    chara_fortune_schedule: Dict[int, Tuple[str, str]] = {}
-    hatsune_item: Dict[int, Tuple[int, int]] = {}
-    quest_to_event_id: Dict[int, int] = {}
-    quest_name: Dict[int, str] = {}
-    training_quest_exp: Dict[int, str] = {}
-    training_quest_mana: Dict[int, str] = {}
-    unit_unique_equip_id: Dict[int, int] = {}
-    unique_equip_required: Dict[int, Dict[int, typing.Counter[Tuple[eInventoryType, int]]]] = rec_counter(3)
-    unique_equip_rank_max_level: Dict[int, int] = rec_intdict(1)
-    rarity_up_required: Dict[int, Dict[int, typing.Counter[Tuple[eInventoryType, int]]]] = rec_counter(3)
-    pure_memory_to_unit: Dict[int, int] = {}
-    memory_to_unit: Dict[int, int] = {}
-    memory_quest: Dict[int, List[int]] = {}
-    campaign_schedule: Dict[int, Tuple[int, int, str, str]] = {}
-    hatsune_schedule: Dict[int, Tuple[str, str]] = {}
-    unit_promotion: Dict[int, Dict[int, typing.Counter[Tuple[eInventoryType, int]]]] = rec_counter(3)
-    equip_craft: Dict[Tuple[eInventoryType, int], List[Tuple[Tuple[eInventoryType, int], int]]] = {}
-    equip_max_rank: int = 0
-    equip_max_rank_equip_num: int = 0
-    '''
 
     def update(self, dbmgr: dbmgr):
         
         with dbmgr.session() as db:
-            self.unique_equip_rank_max_level: Dict[int, int] = (
+            self.unique_equip_rank: Dict[int, UniqueEquipmentEnhanceDatum] = (
                 UniqueEquipmentEnhanceDatum.query(db)
                 .group_by(lambda x: x.rank)
-                .to_dict(lambda x: x.key, lambda x: x.max(lambda y: y.enhance_level))
+                .to_dict(lambda x: x.key, lambda x: x.max(lambda y: y))
             )
 
             self.equip_craft: Dict[Tuple[eInventoryType, int], List[Tuple[Tuple[eInventoryType, int], int]]] = (
@@ -112,28 +73,28 @@ class database():
                 for rank in range(max(self.unit_promotion[unit_id].keys()) - 1, 0, -1):
                     self.unit_promotion[unit_id][rank] += self.unit_promotion[unit_id][rank + 1]
 
-            self.hatsune_schedule: Dict[int, Tuple[str, str]] = (
+            self.hatsune_schedule: Dict[int, HatsuneSchedule] = (
                 HatsuneSchedule.query(db)
-                .to_dict(lambda x: x.event_id, lambda x: (x.start_time, x.end_time))
+                .to_dict(lambda x: x.event_id, lambda x: x)
             )
             
-            self.campaign_schedule: Dict[int, Tuple[int, int, str, str]] = (
+            self.campaign_schedule: Dict[int, CampaignSchedule] = (
                 CampaignSchedule.query(db)
                 .to_dict(lambda x: x.id, lambda x: (x.campaign_category, x.value, x.start_time, x.end_time))
             )
 
-            self.memory_questmemory_quest: Dict[int, List[int]] = (
+            self.memory_quest: Dict[int, List[QuestDatum]] = (
                 QuestDatum.query(db)
                 .where(lambda x: x.quest_id >= 12000000 and x.quest_id < 13000000)
-                .group_by(lambda x: x.quest_id)
+                .group_by(lambda x: x.reward_image_1)
                 .to_dict(lambda x: x.key, lambda x:
-                    x.select(lambda y: y.reward_image_1).to_list()
+                    x.to_list()
                 )
             )
 
-            self.unit_unique_equip_id: Dict[int, int] = (
+            self.unit_unique_equip: Dict[int, UnitUniqueEquip] = (
                 UnitUniqueEquip.query(db)
-                .to_dict(lambda x: x.unit_id, lambda x: x.equip_id)
+                .to_dict(lambda x: x.unit_id, lambda x: x.x)
             )
             
             self.rarity_up_required: Dict[int, Dict[int, typing.Counter[Tuple[eInventoryType, int]]]] = (
@@ -223,26 +184,26 @@ class database():
                 for rank in range(max(self.unique_equip_required[equip_id].keys()) - 1, -1, -1):
                     self.unique_equip_required[equip_id][rank] += self.unique_equip_required[equip_id][rank + 1]
 
-            self.training_quest_exp: Dict[int, str] = (
+            self.training_quest_exp: Dict[int, TrainingQuestDatum] = (
                 TrainingQuestDatum.query(db)
                 .where(lambda x: x.area_id == 21002)
-                .to_dict(lambda x: x.quest_id, lambda x: x.start_time)
+                .to_dict(lambda x: x.quest_id, lambda x: x)
             )
 
-            self.training_quest_mana: Dict[int, str] = (
+            self.training_quest_mana: Dict[int, TrainingQuestDatum] = (
                 TrainingQuestDatum.query(db)
                 .where(lambda x: x.area_id == 21001)
-                .to_dict(lambda x: x.quest_id, lambda x: x.start_time)
+                .to_dict(lambda x: x.quest_id, lambda x: x)
             )
             
-            self.chara_fortune_schedule: Dict[int, Tuple[str, str]] = (
+            self.chara_fortune_schedule: Dict[int, CharaFortuneSchedule] = (
                 CharaFortuneSchedule.query(db)
-                .to_dict(lambda x: x.fortune_id, lambda x: (x.start_time, x.end_time))
+                .to_dict(lambda x: x.fortune_id, lambda x: x)
             )
 
-            self.clan_battle_period: Dict[int, Tuple[str, str]] = (
+            self.clan_battle_period: Dict[int, ClanBattlePeriod] = (
                 ClanBattlePeriod.query(db)
-                .to_dict(lambda x: x.clan_battle_id, lambda x: (x.start_time, x.end_time))
+                .to_dict(lambda x: x.clan_battle_id, lambda x: x)
             )
 
             self.quest_info: Dict[int, Tuple[int, int]] = (
@@ -260,45 +221,45 @@ class database():
                 .to_dict(lambda x: x.quest_id, lambda x: x.quest_name)
             )
 
-            self.main_story: List[Tuple[int, int, int, str]] = (
+            self.main_story: List[StoryDetail] = (
                 StoryDetail.query(db)
                 .where(lambda x: x.story_id >= 2000000 and x.story_id < 3000000)
-                .select(lambda x: (x.story_id, x.pre_story_id, x.unlock_quest_id, x.title))
+                # .select(lambda x: (x.story_id, x.pre_story_id, x.unlock_quest_id, x.title))
                 .to_list()
             )
 
-            self.tower_story: List[Tuple[int, int, int, str, str]] = (
+            self.tower_story: List[TowerStoryDetail] = (
                 TowerStoryDetail.query(db)
-                .select(lambda x: (x.story_id, x.pre_story_id, x.unlock_quest_id, x.title, x.start_time))
+                # .select(lambda x: (x.story_id, x.pre_story_id, x.unlock_quest_id, x.title, x.start_time))
                 .to_list()
             )
 
-            self.floor2clositer: Dict[int, int] = (
+            self.tower_area: Dict[int, TowerAreaDatum] = (
                 TowerAreaDatum.query(db)
-                .to_dict(lambda x: x.max_floor_num, lambda x: x.cloister_quest_id)
+                .to_dict(lambda x: x.max_floor_num, lambda x: x)
             )
 
-            self.tower2floor: Dict[int, int] = (
+            self.tower_quest: Dict[int, TowerQuestDatum] = (
                 TowerQuestDatum.query(db)
-                .to_dict(lambda x: x.tower_quest_id, lambda x: x.floor_num)
+                .to_dict(lambda x: x.tower_quest_id, lambda x: x)
             )
 
-            self.team_max_stamina: Dict[int, int] = (
+            self.team_max_stamina: Dict[int, ExperienceTeam] = (
                 ExperienceTeam.query(db)
-                .to_dict(lambda x: x.team_level, lambda x: x.max_stamina)
+                .to_dict(lambda x: x.team_level, lambda x: x)
             )
 
-            self.event_story: List[Tuple[int, int, str]] = (
+            self.event_story: List[EventStoryDetail] = (
                 EventStoryDetail.query(db)
                 .where(lambda x: x.visible_type == 0)
-                .select(lambda x: (x.story_id, x.pre_story_id, x.title))
+                #.select(lambda x: (x.story_id, x.pre_story_id, x.title))
                 .to_list()
             )
 
-            self.unit_story: List[Tuple[int, int, int, int, str]] = (
+            self.unit_story: List[StoryDetail] = (
                 StoryDetail.query(db)
                 .where(lambda x: x.story_id >= 1000000 and x.story_id < 2000000)
-                .select(lambda x: (x.story_id, x.pre_story_id, x.story_group_id, x.love_level, x.title))
+                #.select(lambda x: (x.story_id, x.pre_story_id, x.story_group_id, x.love_level, x.title))
                 .to_list()
             )
 
@@ -325,9 +286,9 @@ class database():
             self.inventory_name[(eInventoryType.Jewel, 91002)] = "宝石"
             self.inventory_name[(eInventoryType.Gold, 94002)] = "mana"
 
-            self.room_item_max_level: Dict[int, int] = (
+            self.room_item: Dict[int, RoomItem] = (
                 RoomItem.query(db)
-                .to_dict(lambda x: x.id, lambda x: x.max_level)
+                .to_dict(lambda x: x.id, lambda x: x)
             )
             
             self.daily_mission: Set[int] = (
@@ -349,15 +310,15 @@ class database():
                 .to_dict(lambda x: x.material_id, lambda x: x.unit_id)
             )
             
-            self.six_area: Dict[int, Tuple[int, int]] = (
+            self.six_area: Dict[int, QuestDatum] = (
                 QuestDatum.query(db)
                 .where(lambda x: x.quest_id >= 13000000 and x.quest_id < 14000000)
-                .to_dict(lambda x: x.quest_id, lambda x: (x.reward_image_1, self.pure_memory_to_unit[x.reward_image_1]))
+                .to_dict(lambda x: x.quest_id, lambda x: x)
             )
 
-            self.tower: Dict[int, Tuple[int, int]] = (
+            self.tower: Dict[int, TowerSchedule] = (
                 TowerSchedule.query(db)
-                .to_dict(lambda x: x.tower_schedule_id, lambda x: (x.start_time, x.end_time))
+                .to_dict(lambda x: x.tower_schedule_id, lambda x: x)
             )
             
             self.dungeon_name: Dict[int, str] = (
@@ -365,15 +326,15 @@ class database():
                 .to_dict(lambda x: x.dungeon_area_id, lambda x: x.dungeon_name)
             )
             
-            gacha_list = (
+            self.gacha_list: Dict[int, List[CampaignFreegachaDatum]] = (
                 CampaignFreegachaDatum.query(db)
                 .group_by(lambda x: x.campaign_id)
-                .to_dict(lambda x: x.key, lambda x: [i.gacha_id for i in x])
+                .to_dict(lambda x: x.key, lambda x: x.to_list())
             )
             
-            self.campaign_gacha: Dict[int, Tuple[int, int, List[int]]] = (
+            self.campaign_gacha: Dict[int, CampaignFreegacha] = (
                 CampaignFreegacha.query(db)
-                .to_dict(lambda x: x.campaign_id, lambda x: (x.start_time, x.end_time, gacha_list[x.campaign_id]))
+                .to_dict(lambda x: x.campaign_id, lambda x: CampaignFreegacha)
             )
             
             self.love_char: Dict[int, Tuple[int, int]] = (
@@ -384,22 +345,22 @@ class database():
                 )
             )
 
-            self.love_cake: List[Tuple[int, int]] = (
+            self.love_cake: List[ItemDatum] = (
                 ItemDatum.query(db)
                 .where(lambda x: x.item_id >= 50000 and x.item_id < 51000)
-                .select(lambda x: (x.item_id, x.value))
+                #.select(lambda x: (x.item_id, x.value))
                 .to_list()
             )
 
             self.love_cake = self.love_cake[::-1]
 
-            self.quest_to_event_id: Dict[int, int] = (
+            self.quest_to_event: Dict[int, HatsuneQuest] = (
                 HatsuneQuest.query(db)
                 .concat(ShioriQuest.query(db))
-                .to_dict(lambda x: x.quest_id, lambda x: x.event_id)
+                #.to_dict(lambda x: x.quest_id, lambda x: x.event_id)
             )
             
-            self.hatsune_item: Dict[int, Tuple[int, int]] = (
+            self.hatsune_item: Dict[int, HatsuneItem] = (
                 HatsuneItem.query(db)
                 .to_dict(lambda x: x.event_id, lambda x: (x.boss_ticket_id, x.gacha_ticket_id))
             )
@@ -435,7 +396,7 @@ class database():
         return item[0] == eInventoryType.Equip and item[1] >= 101000 and item[1] < 140000
 
     def is_room_item_level_upable(self, team_level: int, item: RoomUserItem) -> bool:
-        return item.room_item_level < self.room_item_max_level[item.room_item_id] and team_level // 10 >= item.room_item_level and (item.level_up_end_time is None or item.level_up_end_time < time.time())
+        return item.room_item_level < self.room_item[item.room_item_id].max_level and team_level // 10 >= item.room_item_level and (item.level_up_end_time is None or item.level_up_end_time < time.time())
 
     def is_normal_quest(self, quest_id: int) -> bool:
         return quest_id // 1000000 == 11
@@ -458,35 +419,35 @@ class database():
     def is_shiori_quest(self, quest_id: int) -> bool:
         return quest_id // 1000000 == 20
 
-    def campaign_info(self, campaign_id: int) -> Tuple[str, str, List[int]]:
-        return self.campaign_gacha[campaign_id]
-
     def is_heart_piece_double(self, campaign_id: int) -> bool:
-        return self.campaign_schedule[campaign_id][0] == eCampaignCategory.ITEM_DROP_AMOUNT_UNIQUE_EQUIP
+        return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.ITEM_DROP_AMOUNT_UNIQUE_EQUIP
 
     def is_star_cup_double(self, campaign_id: int) -> bool:
-        return self.campaign_schedule[campaign_id][0] == eCampaignCategory.ITEM_DROP_AMOUNT_HIGH_RARITY_EQUIP
+        return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.ITEM_DROP_AMOUNT_HIGH_RARITY_EQUIP
 
     def is_normal_quest_double(self, campaign_id: int) -> bool:
-        return self.campaign_schedule[campaign_id][0] == eCampaignCategory.ITEM_DROP_AMOUNT_NORMAL
+        return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.ITEM_DROP_AMOUNT_NORMAL
 
     def is_hard_quest_double(self, campaign_id: int) -> bool:
-        return self.campaign_schedule[campaign_id][0] == eCampaignCategory.ITEM_DROP_AMOUNT_HARD
+        return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.ITEM_DROP_AMOUNT_HARD
 
     def is_very_hard_quest_double(self, campaign_id: int) -> bool:
-        return self.campaign_schedule[campaign_id][0] == eCampaignCategory.ITEM_DROP_AMOUNT_VERY_HARD
+        return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.ITEM_DROP_AMOUNT_VERY_HARD
 
     def is_dungeon_mana_double(self, campaign_id: int) -> bool:
-        return self.campaign_schedule[campaign_id][0] == eCampaignCategory.GOLD_DROP_AMOUNT_DUNGEON
+        return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.GOLD_DROP_AMOUNT_DUNGEON
 
     def get_dungeon_mana_before_day(self) -> int:
-        dungeon = min([schedule for schedule in self.campaign_schedule.values() if schedule[0] == eCampaignCategory.GOLD_DROP_AMOUNT_DUNGEON and db.parse_time(schedule[2]) > datetime.datetime.now()], lambda x: x[2])
+        dungeon = min([schedule for schedule in self.campaign_schedule.values() if 
+            schedule.campaign_category == eCampaignCategory.GOLD_DROP_AMOUNT_DUNGEON and 
+            db.parse_time(schedule.start_time) > datetime.datetime.now()
+            ], lambda x: x.start_time)
         today = self.get_today_start_time()
         dungeon = self.get_start_time(db.parse_time(dungeon[2]))
         return (dungeon - today).days
 
     def get_newest_tower_id(self):
-        return max(self.tower, key = lambda x: self.tower[x][0])
+        return max(self.tower, key = lambda x: self.tower[x].start_time)
 
     def max_total_love(self, rarity: int):
         love_info: Tuple[int, int] = (0, 0)
@@ -497,9 +458,9 @@ class database():
 
     def is_clan_battle_time(self) -> bool:
         now = datetime.datetime.now()
-        for key, (start_time, end_time) in list(self.clan_battle_period.items()):
-            start_time = self.parse_time(start_time)
-            end_time = self.parse_time(end_time)
+        for key, schedule in list(self.clan_battle_period.items()):
+            start_time = self.parse_time(schedule.start_time)
+            end_time = self.parse_time(schedule.end_time)
             if now > end_time:
                 self.clan_battle_period.pop(key)
             elif now >= start_time:
@@ -508,9 +469,9 @@ class database():
 
     def is_cf_time(self) -> bool:
         now = datetime.datetime.now()
-        for key, (start_time, end_time) in list(self.chara_fortune_schedule.items()):
-            start_time = self.parse_time(start_time)
-            end_time = self.parse_time(end_time)
+        for key, schedule in list(self.chara_fortune_schedule.items()):
+            start_time = self.parse_time(schedule.start_time)
+            end_time = self.parse_time(schedule.end_time)
             if now > end_time:
                 self.chara_fortune_schedule.pop(key)
             elif now >= start_time:

@@ -125,7 +125,7 @@ class pcrclient(apiclient):
     async def tower_cloister_battle_skip(self, times: int):
         req = CloisterBattleSkipRequest()
         req.skip_count = times
-        req.quest_id = db.floor2clositer[self.data.tower_status.cleared_floor_num] # TODO
+        req.quest_id = db.tower_area[self.data.tower_status.cleared_floor_num].cloister_quest_id # TODO
         req.current_ticket_num = self.data.get_inventory((eInventoryType.Item, 23001))
         return await self.request(req)
 
@@ -363,12 +363,15 @@ class pcrclient(apiclient):
         return await self.request(req)
 
     async def unlock_quest_id(self, quest: int):
-        return (quest in self.data.quest_dict and self.data.quest_dict[quest].clear_flg > 0) or (quest in db.tower2floor and self.data.tower_status.cleared_floor_num >= db.tower2floor[quest])
+        return (
+            (quest in self.data.quest_dict and self.data.quest_dict[quest].clear_flg > 0) or 
+            (quest in db.tower_quest and self.data.tower_status.cleared_floor_num >= db.tower_quest[quest].floor_num)
+        )
 
     async def quest_skip_aware(self, quest: int, times: int, recover: bool = False, is_total: bool = False):
         name = db.quest_name[quest] if quest in db.quest_name else f"未知关卡{quest}"
         if db.is_hatsune_quest(quest):
-            event = db.quest_to_event_id[quest]
+            event = db.quest_to_event[quest].event_id
             if not quest in self.data.hatsune_quest_dict[event]:
                 raise AbortError(f"任务{name}未通关或不存在")
 
@@ -395,10 +398,10 @@ class pcrclient(apiclient):
                 else:
                     raise AbortError(f"任务{name}体力不足")
             if db.is_shiori_quest(quest):
-                event = db.quest_to_event_id[quest]
+                event = db.quest_to_event[quest].event_id
                 return await self.shiori_quest_skip(event, quest, times)
             elif db.is_hatsune_quest(quest):
-                event = db.quest_to_event_id[quest]
+                event = db.quest_to_event[quest].event_id
                 return await self.hatsune_quest_skip(event, quest, times)
             else:
                 return await self.quest_skip(quest, times)

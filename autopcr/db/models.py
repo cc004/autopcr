@@ -1,14 +1,9 @@
 # coding: utf-8
 from sqlalchemy import Column, Float, Index, Integer, Table, Text, UniqueConstraint
 from sqlalchemy.sql.sqltypes import NullType
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, DeclarativeBase
 from typing import Generic, TypeVar, List
 from ..util.linq import flow
-
-base = declarative_base()
-metadata = base.metadata
-
 
 T = TypeVar('T')
 
@@ -18,7 +13,7 @@ class Base(Generic[T]):
         dat = session.query(UniqueEquipmentEnhanceDatum)
         return flow(session.query(cls).all())
 
-class ActualUnitBackground(base, Base["ActualUnitBackground"]):
+class ActualUnitBackground(DeclarativeBase, Base["ActualUnitBackground"]):
     __tablename__ = 'actual_unit_background'
 
     unit_id = Column(Integer, primary_key=True)
@@ -27,7 +22,7 @@ class ActualUnitBackground(base, Base["ActualUnitBackground"]):
     face_type = Column(Integer, nullable=False)
 
 
-class AilmentDatum(base, Base["AilmentDatum"]):
+class AilmentDatum(DeclarativeBase, Base["AilmentDatum"]):
     __tablename__ = 'ailment_data'
 
     ailment_id = Column(Integer, primary_key=True)
@@ -36,7 +31,7 @@ class AilmentDatum(base, Base["AilmentDatum"]):
     ailment_name = Column(Text, nullable=False)
 
 
-class AlbumProductionList(base, Base["AlbumProductionList"]):
+class AlbumProductionList(DeclarativeBase, Base["AlbumProductionList"]):
     __tablename__ = 'album_production_list'
 
     id = Column(Integer, primary_key=True)
@@ -46,7 +41,7 @@ class AlbumProductionList(base, Base["AlbumProductionList"]):
     description = Column(Text, nullable=False)
 
 
-class AlbumVoiceList(base, Base["AlbumVoiceList"]):
+class AlbumVoiceList(DeclarativeBase, Base["AlbumVoiceList"]):
     __tablename__ = 'album_voice_list'
 
     id = Column(Integer, primary_key=True)
@@ -57,7 +52,7 @@ class AlbumVoiceList(base, Base["AlbumVoiceList"]):
     description = Column(Text, nullable=False)
 
 
-class ApaSchedule(base, Base["ApaSchedule"]):
+class ApaSchedule(DeclarativeBase, Base["ApaSchedule"]):
     __tablename__ = 'apa_schedule'
 
     apa_id = Column(Integer, primary_key=True)
@@ -72,7 +67,7 @@ class ApaSchedule(base, Base["ApaSchedule"]):
     url_3 = Column(Text, nullable=False)
 
 
-class ArcadeDescription(base, Base["ArcadeDescription"]):
+class ArcadeDescription(DeclarativeBase, Base["ArcadeDescription"]):
     __tablename__ = 'arcade_description'
     __table_args__ = (
         Index('arcade_description_0_arcade_id_1_type', 'arcade_id', 'type'),
@@ -85,7 +80,7 @@ class ArcadeDescription(base, Base["ArcadeDescription"]):
     description = Column(Text, nullable=False)
 
 
-class ArcadeList(base, Base["ArcadeList"]):
+class ArcadeList(DeclarativeBase, Base["ArcadeList"]):
     __tablename__ = 'arcade_list'
 
     arcade_id = Column(Integer, primary_key=True)
@@ -100,7 +95,7 @@ class ArcadeList(base, Base["ArcadeList"]):
     description = Column(Text, nullable=False)
 
 
-class ArcadeStoryList(base, Base["ArcadeStoryList"]):
+class ArcadeStoryList(DeclarativeBase, Base["ArcadeStoryList"]):
     __tablename__ = 'arcade_story_list'
 
     story_id = Column(Integer, primary_key=True)
@@ -108,7 +103,7 @@ class ArcadeStoryList(base, Base["ArcadeStoryList"]):
     sub_title = Column(Text, nullable=False)
 
 
-class ArenaDailyRankReward(base, Base["ArenaDailyRankReward"]):
+class ArenaDailyRankReward(DeclarativeBase, Base["ArenaDailyRankReward"]):
     __tablename__ = 'arena_daily_rank_reward'
 
     id = Column(Integer, primary_key=True)
@@ -131,7 +126,7 @@ class ArenaDailyRankReward(base, Base["ArenaDailyRankReward"]):
     reward_num_5 = Column(Integer, nullable=False)
 
 
-class ArenaDefenceReward(base, Base["ArenaDefenceReward"]):
+class ArenaDefenceReward(DeclarativeBase, Base["ArenaDefenceReward"]):
     __tablename__ = 'arena_defence_reward'
 
     id = Column(Integer, primary_key=True)
@@ -153,7 +148,7 @@ class ArenaDefenceReward(base, Base["ArenaDefenceReward"]):
     reward_num_5 = Column(Integer, nullable=False)
 
 
-class ArenaMaxRankReward(base, Base["ArenaMaxRankReward"]):
+class ArenaMaxRankReward(DeclarativeBase, Base["ArenaMaxRankReward"]):
     __tablename__ = 'arena_max_rank_reward'
 
     id = Column(Integer, primary_key=True)
@@ -176,7 +171,7 @@ class ArenaMaxRankReward(base, Base["ArenaMaxRankReward"]):
     reward_num_5 = Column(Integer, nullable=False)
 
 
-class ArenaMaxSeasonRankReward(base, Base["ArenaMaxSeasonRankReward"]):
+class ArenaMaxSeasonRankReward(DeclarativeBase, Base["ArenaMaxSeasonRankReward"]):
     __tablename__ = 'arena_max_season_rank_reward'
 
     id = Column(Integer, primary_key=True)
@@ -199,7 +194,7 @@ class ArenaMaxSeasonRankReward(base, Base["ArenaMaxSeasonRankReward"]):
     reward_num_5 = Column(Integer, nullable=False)
 
 
-class Banner(base, Base["Banner"]):
+class Banner(DeclarativeBase, Base["Banner"]):
     __tablename__ = 'banner'
 
     banner_id = Column(Integer, primary_key=True)
@@ -218,7 +213,7 @@ class Banner(base, Base["Banner"]):
     poster_id = Column(Integer, nullable=False)
 
 
-class BgDatum(base, Base["BgDatum"]):
+class BgDatum(DeclarativeBase, Base["BgDatum"]):
     __tablename__ = 'bg_data'
 
     view_name = Column(Text, primary_key=True)
@@ -226,7 +221,7 @@ class BgDatum(base, Base["BgDatum"]):
     event_id = Column(Integer, nullable=False)
 
 
-class BirthdayLoginBonusDatum(base, Base["BirthdayLoginBonusDatum"]):
+class BirthdayLoginBonusDatum(DeclarativeBase, Base["BirthdayLoginBonusDatum"]):
     __tablename__ = 'birthday_login_bonus_data'
 
     login_bonus_id = Column(Integer, primary_key=True)
@@ -237,7 +232,7 @@ class BirthdayLoginBonusDatum(base, Base["BirthdayLoginBonusDatum"]):
     adv_id = Column(Integer, nullable=False)
 
 
-class BirthdayLoginBonusDetail(base, Base["BirthdayLoginBonusDetail"]):
+class BirthdayLoginBonusDetail(DeclarativeBase, Base["BirthdayLoginBonusDetail"]):
     __tablename__ = 'birthday_login_bonus_detail'
 
     id = Column(Integer, primary_key=True)
@@ -247,7 +242,7 @@ class BirthdayLoginBonusDetail(base, Base["BirthdayLoginBonusDetail"]):
     reward_num = Column(Integer, nullable=False)
 
 
-class BirthdayLoginBonusDramaScript(base, Base["BirthdayLoginBonusDramaScript"]):
+class BirthdayLoginBonusDramaScript(DeclarativeBase, Base["BirthdayLoginBonusDramaScript"]):
     __tablename__ = 'birthday_login_bonus_drama_script'
 
     command_id = Column(Integer, primary_key=True)
@@ -263,7 +258,7 @@ class BirthdayLoginBonusDramaScript(base, Base["BirthdayLoginBonusDramaScript"])
     param_08 = Column(Text, nullable=False)
 
 
-class CampaignBeginnerDatum(base, Base["CampaignBeginnerDatum"]):
+class CampaignBeginnerDatum(DeclarativeBase, Base["CampaignBeginnerDatum"]):
     __tablename__ = 'campaign_beginner_data'
 
     beginner_id = Column(Integer, primary_key=True)
@@ -271,7 +266,7 @@ class CampaignBeginnerDatum(base, Base["CampaignBeginnerDatum"]):
     id_to = Column(Integer, nullable=False)
 
 
-class CampaignFreegacha(base, Base["CampaignFreegacha"]):
+class CampaignFreegacha(DeclarativeBase, Base["CampaignFreegacha"]):
     __tablename__ = 'campaign_freegacha'
 
     id = Column(Integer, primary_key=True)
@@ -285,7 +280,7 @@ class CampaignFreegacha(base, Base["CampaignFreegacha"]):
     relation_count = Column(Integer, nullable=False)
 
 
-class CampaignFreegachaDatum(base, Base["CampaignFreegachaDatum"]):
+class CampaignFreegachaDatum(DeclarativeBase, Base["CampaignFreegachaDatum"]):
     __tablename__ = 'campaign_freegacha_data'
 
     id = Column(Integer, primary_key=True)
@@ -293,7 +288,7 @@ class CampaignFreegachaDatum(base, Base["CampaignFreegachaDatum"]):
     gacha_id = Column(Integer, nullable=False)
 
 
-class CampaignFreegachaSp(base, Base["CampaignFreegachaSp"]):
+class CampaignFreegachaSp(DeclarativeBase, Base["CampaignFreegachaSp"]):
     __tablename__ = 'campaign_freegacha_sp'
 
     campaign_id = Column(Integer, primary_key=True)
@@ -302,7 +297,7 @@ class CampaignFreegachaSp(base, Base["CampaignFreegachaSp"]):
     end_time = Column(Text, nullable=False)
 
 
-class CampaignLevelDatum(base, Base["CampaignLevelDatum"]):
+class CampaignLevelDatum(DeclarativeBase, Base["CampaignLevelDatum"]):
     __tablename__ = 'campaign_level_data'
 
     id = Column(Integer, primary_key=True)
@@ -314,7 +309,7 @@ class CampaignLevelDatum(base, Base["CampaignLevelDatum"]):
     frame_color = Column(Text, nullable=False)
 
 
-class CampaignMissionCategory(base, Base["CampaignMissionCategory"]):
+class CampaignMissionCategory(DeclarativeBase, Base["CampaignMissionCategory"]):
     __tablename__ = 'campaign_mission_category'
     __table_args__ = (
         Index('campaign_mission_category_0_campaign_id_1_type', 'campaign_id', 'type'),
@@ -327,7 +322,7 @@ class CampaignMissionCategory(base, Base["CampaignMissionCategory"]):
     lv_to = Column(Integer, nullable=False)
 
 
-class CampaignMissionDatum(base, Base["CampaignMissionDatum"]):
+class CampaignMissionDatum(DeclarativeBase, Base["CampaignMissionDatum"]):
     __tablename__ = 'campaign_mission_data'
     __table_args__ = (
         Index('campaign_mission_data_0_campaign_id_1_type', 'campaign_id', 'type'),
@@ -362,7 +357,7 @@ class CampaignMissionDatum(base, Base["CampaignMissionDatum"]):
     mark_flag = Column(Integer, nullable=False)
 
 
-class CampaignMissionRewardDatum(base, Base["CampaignMissionRewardDatum"]):
+class CampaignMissionRewardDatum(DeclarativeBase, Base["CampaignMissionRewardDatum"]):
     __tablename__ = 'campaign_mission_reward_data'
 
     id = Column(Integer, primary_key=True)
@@ -372,7 +367,7 @@ class CampaignMissionRewardDatum(base, Base["CampaignMissionRewardDatum"]):
     reward_num = Column(Integer, nullable=False)
 
 
-class CampaignMissionSchedule(base, Base["CampaignMissionSchedule"]):
+class CampaignMissionSchedule(DeclarativeBase, Base["CampaignMissionSchedule"]):
     __tablename__ = 'campaign_mission_schedule'
 
     campaign_id = Column(Integer, primary_key=True)
@@ -381,7 +376,7 @@ class CampaignMissionSchedule(base, Base["CampaignMissionSchedule"]):
     close_time = Column(Text, nullable=False)
 
 
-class CampaignSchedule(base, Base["CampaignSchedule"]):
+class CampaignSchedule(DeclarativeBase, Base["CampaignSchedule"]):
     __tablename__ = 'campaign_schedule'
 
     id = Column(Integer, primary_key=True)
@@ -397,7 +392,7 @@ class CampaignSchedule(base, Base["CampaignSchedule"]):
     beginner_id = Column(Integer, nullable=False)
 
 
-class CampaignShioriGroup(base, Base["CampaignShioriGroup"]):
+class CampaignShioriGroup(DeclarativeBase, Base["CampaignShioriGroup"]):
     __tablename__ = 'campaign_shiori_group'
 
     id = Column(Integer, primary_key=True)
@@ -405,7 +400,7 @@ class CampaignShioriGroup(base, Base["CampaignShioriGroup"]):
     event_id = Column(Integer, nullable=False)
 
 
-class CggCompletionDatum(base, Base["CggCompletionDatum"]):
+class CggCompletionDatum(DeclarativeBase, Base["CggCompletionDatum"]):
     __tablename__ = 'cgg_completion_data'
 
     completion_id = Column(Integer, primary_key=True)
@@ -419,7 +414,7 @@ class CggCompletionDatum(base, Base["CggCompletionDatum"]):
     receive_description = Column(Text, nullable=False)
 
 
-class CggCompletionRewardDatum(base, Base["CggCompletionRewardDatum"]):
+class CggCompletionRewardDatum(DeclarativeBase, Base["CggCompletionRewardDatum"]):
     __tablename__ = 'cgg_completion_reward_data'
 
     id = Column(Integer, primary_key=True)
@@ -429,7 +424,7 @@ class CggCompletionRewardDatum(base, Base["CggCompletionRewardDatum"]):
     reward_num = Column(Integer, nullable=False)
 
 
-class CggDrama(base, Base["CggDrama"]):
+class CggDrama(DeclarativeBase, Base["CggDrama"]):
     __tablename__ = 'cgg_drama'
 
     command_id = Column(Integer, primary_key=True)
@@ -445,7 +440,7 @@ class CggDrama(base, Base["CggDrama"]):
     param_08 = Column(Text, nullable=False)
 
 
-class CggGachaInfo(base, Base["CggGachaInfo"]):
+class CggGachaInfo(DeclarativeBase, Base["CggGachaInfo"]):
     __tablename__ = 'cgg_gacha_info'
 
     gacha_type = Column(Integer, primary_key=True)
@@ -456,7 +451,7 @@ class CggGachaInfo(base, Base["CggGachaInfo"]):
     gacha_intro = Column(Text, nullable=False)
 
 
-class CggGachaLineup(base, Base["CggGachaLineup"]):
+class CggGachaLineup(DeclarativeBase, Base["CggGachaLineup"]):
     __tablename__ = 'cgg_gacha_lineup'
 
     id = Column(Integer, primary_key=True)
@@ -466,7 +461,7 @@ class CggGachaLineup(base, Base["CggGachaLineup"]):
     goods_num = Column(Integer, nullable=False)
 
 
-class CggGameSetting(base, Base["CggGameSetting"]):
+class CggGameSetting(DeclarativeBase, Base["CggGameSetting"]):
     __tablename__ = 'cgg_game_settings'
 
     cgg_id = Column(Integer, primary_key=True)
@@ -479,7 +474,7 @@ class CggGameSetting(base, Base["CggGameSetting"]):
     max_goods_count = Column(Integer, nullable=False)
 
 
-class CggGoodsDatum(base, Base["CggGoodsDatum"]):
+class CggGoodsDatum(DeclarativeBase, Base["CggGoodsDatum"]):
     __tablename__ = 'cgg_goods_data'
 
     goods_id = Column(Integer, primary_key=True)
@@ -491,7 +486,7 @@ class CggGoodsDatum(base, Base["CggGoodsDatum"]):
     description = Column(Text, nullable=False)
 
 
-class CharaETicketDatum(base, Base["CharaETicketDatum"]):
+class CharaETicketDatum(DeclarativeBase, Base["CharaETicketDatum"]):
     __tablename__ = 'chara_e_ticket_data'
 
     ticket_id = Column(Integer, primary_key=True)
@@ -501,7 +496,7 @@ class CharaETicketDatum(base, Base["CharaETicketDatum"]):
     icon_id = Column(Integer, nullable=False)
 
 
-class CharaFortuneRail(base, Base["CharaFortuneRail"]):
+class CharaFortuneRail(DeclarativeBase, Base["CharaFortuneRail"]):
     __tablename__ = 'chara_fortune_rail'
 
     rail_id = Column(Integer, primary_key=True)
@@ -527,7 +522,7 @@ class CharaFortuneRail(base, Base["CharaFortuneRail"]):
     gimmick_10_x = Column(Integer, nullable=False)
 
 
-class CharaFortuneReward(base, Base["CharaFortuneReward"]):
+class CharaFortuneReward(DeclarativeBase, Base["CharaFortuneReward"]):
     __tablename__ = 'chara_fortune_reward'
 
     id = Column(Integer, primary_key=True)
@@ -550,7 +545,7 @@ class CharaFortuneReward(base, Base["CharaFortuneReward"]):
     count_5 = Column(Integer, nullable=False)
 
 
-class CharaFortuneScenario(base, Base["CharaFortuneScenario"]):
+class CharaFortuneScenario(DeclarativeBase, Base["CharaFortuneScenario"]):
     __tablename__ = 'chara_fortune_scenario'
 
     scenario_id = Column(Integer, primary_key=True)
@@ -560,7 +555,7 @@ class CharaFortuneScenario(base, Base["CharaFortuneScenario"]):
     rail_4 = Column(Integer, nullable=False)
 
 
-class CharaFortuneSchedule(base, Base["CharaFortuneSchedule"]):
+class CharaFortuneSchedule(DeclarativeBase, Base["CharaFortuneSchedule"]):
     __tablename__ = 'chara_fortune_schedule'
 
     fortune_id = Column(Integer, primary_key=True)
@@ -569,7 +564,7 @@ class CharaFortuneSchedule(base, Base["CharaFortuneSchedule"]):
     end_time = Column(Text, nullable=False)
 
 
-class CharaIdentity(base, Base["CharaIdentity"]):
+class CharaIdentity(DeclarativeBase, Base["CharaIdentity"]):
     __tablename__ = 'chara_identity'
 
     unit_id = Column(Integer, primary_key=True)
@@ -578,7 +573,7 @@ class CharaIdentity(base, Base["CharaIdentity"]):
     chara_type_3 = Column(Integer, nullable=False)
 
 
-class CharaStoryStatu(base, Base["CharaStoryStatu"]):
+class CharaStoryStatu(DeclarativeBase, Base["CharaStoryStatu"]):
     __tablename__ = 'chara_story_status'
 
     story_id = Column(Integer, primary_key=True)
@@ -605,7 +600,7 @@ class CharaStoryStatu(base, Base["CharaStoryStatu"]):
     chara_id_10 = Column(Integer, nullable=False)
 
 
-class CharacterLoveRankupText(base, Base["CharacterLoveRankupText"]):
+class CharacterLoveRankupText(DeclarativeBase, Base["CharacterLoveRankupText"]):
     __tablename__ = 'character_love_rankup_text'
 
     chara_id = Column(Integer, primary_key=True)
@@ -625,7 +620,7 @@ class CharacterLoveRankupText(base, Base["CharacterLoveRankupText"]):
     serif_3 = Column(Text, nullable=False)
 
 
-class ClanBattle2BossDatum(base, Base["ClanBattle2BossDatum"]):
+class ClanBattle2BossDatum(DeclarativeBase, Base["ClanBattle2BossDatum"]):
     __tablename__ = 'clan_battle_2_boss_data'
 
     boss_id = Column(Integer, primary_key=True)
@@ -652,7 +647,7 @@ class ClanBattle2BossDatum(base, Base["ClanBattle2BossDatum"]):
     wave_bgm = Column(Text, nullable=False)
 
 
-class ClanBattle2MapDatum(base, Base["ClanBattle2MapDatum"]):
+class ClanBattle2MapDatum(DeclarativeBase, Base["ClanBattle2MapDatum"]):
     __tablename__ = 'clan_battle_2_map_data'
 
     id = Column(Integer, primary_key=True)
@@ -696,7 +691,7 @@ class ClanBattle2MapDatum(base, Base["ClanBattle2MapDatum"]):
     param_adjust_interval = Column(Integer, nullable=False)
 
 
-class ClanBattleArchiveClanRank(base, Base["ClanBattleArchiveClanRank"]):
+class ClanBattleArchiveClanRank(DeclarativeBase, Base["ClanBattleArchiveClanRank"]):
     __tablename__ = 'clan_battle_archive_clan_rank'
 
     id = Column(Integer, primary_key=True)
@@ -704,7 +699,7 @@ class ClanBattleArchiveClanRank(base, Base["ClanBattleArchiveClanRank"]):
     rank_to = Column(Integer, nullable=False)
 
 
-class ClanBattleArchivePersonRank(base, Base["ClanBattleArchivePersonRank"]):
+class ClanBattleArchivePersonRank(DeclarativeBase, Base["ClanBattleArchivePersonRank"]):
     __tablename__ = 'clan_battle_archive_person_rank'
 
     id = Column(Integer, primary_key=True)
@@ -712,7 +707,7 @@ class ClanBattleArchivePersonRank(base, Base["ClanBattleArchivePersonRank"]):
     rank_to = Column(Integer, nullable=False)
 
 
-class ClanBattleBattleMissionDatum(base, Base["ClanBattleBattleMissionDatum"]):
+class ClanBattleBattleMissionDatum(DeclarativeBase, Base["ClanBattleBattleMissionDatum"]):
     __tablename__ = 'clan_battle_battle_mission_data'
 
     mission_id = Column(Integer, primary_key=True)
@@ -737,7 +732,7 @@ class ClanBattleBattleMissionDatum(base, Base["ClanBattleBattleMissionDatum"]):
     end_time = Column(Text, nullable=False)
 
 
-class ClanBattleBossDamageRank(base, Base["ClanBattleBossDamageRank"]):
+class ClanBattleBossDamageRank(DeclarativeBase, Base["ClanBattleBossDamageRank"]):
     __tablename__ = 'clan_battle_boss_damage_rank'
 
     id = Column(Integer, nullable=False)
@@ -762,7 +757,7 @@ class ClanBattleBossDamageRank(base, Base["ClanBattleBossDamageRank"]):
     reward_num_5 = Column(Integer, nullable=False)
 
 
-class ClanBattleBossFixReward(base, Base["ClanBattleBossFixReward"]):
+class ClanBattleBossFixReward(DeclarativeBase, Base["ClanBattleBossFixReward"]):
     __tablename__ = 'clan_battle_boss_fix_reward'
 
     fix_reward_id = Column(Integer, primary_key=True)
@@ -783,7 +778,7 @@ class ClanBattleBossFixReward(base, Base["ClanBattleBossFixReward"]):
     reward_num_5 = Column(Integer, nullable=False)
 
 
-class ClanBattleLastAttackReward(base, Base["ClanBattleLastAttackReward"]):
+class ClanBattleLastAttackReward(DeclarativeBase, Base["ClanBattleLastAttackReward"]):
     __tablename__ = 'clan_battle_last_attack_reward'
 
     last_attack_reward_id = Column(Integer, primary_key=True)
@@ -804,7 +799,7 @@ class ClanBattleLastAttackReward(base, Base["ClanBattleLastAttackReward"]):
     reward_num_5 = Column(Integer, nullable=False)
 
 
-class ClanBattleOddsDatum(base, Base["ClanBattleOddsDatum"]):
+class ClanBattleOddsDatum(DeclarativeBase, Base["ClanBattleOddsDatum"]):
     __tablename__ = 'clan_battle_odds_data'
 
     odds_group_id = Column(Integer, primary_key=True, nullable=False, index=True)
@@ -822,7 +817,7 @@ class ClanBattleOddsDatum(base, Base["ClanBattleOddsDatum"]):
     odds_csv_10 = Column(Text, nullable=False)
 
 
-class ClanBattleParamAdjust(base, Base["ClanBattleParamAdjust"]):
+class ClanBattleParamAdjust(DeclarativeBase, Base["ClanBattleParamAdjust"]):
     __tablename__ = 'clan_battle_param_adjust'
 
     param_adjust_id = Column(Integer, primary_key=True)
@@ -851,7 +846,7 @@ class ClanBattleParamAdjust(base, Base["ClanBattleParamAdjust"]):
     score_coefficient = Column(Integer, nullable=False)
 
 
-class ClanBattlePeriod(base, Base["ClanBattlePeriod"]):
+class ClanBattlePeriod(DeclarativeBase, Base["ClanBattlePeriod"]):
     __tablename__ = 'clan_battle_period'
 
     clan_battle_id = Column(Integer, primary_key=True, nullable=False, index=True)
@@ -876,7 +871,7 @@ class ClanBattlePeriod(base, Base["ClanBattlePeriod"]):
     min_carry_over_time = Column(Integer, nullable=False)
 
 
-class ClanBattlePeriodLapReward(base, Base["ClanBattlePeriodLapReward"]):
+class ClanBattlePeriodLapReward(DeclarativeBase, Base["ClanBattlePeriodLapReward"]):
     __tablename__ = 'clan_battle_period_lap_reward'
 
     id = Column(Integer, primary_key=True)
@@ -902,7 +897,7 @@ class ClanBattlePeriodLapReward(base, Base["ClanBattlePeriodLapReward"]):
     reward_num_5 = Column(Integer, nullable=False)
 
 
-class ClanBattlePeriodRankReward(base, Base["ClanBattlePeriodRankReward"]):
+class ClanBattlePeriodRankReward(DeclarativeBase, Base["ClanBattlePeriodRankReward"]):
     __tablename__ = 'clan_battle_period_rank_reward'
 
     id = Column(Integer, primary_key=True)
@@ -928,7 +923,7 @@ class ClanBattlePeriodRankReward(base, Base["ClanBattlePeriodRankReward"]):
     reward_num_5 = Column(Integer, nullable=False)
 
 
-class ClanBattleRecommendDatum(base, Base["ClanBattleRecommendDatum"]):
+class ClanBattleRecommendDatum(DeclarativeBase, Base["ClanBattleRecommendDatum"]):
     __tablename__ = 'clan_battle_recommend_data'
 
     level_id = Column(Integer, primary_key=True)
@@ -939,7 +934,7 @@ class ClanBattleRecommendDatum(base, Base["ClanBattleRecommendDatum"]):
     magic_party_count = Column(Integer, nullable=False)
 
 
-class ClanBattleSBossDatum(base, Base["ClanBattleSBossDatum"]):
+class ClanBattleSBossDatum(DeclarativeBase, Base["ClanBattleSBossDatum"]):
     __tablename__ = 'clan_battle_s_boss_data'
 
     boss_id = Column(Integer, primary_key=True)
@@ -966,7 +961,7 @@ class ClanBattleSBossDatum(base, Base["ClanBattleSBossDatum"]):
     wave_bgm = Column(Text, nullable=False)
 
 
-class ClanBattleSBossFixReward(base, Base["ClanBattleSBossFixReward"]):
+class ClanBattleSBossFixReward(DeclarativeBase, Base["ClanBattleSBossFixReward"]):
     __tablename__ = 'clan_battle_s_boss_fix_reward'
 
     fix_reward_id = Column(Integer, primary_key=True)
@@ -987,7 +982,7 @@ class ClanBattleSBossFixReward(base, Base["ClanBattleSBossFixReward"]):
     reward_num_5 = Column(Integer, nullable=False)
 
 
-class ClanBattleSMapDatum(base, Base["ClanBattleSMapDatum"]):
+class ClanBattleSMapDatum(DeclarativeBase, Base["ClanBattleSMapDatum"]):
     __tablename__ = 'clan_battle_s_map_data'
 
     id = Column(Integer, primary_key=True)
@@ -1036,7 +1031,7 @@ class ClanBattleSMapDatum(base, Base["ClanBattleSMapDatum"]):
     param_adjust_interval = Column(Integer, nullable=False)
 
 
-class ClanBattleSParamAdjust(base, Base["ClanBattleSParamAdjust"]):
+class ClanBattleSParamAdjust(DeclarativeBase, Base["ClanBattleSParamAdjust"]):
     __tablename__ = 'clan_battle_s_param_adjust'
 
     param_adjust_id = Column(Integer, primary_key=True)
@@ -1065,7 +1060,7 @@ class ClanBattleSParamAdjust(base, Base["ClanBattleSParamAdjust"]):
     score_coefficient = Column(Integer, nullable=False)
 
 
-class ClanBattleSchedule(base, Base["ClanBattleSchedule"]):
+class ClanBattleSchedule(DeclarativeBase, Base["ClanBattleSchedule"]):
     __tablename__ = 'clan_battle_schedule'
 
     clan_battle_id = Column(Integer, primary_key=True)
@@ -1080,7 +1075,7 @@ class ClanBattleSchedule(base, Base["ClanBattleSchedule"]):
     end_time = Column(Text, nullable=False)
 
 
-class ClanBattleTrainingDatum(base, Base["ClanBattleTrainingDatum"]):
+class ClanBattleTrainingDatum(DeclarativeBase, Base["ClanBattleTrainingDatum"]):
     __tablename__ = 'clan_battle_training_data'
 
     id = Column(Integer, primary_key=True)
@@ -1090,7 +1085,7 @@ class ClanBattleTrainingDatum(base, Base["ClanBattleTrainingDatum"]):
     map_data_id = Column(Integer, nullable=False)
 
 
-class ClanBattleTrainingSchedule(base, Base["ClanBattleTrainingSchedule"]):
+class ClanBattleTrainingSchedule(DeclarativeBase, Base["ClanBattleTrainingSchedule"]):
     __tablename__ = 'clan_battle_training_schedule'
 
     training_id = Column(Integer, primary_key=True)
@@ -1101,7 +1096,7 @@ class ClanBattleTrainingSchedule(base, Base["ClanBattleTrainingSchedule"]):
     interval_end_time = Column(Text, nullable=False)
 
 
-class ClanCostGroup(base, Base["ClanCostGroup"]):
+class ClanCostGroup(DeclarativeBase, Base["ClanCostGroup"]):
     __tablename__ = 'clan_cost_group'
 
     id = Column(Integer, primary_key=True)
@@ -1111,7 +1106,7 @@ class ClanCostGroup(base, Base["ClanCostGroup"]):
     cost = Column(Integer, nullable=False)
 
 
-class ClanGrade(base, Base["ClanGrade"]):
+class ClanGrade(DeclarativeBase, Base["ClanGrade"]):
     __tablename__ = 'clan_grade'
 
     clan_grade_id = Column(Integer, primary_key=True)
@@ -1119,7 +1114,7 @@ class ClanGrade(base, Base["ClanGrade"]):
     rank_to = Column(Integer, nullable=False)
 
 
-class ClanInviteLevelGroup(base, Base["ClanInviteLevelGroup"]):
+class ClanInviteLevelGroup(DeclarativeBase, Base["ClanInviteLevelGroup"]):
     __tablename__ = 'clan_invite_level_group'
 
     level_group_id = Column(Integer, primary_key=True)
@@ -1127,7 +1122,7 @@ class ClanInviteLevelGroup(base, Base["ClanInviteLevelGroup"]):
     team_level_to = Column(Integer, nullable=False)
 
 
-class ClanprofileContent(base, Base["ClanprofileContent"]):
+class ClanprofileContent(DeclarativeBase, Base["ClanprofileContent"]):
     __tablename__ = 'clanprofile_content'
 
     id = Column(Integer, primary_key=True)
@@ -1137,7 +1132,7 @@ class ClanprofileContent(base, Base["ClanprofileContent"]):
     disp_order = Column(Integer, nullable=False)
 
 
-class CombinedResultMotion(base, Base["CombinedResultMotion"]):
+class CombinedResultMotion(DeclarativeBase, Base["CombinedResultMotion"]):
     __tablename__ = 'combined_result_motion'
 
     result_id = Column(Integer, primary_key=True)
@@ -1153,7 +1148,7 @@ class CombinedResultMotion(base, Base["CombinedResultMotion"]):
     disp_order_5 = Column(Integer, nullable=False)
 
 
-class ContentMapDatum(base, Base["ContentMapDatum"]):
+class ContentMapDatum(DeclarativeBase, Base["ContentMapDatum"]):
     __tablename__ = 'content_map_data'
 
     content_map_id = Column(Integer, primary_key=True)
@@ -1169,7 +1164,7 @@ class ContentMapDatum(base, Base["ContentMapDatum"]):
     end_time = Column(Text, nullable=False)
 
 
-class ContentReleaseDatum(base, Base["ContentReleaseDatum"]):
+class ContentReleaseDatum(DeclarativeBase, Base["ContentReleaseDatum"]):
     __tablename__ = 'content_release_data'
 
     system_id = Column(Integer, primary_key=True)
@@ -1179,7 +1174,7 @@ class ContentReleaseDatum(base, Base["ContentReleaseDatum"]):
     dialog = Column(Text, nullable=False)
 
 
-class CooperationQuestDatum(base, Base["CooperationQuestDatum"]):
+class CooperationQuestDatum(DeclarativeBase, Base["CooperationQuestDatum"]):
     __tablename__ = 'cooperation_quest_data'
 
     quest_id = Column(Integer, primary_key=True)
@@ -1239,7 +1234,7 @@ class CooperationQuestDatum(base, Base["CooperationQuestDatum"]):
     unlock_quest_id_2 = Column(Integer, nullable=False)
 
 
-class CustomMypage(base, Base["CustomMypage"]):
+class CustomMypage(DeclarativeBase, Base["CustomMypage"]):
     __tablename__ = 'custom_mypage'
 
     still_id = Column(Integer, primary_key=True)
@@ -1251,14 +1246,14 @@ class CustomMypage(base, Base["CustomMypage"]):
     mypage_type = Column(Integer, nullable=False)
 
 
-class CustomMypageGroup(base, Base["CustomMypageGroup"]):
+class CustomMypageGroup(DeclarativeBase, Base["CustomMypageGroup"]):
     __tablename__ = 'custom_mypage_group'
 
     group_id = Column(Integer, primary_key=True)
     group_name = Column(Text, nullable=False)
 
 
-class DailyMissionDatum(base, Base["DailyMissionDatum"]):
+class DailyMissionDatum(DeclarativeBase, Base["DailyMissionDatum"]):
     __tablename__ = 'daily_mission_data'
 
     daily_mission_id = Column(Integer, primary_key=True)
@@ -1280,7 +1275,7 @@ class DailyMissionDatum(base, Base["DailyMissionDatum"]):
     visible_flag = Column(Integer, nullable=False)
 
 
-class DearChara(base, Base["DearChara"]):
+class DearChara(DeclarativeBase, Base["DearChara"]):
     __tablename__ = 'dear_chara'
 
     event_id = Column(Integer, primary_key=True, nullable=False, index=True)
@@ -1296,7 +1291,7 @@ class DearChara(base, Base["DearChara"]):
     condition_story_id = Column(Integer, nullable=False)
 
 
-class DearReward(base, Base["DearReward"]):
+class DearReward(DeclarativeBase, Base["DearReward"]):
     __tablename__ = 'dear_reward'
     __table_args__ = (
         Index('dear_reward_0_event_id_1_chara_index', 'event_id', 'chara_index'),
@@ -1324,7 +1319,7 @@ class DearReward(base, Base["DearReward"]):
     reward_count_5 = Column(Integer, nullable=False)
 
 
-class DearSetting(base, Base["DearSetting"]):
+class DearSetting(DeclarativeBase, Base["DearSetting"]):
     __tablename__ = 'dear_setting'
 
     event_id = Column(Integer, primary_key=True)
@@ -1334,7 +1329,7 @@ class DearSetting(base, Base["DearSetting"]):
     tutorial_story_id = Column(Integer, nullable=False)
 
 
-class DearStoryDatum(base, Base["DearStoryDatum"]):
+class DearStoryDatum(DeclarativeBase, Base["DearStoryDatum"]):
     __tablename__ = 'dear_story_data'
 
     story_group_id = Column(Integer, primary_key=True)
@@ -1347,7 +1342,7 @@ class DearStoryDatum(base, Base["DearStoryDatum"]):
     end_time = Column(Text, nullable=False)
 
 
-class DearStoryDetail(base, Base["DearStoryDetail"]):
+class DearStoryDetail(DeclarativeBase, Base["DearStoryDetail"]):
     __tablename__ = 'dear_story_detail'
     __table_args__ = (
         Index('dear_story_detail_0_story_group_id_1_chara_index', 'story_group_id', 'chara_index'),
@@ -1380,7 +1375,7 @@ class DearStoryDetail(base, Base["DearStoryDetail"]):
     end_time = Column(Text, nullable=False)
 
 
-class DefineSpskill(base, Base["DefineSpskill"]):
+class DefineSpskill(DeclarativeBase, Base["DefineSpskill"]):
     __tablename__ = 'define_spskill'
 
     link_skill_slot = Column(Integer, primary_key=True)
@@ -1389,14 +1384,14 @@ class DefineSpskill(base, Base["DefineSpskill"]):
     skill_category = Column(Integer, nullable=False)
 
 
-class DodgeTpRecovery(base, Base["DodgeTpRecovery"]):
+class DodgeTpRecovery(DeclarativeBase, Base["DodgeTpRecovery"]):
     __tablename__ = 'dodge_tp_recovery'
 
     system_id = Column(Integer, primary_key=True)
     recovery_ratio = Column(Float, nullable=False)
 
 
-class DungeonArea(base, Base["DungeonArea"]):
+class DungeonArea(DeclarativeBase, Base["DungeonArea"]):
     __tablename__ = 'dungeon_area'
 
     dungeon_area_id = Column(Integer, primary_key=True)
@@ -1416,7 +1411,7 @@ class DungeonArea(base, Base["DungeonArea"]):
     recovery_tp_rate = Column(Integer, nullable=False)
 
 
-class DungeonAreaDatum(base, Base["DungeonAreaDatum"]):
+class DungeonAreaDatum(DeclarativeBase, Base["DungeonAreaDatum"]):
     __tablename__ = 'dungeon_area_data'
 
     dungeon_area_id = Column(Integer, primary_key=True)
@@ -1449,7 +1444,7 @@ class DungeonAreaDatum(base, Base["DungeonAreaDatum"]):
     end_time = Column(Text, nullable=False)
 
 
-class DungeonQuestDatum(base, Base["DungeonQuestDatum"]):
+class DungeonQuestDatum(DeclarativeBase, Base["DungeonQuestDatum"]):
     __tablename__ = 'dungeon_quest_data'
     __table_args__ = (
         Index('dungeon_quest_data_0_dungeon_area_id_1_floor_num', 'dungeon_area_id', 'floor_num', unique=True),
@@ -1486,7 +1481,7 @@ class DungeonQuestDatum(base, Base["DungeonQuestDatum"]):
     wave_bgm_que_id_1 = Column(Text, nullable=False)
 
 
-class DungeonSkipDatum(base, Base["DungeonSkipDatum"]):
+class DungeonSkipDatum(DeclarativeBase, Base["DungeonSkipDatum"]):
     __tablename__ = 'dungeon_skip_data'
 
     area_id = Column(Integer, primary_key=True)
@@ -1498,7 +1493,7 @@ class DungeonSkipDatum(base, Base["DungeonSkipDatum"]):
     skip_scale_y = Column(Float, nullable=False)
 
 
-class DungeonSpecialBattle(base, Base["DungeonSpecialBattle"]):
+class DungeonSpecialBattle(DeclarativeBase, Base["DungeonSpecialBattle"]):
     __tablename__ = 'dungeon_special_battle'
     __table_args__ = (
         Index('dungeon_special_battle_0_quest_id_1_mode', 'quest_id', 'mode', unique=True),
@@ -1520,7 +1515,7 @@ class DungeonSpecialBattle(base, Base["DungeonSpecialBattle"]):
     detail_boss_motion = Column(Text, nullable=False)
 
 
-class DungeonSpecialEnemySetting(base, Base["DungeonSpecialEnemySetting"]):
+class DungeonSpecialEnemySetting(DeclarativeBase, Base["DungeonSpecialEnemySetting"]):
     __tablename__ = 'dungeon_special_enemy_setting'
     __table_args__ = (
         UniqueConstraint('special_battle_id', 'disp_order'),
@@ -1537,7 +1532,7 @@ class DungeonSpecialEnemySetting(base, Base["DungeonSpecialEnemySetting"]):
     detail_scale = Column(Float, nullable=False)
 
 
-class EReduction(base, Base["EReduction"]):
+class EReduction(DeclarativeBase, Base["EReduction"]):
     __tablename__ = 'e_reduction'
 
     id = Column(Integer, primary_key=True)
@@ -1554,7 +1549,7 @@ class EReduction(base, Base["EReduction"]):
     value_5 = Column(Float, nullable=False)
 
 
-class EmblemDatum(base, Base["EmblemDatum"]):
+class EmblemDatum(DeclarativeBase, Base["EmblemDatum"]):
     __tablename__ = 'emblem_data'
 
     emblem_id = Column(Integer, primary_key=True)
@@ -1567,7 +1562,7 @@ class EmblemDatum(base, Base["EmblemDatum"]):
     end_time = Column(Text, nullable=False)
 
 
-class EmblemMissionDatum(base, Base["EmblemMissionDatum"]):
+class EmblemMissionDatum(DeclarativeBase, Base["EmblemMissionDatum"]):
     __tablename__ = 'emblem_mission_data'
 
     mission_id = Column(Integer, primary_key=True)
@@ -1586,7 +1581,7 @@ class EmblemMissionDatum(base, Base["EmblemMissionDatum"]):
     end_time = Column(Text, nullable=False)
 
 
-class EmblemMissionRewardDatum(base, Base["EmblemMissionRewardDatum"]):
+class EmblemMissionRewardDatum(DeclarativeBase, Base["EmblemMissionRewardDatum"]):
     __tablename__ = 'emblem_mission_reward_data'
 
     id = Column(Integer, primary_key=True)
@@ -1597,20 +1592,20 @@ class EmblemMissionRewardDatum(base, Base["EmblemMissionRewardDatum"]):
     icon_type = Column(Integer, nullable=False)
 
 
-class EnemyEnableVoice(base, Base["EnemyEnableVoice"]):
+class EnemyEnableVoice(DeclarativeBase, Base["EnemyEnableVoice"]):
     __tablename__ = 'enemy_enable_voice'
 
     unit_id = Column(Integer, primary_key=True)
     voice_id = Column(Integer, nullable=False)
 
 
-class EnemyIgnoreSkillRf(base, Base["EnemyIgnoreSkillRf"]):
+class EnemyIgnoreSkillRf(DeclarativeBase, Base["EnemyIgnoreSkillRf"]):
     __tablename__ = 'enemy_ignore_skill_rf'
 
     enemy_id = Column(Integer, primary_key=True)
 
 
-class EnemyMPart(base, Base["EnemyMPart"]):
+class EnemyMPart(DeclarativeBase, Base["EnemyMPart"]):
     __tablename__ = 'enemy_m_parts'
 
     enemy_id = Column(Integer, primary_key=True)
@@ -1622,7 +1617,7 @@ class EnemyMPart(base, Base["EnemyMPart"]):
     child_enemy_parameter_5 = Column(Integer, nullable=False)
 
 
-class EnemyParameter(base, Base["EnemyParameter"]):
+class EnemyParameter(DeclarativeBase, Base["EnemyParameter"]):
     __tablename__ = 'enemy_parameter'
 
     enemy_id = Column(Integer, primary_key=True)
@@ -1671,7 +1666,7 @@ class EnemyParameter(base, Base["EnemyParameter"]):
     virtual_hp = Column(Integer, nullable=False)
 
 
-class EnemyRewardDatum(base, Base["EnemyRewardDatum"]):
+class EnemyRewardDatum(DeclarativeBase, Base["EnemyRewardDatum"]):
     __tablename__ = 'enemy_reward_data'
 
     drop_reward_id = Column(Integer, primary_key=True)
@@ -1698,7 +1693,7 @@ class EnemyRewardDatum(base, Base["EnemyRewardDatum"]):
     odds_5 = Column(Integer, nullable=False)
 
 
-class EquipmentCraft(base, Base["EquipmentCraft"]):
+class EquipmentCraft(DeclarativeBase, Base["EquipmentCraft"]):
     __tablename__ = 'equipment_craft'
 
     equipment_id = Column(Integer, primary_key=True)
@@ -1725,7 +1720,7 @@ class EquipmentCraft(base, Base["EquipmentCraft"]):
     consume_num_10 = Column(Integer, nullable=False)
 
 
-class EquipmentDatum(base, Base["EquipmentDatum"]):
+class EquipmentDatum(DeclarativeBase, Base["EquipmentDatum"]):
     __tablename__ = 'equipment_data'
 
     equipment_id = Column(Integer, primary_key=True)
@@ -1758,7 +1753,7 @@ class EquipmentDatum(base, Base["EquipmentDatum"]):
     item_type = Column(Integer, nullable=False)
 
 
-class EquipmentDonation(base, Base["EquipmentDonation"]):
+class EquipmentDonation(DeclarativeBase, Base["EquipmentDonation"]):
     __tablename__ = 'equipment_donation'
 
     team_level = Column(Integer, primary_key=True)
@@ -1767,7 +1762,7 @@ class EquipmentDonation(base, Base["EquipmentDonation"]):
     request_num_once = Column(Integer, nullable=False)
 
 
-class EquipmentEnhanceDatum(base, Base["EquipmentEnhanceDatum"]):
+class EquipmentEnhanceDatum(DeclarativeBase, Base["EquipmentEnhanceDatum"]):
     __tablename__ = 'equipment_enhance_data'
 
     promotion_level = Column(Integer, primary_key=True, nullable=False)
@@ -1776,7 +1771,7 @@ class EquipmentEnhanceDatum(base, Base["EquipmentEnhanceDatum"]):
     total_point = Column(Integer, nullable=False)
 
 
-class EquipmentEnhanceRate(base, Base["EquipmentEnhanceRate"]):
+class EquipmentEnhanceRate(DeclarativeBase, Base["EquipmentEnhanceRate"]):
     __tablename__ = 'equipment_enhance_rate'
 
     equipment_id = Column(Integer, primary_key=True)
@@ -1802,7 +1797,7 @@ class EquipmentEnhanceRate(base, Base["EquipmentEnhanceRate"]):
     accuracy = Column(Float, nullable=False)
 
 
-class EventBgDatum(base, Base["EventBgDatum"]):
+class EventBgDatum(DeclarativeBase, Base["EventBgDatum"]):
     __tablename__ = 'event_bg_data'
 
     event_id = Column(Integer, primary_key=True)
@@ -1811,7 +1806,7 @@ class EventBgDatum(base, Base["EventBgDatum"]):
     end_date = Column(Text, nullable=False)
 
 
-class EventBossTreasureBox(base, Base["EventBossTreasureBox"]):
+class EventBossTreasureBox(DeclarativeBase, Base["EventBossTreasureBox"]):
     __tablename__ = 'event_boss_treasure_box'
 
     event_boss_treasure_box_id = Column(Integer, primary_key=True)
@@ -1847,7 +1842,7 @@ class EventBossTreasureBox(base, Base["EventBossTreasureBox"]):
     each_odds_10 = Column(Integer, nullable=False)
 
 
-class EventBossTreasureContent(base, Base["EventBossTreasureContent"]):
+class EventBossTreasureContent(DeclarativeBase, Base["EventBossTreasureContent"]):
     __tablename__ = 'event_boss_treasure_content'
 
     event_boss_treasure_content_id = Column(Integer, primary_key=True)
@@ -1878,7 +1873,7 @@ class EventBossTreasureContent(base, Base["EventBossTreasureContent"]):
     odds_5 = Column(Integer, nullable=False)
 
 
-class EventEffectSetting(base, Base["EventEffectSetting"]):
+class EventEffectSetting(DeclarativeBase, Base["EventEffectSetting"]):
     __tablename__ = 'event_effect_setting'
 
     event_id = Column(Integer, primary_key=True, nullable=False)
@@ -1886,7 +1881,7 @@ class EventEffectSetting(base, Base["EventEffectSetting"]):
     value = Column(Integer, nullable=False)
 
 
-class EventEnemyParameter(base, Base["EventEnemyParameter"]):
+class EventEnemyParameter(DeclarativeBase, Base["EventEnemyParameter"]):
     __tablename__ = 'event_enemy_parameter'
 
     enemy_id = Column(Integer, primary_key=True)
@@ -1931,7 +1926,7 @@ class EventEnemyParameter(base, Base["EventEnemyParameter"]):
     accuracy = Column(Integer, nullable=False)
 
 
-class EventEnemyRewardGroup(base, Base["EventEnemyRewardGroup"]):
+class EventEnemyRewardGroup(DeclarativeBase, Base["EventEnemyRewardGroup"]):
     __tablename__ = 'event_enemy_reward_group'
 
     id = Column(Integer, primary_key=True)
@@ -1942,7 +1937,7 @@ class EventEnemyRewardGroup(base, Base["EventEnemyRewardGroup"]):
     odds = Column(Integer, nullable=False)
 
 
-class EventGachaDatum(base, Base["EventGachaDatum"]):
+class EventGachaDatum(DeclarativeBase, Base["EventGachaDatum"]):
     __tablename__ = 'event_gacha_data'
 
     gacha_id = Column(Integer, primary_key=True)
@@ -1954,7 +1949,7 @@ class EventGachaDatum(base, Base["EventGachaDatum"]):
     repeat_step = Column(Integer, nullable=False)
 
 
-class EventIntroduction(base, Base["EventIntroduction"]):
+class EventIntroduction(DeclarativeBase, Base["EventIntroduction"]):
     __tablename__ = 'event_introduction'
 
     id = Column(Integer, primary_key=True)
@@ -1972,7 +1967,7 @@ class EventIntroduction(base, Base["EventIntroduction"]):
     que_id = Column(Text, nullable=False)
 
 
-class EventNaviComment(base, Base["EventNaviComment"]):
+class EventNaviComment(DeclarativeBase, Base["EventNaviComment"]):
     __tablename__ = 'event_navi_comment'
 
     comment_id = Column(Integer, primary_key=True)
@@ -1991,7 +1986,7 @@ class EventNaviComment(base, Base["EventNaviComment"]):
     event_id = Column(Integer, nullable=False)
 
 
-class EventNaviCommentCondition(base, Base["EventNaviCommentCondition"]):
+class EventNaviCommentCondition(DeclarativeBase, Base["EventNaviCommentCondition"]):
     __tablename__ = 'event_navi_comment_condition'
 
     comment_id = Column(Integer, primary_key=True)
@@ -2003,7 +1998,7 @@ class EventNaviCommentCondition(base, Base["EventNaviCommentCondition"]):
     condition_value_3 = Column(Integer, nullable=False)
 
 
-class EventReminder(base, Base["EventReminder"]):
+class EventReminder(DeclarativeBase, Base["EventReminder"]):
     __tablename__ = 'event_reminder'
 
     reminder_id = Column(Integer, primary_key=True)
@@ -2019,7 +2014,7 @@ class EventReminder(base, Base["EventReminder"]):
     target_id = Column(Integer, nullable=False)
 
 
-class EventReminderCondition(base, Base["EventReminderCondition"]):
+class EventReminderCondition(DeclarativeBase, Base["EventReminderCondition"]):
     __tablename__ = 'event_reminder_condition'
 
     id = Column(Integer, primary_key=True)
@@ -2028,7 +2023,7 @@ class EventReminderCondition(base, Base["EventReminderCondition"]):
     condition_id = Column(Integer, nullable=False)
 
 
-class EventRevivalSeriesWaveGroupDatum(base, Base["EventRevivalSeriesWaveGroupDatum"]):
+class EventRevivalSeriesWaveGroupDatum(DeclarativeBase, Base["EventRevivalSeriesWaveGroupDatum"]):
     __tablename__ = 'event_revival_series_wave_group_data'
 
     id = Column(Integer, primary_key=True)
@@ -2074,7 +2069,7 @@ class EventRevivalSeriesWaveGroupDatum(base, Base["EventRevivalSeriesWaveGroupDa
     reward_odds_5 = Column(Integer, nullable=False)
 
 
-class EventRevivalWaveGroupDatum(base, Base["EventRevivalWaveGroupDatum"]):
+class EventRevivalWaveGroupDatum(DeclarativeBase, Base["EventRevivalWaveGroupDatum"]):
     __tablename__ = 'event_revival_wave_group_data'
 
     id = Column(Integer, primary_key=True)
@@ -2120,7 +2115,7 @@ class EventRevivalWaveGroupDatum(base, Base["EventRevivalWaveGroupDatum"]):
     reward_odds_5 = Column(Integer, nullable=False)
 
 
-class EventSeriesWaveGroupDatum(base, Base["EventSeriesWaveGroupDatum"]):
+class EventSeriesWaveGroupDatum(DeclarativeBase, Base["EventSeriesWaveGroupDatum"]):
     __tablename__ = 'event_series_wave_group_data'
 
     id = Column(Integer, primary_key=True)
@@ -2166,7 +2161,7 @@ class EventSeriesWaveGroupDatum(base, Base["EventSeriesWaveGroupDatum"]):
     reward_odds_5 = Column(Integer, nullable=False)
 
 
-class EventStoryDatum(base, Base["EventStoryDatum"]):
+class EventStoryDatum(DeclarativeBase, Base["EventStoryDatum"]):
     __tablename__ = 'event_story_data'
 
     story_group_id = Column(Integer, primary_key=True)
@@ -2179,7 +2174,7 @@ class EventStoryDatum(base, Base["EventStoryDatum"]):
     end_time = Column(Text, nullable=False)
 
 
-class EventStoryDetail(base, Base["EventStoryDetail"]):
+class EventStoryDetail(DeclarativeBase, Base["EventStoryDetail"]):
     __tablename__ = 'event_story_detail'
 
     story_id = Column(Integer, primary_key=True)
@@ -2206,7 +2201,7 @@ class EventStoryDetail(base, Base["EventStoryDetail"]):
     end_time = Column(Text, nullable=False)
 
 
-class EventTopAdv(base, Base["EventTopAdv"]):
+class EventTopAdv(DeclarativeBase, Base["EventTopAdv"]):
     __tablename__ = 'event_top_adv'
     __table_args__ = (
         Index('event_top_adv_0_event_id_1_type', 'event_id', 'type'),
@@ -2226,7 +2221,7 @@ class EventTopAdv(base, Base["EventTopAdv"]):
     end_time = Column(Text, nullable=False)
 
 
-class EventWaveGroupDatum(base, Base["EventWaveGroupDatum"]):
+class EventWaveGroupDatum(DeclarativeBase, Base["EventWaveGroupDatum"]):
     __tablename__ = 'event_wave_group_data'
 
     id = Column(Integer, primary_key=True)
@@ -2272,7 +2267,7 @@ class EventWaveGroupDatum(base, Base["EventWaveGroupDatum"]):
     reward_odds_5 = Column(Integer, nullable=False)
 
 
-class ExceedLevelStage(base, Base["ExceedLevelStage"]):
+class ExceedLevelStage(DeclarativeBase, Base["ExceedLevelStage"]):
     __tablename__ = 'exceed_level_stage'
 
     exceed_stage = Column(Integer, primary_key=True)
@@ -2282,7 +2277,7 @@ class ExceedLevelStage(base, Base["ExceedLevelStage"]):
     general_exceed_item_id = Column(Integer, nullable=False)
 
 
-class ExceedLevelUnit(base, Base["ExceedLevelUnit"]):
+class ExceedLevelUnit(DeclarativeBase, Base["ExceedLevelUnit"]):
     __tablename__ = 'exceed_level_unit'
 
     id = Column(Integer, nullable=False)
@@ -2306,13 +2301,13 @@ class ExceedLevelUnit(base, Base["ExceedLevelUnit"]):
     consume_num_5 = Column(Integer, nullable=False)
 
 
-class ExceptEr(base, Base["ExceptEr"]):
+class ExceptEr(DeclarativeBase, Base["ExceptEr"]):
     __tablename__ = 'except_er'
 
     category_id = Column(Integer, primary_key=True)
 
 
-class ExperienceTeam(base, Base["ExperienceTeam"]):
+class ExperienceTeam(DeclarativeBase, Base["ExperienceTeam"]):
     __tablename__ = 'experience_team'
 
     team_level = Column(Integer, primary_key=True)
@@ -2322,14 +2317,14 @@ class ExperienceTeam(base, Base["ExperienceTeam"]):
     recover_stamina_count = Column(Integer, nullable=False)
 
 
-class ExperienceUnit(base, Base["ExperienceUnit"]):
+class ExperienceUnit(DeclarativeBase, Base["ExperienceUnit"]):
     __tablename__ = 'experience_unit'
 
     unit_level = Column(Integer, primary_key=True)
     total_exp = Column(Integer, nullable=False)
 
 
-class FixLineupGroupSet(base, Base["FixLineupGroupSet"]):
+class FixLineupGroupSet(DeclarativeBase, Base["FixLineupGroupSet"]):
     __tablename__ = 'fix_lineup_group_set'
     __table_args__ = (
         Index('fix_lineup_group_set_0_team_level_from_1_team_level_to', 'team_level_from', 'team_level_to'),
@@ -2460,14 +2455,14 @@ class FixLineupGroupSet(base, Base["FixLineupGroupSet"]):
     price_20 = Column(Integer, nullable=False)
 
 
-class FkeHappeningList(base, Base["FkeHappeningList"]):
+class FkeHappeningList(DeclarativeBase, Base["FkeHappeningList"]):
     __tablename__ = 'fke_happening_list'
 
     happening_id = Column(Integer, primary_key=True)
     happening_name = Column(Text, nullable=False)
 
 
-class FkeReward(base, Base["FkeReward"]):
+class FkeReward(DeclarativeBase, Base["FkeReward"]):
     __tablename__ = 'fke_reward'
 
     id = Column(Integer, primary_key=True)
@@ -2490,7 +2485,7 @@ class FkeReward(base, Base["FkeReward"]):
     reward_count_5 = Column(Integer, nullable=False)
 
 
-class GachaDatum(base, Base["GachaDatum"]):
+class GachaDatum(DeclarativeBase, Base["GachaDatum"]):
     __tablename__ = 'gacha_data'
 
     gacha_id = Column(Integer, primary_key=True)
@@ -2530,7 +2525,7 @@ class GachaDatum(base, Base["GachaDatum"]):
     gacha_times_limit10 = Column(Integer, nullable=False)
 
 
-class GachaExchangeLineup(base, Base["GachaExchangeLineup"]):
+class GachaExchangeLineup(DeclarativeBase, Base["GachaExchangeLineup"]):
     __tablename__ = 'gacha_exchange_lineup'
 
     id = Column(Integer, primary_key=True)
@@ -2542,7 +2537,7 @@ class GachaExchangeLineup(base, Base["GachaExchangeLineup"]):
     end_time = Column(Text, nullable=False)
 
 
-class GiftMessage(base, Base["GiftMessage"]):
+class GiftMessage(DeclarativeBase, Base["GiftMessage"]):
     __tablename__ = 'gift_message'
 
     id = Column(Integer, primary_key=True)
@@ -2553,7 +2548,7 @@ class GiftMessage(base, Base["GiftMessage"]):
     type_4 = Column(Integer, nullable=False)
 
 
-class GlobalDatum(base, Base["GlobalDatum"]):
+class GlobalDatum(DeclarativeBase, Base["GlobalDatum"]):
     __tablename__ = 'global_data'
 
     key_name = Column(Text, primary_key=True)
@@ -2561,7 +2556,7 @@ class GlobalDatum(base, Base["GlobalDatum"]):
     desc = Column(Text, nullable=False)
 
 
-class GlossaryDetail(base, Base["GlossaryDetail"]):
+class GlossaryDetail(DeclarativeBase, Base["GlossaryDetail"]):
     __tablename__ = 'glossary_detail'
 
     glossary_id = Column(Integer, primary_key=True)
@@ -2573,7 +2568,7 @@ class GlossaryDetail(base, Base["GlossaryDetail"]):
     disp_order = Column(Integer, nullable=False)
 
 
-class GoldsetDatum(base, Base["GoldsetDatum"]):
+class GoldsetDatum(DeclarativeBase, Base["GoldsetDatum"]):
     __tablename__ = 'goldset_data'
 
     id = Column(Integer, nullable=False)
@@ -2587,7 +2582,7 @@ class GoldsetDatum(base, Base["GoldsetDatum"]):
     additional_gold_max_rate = Column(Integer, nullable=False)
 
 
-class GoldsetData2(base, Base["GoldsetData2"]):
+class GoldsetData2(DeclarativeBase, Base["GoldsetData2"]):
     __tablename__ = 'goldset_data_2'
 
     id = Column(Integer, nullable=False)
@@ -2602,7 +2597,7 @@ class GoldsetData2(base, Base["GoldsetData2"]):
     training_quest_count = Column(Integer, nullable=False)
 
 
-class GoldsetDataTeamlevel(base, Base["GoldsetDataTeamlevel"]):
+class GoldsetDataTeamlevel(DeclarativeBase, Base["GoldsetDataTeamlevel"]):
     __tablename__ = 'goldset_data_teamlevel'
 
     id = Column(Integer, nullable=False)
@@ -2610,7 +2605,7 @@ class GoldsetDataTeamlevel(base, Base["GoldsetDataTeamlevel"]):
     initial_get_gold_count = Column(Integer, nullable=False)
 
 
-class GrandArenaDailyRankReward(base, Base["GrandArenaDailyRankReward"]):
+class GrandArenaDailyRankReward(DeclarativeBase, Base["GrandArenaDailyRankReward"]):
     __tablename__ = 'grand_arena_daily_rank_reward'
 
     id = Column(Integer, primary_key=True)
@@ -2633,7 +2628,7 @@ class GrandArenaDailyRankReward(base, Base["GrandArenaDailyRankReward"]):
     reward_num_5 = Column(Integer, nullable=False)
 
 
-class GrandArenaDefenceReward(base, Base["GrandArenaDefenceReward"]):
+class GrandArenaDefenceReward(DeclarativeBase, Base["GrandArenaDefenceReward"]):
     __tablename__ = 'grand_arena_defence_reward'
 
     id = Column(Integer, primary_key=True)
@@ -2655,7 +2650,7 @@ class GrandArenaDefenceReward(base, Base["GrandArenaDefenceReward"]):
     reward_num_5 = Column(Integer, nullable=False)
 
 
-class GrandArenaMaxRankReward(base, Base["GrandArenaMaxRankReward"]):
+class GrandArenaMaxRankReward(DeclarativeBase, Base["GrandArenaMaxRankReward"]):
     __tablename__ = 'grand_arena_max_rank_reward'
 
     id = Column(Integer, primary_key=True)
@@ -2678,7 +2673,7 @@ class GrandArenaMaxRankReward(base, Base["GrandArenaMaxRankReward"]):
     reward_num_5 = Column(Integer, nullable=False)
 
 
-class GrandArenaMaxSeasonRankReward(base, Base["GrandArenaMaxSeasonRankReward"]):
+class GrandArenaMaxSeasonRankReward(DeclarativeBase, Base["GrandArenaMaxSeasonRankReward"]):
     __tablename__ = 'grand_arena_max_season_rank_reward'
 
     id = Column(Integer, primary_key=True)
@@ -2701,7 +2696,7 @@ class GrandArenaMaxSeasonRankReward(base, Base["GrandArenaMaxSeasonRankReward"])
     reward_num_5 = Column(Integer, nullable=False)
 
 
-class GrowthParameter(base, Base["GrowthParameter"]):
+class GrowthParameter(DeclarativeBase, Base["GrowthParameter"]):
     __tablename__ = 'growth_parameter'
 
     growth_id = Column(Integer, primary_key=True)
@@ -2720,7 +2715,7 @@ class GrowthParameter(base, Base["GrowthParameter"]):
     love_level = Column(Integer, nullable=False)
 
 
-class GrowthParameterUnique(base, Base["GrowthParameterUnique"]):
+class GrowthParameterUnique(DeclarativeBase, Base["GrowthParameterUnique"]):
     __tablename__ = 'growth_parameter_unique'
 
     growth_id = Column(Integer, primary_key=True)
@@ -2730,7 +2725,7 @@ class GrowthParameterUnique(base, Base["GrowthParameterUnique"]):
     unique_equip_rank_2 = Column(Integer, nullable=False)
 
 
-class GrowthRestrictionUnit(base, Base["GrowthRestrictionUnit"]):
+class GrowthRestrictionUnit(DeclarativeBase, Base["GrowthRestrictionUnit"]):
     __tablename__ = 'growth_restriction_unit'
 
     id = Column(Integer, primary_key=True)
@@ -2738,7 +2733,7 @@ class GrowthRestrictionUnit(base, Base["GrowthRestrictionUnit"]):
     unit_id = Column(Integer, nullable=False)
 
 
-class Guild(base, Base["Guild"]):
+class Guild(DeclarativeBase, Base["Guild"]):
     __tablename__ = 'guild'
 
     guild_id = Column(Integer, primary_key=True)
@@ -2777,7 +2772,7 @@ class Guild(base, Base["Guild"]):
     member30 = Column(Integer, nullable=False)
 
 
-class GuildAdditionalMember(base, Base["GuildAdditionalMember"]):
+class GuildAdditionalMember(DeclarativeBase, Base["GuildAdditionalMember"]):
     __tablename__ = 'guild_additional_member'
 
     guild_id = Column(Integer, primary_key=True)
@@ -2795,7 +2790,7 @@ class GuildAdditionalMember(base, Base["GuildAdditionalMember"]):
     member10 = Column(Integer, nullable=False)
 
 
-class HatsuneBattleMissionDatum(base, Base["HatsuneBattleMissionDatum"]):
+class HatsuneBattleMissionDatum(DeclarativeBase, Base["HatsuneBattleMissionDatum"]):
     __tablename__ = 'hatsune_battle_mission_data'
 
     mission_id = Column(Integer, primary_key=True)
@@ -2821,7 +2816,7 @@ class HatsuneBattleMissionDatum(base, Base["HatsuneBattleMissionDatum"]):
     end_time = Column(Text, nullable=False)
 
 
-class HatsuneBgChange(base, Base["HatsuneBgChange"]):
+class HatsuneBgChange(DeclarativeBase, Base["HatsuneBgChange"]):
     __tablename__ = 'hatsune_bg_change'
 
     area_id = Column(Integer, primary_key=True)
@@ -2832,7 +2827,7 @@ class HatsuneBgChange(base, Base["HatsuneBgChange"]):
     quest_id_5 = Column(Integer, nullable=False)
 
 
-class HatsuneBgChangeDatum(base, Base["HatsuneBgChangeDatum"]):
+class HatsuneBgChangeDatum(DeclarativeBase, Base["HatsuneBgChangeDatum"]):
     __tablename__ = 'hatsune_bg_change_data'
     __table_args__ = (
         Index('hatsune_bg_change_data_0_target_type_1_area_id', 'target_type', 'area_id'),
@@ -2846,7 +2841,7 @@ class HatsuneBgChangeDatum(base, Base["HatsuneBgChangeDatum"]):
     bg_after_change_id = Column(Integer, nullable=False)
 
 
-class HatsuneBos(base, Base["HatsuneBos"]):
+class HatsuneBos(DeclarativeBase, Base["HatsuneBos"]):
     __tablename__ = 'hatsune_boss'
     __table_args__ = (
         Index('hatsune_boss_0_event_id_1_difficulty', 'event_id', 'difficulty'),
@@ -2900,7 +2895,7 @@ class HatsuneBos(base, Base["HatsuneBos"]):
     td_mode = Column(Integer, nullable=False)
 
 
-class HatsuneBossCondition(base, Base["HatsuneBossCondition"]):
+class HatsuneBossCondition(DeclarativeBase, Base["HatsuneBossCondition"]):
     __tablename__ = 'hatsune_boss_condition'
 
     boss_id = Column(Integer, primary_key=True)
@@ -2917,7 +2912,7 @@ class HatsuneBossCondition(base, Base["HatsuneBossCondition"]):
     release_boss_id_2 = Column(Integer, nullable=False)
 
 
-class HatsuneBossEnemySetting(base, Base["HatsuneBossEnemySetting"]):
+class HatsuneBossEnemySetting(DeclarativeBase, Base["HatsuneBossEnemySetting"]):
     __tablename__ = 'hatsune_boss_enemy_setting'
     __table_args__ = (
         Index('hatsune_boss_enemy_setting_0_boss_id_1_event_id', 'boss_id', 'event_id'),
@@ -2939,7 +2934,7 @@ class HatsuneBossEnemySetting(base, Base["HatsuneBossEnemySetting"]):
     map_depth = Column(Integer, nullable=False)
 
 
-class HatsuneDailyMissionDatum(base, Base["HatsuneDailyMissionDatum"]):
+class HatsuneDailyMissionDatum(DeclarativeBase, Base["HatsuneDailyMissionDatum"]):
     __tablename__ = 'hatsune_daily_mission_data'
 
     daily_mission_id = Column(Integer, primary_key=True)
@@ -2958,7 +2953,7 @@ class HatsuneDailyMissionDatum(base, Base["HatsuneDailyMissionDatum"]):
     end_time = Column(Text, nullable=False)
 
 
-class HatsuneDescription(base, Base["HatsuneDescription"]):
+class HatsuneDescription(DeclarativeBase, Base["HatsuneDescription"]):
     __tablename__ = 'hatsune_description'
     __table_args__ = (
         Index('hatsune_description_0_event_id_1_type', 'event_id', 'type'),
@@ -2970,7 +2965,7 @@ class HatsuneDescription(base, Base["HatsuneDescription"]):
     description = Column(Text, nullable=False)
 
 
-class HatsuneDiaryDatum(base, Base["HatsuneDiaryDatum"]):
+class HatsuneDiaryDatum(DeclarativeBase, Base["HatsuneDiaryDatum"]):
     __tablename__ = 'hatsune_diary_data'
 
     diary_id = Column(Integer, primary_key=True)
@@ -2983,7 +2978,7 @@ class HatsuneDiaryDatum(base, Base["HatsuneDiaryDatum"]):
     condition_boss_count = Column(Integer, nullable=False)
 
 
-class HatsuneDiaryLetterScript(base, Base["HatsuneDiaryLetterScript"]):
+class HatsuneDiaryLetterScript(DeclarativeBase, Base["HatsuneDiaryLetterScript"]):
     __tablename__ = 'hatsune_diary_letter_script'
 
     id = Column(Integer, primary_key=True)
@@ -3000,7 +2995,7 @@ class HatsuneDiaryLetterScript(base, Base["HatsuneDiaryLetterScript"]):
     command_param = Column(Float, nullable=False)
 
 
-class HatsuneDiaryScript(base, Base["HatsuneDiaryScript"]):
+class HatsuneDiaryScript(DeclarativeBase, Base["HatsuneDiaryScript"]):
     __tablename__ = 'hatsune_diary_script'
 
     id = Column(Integer, primary_key=True)
@@ -3015,7 +3010,7 @@ class HatsuneDiaryScript(base, Base["HatsuneDiaryScript"]):
     command_param = Column(Float, nullable=False)
 
 
-class HatsuneDiarySetting(base, Base["HatsuneDiarySetting"]):
+class HatsuneDiarySetting(DeclarativeBase, Base["HatsuneDiarySetting"]):
     __tablename__ = 'hatsune_diary_setting'
 
     event_id = Column(Integer, primary_key=True)
@@ -3023,7 +3018,7 @@ class HatsuneDiarySetting(base, Base["HatsuneDiarySetting"]):
     bgm_cue_name = Column(Text, nullable=False)
 
 
-class HatsuneEmblemMission(base, Base["HatsuneEmblemMission"]):
+class HatsuneEmblemMission(DeclarativeBase, Base["HatsuneEmblemMission"]):
     __tablename__ = 'hatsune_emblem_mission'
 
     mission_id = Column(Integer, primary_key=True)
@@ -3043,7 +3038,7 @@ class HatsuneEmblemMission(base, Base["HatsuneEmblemMission"]):
     end_time = Column(Text, nullable=False)
 
 
-class HatsuneEmblemMissionReward(base, Base["HatsuneEmblemMissionReward"]):
+class HatsuneEmblemMissionReward(DeclarativeBase, Base["HatsuneEmblemMissionReward"]):
     __tablename__ = 'hatsune_emblem_mission_reward'
 
     id = Column(Integer, primary_key=True)
@@ -3054,7 +3049,7 @@ class HatsuneEmblemMissionReward(base, Base["HatsuneEmblemMissionReward"]):
     icon_type = Column(Integer, nullable=False)
 
 
-class HatsuneItem(base, Base["HatsuneItem"]):
+class HatsuneItem(DeclarativeBase, Base["HatsuneItem"]):
     __tablename__ = 'hatsune_item'
 
     event_id = Column(Integer, primary_key=True)
@@ -3072,14 +3067,14 @@ class HatsuneItem(base, Base["HatsuneItem"]):
     unit_material_id_10 = Column(Integer, nullable=False)
 
 
-class HatsuneLimitChara(base, Base["HatsuneLimitChara"]):
+class HatsuneLimitChara(DeclarativeBase, Base["HatsuneLimitChara"]):
     __tablename__ = 'hatsune_limit_chara'
 
     event_boss_id = Column(Integer, primary_key=True)
     limit_chara_type_1 = Column(Integer, nullable=False)
 
 
-class HatsuneMap(base, Base["HatsuneMap"]):
+class HatsuneMap(DeclarativeBase, Base["HatsuneMap"]):
     __tablename__ = 'hatsune_map'
 
     course_id = Column(Integer, primary_key=True)
@@ -3092,7 +3087,7 @@ class HatsuneMap(base, Base["HatsuneMap"]):
     end_area_id = Column(Integer, nullable=False)
 
 
-class HatsuneMapEvent(base, Base["HatsuneMapEvent"]):
+class HatsuneMapEvent(DeclarativeBase, Base["HatsuneMapEvent"]):
     __tablename__ = 'hatsune_map_event'
 
     id = Column(Integer, primary_key=True)
@@ -3103,7 +3098,7 @@ class HatsuneMapEvent(base, Base["HatsuneMapEvent"]):
     param2 = Column(Integer, nullable=False)
 
 
-class HatsuneMissionRewardDatum(base, Base["HatsuneMissionRewardDatum"]):
+class HatsuneMissionRewardDatum(DeclarativeBase, Base["HatsuneMissionRewardDatum"]):
     __tablename__ = 'hatsune_mission_reward_data'
 
     id = Column(Integer, primary_key=True)
@@ -3113,7 +3108,7 @@ class HatsuneMissionRewardDatum(base, Base["HatsuneMissionRewardDatum"]):
     reward_num = Column(Integer, nullable=False)
 
 
-class HatsuneMultiRouteParameter(base, Base["HatsuneMultiRouteParameter"]):
+class HatsuneMultiRouteParameter(DeclarativeBase, Base["HatsuneMultiRouteParameter"]):
     __tablename__ = 'hatsune_multi_route_parameter'
 
     id = Column(Integer, primary_key=True)
@@ -3125,7 +3120,7 @@ class HatsuneMultiRouteParameter(base, Base["HatsuneMultiRouteParameter"]):
     text_1 = Column(Text, nullable=False)
 
 
-class HatsunePresent(base, Base["HatsunePresent"]):
+class HatsunePresent(DeclarativeBase, Base["HatsunePresent"]):
     __tablename__ = 'hatsune_present'
 
     id = Column(Integer, primary_key=True)
@@ -3153,7 +3148,7 @@ class HatsunePresent(base, Base["HatsunePresent"]):
     item_num_5 = Column(Integer, nullable=False)
 
 
-class HatsuneQuest(base, Base["HatsuneQuest"]):
+class HatsuneQuest(DeclarativeBase, Base["HatsuneQuest"]):
     __tablename__ = 'hatsune_quest'
 
     quest_id = Column(Integer, primary_key=True)
@@ -3201,7 +3196,7 @@ class HatsuneQuest(base, Base["HatsuneQuest"]):
     end_time = Column(Text, nullable=False)
 
 
-class HatsuneQuestArea(base, Base["HatsuneQuestArea"]):
+class HatsuneQuestArea(DeclarativeBase, Base["HatsuneQuestArea"]):
     __tablename__ = 'hatsune_quest_area'
 
     area_id = Column(Integer, primary_key=True)
@@ -3222,7 +3217,7 @@ class HatsuneQuestArea(base, Base["HatsuneQuestArea"]):
     additional_effect = Column(Integer, nullable=False)
 
 
-class HatsuneQuestCondition(base, Base["HatsuneQuestCondition"]):
+class HatsuneQuestCondition(DeclarativeBase, Base["HatsuneQuestCondition"]):
     __tablename__ = 'hatsune_quest_condition'
 
     quest_id = Column(Integer, primary_key=True)
@@ -3238,7 +3233,7 @@ class HatsuneQuestCondition(base, Base["HatsuneQuestCondition"]):
     condition_main_quest_id = Column(Integer, nullable=False)
 
 
-class HatsuneQuiz(base, Base["HatsuneQuiz"]):
+class HatsuneQuiz(DeclarativeBase, Base["HatsuneQuiz"]):
     __tablename__ = 'hatsune_quiz'
     __table_args__ = (
         Index('hatsune_quiz_0_event_id_1_release_quest_id', 'event_id', 'release_quest_id'),
@@ -3266,7 +3261,7 @@ class HatsuneQuiz(base, Base["HatsuneQuiz"]):
     adv_id_quiz_end = Column(Integer, nullable=False)
 
 
-class HatsuneQuizCondition(base, Base["HatsuneQuizCondition"]):
+class HatsuneQuizCondition(DeclarativeBase, Base["HatsuneQuizCondition"]):
     __tablename__ = 'hatsune_quiz_condition'
     __table_args__ = (
         Index('hatsune_quiz_condition_0_event_id_1_quiz_id', 'event_id', 'quiz_id'),
@@ -3282,7 +3277,7 @@ class HatsuneQuizCondition(base, Base["HatsuneQuizCondition"]):
     condition_time_from = Column(Integer, nullable=False)
 
 
-class HatsuneQuizReward(base, Base["HatsuneQuizReward"]):
+class HatsuneQuizReward(DeclarativeBase, Base["HatsuneQuizReward"]):
     __tablename__ = 'hatsune_quiz_reward'
 
     quiz_id = Column(Integer, primary_key=True)
@@ -3303,7 +3298,7 @@ class HatsuneQuizReward(base, Base["HatsuneQuizReward"]):
     reward_num_5 = Column(Integer, nullable=False)
 
 
-class HatsuneRelayDatum(base, Base["HatsuneRelayDatum"]):
+class HatsuneRelayDatum(DeclarativeBase, Base["HatsuneRelayDatum"]):
     __tablename__ = 'hatsune_relay_data'
 
     relay_story_id = Column(Integer, primary_key=True)
@@ -3313,7 +3308,7 @@ class HatsuneRelayDatum(base, Base["HatsuneRelayDatum"]):
     sub_title = Column(Text, nullable=False)
 
 
-class HatsuneSchedule(base, Base["HatsuneSchedule"]):
+class HatsuneSchedule(DeclarativeBase, Base["HatsuneSchedule"]):
     __tablename__ = 'hatsune_schedule'
 
     event_id = Column(Integer, primary_key=True)
@@ -3335,14 +3330,14 @@ class HatsuneSchedule(base, Base["HatsuneSchedule"]):
     teaser_dialog_type = Column(Integer, nullable=False)
 
 
-class HatsuneSeriesGachaReference(base, Base["HatsuneSeriesGachaReference"]):
+class HatsuneSeriesGachaReference(DeclarativeBase, Base["HatsuneSeriesGachaReference"]):
     __tablename__ = 'hatsune_series_gacha_reference'
 
     event_id = Column(Integer, primary_key=True)
     reference_key_event_id_flag = Column(Integer, nullable=False)
 
 
-class HatsuneSpecialBattle(base, Base["HatsuneSpecialBattle"]):
+class HatsuneSpecialBattle(DeclarativeBase, Base["HatsuneSpecialBattle"]):
     __tablename__ = 'hatsune_special_battle'
 
     event_id = Column(Integer, primary_key=True, nullable=False, index=True)
@@ -3366,7 +3361,7 @@ class HatsuneSpecialBattle(base, Base["HatsuneSpecialBattle"]):
     is_hide_boss = Column(Integer, nullable=False)
 
 
-class HatsuneSpecialBossTicketCount(base, Base["HatsuneSpecialBossTicketCount"]):
+class HatsuneSpecialBossTicketCount(DeclarativeBase, Base["HatsuneSpecialBossTicketCount"]):
     __tablename__ = 'hatsune_special_boss_ticket_count'
 
     id = Column(Integer, primary_key=True)
@@ -3375,7 +3370,7 @@ class HatsuneSpecialBossTicketCount(base, Base["HatsuneSpecialBossTicketCount"])
     use_ticket_num = Column(Integer, nullable=False)
 
 
-class HatsuneSpecialEnemy(base, Base["HatsuneSpecialEnemy"]):
+class HatsuneSpecialEnemy(DeclarativeBase, Base["HatsuneSpecialEnemy"]):
     __tablename__ = 'hatsune_special_enemy'
 
     enemy_id = Column(Integer, primary_key=True)
@@ -3386,7 +3381,7 @@ class HatsuneSpecialEnemy(base, Base["HatsuneSpecialEnemy"]):
     order = Column(Integer, nullable=False)
 
 
-class HatsuneSpecialMissionDatum(base, Base["HatsuneSpecialMissionDatum"]):
+class HatsuneSpecialMissionDatum(DeclarativeBase, Base["HatsuneSpecialMissionDatum"]):
     __tablename__ = 'hatsune_special_mission_data'
 
     special_mission_id = Column(Integer, primary_key=True)
@@ -3406,7 +3401,7 @@ class HatsuneSpecialMissionDatum(base, Base["HatsuneSpecialMissionDatum"]):
     end_time = Column(Text, nullable=False)
 
 
-class HatsuneStationaryMissionDatum(base, Base["HatsuneStationaryMissionDatum"]):
+class HatsuneStationaryMissionDatum(DeclarativeBase, Base["HatsuneStationaryMissionDatum"]):
     __tablename__ = 'hatsune_stationary_mission_data'
 
     stationary_mission_id = Column(Integer, primary_key=True)
@@ -3425,7 +3420,7 @@ class HatsuneStationaryMissionDatum(base, Base["HatsuneStationaryMissionDatum"])
     end_time = Column(Text, nullable=False)
 
 
-class HatsuneUnlockStoryCondition(base, Base["HatsuneUnlockStoryCondition"]):
+class HatsuneUnlockStoryCondition(DeclarativeBase, Base["HatsuneUnlockStoryCondition"]):
     __tablename__ = 'hatsune_unlock_story_condition'
 
     story_id = Column(Integer, primary_key=True)
@@ -3438,7 +3433,7 @@ class HatsuneUnlockStoryCondition(base, Base["HatsuneUnlockStoryCondition"]):
     condition_story_id = Column(Integer, nullable=False)
 
 
-class HatsuneUnlockUnitCondition(base, Base["HatsuneUnlockUnitCondition"]):
+class HatsuneUnlockUnitCondition(DeclarativeBase, Base["HatsuneUnlockUnitCondition"]):
     __tablename__ = 'hatsune_unlock_unit_condition'
     __table_args__ = (
         Index('hatsune_unlock_unit_condition_0_unit_id_1_event_id', 'unit_id', 'event_id'),
@@ -3453,7 +3448,7 @@ class HatsuneUnlockUnitCondition(base, Base["HatsuneUnlockUnitCondition"]):
     description_2 = Column(Text, nullable=False)
 
 
-class ItemDatum(base, Base["ItemDatum"]):
+class ItemDatum(DeclarativeBase, Base["ItemDatum"]):
     __tablename__ = 'item_data'
 
     item_id = Column(Integer, primary_key=True)
@@ -3470,7 +3465,7 @@ class ItemDatum(base, Base["ItemDatum"]):
     end_time = Column(Text, nullable=False)
 
 
-class ItemETicketDatum(base, Base["ItemETicketDatum"]):
+class ItemETicketDatum(DeclarativeBase, Base["ItemETicketDatum"]):
     __tablename__ = 'item_e_ticket_data'
 
     ticket_id = Column(Integer, primary_key=True, nullable=False, index=True)
@@ -3489,7 +3484,7 @@ class ItemETicketDatum(base, Base["ItemETicketDatum"]):
     end_time = Column(Text, nullable=False)
 
 
-class KaiserAddTimesDatum(base, Base["KaiserAddTimesDatum"]):
+class KaiserAddTimesDatum(DeclarativeBase, Base["KaiserAddTimesDatum"]):
     __tablename__ = 'kaiser_add_times_data'
 
     id = Column(Integer, primary_key=True)
@@ -3498,7 +3493,7 @@ class KaiserAddTimesDatum(base, Base["KaiserAddTimesDatum"]):
     duration = Column(Integer, nullable=False)
 
 
-class KaiserExterminationReward(base, Base["KaiserExterminationReward"]):
+class KaiserExterminationReward(DeclarativeBase, Base["KaiserExterminationReward"]):
     __tablename__ = 'kaiser_extermination_reward'
 
     extermination_reward_group = Column(Integer, primary_key=True)
@@ -3519,7 +3514,7 @@ class KaiserExterminationReward(base, Base["KaiserExterminationReward"]):
     reward_count_5 = Column(Integer, nullable=False)
 
 
-class KaiserQuestDatum(base, Base["KaiserQuestDatum"]):
+class KaiserQuestDatum(DeclarativeBase, Base["KaiserQuestDatum"]):
     __tablename__ = 'kaiser_quest_data'
 
     kaiser_boss_id = Column(Integer, primary_key=True)
@@ -3558,14 +3553,14 @@ class KaiserQuestDatum(base, Base["KaiserQuestDatum"]):
     clear_story_id_2 = Column(Integer, nullable=False)
 
 
-class KaiserRestrictionGroup(base, Base["KaiserRestrictionGroup"]):
+class KaiserRestrictionGroup(DeclarativeBase, Base["KaiserRestrictionGroup"]):
     __tablename__ = 'kaiser_restriction_group'
 
     restriction_group_id = Column(Integer, primary_key=True, nullable=False, index=True)
     unit_id = Column(Integer, primary_key=True, nullable=False)
 
 
-class KaiserSchedule(base, Base["KaiserSchedule"]):
+class KaiserSchedule(DeclarativeBase, Base["KaiserSchedule"]):
     __tablename__ = 'kaiser_schedule'
 
     id = Column(Integer, primary_key=True)
@@ -3583,7 +3578,7 @@ class KaiserSchedule(base, Base["KaiserSchedule"]):
     after_bg = Column(Text, nullable=False)
 
 
-class KaiserSpecialBattle(base, Base["KaiserSpecialBattle"]):
+class KaiserSpecialBattle(DeclarativeBase, Base["KaiserSpecialBattle"]):
     __tablename__ = 'kaiser_special_battle'
 
     mode = Column(Integer, primary_key=True)
@@ -3602,7 +3597,7 @@ class KaiserSpecialBattle(base, Base["KaiserSpecialBattle"]):
     appear_time = Column(Float, nullable=False)
 
 
-class KmkNaviComment(base, Base["KmkNaviComment"]):
+class KmkNaviComment(DeclarativeBase, Base["KmkNaviComment"]):
     __tablename__ = 'kmk_navi_comment'
 
     comment_id = Column(Integer, primary_key=True)
@@ -3621,7 +3616,7 @@ class KmkNaviComment(base, Base["KmkNaviComment"]):
     event_id = Column(Integer, nullable=False)
 
 
-class KmkReward(base, Base["KmkReward"]):
+class KmkReward(DeclarativeBase, Base["KmkReward"]):
     __tablename__ = 'kmk_reward'
 
     id = Column(Integer, primary_key=True)
@@ -3644,7 +3639,7 @@ class KmkReward(base, Base["KmkReward"]):
     reward_count_5 = Column(Integer, nullable=False)
 
 
-class LegionAddTimesDatum(base, Base["LegionAddTimesDatum"]):
+class LegionAddTimesDatum(DeclarativeBase, Base["LegionAddTimesDatum"]):
     __tablename__ = 'legion_add_times_data'
 
     id = Column(Integer, primary_key=True)
@@ -3652,7 +3647,7 @@ class LegionAddTimesDatum(base, Base["LegionAddTimesDatum"]):
     add_times_time = Column(Text, nullable=False)
 
 
-class LegionBattleBonu(base, Base["LegionBattleBonu"]):
+class LegionBattleBonu(DeclarativeBase, Base["LegionBattleBonu"]):
     __tablename__ = 'legion_battle_bonus'
     __table_args__ = (
         Index('legion_battle_bonus_0_type_1_legion_boss_id', 'type', 'legion_boss_id'),
@@ -3668,7 +3663,7 @@ class LegionBattleBonu(base, Base["LegionBattleBonu"]):
     description = Column(Text, nullable=False)
 
 
-class LegionBattleBonusEffect(base, Base["LegionBattleBonusEffect"]):
+class LegionBattleBonusEffect(DeclarativeBase, Base["LegionBattleBonusEffect"]):
     __tablename__ = 'legion_battle_bonus_effect'
 
     legion_battle_effect_id = Column(Integer, primary_key=True)
@@ -3679,7 +3674,7 @@ class LegionBattleBonusEffect(base, Base["LegionBattleBonusEffect"]):
     target_type = Column(Integer, nullable=False)
 
 
-class LegionBossEnemySetting(base, Base["LegionBossEnemySetting"]):
+class LegionBossEnemySetting(DeclarativeBase, Base["LegionBossEnemySetting"]):
     __tablename__ = 'legion_boss_enemy_setting'
 
     boss_id = Column(Integer, primary_key=True)
@@ -3688,7 +3683,7 @@ class LegionBossEnemySetting(base, Base["LegionBossEnemySetting"]):
     detail_offset_scale = Column(Float, nullable=False)
 
 
-class LegionEffect(base, Base["LegionEffect"]):
+class LegionEffect(DeclarativeBase, Base["LegionEffect"]):
     __tablename__ = 'legion_effect'
 
     effect_id = Column(Integer, primary_key=True)
@@ -3699,7 +3694,7 @@ class LegionEffect(base, Base["LegionEffect"]):
     bonus_5 = Column(Integer, nullable=False)
 
 
-class LegionEffectiveUnit(base, Base["LegionEffectiveUnit"]):
+class LegionEffectiveUnit(DeclarativeBase, Base["LegionEffectiveUnit"]):
     __tablename__ = 'legion_effective_unit'
 
     legion_boss_id = Column(Integer, primary_key=True, nullable=False, index=True)
@@ -3708,7 +3703,7 @@ class LegionEffectiveUnit(base, Base["LegionEffectiveUnit"]):
     support_effect_id = Column(Integer, nullable=False)
 
 
-class LegionExterminationReward(base, Base["LegionExterminationReward"]):
+class LegionExterminationReward(DeclarativeBase, Base["LegionExterminationReward"]):
     __tablename__ = 'legion_extermination_reward'
 
     extermination_reward_group_id = Column(Integer, primary_key=True)
@@ -3729,14 +3724,14 @@ class LegionExterminationReward(base, Base["LegionExterminationReward"]):
     reward_count_5 = Column(Integer, nullable=False)
 
 
-class LegionMissionCategoryDatum(base, Base["LegionMissionCategoryDatum"]):
+class LegionMissionCategoryDatum(DeclarativeBase, Base["LegionMissionCategoryDatum"]):
     __tablename__ = 'legion_mission_category_data'
 
     category_id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
 
 
-class LegionMissionDatum(base, Base["LegionMissionDatum"]):
+class LegionMissionDatum(DeclarativeBase, Base["LegionMissionDatum"]):
     __tablename__ = 'legion_mission_data'
 
     legion_mission_id = Column(Integer, primary_key=True)
@@ -3752,7 +3747,7 @@ class LegionMissionDatum(base, Base["LegionMissionDatum"]):
     end_time = Column(Text, nullable=False)
 
 
-class LegionMissionRewardDatum(base, Base["LegionMissionRewardDatum"]):
+class LegionMissionRewardDatum(DeclarativeBase, Base["LegionMissionRewardDatum"]):
     __tablename__ = 'legion_mission_reward_data'
 
     id = Column(Integer, primary_key=True)
@@ -3762,7 +3757,7 @@ class LegionMissionRewardDatum(base, Base["LegionMissionRewardDatum"]):
     reward_num = Column(Integer, nullable=False)
 
 
-class LegionQuestDatum(base, Base["LegionQuestDatum"]):
+class LegionQuestDatum(DeclarativeBase, Base["LegionQuestDatum"]):
     __tablename__ = 'legion_quest_data'
 
     legion_boss_id = Column(Integer, primary_key=True)
@@ -3800,7 +3795,7 @@ class LegionQuestDatum(base, Base["LegionQuestDatum"]):
     bonus_max = Column(Integer, nullable=False)
 
 
-class LegionSchedule(base, Base["LegionSchedule"]):
+class LegionSchedule(DeclarativeBase, Base["LegionSchedule"]):
     __tablename__ = 'legion_schedule'
 
     id = Column(Integer, primary_key=True)
@@ -3816,7 +3811,7 @@ class LegionSchedule(base, Base["LegionSchedule"]):
     top_bg = Column(Text, nullable=False)
 
 
-class LegionSpecialBattle(base, Base["LegionSpecialBattle"]):
+class LegionSpecialBattle(DeclarativeBase, Base["LegionSpecialBattle"]):
     __tablename__ = 'legion_special_battle'
 
     mode = Column(Integer, primary_key=True)
@@ -3832,7 +3827,7 @@ class LegionSpecialBattle(base, Base["LegionSpecialBattle"]):
     hp_gauge_color_flag = Column(Integer, nullable=False)
 
 
-class LoginBonusAdv(base, Base["LoginBonusAdv"]):
+class LoginBonusAdv(DeclarativeBase, Base["LoginBonusAdv"]):
     __tablename__ = 'login_bonus_adv'
 
     id = Column(Integer, primary_key=True)
@@ -3844,7 +3839,7 @@ class LoginBonusAdv(base, Base["LoginBonusAdv"]):
     read_process_flag = Column(Integer, nullable=False)
 
 
-class LoginBonusDatum(base, Base["LoginBonusDatum"]):
+class LoginBonusDatum(DeclarativeBase, Base["LoginBonusDatum"]):
     __tablename__ = 'login_bonus_data'
 
     login_bonus_id = Column(Integer, primary_key=True)
@@ -3860,7 +3855,7 @@ class LoginBonusDatum(base, Base["LoginBonusDatum"]):
     count_type = Column(Integer, nullable=False)
 
 
-class LoginBonusDetail(base, Base["LoginBonusDetail"]):
+class LoginBonusDetail(DeclarativeBase, Base["LoginBonusDetail"]):
     __tablename__ = 'login_bonus_detail'
     __table_args__ = (
         Index('login_bonus_detail_0_login_bonus_id_1_count', 'login_bonus_id', 'count'),
@@ -3879,7 +3874,7 @@ class LoginBonusDetail(base, Base["LoginBonusDetail"]):
     bg_id = Column(Integer, nullable=False)
 
 
-class LoginBonusMessageDatum(base, Base["LoginBonusMessageDatum"]):
+class LoginBonusMessageDatum(DeclarativeBase, Base["LoginBonusMessageDatum"]):
     __tablename__ = 'login_bonus_message_data'
 
     id = Column(Integer, primary_key=True)
@@ -3896,7 +3891,7 @@ class LoginBonusMessageDatum(base, Base["LoginBonusMessageDatum"]):
     additional_param = Column(Text, nullable=False)
 
 
-class LoveChara(base, Base["LoveChara"]):
+class LoveChara(DeclarativeBase, Base["LoveChara"]):
     __tablename__ = 'love_chara'
 
     love_level = Column(Integer, primary_key=True)
@@ -3905,7 +3900,7 @@ class LoveChara(base, Base["LoveChara"]):
     rarity = Column(Integer, nullable=False)
 
 
-class LoveRankup(base, Base["LoveRankup"]):
+class LoveRankup(DeclarativeBase, Base["LoveRankup"]):
     __tablename__ = 'love_rankup'
 
     unit_id = Column(Integer, primary_key=True, nullable=False, index=True)
@@ -3913,7 +3908,7 @@ class LoveRankup(base, Base["LoveRankup"]):
     effect_unit_id = Column(Integer, nullable=False)
 
 
-class LtoLetterScript(base, Base["LtoLetterScript"]):
+class LtoLetterScript(DeclarativeBase, Base["LtoLetterScript"]):
     __tablename__ = 'lto_letter_script'
 
     id = Column(Integer, primary_key=True)
@@ -3930,7 +3925,7 @@ class LtoLetterScript(base, Base["LtoLetterScript"]):
     command_param = Column(Float, nullable=False)
 
 
-class LtoStoryDatum(base, Base["LtoStoryDatum"]):
+class LtoStoryDatum(DeclarativeBase, Base["LtoStoryDatum"]):
     __tablename__ = 'lto_story_data'
 
     sub_story_id = Column(Integer, primary_key=True)
@@ -3942,7 +3937,7 @@ class LtoStoryDatum(base, Base["LtoStoryDatum"]):
     reward_count = Column(Integer, nullable=False)
 
 
-class Metamorphose(base, Base["Metamorphose"]):
+class Metamorphose(DeclarativeBase, Base["Metamorphose"]):
     __tablename__ = 'metamorphose'
 
     type_id = Column(Integer, primary_key=True, nullable=False, index=True)
@@ -3950,7 +3945,7 @@ class Metamorphose(base, Base["Metamorphose"]):
     prefab_id = Column(Integer, nullable=False)
 
 
-class MhpDramaScript(base, Base["MhpDramaScript"]):
+class MhpDramaScript(DeclarativeBase, Base["MhpDramaScript"]):
     __tablename__ = 'mhp_drama_script'
 
     command_id = Column(Integer, primary_key=True)
@@ -3966,7 +3961,7 @@ class MhpDramaScript(base, Base["MhpDramaScript"]):
     param_08 = Column(Text, nullable=False)
 
 
-class MhpStoryDatum(base, Base["MhpStoryDatum"]):
+class MhpStoryDatum(DeclarativeBase, Base["MhpStoryDatum"]):
     __tablename__ = 'mhp_story_data'
 
     sub_story_id = Column(Integer, primary_key=True)
@@ -3983,7 +3978,7 @@ class MhpStoryDatum(base, Base["MhpStoryDatum"]):
     reward_count = Column(Integer, nullable=False)
 
 
-class Minigame(base, Base["Minigame"]):
+class Minigame(DeclarativeBase, Base["Minigame"]):
     __tablename__ = 'minigame'
 
     id = Column(Integer, nullable=False)
@@ -3999,7 +3994,7 @@ class Minigame(base, Base["Minigame"]):
     is_enabled_zero_score = Column(Integer, nullable=False)
 
 
-class MissionRewardDatum(base, Base["MissionRewardDatum"]):
+class MissionRewardDatum(DeclarativeBase, Base["MissionRewardDatum"]):
     __tablename__ = 'mission_reward_data'
 
     id = Column(Integer, primary_key=True)
@@ -4013,7 +4008,7 @@ class MissionRewardDatum(base, Base["MissionRewardDatum"]):
     end_time = Column(Text, nullable=False)
 
 
-class Movie(base, Base["Movie"]):
+class Movie(DeclarativeBase, Base["Movie"]):
     __tablename__ = 'movie'
 
     movie_id = Column(Integer, primary_key=True)
@@ -4026,7 +4021,7 @@ class Movie(base, Base["Movie"]):
     bgm_volume_rate = Column(Float, nullable=False)
 
 
-class MusicContent(base, Base["MusicContent"]):
+class MusicContent(DeclarativeBase, Base["MusicContent"]):
     __tablename__ = 'music_content'
 
     music_id = Column(Integer, primary_key=True)
@@ -4038,7 +4033,7 @@ class MusicContent(base, Base["MusicContent"]):
     cue_id = Column(Text, nullable=False)
 
 
-class MusicList(base, Base["MusicList"]):
+class MusicList(DeclarativeBase, Base["MusicList"]):
     __tablename__ = 'music_list'
 
     music_id = Column(Integer, primary_key=True)
@@ -4056,7 +4051,7 @@ class MusicList(base, Base["MusicList"]):
     dmm_url = Column(Text, nullable=False)
 
 
-class MypageFrame(base, Base["MypageFrame"]):
+class MypageFrame(DeclarativeBase, Base["MypageFrame"]):
     __tablename__ = 'mypage_frame'
 
     frame_id = Column(Integer, primary_key=True)
@@ -4066,7 +4061,7 @@ class MypageFrame(base, Base["MypageFrame"]):
     start_time = Column(Text, nullable=False)
 
 
-class MyprofileContent(base, Base["MyprofileContent"]):
+class MyprofileContent(DeclarativeBase, Base["MyprofileContent"]):
     __tablename__ = 'myprofile_content'
 
     id = Column(Integer, primary_key=True)
@@ -4076,7 +4071,7 @@ class MyprofileContent(base, Base["MyprofileContent"]):
     disp_order = Column(Integer, nullable=False)
 
 
-class NaviComment(base, Base["NaviComment"]):
+class NaviComment(DeclarativeBase, Base["NaviComment"]):
     __tablename__ = 'navi_comment'
 
     comment_id = Column(Integer, primary_key=True)
@@ -4095,7 +4090,7 @@ class NaviComment(base, Base["NaviComment"]):
     event_id = Column(Integer, nullable=False)
 
 
-class NopDramaDatum(base, Base["NopDramaDatum"]):
+class NopDramaDatum(DeclarativeBase, Base["NopDramaDatum"]):
     __tablename__ = 'nop_drama_data'
 
     id = Column(Integer, primary_key=True)
@@ -4116,7 +4111,7 @@ class NopDramaDatum(base, Base["NopDramaDatum"]):
     sub_story_id = Column(Integer, nullable=False)
 
 
-class NopDramaScript(base, Base["NopDramaScript"]):
+class NopDramaScript(DeclarativeBase, Base["NopDramaScript"]):
     __tablename__ = 'nop_drama_script'
 
     command_id = Column(Integer, primary_key=True)
@@ -4132,7 +4127,7 @@ class NopDramaScript(base, Base["NopDramaScript"]):
     param_08 = Column(Text, nullable=False)
 
 
-class NotifDatum(base, Base["NotifDatum"]):
+class NotifDatum(DeclarativeBase, Base["NotifDatum"]):
     __tablename__ = 'notif_data'
 
     unit_id = Column(Integer, primary_key=True, nullable=False, index=True)
@@ -4140,7 +4135,7 @@ class NotifDatum(base, Base["NotifDatum"]):
     comment = Column(Text, nullable=False)
 
 
-class NyxDramaDatum(base, Base["NyxDramaDatum"]):
+class NyxDramaDatum(DeclarativeBase, Base["NyxDramaDatum"]):
     __tablename__ = 'nyx_drama_data'
 
     drama_id = Column(Integer, primary_key=True)
@@ -4151,7 +4146,7 @@ class NyxDramaDatum(base, Base["NyxDramaDatum"]):
     condition_locked_story_id = Column(Integer, nullable=False)
 
 
-class NyxDramaScript(base, Base["NyxDramaScript"]):
+class NyxDramaScript(DeclarativeBase, Base["NyxDramaScript"]):
     __tablename__ = 'nyx_drama_script'
 
     command_id = Column(Integer, primary_key=True)
@@ -4167,7 +4162,7 @@ class NyxDramaScript(base, Base["NyxDramaScript"]):
     param_08 = Column(Text, nullable=False)
 
 
-class NyxPhaseDatum(base, Base["NyxPhaseDatum"]):
+class NyxPhaseDatum(DeclarativeBase, Base["NyxPhaseDatum"]):
     __tablename__ = 'nyx_phase_data'
 
     story_phase = Column(Integer, primary_key=True)
@@ -4176,7 +4171,7 @@ class NyxPhaseDatum(base, Base["NyxPhaseDatum"]):
     condition_quest_boss = Column(Integer, nullable=False)
 
 
-class NyxStoryDatum(base, Base["NyxStoryDatum"]):
+class NyxStoryDatum(DeclarativeBase, Base["NyxStoryDatum"]):
     __tablename__ = 'nyx_story_data'
 
     story_id = Column(Integer, primary_key=True)
@@ -4191,7 +4186,7 @@ class NyxStoryDatum(base, Base["NyxStoryDatum"]):
     adv_id = Column(Integer, nullable=False)
 
 
-class NyxStoryScript(base, Base["NyxStoryScript"]):
+class NyxStoryScript(DeclarativeBase, Base["NyxStoryScript"]):
     __tablename__ = 'nyx_story_script'
 
     id = Column(Integer, primary_key=True)
@@ -4208,7 +4203,7 @@ class NyxStoryScript(base, Base["NyxStoryScript"]):
     command_param = Column(Float, nullable=False)
 
 
-class OddsNameDatum(base, Base["OddsNameDatum"]):
+class OddsNameDatum(DeclarativeBase, Base["OddsNameDatum"]):
     __tablename__ = 'odds_name_data'
 
     id = Column(Integer, primary_key=True)
@@ -4218,7 +4213,7 @@ class OddsNameDatum(base, Base["OddsNameDatum"]):
     description = Column(Text, nullable=False)
 
 
-class OmpDrama(base, Base["OmpDrama"]):
+class OmpDrama(DeclarativeBase, Base["OmpDrama"]):
     __tablename__ = 'omp_drama'
 
     command_id = Column(Integer, primary_key=True)
@@ -4234,7 +4229,7 @@ class OmpDrama(base, Base["OmpDrama"]):
     param_08 = Column(Text, nullable=False)
 
 
-class OmpStoryDatum(base, Base["OmpStoryDatum"]):
+class OmpStoryDatum(DeclarativeBase, Base["OmpStoryDatum"]):
     __tablename__ = 'omp_story_data'
 
     omp_story_id = Column(Integer, primary_key=True)
@@ -4249,7 +4244,7 @@ class OmpStoryDatum(base, Base["OmpStoryDatum"]):
     sub_title = Column(Text, nullable=False)
 
 
-class PctComboCoefficient(base, Base["PctComboCoefficient"]):
+class PctComboCoefficient(DeclarativeBase, Base["PctComboCoefficient"]):
     __tablename__ = 'pct_combo_coefficient'
 
     id = Column(Integer, primary_key=True)
@@ -4258,7 +4253,7 @@ class PctComboCoefficient(base, Base["PctComboCoefficient"]):
     combo_coefficient = Column(Integer, nullable=False)
 
 
-class PctEvaluation(base, Base["PctEvaluation"]):
+class PctEvaluation(DeclarativeBase, Base["PctEvaluation"]):
     __tablename__ = 'pct_evaluation'
 
     evaluation_id = Column(Integer, primary_key=True)
@@ -4267,7 +4262,7 @@ class PctEvaluation(base, Base["PctEvaluation"]):
     meet_width = Column(Integer, nullable=False)
 
 
-class PctGamingMotion(base, Base["PctGamingMotion"]):
+class PctGamingMotion(DeclarativeBase, Base["PctGamingMotion"]):
     __tablename__ = 'pct_gaming_motion'
 
     motion_id = Column(Integer, primary_key=True)
@@ -4277,7 +4272,7 @@ class PctGamingMotion(base, Base["PctGamingMotion"]):
     point = Column(Integer, nullable=False)
 
 
-class PctItempoint(base, Base["PctItempoint"]):
+class PctItempoint(DeclarativeBase, Base["PctItempoint"]):
     __tablename__ = 'pct_itempoint'
 
     id = Column(Integer, primary_key=True)
@@ -4285,7 +4280,7 @@ class PctItempoint(base, Base["PctItempoint"]):
     pct_point_coefficient = Column(Integer, nullable=False)
 
 
-class PctResult(base, Base["PctResult"]):
+class PctResult(DeclarativeBase, Base["PctResult"]):
     __tablename__ = 'pct_result'
 
     id = Column(Integer, primary_key=True)
@@ -4299,7 +4294,7 @@ class PctResult(base, Base["PctResult"]):
     comment_id_5 = Column(Integer, nullable=False)
 
 
-class PctReward(base, Base["PctReward"]):
+class PctReward(DeclarativeBase, Base["PctReward"]):
     __tablename__ = 'pct_reward'
 
     id = Column(Integer, primary_key=True)
@@ -4323,7 +4318,7 @@ class PctReward(base, Base["PctReward"]):
     reward_count_5 = Column(Integer, nullable=False)
 
 
-class PctSystem(base, Base["PctSystem"]):
+class PctSystem(DeclarativeBase, Base["PctSystem"]):
     __tablename__ = 'pct_system'
 
     id = Column(Integer, primary_key=True)
@@ -4338,7 +4333,7 @@ class PctSystem(base, Base["PctSystem"]):
     chara2_gauge_choice = Column(Integer, nullable=False)
 
 
-class PctSystemFruit(base, Base["PctSystemFruit"]):
+class PctSystemFruit(DeclarativeBase, Base["PctSystemFruit"]):
     __tablename__ = 'pct_system_fruits'
 
     id = Column(Integer, primary_key=True)
@@ -4350,7 +4345,7 @@ class PctSystemFruit(base, Base["PctSystemFruit"]):
     wait_time = Column(Integer, nullable=False)
 
 
-class PctTapSpeed(base, Base["PctTapSpeed"]):
+class PctTapSpeed(DeclarativeBase, Base["PctTapSpeed"]):
     __tablename__ = 'pct_tap_speed'
 
     id = Column(Integer, primary_key=True)
@@ -4358,7 +4353,7 @@ class PctTapSpeed(base, Base["PctTapSpeed"]):
     speed_magnification = Column(Integer, nullable=False)
 
 
-class PkbBatterCondition(base, Base["PkbBatterCondition"]):
+class PkbBatterCondition(DeclarativeBase, Base["PkbBatterCondition"]):
     __tablename__ = 'pkb_batter_condition'
 
     batter_id = Column(Integer, primary_key=True)
@@ -4373,7 +4368,7 @@ class PkbBatterCondition(base, Base["PkbBatterCondition"]):
     is_playable = Column(Integer, nullable=False)
 
 
-class PkbDrama(base, Base["PkbDrama"]):
+class PkbDrama(DeclarativeBase, Base["PkbDrama"]):
     __tablename__ = 'pkb_drama'
 
     command_id = Column(Integer, primary_key=True)
@@ -4389,7 +4384,7 @@ class PkbDrama(base, Base["PkbDrama"]):
     param_08 = Column(Text, nullable=False)
 
 
-class PkbDramaDatum(base, Base["PkbDramaDatum"]):
+class PkbDramaDatum(DeclarativeBase, Base["PkbDramaDatum"]):
     __tablename__ = 'pkb_drama_data'
 
     drama_id = Column(Integer, primary_key=True)
@@ -4399,7 +4394,7 @@ class PkbDramaDatum(base, Base["PkbDramaDatum"]):
     condition_batter_id_2 = Column(Integer, nullable=False)
 
 
-class PkbNaviComment(base, Base["PkbNaviComment"]):
+class PkbNaviComment(DeclarativeBase, Base["PkbNaviComment"]):
     __tablename__ = 'pkb_navi_comment'
 
     comment_id = Column(Integer, primary_key=True)
@@ -4418,7 +4413,7 @@ class PkbNaviComment(base, Base["PkbNaviComment"]):
     event_id = Column(Integer, nullable=False)
 
 
-class PkbPitcherBallType(base, Base["PkbPitcherBallType"]):
+class PkbPitcherBallType(DeclarativeBase, Base["PkbPitcherBallType"]):
     __tablename__ = 'pkb_pitcher_ball_type'
 
     pitcher_id = Column(Integer, primary_key=True, nullable=False, index=True)
@@ -4426,7 +4421,7 @@ class PkbPitcherBallType(base, Base["PkbPitcherBallType"]):
     ball_type_name = Column(Text, nullable=False)
 
 
-class PkbReward(base, Base["PkbReward"]):
+class PkbReward(DeclarativeBase, Base["PkbReward"]):
     __tablename__ = 'pkb_reward'
 
     id = Column(Integer, primary_key=True)
@@ -4449,7 +4444,7 @@ class PkbReward(base, Base["PkbReward"]):
     reward_count_5 = Column(Integer, nullable=False)
 
 
-class PositionSetting(base, Base["PositionSetting"]):
+class PositionSetting(DeclarativeBase, Base["PositionSetting"]):
     __tablename__ = 'position_setting'
 
     position_setting_id = Column(Integer, primary_key=True)
@@ -4457,7 +4452,7 @@ class PositionSetting(base, Base["PositionSetting"]):
     middle = Column(Integer, nullable=False)
 
 
-class PrizegachaDatum(base, Base["PrizegachaDatum"]):
+class PrizegachaDatum(DeclarativeBase, Base["PrizegachaDatum"]):
     __tablename__ = 'prizegacha_data'
 
     prizegacha_id = Column(Integer, primary_key=True)
@@ -4489,7 +4484,7 @@ class PrizegachaDatum(base, Base["PrizegachaDatum"]):
     disp_prize_fixed_compensation = Column(Integer, nullable=False)
 
 
-class PrizegachaSpDatum(base, Base["PrizegachaSpDatum"]):
+class PrizegachaSpDatum(DeclarativeBase, Base["PrizegachaSpDatum"]):
     __tablename__ = 'prizegacha_sp_data'
 
     gacha_id = Column(Integer, primary_key=True, nullable=False, index=True)
@@ -4497,7 +4492,7 @@ class PrizegachaSpDatum(base, Base["PrizegachaSpDatum"]):
     disp_rarity = Column(Integer, nullable=False)
 
 
-class PrizegachaSpDetail(base, Base["PrizegachaSpDetail"]):
+class PrizegachaSpDetail(DeclarativeBase, Base["PrizegachaSpDetail"]):
     __tablename__ = 'prizegacha_sp_detail'
 
     disp_rarity = Column(Integer, primary_key=True)
@@ -4505,7 +4500,7 @@ class PrizegachaSpDetail(base, Base["PrizegachaSpDetail"]):
     name = Column(Text, nullable=False)
 
 
-class ProfileFrame(base, Base["ProfileFrame"]):
+class ProfileFrame(DeclarativeBase, Base["ProfileFrame"]):
     __tablename__ = 'profile_frame'
 
     id = Column(Integer, primary_key=True)
@@ -4516,7 +4511,7 @@ class ProfileFrame(base, Base["ProfileFrame"]):
     disp_order = Column(Integer, nullable=False)
 
 
-class PromotionBonu(base, Base["PromotionBonu"]):
+class PromotionBonu(DeclarativeBase, Base["PromotionBonu"]):
     __tablename__ = 'promotion_bonus'
 
     unit_id = Column(Integer, primary_key=True, nullable=False, index=True)
@@ -4540,7 +4535,7 @@ class PromotionBonu(base, Base["PromotionBonu"]):
     accuracy = Column(Float, nullable=False)
 
 
-class PsyDrama(base, Base["PsyDrama"]):
+class PsyDrama(DeclarativeBase, Base["PsyDrama"]):
     __tablename__ = 'psy_drama'
 
     drama_id = Column(Integer, primary_key=True)
@@ -4560,7 +4555,7 @@ class PsyDrama(base, Base["PsyDrama"]):
     title = Column(Text, nullable=False)
 
 
-class PsyDramaScript(base, Base["PsyDramaScript"]):
+class PsyDramaScript(DeclarativeBase, Base["PsyDramaScript"]):
     __tablename__ = 'psy_drama_script'
 
     command_id = Column(Integer, primary_key=True)
@@ -4576,7 +4571,7 @@ class PsyDramaScript(base, Base["PsyDramaScript"]):
     param_08 = Column(Text, nullable=False)
 
 
-class PsyNote(base, Base["PsyNote"]):
+class PsyNote(DeclarativeBase, Base["PsyNote"]):
     __tablename__ = 'psy_note'
 
     psy_product_id = Column(Integer, primary_key=True)
@@ -4590,7 +4585,7 @@ class PsyNote(base, Base["PsyNote"]):
     init_flg = Column(Integer, nullable=False)
 
 
-class PsyReward(base, Base["PsyReward"]):
+class PsyReward(DeclarativeBase, Base["PsyReward"]):
     __tablename__ = 'psy_reward'
 
     id = Column(Integer, primary_key=True)
@@ -4611,7 +4606,7 @@ class PsyReward(base, Base["PsyReward"]):
     description = Column(Text, nullable=False)
 
 
-class QuestAnnihilation(base, Base["QuestAnnihilation"]):
+class QuestAnnihilation(DeclarativeBase, Base["QuestAnnihilation"]):
     __tablename__ = 'quest_annihilation'
 
     system_id = Column(Integer, primary_key=True, nullable=False)
@@ -4621,7 +4616,7 @@ class QuestAnnihilation(base, Base["QuestAnnihilation"]):
     se_cue_name = Column(Text, nullable=False)
 
 
-class QuestAreaDatum(base, Base["QuestAreaDatum"]):
+class QuestAreaDatum(DeclarativeBase, Base["QuestAreaDatum"]):
     __tablename__ = 'quest_area_data'
 
     area_id = Column(Integer, primary_key=True)
@@ -4634,7 +4629,7 @@ class QuestAreaDatum(base, Base["QuestAreaDatum"]):
     end_time = Column(Text, nullable=False)
 
 
-class QuestConditionDatum(base, Base["QuestConditionDatum"]):
+class QuestConditionDatum(DeclarativeBase, Base["QuestConditionDatum"]):
     __tablename__ = 'quest_condition_data'
 
     quest_id = Column(Integer, primary_key=True)
@@ -4650,7 +4645,7 @@ class QuestConditionDatum(base, Base["QuestConditionDatum"]):
     release_quest_id_5 = Column(Integer, nullable=False)
 
 
-class QuestDatum(base, Base["QuestDatum"]):
+class QuestDatum(DeclarativeBase, Base["QuestDatum"]):
     __tablename__ = 'quest_data'
 
     quest_id = Column(Integer, primary_key=True)
@@ -4705,7 +4700,7 @@ class QuestDatum(base, Base["QuestDatum"]):
     add_treasure_num = Column(Integer, nullable=False)
 
 
-class QuestDefeatNotice(base, Base["QuestDefeatNotice"]):
+class QuestDefeatNotice(DeclarativeBase, Base["QuestDefeatNotice"]):
     __tablename__ = 'quest_defeat_notice'
 
     id = Column(Integer, primary_key=True)
@@ -4714,7 +4709,7 @@ class QuestDefeatNotice(base, Base["QuestDefeatNotice"]):
     required_quest_id = Column(Integer, nullable=False)
 
 
-class QuestRewardDatum(base, Base["QuestRewardDatum"]):
+class QuestRewardDatum(DeclarativeBase, Base["QuestRewardDatum"]):
     __tablename__ = 'quest_reward_data'
 
     reward_group_id = Column(Integer, primary_key=True)
@@ -4735,7 +4730,7 @@ class QuestRewardDatum(base, Base["QuestRewardDatum"]):
     reward_num_5 = Column(Integer, nullable=False)
 
 
-class Rarity6QuestDatum(base, Base["Rarity6QuestDatum"]):
+class Rarity6QuestDatum(DeclarativeBase, Base["Rarity6QuestDatum"]):
     __tablename__ = 'rarity_6_quest_data'
 
     rarity_6_quest_id = Column(Integer, nullable=False, index=True)
@@ -4776,14 +4771,14 @@ class Rarity6QuestDatum(base, Base["Rarity6QuestDatum"]):
     wave_bgm = Column(Text, nullable=False)
 
 
-class RedeemStaticPriceGroup(base, Base["RedeemStaticPriceGroup"]):
+class RedeemStaticPriceGroup(DeclarativeBase, Base["RedeemStaticPriceGroup"]):
     __tablename__ = 'redeem_static_price_group'
 
     condition_category = Column(Integer, primary_key=True)
     count = Column(Integer, nullable=False)
 
 
-class RedeemUnit(base, Base["RedeemUnit"]):
+class RedeemUnit(DeclarativeBase, Base["RedeemUnit"]):
     __tablename__ = 'redeem_unit'
 
     id = Column(Integer, primary_key=True)
@@ -4794,14 +4789,14 @@ class RedeemUnit(base, Base["RedeemUnit"]):
     consume_num = Column(Text, nullable=False)
 
 
-class RedeemUnitBg(base, Base["RedeemUnitBg"]):
+class RedeemUnitBg(DeclarativeBase, Base["RedeemUnitBg"]):
     __tablename__ = 'redeem_unit_bg'
 
     unit_id = Column(Integer, primary_key=True)
     bg_id = Column(Integer, nullable=False)
 
 
-class ResistDatum(base, Base["ResistDatum"]):
+class ResistDatum(DeclarativeBase, Base["ResistDatum"]):
     __tablename__ = 'resist_data'
 
     resist_status_id = Column(Integer, primary_key=True)
@@ -4857,7 +4852,7 @@ class ResistDatum(base, Base["ResistDatum"]):
     ailment_50 = Column(Integer, nullable=False)
 
 
-class ResistVariationDatum(base, Base["ResistVariationDatum"]):
+class ResistVariationDatum(DeclarativeBase, Base["ResistVariationDatum"]):
     __tablename__ = 'resist_variation_data'
 
     resist_variation_id = Column(Integer, primary_key=True)
@@ -4867,7 +4862,7 @@ class ResistVariationDatum(base, Base["ResistVariationDatum"]):
     value_4 = Column(Integer, nullable=False)
 
 
-class ReturnSpecialfesBanner(base, Base["ReturnSpecialfesBanner"]):
+class ReturnSpecialfesBanner(DeclarativeBase, Base["ReturnSpecialfesBanner"]):
     __tablename__ = 'return_specialfes_banner'
 
     gacha_id = Column(Integer, primary_key=True)
@@ -4883,7 +4878,7 @@ class ReturnSpecialfesBanner(base, Base["ReturnSpecialfesBanner"]):
     banner_id_10 = Column(Integer, nullable=False)
 
 
-class RewardCollectGuide(base, Base["RewardCollectGuide"]):
+class RewardCollectGuide(DeclarativeBase, Base["RewardCollectGuide"]):
     __tablename__ = 'reward_collect_guide'
 
     object_id = Column(Integer, primary_key=True)
@@ -4904,7 +4899,7 @@ class RewardCollectGuide(base, Base["RewardCollectGuide"]):
     system_id_5 = Column(Integer, nullable=False)
 
 
-class RoomChange(base, Base["RoomChange"]):
+class RoomChange(DeclarativeBase, Base["RoomChange"]):
     __tablename__ = 'room_change'
 
     room_item_id = Column(Integer, primary_key=True)
@@ -4913,21 +4908,21 @@ class RoomChange(base, Base["RoomChange"]):
     change_end = Column(Text, nullable=False)
 
 
-class RoomCharacterPersonality(base, Base["RoomCharacterPersonality"]):
+class RoomCharacterPersonality(DeclarativeBase, Base["RoomCharacterPersonality"]):
     __tablename__ = 'room_character_personality'
 
     character_id = Column(Integer, primary_key=True)
     personality_id = Column(Integer, nullable=False)
 
 
-class RoomCharacterSkinColor(base, Base["RoomCharacterSkinColor"]):
+class RoomCharacterSkinColor(DeclarativeBase, Base["RoomCharacterSkinColor"]):
     __tablename__ = 'room_character_skin_color'
 
     character_id = Column(Integer, primary_key=True)
     skin_color_id = Column(Integer, nullable=False)
 
 
-class RoomChatFormation(base, Base["RoomChatFormation"]):
+class RoomChatFormation(DeclarativeBase, Base["RoomChatFormation"]):
     __tablename__ = 'room_chat_formation'
 
     id = Column(Integer, primary_key=True)
@@ -4959,7 +4954,7 @@ class RoomChatFormation(base, Base["RoomChatFormation"]):
     ignore_unit_id5 = Column(Integer)
 
 
-class RoomChatInfo(base, Base["RoomChatInfo"]):
+class RoomChatInfo(DeclarativeBase, Base["RoomChatInfo"]):
     __tablename__ = 'room_chat_info'
 
     id = Column(Integer, primary_key=True)
@@ -4967,7 +4962,7 @@ class RoomChatInfo(base, Base["RoomChatInfo"]):
     scenario_id = Column(Integer, nullable=False)
 
 
-class RoomChatScenario(base, Base["RoomChatScenario"]):
+class RoomChatScenario(DeclarativeBase, Base["RoomChatScenario"]):
     __tablename__ = 'room_chat_scenario'
 
     id = Column(Integer, primary_key=True, nullable=False, index=True)
@@ -4979,7 +4974,7 @@ class RoomChatScenario(base, Base["RoomChatScenario"]):
     icon_id = Column(Integer, nullable=False)
 
 
-class RoomEffect(base, Base["RoomEffect"]):
+class RoomEffect(DeclarativeBase, Base["RoomEffect"]):
     __tablename__ = 'room_effect'
 
     id = Column(Integer, primary_key=True)
@@ -4992,7 +4987,7 @@ class RoomEffect(base, Base["RoomEffect"]):
     stock = Column(Integer, nullable=False)
 
 
-class RoomEffectRewardGet(base, Base["RoomEffectRewardGet"]):
+class RoomEffectRewardGet(DeclarativeBase, Base["RoomEffectRewardGet"]):
     __tablename__ = 'room_effect_reward_get'
 
     id = Column(Integer, primary_key=True, nullable=False)
@@ -5006,7 +5001,7 @@ class RoomEffectRewardGet(base, Base["RoomEffectRewardGet"]):
     stock_mid_step = Column(Text, nullable=False)
 
 
-class RoomEmotionIcon(base, Base["RoomEmotionIcon"]):
+class RoomEmotionIcon(DeclarativeBase, Base["RoomEmotionIcon"]):
     __tablename__ = 'room_emotion_icon'
 
     id = Column(Integer, primary_key=True)
@@ -5014,7 +5009,7 @@ class RoomEmotionIcon(base, Base["RoomEmotionIcon"]):
     enable_tap = Column(Integer, nullable=False)
 
 
-class RoomExclusiveCondition(base, Base["RoomExclusiveCondition"]):
+class RoomExclusiveCondition(DeclarativeBase, Base["RoomExclusiveCondition"]):
     __tablename__ = 'room_exclusive_condition'
 
     id = Column(Integer, primary_key=True)
@@ -5023,7 +5018,7 @@ class RoomExclusiveCondition(base, Base["RoomExclusiveCondition"]):
     notification = Column(Text, nullable=False)
 
 
-class RoomItem(base, Base["RoomItem"]):
+class RoomItem(DeclarativeBase, Base["RoomItem"]):
     __tablename__ = 'room_item'
 
     id = Column(Integer, primary_key=True)
@@ -5047,7 +5042,7 @@ class RoomItem(base, Base["RoomItem"]):
     category_action_type = Column(Integer, nullable=False)
 
 
-class RoomItemAnnouncement(base, Base["RoomItemAnnouncement"]):
+class RoomItemAnnouncement(DeclarativeBase, Base["RoomItemAnnouncement"]):
     __tablename__ = 'room_item_announcement'
 
     id = Column(Integer, primary_key=True)
@@ -5056,7 +5051,7 @@ class RoomItemAnnouncement(base, Base["RoomItemAnnouncement"]):
     announcement_text = Column(Text, nullable=False)
 
 
-class RoomItemDetail(base, Base["RoomItemDetail"]):
+class RoomItemDetail(DeclarativeBase, Base["RoomItemDetail"]):
     __tablename__ = 'room_item_detail'
     __table_args__ = (
         Index('room_item_detail_0_lvup_trigger_type_1_lvup_trigger_id', 'lvup_trigger_type', 'lvup_trigger_id'),
@@ -5078,7 +5073,7 @@ class RoomItemDetail(base, Base["RoomItemDetail"]):
     lvup_time = Column(Integer, nullable=False)
 
 
-class RoomItemGetAnnouncement(base, Base["RoomItemGetAnnouncement"]):
+class RoomItemGetAnnouncement(DeclarativeBase, Base["RoomItemGetAnnouncement"]):
     __tablename__ = 'room_item_get_announcement'
 
     id = Column(Integer, primary_key=True)
@@ -5089,7 +5084,7 @@ class RoomItemGetAnnouncement(base, Base["RoomItemGetAnnouncement"]):
     room_announcement_name = Column(Text, nullable=False)
 
 
-class RoomReleaseDatum(base, Base["RoomReleaseDatum"]):
+class RoomReleaseDatum(DeclarativeBase, Base["RoomReleaseDatum"]):
     __tablename__ = 'room_release_data'
 
     system_id = Column(Integer, primary_key=True)
@@ -5097,7 +5092,7 @@ class RoomReleaseDatum(base, Base["RoomReleaseDatum"]):
     pre_story_id = Column(Integer, nullable=False)
 
 
-class RoomSetup(base, Base["RoomSetup"]):
+class RoomSetup(DeclarativeBase, Base["RoomSetup"]):
     __tablename__ = 'room_setup'
 
     room_item_id = Column(Integer, primary_key=True)
@@ -5106,7 +5101,7 @@ class RoomSetup(base, Base["RoomSetup"]):
     unit_id = Column(Integer, nullable=False)
 
 
-class RoomSkinColor(base, Base["RoomSkinColor"]):
+class RoomSkinColor(DeclarativeBase, Base["RoomSkinColor"]):
     __tablename__ = 'room_skin_color'
 
     skin_color_id = Column(Integer, primary_key=True)
@@ -5115,7 +5110,7 @@ class RoomSkinColor(base, Base["RoomSkinColor"]):
     color_blue = Column(Integer, nullable=False)
 
 
-class RoomUnitComment(base, Base["RoomUnitComment"]):
+class RoomUnitComment(DeclarativeBase, Base["RoomUnitComment"]):
     __tablename__ = 'room_unit_comments'
 
     id = Column(Integer, nullable=False)
@@ -5129,7 +5124,7 @@ class RoomUnitComment(base, Base["RoomUnitComment"]):
     insert_word_type = Column(Integer, nullable=False)
 
 
-class SdNaviComment(base, Base["SdNaviComment"]):
+class SdNaviComment(DeclarativeBase, Base["SdNaviComment"]):
     __tablename__ = 'sd_navi_comment'
 
     comment_id = Column(Integer, primary_key=True)
@@ -5142,7 +5137,7 @@ class SdNaviComment(base, Base["SdNaviComment"]):
     end_time = Column(Text, nullable=False)
 
 
-class SeasonPack(base, Base["SeasonPack"]):
+class SeasonPack(DeclarativeBase, Base["SeasonPack"]):
     __tablename__ = 'season_pack'
 
     id = Column(Integer, primary_key=True)
@@ -5162,7 +5157,7 @@ class SeasonPack(base, Base["SeasonPack"]):
     reward_rate_1 = Column(Integer, nullable=False)
 
 
-class SeasonpassFoundation(base, Base["SeasonpassFoundation"]):
+class SeasonpassFoundation(DeclarativeBase, Base["SeasonpassFoundation"]):
     __tablename__ = 'seasonpass_foundation'
 
     season_id = Column(Integer, primary_key=True)
@@ -5183,7 +5178,7 @@ class SeasonpassFoundation(base, Base["SeasonpassFoundation"]):
     end_time = Column(Text, nullable=False)
 
 
-class SeasonpassLevelReward(base, Base["SeasonpassLevelReward"]):
+class SeasonpassLevelReward(DeclarativeBase, Base["SeasonpassLevelReward"]):
     __tablename__ = 'seasonpass_level_reward'
 
     level_id = Column(Integer, primary_key=True)
@@ -5200,7 +5195,7 @@ class SeasonpassLevelReward(base, Base["SeasonpassLevelReward"]):
     event_id = Column(Integer, nullable=False)
 
 
-class SeasonpassMissionDatum(base, Base["SeasonpassMissionDatum"]):
+class SeasonpassMissionDatum(DeclarativeBase, Base["SeasonpassMissionDatum"]):
     __tablename__ = 'seasonpass_mission_data'
 
     seasonpass_mission_id = Column(Integer, primary_key=True)
@@ -5222,7 +5217,7 @@ class SeasonpassMissionDatum(base, Base["SeasonpassMissionDatum"]):
     end_time = Column(Text, nullable=False)
 
 
-class SeasonpassMissionRewardDatum(base, Base["SeasonpassMissionRewardDatum"]):
+class SeasonpassMissionRewardDatum(DeclarativeBase, Base["SeasonpassMissionRewardDatum"]):
     __tablename__ = 'seasonpass_mission_reward_data'
 
     id = Column(Integer, primary_key=True)
@@ -5232,7 +5227,7 @@ class SeasonpassMissionRewardDatum(base, Base["SeasonpassMissionRewardDatum"]):
     reward_num = Column(Integer, nullable=False)
 
 
-class SecretDungeonEmblemMission(base, Base["SecretDungeonEmblemMission"]):
+class SecretDungeonEmblemMission(DeclarativeBase, Base["SecretDungeonEmblemMission"]):
     __tablename__ = 'secret_dungeon_emblem_mission'
 
     mission_id = Column(Integer, primary_key=True)
@@ -5252,7 +5247,7 @@ class SecretDungeonEmblemMission(base, Base["SecretDungeonEmblemMission"]):
     end_time = Column(Text, nullable=False)
 
 
-class SecretDungeonEmblemReward(base, Base["SecretDungeonEmblemReward"]):
+class SecretDungeonEmblemReward(DeclarativeBase, Base["SecretDungeonEmblemReward"]):
     __tablename__ = 'secret_dungeon_emblem_reward'
 
     id = Column(Integer, primary_key=True)
@@ -5263,7 +5258,7 @@ class SecretDungeonEmblemReward(base, Base["SecretDungeonEmblemReward"]):
     icon_type = Column(Integer, nullable=False)
 
 
-class SecretDungeonFloorReward(base, Base["SecretDungeonFloorReward"]):
+class SecretDungeonFloorReward(DeclarativeBase, Base["SecretDungeonFloorReward"]):
     __tablename__ = 'secret_dungeon_floor_reward'
 
     dungeon_area_id = Column(Integer, primary_key=True, nullable=False, index=True)
@@ -5287,7 +5282,7 @@ class SecretDungeonFloorReward(base, Base["SecretDungeonFloorReward"]):
     icon_type = Column(Integer, nullable=False)
 
 
-class SecretDungeonFloorSetting(base, Base["SecretDungeonFloorSetting"]):
+class SecretDungeonFloorSetting(DeclarativeBase, Base["SecretDungeonFloorSetting"]):
     __tablename__ = 'secret_dungeon_floor_setting'
     __table_args__ = (
         Index('secret_dungeon_floor_setting_0_quest_id_1_mode', 'quest_id', 'mode'),
@@ -5304,7 +5299,7 @@ class SecretDungeonFloorSetting(base, Base["SecretDungeonFloorSetting"]):
     disp_order = Column(Integer, nullable=False)
 
 
-class SecretDungeonQuestDatum(base, Base["SecretDungeonQuestDatum"]):
+class SecretDungeonQuestDatum(DeclarativeBase, Base["SecretDungeonQuestDatum"]):
     __tablename__ = 'secret_dungeon_quest_data'
     __table_args__ = (
         Index('secret_dungeon_quest_data_0_dungeon_area_id_1_floor_num', 'dungeon_area_id', 'floor_num'),
@@ -5347,7 +5342,7 @@ class SecretDungeonQuestDatum(base, Base["SecretDungeonQuestDatum"]):
     wave_bgm_que_id_1 = Column(Text, nullable=False)
 
 
-class SecretDungeonSchedule(base, Base["SecretDungeonSchedule"]):
+class SecretDungeonSchedule(DeclarativeBase, Base["SecretDungeonSchedule"]):
     __tablename__ = 'secret_dungeon_schedule'
 
     dungeon_area_id = Column(Integer, primary_key=True)
@@ -5358,7 +5353,7 @@ class SecretDungeonSchedule(base, Base["SecretDungeonSchedule"]):
     close_time = Column(Text, nullable=False)
 
 
-class SekaiAddTimesDatum(base, Base["SekaiAddTimesDatum"]):
+class SekaiAddTimesDatum(DeclarativeBase, Base["SekaiAddTimesDatum"]):
     __tablename__ = 'sekai_add_times_data'
 
     id = Column(Integer, primary_key=True)
@@ -5369,7 +5364,7 @@ class SekaiAddTimesDatum(base, Base["SekaiAddTimesDatum"]):
     duration = Column(Integer, nullable=False)
 
 
-class SekaiBossDamageRankReward(base, Base["SekaiBossDamageRankReward"]):
+class SekaiBossDamageRankReward(DeclarativeBase, Base["SekaiBossDamageRankReward"]):
     __tablename__ = 'sekai_boss_damage_rank_reward'
 
     id = Column(Integer, primary_key=True)
@@ -5393,7 +5388,7 @@ class SekaiBossDamageRankReward(base, Base["SekaiBossDamageRankReward"]):
     reward_num_5 = Column(Integer, nullable=False)
 
 
-class SekaiBossFixReward(base, Base["SekaiBossFixReward"]):
+class SekaiBossFixReward(DeclarativeBase, Base["SekaiBossFixReward"]):
     __tablename__ = 'sekai_boss_fix_reward'
 
     sekai_id = Column(Integer, nullable=False)
@@ -5432,7 +5427,7 @@ class SekaiBossFixReward(base, Base["SekaiBossFixReward"]):
     reward_num_10 = Column(Integer, nullable=False)
 
 
-class SekaiBossMode(base, Base["SekaiBossMode"]):
+class SekaiBossMode(DeclarativeBase, Base["SekaiBossMode"]):
     __tablename__ = 'sekai_boss_mode'
 
     sekai_boss_mode_id = Column(Integer, primary_key=True)
@@ -5452,7 +5447,7 @@ class SekaiBossMode(base, Base["SekaiBossMode"]):
     score_coefficient = Column(Integer, nullable=False)
 
 
-class SekaiEnemyParameter(base, Base["SekaiEnemyParameter"]):
+class SekaiEnemyParameter(DeclarativeBase, Base["SekaiEnemyParameter"]):
     __tablename__ = 'sekai_enemy_parameter'
 
     sekai_enemy_id = Column(Integer, primary_key=True)
@@ -5497,7 +5492,7 @@ class SekaiEnemyParameter(base, Base["SekaiEnemyParameter"]):
     accuracy = Column(Integer, nullable=False)
 
 
-class SekaiSchedule(base, Base["SekaiSchedule"]):
+class SekaiSchedule(DeclarativeBase, Base["SekaiSchedule"]):
     __tablename__ = 'sekai_schedule'
 
     sekai_id = Column(Integer, primary_key=True)
@@ -5512,7 +5507,7 @@ class SekaiSchedule(base, Base["SekaiSchedule"]):
     result_end = Column(Text, nullable=False)
 
 
-class SekaiTopDatum(base, Base["SekaiTopDatum"]):
+class SekaiTopDatum(DeclarativeBase, Base["SekaiTopDatum"]):
     __tablename__ = 'sekai_top_data'
 
     id = Column(Integer, primary_key=True)
@@ -5535,7 +5530,7 @@ class SekaiTopDatum(base, Base["SekaiTopDatum"]):
     story_id = Column(Integer, nullable=False)
 
 
-class SekaiTopStoryDatum(base, Base["SekaiTopStoryDatum"]):
+class SekaiTopStoryDatum(DeclarativeBase, Base["SekaiTopStoryDatum"]):
     __tablename__ = 'sekai_top_story_data'
 
     sekai_id = Column(Integer, nullable=False, index=True)
@@ -5544,7 +5539,7 @@ class SekaiTopStoryDatum(base, Base["SekaiTopStoryDatum"]):
     boss_time_to = Column(Text, nullable=False)
 
 
-class SekaiUnlockStoryCondition(base, Base["SekaiUnlockStoryCondition"]):
+class SekaiUnlockStoryCondition(DeclarativeBase, Base["SekaiUnlockStoryCondition"]):
     __tablename__ = 'sekai_unlock_story_condition'
 
     story_id = Column(Integer, primary_key=True)
@@ -5554,7 +5549,7 @@ class SekaiUnlockStoryCondition(base, Base["SekaiUnlockStoryCondition"]):
     condition_time = Column(Text, nullable=False)
 
 
-class SerialCodeDatum(base, Base["SerialCodeDatum"]):
+class SerialCodeDatum(DeclarativeBase, Base["SerialCodeDatum"]):
     __tablename__ = 'serial_code_data'
 
     serial_campaign_id = Column(Integer, primary_key=True)
@@ -5565,7 +5560,7 @@ class SerialCodeDatum(base, Base["SerialCodeDatum"]):
     limit_num = Column(Integer, nullable=False)
 
 
-class SerialGroupDatum(base, Base["SerialGroupDatum"]):
+class SerialGroupDatum(DeclarativeBase, Base["SerialGroupDatum"]):
     __tablename__ = 'serial_group_data'
 
     serial_group_id = Column(Integer, primary_key=True)
@@ -5580,7 +5575,7 @@ class SerialGroupDatum(base, Base["SerialGroupDatum"]):
     end_time = Column(Text, nullable=False)
 
 
-class SeriesUnlockCondition(base, Base["SeriesUnlockCondition"]):
+class SeriesUnlockCondition(DeclarativeBase, Base["SeriesUnlockCondition"]):
     __tablename__ = 'series_unlock_condition'
 
     sequel_event_id = Column(Integer, primary_key=True)
@@ -5591,7 +5586,7 @@ class SeriesUnlockCondition(base, Base["SeriesUnlockCondition"]):
     condition_boss_id = Column(Integer, nullable=False)
 
 
-class ShioriBattleMissionDatum(base, Base["ShioriBattleMissionDatum"]):
+class ShioriBattleMissionDatum(DeclarativeBase, Base["ShioriBattleMissionDatum"]):
     __tablename__ = 'shiori_battle_mission_data'
 
     mission_id = Column(Integer, primary_key=True)
@@ -5617,7 +5612,7 @@ class ShioriBattleMissionDatum(base, Base["ShioriBattleMissionDatum"]):
     end_time = Column(Text, nullable=False)
 
 
-class ShioriBos(base, Base["ShioriBos"]):
+class ShioriBos(DeclarativeBase, Base["ShioriBos"]):
     __tablename__ = 'shiori_boss'
     __table_args__ = (
         Index('shiori_boss_0_event_id_1_difficulty', 'event_id', 'difficulty'),
@@ -5657,7 +5652,7 @@ class ShioriBos(base, Base["ShioriBos"]):
     qd_mode = Column(Integer, nullable=False)
 
 
-class ShioriBossCondition(base, Base["ShioriBossCondition"]):
+class ShioriBossCondition(DeclarativeBase, Base["ShioriBossCondition"]):
     __tablename__ = 'shiori_boss_condition'
 
     boss_id = Column(Integer, primary_key=True)
@@ -5668,7 +5663,7 @@ class ShioriBossCondition(base, Base["ShioriBossCondition"]):
     release_boss_id = Column(Integer, nullable=False)
 
 
-class ShioriDescription(base, Base["ShioriDescription"]):
+class ShioriDescription(DeclarativeBase, Base["ShioriDescription"]):
     __tablename__ = 'shiori_description'
 
     id = Column(Integer, primary_key=True)
@@ -5676,7 +5671,7 @@ class ShioriDescription(base, Base["ShioriDescription"]):
     description = Column(Text, nullable=False)
 
 
-class ShioriEnemyParameter(base, Base["ShioriEnemyParameter"]):
+class ShioriEnemyParameter(DeclarativeBase, Base["ShioriEnemyParameter"]):
     __tablename__ = 'shiori_enemy_parameter'
 
     enemy_id = Column(Integer, primary_key=True)
@@ -5721,7 +5716,7 @@ class ShioriEnemyParameter(base, Base["ShioriEnemyParameter"]):
     accuracy = Column(Integer, nullable=False)
 
 
-class ShioriEventList(base, Base["ShioriEventList"]):
+class ShioriEventList(DeclarativeBase, Base["ShioriEventList"]):
     __tablename__ = 'shiori_event_list'
 
     event_id = Column(Integer, primary_key=True)
@@ -5737,7 +5732,7 @@ class ShioriEventList(base, Base["ShioriEventList"]):
     help_index = Column(Text, nullable=False)
 
 
-class ShioriItem(base, Base["ShioriItem"]):
+class ShioriItem(DeclarativeBase, Base["ShioriItem"]):
     __tablename__ = 'shiori_item'
 
     event_id = Column(Integer, primary_key=True)
@@ -5745,7 +5740,7 @@ class ShioriItem(base, Base["ShioriItem"]):
     unit_material_id_2 = Column(Integer, nullable=False)
 
 
-class ShioriMissionRewardDatum(base, Base["ShioriMissionRewardDatum"]):
+class ShioriMissionRewardDatum(DeclarativeBase, Base["ShioriMissionRewardDatum"]):
     __tablename__ = 'shiori_mission_reward_data'
 
     id = Column(Integer, primary_key=True)
@@ -5755,7 +5750,7 @@ class ShioriMissionRewardDatum(base, Base["ShioriMissionRewardDatum"]):
     reward_num = Column(Integer, nullable=False)
 
 
-class ShioriQuest(base, Base["ShioriQuest"]):
+class ShioriQuest(DeclarativeBase, Base["ShioriQuest"]):
     __tablename__ = 'shiori_quest'
 
     quest_id = Column(Integer, primary_key=True)
@@ -5804,7 +5799,7 @@ class ShioriQuest(base, Base["ShioriQuest"]):
     quest_detail_bg_position = Column(Integer, nullable=False)
 
 
-class ShioriQuestArea(base, Base["ShioriQuestArea"]):
+class ShioriQuestArea(DeclarativeBase, Base["ShioriQuestArea"]):
     __tablename__ = 'shiori_quest_area'
 
     area_id = Column(Integer, primary_key=True)
@@ -5823,7 +5818,7 @@ class ShioriQuestArea(base, Base["ShioriQuestArea"]):
     additional_effect = Column(Integer, nullable=False)
 
 
-class ShioriQuestCondition(base, Base["ShioriQuestCondition"]):
+class ShioriQuestCondition(DeclarativeBase, Base["ShioriQuestCondition"]):
     __tablename__ = 'shiori_quest_condition'
 
     quest_id = Column(Integer, primary_key=True)
@@ -5835,7 +5830,7 @@ class ShioriQuestCondition(base, Base["ShioriQuestCondition"]):
     condition_main_quest_id = Column(Integer, nullable=False)
 
 
-class ShioriStationaryMissionDatum(base, Base["ShioriStationaryMissionDatum"]):
+class ShioriStationaryMissionDatum(DeclarativeBase, Base["ShioriStationaryMissionDatum"]):
     __tablename__ = 'shiori_stationary_mission_data'
 
     stationary_mission_id = Column(Integer, primary_key=True)
@@ -5854,7 +5849,7 @@ class ShioriStationaryMissionDatum(base, Base["ShioriStationaryMissionDatum"]):
     end_time = Column(Text, nullable=False)
 
 
-class ShioriUnlockUnitCondition(base, Base["ShioriUnlockUnitCondition"]):
+class ShioriUnlockUnitCondition(DeclarativeBase, Base["ShioriUnlockUnitCondition"]):
     __tablename__ = 'shiori_unlock_unit_condition'
     __table_args__ = (
         Index('shiori_unlock_unit_condition_0_unit_id_1_event_id', 'unit_id', 'event_id'),
@@ -5869,7 +5864,7 @@ class ShioriUnlockUnitCondition(base, Base["ShioriUnlockUnitCondition"]):
     description_2 = Column(Text, nullable=False)
 
 
-class ShioriWaveGroupDatum(base, Base["ShioriWaveGroupDatum"]):
+class ShioriWaveGroupDatum(DeclarativeBase, Base["ShioriWaveGroupDatum"]):
     __tablename__ = 'shiori_wave_group_data'
 
     wave_group_id = Column(Integer, primary_key=True)
@@ -5912,7 +5907,7 @@ class ShioriWaveGroupDatum(base, Base["ShioriWaveGroupDatum"]):
     reward_odds_5 = Column(Integer, nullable=False)
 
 
-class ShopStaticPriceGroup(base, Base["ShopStaticPriceGroup"]):
+class ShopStaticPriceGroup(DeclarativeBase, Base["ShopStaticPriceGroup"]):
     __tablename__ = 'shop_static_price_group'
 
     id = Column(Integer, primary_key=True)
@@ -5922,7 +5917,7 @@ class ShopStaticPriceGroup(base, Base["ShopStaticPriceGroup"]):
     count = Column(Integer, nullable=False)
 
 
-class SkeStoryDatum(base, Base["SkeStoryDatum"]):
+class SkeStoryDatum(DeclarativeBase, Base["SkeStoryDatum"]):
     __tablename__ = 'ske_story_data'
 
     sub_story_id = Column(Integer, primary_key=True)
@@ -5933,7 +5928,7 @@ class SkeStoryDatum(base, Base["SkeStoryDatum"]):
     read_condition_event_story_id = Column(Integer, nullable=False)
 
 
-class SkeStoryScript(base, Base["SkeStoryScript"]):
+class SkeStoryScript(DeclarativeBase, Base["SkeStoryScript"]):
     __tablename__ = 'ske_story_script'
 
     id = Column(Integer, primary_key=True)
@@ -5950,7 +5945,7 @@ class SkeStoryScript(base, Base["SkeStoryScript"]):
     command_param = Column(Float, nullable=False)
 
 
-class SkillAction(base, Base["SkillAction"]):
+class SkillAction(DeclarativeBase, Base["SkillAction"]):
     __tablename__ = 'skill_action'
 
     action_id = Column(Integer, primary_key=True)
@@ -5976,14 +5971,14 @@ class SkillAction(base, Base["SkillAction"]):
     level_up_disp = Column(Text, nullable=False)
 
 
-class SkillCost(base, Base["SkillCost"]):
+class SkillCost(DeclarativeBase, Base["SkillCost"]):
     __tablename__ = 'skill_cost'
 
     target_level = Column(Integer, primary_key=True)
     cost = Column(Integer, nullable=False)
 
 
-class SkillDatum(base, Base["SkillDatum"]):
+class SkillDatum(DeclarativeBase, Base["SkillDatum"]):
     __tablename__ = 'skill_data'
 
     skill_id = Column(Integer, primary_key=True)
@@ -6010,7 +6005,7 @@ class SkillDatum(base, Base["SkillDatum"]):
     icon_type = Column(Integer, nullable=False)
 
 
-class SkipBossDatum(base, Base["SkipBossDatum"]):
+class SkipBossDatum(DeclarativeBase, Base["SkipBossDatum"]):
     __tablename__ = 'skip_boss_data'
 
     boss_id = Column(Integer, primary_key=True)
@@ -6022,7 +6017,7 @@ class SkipBossDatum(base, Base["SkipBossDatum"]):
     skip_scale_y = Column(Float, nullable=False)
 
 
-class SkipMonsterDatum(base, Base["SkipMonsterDatum"]):
+class SkipMonsterDatum(DeclarativeBase, Base["SkipMonsterDatum"]):
     __tablename__ = 'skip_monster_data'
 
     quest_id = Column(Integer, primary_key=True)
@@ -6032,7 +6027,7 @@ class SkipMonsterDatum(base, Base["SkipMonsterDatum"]):
     bg_skip_id = Column(Integer, nullable=False)
 
 
-class SpBattleVoice(base, Base["SpBattleVoice"]):
+class SpBattleVoice(DeclarativeBase, Base["SpBattleVoice"]):
     __tablename__ = 'sp_battle_voice'
 
     id = Column(Integer, primary_key=True, nullable=False)
@@ -6041,7 +6036,7 @@ class SpBattleVoice(base, Base["SpBattleVoice"]):
     value = Column(Integer, nullable=False)
 
 
-class SpDetailVoice(base, Base["SpDetailVoice"]):
+class SpDetailVoice(DeclarativeBase, Base["SpDetailVoice"]):
     __tablename__ = 'sp_detail_voice'
 
     unit_id = Column(Integer, primary_key=True)
@@ -6052,7 +6047,7 @@ class SpDetailVoice(base, Base["SpDetailVoice"]):
     cue_name_5 = Column(Text, nullable=False)
 
 
-class SpLoseVoice(base, Base["SpLoseVoice"]):
+class SpLoseVoice(DeclarativeBase, Base["SpLoseVoice"]):
     __tablename__ = 'sp_lose_voice'
 
     original_unit_id = Column(Integer, primary_key=True)
@@ -6084,7 +6079,7 @@ class SpLoseVoice(base, Base["SpLoseVoice"]):
     speaker_unit_id_10 = Column(Integer, nullable=False)
 
 
-class SpLoseVoiceGroup(base, Base["SpLoseVoiceGroup"]):
+class SpLoseVoiceGroup(DeclarativeBase, Base["SpLoseVoiceGroup"]):
     __tablename__ = 'sp_lose_voice_group'
 
     group_id = Column(Integer, primary_key=True, nullable=False)
@@ -6092,7 +6087,7 @@ class SpLoseVoiceGroup(base, Base["SpLoseVoiceGroup"]):
     speaker_unit_id = Column(Integer, nullable=False)
 
 
-class SpaceBattleDatum(base, Base["SpaceBattleDatum"]):
+class SpaceBattleDatum(DeclarativeBase, Base["SpaceBattleDatum"]):
     __tablename__ = 'space_battle_data'
 
     space_battle_id = Column(Integer, primary_key=True)
@@ -6108,7 +6103,7 @@ class SpaceBattleDatum(base, Base["SpaceBattleDatum"]):
     quest_name = Column(Text, nullable=False)
 
 
-class SpaceSchedule(base, Base["SpaceSchedule"]):
+class SpaceSchedule(DeclarativeBase, Base["SpaceSchedule"]):
     __tablename__ = 'space_schedule'
 
     space_id = Column(Integer, primary_key=True)
@@ -6121,7 +6116,7 @@ class SpaceSchedule(base, Base["SpaceSchedule"]):
     pre_story_id = Column(Integer, nullable=False)
 
 
-class SpaceTopDatum(base, Base["SpaceTopDatum"]):
+class SpaceTopDatum(DeclarativeBase, Base["SpaceTopDatum"]):
     __tablename__ = 'space_top_data'
 
     id = Column(Integer, primary_key=True)
@@ -6135,7 +6130,7 @@ class SpaceTopDatum(base, Base["SpaceTopDatum"]):
     name = Column(Text, nullable=False)
 
 
-class SpecialStill(base, Base["SpecialStill"]):
+class SpecialStill(DeclarativeBase, Base["SpecialStill"]):
     __tablename__ = 'special_still'
 
     still_id = Column(Integer, primary_key=True)
@@ -6144,7 +6139,7 @@ class SpecialStill(base, Base["SpecialStill"]):
     value = Column(Integer, nullable=False)
 
 
-class SpecialStoryBanner(base, Base["SpecialStoryBanner"]):
+class SpecialStoryBanner(DeclarativeBase, Base["SpecialStoryBanner"]):
     __tablename__ = 'special_story_banner'
 
     id = Column(Integer, primary_key=True)
@@ -6154,7 +6149,7 @@ class SpecialStoryBanner(base, Base["SpecialStoryBanner"]):
     end_time = Column(Text, nullable=False)
 
 
-class SpecialfesBanner(base, Base["SpecialfesBanner"]):
+class SpecialfesBanner(DeclarativeBase, Base["SpecialfesBanner"]):
     __tablename__ = 'specialfes_banner'
 
     gacha_id = Column(Integer, primary_key=True)
@@ -6170,7 +6165,7 @@ class SpecialfesBanner(base, Base["SpecialfesBanner"]):
     banner_id_10 = Column(Integer, nullable=False)
 
 
-class SpskillLabelDatum(base, Base["SpskillLabelDatum"]):
+class SpskillLabelDatum(DeclarativeBase, Base["SpskillLabelDatum"]):
     __tablename__ = 'spskill_label_data'
 
     unit_id = Column(Integer, primary_key=True)
@@ -6178,22 +6173,13 @@ class SpskillLabelDatum(base, Base["SpskillLabelDatum"]):
     sp_label_text = Column(Text, nullable=False)
 
 
-class SpskillLvInitializeDatum(base, Base["SpskillLvInitializeDatum"]):
+class SpskillLvInitializeDatum(DeclarativeBase, Base["SpskillLvInitializeDatum"]):
     __tablename__ = 'spskill_lv_initialize_data'
 
     initialize_skill_id = Column(Integer, primary_key=True)
     base_skill_id = Column(Integer, nullable=False)
 
-
-t_sqlite_stat1 = Table(
-    'sqlite_stat1', metadata,
-    Column('tbl', NullType),
-    Column('idx', NullType),
-    Column('stat', NullType)
-)
-
-
-class SrtAction(base, Base["SrtAction"]):
+class SrtAction(DeclarativeBase, Base["SrtAction"]):
     __tablename__ = 'srt_action'
 
     action_name = Column(Text, primary_key=True)
@@ -6206,7 +6192,7 @@ class SrtAction(base, Base["SrtAction"]):
     voice_list = Column(Text, nullable=False)
 
 
-class SrtPanel(base, Base["SrtPanel"]):
+class SrtPanel(DeclarativeBase, Base["SrtPanel"]):
     __tablename__ = 'srt_panel'
 
     reading_id = Column(Integer, primary_key=True)
@@ -6219,7 +6205,7 @@ class SrtPanel(base, Base["SrtPanel"]):
     tail_symbol = Column(Text, nullable=False)
 
 
-class SrtReward(base, Base["SrtReward"]):
+class SrtReward(DeclarativeBase, Base["SrtReward"]):
     __tablename__ = 'srt_reward'
 
     id = Column(Integer, primary_key=True)
@@ -6242,7 +6228,7 @@ class SrtReward(base, Base["SrtReward"]):
     reward_count_5 = Column(Integer, nullable=False)
 
 
-class SrtScore(base, Base["SrtScore"]):
+class SrtScore(DeclarativeBase, Base["SrtScore"]):
     __tablename__ = 'srt_score'
 
     difficulty_level = Column(Integer, primary_key=True)
@@ -6258,7 +6244,7 @@ class SrtScore(base, Base["SrtScore"]):
     coefficient_wrong_num = Column(Integer, nullable=False)
 
 
-class SrtTopTalk(base, Base["SrtTopTalk"]):
+class SrtTopTalk(DeclarativeBase, Base["SrtTopTalk"]):
     __tablename__ = 'srt_top_talk'
 
     id = Column(Integer, primary_key=True)
@@ -6270,7 +6256,7 @@ class SrtTopTalk(base, Base["SrtTopTalk"]):
     direction = Column(Integer, nullable=False)
 
 
-class SspStoryDatum(base, Base["SspStoryDatum"]):
+class SspStoryDatum(DeclarativeBase, Base["SspStoryDatum"]):
     __tablename__ = 'ssp_story_data'
 
     sub_story_id = Column(Integer, primary_key=True)
@@ -6282,7 +6268,7 @@ class SspStoryDatum(base, Base["SspStoryDatum"]):
     read_condition = Column(Integer, nullable=False)
 
 
-class Stamp(base, Base["Stamp"]):
+class Stamp(DeclarativeBase, Base["Stamp"]):
     __tablename__ = 'stamp'
 
     stamp_id = Column(Integer, primary_key=True)
@@ -6292,7 +6278,7 @@ class Stamp(base, Base["Stamp"]):
     end_date = Column(Text, nullable=False)
 
 
-class StationaryMissionDatum(base, Base["StationaryMissionDatum"]):
+class StationaryMissionDatum(DeclarativeBase, Base["StationaryMissionDatum"]):
     __tablename__ = 'stationary_mission_data'
 
     stationary_mission_id = Column(Integer, primary_key=True)
@@ -6321,7 +6307,7 @@ class StationaryMissionDatum(base, Base["StationaryMissionDatum"]):
     visible_flag = Column(Integer, nullable=False)
 
 
-class Still(base, Base["Still"]):
+class Still(DeclarativeBase, Base["Still"]):
     __tablename__ = 'still'
 
     still_id = Column(Integer, primary_key=True)
@@ -6346,7 +6332,7 @@ class Still(base, Base["Still"]):
     scroll_direction = Column(Integer, nullable=False)
 
 
-class StoryCharacterMask(base, Base["StoryCharacterMask"]):
+class StoryCharacterMask(DeclarativeBase, Base["StoryCharacterMask"]):
     __tablename__ = 'story_character_mask'
 
     chara_id = Column(Integer, primary_key=True)
@@ -6355,7 +6341,7 @@ class StoryCharacterMask(base, Base["StoryCharacterMask"]):
     softness = Column(Float, nullable=False)
 
 
-class StoryDatum(base, Base["StoryDatum"]):
+class StoryDatum(DeclarativeBase, Base["StoryDatum"]):
     __tablename__ = 'story_data'
 
     story_group_id = Column(Integer, primary_key=True)
@@ -6371,7 +6357,7 @@ class StoryDatum(base, Base["StoryDatum"]):
     gojuon_order = Column(Integer, nullable=False)
 
 
-class StoryDetail(base, Base["StoryDetail"]):
+class StoryDetail(DeclarativeBase, Base["StoryDetail"]):
     __tablename__ = 'story_detail'
 
     story_id = Column(Integer, primary_key=True)
@@ -6401,7 +6387,7 @@ class StoryDetail(base, Base["StoryDetail"]):
     end_time = Column(Text, nullable=False)
 
 
-class StoryQuestDatum(base, Base["StoryQuestDatum"]):
+class StoryQuestDatum(DeclarativeBase, Base["StoryQuestDatum"]):
     __tablename__ = 'story_quest_data'
 
     story_quest_id = Column(Integer, primary_key=True)
@@ -6427,7 +6413,7 @@ class StoryQuestDatum(base, Base["StoryQuestDatum"]):
     guest_unit_5 = Column(Integer, nullable=False)
 
 
-class SvdDramaScript(base, Base["SvdDramaScript"]):
+class SvdDramaScript(DeclarativeBase, Base["SvdDramaScript"]):
     __tablename__ = 'svd_drama_script'
 
     command_id = Column(Integer, primary_key=True)
@@ -6443,7 +6429,7 @@ class SvdDramaScript(base, Base["SvdDramaScript"]):
     param_08 = Column(Text, nullable=False)
 
 
-class SvdStoryDatum(base, Base["SvdStoryDatum"]):
+class SvdStoryDatum(DeclarativeBase, Base["SvdStoryDatum"]):
     __tablename__ = 'svd_story_data'
 
     sub_story_id = Column(Integer, primary_key=True)
@@ -6455,7 +6441,7 @@ class SvdStoryDatum(base, Base["SvdStoryDatum"]):
     read_condition = Column(Integer, nullable=False)
 
 
-class SvdStoryScript(base, Base["SvdStoryScript"]):
+class SvdStoryScript(DeclarativeBase, Base["SvdStoryScript"]):
     __tablename__ = 'svd_story_script'
 
     id = Column(Integer, primary_key=True)
@@ -6472,7 +6458,7 @@ class SvdStoryScript(base, Base["SvdStoryScript"]):
     command_param = Column(Float, nullable=False)
 
 
-class TaqCompletionReward(base, Base["TaqCompletionReward"]):
+class TaqCompletionReward(DeclarativeBase, Base["TaqCompletionReward"]):
     __tablename__ = 'taq_completion_rewards'
 
     id = Column(Integer, primary_key=True)
@@ -6481,7 +6467,7 @@ class TaqCompletionReward(base, Base["TaqCompletionReward"]):
     emblem_id = Column(Integer, nullable=False)
 
 
-class TaqDatum(base, Base["TaqDatum"]):
+class TaqDatum(DeclarativeBase, Base["TaqDatum"]):
     __tablename__ = 'taq_data'
 
     taq_no = Column(Integer, primary_key=True)
@@ -6506,7 +6492,7 @@ class TaqDatum(base, Base["TaqDatum"]):
     input_type_5 = Column(Integer, nullable=False)
 
 
-class TaqDramaScript(base, Base["TaqDramaScript"]):
+class TaqDramaScript(DeclarativeBase, Base["TaqDramaScript"]):
     __tablename__ = 'taq_drama_script'
 
     command_id = Column(Integer, primary_key=True)
@@ -6522,7 +6508,7 @@ class TaqDramaScript(base, Base["TaqDramaScript"]):
     param_08 = Column(Text, nullable=False)
 
 
-class TaqGameSetting(base, Base["TaqGameSetting"]):
+class TaqGameSetting(DeclarativeBase, Base["TaqGameSetting"]):
     __tablename__ = 'taq_game_setting'
 
     id = Column(Integer, primary_key=True)
@@ -6532,14 +6518,14 @@ class TaqGameSetting(base, Base["TaqGameSetting"]):
     help_use_count_veryhard = Column(Integer, nullable=False)
 
 
-class TaqGenre(base, Base["TaqGenre"]):
+class TaqGenre(DeclarativeBase, Base["TaqGenre"]):
     __tablename__ = 'taq_genre'
 
     genre_id = Column(Integer, primary_key=True)
     genre_name = Column(Text, nullable=False)
 
 
-class TaqGoodUnit(base, Base["TaqGoodUnit"]):
+class TaqGoodUnit(DeclarativeBase, Base["TaqGoodUnit"]):
     __tablename__ = 'taq_good_unit'
 
     taq_no = Column(Integer, primary_key=True)
@@ -6555,21 +6541,21 @@ class TaqGoodUnit(base, Base["TaqGoodUnit"]):
     unit_id_10 = Column(Integer, nullable=False)
 
 
-class TaqIncorrectWord(base, Base["TaqIncorrectWord"]):
+class TaqIncorrectWord(DeclarativeBase, Base["TaqIncorrectWord"]):
     __tablename__ = 'taq_incorrect_word'
 
     word_id = Column(Integer, primary_key=True)
     incorrect_word = Column(Text, nullable=False)
 
 
-class TaqKanjiList(base, Base["TaqKanjiList"]):
+class TaqKanjiList(DeclarativeBase, Base["TaqKanjiList"]):
     __tablename__ = 'taq_kanji_list'
 
     id = Column(Integer, primary_key=True)
     kanji = Column(Text, nullable=False)
 
 
-class TaqNecessaryWord(base, Base["TaqNecessaryWord"]):
+class TaqNecessaryWord(DeclarativeBase, Base["TaqNecessaryWord"]):
     __tablename__ = 'taq_necessary_word'
 
     taq_no = Column(Integer, primary_key=True)
@@ -6585,7 +6571,7 @@ class TaqNecessaryWord(base, Base["TaqNecessaryWord"]):
     unnecessary_word_5 = Column(Text, nullable=False)
 
 
-class TaqReward(base, Base["TaqReward"]):
+class TaqReward(DeclarativeBase, Base["TaqReward"]):
     __tablename__ = 'taq_rewards'
 
     id = Column(Integer, primary_key=True)
@@ -6608,7 +6594,7 @@ class TaqReward(base, Base["TaqReward"]):
     reward_count_5 = Column(Integer, nullable=False)
 
 
-class TaqUnit(base, Base["TaqUnit"]):
+class TaqUnit(DeclarativeBase, Base["TaqUnit"]):
     __tablename__ = 'taq_unit'
 
     unit_id = Column(Integer, primary_key=True)
@@ -6622,7 +6608,7 @@ class TaqUnit(base, Base["TaqUnit"]):
     genre_status_6 = Column(Integer, nullable=False)
 
 
-class ThumbnailHideCondition(base, Base["ThumbnailHideCondition"]):
+class ThumbnailHideCondition(DeclarativeBase, Base["ThumbnailHideCondition"]):
     __tablename__ = 'thumbnail_hide_condition'
 
     story_group_id = Column(Integer, primary_key=True)
@@ -6631,7 +6617,7 @@ class ThumbnailHideCondition(base, Base["ThumbnailHideCondition"]):
     unlock_condition_story_id = Column(Integer, nullable=False)
 
 
-class TicketGachaDatum(base, Base["TicketGachaDatum"]):
+class TicketGachaDatum(DeclarativeBase, Base["TicketGachaDatum"]):
     __tablename__ = 'ticket_gacha_data'
 
     gacha_id = Column(Integer, primary_key=True)
@@ -6648,7 +6634,7 @@ class TicketGachaDatum(base, Base["TicketGachaDatum"]):
     staging_type = Column(Integer, nullable=False)
 
 
-class Tip(base, Base["Tip"]):
+class Tip(DeclarativeBase, Base["Tip"]):
     __tablename__ = 'tips'
 
     id = Column(Integer, primary_key=True)
@@ -6657,7 +6643,7 @@ class Tip(base, Base["Tip"]):
     title = Column(Text, nullable=False)
 
 
-class TmeMapDatum(base, Base["TmeMapDatum"]):
+class TmeMapDatum(DeclarativeBase, Base["TmeMapDatum"]):
     __tablename__ = 'tme_map_data'
 
     tme_object_id = Column(Integer, primary_key=True)
@@ -6668,7 +6654,7 @@ class TmeMapDatum(base, Base["TmeMapDatum"]):
     tap_effect = Column(Integer, nullable=False)
 
 
-class TowerAreaDatum(base, Base["TowerAreaDatum"]):
+class TowerAreaDatum(DeclarativeBase, Base["TowerAreaDatum"]):
     __tablename__ = 'tower_area_data'
 
     tower_area_id = Column(Integer, primary_key=True)
@@ -6678,7 +6664,7 @@ class TowerAreaDatum(base, Base["TowerAreaDatum"]):
     cloister_quest_id = Column(Integer, nullable=False)
 
 
-class TowerCloisterQuestDatum(base, Base["TowerCloisterQuestDatum"]):
+class TowerCloisterQuestDatum(DeclarativeBase, Base["TowerCloisterQuestDatum"]):
     __tablename__ = 'tower_cloister_quest_data'
 
     tower_cloister_quest_id = Column(Integer, primary_key=True)
@@ -6750,7 +6736,7 @@ class TowerCloisterQuestDatum(base, Base["TowerCloisterQuestDatum"]):
     bg_position = Column(Integer, nullable=False)
 
 
-class TowerEnemyParameter(base, Base["TowerEnemyParameter"]):
+class TowerEnemyParameter(DeclarativeBase, Base["TowerEnemyParameter"]):
     __tablename__ = 'tower_enemy_parameter'
 
     enemy_id = Column(Integer, primary_key=True)
@@ -6797,7 +6783,7 @@ class TowerEnemyParameter(base, Base["TowerEnemyParameter"]):
     enemy_color = Column(Integer, nullable=False)
 
 
-class TowerExQuestDatum(base, Base["TowerExQuestDatum"]):
+class TowerExQuestDatum(DeclarativeBase, Base["TowerExQuestDatum"]):
     __tablename__ = 'tower_ex_quest_data'
 
     tower_ex_quest_id = Column(Integer, primary_key=True)
@@ -6844,7 +6830,7 @@ class TowerExQuestDatum(base, Base["TowerExQuestDatum"]):
     skip_level = Column(Integer, nullable=False)
 
 
-class TowerQuestDatum(base, Base["TowerQuestDatum"]):
+class TowerQuestDatum(DeclarativeBase, Base["TowerQuestDatum"]):
     __tablename__ = 'tower_quest_data'
 
     tower_quest_id = Column(Integer, primary_key=True)
@@ -6899,7 +6885,7 @@ class TowerQuestDatum(base, Base["TowerQuestDatum"]):
     skip_level = Column(Integer, nullable=False)
 
 
-class TowerQuestFixRewardGroup(base, Base["TowerQuestFixRewardGroup"]):
+class TowerQuestFixRewardGroup(DeclarativeBase, Base["TowerQuestFixRewardGroup"]):
     __tablename__ = 'tower_quest_fix_reward_group'
 
     fix_reward_group_id = Column(Integer, primary_key=True)
@@ -6945,7 +6931,7 @@ class TowerQuestFixRewardGroup(base, Base["TowerQuestFixRewardGroup"]):
     reward_num_10 = Column(Integer, nullable=False)
 
 
-class TowerQuestOddsGroup(base, Base["TowerQuestOddsGroup"]):
+class TowerQuestOddsGroup(DeclarativeBase, Base["TowerQuestOddsGroup"]):
     __tablename__ = 'tower_quest_odds_group'
 
     odds_group_id = Column(Integer, primary_key=True, nullable=False, index=True)
@@ -6973,7 +6959,7 @@ class TowerQuestOddsGroup(base, Base["TowerQuestOddsGroup"]):
     odds_csv_10 = Column(Text, nullable=False)
 
 
-class TowerSchedule(base, Base["TowerSchedule"]):
+class TowerSchedule(DeclarativeBase, Base["TowerSchedule"]):
     __tablename__ = 'tower_schedule'
 
     tower_schedule_id = Column(Integer, primary_key=True)
@@ -6985,7 +6971,7 @@ class TowerSchedule(base, Base["TowerSchedule"]):
     end_time = Column(Text, nullable=False)
 
 
-class TowerStoryDatum(base, Base["TowerStoryDatum"]):
+class TowerStoryDatum(DeclarativeBase, Base["TowerStoryDatum"]):
     __tablename__ = 'tower_story_data'
 
     story_group_id = Column(Integer, primary_key=True)
@@ -6998,7 +6984,7 @@ class TowerStoryDatum(base, Base["TowerStoryDatum"]):
     end_time = Column(Text, nullable=False)
 
 
-class TowerStoryDetail(base, Base["TowerStoryDetail"]):
+class TowerStoryDetail(DeclarativeBase, Base["TowerStoryDetail"]):
     __tablename__ = 'tower_story_detail'
 
     story_id = Column(Integer, primary_key=True)
@@ -7025,7 +7011,7 @@ class TowerStoryDetail(base, Base["TowerStoryDetail"]):
     end_time = Column(Text, nullable=False)
 
 
-class TowerWaveGroupDatum(base, Base["TowerWaveGroupDatum"]):
+class TowerWaveGroupDatum(DeclarativeBase, Base["TowerWaveGroupDatum"]):
     __tablename__ = 'tower_wave_group_data'
 
     id = Column(Integer, nullable=False)
@@ -7038,7 +7024,7 @@ class TowerWaveGroupDatum(base, Base["TowerWaveGroupDatum"]):
     enemy_id_5 = Column(Integer, nullable=False)
 
 
-class TrainingQuestDatum(base, Base["TrainingQuestDatum"]):
+class TrainingQuestDatum(DeclarativeBase, Base["TrainingQuestDatum"]):
     __tablename__ = 'training_quest_data'
 
     quest_id = Column(Integer, primary_key=True)
@@ -7081,7 +7067,7 @@ class TrainingQuestDatum(base, Base["TrainingQuestDatum"]):
     end_time = Column(Text, nullable=False)
 
 
-class TrialBattleCategory(base, Base["TrialBattleCategory"]):
+class TrialBattleCategory(DeclarativeBase, Base["TrialBattleCategory"]):
     __tablename__ = 'trial_battle_category'
 
     category_id = Column(Integer, primary_key=True)
@@ -7094,7 +7080,7 @@ class TrialBattleCategory(base, Base["TrialBattleCategory"]):
     description_detail = Column(Text, nullable=False)
 
 
-class TrialBattleDatum(base, Base["TrialBattleDatum"]):
+class TrialBattleDatum(DeclarativeBase, Base["TrialBattleDatum"]):
     __tablename__ = 'trial_battle_data'
 
     quest_id = Column(Integer, primary_key=True)
@@ -7114,7 +7100,7 @@ class TrialBattleDatum(base, Base["TrialBattleDatum"]):
     clear_reward_group = Column(Integer, nullable=False)
 
 
-class TrialBattleMissionDatum(base, Base["TrialBattleMissionDatum"]):
+class TrialBattleMissionDatum(DeclarativeBase, Base["TrialBattleMissionDatum"]):
     __tablename__ = 'trial_battle_mission_data'
 
     trial_mission_id = Column(Integer, primary_key=True)
@@ -7127,7 +7113,7 @@ class TrialBattleMissionDatum(base, Base["TrialBattleMissionDatum"]):
     mission_reward_id = Column(Integer, nullable=False)
 
 
-class TrialBattleMissionReward(base, Base["TrialBattleMissionReward"]):
+class TrialBattleMissionReward(DeclarativeBase, Base["TrialBattleMissionReward"]):
     __tablename__ = 'trial_battle_mission_reward'
 
     id = Column(Integer, primary_key=True)
@@ -7137,7 +7123,7 @@ class TrialBattleMissionReward(base, Base["TrialBattleMissionReward"]):
     reward_num = Column(Integer, nullable=False)
 
 
-class TrialBattleRewardDatum(base, Base["TrialBattleRewardDatum"]):
+class TrialBattleRewardDatum(DeclarativeBase, Base["TrialBattleRewardDatum"]):
     __tablename__ = 'trial_battle_reward_data'
 
     reward_group_id = Column(Integer, primary_key=True)
@@ -7158,7 +7144,7 @@ class TrialBattleRewardDatum(base, Base["TrialBattleRewardDatum"]):
     reward_num_5 = Column(Integer, nullable=False)
 
 
-class TtkDrama(base, Base["TtkDrama"]):
+class TtkDrama(DeclarativeBase, Base["TtkDrama"]):
     __tablename__ = 'ttk_drama'
 
     command_id = Column(Integer, primary_key=True)
@@ -7174,7 +7160,7 @@ class TtkDrama(base, Base["TtkDrama"]):
     param_08 = Column(Text, nullable=False)
 
 
-class TtkEnemy(base, Base["TtkEnemy"]):
+class TtkEnemy(DeclarativeBase, Base["TtkEnemy"]):
     __tablename__ = 'ttk_enemy'
 
     enemy_id = Column(Integer, primary_key=True)
@@ -7183,7 +7169,7 @@ class TtkEnemy(base, Base["TtkEnemy"]):
     max = Column(Integer, nullable=False)
 
 
-class TtkNaviComment(base, Base["TtkNaviComment"]):
+class TtkNaviComment(DeclarativeBase, Base["TtkNaviComment"]):
     __tablename__ = 'ttk_navi_comment'
 
     comment_id = Column(Integer, primary_key=True)
@@ -7202,7 +7188,7 @@ class TtkNaviComment(base, Base["TtkNaviComment"]):
     event_id = Column(Integer, nullable=False)
 
 
-class TtkReward(base, Base["TtkReward"]):
+class TtkReward(DeclarativeBase, Base["TtkReward"]):
     __tablename__ = 'ttk_reward'
 
     id = Column(Integer, primary_key=True)
@@ -7225,7 +7211,7 @@ class TtkReward(base, Base["TtkReward"]):
     reward_count_5 = Column(Integer, nullable=False)
 
 
-class TtkScore(base, Base["TtkScore"]):
+class TtkScore(DeclarativeBase, Base["TtkScore"]):
     __tablename__ = 'ttk_score'
 
     difficulty_level = Column(Integer, primary_key=True)
@@ -7235,7 +7221,7 @@ class TtkScore(base, Base["TtkScore"]):
     coefficient_wrong_num = Column(Integer, nullable=False)
 
 
-class TtkStory(base, Base["TtkStory"]):
+class TtkStory(DeclarativeBase, Base["TtkStory"]):
     __tablename__ = 'ttk_story'
 
     ttk_story_id = Column(Integer, primary_key=True)
@@ -7243,7 +7229,7 @@ class TtkStory(base, Base["TtkStory"]):
     title = Column(Text, nullable=False)
 
 
-class TtkStoryScript(base, Base["TtkStoryScript"]):
+class TtkStoryScript(DeclarativeBase, Base["TtkStoryScript"]):
     __tablename__ = 'ttk_story_script'
 
     id = Column(Integer, primary_key=True)
@@ -7260,7 +7246,7 @@ class TtkStoryScript(base, Base["TtkStoryScript"]):
     command_param = Column(Float, nullable=False)
 
 
-class TtkWeapon(base, Base["TtkWeapon"]):
+class TtkWeapon(DeclarativeBase, Base["TtkWeapon"]):
     __tablename__ = 'ttk_weapon'
 
     ttk_weapon_id = Column(Integer, primary_key=True)
@@ -7268,7 +7254,7 @@ class TtkWeapon(base, Base["TtkWeapon"]):
     name = Column(Text, nullable=False)
 
 
-class UbAutoDatum(base, Base["UbAutoDatum"]):
+class UbAutoDatum(DeclarativeBase, Base["UbAutoDatum"]):
     __tablename__ = 'ub_auto_data'
 
     ub_auto_id = Column(Integer, primary_key=True)
@@ -7285,7 +7271,7 @@ class UbAutoDatum(base, Base["UbAutoDatum"]):
     auto_value_5 = Column(Integer, nullable=False)
 
 
-class UbAutoDefine(base, Base["UbAutoDefine"]):
+class UbAutoDefine(DeclarativeBase, Base["UbAutoDefine"]):
     __tablename__ = 'ub_auto_define'
 
     skill_id = Column(Integer, primary_key=True)
@@ -7296,7 +7282,7 @@ class UbAutoDefine(base, Base["UbAutoDefine"]):
     ub_auto_id_5 = Column(Integer, nullable=False)
 
 
-class UekBos(base, Base["UekBos"]):
+class UekBos(DeclarativeBase, Base["UekBos"]):
     __tablename__ = 'uek_boss'
 
     area = Column(Integer, primary_key=True)
@@ -7329,7 +7315,7 @@ class UekBos(base, Base["UekBos"]):
     result_movie = Column(Integer, nullable=False)
 
 
-class UekDrama(base, Base["UekDrama"]):
+class UekDrama(DeclarativeBase, Base["UekDrama"]):
     __tablename__ = 'uek_drama'
 
     command_id = Column(Integer, primary_key=True)
@@ -7345,7 +7331,7 @@ class UekDrama(base, Base["UekDrama"]):
     param_08 = Column(Text, nullable=False)
 
 
-class UekMission(base, Base["UekMission"]):
+class UekMission(DeclarativeBase, Base["UekMission"]):
     __tablename__ = 'uek_mission'
 
     mission_id = Column(Integer, primary_key=True)
@@ -7377,14 +7363,14 @@ class UekMission(base, Base["UekMission"]):
     event_id = Column(Integer, nullable=False)
 
 
-class UekSpineAnimLink(base, Base["UekSpineAnimLink"]):
+class UekSpineAnimLink(DeclarativeBase, Base["UekSpineAnimLink"]):
     __tablename__ = 'uek_spine_anim_link'
 
     spine_id = Column(Integer, primary_key=True)
     anim_num = Column(Integer, nullable=False, index=True)
 
 
-class UniqueEquipEnhanceRate(base, Base["UniqueEquipEnhanceRate"]):
+class UniqueEquipEnhanceRate(DeclarativeBase, Base["UniqueEquipEnhanceRate"]):
     __tablename__ = 'unique_equip_enhance_rate'
 
     id = Column(Integer, primary_key=True)
@@ -7410,7 +7396,7 @@ class UniqueEquipEnhanceRate(base, Base["UniqueEquipEnhanceRate"]):
     accuracy = Column(Float, nullable=False)
 
 
-class UniqueEquipmentBonu(base, Base["UniqueEquipmentBonu"]):
+class UniqueEquipmentBonu(DeclarativeBase, Base["UniqueEquipmentBonu"]):
     __tablename__ = 'unique_equipment_bonus'
 
     id = Column(Integer, primary_key=True)
@@ -7436,7 +7422,7 @@ class UniqueEquipmentBonu(base, Base["UniqueEquipmentBonu"]):
     accuracy = Column(Float, nullable=False)
 
 
-class UniqueEquipmentCraft(base, Base["UniqueEquipmentCraft"]):
+class UniqueEquipmentCraft(DeclarativeBase, Base["UniqueEquipmentCraft"]):
     __tablename__ = 'unique_equipment_craft'
 
     equip_id = Column(Integer, primary_key=True)
@@ -7473,7 +7459,7 @@ class UniqueEquipmentCraft(base, Base["UniqueEquipmentCraft"]):
     consume_num_10 = Column(Integer, nullable=False)
 
 
-class UniqueEquipmentDatum(base, Base["UniqueEquipmentDatum"]):
+class UniqueEquipmentDatum(DeclarativeBase, Base["UniqueEquipmentDatum"]):
     __tablename__ = 'unique_equipment_data'
 
     equipment_id = Column(Integer, primary_key=True)
@@ -7504,7 +7490,7 @@ class UniqueEquipmentDatum(base, Base["UniqueEquipmentDatum"]):
     accuracy = Column(Float, nullable=False)
 
 
-class UniqueEquipmentEnhanceDatum(base, Base["UniqueEquipmentEnhanceDatum"]):
+class UniqueEquipmentEnhanceDatum(DeclarativeBase, Base["UniqueEquipmentEnhanceDatum"]):
     __tablename__ = 'unique_equipment_enhance_data'
 
     equip_slot = Column(Integer, primary_key=True, nullable=False)
@@ -7515,7 +7501,7 @@ class UniqueEquipmentEnhanceDatum(base, Base["UniqueEquipmentEnhanceDatum"]):
     rank = Column(Integer, nullable=False)
 
 
-class UniqueEquipmentEnhanceRate(base, Base["UniqueEquipmentEnhanceRate"]):
+class UniqueEquipmentEnhanceRate(DeclarativeBase, Base["UniqueEquipmentEnhanceRate"]):
     __tablename__ = 'unique_equipment_enhance_rate'
 
     equipment_id = Column(Integer, primary_key=True)
@@ -7541,7 +7527,7 @@ class UniqueEquipmentEnhanceRate(base, Base["UniqueEquipmentEnhanceRate"]):
     accuracy = Column(Float, nullable=False)
 
 
-class UniqueEquipmentRankup(base, Base["UniqueEquipmentRankup"]):
+class UniqueEquipmentRankup(DeclarativeBase, Base["UniqueEquipmentRankup"]):
     __tablename__ = 'unique_equipment_rankup'
 
     equip_id = Column(Integer, primary_key=True, nullable=False, index=True)
@@ -7580,7 +7566,7 @@ class UniqueEquipmentRankup(base, Base["UniqueEquipmentRankup"]):
     consume_num_10 = Column(Integer, nullable=False)
 
 
-class UnitAttackPattern(base, Base["UnitAttackPattern"]):
+class UnitAttackPattern(DeclarativeBase, Base["UnitAttackPattern"]):
     __tablename__ = 'unit_attack_pattern'
 
     pattern_id = Column(Integer, primary_key=True)
@@ -7609,7 +7595,7 @@ class UnitAttackPattern(base, Base["UnitAttackPattern"]):
     atk_pattern_20 = Column(Integer, nullable=False)
 
 
-class UnitBackground(base, Base["UnitBackground"]):
+class UnitBackground(DeclarativeBase, Base["UnitBackground"]):
     __tablename__ = 'unit_background'
 
     unit_id = Column(Integer, primary_key=True)
@@ -7620,7 +7606,7 @@ class UnitBackground(base, Base["UnitBackground"]):
     face_type = Column(Integer, nullable=False)
 
 
-class UnitClipSetting(base, Base["UnitClipSetting"]):
+class UnitClipSetting(DeclarativeBase, Base["UnitClipSetting"]):
     __tablename__ = 'unit_clip_setting'
 
     clip_id = Column(Integer, primary_key=True)
@@ -7629,7 +7615,7 @@ class UnitClipSetting(base, Base["UnitClipSetting"]):
     softness_x = Column(Integer, nullable=False)
 
 
-class UnitComment(base, Base["UnitComment"]):
+class UnitComment(DeclarativeBase, Base["UnitComment"]):
     __tablename__ = 'unit_comments'
     __table_args__ = (
         Index('unit_comments_0_unit_id_1_use_type', 'unit_id', 'use_type'),
@@ -7653,14 +7639,14 @@ class UnitComment(base, Base["UnitComment"]):
     change_face_3 = Column(Integer, nullable=False)
 
 
-class UnitConversion(base, Base["UnitConversion"]):
+class UnitConversion(DeclarativeBase, Base["UnitConversion"]):
     __tablename__ = 'unit_conversion'
 
     original_unit_id = Column(Integer, primary_key=True)
     unit_id = Column(Integer, nullable=False, unique=True)
 
 
-class UnitDatum(base, Base["UnitDatum"]):
+class UnitDatum(DeclarativeBase, Base["UnitDatum"]):
     __tablename__ = 'unit_data'
 
     unit_id = Column(Integer, primary_key=True)
@@ -7689,7 +7675,7 @@ class UnitDatum(base, Base["UnitDatum"]):
     original_unit_id = Column(Integer, nullable=False)
 
 
-class UnitEnemyDatum(base, Base["UnitEnemyDatum"]):
+class UnitEnemyDatum(DeclarativeBase, Base["UnitEnemyDatum"]):
     __tablename__ = 'unit_enemy_data'
 
     unit_id = Column(Integer, primary_key=True)
@@ -7707,7 +7693,7 @@ class UnitEnemyDatum(base, Base["UnitEnemyDatum"]):
     comment = Column(Text, nullable=False)
 
 
-class UnitIntroduction(base, Base["UnitIntroduction"]):
+class UnitIntroduction(DeclarativeBase, Base["UnitIntroduction"]):
     __tablename__ = 'unit_introduction'
 
     id = Column(Integer, primary_key=True)
@@ -7723,14 +7709,14 @@ class UnitIntroduction(base, Base["UnitIntroduction"]):
     maximum_chunk_size_loop_3 = Column(Integer, nullable=False)
 
 
-class UnitMotionList(base, Base["UnitMotionList"]):
+class UnitMotionList(DeclarativeBase, Base["UnitMotionList"]):
     __tablename__ = 'unit_motion_list'
 
     unit_id = Column(Integer, primary_key=True)
     sp_motion = Column(Integer, nullable=False)
 
 
-class UnitMypagePo(base, Base["UnitMypagePo"]):
+class UnitMypagePo(DeclarativeBase, Base["UnitMypagePo"]):
     __tablename__ = 'unit_mypage_pos'
 
     id = Column(Integer, primary_key=True)
@@ -7739,7 +7725,7 @@ class UnitMypagePo(base, Base["UnitMypagePo"]):
     scale = Column(Float, nullable=False)
 
 
-class UnitPosAdjustment(base, Base["UnitPosAdjustment"]):
+class UnitPosAdjustment(DeclarativeBase, Base["UnitPosAdjustment"]):
     __tablename__ = 'unit_pos_adjustment'
 
     unit_id = Column(Integer, primary_key=True)
@@ -7793,7 +7779,7 @@ class UnitPosAdjustment(base, Base["UnitPosAdjustment"]):
     is_myprofile_image = Column(Integer, nullable=False)
 
 
-class UnitProfile(base, Base["UnitProfile"]):
+class UnitProfile(DeclarativeBase, Base["UnitProfile"]):
     __tablename__ = 'unit_profile'
 
     unit_id = Column(Integer, primary_key=True)
@@ -7814,7 +7800,7 @@ class UnitProfile(base, Base["UnitProfile"]):
     guild_id = Column(Text, nullable=False)
 
 
-class UnitPromotion(base, Base["UnitPromotion"]):
+class UnitPromotion(DeclarativeBase, Base["UnitPromotion"]):
     __tablename__ = 'unit_promotion'
 
     unit_id = Column(Integer, primary_key=True, nullable=False, index=True)
@@ -7827,7 +7813,7 @@ class UnitPromotion(base, Base["UnitPromotion"]):
     equip_slot_6 = Column(Integer, nullable=False)
 
 
-class UnitPromotionStatu(base, Base["UnitPromotionStatu"]):
+class UnitPromotionStatu(DeclarativeBase, Base["UnitPromotionStatu"]):
     __tablename__ = 'unit_promotion_status'
 
     unit_id = Column(Integer, primary_key=True, nullable=False)
@@ -7851,7 +7837,7 @@ class UnitPromotionStatu(base, Base["UnitPromotionStatu"]):
     accuracy = Column(Float, nullable=False)
 
 
-class UnitRarity(base, Base["UnitRarity"]):
+class UnitRarity(DeclarativeBase, Base["UnitRarity"]):
     __tablename__ = 'unit_rarity'
 
     unit_id = Column(Integer, primary_key=True, nullable=False, index=True)
@@ -7895,7 +7881,7 @@ class UnitRarity(base, Base["UnitRarity"]):
     accuracy_growth = Column(Float, nullable=False)
 
 
-class UnitSkillDatum(base, Base["UnitSkillDatum"]):
+class UnitSkillDatum(DeclarativeBase, Base["UnitSkillDatum"]):
     __tablename__ = 'unit_skill_data'
 
     unit_id = Column(Integer, primary_key=True)
@@ -7933,7 +7919,7 @@ class UnitSkillDatum(base, Base["UnitSkillDatum"]):
     sp_skill_evolution_2 = Column(Integer, nullable=False)
 
 
-class UnitSkillDataRf(base, Base["UnitSkillDataRf"]):
+class UnitSkillDataRf(DeclarativeBase, Base["UnitSkillDataRf"]):
     __tablename__ = 'unit_skill_data_rf'
 
     id = Column(Integer, primary_key=True)
@@ -7943,7 +7929,7 @@ class UnitSkillDataRf(base, Base["UnitSkillDataRf"]):
     max_lv = Column(Integer, nullable=False)
 
 
-class UnitStatusCoefficient(base, Base["UnitStatusCoefficient"]):
+class UnitStatusCoefficient(DeclarativeBase, Base["UnitStatusCoefficient"]):
     __tablename__ = 'unit_status_coefficient'
 
     coefficient_id = Column(Integer, primary_key=True)
@@ -7973,7 +7959,7 @@ class UnitStatusCoefficient(base, Base["UnitStatusCoefficient"]):
     ub_evolution_slv_coefficient = Column(Float, nullable=False)
 
 
-class UnitUniqueEquip(base, Base["UnitUniqueEquip"]):
+class UnitUniqueEquip(DeclarativeBase, Base["UnitUniqueEquip"]):
     __tablename__ = 'unit_unique_equip'
 
     unit_id = Column(Integer, primary_key=True)
@@ -7981,7 +7967,7 @@ class UnitUniqueEquip(base, Base["UnitUniqueEquip"]):
     equip_id = Column(Integer, nullable=False)
 
 
-class UnlockRarity6(base, Base["UnlockRarity6"]):
+class UnlockRarity6(DeclarativeBase, Base["UnlockRarity6"]):
     __tablename__ = 'unlock_rarity_6'
     __table_args__ = (
         Index('unlock_rarity_6_0_unit_id_1_unlock_level', 'unit_id', 'unlock_level'),
@@ -8015,14 +8001,14 @@ class UnlockRarity6(base, Base["UnlockRarity6"]):
     accuracy = Column(Integer, nullable=False)
 
 
-class UnlockSkillDatum(base, Base["UnlockSkillDatum"]):
+class UnlockSkillDatum(DeclarativeBase, Base["UnlockSkillDatum"]):
     __tablename__ = 'unlock_skill_data'
 
     promotion_level = Column(Integer, nullable=False)
     unlock_skill = Column(Integer, primary_key=True)
 
 
-class UnlockUnitCondition(base, Base["UnlockUnitCondition"]):
+class UnlockUnitCondition(DeclarativeBase, Base["UnlockUnitCondition"]):
     __tablename__ = 'unlock_unit_condition'
 
     unit_id = Column(Integer, primary_key=True)
@@ -8052,7 +8038,7 @@ class UnlockUnitCondition(base, Base["UnlockUnitCondition"]):
     release_effect_type = Column(Integer, nullable=False)
 
 
-class VisualCustomize(base, Base["VisualCustomize"]):
+class VisualCustomize(DeclarativeBase, Base["VisualCustomize"]):
     __tablename__ = 'visual_customize'
 
     id = Column(Integer, primary_key=True)
@@ -8067,7 +8053,7 @@ class VisualCustomize(base, Base["VisualCustomize"]):
     end_time = Column(Text, nullable=False)
 
 
-class VoiceGroup(base, Base["VoiceGroup"]):
+class VoiceGroup(DeclarativeBase, Base["VoiceGroup"]):
     __tablename__ = 'voice_group'
 
     group_id = Column(Integer, primary_key=True)
@@ -8079,7 +8065,7 @@ class VoiceGroup(base, Base["VoiceGroup"]):
     group_unit_id_05 = Column(Integer, nullable=False)
 
 
-class VoiceGroupChara(base, Base["VoiceGroupChara"]):
+class VoiceGroupChara(DeclarativeBase, Base["VoiceGroupChara"]):
     __tablename__ = 'voice_group_chara'
 
     group_unit_id = Column(Integer, primary_key=True)
@@ -8096,7 +8082,7 @@ class VoiceGroupChara(base, Base["VoiceGroupChara"]):
     unit_id_10 = Column(Integer, nullable=False)
 
 
-class VoteDatum(base, Base["VoteDatum"]):
+class VoteDatum(DeclarativeBase, Base["VoteDatum"]):
     __tablename__ = 'vote_data'
 
     vote_id = Column(Integer, primary_key=True)
@@ -8108,7 +8094,7 @@ class VoteDatum(base, Base["VoteDatum"]):
     result_story_id = Column(Integer, nullable=False)
 
 
-class VoteInfo(base, Base["VoteInfo"]):
+class VoteInfo(DeclarativeBase, Base["VoteInfo"]):
     __tablename__ = 'vote_info'
 
     vote_id = Column(Integer, primary_key=True, nullable=False)
@@ -8117,7 +8103,7 @@ class VoteInfo(base, Base["VoteInfo"]):
     vote_help = Column(Text, nullable=False)
 
 
-class VoteUnit(base, Base["VoteUnit"]):
+class VoteUnit(DeclarativeBase, Base["VoteUnit"]):
     __tablename__ = 'vote_unit'
 
     vote_id = Column(Integer, primary_key=True, nullable=False)
@@ -8125,7 +8111,7 @@ class VoteUnit(base, Base["VoteUnit"]):
     unit_rarity = Column(Integer, nullable=False)
 
 
-class WacBirthdayDramaScript(base, Base["WacBirthdayDramaScript"]):
+class WacBirthdayDramaScript(DeclarativeBase, Base["WacBirthdayDramaScript"]):
     __tablename__ = 'wac_birthday_drama_script'
 
     command_id = Column(Integer, primary_key=True)
@@ -8141,7 +8127,7 @@ class WacBirthdayDramaScript(base, Base["WacBirthdayDramaScript"]):
     param_08 = Column(Text, nullable=False)
 
 
-class WacDatum(base, Base["WacDatum"]):
+class WacDatum(DeclarativeBase, Base["WacDatum"]):
     __tablename__ = 'wac_data'
 
     wac_id = Column(Integer, primary_key=True, nullable=False)
@@ -8160,7 +8146,7 @@ class WacDatum(base, Base["WacDatum"]):
     draw_end_to_center = Column(Integer, nullable=False)
 
 
-class WacDramaScript(base, Base["WacDramaScript"]):
+class WacDramaScript(DeclarativeBase, Base["WacDramaScript"]):
     __tablename__ = 'wac_drama_script'
 
     command_id = Column(Integer, primary_key=True)
@@ -8176,7 +8162,7 @@ class WacDramaScript(base, Base["WacDramaScript"]):
     param_08 = Column(Text, nullable=False)
 
 
-class WacMuralBgDatum(base, Base["WacMuralBgDatum"]):
+class WacMuralBgDatum(DeclarativeBase, Base["WacMuralBgDatum"]):
     __tablename__ = 'wac_mural_bg_data'
 
     wac_id = Column(Integer, primary_key=True, nullable=False)
@@ -8187,7 +8173,7 @@ class WacMuralBgDatum(base, Base["WacMuralBgDatum"]):
     end_offset_x = Column(Text, nullable=False)
 
 
-class WacMuralDatum(base, Base["WacMuralDatum"]):
+class WacMuralDatum(DeclarativeBase, Base["WacMuralDatum"]):
     __tablename__ = 'wac_mural_data'
 
     mural_group_id = Column(Integer, primary_key=True, nullable=False, index=True)
@@ -8200,7 +8186,7 @@ class WacMuralDatum(base, Base["WacMuralDatum"]):
     height = Column(Integer, nullable=False)
 
 
-class WacPresentStillDatum(base, Base["WacPresentStillDatum"]):
+class WacPresentStillDatum(DeclarativeBase, Base["WacPresentStillDatum"]):
     __tablename__ = 'wac_present_still_data'
 
     wac_id = Column(Integer, primary_key=True, nullable=False)
@@ -8208,7 +8194,7 @@ class WacPresentStillDatum(base, Base["WacPresentStillDatum"]):
     still_id = Column(Integer, nullable=False)
 
 
-class WaveGroupDatum(base, Base["WaveGroupDatum"]):
+class WaveGroupDatum(DeclarativeBase, Base["WaveGroupDatum"]):
     __tablename__ = 'wave_group_data'
 
     id = Column(Integer, primary_key=True)
@@ -8233,7 +8219,7 @@ class WaveGroupDatum(base, Base["WaveGroupDatum"]):
     guest_lane = Column(Integer, nullable=False)
 
 
-class Worldmap(base, Base["Worldmap"]):
+class Worldmap(DeclarativeBase, Base["Worldmap"]):
     __tablename__ = 'worldmap'
 
     course_id = Column(Integer, primary_key=True)
@@ -8245,7 +8231,7 @@ class Worldmap(base, Base["Worldmap"]):
     end_area_id = Column(Integer, nullable=False)
 
 
-class YsnStoryDatum(base, Base["YsnStoryDatum"]):
+class YsnStoryDatum(DeclarativeBase, Base["YsnStoryDatum"]):
     __tablename__ = 'ysn_story_data'
 
     sub_story_id = Column(Integer, primary_key=True)
