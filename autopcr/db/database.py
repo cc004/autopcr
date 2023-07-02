@@ -8,6 +8,7 @@ from functools import reduce
 from .dbmgr import dbmgr
 from .models import *
 from ..util.linq import flow
+from queue import SimpleQueue
 
 '''
 db_path = os.path.join(os.path.dirname(__file__), "../../", "redive_cn.db")
@@ -69,10 +70,6 @@ class database():
                 len(x.get(self.equip_max_rank, {})) for x in self.unit_promotion.values()
             )
 
-            for unit_id in self.unit_promotion:
-                for rank in range(max(self.unit_promotion[unit_id].keys()) - 1, 0, -1):
-                    self.unit_promotion[unit_id][rank] += self.unit_promotion[unit_id][rank + 1]
-
             self.hatsune_schedule: Dict[int, HatsuneSchedule] = (
                 HatsuneSchedule.query(db)
                 .to_dict(lambda x: x.event_id, lambda x: x)
@@ -126,11 +123,6 @@ class database():
                 )
             )
 
-            for unit_id in self.rarity_up_required:
-                for rarity in range(max(self.rarity_up_required[unit_id].keys()) - 1, 0, -1):
-                    self.rarity_up_required[unit_id][rarity] += self.rarity_up_required[unit_id][rarity + 1]
-                self.rarity_up_required[unit_id][0] = self.rarity_up_required[unit_id][1]
-
             self.unique_equip_required: Dict[int, Dict[int, typing.Counter[Tuple[eInventoryType, int]]]] = (
                 UniqueEquipmentCraft.query(db)
                 .select_many(lambda x: [(
@@ -179,10 +171,6 @@ class database():
                     )
                 )
             )
-
-            for equip_id in self.unique_equip_required:
-                for rank in range(max(self.unique_equip_required[equip_id].keys()) - 1, -1, -1):
-                    self.unique_equip_required[equip_id][rank] += self.unique_equip_required[equip_id][rank + 1]
 
             self.training_quest_exp: Dict[int, TrainingQuestDatum] = (
                 TrainingQuestDatum.query(db)
@@ -498,11 +486,21 @@ class database():
     def get_today_start_time(self) -> datetime.datetime:
         return self.get_start_time(datetime.datetime.now())
 
-    def craft_equip(self, equip: Tuple[eInventoryType, int], num: int) -> typing.Counter[Tuple[eInventoryType, int]]: # 依赖关系不深，没必要写成拓扑图求解
-        if equip not in self.equip_craft:
-            return Counter({equip: num})
-        sub_results = map(lambda token: self.craft_equip(token[0], token[1] * num), self.equip_craft[equip])
-        res = reduce(lambda x, y: x + y, sub_results, Counter())
-        return res
+    def craft_equip(self, source: typing.Counter[Tuple[eInventoryType, int]]) -> typing.Counter[Tuple[eInventoryType, int]]: # 依赖关系不深，没必要写成拓扑图求解
+        result: typing.Counter[Tuple[eInventoryType, int]] = Counter()
+
+        queue = SimpleQueue()
+        for key, value in source.items():
+            queue.put((key, value))
+        
+        while not queue.empty():
+            key, value = queue.get()
+            if key in self.equip_craft:
+                for token in self.equip_craft[key]:
+                    queue.put((token[0], token[1] * value))
+            else:
+                result[key] += value
+
+        return result
 
 db = database()

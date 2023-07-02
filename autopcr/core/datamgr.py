@@ -12,6 +12,7 @@ from ..db.assetmgr import instance as assetmgr
 from ..db.dbmgr import instance as dbmgr
 from ..db.database import db
 from ..db.models import TrainingQuestDatum
+from ..util.linq import flow
 
 class datamgr(Component[apiclient]):
     settings: IniSetting = None
@@ -83,19 +84,39 @@ class datamgr(Component[apiclient]):
         if unit_id not in db.unit_unique_equip:
             return 0
         equip_id = db.unit_unique_equip[unit_id].equip_id
-        rank = self.unit[unit_id].unique_equip_slot[0].rank if unit_id in self.unit and self.unit[unit_id].unique_equip_slot else 0
-        return db.unique_equip_required[equip_id][rank][token]
+        rank = self.unit[unit_id].unique_equip_slot[0].rank if unit_id in self.unit and self.unit[unit_id].unique_equip_slot else -1
+        return (
+            flow(db.unique_equip_required[equip_id].items())
+            .where(lambda x: x[0] > rank)
+            .select(lambda x: x[1][token])
+            .sum()
+        )
 
     def get_need_unit_need_eqiup(self, unit_id: int) -> typing.Counter[Tuple[eInventoryType, int]]:
         unit = self.unit[unit_id]
         rank = unit.promotion_level
-        need = Counter(db.unit_promotion[unit_id][rank])
-        for equip in unit.equip_slot:
-            if equip.is_slot:
-                need[(eInventoryType.Equip, equip.id)] -= 1
 
-        cnt = reduce(lambda acc, equip_num: acc + db.craft_equip(equip_num[0], equip_num[1]), need.items(), Counter())
-        return cnt
+        return db.craft_equip(
+            flow(db.unit_promotion[unit_id].items())
+            .where(lambda x: x[0] >= rank)
+            .select(lambda x: x[1])
+            .sum() - 
+            Counter((eInventoryType.Equip, equip.id) for equip in unit.equip_slot if equip.is_slot)
+        )
+
+    def get_need_rarity_memory(self, unit_id: int, token: Tuple[eInventoryType, int]) -> int:
+        rarity = -1
+        if unit_id in self.unit:
+            unit_data = self.unit[unit_id]
+            rarity = unit_data.unit_rarity
+            if unit_data.unlock_rarity_6_item and unit_data.unlock_rarity_6_item.slot_2:
+                rarity = 6
+        return (
+            flow(db.rarity_up_required[unit_id].items())
+            .where(lambda x: x[0] > rarity)
+            .select(lambda x: x[1][token])
+            .sum()
+        )
 
     def get_library_unit_data(self) -> List:
         result = []
@@ -176,17 +197,6 @@ class datamgr(Component[apiclient]):
                 cnt += need
                 result.append((token, need))
         return result, cnt 
-
-    def get_need_rarity_memory(self, unit_id: int, token: Tuple[eInventoryType, int]) -> int:
-        rarity = 0
-        cnt = 0
-        if unit_id in self.unit:
-            unit_data = self.unit[unit_id]
-            rarity = unit_data.unit_rarity
-            if unit_data.unlock_rarity_6_item and unit_data.unlock_rarity_6_item.slot_2:
-                rarity = 6
-        cnt += db.rarity_up_required[unit_id][rarity][token]
-        return cnt
 
     def get_need_unique_equip_memory(self, unit_id: int, token: Tuple[eInventoryType, int]) -> int:
         return self.get_need_unique_equip_material(unit_id, token)
