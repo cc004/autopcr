@@ -125,8 +125,8 @@ class free_gacha(Module):
             raise SkipError("免费十连已结束")
         schedule = db.campaign_gacha[res.campaign_info.campaign_id]
         gacha_list = db.gacha_list[schedule.campaign_id]
-        start_time = db.parse_time(start_time)
-        end_time = db.parse_time(end_time)
+        start_time = db.parse_time(schedule.start_time)
+        end_time = db.parse_time(schedule.end_time)
         if datetime.datetime.now() >= end_time:
             raise SkipError("免费十连已结束")
         if datetime.datetime.now() < start_time:
@@ -523,7 +523,7 @@ class tower_story_reading(Module):
         read_story.add(0) # no pre story
         for story in db.tower_story:
             now = datetime.datetime.now()
-            start_time = db.parse_time(start_time)
+            start_time = db.parse_time(story.start_time)
             if now < start_time:
                 continue
             if story.story_id not in read_story and story.pre_story_id in read_story:
