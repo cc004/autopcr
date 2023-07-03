@@ -89,7 +89,7 @@ class datamgr(Component[apiclient]):
             flow(db.unique_equip_required[equip_id].items())
             .where(lambda x: x[0] > rank)
             .select(lambda x: x[1][token])
-            .sum()
+            .sum(seed=Counter())
         )
 
     def get_need_unit_need_eqiup(self, unit_id: int) -> typing.Counter[Tuple[eInventoryType, int]]:
@@ -100,7 +100,7 @@ class datamgr(Component[apiclient]):
             flow(db.unit_promotion[unit_id].items())
             .where(lambda x: x[0] >= rank)
             .select(lambda x: x[1])
-            .sum() - 
+            .sum(seed=Counter()) - 
             Counter((eInventoryType.Equip, equip.id) for equip in unit.equip_slot if equip.is_slot)
         )
 
@@ -115,7 +115,7 @@ class datamgr(Component[apiclient]):
             flow(db.rarity_up_required[unit_id].items())
             .where(lambda x: x[0] > rarity)
             .select(lambda x: x[1][token])
-            .sum()
+            .sum(seed=Counter())
         )
 
     def get_library_unit_data(self) -> List:
