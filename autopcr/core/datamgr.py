@@ -5,15 +5,19 @@ from ..model.modelbase import *
 from typing import Callable, Coroutine, Any, Set, Dict, Tuple
 import typing
 from ..model.common import *
-from .database import db
 import datetime
 from functools import reduce
 import json, base64, gzip
+from ..db.assetmgr import instance as assetmgr
+from ..db.dbmgr import instance as dbmgr
+from ..db.database import db
+from ..db.models import TrainingQuestDatum
+from ..util.linq import flow
 
 class datamgr(Component[apiclient]):
     settings: IniSetting = None
     dungeon_avaliable: bool = False
-    finishedQuest: Set[int] = set()
+    finishedQuest: Set[int] = None
     jewel: UserJewel = None
     gold: UserGold = None
     clan: int = 0
@@ -28,17 +32,31 @@ class datamgr(Component[apiclient]):
     training_quest_count: TrainingQuestCount = None
     training_quest_max_count: TrainingQuestCount = None
     quest_dict: Dict[int, UserQuestInfo] = None
-    hatsune_quest_dict: Dict[int, Dict[int, HatsuneUserEventQuest]] = {}
+    hatsune_quest_dict: Dict[int, Dict[int, HatsuneUserEventQuest]] = None
     name: str = None
     clan_like_count: int = 0
     user_my_quest: List[UserMyQuest] = None
-    _inventory: Dict[Tuple[eInventoryType, int], int] = {}
+    _inventory: Dict[Tuple[eInventoryType, int], int] = None
     read_story_ids: List[int] = None
     unlock_story_ids: List[int] = None
     event_statuses: List[EventStatus] = None
     tower_status: TowerStatus = None
-    deck_list: Dict[ePartyType, LoadDeckData] = {}
-    campaign_list: List[int] = []
+    deck_list: Dict[ePartyType, LoadDeckData] = None
+    campaign_list: List[int] = None
+
+    def __init__(self):
+        self.finishedQuest = set()
+        self.hatsune_quest_dict = {}
+        self._inventory = {}
+        self.deck_list = {}
+        self.campaign_list = []
+
+
+    async def try_update_database(self, ver: int):
+        if not assetmgr.ver or assetmgr.ver < ver:
+            await assetmgr.init(ver)
+            await dbmgr.update_db(assetmgr)
+            db.update(dbmgr)
 
     def is_heart_piece_double(self) -> bool:
         return any(db.is_heart_piece_double(campaign_id) for campaign_id in self.campaign_list)
@@ -63,22 +81,42 @@ class datamgr(Component[apiclient]):
         self.hatsune_quest_dict.clear()
 
     def get_need_unique_equip_material(self, unit_id: int, token: Tuple[eInventoryType, int]) -> int:
-        if unit_id not in db.unit_unique_equip_id:
+        if unit_id not in db.unit_unique_equip:
             return 0
-        equip_id = db.unit_unique_equip_id[unit_id]
-        rank = self.unit[unit_id].unique_equip_slot[0].rank if unit_id in self.unit and self.unit[unit_id].unique_equip_slot else 0
-        return db.unique_equip_required[equip_id][rank][token]
+        equip_id = db.unit_unique_equip[unit_id].equip_id
+        rank = self.unit[unit_id].unique_equip_slot[0].rank if unit_id in self.unit and self.unit[unit_id].unique_equip_slot else -1
+        return (
+            flow(db.unique_equip_required[equip_id].items())
+            .where(lambda x: x[0] > rank)
+            .select(lambda x: x[1][token])
+            .sum()
+        )
 
     def get_need_unit_need_eqiup(self, unit_id: int) -> typing.Counter[Tuple[eInventoryType, int]]:
         unit = self.unit[unit_id]
         rank = unit.promotion_level
-        need = Counter(db.unit_promotion[unit_id][rank])
-        for equip in unit.equip_slot:
-            if equip.is_slot:
-                need[(eInventoryType.Equip, equip.id)] -= 1
 
-        cnt = reduce(lambda acc, equip_num: acc + db.craft_equip(equip_num[0], equip_num[1]), need.items(), Counter())
-        return cnt
+        return db.craft_equip(
+            flow(db.unit_promotion[unit_id].items())
+            .where(lambda x: x[0] >= rank)
+            .select(lambda x: x[1])
+            .sum(seed=Counter()) - 
+            Counter((eInventoryType.Equip, equip.id) for equip in unit.equip_slot if equip.is_slot)
+        )
+
+    def get_need_rarity_memory(self, unit_id: int, token: Tuple[eInventoryType, int]) -> int:
+        rarity = -1
+        if unit_id in self.unit:
+            unit_data = self.unit[unit_id]
+            rarity = unit_data.unit_rarity
+            if unit_data.unlock_rarity_6_item and unit_data.unlock_rarity_6_item.slot_2:
+                rarity = 6
+        return (
+            flow(db.rarity_up_required[unit_id].items())
+            .where(lambda x: x[0] > rarity)
+            .select(lambda x: x[1][token])
+            .sum()
+        )
 
     def get_library_unit_data(self) -> List:
         result = []
@@ -94,12 +132,11 @@ class datamgr(Component[apiclient]):
                 "r": str(unit.unit_rarity),
                 "u": hex(unit.id // 100)[2:],
                 "t": f"{db.equip_max_rank}.{db.equip_max_rank_equip_num}",
-                "q": str(db.unique_equip_rank_max_level[unit.unique_equip_slot[0].rank]) if unit.unique_equip_slot else "0",
+                "q": str(db.unique_equip_rank[unit.unique_equip_slot[0].rank].enhance_level) if unit.unique_equip_slot and unit.unique_equip_slot[0].rank > 0 else "0",
                 "b": "true" if unit.exceed_stage else "false",
                 "f": False
             })
         return result
-
 
     def get_library_equip_data(self) -> List:
         result = []
@@ -130,8 +167,6 @@ class datamgr(Component[apiclient]):
         result.append(self.get_library_equip_data())
         result.append(self.get_library_memory_data())
         json_str = json.dumps(result)
-        with open("tmp.txt", "w") as f:
-            f.write(json_str)
         compressed_data = gzip.compress(json_str.encode('utf-8'))
         encoded_data = base64.b64encode(compressed_data).decode('utf-8')
         return encoded_data
@@ -160,17 +195,6 @@ class datamgr(Component[apiclient]):
                 result.append((token, need))
         return result, cnt 
 
-    def get_need_rarity_memory(self, unit_id: int, token: Tuple[eInventoryType, int]) -> int:
-        rarity = 0
-        cnt = 0
-        if unit_id in self.unit:
-            unit_data = self.unit[unit_id]
-            rarity = unit_data.unit_rarity
-            if unit_data.unlock_rarity_6_item and unit_data.unlock_rarity_6_item.slot_2:
-                rarity = 6
-        cnt += db.rarity_up_required[unit_id][rarity][token]
-        return cnt
-
     def get_need_unique_equip_memory(self, unit_id: int, token: Tuple[eInventoryType, int]) -> int:
         return self.get_need_unique_equip_material(unit_id, token)
 
@@ -188,11 +212,11 @@ class datamgr(Component[apiclient]):
 
         return result, cnt 
 
-    def get_max_avaliable_quest(self, quests: Dict[int, str]) -> int:
+    def get_max_avaliable_quest(self, quests: Dict[int, TrainingQuestDatum]) -> int:
         now = datetime.datetime.now()
         result = 0
-        for quest_id, start_time in quests.items():
-            start_time = db.parse_time(start_time)
+        for quest_id, quest in quests.items():
+            start_time = db.parse_time(quest.start_time)
             if now < start_time:
                 continue
             if quest_id in self.quest_dict and self.quest_dict[quest_id].clear_flg == 3:
@@ -258,5 +282,5 @@ class datamgr(Component[apiclient]):
 
     async def request(self, request: Request[TResponse], next: Callable[[Request[TResponse]], Coroutine[Any, Any, TResponse]]) -> TResponse:
         resp = await next(request)
-        if resp: resp.update(self, request)
+        if resp: await resp.update(self, request)
         return resp

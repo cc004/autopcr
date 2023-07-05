@@ -4,7 +4,7 @@ from .modulebase import *
 
 import datetime
 from ..model.error import *
-from ..core.database import db
+from ..db.database import db
 from ..model.models import *
 import random
 from abc import abstractmethod
@@ -49,10 +49,10 @@ class smart_hard_sweep(Module):
             if token[1] not in db.memory_quest:
                 continue
             tmp = []
-            for quest_id in db.memory_quest[token[1]]:
-                max_times = 5 if db.is_shiori_quest(quest_id) else 3
+            for quest in db.memory_quest[token[1]]:
+                max_times = 5 if db.is_shiori_quest(quest.quest_id) else 3
                 try:
-                    resp = await client.quest_skip_aware(quest_id, max_times)
+                    resp = await client.quest_skip_aware(quest.quest_id, max_times)
                     tmp += resp
                 except SkipError:
                     pass
@@ -93,14 +93,14 @@ class love_up(Module):
             if unit.chara_love < total_love:
                 dis = total_love - unit.chara_love
                 cakes: List[SendGiftData] = []
-                for cake_id, cake_value in db.love_cake:
-                    current_num = client.data.get_inventory((eInventoryType.Item, cake_id))
+                for cake in db.love_cake:
+                    current_num = client.data.get_inventory((eInventoryType.Item, cake.item_id))
                     if not current_num:
                         continue
-                    item_num = min(current_num, (dis + cake_value - 1) // cake_value)
-                    dis -= item_num * cake_value
+                    item_num = min(current_num, (dis + cake.value - 1) // cake.value)
+                    dis -= item_num * cake.value
                     use_cake = SendGiftData()
-                    use_cake.item_id = cake_id
+                    use_cake.item_id = cake.item_id
                     use_cake.item_num = item_num
                     use_cake.current_item_num = current_num
                     cakes.append(use_cake)
@@ -123,9 +123,10 @@ class free_gacha(Module):
         res = await client.get_gacha_index()
         if res.campaign_info is None:
             raise SkipError("免费十连已结束")
-        start_time, end_time, gacha_list = db.campaign_info(res.campaign_info.campaign_id)
-        start_time = db.parse_time(start_time)
-        end_time = db.parse_time(end_time)
+        schedule = db.campaign_gacha[res.campaign_info.campaign_id]
+        gacha_list = db.gacha_list[schedule.campaign_id]
+        start_time = db.parse_time(schedule.start_time)
+        end_time = db.parse_time(schedule.end_time)
         if datetime.datetime.now() >= end_time:
             raise SkipError("免费十连已结束")
         if datetime.datetime.now() < start_time:
@@ -135,7 +136,7 @@ class free_gacha(Module):
         cnt = res.campaign_info.fg10_exec_cnt
         gacha_id = 0
         exchange_id = 0
-        gacha_list = set(gacha_list)
+        gacha_list = set(gacha.gacha_id for gacha in gacha_list)
         for gacha_info in res.gacha_info:
             if gacha_info.id in gacha_list:
                 gacha_id = gacha_info.id
@@ -368,7 +369,9 @@ class six_star(Module):
     async def do_task(self, client: pcrclient):
         times = int(self.value.split(':')[client.data.is_very_hard_quest_double()])
         is_skip = True
-        for quest_id, (pure_memory, unit_id) in db.six_area.items():
+        for quest_id, quest in db.six_area.items():
+            pure_memory = quest.reward_image_1
+            unit_id = db.pure_memory_to_unit[pure_memory]
             data = client.data.unit[unit_id]
             if data.unit_rarity != 6 and \
             (not data.unlock_rarity_6_item or 
@@ -456,7 +459,7 @@ class underground_skip(Module):
 class user_info(Module):
     async def do_task(self, client: pcrclient):
         now = db.format_time(datetime.datetime.now())
-        self._log(f"{client.data.name} 体力{client.data.stamina}({db.team_max_stamina[client.data.team_level]}) 等级{client.data.team_level} 钻石{client.data.jewel.free_jewel} mana{client.data.gold.gold_id_free} 扫荡券{client.data.get_inventory((eInventoryType.Item, 23001))} 母猪石{client.data.get_inventory((eInventoryType.Item, 90005))}\n清日常时间:{now}")
+        self._log(f"{client.data.name} 体力{client.data.stamina}({db.team_max_stamina[client.data.team_level].max_stamina}) 等级{client.data.team_level} 钻石{client.data.jewel.free_jewel} mana{client.data.gold.gold_id_free} 扫荡券{client.data.get_inventory((eInventoryType.Item, 23001))} 母猪石{client.data.get_inventory((eInventoryType.Item, 90005))}\n清日常时间:{now}")
 
 @description('阅读角色剧情')
 @enumtype(["none", "除ue普妈圣千普千真步", "all"])
@@ -473,13 +476,18 @@ class unit_story_reading(Module):
             1059, # 普妈
             1084, # 圣千
         ])
-        for story_id, pre_story_id, chara_id, love_level, title in db.unit_story:
-            if ignore and chara_id in ignore_chara_id:
+        for story in db.unit_story:
+            if ignore and story.story_group_id in ignore_chara_id:
                 continue
-            if story_id not in read_story and pre_story_id in read_story and chara_id in client.data.unit_love and client.data.unit_love[chara_id].love_level >= love_level:
-                await client.read_story(story_id)
-                read_story.add(story_id)
-                self._log(f"阅读了{title}")
+            if (
+                story.story_id not in read_story and
+                story.pre_story_id in read_story and
+                story.story_group_id in client.data.unit_love and 
+                client.data.unit_love[story.story_group_id].love_level >= story.love_level
+                ):
+                await client.read_story(story.story_id)
+                read_story.add(story.story_id)
+                self._log(f"阅读了{story.title}")
 
         if not self.log:
             raise SkipError("不存在未阅读的角色剧情")
@@ -493,13 +501,13 @@ class main_story_reading(Module):
     async def do_task(self, client: pcrclient):
         read_story = set(client.data.read_story_ids)
         read_story.add(0) # no pre story
-        for story_id, pre_story_id, unlock_quest_id, title in db.main_story:
-            if story_id not in read_story and pre_story_id in read_story:
-                if not await client.unlock_quest_id(unlock_quest_id):
-                    raise AbortError(f"区域{str(unlock_quest_id)}未通关，无法观看{title}\n")
-                await client.read_story(story_id)
-                read_story.add(story_id)
-                self._log(f"阅读了{title}")
+        for story in db.main_story:
+            if story.story_id not in read_story and story.pre_story_id in read_story:
+                if not await client.unlock_quest_id(story.unlock_quest_id):
+                    raise AbortError(f"区域{story.unlock_quest_id}未通关，无法观看{story.title}\n")
+                await client.read_story(story.story_id)
+                read_story.add(story.story_id)
+                self._log(f"阅读了{story.title}")
 
         client.data.read_story_ids = list(read_story)
         if not self.log:
@@ -513,17 +521,17 @@ class tower_story_reading(Module):
     async def do_task(self, client: pcrclient):
         read_story = set(client.data.read_story_ids)
         read_story.add(0) # no pre story
-        for story_id, pre_story_id, unlock_quest_id, title, start_time in db.tower_story:
+        for story in db.tower_story:
             now = datetime.datetime.now()
-            start_time = db.parse_time(start_time)
+            start_time = db.parse_time(story.start_time)
             if now < start_time:
                 continue
-            if story_id not in read_story and pre_story_id in read_story:
-                if not await client.unlock_quest_id(unlock_quest_id):
-                    raise AbortError(f"层数{db.tower2floor[unlock_quest_id]}未通关，无法观看{title}\n")
-                await client.read_story(story_id)
-                read_story.add(story_id)
-                self._log(f"阅读了{title}")
+            if story.story_id not in read_story and story.pre_story_id in read_story:
+                if not await client.unlock_quest_id(story.unlock_quest_id):
+                    raise AbortError(f"层数{db.tower_quest[story.unlock_quest_id].floor_num}未通关，无法观看{story.title}\n")
+                await client.read_story(story.story_id)
+                read_story.add(story.story_id)
+                self._log(f"阅读了{story.title}")
 
         client.data.read_story_ids = list(read_story)
         if not self.log:
@@ -538,11 +546,11 @@ class hatsune_story_reading(Module):
         read_story = set(client.data.read_story_ids)
         read_story.add(0) # no pre story
         unlock_story = set(client.data.unlock_story_ids)
-        for story_id, pre_story_id, title in db.event_story:
-            if story_id not in read_story and pre_story_id in read_story and story_id in unlock_story:
-                await client.read_story(story_id)
-                read_story.add(story_id)
-                self._log(f"阅读了{title}")
+        for story in db.event_story:
+            if story.story_id not in read_story and story.pre_story_id in read_story and story.story_id in unlock_story:
+                await client.read_story(story.story_id)
+                read_story.add(story.story_id)
+                self._log(f"阅读了{story.title}")
 
         if not self.log:
             raise SkipError("不存在未阅读的活动剧情")
@@ -587,7 +595,7 @@ class hatsune_gacha_exchange(Module):
                 continue
             event_active = True
             res = (await client.get_hatsune_top(event.event_id))
-            exchange_ticket_id = db.hatsune_item[event.event_id][1]
+            exchange_ticket_id = db.hatsune_item[event.event_id].gacha_ticket_id
             res = (await client.get_hatsune_gacha_index(event.event_id, event.event_id))
             box_item = {item.box_set_id: item for item in res.event_gacha_info.box_set_list}
             ticket = client.data.get_inventory((eInventoryType.Item, exchange_ticket_id))
@@ -752,7 +760,7 @@ class hatsune_hboss_sweep(Module):
                     self._log("今日vh未通关，保留30张")
                     times -= 1
                 if self.value == "保留当日及未来vh份":
-                    left_day = (db.get_start_time(db.parse_time(db.hatsune_schedule[event.event_id][1])) - db.get_today_start_time()).days 
+                    left_day = (db.get_start_time(db.parse_time(db.hatsune_schedule[event.event_id].end_time)) - db.get_today_start_time()).days 
                     self._log(f"距离活动结束还有{left_day}天，保留{left_day * 30}张")
                     times -= left_day
 
@@ -859,7 +867,13 @@ class room_like_back(Module):
             pos += 1
             if user.room_user_info.today_like_flag:
                 continue
-            resp = await client.room_like(user.room_user_info.viewer_id)
+            try:
+                resp = await client.room_like(user.room_user_info.viewer_id)
+            except Exception as e:
+                if str(e).startswith("此玩家未读取的点赞数"):
+                    continue
+                else:
+                    raise(e)
             result += resp.reward_list
             like_user.append(user.room_user_info.name)
             cnt += 1
@@ -926,9 +940,9 @@ class tower_cloister_sweep(Module):
     async def do_task(self, client: pcrclient):
         now = datetime.datetime.now()
         tower_id = db.get_newest_tower_id()
-        start_time, end_time = db.tower[tower_id]
-        start_time = db.parse_time(start_time)
-        end_time = db.parse_time(end_time)
+        schedule = db.tower[tower_id]
+        start_time = db.parse_time(schedule.start_time)
+        end_time = db.parse_time(schedule.end_time)
         if now < start_time:
             raise SkipError("露娜塔未开启")
         if now > end_time:

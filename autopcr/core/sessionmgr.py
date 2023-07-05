@@ -7,11 +7,12 @@ import dateutil.parser
 from datetime import datetime
 from ..model.models import *
 from traceback import print_exc
+from ..constants import CACHE_DIR
 
 class sessionmgr(Component[apiclient]):
     def __init__(self, account, *arg, **kwargs):
         super().__init__()
-        self.cacheDir = os.path.join(os.path.dirname(__file__), 'cache')
+        self.cacheDir = os.path.join(CACHE_DIR, 'token')
         self.bsdk = bsdkclient(account, *arg, **kwargs)
         self._platform = self.bsdk.platform
         self._channel = self.bsdk.channel

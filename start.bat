@@ -1,1 +1,1 @@
-py -3.8 httpserver_test.py
+py -3.8 test/_httpserver_test.py
