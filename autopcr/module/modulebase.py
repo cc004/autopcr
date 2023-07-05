@@ -3,7 +3,7 @@ from typing import DefaultDict, List, Dict, Tuple, Iterator, Union
 from collections import defaultdict
 from abc import abstractmethod
 from ..model.error import *
-from ..core.database import db
+from ..db.database import db
 import datetime
 
 def _wrap_init(cls, setter):
@@ -198,7 +198,7 @@ class ModuleManager:
             await client.login()
             result, need = client.data.get_need_equip(start_rank)
             result = sorted(result, key=lambda x: -client.data.unit[x[0][1]].promotion_level)
-            msg = [db.get_inventory_name_san(token) + ":\n" + '\n'.join([db.get_inventory_name_san(equip[0]) + "x" + str(equip[1]) for equip in equips]) for token, equips in result]
+            # msg = [db.get_inventory_name_san(token) + ":\n" + '\n'.join([db.get_inventory_name_san(equip[0]) + "x" + str(equip[1]) for equip in equips]) for token, equips in result]
 
 
             total = [(token, client.data.get_inventory(token) - num) for token, num in need.items()]

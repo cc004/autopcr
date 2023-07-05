@@ -3,7 +3,7 @@ from nonebot import MessageSegment
 from hoshino.typing import MessageSegment
 
 from .autopcr.module.modulebase import ModuleManager
-from .util import draw, draw_line, render_forward_msg
+from ._util import draw, draw_line, render_forward_msg
 
 class Task():
     def __init__(self, alian, target, bot, ev, qid = None, gid = None):

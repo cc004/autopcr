@@ -1,4 +1,4 @@
-from . import responses
+from . import responses, sdkrequests
 from .common import *
 from .requests import *
 from ..core.datamgr import datamgr
@@ -8,8 +8,13 @@ def handles(cls):
     return None
 
 @handles
+class SourceIniGetMaintenanceStatusResponse(sdkrequests.SourceIniGetMaintenanceStatusResponse):
+    async def update(self, mgr: datamgr, request):
+        await mgr.try_update_database(int(self.manifest_ver))
+
+@handles
 class ShioriQuestSkipResponse(responses.ShioriQuestSkipResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         if self.quest_result_list:
             for result in self.quest_result_list:
                 for item in result.reward_list:
@@ -30,7 +35,7 @@ class ShioriQuestSkipResponse(responses.ShioriQuestSkipResponse):
 
 @handles
 class TrainingQuestSkipResponse(responses.TrainingQuestSkipResponse):
-    def update(self, mgr: datamgr, request: TrainingQuestSkipRequest):
+    async def update(self, mgr: datamgr, request: TrainingQuestSkipRequest):
         if self.quest_result_list:
             for result in self.quest_result_list:
                 for item in result.reward_list:
@@ -47,12 +52,12 @@ class TrainingQuestSkipResponse(responses.TrainingQuestSkipResponse):
 
 @handles
 class TrainingQuestFinishResponse(responses.TrainingQuestFinishResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         mgr.training_quest_count = self.quest_challenge_count
 
 @handles
 class StoryViewingResponse(responses.StoryViewingResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         if self.reward_info:
             for item in self.reward_info:
                 mgr.update_inventory(item)
@@ -60,7 +65,7 @@ class StoryViewingResponse(responses.StoryViewingResponse):
 
 @handles
 class ShopResetResponse(responses.ShopResetResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         if self.user_gold:
             mgr.gold = self.user_gold
         if self.item_data:
@@ -72,7 +77,7 @@ class ShopResetResponse(responses.ShopResetResponse):
 
 @handles
 class ShopRecoverStaminaResponse(responses.ShopRecoverStaminaResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         mgr.jewel = self.user_jewel
         mgr.stamina = self.user_info.user_stamina
         mgr.recover_stamina_exec_count = self.recover_stamina.exec_count
@@ -80,7 +85,7 @@ class ShopRecoverStaminaResponse(responses.ShopRecoverStaminaResponse):
 
 @handles
 class ShopBuyResponse(responses.ShopBuyResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         if self.user_gold:
             mgr.gold = self.user_gold
         if self.item_data:
@@ -92,7 +97,7 @@ class ShopBuyResponse(responses.ShopBuyResponse):
 
 @handles
 class ShopBuyMultipleResponse(responses.ShopBuyMultipleResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         if self.user_gold:
             mgr.gold = self.user_gold
         if self.item_data:
@@ -102,7 +107,7 @@ class ShopBuyMultipleResponse(responses.ShopBuyMultipleResponse):
 
 @handles
 class RoomReceiveItemAllResponse(responses.RoomReceiveItemAllResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         if self.stamina_info:
             mgr.stamina = self.stamina_info.user_stamina
         if self.reward_list:
@@ -112,7 +117,7 @@ class RoomReceiveItemAllResponse(responses.RoomReceiveItemAllResponse):
 
 @handles
 class RoomMultiGiveGiftResponse(responses.RoomMultiGiveGiftResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         if self.user_gift_item_list:
             for item in self.user_gift_item_list:
                 mgr.update_inventory(item)
@@ -125,7 +130,7 @@ class RoomMultiGiveGiftResponse(responses.RoomMultiGiveGiftResponse):
 
 @handles
 class RoomLevelUpStartResponse(responses.RoomLevelUpStartResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         if self.user_gold:
             mgr.gold = self.user_gold
         if self.item_data:
@@ -135,7 +140,7 @@ class RoomLevelUpStartResponse(responses.RoomLevelUpStartResponse):
 
 @handles
 class QuestSkipResponse(responses.QuestSkipResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         if self.quest_result_list:
             for result in self.quest_result_list:
                 for item in result.reward_list:
@@ -160,7 +165,7 @@ class QuestSkipResponse(responses.QuestSkipResponse):
 
 @handles
 class QuestSkipMultipleResponse(responses.QuestSkipMultipleResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
 
         if self.quest_result_list:
             for result in self.quest_result_list:
@@ -183,13 +188,13 @@ class QuestSkipMultipleResponse(responses.QuestSkipMultipleResponse):
 
 @handles
 class QuestRecoverChallengeResponse(responses.QuestRecoverChallengeResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         mgr.jewel = self.user_jewel
         mgr.quest_dict[self.user_quest.quest_id].daily_recovery_count = self.user_quest.daily_recovery_count
 
 @handles
 class PresentReceiveAllResponse(responses.PresentReceiveAllResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         if self.rewards:
             for item in self.rewards:
                 mgr.update_inventory(item)
@@ -199,7 +204,7 @@ class PresentReceiveAllResponse(responses.PresentReceiveAllResponse):
 
 @handles
 class MissionAcceptResponse(responses.MissionAcceptResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         if self.rewards:
             for item in self.rewards:
                 mgr.update_inventory(item)
@@ -209,7 +214,7 @@ class MissionAcceptResponse(responses.MissionAcceptResponse):
 
 @handles
 class LoadIndexResponse(responses.LoadIndexResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         mgr.name = self.user_info.user_name
         mgr.team_level = self.user_info.team_level
         mgr.jewel = self.user_jewel
@@ -244,7 +249,7 @@ class LoadIndexResponse(responses.LoadIndexResponse):
 
 @handles
 class HomeIndexResponse(responses.HomeIndexResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         mgr.finishedQuest = set([q.quest_id for q in self.quest_list if q.result_type > 0] + [q.quest_id for q in self.shiori_quest_info.quest_list if q.result_type > 0] if self.shiori_quest_info else [])
         mgr.clan = self.user_clan.clan_id
         mgr.donation_num = self.user_clan.donation_num
@@ -265,13 +270,13 @@ class HomeIndexResponse(responses.HomeIndexResponse):
 
 @handles
 class HatsuneQuestTopResponse(responses.HatsuneQuestTopResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         mgr.hatsune_quest_dict[self.quest_list[0].quest_id // 1000] = {q.quest_id: q for q in self.quest_list}
 
 
 @handles
 class HatsuneQuestSkipResponse(responses.HatsuneQuestSkipResponse):
-    def update(self, mgr: datamgr, request: HatsuneQuestSkipRequest):
+    async def update(self, mgr: datamgr, request: HatsuneQuestSkipRequest):
         if self.quest_result_list:
             for result in self.quest_result_list:
                 for item in result.reward_list:
@@ -293,7 +298,7 @@ class HatsuneQuestSkipResponse(responses.HatsuneQuestSkipResponse):
 
 @handles
 class HatsuneMissionAcceptResponse(responses.HatsuneMissionAcceptResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         if self.rewards:
             for item in self.rewards:
                 mgr.update_inventory(item)
@@ -307,7 +312,7 @@ class HatsuneMissionAcceptResponse(responses.HatsuneMissionAcceptResponse):
 
 @handles
 class HatsuneBossBattleSkipResponse(responses.HatsuneBossBattleSkipResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         if self.crush_reward_list:
             for result in self.crush_reward_list:
                 for item in result.reward_list:
@@ -325,14 +330,14 @@ class HatsuneBossBattleSkipResponse(responses.HatsuneBossBattleSkipResponse):
 
 @handles
 class GrandArenaTimeRewardAcceptResponse(responses.GrandArenaTimeRewardAcceptResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         if self.reward_info:
             mgr.update_inventory(self.reward_info)
 
 
 @handles
 class GachaExecResponse(responses.GachaExecResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         if self.reward_info_list:
             for item in self.reward_info_list:
                 mgr.update_inventory(item)
@@ -366,7 +371,7 @@ class GachaExecResponse(responses.GachaExecResponse):
 
 @handles
 class EventGachaExecResponse(responses.EventGachaExecResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         if self.reward_info_list:
             for item in self.reward_info_list:
                 mgr.update_inventory(item)
@@ -374,7 +379,7 @@ class EventGachaExecResponse(responses.EventGachaExecResponse):
 
 @handles
 class EquipDonateResponse(responses.EquipDonateResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         mgr.donation_num = self.donation_num
         if self.donate_equip:
             mgr.update_inventory(self.donate_equip)
@@ -385,7 +390,7 @@ class EquipDonateResponse(responses.EquipDonateResponse):
 
 @handles
 class DungeonSkipResponse(responses.DungeonSkipResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         if self.skip_result_list:
             for result in self.skip_result_list:
                 for reward in result.reward_list:
@@ -397,7 +402,7 @@ class DungeonSkipResponse(responses.DungeonSkipResponse):
 
 @handles
 class DungeonResetResponse(responses.DungeonResetResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         mgr.dungeon_area_id = 0
         type = self.dungeon_area[0].dungeon_type
         for count in self.rest_challenge_count:
@@ -408,13 +413,13 @@ class DungeonResetResponse(responses.DungeonResetResponse):
 
 @handles
 class DungeonEnterAreaResponse(responses.DungeonEnterAreaResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         mgr.dungeon_area_id = self.quest_id // 1000
 
 
 @handles
 class CloisterBattleSkipResponse(responses.CloisterBattleSkipResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         if self.quest_result_list:
             for result in self.quest_result_list:
                 for item in result.reward_list:
@@ -432,31 +437,31 @@ class CloisterBattleSkipResponse(responses.CloisterBattleSkipResponse):
 
 @handles
 class ClanLikeResponse(responses.ClanLikeResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         mgr.stamina = self.stamina_info.user_stamina
         mgr.clan_like_count = 1
 
 @handles
 class ClanInfoResponse(responses.ClanInfoResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         mgr.clan = self.clan.detail.clan_id
 
 
 @handles
 class ClanCreateResponse(responses.ClanCreateResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         mgr.clan = self.clan_id
 
 
 @handles
 class ArenaTimeRewardAcceptResponse(responses.ArenaTimeRewardAcceptResponse):
-    def update(self, mgr: datamgr, request):
+    async def update(self, mgr: datamgr, request):
         if self.reward_info:
             mgr.update_inventory(self.reward_info)
 
 @handles
 class DeckUpdateResponse(responses.DeckUpdateResponse):
-    def update(self, mgr: datamgr, request: DeckUpdateRequest):
+    async def update(self, mgr: datamgr, request: DeckUpdateRequest):
         deck = mgr.deck_list[ePartyType(request.deck_number)]
         deck.unit_id1 = request.unit_id_1
         deck.unit_id2 = request.unit_id_2

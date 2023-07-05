@@ -10,55 +10,10 @@ from hashlib import md5
 from Crypto.Cipher import AES
 from base64 import b64encode, b64decode
 from traceback import print_exc
+from ..constants import DEFAULT_HEADERS, IOS_HEADERS
 
 import json
 from enum import Enum
-
-version = "6.2.0"
-
-defaultHeaders = {
-    'Accept-Encoding': 'gzip',
-    'User-Agent': 'Dalvik/2.1.0 (Linux, U, Android 5.1.1, PCRT00 Build/LMY48Z)',
-    'X-Unity-Version': '2018.4.30f1',
-    'APP-VER': version,
-    'BATTLE-LOGIC-VERSION': '4',
-    'BUNDLE-VER': '',
-    'DEVICE': '2',
-    'DEVICE-ID': '7b1703a5d9b394e24051d7a5d4818f17',
-    'DEVICE-NAME': 'OPPO PCRT00',
-    'EXCEL-VER': '1.0.0',
-    'GRAPHICS-DEVICE-NAME': 'Adreno (TM) 640',
-    'IP-ADDRESS': '10.0.2.15',
-    'KEYCHAIN': '',
-    'LOCALE': 'CN',
-    'PLATFORM-OS-VERSION': 'Android OS 5.1.1 / API-22 (LMY48Z/rel.se.infra.20200612.100533)',
-    'REGION-CODE': '',
-    'RES-KEY': 'ab00a0a6dd915a052a2ef7fd649083e5',
-    'RES-VER': '10002200',
-    'SHORT-UDID': '0'
-}
-
-iosHeaders = {
-    'Accept-Encoding': 'gzip',
-    'User-Agent': 'priconne/4 CFNetwork/1399.4 Darwin/22.1.0',
-    'X-Unity-Version': '2018.4.30f1',
-    'APP-VER': version,
-    'BATTLE-LOGIC-VERSION': '4',
-    'BUNDLE-VER': '',
-    'DEVICE': '1',
-    'DEVICE-ID': 'CB03A1AC-B27D-5E96-9422-CBF0F4D333D7',
-    'DEVICE-NAME': 'iPad13,8',
-    'EXCEL-VER': '1.0.0',
-    'GRAPHICS-DEVICE-NAME': 'Apple M1',
-    'IP-ADDRESS': '172.26.62.98',
-    'KEYCHAIN': '',
-    'LOCALE': 'CN',
-    'PLATFORM-OS-VERSION': 'iOS 16.1',
-    'REGION-CODE': '',
-    'RES-KEY': 'ab00a0a6dd915a052a2ef7fd649083e5',
-    'RES-VER': '10002200',
-    'SHORT-UDID': '0'
-}
 
 class CuteResultCode(Enum):
     API_RESULT_SUCCESS_CODE = 1
@@ -97,8 +52,8 @@ class apiclient(Container["apiclient"]):
     def __init__(self):
         super().__init__()
         self._headers = {}
-        for key in defaultHeaders.keys():
-            self._headers[key] = defaultHeaders[key]
+        for key in DEFAULT_HEADERS.keys():
+            self._headers[key] = DEFAULT_HEADERS[key]
         # for key in iosHeaders.keys():
         #     self._headers[key] = iosHeaders[key]
         self._lck = Lock()
