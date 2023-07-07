@@ -8,8 +8,6 @@
     <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/static/css/Switch.css" />
 
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-
     <style>
         body {
             background-color: #f8f9fa;
@@ -71,8 +69,8 @@
             <div class="container">
                 <div class="row justify-content-center">
                     <div id="card" class="col-md-10">
-                        <div id="alertContainer" class="alert-container"></div>
                         <div class="config-section">
+                            <div id="alertContainer" class="alert-container"></div>
                             <h3 class="config-header">配置信息：</h3>
                             <div class="config-info">
                                 <div class="form-group">
@@ -156,23 +154,16 @@
     <script src="/static/js/bootbox.min.js"></script>
 
     <script type="text/javascript">
-        tt = "10px";
-        $(function () {
-            $(window).scroll(function () {
-                tt = $(window).scrollTop() + 10 + "px";
-            });
-        });
         var prompt = function (message, style, time) {
             style = style === undefined ? "alert-success" : style;
             time = time === undefined ? 3000 : time;
 
-            var alertBox = $('<div class="w-100 alert" role="alert"></div>')
+            var alertBox = $('<div class="alert" role="alert"></div>')
                 .addClass(style)
                 .text(message)
                 .css({
-                    top: tt,
-                    left: $('#card').offset().left,
-                    width: $('#card').outerWidth()
+                    position: "absolute",
+                    "z-index": 99999,
                     });
             $('#alertContainer').append(alertBox);
             alertBox.hide().slideDown();
@@ -181,31 +172,7 @@
                 $(this).remove();
                 });
             }, time);
-            /*
-            //原始代码
-            $('<div id="promptModal">')
-                .appendTo("body")
-                .addClass("alert " + style)
-                .css({
-                    display: "block",
-                    "z-index": 99999,
-                    width: "75%",
-                    left: ($(document.body).outerWidth(true) - 120) / 8,
-                    top: tt,
-                    position: "absolute",
-                    padding: "20px",
-                    "border-radius": "5px",
-                })
-                .html(message)
-                .hide()
-                .fadeIn(200, function () {
-                    $("#promptModal").show();
-                })
-                .delay(time)
-                .fadeOut(200, function () {
-                    $("#promptModal").remove();
-                });
-            */
+
         };
         // 成功提示
         var success_prompt = function (message, time) {
@@ -311,6 +278,7 @@
 
         function library_import() {
             $("#library_import").attr('disabled', true);
+            suspend("alert-info", "已开始执行任务。");
             $.ajax({
                 url: '/daily/api/library_import' + window.location.search,
                 type: 'get',
@@ -321,6 +289,7 @@
                     $("#msg-description").css('display', '');
                     $("#msg-input-group").css('display', '');
                     $("#library_import").attr('disabled', false);
+                    suspend("alert-success", "任务执行成功！");
                 },
                 error: function (ret) {
                     suspend("alert-danger", "执行任务失败: " + ret.responseText);
@@ -331,12 +300,14 @@
 
         function do_task() {
             $("#do_task").attr('disabled', true);
+            suspend("alert-info", "已开始执行清日常任务。");
             $.ajax({
                 url: '/daily/api/do_task' + window.location.search,
                 type: 'get',
                 processData: false,
                 success: function (ret) {
                     // <!-- prompt(JSON.stringify(ret), "alert-success", 60000); -->
+                    suspend("alert-success", "清日常任务执行完毕。");
                     $("#do_task").attr('disabled', false);
                     load_result(ret);
                 },
