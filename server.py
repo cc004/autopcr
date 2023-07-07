@@ -17,7 +17,7 @@ from hoshino.config import SUPERUSERS
 from hoshino.typing import CQEvent, MessageSegment
 from hoshino.config import PUBLIC_ADDRESS
 from ._util import get_info, get_result
-from ._task import DailyClean, FindEquip, FindMemory, FindXinsui, Task, GetLibraryImport
+from ._task import DailyClean, FindEquip, FindMemory, FindXinsui, Task, GetLibraryImport, QuestRecommand
 from .autopcr.bsdk.validator import validate_ok_queue, validate_queue
 import datetime
 import random
@@ -40,7 +40,8 @@ sv_help = """
 [#日常报告] 获取最近一次清日常的报告
 [#查心碎 [昵称]] 查询缺口心碎
 [#查记忆碎片 [昵称]] 查询缺口记忆碎片
-[#查装备 [昵称] [rank]] 查询缺口装备，[rank]为数字，只查询>=rank的角色缺口装备
+[#查装备 [昵称] [rank] [fav]] 查询缺口装备，[rank]为数字，只查询>=rank的角色缺口装备，fav表示只查询favorite的角色
+[#刷图推荐 [昵称] [rank] [fav]] 查询缺口装备的刷图推荐，格式同上
 """
 
 address = "https://" + PUBLIC_ADDRESS + "/daily/"
@@ -126,6 +127,8 @@ async def start_daily():
     loop.create_task(consumer())
     loop.create_task(manual_validate())
 
+
+'''
 @sv.scheduled_job('cron', hour='14', minute='15')
 async def auto_update_database():
     bot = hoshino.get_bot()
@@ -138,6 +141,7 @@ async def auto_update_database():
         return
     msg = "发现数据库更新，" + msg
     await bot.send_group_msg(group_id = gid, message = msg)
+'''
 
 @sv.scheduled_job('interval', minutes=1)
 async def timing():
@@ -272,11 +276,43 @@ async def find_equip(bot: HoshinoBot, ev: CQEvent):
     if not queue.empty() or consuming:
         await bot.send(ev, f"[CQ:reply,id={ev.message_id}]当前有人正在清日常，已将{alian}加入等待队列中")
 
+    fav = False
     try:
-        start_rank = int(ev.message.extract_plain_text().split(' ')[-1]) 
+        if ev.message.extract_plain_text().split(' ')[-1].strip() == 'fav':
+            fav = True
+            start_rank = int(ev.message.extract_plain_text().split(' ')[-2]) 
+        else:
+            start_rank = int(ev.message.extract_plain_text().split(' ')[-1]) 
     except:
         start_rank = None
-    await queue.put(FindEquip(start_rank = start_rank, alian = alian, target = target, bot = bot, ev = ev))
+    await queue.put(FindEquip(like_unit_only = fav, start_rank = start_rank, alian = alian, target = target, bot = bot, ev = ev))
+
+@sv.on_prefix("#刷图推荐")
+async def quest_recommand(bot: HoshinoBot, ev: CQEvent):
+    ok, msg, alian, target = await get_config(bot, ev)
+    if not ok:
+        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + msg)
+
+    token = (ev.user_id, target)
+    if token in inqueue:
+        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]{alian}已在队列里，请耐心等待")
+
+    inqueue.add(token)
+    global consuming, queue
+    if not queue.empty() or consuming:
+        await bot.send(ev, f"[CQ:reply,id={ev.message_id}]当前有人正在清日常，已将{alian}加入等待队列中")
+
+    like_unit_only = False
+    try:
+        if ev.message.extract_plain_text().split(' ')[-1].strip() == 'fav':
+            like_unit_only = True
+            start_rank = int(ev.message.extract_plain_text().split(' ')[-2]) 
+        else:
+            start_rank = int(ev.message.extract_plain_text().split(' ')[-1]) 
+    except:
+        start_rank = None
+    await queue.put(QuestRecommand(like_unit_only = like_unit_only, start_rank = start_rank, alian = alian, target = target, bot = bot, ev = ev))
+
 
 # @sv.on_prefix("#获取导入")
 # async def get_library_import(bot: HoshinoBot, ev: CQEvent):
