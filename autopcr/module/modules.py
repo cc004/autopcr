@@ -31,8 +31,8 @@ class cron4(cron): ...
 
 
 @description('智能刷n图考虑的角色')
-@enumtype([1, 'max_rank', 'max_rank-1', 'max_rank-2', 'favorite'])
-@default(1)
+@enumtype(['all', 'max_rank', 'max_rank-1', 'max_rank-2', 'favorite'])
+@default('all')
 class smart_normal_sweep_unit(Module):
     async def do_task(self, client: pcrclient):
         client.keys['smart_normal_sweep_unit'] = self.value
@@ -50,7 +50,7 @@ class smart_normal_sweep(Module):
             _, require_equip = client.data.get_need_equip(like_unit_only = True)
         else:
             opt = {
-                1: 1,
+                'all': 1,
                 'max_rank': db.equip_max_rank,
                 'max_rank-1': db.equip_max_rank - 1,
                 'max_rank-2': db.equip_max_rank - 2,
@@ -1331,6 +1331,7 @@ def register_all():
         present_receive,
         smart_sweep,
         smart_hard_sweep,
+        smart_normal_sweep_unit,
         smart_normal_sweep,
 
         buy_stamina_active,
