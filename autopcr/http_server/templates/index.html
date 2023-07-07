@@ -1,34 +1,59 @@
 <!DOCTYPE html>
 <html>
+
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoPCR-登录</title>
+
     <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="/static/css/animate.min.css" />
-    <link rel="stylesheet" href="/static/css/magnific-popup.css" />
-    <link rel="stylesheet" href="/static/css/fontawesome-all.min.css" />
-    <link rel="stylesheet" href="/static/css/jquery-ui.css" />
-    <link rel="stylesheet" href="/static/css/flaticon.css" />
-    <link rel="stylesheet" href="/static/css/aos.css" />
-    <link rel="stylesheet" href="/static/css/slick.css" />
-    <link rel="stylesheet" href="/static/css/default.css" />
-    <link rel="stylesheet" href="/static/css/style.css" />
-    <link rel="stylesheet" href="/static/css/responsive.css" />
-    <link rel="stylesheet" href="/static/css/Switch.css" />
-    
     <script src="/static/js/vendor/jquery-3.6.0.min.js"></script>
-    <script src="/static/js/bootstrap.min.js"></script>
-    <script src="/static/js/isotope.pkgd.min.js"></script>
-    <script src="/static/js/imagesloaded.pkgd.min.js"></script>
-    <script src="/static/js/jquery.magnific-popup.min.js"></script>
-    <script src="/static/js/jquery.countdown.min.js"></script>
-    <script src="/static/js/jquery-ui.min.js"></script>
-    <script src="/static/js/slick.min.js"></script>
-    <script src="/static/js/ajax-form.js"></script>
-    <script src="/static/js/wow.min.js"></script>
-    <script src="/static/js/aos.js"></script>
-    <script src="/static/js/plugins.js"></script>
-    <script src="/static/js/main.js"></script>
-    <script src="/static/js/bootbox.min.js"></script>
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .card {
+            margin: 0 auto;
+            margin-top: 100px;
+            width: 360px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header {
+            background-color: #fff;
+            border-bottom: none;
+            text-align: left;
+            padding: 0;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px;
+            margin-bottom: 10px;
+        }
+
+        .btn-rounded {
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 14px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .btn-group {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .form-text-red {
+            color: red;
+        }
+    </style>
 </head>
+
 <body>
     <script>
         function register() {
@@ -55,13 +80,28 @@
             window.location.href = "/daily/config.html?account=" + $("#account").val();
         }
     </script>
-    <div>
-        <p>账号：（账号为唯一凭据，请勿泄露给他人）1~32位字母数字下划线</p>
-        <input type="text" id="account" placeholder="[a-zA-Z0-9_]{1,32}"/>
-    </div>
-    <div>
-        <input type="button" value="注册" onclick="register()" />
-        <input type="button" value="登录" onclick="login()" />
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">AutoPCR</div>
+            </div>
+            <div class="card-body" style="padding-top: 0px;">
+                <form>
+                    <div class="form-group">
+                        <label for="account">账号：</label>
+                        <input type="text" class="form-control" id="account" placeholder="1~32位，字母/数字/下划线">
+                        <small id="account-description" class="form-text form-text-red">账号为唯一凭据，请勿泄露。</small>
+                    </div>
+                    <div class="text-center">
+                        <button type="button" class="btn btn-primary btn-rounded" onclick="login()">登录</button>
+                    </div>
+                    <div class="text-center">
+                        <button type="button" class="btn btn-primary btn-rounded" onclick="register()">注册</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 </body>
 </html>

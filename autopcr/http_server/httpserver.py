@@ -50,7 +50,7 @@ class HttpServer:
 
             with open(fn, 'w') as f:
                 f.write(json.dumps(data))
-            return '', 204
+            return {"statusCode": 200}, 200
 
         @self.app.route('/api/config', methods = ['POST'])
         async def new_config():
