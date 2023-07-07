@@ -266,6 +266,10 @@ class database():
                     RoomItem.query(db)
                     .select(lambda x: (eInventoryType.RoomItem, x.id, x.name))
                 )
+                .concat(
+                    EmblemDatum.query(db)
+                    .select(lambda x: (x.type, x.emblem_id, x.emblem_name)
+                )
                 .to_dict(lambda x: (x[0], x[1]), lambda x: x[2])
             )
 
