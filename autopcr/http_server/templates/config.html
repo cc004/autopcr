@@ -40,7 +40,7 @@
 
         .config-info > .form-group {
             width: 256px;
-            margin-bottom: 0px
+            margin-bottom: 0px;
         }
 
         .button-group .btn {
@@ -51,6 +51,7 @@
             font-size: 8px;
             user-select: all;
             cursor: pointer;
+            max-width: 520px;
             }
 
         #ta td:nth-child(5) {
@@ -380,17 +381,10 @@
     </script>
     <script>
         function copyToClipboard() {
-        /* 获取文本框元素 */
         var copyText = document.getElementById("msg");
-    
-        /* 选择文本内容 */
         copyText.select();
         copyText.setSelectionRange(0, 99999); /* 兼容移动设备 */
-    
-        /* 复制文本到剪贴板 */
         document.execCommand("copy");
-    
-        /* 提示复制成功 */
         suspend("alert-success", "内容已复制到剪贴板！");
         }
     </script>
