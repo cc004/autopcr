@@ -1,123 +1,135 @@
 <!DOCTYPE html>
-<html class="no-js" lang="">
+<html>
 
 <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="x-ua-compatible" content="ie=edge" />
-
-    <title>清日常配置修改</title>
-
-
-    <meta name="description" content="" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-    <link rel="shortcut icon" type="image/x-icon" href="/static/img/icon/favicon.png" />
-
-    <!-- CSS here -->
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoPCR-主界面</title>
     <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="/static/css/animate.min.css" />
-    <link rel="stylesheet" href="/static/css/magnific-popup.css" />
-    <link rel="stylesheet" href="/static/css/fontawesome-all.min.css" />
-    <link rel="stylesheet" href="/static/css/jquery-ui.css" />
-    <link rel="stylesheet" href="/static/css/flaticon.css" />
-    <link rel="stylesheet" href="/static/css/aos.css" />
-    <link rel="stylesheet" href="/static/css/slick.css" />
-    <link rel="stylesheet" href="/static/css/default.css" />
-    <link rel="stylesheet" href="/static/css/style.css" />
-    <link rel="stylesheet" href="/static/css/responsive.css" />
     <link rel="stylesheet" href="/static/css/Switch.css" />
-    <!--
-        <link rel="stylesheet" href="/static/css/dropdown.css">
-        <link rel="stylesheet" href="/static/css/member-main.css">
-        <link rel="stylesheet" href="/static/css/init.css">
-        <link rel="stylesheet" href="/static/css/base.css">
-        -->
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
 
+        .cart-area {
+            margin-top: 100px;
+        }
+
+        .config-section {
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .config-header {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .config-info {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            align-items: flex-start;
+            gap: 0px 20px;
+        }
+
+        .config-info > .form-group {
+            width: 256px;
+            margin-bottom: 0px
+        }
+
+        .button-group .btn {
+            margin-top: 4px;
+        }
+
+        .result-msg {
+            margin-top: 20px;
+            word-wrap: break-word;
+        }
+
+        #ta td:nth-child(5) {
+            min-width: 150px;
+        }
+
+        .form-text-red {
+            color: red;
+        }
+    </style>
 </head>
 
 <body>
-    <!-- header-area -->
-
-    <header></header>
-
-    <!-- header-area-end -->
-
-    <!-- main-area -->
-
     <main>
-        <div class="cart-area pt-90 pb-90">
+        <div class="cart-area">
             <div class="container">
                 <div class="row justify-content-center">
-                    <div>
-                        <div><b>配置：</b></div>
-                        <br/>
-                        <div>
-                            <input type="text" id="alian" placeholder="昵称"/>
-                            <input type="text" id="qq" placeholder="qq"/>
-                            <input type="text" id="username" placeholder="用户名"/>
-                            <input type="text" id="password" placeholder="密码" />
-                        </div>
-                        <div>
-                            <input type="button" id="login" value="保存账号信息" onclick="selectOnChange()"/>
-                            <input type="button" id="do_task" value="清日常" onclick="do_task()"/>
-                            <input type="button" id="library_import" value="兰德索尔图书馆导入" onclick="library_import()"/>
-                        </div>
-                        <br/>
-                        <div class="container" width="100%" >
-                            <div id="msg" style="word-wrap: break-word;"></div>
-                        </div>
-                        <table id="tab" width="100%" cellspacing="0" cellpadding="0" class="table">
-                            <div>
-                                <thead class="thead-light">
-                                    <tr>
-                                        <th></th>
-                                        <th>设置项</th>
-                                        <th>值</th>
-                                        <th>说明</th>
-                                        <th>结果</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="ta">
-                                    <tr>
-                                        <td></td>
-                                        <td>自动执行时间1</td>
-                                        <td>
-                                            <input type="checkbox" class="switch" id="time1open" onchange="selectOnChange(this)"/>
-                                            <input type="time" id="time1" onchange="selectOnChange(this)" />
-                                         </td>
-                                        <td>会战期间照常执行</td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td></td>
-                                        <td>自动执行时间2</td>
-                                        <td>
-                                            <input type="checkbox" class="switch" id="time2open" onchange="selectOnChange(this)"/>
-                                            <input type="time" id="time2" onchange="selectOnChange(this)" />
-                                        </td>
-                                        <td>会战期间不执行</td>
-                                        <td></td>
-                                    </tr>
-
-                                </tbody>
+                    <div class="col-md-10">
+                        <div class="config-section">
+                            <h3 class="config-header">配置信息：</h3>
+                            <div class="config-info">
+                                <div class="form-group">
+                                    <label>一般配置：</label>
+                                    <input type="text" class="form-control" id="alian" placeholder="昵称" />
+                                    <input type="text" class="form-control" id="qq" placeholder="QQ号" style="margin-top: 10px;" />
+                                </div>
+                                <div class="form-group">
+                                    <label>账号配置：</label>
+                                    <input type="text" class="form-control" id="username" placeholder="PCR登录用户名" />
+                                    <input type="text" class="form-control" id="password" placeholder="PCR登录密码" style="margin-top: 10px;" />
+                                </div>
                             </div>
-                        </table>
+                            <small id="account-description" class="form-text form-text-red">本插件仅存储AccessKey，不会存储密码。</small>
+                            <div class="button-group" style="margin-top: 4px;">
+                                <button type="button" class="btn btn-primary" id="login" onclick="selectOnChange()">保存配置信息</button>
+                                <button type="button" class="btn btn-primary" id="do_task" onclick="do_task()">执行清日常</button>
+                                <button type="button" class="btn btn-primary" id="library_import" onclick="library_import()">兰德索尔图书馆导入文本</button>
+                            </div>
+                            <div class="container">
+                                <div id="msg" class="result-msg"></div>
+                            </div>
+                            <div class="table-responsive">
+                                <table id="tab" class="table">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th style="padding: 0px"></th>
+                                            <th style="max-width: 120px;">设置项</th>
+                                            <th style="max-width: 120px;">值</th>
+                                            <th style="max-width: 120px;">说明</th>
+                                            <th style="min-width: 300px;">结果</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ta">
+                                        <tr>
+                                            <td></td>
+                                            <td>自动执行时间1</td>
+                                            <td>
+                                                    <input type="checkbox" class="switch" id="time1open" onchange="selectOnChange(this)" />
+                                                    <input type="time" class="form-control" id="time1" onchange="selectOnChange(this)" />
+                                            </td>
+                                            <td>会战期间照常执行</td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <td></td>
+                                            <td>自动执行时间2</td>
+                                            <td>
+                                                    <input type="checkbox" class="switch" id="time2open" onchange="selectOnChange(this)" />
+                                                    <input type="time" class="form-control" id="time2" onchange="selectOnChange(this)" />
+                                            </td>
+                                            <td>会战期间不执行</td>
+                                            <td></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </main>
-
-    <!-- main-area-end -->
-
-    <!-- footer-area -->
-
-    <footer></footer>
-
-    <!-- footer-area-end -->
-
-    <!-- JS here -->
 
     <script src="/static/js/vendor/jquery-3.6.0.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
@@ -133,7 +145,7 @@
     <script src="/static/js/plugins.js"></script>
     <script src="/static/js/main.js"></script>
     <script src="/static/js/bootbox.min.js"></script>
-    <!--<script src="/static/js/dropdown.js"></script>-->
+
     <script type="text/javascript">
         tt = "10px";
         $(function () {
@@ -365,7 +377,6 @@
             });
         }
     </script>
-
 </body>
 
 </html>
