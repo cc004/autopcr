@@ -4,6 +4,7 @@ from collections import defaultdict
 from abc import abstractmethod
 from ..model.error import *
 from ..db.database import db
+from ..model.enums import *
 import datetime
 
 def _wrap_init(cls, setter):
@@ -192,11 +193,34 @@ class ModuleManager:
             traceback.print_exc()
             raise(e)
 
-    async def get_need_equip(self, start_rank: int):
+    async def get_normal_quest_recommand(self, start_rank: int, like_unit_only: bool) -> List[str]:
         try:
             client = self.get_android_client()
             await client.login()
-            result, need = client.data.get_need_equip(start_rank)
+            _, require_equip = client.data.get_need_equip(start_rank = start_rank, like_unit_only = like_unit_only)
+            quest_list: List[int] = [id for id, quest in db.normal_quest_data.items() if db.parse_time(quest.start_time) <= datetime.datetime.now()]
+            quest_weight = client.data.get_quest_weght(require_equip)
+            quest_id = sorted(quest_list, key = lambda x: quest_weight[x][0], reverse = True)
+            tot = []
+            for i in range(10):
+                id = quest_id[i]
+                name = db.quest_name[id]
+                tokens: List[Tuple[eInventoryType, int]] = [(eInventoryType.Equip, getattr(db.normal_quest_data[id], f'reward_image_{i}')) for i in range(1,4)]
+                msg = f"{name}:\n" + '\n'.join([
+                    (f'{db.get_inventory_name_san(token)}: {"缺少" if require_equip[token] - client.data.get_inventory(token) > 0 else "盈余"}{abs(require_equip[token] - client.data.get_inventory(token))}片')
+                    for token in tokens])
+                tot.append(msg.strip())
+
+            return tot
+        except Exception as e:
+            traceback.print_exc()
+            raise(e)
+
+    async def get_need_equip(self, start_rank: int, like_unit_only: bool):
+        try:
+            client = self.get_android_client()
+            await client.login()
+            result, need = client.data.get_need_equip(start_rank, like_unit_only)
             result = sorted(result, key=lambda x: -client.data.unit[x[0][1]].promotion_level)
             # msg = [db.get_inventory_name_san(token) + ":\n" + '\n'.join([db.get_inventory_name_san(equip[0]) + "x" + str(equip[1]) for equip in equips]) for token, equips in result]
 

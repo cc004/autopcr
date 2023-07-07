@@ -35,6 +35,13 @@ class database():
     def update(self, dbmgr: dbmgr):
         
         with dbmgr.session() as db:
+
+            self.normal_quest_data: Dict[int, QuestDatum] = (
+                QuestDatum.query(db)
+                .where(lambda x: self.is_normal_quest(x.quest_id)) 
+                .to_dict(lambda x: x.quest_id, lambda x: x)
+            )
+
             self.unique_equip_rank: Dict[int, UniqueEquipmentEnhanceDatum] = ( # 第二维是int？
                 UniqueEquipmentEnhanceDatum.query(db)
                 .group_by(lambda x: x.rank)
@@ -82,7 +89,7 @@ class database():
 
             self.memory_quest: Dict[int, List[QuestDatum]] = (
                 QuestDatum.query(db)
-                .where(lambda x: x.quest_id >= 12000000 and x.quest_id < 13000000)
+                .where(lambda x: self.is_hard_quest(x.quest_id))
                 .group_by(lambda x: x.reward_image_1)
                 .to_dict(lambda x: x.key, lambda x:
                     x.to_list()
@@ -194,11 +201,11 @@ class database():
                 .to_dict(lambda x: x.clan_battle_id, lambda x: x)
             )
 
-            self.quest_info: Dict[int, Tuple[int, int]] = (
+            self.quest_info: Dict[int, Tuple[int, QuestDatum]] = (
                 QuestDatum.query(db)
                 .concat(HatsuneQuest.query(db))
                 .concat(ShioriQuest.query(db))
-                .to_dict(lambda x: x.quest_id, lambda x: (x.daily_limit, x.stamina))
+                .to_dict(lambda x: x.quest_id, lambda x: x)
             )
 
             self.quest_name: Dict[int, str] = (
@@ -304,7 +311,7 @@ class database():
             
             self.six_area: Dict[int, QuestDatum] = (
                 QuestDatum.query(db)
-                .where(lambda x: x.quest_id >= 13000000 and x.quest_id < 14000000)
+                .where(lambda x: self.is_very_hard_quest(x.quest_id))
                 .to_dict(lambda x: x.quest_id, lambda x: x)
             )
 
