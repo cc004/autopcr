@@ -71,6 +71,7 @@
             <div class="container">
                 <div class="row justify-content-center">
                     <div id="card" class="col-md-10">
+                        <div id="alertContainer" class="alert-container"></div>
                         <div class="config-section">
                             <h3 class="config-header">配置信息：</h3>
                             <div class="config-info">
@@ -137,7 +138,6 @@
                 </div>
             </div>
         </div>
-        <div id="alertContainer" class="alert-container"></div>
     </main>
 
     <script src="/static/js/vendor/jquery-3.6.0.min.js"></script>
@@ -166,7 +166,7 @@
             style = style === undefined ? "alert-success" : style;
             time = time === undefined ? 3000 : time;
 
-            var alertBox = $('<div class="alert" role="alert"></div>')
+            var alertBox = $('<div class="w-100 alert" role="alert"></div>')
                 .addClass(style)
                 .text(message)
                 .css({
