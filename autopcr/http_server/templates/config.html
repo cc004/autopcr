@@ -55,12 +55,6 @@
             cursor: pointer;
             }
 
-        /* 旧样式 */
-        .result-msg {
-            margin-top: 20px;
-            word-wrap: break-word;
-        }
-
         #ta td:nth-child(5) {
             min-width: 150px;
         }
@@ -76,7 +70,7 @@
         <div class="cart-area">
             <div class="container">
                 <div class="row justify-content-center">
-                    <div class="col-md-10">
+                    <div id="card" class="col-md-10">
                         <div class="config-section">
                             <h3 class="config-header">配置信息：</h3>
                             <div class="config-info">
@@ -100,9 +94,6 @@
                             <div id="msg-group" style="margin-top: 16px">
                                 <small id="msg-description" class="form-text" style="display: none;">↓导入文本↓点击复制↓</small>
                                 <div id="msg-input-group" class="input-group" style="margin-top: 2px; margin-bottom: 6px; display: none;">
-                                    <!--
-                                        <div id="msg" class="result-msg"></div>
-                                    -->
                                     <input id="msg" type="text" class="form-control copy-text" value="value" readonly onclick="copyToClipboard()">
                                 </div>
                             </div>
@@ -146,6 +137,7 @@
                 </div>
             </div>
         </div>
+        <div id="alertContainer" class="alert-container"></div>
     </main>
 
     <script src="/static/js/vendor/jquery-3.6.0.min.js"></script>
@@ -172,7 +164,25 @@
         });
         var prompt = function (message, style, time) {
             style = style === undefined ? "alert-success" : style;
-            time = time === undefined ? 1200 : time;
+            time = time === undefined ? 3000 : time;
+
+            var alertBox = $('<div class="alert" role="alert"></div>')
+                .addClass(style)
+                .text(message)
+                .css({
+                    top: tt,
+                    left: $('#card').offset().left,
+                    width: $('#card').outerWidth()
+                    });
+            $('#alertContainer').append(alertBox);
+            alertBox.hide().slideDown();
+            setTimeout(function() {
+                alertBox.slideUp(function() {
+                $(this).remove();
+                });
+            }, time);
+            /*
+            //原始代码
             $('<div id="promptModal">')
                 .appendTo("body")
                 .addClass("alert " + style)
@@ -195,6 +205,7 @@
                 .fadeOut(200, function () {
                     $("#promptModal").remove();
                 });
+            */
         };
         // 成功提示
         var success_prompt = function (message, time) {
@@ -305,15 +316,10 @@
                 type: 'get',
                 processData: false,
                 success: function (ret) {
-                    /*
-                    //原有代码
-                    $("#msg").text(ret)
-                    
-                    */
                     $("#msg").attr('value', ret)
-                    $("msg-group").css('margin-top', '0');
-                    $("msg-description").css('display', '');
-                    $("msg-input-group").css('display', '');
+                    $("#msg-group").css('margin-top', '0');
+                    $("#msg-description").css('display', '');
+                    $("#msg-input-group").css('display', '');
                     $("#library_import").attr('disabled', false);
                 },
                 error: function (ret) {
