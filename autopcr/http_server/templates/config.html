@@ -7,13 +7,17 @@
     <title>AutoPCR-主界面</title>
     <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/static/css/Switch.css" />
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
     <style>
         body {
             background-color: #f8f9fa;
         }
 
         .cart-area {
-            margin-top: 100px;
+            margin-top: 5%;
+            margin-bottom: 5%;
         }
 
         .config-section {
@@ -45,6 +49,13 @@
             margin-top: 4px;
         }
 
+        .copy-text {
+            font-size: 8px;
+            user-select: all;
+            cursor: pointer;
+            }
+
+        /* 旧样式 */
         .result-msg {
             margin-top: 20px;
             word-wrap: break-word;
@@ -86,8 +97,14 @@
                                 <button type="button" class="btn btn-primary" id="do_task" onclick="do_task()">执行清日常</button>
                                 <button type="button" class="btn btn-primary" id="library_import" onclick="library_import()">生成兰德索尔图书馆导入文本</button>
                             </div>
-                            <div class="container">
-                                <div id="msg" class="result-msg"></div>
+                            <div id="msg-group" style="margin-top: 16px">
+                                <small id="msg-description" class="form-text" style="display: none;">↓导入文本↓点击复制↓</small>
+                                <div id="msg-input-group" class="input-group" style="margin-top: 2px; margin-bottom: 6px; display: none;">
+                                    <!--
+                                        <div id="msg" class="result-msg"></div>
+                                    -->
+                                    <input id="msg" type="text" class="form-control copy-text" value="value" readonly onclick="copyToClipboard()">
+                                </div>
                             </div>
                             <div class="table-responsive">
                                 <table id="tab" class="table">
@@ -228,7 +245,6 @@
         }
     </script>
 
-
     <script type="text/javascript" charset="utf-8">
         $(document).ready(function () {
             $.ajax({
@@ -289,7 +305,15 @@
                 type: 'get',
                 processData: false,
                 success: function (ret) {
+                    /*
+                    //原有代码
                     $("#msg").text(ret)
+                    
+                    */
+                    $("#msg").attr('value', ret)
+                    $("msg-group").css('margin-top', '0');
+                    $("msg-description").css('display', '');
+                    $("msg-input-group").css('display', '');
                     $("#library_import").attr('disabled', false);
                 },
                 error: function (ret) {
@@ -375,6 +399,22 @@
                     suspend("alert-danger", "本次修改保存失败");
                 },
             });
+        }
+    </script>
+    <script>
+        function copyToClipboard() {
+        /* 获取文本框元素 */
+        var copyText = document.getElementById("msg");
+    
+        /* 选择文本内容 */
+        copyText.select();
+        copyText.setSelectionRange(0, 99999); /* 兼容移动设备 */
+    
+        /* 复制文本到剪贴板 */
+        document.execCommand("copy");
+    
+        /* 提示复制成功 */
+        suspend("alert-success", "内容已复制到剪贴板！");
         }
     </script>
 </body>
