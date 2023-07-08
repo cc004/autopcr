@@ -7,7 +7,7 @@
     <title>AutoPCR-主界面</title>
     <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/static/css/Switch.css" />
-
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
             background-color: #f8f9fa;
@@ -86,13 +86,13 @@
                                 </div>
                             </div>
                             <small id="account-description" class="form-text form-text-red">注意：本服务需要存储您的用户名和密码以正常运行。若不同意存储，请勿使用。</small>
-                            <div class="button-group" style="margin-top: 4px;">
+                            <div class="button-group" style="margin-top: 0px;">
                                 <button type="button" class="btn btn-primary" id="login" onclick="selectOnChange()">保存配置信息</button>
                                 <button type="button" class="btn btn-primary" id="do_task" onclick="do_task()">执行清日常</button>
                                 <button type="button" class="btn btn-primary" id="library_import" onclick="library_import()">生成兰德索尔图书馆导入文本</button>
                             </div>
-                            <div id="msg-group" style="margin-top: 16px">
-                                <small id="msg-description" class="form-text" style="display: none;">↓导入文本↓点击复制↓</small>
+                            <div id="msg-group" style="margin-top: 4px; margin-bottom: 8px">
+                                <small id="msg-description" class="form-text" style="display: none;">↓导入文本↓点击复制↓&ensp;<a href="https://pcredivewiki.tw/Armory" target="_blank">兰德索尔图书馆</a></small>
                                 <div id="msg-input-group" class="input-group" style="margin-top: 2px; margin-bottom: 6px; display: none;">
                                     <input id="msg" type="text" class="form-control copy-text" value="value" readonly onclick="copyToClipboard()">
                                 </div>
