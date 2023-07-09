@@ -287,9 +287,9 @@ class datamgr(Component[apiclient]):
 
     def get_shop_gold(self, shop_id: int) -> int:
         if shop_id == eSystemId.NORMAL_SHOP: # 正常商店
-            return self.gold.gold_id_free
+            return self.gold.gold_id_free + self.gold.gold_id_pay
         if shop_id == eSystemId.LIMITED_SHOP: # 限定商店
-            return self.gold.gold_id_free
+            return self.gold.gold_id_free + self.gold.gold_id_pay
         elif shop_id == eSystemId.ARENA_SHOP: # jjc店
             return self.get_inventory((eInventoryType.Item, 90003))
         elif shop_id == eSystemId.GRAND_ARENA_SHOP: # pjjc店
