@@ -44,7 +44,7 @@ async def draw_line(data: list, alian: str):
             "msg": [],
             }
     for value in data:
-        tmp["msg"].append(value)
+        tmp["msg"].append(value.replace("\n", "<br />"))
 
     df = pd.DataFrame(tmp)
     df = df.style.set_table_styles([{'selector' : 'thead tr', 'props' : [('background-color', '#F5F5D5!important')]}, {'selector' : 'tr:nth-child(odd)', 'props' : [('background-color', '#E0E0FF')]}, {'selector' : 'tr:nth-child(even)', 'props' : [('background-color', '#F8F8F8')]}])

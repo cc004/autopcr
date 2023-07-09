@@ -13,16 +13,33 @@ class Task():
     @abstractclassmethod
     async def do_task(self): ...
 
-class FindEquip(Task):
-    def __init__(self, start_rank = None, *args, **kwargs):
+class QuestRecommand(Task):
+    def __init__(self, start_rank = None, like_unit_only = None, *args, **kwargs):
         self.start_rank = start_rank
+        self.like_unit_only = like_unit_only
         super().__init__(*args, **kwargs)
 
     async def do_task(self):
         alian, target, bot, ev, qid, gid = self.info 
         mgr = ModuleManager(target)
         try:
-            resp = await mgr.get_need_equip(self.start_rank)
+            resp = await mgr.get_normal_quest_recommand(self.start_rank, self.like_unit_only)
+            img = await draw_line(resp, alian)
+            await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
+        except Exception as e:
+            await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + str(e))
+
+class FindEquip(Task):
+    def __init__(self, start_rank = None, like_unit_only = None, *args, **kwargs):
+        self.start_rank = start_rank
+        self.like_unit_only = like_unit_only
+        super().__init__(*args, **kwargs)
+
+    async def do_task(self):
+        alian, target, bot, ev, qid, gid = self.info 
+        mgr = ModuleManager(target)
+        try:
+            resp = await mgr.get_need_equip(self.start_rank, self.like_unit_only)
             img = await draw_line(resp, alian)
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
         except Exception as e:

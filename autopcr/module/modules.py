@@ -5,9 +5,11 @@ from .modulebase import *
 import datetime
 from ..model.error import *
 from ..db.database import db
+from ..db.models import *
 from ..model.models import *
 import random
 from abc import abstractmethod
+from collections import Counter
 
 @enumtype([x for x in range(-1, 24)])
 @default(-1)
@@ -26,6 +28,73 @@ class cron3(cron): ...
 
 @description('定时清日常4')
 class cron4(cron): ...
+
+
+@description('智能刷n图考虑的角色')
+@enumtype(['all', 'max_rank', 'max_rank-1', 'max_rank-2', 'favorite'])
+@default('all')
+class smart_normal_sweep_unit(Module):
+    async def do_task(self, client: pcrclient):
+        client.keys['smart_normal_sweep_unit'] = self.value
+
+@description('智能刷n图')
+@enumtype(["none", "n庆典", "always"])
+@default("none")
+class smart_normal_sweep(Module):
+
+    async def do_task(self, client: pcrclient):
+        if self.value == "n庆典" and not client.data.is_normal_quest_double():
+            raise SkipError("今日非normal庆典，不刷取")
+
+        if client.keys['smart_normal_sweep_unit'] == 'favorite':
+            _, require_equip = client.data.get_need_equip(like_unit_only = True)
+        else:
+            opt = {
+                'all': 1,
+                'max_rank': db.equip_max_rank,
+                'max_rank-1': db.equip_max_rank - 1,
+                'max_rank-2': db.equip_max_rank - 2,
+            }
+            _, require_equip = client.data.get_need_equip(start_rank = opt[client.keys['smart_normal_sweep_unit']])
+
+        clean_cnt = Counter()
+        quest_id = []
+        tmp = []
+        quest_list: List[int] = [id for id, quest in db.normal_quest_data.items() if db.parse_time(quest.start_time) <= datetime.datetime.now()]
+        stop: bool = False
+
+        try:
+            for i in range(10000):
+
+                if i % 3 == 0:
+                    quest_weight = client.data.get_quest_weght(require_equip)
+                    quest_id = sorted(quest_list, key = lambda x: quest_weight[x][0], reverse = True)
+
+                target_id = quest_id[0]
+                try:
+                    tmp.extend(await client.quest_skip_aware(target_id, 3))
+                    clean_cnt[target_id] += 3
+                except SkipError:
+                    pass
+                except AbortError as e:
+                    stop = True
+                    if str(e).endswith("体力不足"):
+                        if not tmp and not self.log: self._log(str(e))
+                    else:
+                        raise e
+                    break
+                if stop:
+                    break
+        except:
+            raise 
+        finally:
+            if tmp:
+                self._log(await client.serlize_reward(tmp))
+            if clean_cnt:
+                msg = '\n'.join((db.quest_name[quest] if quest in db.quest_name else f"未知关卡{quest}") +
+                f": 刷取{cnt}次" for quest, cnt in clean_cnt.items())
+                self._log(msg)
+
 
 @description('智能刷hard图')
 @enumtype(["none", "h庆典", "非n庆典", "always"])
@@ -1224,7 +1293,7 @@ class all_in_hatsune(Module):
         if not quest: raise SkipError("当前无进行中的活动")
         
 
-        count = client.data.stamina // db.quest_info[quest][1]
+        count = client.data.stamina // db.quest_info[quest].stamina
 
         if count == 0: raise AbortError("体力不足")
         await client.quest_skip_aware(quest, count)
@@ -1260,15 +1329,18 @@ def register_all():
         hatsune_h_sweep,
         hatsune_dear_reading,
         present_receive,
+        smart_sweep,
+        smart_hard_sweep,
+        smart_normal_sweep_unit,
+        smart_normal_sweep,
+
+        buy_stamina_active,
+        all_in_hatsune,
+
         hatsune_hboss_sweep,
         hatsune_mission_accept,
         hatsune_gacha_exchange,
         hatsune_mission_accept,
-        smart_sweep,
-        smart_hard_sweep,
-
-        buy_stamina_active,
-        all_in_hatsune,
 
         mission_receive_last,
 
