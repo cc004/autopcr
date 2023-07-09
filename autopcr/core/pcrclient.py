@@ -392,7 +392,7 @@ class pcrclient(apiclient):
         info = db.quest_info[quest]
         result: List[InventoryInfo] = []
         async def skip(times):
-            while self.data.stamina < info[1] * times:
+            while self.data.stamina < info.stamina * times:
                 if self.keys.get('buy_stamina_passive', 0) > self.data.recover_stamina_exec_count:
                     await self.recover_stamina()
                 else:
@@ -405,18 +405,18 @@ class pcrclient(apiclient):
                 return await self.hatsune_quest_skip(event, quest, times)
             else:
                 return await self.quest_skip(quest, times)
-        if info[0]:
+        if info.daily_limit:
             if is_total:
                 times -= qinfo.daily_clear_count
-            max_times = ((self.data.recover_max_time(quest) if recover else 0) + 1) * info[0] - qinfo.daily_clear_count
+            max_times = ((self.data.recover_max_time(quest) if recover else 0) + 1) * info.daily_limit - qinfo.daily_clear_count
             times = min(times, max_times)
             if times <= 0:
                 raise SkipError(f"任务{name}已达最大次数")
-            remain = info[0] * (qinfo.daily_recovery_count + 1) - qinfo.daily_clear_count
+            remain = info.daily_limit * (qinfo.daily_recovery_count + 1) - qinfo.daily_clear_count
             while times > 0:
                 if remain == 0:
                     await self.recover_challenge(quest)
-                    remain = info[0]
+                    remain = info.daily_limit
                 t = min(times, remain)
                 resp = await skip(t)
                 if resp.quest_result_list:
