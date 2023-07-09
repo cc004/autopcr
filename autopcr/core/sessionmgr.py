@@ -8,6 +8,7 @@ from datetime import datetime
 from ..model.models import *
 from traceback import print_exc
 from ..constants import CACHE_DIR
+import hashlib
 
 class sessionmgr(Component[apiclient]):
     def __init__(self, account, *arg, **kwargs):
@@ -22,7 +23,7 @@ class sessionmgr(Component[apiclient]):
         self._sdkaccount = None
         if not os.path.exists(self.cacheDir):
             os.makedirs(self.cacheDir)
-        self.cacheFile = os.path.join(self.cacheDir, account['account'])
+        self.cacheFile = os.path.join(self.cacheDir, hashlib.md5(account['account'].encode('utf-8')).hexdigest())
 
     def register_to(self, container: apiclient):
         container._headers['PLATFORM'] = str(self._account['platform'])
