@@ -1045,17 +1045,21 @@ class present_receive(Module):
             raise ValueError(f"Unknown option: {self.value}")
         received = False
         result = []
-        while True:
+        stop = False
+        while not stop:
             present = await client.present_index()
             for present in present.present_info_list:
                 if not is_exclude_stamina or not (present.reward_type == eInventoryType.Stamina and present.reward_id == 93001):
                     print(present.reward_type, present.reward_id)
                     res = await client.present_receive_all(is_exclude_stamina)
-                    result += res.rewards
-                    received = True
+                    if not res.rewards:
+                        stop = True
+                    else:
+                        result += res.rewards
+                        received = True
                     break
             else:
-                break
+                stop = True
 
         if not received:
             raise SkipError(f"不存在未领取{'的非体力的' if is_exclude_stamina == True else '的'}礼物")
