@@ -13,7 +13,8 @@
         }
 
         .cart-area {
-            margin-top: 100px;
+            margin-top: 5%;
+            margin-bottom: 5%;
         }
 
         .config-section {
@@ -38,17 +39,19 @@
 
         .config-info > .form-group {
             width: 256px;
-            margin-bottom: 0px
+            margin-bottom: 0px;
         }
 
         .button-group .btn {
             margin-top: 4px;
         }
 
-        .result-msg {
-            margin-top: 20px;
-            word-wrap: break-word;
-        }
+        .copy-text {
+            font-size: 8px;
+            user-select: all;
+            cursor: pointer;
+            max-width: 520px;
+            }
 
         #ta td:nth-child(5) {
             min-width: 150px;
@@ -65,8 +68,9 @@
         <div class="cart-area">
             <div class="container">
                 <div class="row justify-content-center">
-                    <div class="col-md-10">
+                    <div id="card" class="col-md-10">
                         <div class="config-section">
+                            <div id="alertContainer" class="alert-container"></div>
                             <h3 class="config-header">配置信息：</h3>
                             <div class="config-info">
                                 <div class="form-group">
@@ -81,13 +85,16 @@
                                 </div>
                             </div>
                             <small id="account-description" class="form-text form-text-red">注意：本服务需要存储您的用户名和密码以正常运行。若不同意存储，请勿使用。</small>
-                            <div class="button-group" style="margin-top: 4px;">
+                            <div class="button-group" style="margin-top: 0px;">
                                 <button type="button" class="btn btn-primary" id="login" onclick="selectOnChange()">保存配置信息</button>
                                 <button type="button" class="btn btn-primary" id="do_task" onclick="do_task()">执行清日常</button>
                                 <button type="button" class="btn btn-primary" id="library_import" onclick="library_import()">生成兰德索尔图书馆导入文本</button>
                             </div>
-                            <div class="container">
-                                <div id="msg" class="result-msg"></div>
+                            <div id="msg-group" style="margin-top: 4px; margin-bottom: 8px">
+                                <small id="msg-description" class="form-text" style="display: none;">↓导入文本↓点击复制↓&ensp;<a href="https://pcredivewiki.tw/Armory" target="_blank">兰德索尔图书馆</a></small>
+                                <div id="msg-input-group" class="input-group" style="margin-top: 2px; margin-bottom: 6px; display: none;">
+                                    <input id="msg" type="text" class="form-control copy-text" value="value" readonly onclick="copyToClipboard()">
+                                </div>
                             </div>
                             <div class="table-responsive">
                                 <table id="tab" class="table">
@@ -147,37 +154,25 @@
     <script src="/static/js/bootbox.min.js"></script>
 
     <script type="text/javascript">
-        tt = "10px";
-        $(function () {
-            $(window).scroll(function () {
-                tt = $(window).scrollTop() + 10 + "px";
-            });
-        });
         var prompt = function (message, style, time) {
             style = style === undefined ? "alert-success" : style;
-            time = time === undefined ? 1200 : time;
-            $('<div id="promptModal">')
-                .appendTo("body")
-                .addClass("alert " + style)
+            time = time === undefined ? 3000 : time;
+
+            var alertBox = $('<div class="alert" role="alert"></div>')
+                .addClass(style)
+                .text(message)
                 .css({
-                    display: "block",
-                    "z-index": 99999,
-                    width: "75%",
-                    left: ($(document.body).outerWidth(true) - 120) / 8,
-                    top: tt,
                     position: "absolute",
-                    padding: "20px",
-                    "border-radius": "5px",
-                })
-                .html(message)
-                .hide()
-                .fadeIn(200, function () {
-                    $("#promptModal").show();
-                })
-                .delay(time)
-                .fadeOut(200, function () {
-                    $("#promptModal").remove();
+                    "z-index": 99999,
+                    });
+            $('#alertContainer').append(alertBox);
+            alertBox.hide().slideDown();
+            setTimeout(function() {
+                alertBox.slideUp(function() {
+                $(this).remove();
                 });
+            }, time);
+
         };
         // 成功提示
         var success_prompt = function (message, time) {
@@ -227,7 +222,6 @@
             }
         }
     </script>
-
 
     <script type="text/javascript" charset="utf-8">
         $(document).ready(function () {
@@ -284,13 +278,18 @@
 
         function library_import() {
             $("#library_import").attr('disabled', true);
+            suspend("alert-info", "已开始执行任务。");
             $.ajax({
                 url: '/daily/api/library_import' + window.location.search,
                 type: 'get',
                 processData: false,
                 success: function (ret) {
-                    $("#msg").text(ret)
+                    $("#msg").attr('value', ret)
+                    $("#msg-group").css('margin-top', '0');
+                    $("#msg-description").css('display', '');
+                    $("#msg-input-group").css('display', '');
                     $("#library_import").attr('disabled', false);
+                    suspend("alert-success", "任务执行成功！");
                 },
                 error: function (ret) {
                     suspend("alert-danger", "执行任务失败: " + ret.responseText);
@@ -301,12 +300,14 @@
 
         function do_task() {
             $("#do_task").attr('disabled', true);
+            suspend("alert-info", "已开始执行清日常任务。");
             $.ajax({
                 url: '/daily/api/do_task' + window.location.search,
                 type: 'get',
                 processData: false,
                 success: function (ret) {
                     // <!-- prompt(JSON.stringify(ret), "alert-success", 60000); -->
+                    suspend("alert-success", "清日常任务执行完毕。");
                     $("#do_task").attr('disabled', false);
                     load_result(ret);
                 },
@@ -375,6 +376,15 @@
                     suspend("alert-danger", "本次修改保存失败");
                 },
             });
+        }
+    </script>
+    <script>
+        function copyToClipboard() {
+        var copyText = document.getElementById("msg");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999); /* 兼容移动设备 */
+        document.execCommand("copy");
+        suspend("alert-success", "内容已复制到剪贴板！");
         }
     </script>
 </body>
