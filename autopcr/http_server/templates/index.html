@@ -16,7 +16,8 @@
 
         .card {
             margin: 0 auto;
-            margin-top: 100px;
+            margin-top: 5%;
+            margin-bottom: 5%;
             width: 360px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
         }
@@ -69,6 +70,7 @@
                 }),
                 processData: false,
                 success: function (ret) {
+                    alert("注册成功。")
                     login();
                 },
                 error: function (ret) {
@@ -79,6 +81,13 @@
         function login() {
             window.location.href = "/daily/config.html?account=" + $("#account").val();
         }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                login();
+            }
+        });
     </script>
 
     <div class="container">
