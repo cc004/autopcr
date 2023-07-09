@@ -72,7 +72,8 @@ class smart_normal_sweep(Module):
 
                 target_id = quest_id[0]
                 try:
-                    tmp.extend(await client.quest_skip_aware(target_id, 3))
+                    resp = await client.quest_skip_aware(target_id, 3)
+                    tmp.extend([item for item in resp if db.is_equip((item.type, item.id))]) 
                     clean_cnt[target_id] += 3
                 except SkipError:
                     pass
@@ -88,12 +89,13 @@ class smart_normal_sweep(Module):
         except:
             raise 
         finally:
-            if tmp:
-                self._log(await client.serlize_reward(tmp))
             if clean_cnt:
                 msg = '\n'.join((db.quest_name[quest] if quest in db.quest_name else f"未知关卡{quest}") +
                 f": 刷取{cnt}次" for quest, cnt in clean_cnt.items())
                 self._log(msg)
+                self._log("---------")
+            if tmp:
+                self._log(await client.serlize_reward(tmp))
 
 
 @description('智能刷hard图')
