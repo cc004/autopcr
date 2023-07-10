@@ -171,22 +171,21 @@ class datamgr(Component[apiclient]):
         encoded_data = base64.b64encode(compressed_data).decode('utf-8')
         return encoded_data
 
-    def get_quest_weght(self, require_equip: Dict[ItemType, int]) -> Dict[int, Tuple[int, int]]: # weight and max demand
+    @staticmethod
+    def _weight_mapper(cnt: int) -> float:
+        return max(0, cnt) + max(0, cnt + 300) * .1 + max(0, cnt + 600) * .01 + max(0, cnt + 900) * .001
+
+    def get_quest_weght(self, require_equip: typing.Counter[ItemType]) -> Dict[int, float]: # weight demand
         
-        need = (
-            flow(require_equip.items())
-            .where(lambda x: x[1] > self.get_inventory(x[0]))
-            .to_dict(lambda x: x[0], lambda x: x[1] - self.get_inventory(x[0]))
-        )
+        need = require_equip - Counter(self._inventory)
 
         return (
             flow(db.normal_quest_rewards.values())
             .select(lambda x:
                 flow(x.items())
-                .select(lambda y: need.get(y[0], 0) * y[1])
-                .to_list()
+                .select(lambda y: datamgr._weight_mapper(need[y[0]]) * y[1])
+                .sum()
             )
-            .select(lambda x: (sum(x), max(x)))
             .zip(db.normal_quest_rewards.keys())
             .to_dict(lambda x: x[1], lambda x: x[0])
         )

@@ -44,7 +44,7 @@ class database():
                     .select_many(lambda y: self.wave_groups[y].get_drop_reward_ids())
                     .where(lambda y: y != 0)
                     .select_many(lambda y: self.reward_groups[y].get_rewards())
-                    .where(lambda y: y != 0)
+                    .where(lambda y: y != 0 and y.reward_type == eInventoryType.Equip)
                     .select(lambda y: Counter({(y.reward_type, y.reward_id): y.reward_num * y.odds / 100.0}))
                     .sum(seed=Counter())
                 )
