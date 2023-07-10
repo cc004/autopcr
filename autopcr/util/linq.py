@@ -91,6 +91,14 @@ class flow(Iterator[T], Generic[T]):
             return next(self.iterable)
         return next(self.where(func).iterable)
 
+    def _zip(self, other: Iterable[T2]) -> Iterator[Tuple[T, T2]]:
+        other_iter = iter(other)
+        for item in self.iterable:
+            yield (item, next(other_iter))
+    
+    def zip(self, other: Iterable[T2]) -> 'flow[Tuple[T, T2]]':
+        return flow(self._zip(other))
+
 class groupflow(flow[T], Generic[T, T2]):
     def __init__(self, iterable: Iterable[T], key: T2):
         super().__init__(iterable)

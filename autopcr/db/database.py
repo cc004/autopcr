@@ -58,10 +58,12 @@ class database():
 
             self.equip_craft: Dict[ItemType, List[Tuple[ItemType, int]]] = (
                 EquipmentCraft.query(db)
-                .to_dict(lambda x: (eInventoryType.Equip, x.equipment_id), lambda x: [
-                    ((eInventoryType.Equip, getattr(x, f'condition_equipment_id_{i}')),
-                        getattr(x, f'consume_num_{i}')) for i in range(1, 11)
-                ])
+                .to_dict(lambda x: (eInventoryType.Equip, x.equipment_id), lambda x: 
+                    flow(range(1, 11))
+                    .select(lambda y: ((eInventoryType.Item, getattr(x, f'consume_item_id_{y}')), getattr(x, f'consume_num_{y}')))
+                    .where(lambda y: y[0][1] != 0 and y[1] != 0)
+                    .to_list()
+                )
             )
 
             self.unit_promotion: Dict[int, Dict[int, typing.Counter[ItemType]]] = (

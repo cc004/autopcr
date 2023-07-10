@@ -171,7 +171,26 @@ class datamgr(Component[apiclient]):
         encoded_data = base64.b64encode(compressed_data).decode('utf-8')
         return encoded_data
 
-    def get_quest_weght(self, require_equip) -> Dict[int, Tuple[int, int]]: # weight and max demand
+    def get_quest_weght(self, require_equip: Dict[ItemType, int]) -> Dict[int, Tuple[int, int]]: # weight and max demand
+        
+        need = (
+            flow(require_equip.items())
+            .where(lambda x: x[1] > self.get_inventory(x[0]))
+            .to_dict(lambda x: x[0], lambda x: x[1] - self.get_inventory(x[0]))
+        )
+
+        return (
+            flow(db.normal_quest_rewards.values())
+            .select(lambda x:
+                flow(x.items())
+                .select(lambda y: need.get(y[0], 0) * y[1])
+                .to_list()
+            )
+            .select(lambda x: (sum(x), max(x)))
+            .zip(db.normal_quest_rewards.keys())
+            .to_dict(lambda x: x[1], lambda x: x[0])
+        )
+        '''
         def f(x: int, pos: int):
             wei = [0, 0.4, 0.4, 0.2]
             return x * wei[pos]
@@ -193,6 +212,7 @@ class datamgr(Component[apiclient]):
                 for quest in db.normal_quest_data.values()
                 }
         return quest_weight
+        '''
 
     def get_need_equip(self, start_rank: Union[None, int] = None, like_unit_only: bool = False) -> Tuple[List[Tuple[ItemType, List[Tuple[ItemType, int]]]], typing.Counter[ItemType]]:
         cnt: typing.Counter[ItemType] = Counter()
