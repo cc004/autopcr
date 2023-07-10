@@ -8,6 +8,7 @@ from .dbmgr import dbmgr
 from .models import *
 from ..util.linq import flow
 from queue import SimpleQueue
+from .constdata import extra_drops
 
 class database():
     heart: ItemType = (eInventoryType.Equip, 140000)
@@ -46,7 +47,8 @@ class database():
                     .select_many(lambda y: self.reward_groups[y].get_rewards())
                     .where(lambda y: y != 0 and y.reward_item[0] == eInventoryType.Equip)
                     .select(lambda y: Counter({y.reward_item: y.reward_num * y.odds / 100.0}))
-                    .sum(seed=Counter())
+                    .sum(seed=Counter()) + 
+                    extra_drops.get(x.quest_id // 1000, Counter())
                 )
             )
             

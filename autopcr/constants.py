@@ -1,5 +1,9 @@
 import os
-CACHE_DIR = os.path.join(os.path.dirname(__file__), '..', './cache/')
+
+ROOT_DIR = os.path.join(os.path.dirname(__file__), '..')
+CACHE_DIR = os.path.join(ROOT_DIR, './cache/')
+DATA_DIR = os.path.join(ROOT_DIR, './data/')
+
 
 VERSION = "6.2.0"
 
