@@ -1,3 +1,4 @@
+#type: ignore
 from re import T
 from typing import Generic, TypeVar, Optional
 from pydantic import BaseModel
@@ -15,7 +16,7 @@ class ResponseBase(BaseModel):
     server_error: ErrorInfo = None
     async def update(self, mgr: "datamgr", request): ...
 
-TResponse = TypeVar('TResponse', bound=ResponseBase)
+TResponse = TypeVar('TResponse', bound=ResponseBase, covariant=True)
 
 class ResponseHeader(BaseModel):
     sid: str = None

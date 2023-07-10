@@ -40,7 +40,7 @@ class sessionmgr(Component[apiclient]):
         with open(self.cacheFile, 'w') as fp:
             json.dump(self._sdkaccount, fp)
     
-    async def request(self, request: Request[TResponse], next: Callable[[Request[TResponse]], Coroutine[Any, Any, TResponse]]) -> TResponse:
+    async def request(self, request: Request[TResponse], next) -> TResponse:
         async def login():
             if os.path.exists(self.cacheFile):
                 with open(self.cacheFile, 'r') as fp:
