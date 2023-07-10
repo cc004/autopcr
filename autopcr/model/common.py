@@ -1,7 +1,10 @@
 #type: ignore
-from typing import List
+from typing import List, Tuple
 from .enums import *
 from pydantic import BaseModel
+from .common import eInventoryType
+
+ItemType = Tuple[eInventoryType, int]
 
 class AgreementStatus(BaseModel):
 	ver: int = None

@@ -1,36 +1,20 @@
 import time
 from typing import Set, Dict, Tuple
 import typing
-from ..model.common import eInventoryType, eCampaignCategory, RoomUserItem, InventoryInfo
+from ..model.common import eInventoryType, eCampaignCategory, RoomUserItem, InventoryInfo, ItemType
 import datetime
 from collections import Counter
-from functools import reduce
 from .dbmgr import dbmgr
 from .models import *
 from ..util.linq import flow
 from queue import SimpleQueue
 
-'''
-db_path = os.path.join(os.path.dirname(__file__), "../../", "redive_cn.db")
-def rec_intdict(deep: int) -> Union[int, DefaultDict]:
-    if not deep:
-        return 0
-    else:
-        return defaultdict(lambda: rec_intdict(deep - 1))
-
-def rec_counter(deep: int) -> Union[typing.Counter, DefaultDict]:
-    if deep == 1:
-        return Counter()
-    else:
-        return defaultdict(lambda: rec_counter(deep - 1))
-'''
-
 class database():
-    heart: Tuple[eInventoryType, int] = (eInventoryType.Equip, 140000)
-    xinsui: Tuple[eInventoryType, int] = (eInventoryType.Equip, 140001)
-    xingqiubei: Tuple[eInventoryType, int] = (eInventoryType.Item, 25001)
-    mana: Tuple[eInventoryType, int] = (eInventoryType.Gold, 94002)
-    jewel: Tuple[eInventoryType, int] = (eInventoryType.Jewel, 91002)
+    heart: ItemType = (eInventoryType.Equip, 140000)
+    xinsui: ItemType = (eInventoryType.Equip, 140001)
+    xingqiubei: ItemType = (eInventoryType.Item, 25001)
+    mana: ItemType = (eInventoryType.Gold, 94002)
+    jewel: ItemType = (eInventoryType.Jewel, 91002)
 
     def update(self, dbmgr: dbmgr):
         
@@ -42,13 +26,37 @@ class database():
                 .to_dict(lambda x: x.quest_id, lambda x: x)
             )
 
+            self.wave_groups: Dict[int, WaveGroupDatum] = (
+                WaveGroupDatum.query(db)
+                .to_dict(lambda x: x.wave_group_id, lambda x: x)
+            )
+
+            self.reward_groups: Dict[int, EnemyRewardDatum] = (
+                EnemyRewardDatum.query(db)
+                .to_dict(lambda x: x.drop_reward_id, lambda x: x)
+            )
+
+            self.normal_quest_rewards: Dict[int, typing.Counter[ItemType]] = (
+                flow(self.normal_quest_data.values())
+                .to_dict(lambda x: x.quest_id, lambda x:
+                    flow(x.get_wave_group_ids())
+                    .where(lambda y: y != 0)
+                    .select_many(lambda y: self.wave_groups[y].get_drop_reward_ids())
+                    .where(lambda y: y != 0)
+                    .select_many(lambda y: self.reward_groups[y].get_rewards())
+                    .where(lambda y: y != 0)
+                    .select(lambda y: Counter({(y.reward_type, y.reward_id): y.reward_num * y.odds / 100.0}))
+                    .sum(seed=Counter())
+                )
+            )
+            
             self.unique_equip_rank: Dict[int, UniqueEquipmentEnhanceDatum] = ( # 第二维是int？
                 UniqueEquipmentEnhanceDatum.query(db)
                 .group_by(lambda x: x.rank)
                 .to_dict(lambda x: x.key, lambda x: x.max(lambda y: y.enhance_level))
             )
 
-            self.equip_craft: Dict[Tuple[eInventoryType, int], List[Tuple[Tuple[eInventoryType, int], int]]] = (
+            self.equip_craft: Dict[ItemType, List[Tuple[ItemType, int]]] = (
                 EquipmentCraft.query(db)
                 .to_dict(lambda x: (eInventoryType.Equip, x.equipment_id), lambda x: [
                     ((eInventoryType.Equip, getattr(x, f'condition_equipment_id_{i}')),
@@ -56,7 +64,7 @@ class database():
                 ])
             )
 
-            self.unit_promotion: Dict[int, Dict[int, typing.Counter[Tuple[eInventoryType, int]]]] = (
+            self.unit_promotion: Dict[int, Dict[int, typing.Counter[ItemType]]] = (
                 UnitPromotion.query(db)
                 .group_by(lambda x: x.unit_id)
                 .to_dict(lambda x: x.key, lambda x:
@@ -101,7 +109,7 @@ class database():
                 .to_dict(lambda x: x.unit_id, lambda x: x)
             )
             
-            self.rarity_up_required: Dict[int, Dict[int, typing.Counter[Tuple[eInventoryType, int]]]] = (
+            self.rarity_up_required: Dict[int, Dict[int, typing.Counter[ItemType]]] = (
                 UnitRarity.query(db)
                 .select(lambda x: (
                     x.unit_id,
@@ -130,7 +138,7 @@ class database():
                 )
             )
 
-            self.unique_equip_required: Dict[int, Dict[int, typing.Counter[Tuple[eInventoryType, int]]]] = (
+            self.unique_equip_required: Dict[int, Dict[int, typing.Counter[ItemType]]] = (
                 UniqueEquipmentCraft.query(db)
                 .select_many(lambda x: [(
                     x.equip_id,
@@ -258,7 +266,7 @@ class database():
                 .to_list()
             )
 
-            self.inventory_name: Dict[Tuple[eInventoryType, int], str] = (
+            self.inventory_name: Dict[ItemType, str] = (
                 EquipmentDatum.query(db)
                 .select(lambda x: (eInventoryType(eInventoryType.Equip), x.equipment_id, x.equipment_name))
                 .concat(
@@ -370,7 +378,7 @@ class database():
         except:
             return f"未知物品({item.id})"
 
-    def get_inventory_name_san(self, item: Tuple[eInventoryType, int]) -> str:
+    def get_inventory_name_san(self, item: ItemType) -> str:
         try:
             return self.inventory_name[(item[0], item[1])]
         except:
@@ -379,19 +387,19 @@ class database():
     def is_daily_mission(self, mission_id: int) -> bool:
         return mission_id in self.daily_mission
 
-    def is_exp_upper(self, item: Tuple[eInventoryType, int]) -> bool:
+    def is_exp_upper(self, item: ItemType) -> bool:
         return item[0] == eInventoryType.Item and item[1] >= 20000 and item[1] < 21000
 
-    def is_equip_upper(self, item: Tuple[eInventoryType, int]) -> bool:
+    def is_equip_upper(self, item: ItemType) -> bool:
         return item[0] == eInventoryType.Item and item[1] >= 22000 and item[1] < 23000
 
-    def is_unit_memory(self, item: Tuple[eInventoryType, int]) -> bool:
+    def is_unit_memory(self, item: ItemType) -> bool:
         return item[0] == eInventoryType.Item and item[1] >= 31000 and item[1] < 32000
 
-    def is_unit_pure_memory(self, item: Tuple[eInventoryType, int]) -> bool:
+    def is_unit_pure_memory(self, item: ItemType) -> bool:
         return item[0] == eInventoryType.Item and item[1] >= 32000 and item[1] < 33000
 
-    def is_equip(self, item: Tuple[eInventoryType, int]) -> bool:
+    def is_equip(self, item: ItemType) -> bool:
         return item[0] == eInventoryType.Equip and item[1] >= 101000 and item[1] < 140000
 
     def is_room_item_level_upable(self, team_level: int, item: RoomUserItem) -> bool:
@@ -502,8 +510,8 @@ class database():
     def get_today_start_time(self) -> datetime.datetime:
         return self.get_start_time(datetime.datetime.now())
 
-    def craft_equip(self, source: typing.Counter[Tuple[eInventoryType, int]]) -> typing.Counter[Tuple[eInventoryType, int]]: # 依赖关系不深，没必要写成拓扑图求解
-        result: typing.Counter[Tuple[eInventoryType, int]] = Counter()
+    def craft_equip(self, source: typing.Counter[ItemType]) -> typing.Counter[ItemType]: # 依赖关系不深，没必要写成拓扑图求解
+        result: typing.Counter[ItemType] = Counter()
 
         queue = SimpleQueue()
         for key, value in source.items():
