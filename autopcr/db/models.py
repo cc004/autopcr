@@ -4,8 +4,8 @@
 from sqlalchemy import Column, Float, Index, Integer, Table, Text, UniqueConstraint
 from sqlalchemy.sql.sqltypes import NullType
 from sqlalchemy.orm import Session, declarative_base
-from typing import Generic, TypeVar, List, Iterator
-from ..model.common import eInventoryType
+from typing import Generic, TypeVar, List, Iterator, Tuple
+from ..model.common import eInventoryType, ItemType
 from ..util.linq import flow
 
 T = TypeVar('T')
@@ -1671,8 +1671,7 @@ class EnemyParameter(DeclarativeBase, Base["EnemyParameter"]):
 
 class Reward:
     def __init__(self, reward_type: int, reward_id: int, reward_num: int, odds: int):
-        self.reward_type = eInventoryType(reward_type)
-        self.reward_id = reward_id
+        self.reward_item: ItemType = (eInventoryType(reward_type), reward_id)
         self.reward_num = reward_num
         self.odds = odds
 
@@ -1735,6 +1734,18 @@ class EquipmentCraft(DeclarativeBase, Base["EquipmentCraft"]):
     consume_num_9: int = Column(Integer, nullable=False)
     condition_equipment_id_10: int = Column(Integer, nullable=False)
     consume_num_10: int = Column(Integer, nullable=False)
+
+    def get_materials(self) -> Iterator[Tuple[ItemType, int]]:
+        yield ((eInventoryType.Equip, self.condition_equipment_id_1), self.consume_num_1)
+        yield ((eInventoryType.Equip, self.condition_equipment_id_2), self.consume_num_2)
+        yield ((eInventoryType.Equip, self.condition_equipment_id_3), self.consume_num_3)
+        yield ((eInventoryType.Equip, self.condition_equipment_id_4), self.consume_num_4)
+        yield ((eInventoryType.Equip, self.condition_equipment_id_5), self.consume_num_5)
+        yield ((eInventoryType.Equip, self.condition_equipment_id_6), self.consume_num_6)
+        yield ((eInventoryType.Equip, self.condition_equipment_id_7), self.consume_num_7)
+        yield ((eInventoryType.Equip, self.condition_equipment_id_8), self.consume_num_8)
+        yield ((eInventoryType.Equip, self.condition_equipment_id_9), self.consume_num_9)
+        yield ((eInventoryType.Equip, self.condition_equipment_id_10), self.consume_num_10)
 
 
 class EquipmentDatum(DeclarativeBase, Base["EquipmentDatum"]):
