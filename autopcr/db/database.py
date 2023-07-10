@@ -60,7 +60,7 @@ class database():
                 EquipmentCraft.query(db)
                 .to_dict(lambda x: (eInventoryType.Equip, x.equipment_id), lambda x: 
                     flow(range(1, 11))
-                    .select(lambda y: ((eInventoryType.Item, getattr(x, f'consume_item_id_{y}')), getattr(x, f'consume_num_{y}')))
+                    .select(lambda y: ((eInventoryType.Item, getattr(x, f'condition_equipment_id_{y}')), getattr(x, f'consume_num_{y}')))
                     .where(lambda y: y[0][1] != 0 and y[1] != 0)
                     .to_list()
                 )

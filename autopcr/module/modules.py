@@ -68,7 +68,7 @@ class smart_normal_sweep(Module):
 
                 if i % 3 == 0:
                     quest_weight = client.data.get_quest_weght(require_equip)
-                    quest_id = sorted(quest_list, key = lambda x: quest_weight[x][0], reverse = True)
+                    quest_id = sorted(quest_list, key = lambda x: quest_weight[x], reverse = True)
 
                 target_id = quest_id[0]
                 try:
