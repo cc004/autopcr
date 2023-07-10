@@ -177,17 +177,15 @@ class datamgr(Component[apiclient]):
 
     def get_quest_weght(self, require_equip: typing.Counter[ItemType]) -> Dict[int, float]: # weight demand
         
-        need = require_equip - Counter(self._inventory)
+        need = {token: num - self.get_inventory(token) for token, num in require_equip.items()}
 
         return (
-            flow(db.normal_quest_rewards.values())
-            .select(lambda x:
-                flow(x.items())
+            flow(db.normal_quest_rewards.items())
+            .to_dict(lambda x: x[0], lambda x:
+                flow(x[1].items())
                 .select(lambda y: datamgr._weight_mapper(need[y[0]]) * y[1])
                 .sum()
             )
-            .zip(db.normal_quest_rewards.keys())
-            .to_dict(lambda x: x[1], lambda x: x[0])
         )
         '''
         def f(x: int, pos: int):

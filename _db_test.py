@@ -1,8 +1,9 @@
 from autopcr.db.assetmgr import instance as assetmgr
 from autopcr.db.dbmgr import instance as dbmgr
 from autopcr.db.database import db
-import asyncio
+import asyncio, collections
 from autopcr.db.models import UnitDatum
+from autopcr.core import datamgr
 
 asyncio.run(assetmgr.init(202306151740))
 asyncio.run(dbmgr.update_db(assetmgr))

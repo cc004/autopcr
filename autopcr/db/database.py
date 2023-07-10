@@ -44,8 +44,8 @@ class database():
                     .select_many(lambda y: self.wave_groups[y].get_drop_reward_ids())
                     .where(lambda y: y != 0)
                     .select_many(lambda y: self.reward_groups[y].get_rewards())
-                    .where(lambda y: y != 0 and y.reward_type == eInventoryType.Equip)
-                    .select(lambda y: Counter({(y.reward_type, y.reward_id): y.reward_num * y.odds / 100.0}))
+                    .where(lambda y: y != 0 and y.reward_item[0] == eInventoryType.Equip)
+                    .select(lambda y: Counter({y.reward_item: y.reward_num * y.odds / 100.0}))
                     .sum(seed=Counter())
                 )
             )
@@ -59,8 +59,7 @@ class database():
             self.equip_craft: Dict[ItemType, List[Tuple[ItemType, int]]] = (
                 EquipmentCraft.query(db)
                 .to_dict(lambda x: (eInventoryType.Equip, x.equipment_id), lambda x: 
-                    flow(range(1, 11))
-                    .select(lambda y: ((eInventoryType.Item, getattr(x, f'condition_equipment_id_{y}')), getattr(x, f'consume_num_{y}')))
+                    flow(x.get_materials())
                     .where(lambda y: y[0][1] != 0 and y[1] != 0)
                     .to_list()
                 )
