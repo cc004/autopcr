@@ -183,7 +183,7 @@ class datamgr(Component[apiclient]):
             flow(db.normal_quest_rewards.items())
             .to_dict(lambda x: x[0], lambda x:
                 flow(x[1].items())
-                .select(lambda y: datamgr._weight_mapper(need[y[0]]) * y[1])
+                .select(lambda y: datamgr._weight_mapper(need.get(y[0], 0)) * y[1])
                 .sum()
             )
         )
