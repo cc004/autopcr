@@ -1,5 +1,5 @@
 #type: ignore
-from typing import Callable, Iterator, Iterable, Dict, TypeVar, Generic, List, Set, Tuple, Any
+from typing import Callable, Iterator, Iterable, Dict, TypeVar, Generic, List, Set, Tuple, Any, Union
 import functools
 
 T = TypeVar('T', covariant = True)
@@ -62,12 +62,12 @@ class flow(Iterator[T], Generic[T]):
     def group_by(self, key_func: Callable[[T], T2]) -> 'flow[groupflow[T, T2]]':
         return flow(self._group_by(key_func))
 
-    def max(self, func: (Callable[[T], Any] | None) = None) -> T:
+    def max(self, func: Union[Callable[[T], Any], None] = None) -> T:
         if func is None:
             return max(self.iterable)
         return max(self._select(func))
     
-    def min(self, func: (Callable[[T], Any] | None) = None) -> T:
+    def min(self, func: Union[Callable[[T], Any], None] = None) -> T:
         if func is None:
             return min(self.iterable)
         return min(self._select(func))
@@ -86,7 +86,7 @@ class flow(Iterator[T], Generic[T]):
     def select_many(self, func: Callable[[T], Iterable[T2]]) -> 'flow[T2]':
         return flow(self._select_many(func))
     
-    def first(self, func: (Callable[[T], bool] | None) = None) -> T:
+    def first(self, func: Union[Callable[[T], bool], None] = None) -> T:
         if func is None:
             return next(self.iterable)
         return next(self.where(func).iterable)
