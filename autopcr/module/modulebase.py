@@ -206,7 +206,7 @@ class ModuleManager:
             for i in range(10):
                 id = quest_id[i]
                 name = db.quest_name[id]
-                tokens: List[ItemType] = [(eInventoryType.Equip, getattr(db.normal_quest_data[id], f'reward_image_{i}')) for i in range(1,4)]
+                tokens: List[ItemType] = [i for i in db.normal_quest_rewards[id]]
                 msg = f"{name}:\n" + '\n'.join([
                     (f'{db.get_inventory_name_san(token)}: {"缺少" if require_equip[token] - client.data.get_inventory(token) > 0 else "盈余"}{abs(require_equip[token] - client.data.get_inventory(token))}片')
                     for token in tokens])
