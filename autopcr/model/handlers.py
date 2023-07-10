@@ -169,8 +169,9 @@ class QuestSkipMultipleResponse(responses.QuestSkipMultipleResponse):
 
         if self.quest_result_list:
             for result in self.quest_result_list:
-                for item in result.reward_list:
-                    mgr.update_inventory(item)
+                for res in result.quest_result:
+                    for item in res.reward_list:
+                        mgr.update_inventory(item)
         if self.bonus_reward_list:
             for item in self.bonus_reward_list:
                 mgr.update_inventory(item)

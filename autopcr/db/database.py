@@ -1,7 +1,7 @@
 import time
 from typing import Set, Dict, Tuple
 import typing
-from ..model.common import *
+from ..model.common import eInventoryType, eCampaignCategory, RoomUserItem, InventoryInfo
 import datetime
 from collections import Counter
 from functools import reduce
@@ -134,14 +134,14 @@ class database():
                 UniqueEquipmentCraft.query(db)
                 .select_many(lambda x: [(
                     x.equip_id,
-                    0,
-                    x.reward_type_1,
+                    int(0),
+                    eInventoryType(x.reward_type_1),
                     x.item_id_1,
                     x.consume_num_1
                 ), (
                     x.equip_id,
                     0,
-                    x.reward_type_2,
+                    eInventoryType(x.reward_type_2),
                     x.item_id_2,
                     x.consume_num_2
                 )])
@@ -150,13 +150,13 @@ class database():
                     .select_many(lambda x: [(
                         x.equip_id,
                         x.unique_equip_rank,
-                        x.reward_type_1,
+                        eInventoryType(x.reward_type_1),
                         x.item_id_1,
                         x.consume_num_1
                     ), (
                         x.equip_id,
                         x.unique_equip_rank,
-                        x.reward_type_2,
+                        eInventoryType(x.reward_type_2),
                         x.item_id_2,
                         x.consume_num_2
                     )])
@@ -201,7 +201,7 @@ class database():
                 .to_dict(lambda x: x.clan_battle_id, lambda x: x)
             )
 
-            self.quest_info: Dict[int, Tuple[int, QuestDatum]] = (
+            self.quest_info: Dict[int, QuestDatum] = (
                 QuestDatum.query(db)
                 .concat(HatsuneQuest.query(db))
                 .concat(ShioriQuest.query(db))
@@ -260,7 +260,7 @@ class database():
 
             self.inventory_name: Dict[Tuple[eInventoryType, int], str] = (
                 EquipmentDatum.query(db)
-                .select(lambda x: (eInventoryType.Equip, x.equipment_id, x.equipment_name))
+                .select(lambda x: (eInventoryType(eInventoryType.Equip), x.equipment_id, x.equipment_name))
                 .concat(
                     ItemDatum.query(db)
                     .select(lambda x: (eInventoryType.Item, x.item_id, x.item_name))
@@ -275,7 +275,7 @@ class database():
                 )
                 .concat(
                     EmblemDatum.query(db)
-                    .select(lambda x: (x.type, x.emblem_id, x.emblem_name))
+                    .select(lambda x: (eInventoryType(x.type), x.emblem_id, x.emblem_name))
                 )
                 .to_dict(lambda x: (x[0], x[1]), lambda x: x[2])
             )
@@ -437,10 +437,15 @@ class database():
         return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.GOLD_DROP_AMOUNT_DUNGEON
 
     def get_dungeon_mana_before_day(self) -> int:
-        dungeon = min([schedule for schedule in self.campaign_schedule.values() if 
-            schedule.campaign_category == eCampaignCategory.GOLD_DROP_AMOUNT_DUNGEON and 
-            db.parse_time(schedule.start_time) > datetime.datetime.now()
-            ], lambda x: x.start_time)
+        now = datetime.datetime.now()
+        dungeon = (
+            flow(self.campaign_schedule.values())
+            .where(
+                lambda x: x.campaign_category == eCampaignCategory.GOLD_DROP_AMOUNT_DUNGEON and 
+                db.parse_time(x.start_time) > now
+            )
+            .min(lambda x: x.start_time)
+        )
         today = self.get_today_start_time()
         dungeon = self.get_start_time(db.parse_time(dungeon[2]))
         return (dungeon - today).days
