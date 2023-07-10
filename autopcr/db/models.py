@@ -4,7 +4,8 @@
 from sqlalchemy import Column, Float, Index, Integer, Table, Text, UniqueConstraint
 from sqlalchemy.sql.sqltypes import NullType
 from sqlalchemy.orm import Session, declarative_base
-from typing import Generic, TypeVar, List
+from typing import Generic, TypeVar, List, Iterator
+from ..model.common import eInventoryType
 from ..util.linq import flow
 
 T = TypeVar('T')
@@ -1668,6 +1669,12 @@ class EnemyParameter(DeclarativeBase, Base["EnemyParameter"]):
     break_durability: int = Column(Integer, nullable=False)
     virtual_hp: int = Column(Integer, nullable=False)
 
+class Reward:
+    def __init__(self, reward_type: int, reward_id: int, reward_num: int, odds: int):
+        self.reward_type = eInventoryType(reward_type)
+        self.reward_id = reward_id
+        self.reward_num = reward_num
+        self.odds = odds
 
 class EnemyRewardDatum(DeclarativeBase, Base["EnemyRewardDatum"]):
     __tablename__ = 'enemy_reward_data'
@@ -1694,6 +1701,13 @@ class EnemyRewardDatum(DeclarativeBase, Base["EnemyRewardDatum"]):
     reward_id_5: int = Column(Integer, nullable=False)
     reward_num_5: int = Column(Integer, nullable=False)
     odds_5: int = Column(Integer, nullable=False)
+
+    def get_rewards(self) -> Iterator[Reward]:
+        yield Reward(self.reward_type_1, self.reward_id_1, self.reward_num_1, self.odds_1)
+        yield Reward(self.reward_type_2, self.reward_id_2, self.reward_num_2, self.odds_2)
+        yield Reward(self.reward_type_3, self.reward_id_3, self.reward_num_3, self.odds_3)
+        yield Reward(self.reward_type_4, self.reward_id_4, self.reward_num_4, self.odds_4)
+        yield Reward(self.reward_type_5, self.reward_id_5, self.reward_num_5, self.odds_5)
 
 
 class EquipmentCraft(DeclarativeBase, Base["EquipmentCraft"]):
@@ -4702,6 +4716,10 @@ class QuestDatum(DeclarativeBase, Base["QuestDatum"]):
     lv_reward_flag: int = Column(Integer, nullable=False)
     add_treasure_num: int = Column(Integer, nullable=False)
 
+    def get_wave_group_ids(self) -> Iterator[int]:
+        yield self.wave_group_id_1
+        yield self.wave_group_id_2
+        yield self.wave_group_id_3
 
 class QuestDefeatNotice(DeclarativeBase, Base["QuestDefeatNotice"]):
     __tablename__ = 'quest_defeat_notice'
@@ -8221,6 +8239,12 @@ class WaveGroupDatum(DeclarativeBase, Base["WaveGroupDatum"]):
     guest_enemy_id: int = Column(Integer, nullable=False)
     guest_lane: int = Column(Integer, nullable=False)
 
+    def get_drop_reward_ids(self) -> Iterator[int]:
+        yield self.drop_reward_id_1
+        yield self.drop_reward_id_2
+        yield self.drop_reward_id_3
+        yield self.drop_reward_id_4
+        yield self.drop_reward_id_5
 
 class Worldmap(DeclarativeBase, Base["Worldmap"]):
     __tablename__ = 'worldmap'

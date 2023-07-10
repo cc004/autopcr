@@ -36,7 +36,7 @@ class datamgr(Component[apiclient]):
     name: str = None
     clan_like_count: int = 0
     user_my_quest: List[UserMyQuest] = None
-    _inventory: Dict[Tuple[eInventoryType, int], int] = None
+    _inventory: Dict[ItemType, int] = None
     read_story_ids: List[int] = None
     unlock_story_ids: List[int] = None
     event_statuses: List[EventStatus] = None
@@ -80,7 +80,7 @@ class datamgr(Component[apiclient]):
         self._inventory.clear()
         self.hatsune_quest_dict.clear()
 
-    def get_need_unique_equip_material(self, unit_id: int, token: Tuple[eInventoryType, int]) -> int:
+    def get_need_unique_equip_material(self, unit_id: int, token: ItemType) -> int:
         if unit_id not in db.unit_unique_equip:
             return 0
         equip_id = db.unit_unique_equip[unit_id].equip_id
@@ -92,7 +92,7 @@ class datamgr(Component[apiclient]):
             .sum()
         )
 
-    def get_need_unit_need_eqiup(self, unit_id: int) -> typing.Counter[Tuple[eInventoryType, int]]:
+    def get_need_unit_need_eqiup(self, unit_id: int) -> typing.Counter[ItemType]:
         unit = self.unit[unit_id]
         rank = unit.promotion_level
 
@@ -104,7 +104,7 @@ class datamgr(Component[apiclient]):
             Counter((eInventoryType.Equip, equip.id) for equip in unit.equip_slot if equip.is_slot)
         )
 
-    def get_need_rarity_memory(self, unit_id: int, token: Tuple[eInventoryType, int]) -> int:
+    def get_need_rarity_memory(self, unit_id: int, token: ItemType) -> int:
         rarity = -1
         if unit_id in self.unit:
             unit_data = self.unit[unit_id]
@@ -194,9 +194,9 @@ class datamgr(Component[apiclient]):
                 }
         return quest_weight
 
-    def get_need_equip(self, start_rank: Union[None, int] = None, like_unit_only: bool = False) -> Tuple[List[Tuple[Tuple[eInventoryType, int], List[Tuple[Tuple[eInventoryType, int], int]]]], typing.Counter[Tuple[eInventoryType, int]]]:
-        cnt: typing.Counter[Tuple[eInventoryType, int]] = Counter()
-        result: List[Tuple[Tuple[eInventoryType, int], List[Tuple[Tuple[eInventoryType, int], int]]]] = []
+    def get_need_equip(self, start_rank: Union[None, int] = None, like_unit_only: bool = False) -> Tuple[List[Tuple[ItemType, List[Tuple[ItemType, int]]]], typing.Counter[ItemType]]:
+        cnt: typing.Counter[ItemType] = Counter()
+        result: List[Tuple[ItemType, List[Tuple[ItemType, int]]]] = []
         for unit_id in self.unit:
             if start_rank and self.unit[unit_id].promotion_level < start_rank:
                 continue
@@ -209,9 +209,9 @@ class datamgr(Component[apiclient]):
                 result.append((token, list(need.items())))
         return result, cnt 
 
-    def get_need_suixin(self) -> Tuple[List[Tuple[Tuple[eInventoryType, int], int]], int]:
+    def get_need_suixin(self) -> Tuple[List[Tuple[ItemType, int]], int]:
         cnt = 0
-        result: List[Tuple[Tuple[eInventoryType, int], int]] = []
+        result: List[Tuple[ItemType, int]] = []
         for unit_id in self.unit:
             token = (eInventoryType.Unit, unit_id)
             need = self.get_need_unique_equip_material(unit_id, db.xinsui)
@@ -220,12 +220,12 @@ class datamgr(Component[apiclient]):
                 result.append((token, need))
         return result, cnt 
 
-    def get_need_unique_equip_memory(self, unit_id: int, token: Tuple[eInventoryType, int]) -> int:
+    def get_need_unique_equip_memory(self, unit_id: int, token: ItemType) -> int:
         return self.get_need_unique_equip_material(unit_id, token)
 
-    def get_need_memory(self) -> Tuple[List[Tuple[Tuple[eInventoryType, int], int]], int]:
+    def get_need_memory(self) -> Tuple[List[Tuple[ItemType, int]], int]:
         cnt = 0
-        result: List[Tuple[Tuple[eInventoryType, int], int]] = []
+        result: List[Tuple[ItemType, int]] = []
         for memory_id, unit_id in db.memory_to_unit.items():
             token = (eInventoryType.Item, memory_id)
             if token not in db.inventory_name: # 未来角色
@@ -279,10 +279,10 @@ class datamgr(Component[apiclient]):
         else: # hatsune, shiori 0
             return self.settings.hatsune_recover_challenge_count.recovery_max_count
 
-    def get_inventory(self, item: Tuple[eInventoryType, int]) -> int:
+    def get_inventory(self, item: ItemType) -> int:
         return self._inventory.get(item, 0)
 
-    def set_inventory(self, item: Tuple[eInventoryType, int], value: int):
+    def set_inventory(self, item: ItemType, value: int):
         self._inventory[item] = value
 
     def get_shop_gold(self, shop_id: int) -> int:

@@ -1088,7 +1088,7 @@ class investigate_sweep(Module):
     @abstractmethod
     def is_double_drop(self, client: pcrclient) -> bool: ...
     @abstractmethod
-    def target_item(self) -> Tuple[eInventoryType, int]: ...
+    def target_item(self) -> ItemType: ...
 
     async def do_task(self, client: pcrclient):
         times = int(self.value.split(':')[self.is_double_drop(client)])
@@ -1104,7 +1104,7 @@ class xinsui3_sweep(investigate_sweep):
         return 18001003
     def is_double_drop(self, client: pcrclient) -> bool:
         return client.data.is_heart_piece_double()
-    def target_item(self) -> Tuple[eInventoryType, int]:
+    def target_item(self) -> ItemType:
         return db.xinsui
 
 @description('刷取心碎2，平时次数:庆典次数')
@@ -1115,7 +1115,7 @@ class xinsui2_sweep(investigate_sweep):
         return 18001002
     def is_double_drop(self, client: pcrclient) -> bool:
         return client.data.is_heart_piece_double()
-    def target_item(self) -> Tuple[eInventoryType, int]:
+    def target_item(self) -> ItemType:
         return db.xinsui
 
 @description('刷取心碎1，平时次数:庆典次数')
@@ -1126,7 +1126,7 @@ class xinsui1_sweep(investigate_sweep):
         return 18001001
     def is_double_drop(self, client: pcrclient) -> bool:
         return client.data.is_heart_piece_double()
-    def target_item(self) -> Tuple[eInventoryType, int]:
+    def target_item(self) -> ItemType:
         return db.xinsui
 
 @description('刷取星球杯2，平时次数:庆典次数')
@@ -1137,7 +1137,7 @@ class xingqiubei2_sweep(investigate_sweep):
         return 19001002
     def is_double_drop(self, client: pcrclient) -> bool:
         return client.data.is_star_cup_double()
-    def target_item(self) -> Tuple[eInventoryType, int]:
+    def target_item(self) -> ItemType:
         return db.xingqiubei
 
 @description('刷取星球杯1，平时次数:庆典次数')
@@ -1148,7 +1148,7 @@ class xingqiubei1_sweep(investigate_sweep):
         return 19001001
     def is_double_drop(self, client: pcrclient) -> bool:
         return client.data.is_star_cup_double()
-    def target_item(self) -> Tuple[eInventoryType, int]:
+    def target_item(self) -> ItemType:
         return db.xingqiubei
 
 @description('''
