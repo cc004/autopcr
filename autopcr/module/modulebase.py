@@ -1,3 +1,4 @@
+from autopcr.model.common import ItemType
 from ..core.pcrclient import pcrclient
 from typing import DefaultDict, List, Dict, Tuple, Iterator, Union
 from collections import defaultdict
@@ -200,7 +201,7 @@ class ModuleManager:
             _, require_equip = client.data.get_need_equip(start_rank = start_rank, like_unit_only = like_unit_only)
             quest_list: List[int] = [id for id, quest in db.normal_quest_data.items() if db.parse_time(quest.start_time) <= datetime.datetime.now()]
             quest_weight = client.data.get_quest_weght(require_equip)
-            quest_id = sorted(quest_list, key = lambda x: quest_weight[x][0], reverse = True)
+            quest_id = sorted(quest_list, key = lambda x: quest_weight[x], reverse = True)
             tot = []
             for i in range(10):
                 id = quest_id[i]
