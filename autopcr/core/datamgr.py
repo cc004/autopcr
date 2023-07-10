@@ -177,7 +177,7 @@ class datamgr(Component[apiclient]):
 
     def get_quest_weght(self, require_equip: typing.Counter[ItemType]) -> Dict[int, float]: # weight demand
         
-        need = {token: num - self.get_inventory(token) for token, num in require_equip.items()}
+        need = {token: require_equip[token] - self.get_inventory(token) for token in self._inventory if db.is_equip(token)}
 
         return (
             flow(db.normal_quest_rewards.items())
