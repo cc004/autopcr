@@ -1,4 +1,5 @@
 from enum import IntEnum as Enum
+from typing import Tuple
 
 class eInventoryType(Enum):
     TreasureBox = 0
@@ -403,3 +404,4 @@ class eCampaignCategory(Enum):
     PLAYER_EXP_AMOUNT_HATSUNE_REVIVAL_NORMAL = 251
     PLAYER_EXP_AMOUNT_HATSUNE_REVIVAL_HARD = 252
 
+ItemType = Tuple[eInventoryType, int]

@@ -1,14 +1,14 @@
 from typing import List, Callable, Coroutine, Any
 from ..model.modelbase import *
 
-T = TypeVar('T', bound="Container[T]")
+T = TypeVar('T', bound="Container")
 
 class Component(Generic[T]):
     def register_to(self, container: T):
         self._container = container
     async def request(self, request: Request[TResponse],
         next: Callable[[Request[TResponse]], Coroutine[Any, Any, TResponse]]) -> TResponse:
-        return next(request)
+        return await next(request)
     @property
     def name(self) -> str:
         return self.__class__.__name__

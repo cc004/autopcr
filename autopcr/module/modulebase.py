@@ -1,3 +1,4 @@
+from ..model.common import ItemType
 from ..core.pcrclient import pcrclient
 from typing import DefaultDict, List, Dict, Tuple, Iterator, Union
 from collections import defaultdict
@@ -200,12 +201,12 @@ class ModuleManager:
             _, require_equip = client.data.get_need_equip(start_rank = start_rank, like_unit_only = like_unit_only)
             quest_list: List[int] = [id for id, quest in db.normal_quest_data.items() if db.parse_time(quest.start_time) <= datetime.datetime.now()]
             quest_weight = client.data.get_quest_weght(require_equip)
-            quest_id = sorted(quest_list, key = lambda x: quest_weight[x][0], reverse = True)
+            quest_id = sorted(quest_list, key = lambda x: quest_weight[x], reverse = True)
             tot = []
             for i in range(10):
                 id = quest_id[i]
                 name = db.quest_name[id]
-                tokens: List[Tuple[eInventoryType, int]] = [(eInventoryType.Equip, getattr(db.normal_quest_data[id], f'reward_image_{i}')) for i in range(1,4)]
+                tokens: List[ItemType] = [i for i in db.normal_quest_rewards[id]]
                 msg = f"{name}:\n" + '\n'.join([
                     (f'{db.get_inventory_name_san(token)}: {"缺少" if require_equip[token] - client.data.get_inventory(token) > 0 else "盈余"}{abs(require_equip[token] - client.data.get_inventory(token))}片')
                     for token in tokens])
