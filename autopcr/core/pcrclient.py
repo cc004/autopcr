@@ -327,7 +327,7 @@ class pcrclient(apiclient):
         req.type = 1
         await self.request(req)
     
-    async def serlize_reward(self, reward_list: List[InventoryInfo], target: Union[Tuple[eInventoryType, int], None] = None):
+    async def serlize_reward(self, reward_list: List[InventoryInfo], target: Union[ItemType, None] = None):
         result = []
         rewards = {}
         for reward in reward_list:

@@ -1,3 +1,4 @@
+#type: ignore
 from typing import List, Optional
 from .modelbase import *
 from pydantic import Field

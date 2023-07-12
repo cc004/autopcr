@@ -41,7 +41,7 @@ class ApiException(Exception):
         except ValueError:
             self.result_code = result_code
 
-TResponse = TypeVar('TResponse', bound=ResponseBase)
+TResponse = TypeVar('TResponse', bound=ResponseBase, covariant=True)
 
 class apiclient(Container["apiclient"]):
     server_time: int = 0

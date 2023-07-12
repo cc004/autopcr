@@ -1,3 +1,4 @@
+#type: ignore
 from typing import List, Callable
 from ..util import aiorequests
 from ..constants import CACHE_DIR

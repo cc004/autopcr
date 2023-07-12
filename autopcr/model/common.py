@@ -1,6 +1,8 @@
+#type: ignore
 from typing import List
 from .enums import *
 from pydantic import BaseModel
+from .common import eInventoryType
 
 class AgreementStatus(BaseModel):
 	ver: int = None
