@@ -15,7 +15,6 @@ import hoshino
 from hoshino import HoshinoBot, Service, priv
 from hoshino.config import SUPERUSERS
 from hoshino.typing import CQEvent, MessageSegment
-from hoshino.config import PUBLIC_ADDRESS
 from ._util import get_info, get_result
 from ._task import DailyClean, FindEquip, FindMemory, FindXinsui, Task, GetLibraryImport, QuestRecommand
 from .autopcr.bsdk.validator import validate_ok_queue, validate_queue
@@ -25,6 +24,9 @@ import asyncio
 import brotli
 
 register_all()
+
+address = None # 填你的公网IP或域名，不填则会自动尝试获取
+useHttps = False
 
 server = HttpServer(qq_only=True)
 app = nonebot.get_bot().server_app
@@ -44,7 +46,24 @@ sv_help = """
 [#刷图推荐 [昵称] [rank] [fav]] 查询缺口装备的刷图推荐，格式同上
 """
 
-address = "https://" + PUBLIC_ADDRESS + "/daily/"
+if address is None:
+    try:
+        from hoshino.config import PUBLIC_ADDRESS
+        address = PUBLIC_ADDRESS
+    except:
+        pass
+
+if address is None:
+    try:
+        import socket
+        address = socket.gethostbyname(socket.gethostname())
+    except:
+        pass
+
+if address is None:
+    address = "127.0.0.1"
+
+address = ("https://" if useHttps else "http://") + address + "/daily/"
 
 queue = asyncio.Queue()
 inqueue = set({})
