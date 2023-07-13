@@ -3,10 +3,12 @@ from quart import request, render_template, Blueprint
 import os
 import re
 import json
+from typing import Callable, Coroutine, Any, Tuple
 from ..module.modulebase import ModuleManager
+from ..module.accountmgr import instance as accountmgr, AccountException
+from ..constants import CONFIG_PATH
 
 class HttpServer:
-    pathsyntax = re.compile(r'[a-zA-Z0-9_]{1,32}')
     def __init__(self, host = '0.0.0.0', port = 2, qq_only = False):
         self.app = Blueprint('autopcr', __name__, static_folder='statics', static_url_path='/statics', url_prefix="/daily")
         self.quart = quart.Quart(__name__)
@@ -14,81 +16,83 @@ class HttpServer:
         self.port = port
         self.configure_routes()
         self.qq_only = qq_only
-        self.config_path = os.path.join(os.path.dirname(__file__), 'config')
+    
+    @staticmethod
+    def wrapaccount(func: Callable[[ModuleManager], Coroutine[Any, Any, Any]]):
+        async def wrapper():
+            acc = request.args.get('account')
+            if acc is None:
+                return 'No account specified', 400
+            try:
+                async with accountmgr.load(acc) as mgr:
+                    return await func(mgr)
+            except AccountException as e:
+                return str(e), 400
+        wrapper.__name__ = func.__name__
+        return wrapper
 
     def configure_routes(self):
         # backend
         @self.app.route('/api/config', methods = ['GET'])
-        async def get_config():
-            file = request.args.get('account')
-            fn = os.path.join(self.config_path, file) + '.json'
-
-            if not HttpServer.pathsyntax.match(file) or not os.path.exists(fn):
-                return 'Invalid account', 400
-            mgr = ModuleManager(fn)
+        @HttpServer.wrapaccount
+        async def get_config(mgr: ModuleManager):
             return mgr.generate_config()
 
         @self.app.route('/api/config', methods = ['PUT'])
-        async def update_config():
+        @HttpServer.wrapaccount
+        async def update_config(mgr: ModuleManager):
             data = await request.get_json()
-            file = request.args.get('account')
-            fn = os.path.join(self.config_path, file) + '.json'
+            old_data = mgr.data
 
-            if not HttpServer.pathsyntax.match(file) or not os.path.exists(fn):
-                return 'Invalid account', 400
+            if not (data['username'] and data['password'] and (data['qq'] or not self.qq_only)):
+                data['qq'] = old_data['qq']
+                data['username'] = old_data['username']
+                data['password'] = old_data['password']
+            elif not data['username'] or not data['password'] or not data['qq'] and self.qq_only:
+                return {"statusCode": 400, "message": "Incomplete account"}, 400
+            
+            if '_last_result' in old_data:
+                data['_last_result'] = old_data['_last_result']
+            
+            if '_last_clean_time' in old_data:
+                data['_last_clean_time'] = old_data['_last_clean_time']
 
-            with open(fn, 'r') as f:
-                old_data = json.load(f)
-                if data['username'] == "" and data['password'] == "" and data['qq'] == "":
-                    data['qq'] = old_data['qq']
-                    data['username'] = old_data['username']
-                    data['password'] = old_data['password']
-                if '_last_result' in old_data:
-                    data['_last_result'] = old_data['_last_result']
-                if '_last_clean_time' in old_data:
-                    data['_last_clean_time'] = old_data['_last_clean_time']
+            mgr.data = data
+            mgr._load_from(data)
 
-            with open(fn, 'w') as f:
-                f.write(json.dumps(data))
             return {"statusCode": 200}, 200
 
         @self.app.route('/api/config', methods = ['POST'])
-        async def new_config():
+        @HttpServer.wrapaccount
+        async def new_config(mgr: ModuleManager):
             # if self.qq_only:
             #     return 'Please contact the maintenance to register', 400
-            data = await request.get_json()
-            print(data)
             file = request.args.get('account')
-            fn = os.path.join(self.config_path, file) + '.json'
-
-            if not HttpServer.pathsyntax.match(file):
+            if file is None or not accountmgr.pathsyntax.match(file):
                 return 'Invalid account', 400
+                
+            fn = os.path.join(CONFIG_PATH, file) + '.json'
+
             if os.path.exists(fn):
                 return 'Account already exists', 400
+
+            data = await request.get_json()
+            print(data)
             with open(fn, 'w') as f:
                 f.write(json.dumps(data))
             return '', 204
+
         @self.app.route('/api/do_task', methods= ['GET'])
-        async def do_task():
+        @HttpServer.wrapaccount
+        async def do_task(mgr: ModuleManager):
             if self.qq_only:
                 return 'Please use in group', 400
             file = request.args.get('account')
-            fn = os.path.join(self.config_path, file) + '.json'
-
-            if not HttpServer.pathsyntax.match(file) or not os.path.exists(fn):
-                return 'Invalid account', 400
-            mgr = ModuleManager(fn)
-
             return await mgr.do_task()
 
         @self.app.route('/api/library_import', methods = ['GET'])
-        async def get_library():
-            file = request.args.get('account')
-            fn = os.path.join(self.config_path, file) + '.json'
-
-            if not HttpServer.pathsyntax.match(file) or not os.path.exists(fn):
-                return 'Invalid account', 400
-            mgr = ModuleManager(fn)
+        @HttpServer.wrapaccount
+        async def get_library(mgr: ModuleManager):
             return await mgr.get_library_import_data()
 
         # frontend
