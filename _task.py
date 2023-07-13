@@ -6,9 +6,10 @@ from .autopcr.module.modulebase import ModuleManager
 from ._util import draw, draw_line, render_forward_msg
 
 class Task():
-    def __init__(self, alian, target, bot, ev, qid = None, gid = None):
+    def __init__(self, token, bot, ev, qid = None, gid = None):
+        alian, target = token
         self.info = (alian, target, bot, ev, qid, gid)
-        self.token = (ev.user_id if ev else qid, target)
+        self.token = token
 
     @abstractclassmethod
     async def do_task(self): ...
@@ -51,7 +52,6 @@ class GetLibraryImport(Task):
         mgr = ModuleManager(target)
         try:
             resp = await mgr.get_library_import_data()
-            print(resp)
             msg = render_forward_msg([resp])
             await bot.send_group_forward_msg(group_id=ev.group_id, messages=msg)
         except Exception as e:

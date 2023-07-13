@@ -6,13 +6,15 @@ from typing import Callable, Coroutine, Any, Set, Dict, Tuple, Union
 import typing
 from ..model.common import *
 import datetime
-from functools import reduce
 import json, base64, gzip
 from ..db.assetmgr import instance as assetmgr
 from ..db.dbmgr import instance as dbmgr
 from ..db.database import db
 from ..db.models import TrainingQuestDatum
 from ..util.linq import flow
+from asyncio import Lock
+
+lck = Lock()
 
 class datamgr(Component[apiclient]):
     settings: IniSetting = None
@@ -51,12 +53,14 @@ class datamgr(Component[apiclient]):
         self.deck_list = {}
         self.campaign_list = []
 
-
     async def try_update_database(self, ver: int):
-        if not assetmgr.ver or assetmgr.ver < ver:
-            await assetmgr.init(ver)
-            await dbmgr.update_db(assetmgr)
-            db.update(dbmgr)
+        global lck
+
+        async with lck:
+            if not assetmgr.ver or assetmgr.ver < ver:
+                await assetmgr.init(ver)
+                await dbmgr.update_db(assetmgr)
+                db.update(dbmgr)
 
     def is_heart_piece_double(self) -> bool:
         return any(db.is_heart_piece_double(campaign_id) for campaign_id in self.campaign_list)
