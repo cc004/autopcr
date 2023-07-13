@@ -7,6 +7,6 @@ register_all()
 
 server = HttpServer(port=13200)
 
-queue_crons(server.config_path)
+queue_crons()
 
 server.run_forever(asyncio.get_event_loop())

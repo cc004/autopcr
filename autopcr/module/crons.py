@@ -2,6 +2,8 @@ import asyncio
 import datetime
 import os
 from ..module.modulebase import ModuleManager
+from ..module.accountmgr import instance as accountmgr
+from ..constants import CONFIG_PATH
 
 async def _cron(task):
     hour = datetime.datetime.now().hour
@@ -12,14 +14,17 @@ async def _cron(task):
             await task(t)
             hour = t
 
-async def _run_crons(path, hour):
-    for file in os.listdir(path):
-        if file.endswith('.json'):
-            mgr = ModuleManager(os.path.join(path, file))
-            print(f'Running cron#{hour} for {file}, crons = {mgr._crons}')
-            await mgr.do_cron(hour)
+async def _run_crons(hour):
+    for account in accountmgr.accounts():
+        async def task():
+            async with accountmgr.load(account) as mgr:
+                print(f'Doing cron#{hour} for {account}, crons = {mgr._crons}')
+                await mgr.do_cron(hour)
+        asyncio.get_event_loop().create_task(task())
 
-def queue_crons(path):
+
+
+def queue_crons():
     async def task(hour):
-        await _run_crons(path, hour)
+        await _run_crons(hour)
     asyncio.get_event_loop().create_task(_cron(task))

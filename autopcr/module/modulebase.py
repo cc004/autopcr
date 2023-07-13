@@ -116,7 +116,8 @@ class ModuleManager:
             self._load_from(self.data)
         except:
             traceback.print_exc()
-            self.data = {'username': '', 'password': '', 'alian': '', 'qq': ''}
+            raise
+            # self.data = {'username': '', 'password': '', 'alian': '', 'qq': ''}
     
     def _load_from(self, data):
         self._crons.clear()
@@ -130,7 +131,7 @@ class ModuleManager:
         if data.get('time1open', False): self._crons.append(int(data['time1'].split(':')[0]))
         if data.get('time2open', False): self._crons.append(int(data['time2'].split(':')[0]))
     
-    def _save_config(self):
+    def save_config(self):
         data = {m.name: m.value for m in self.modules.values()}
         for k, v in data.items():
             self.data[k] = v
@@ -142,7 +143,6 @@ class ModuleManager:
     
     def update_config(self, data):
         self._load_from(data)
-        self._save_config()
 
     def generate_config(self):
         return {
@@ -307,5 +307,4 @@ class ModuleManager:
         finally:
             self.data['_last_result'] = result
             self.data['_last_clean_time'] = db.format_time(datetime.datetime.now())
-            self._save_config()
         return result
