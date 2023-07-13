@@ -188,7 +188,7 @@ async def timing():
                 alian = config['alian']
                 token = (alian, target)
                 if token in inqueue:
-                    await bot.send_group_msg(group_id = gid, message = f"【定时任务】{alian}已在清日常队列里")
+                    await bot.send_group_msg(group_id = gid, message = f"【定时任务】{alian}已在执行任务")
                     continue
 
                 inqueue.add(token)
@@ -198,9 +198,9 @@ async def timing():
 @sv.on_fullmatch("#cron")
 async def check_schedule(bot, ev):
     if db.is_clan_battle_time():
-        await bot.finish(ev, "当前处于会战期间，定时任务暂停")
+        await bot.finish(ev, "当前处于会战期间，定时任务2暂停")
     else:
-        await bot.finish(ev, "当前不处于会战期间，定时任务正常运行")
+        await bot.finish(ev, "当前不处于会战期间，定时任务2正常运行")
 
 @sv.on_fullmatch("#清日常所有")
 @pre_process_all
