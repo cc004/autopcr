@@ -16,7 +16,8 @@ async def get_info():
         with open(file, "r") as f:
             data = json.load(f)
             if 'qq' in data:
-                tmp[data['qq']].append((data, file))
+                account = os.path.basename(file).split('.')[0]
+                tmp[data['qq']].append((data, account))
     return tmp
 
 async def get_result(alian):
