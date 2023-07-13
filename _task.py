@@ -96,12 +96,12 @@ class DailyClean(Task):
                 resp = await mgr.do_task()
             img = await draw(resp, alian)
             if ev:
-                await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
+                await bot.send(ev, f"[CQ:reply,id={ev.message_id}] {alian}" + MessageSegment.image(f'file:///{img}'))
             else:
-                await bot.send_group_msg(group_id = gid, message = "【定时任务】" + MessageSegment.image(f'file:///{img}'))
+                await bot.send_group_msg(group_id = gid, message = f"【定时任务】{alian}" + MessageSegment.image(f'file:///{img}'))
         except Exception as e:
             if ev:
-                await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + str(e))
+                await bot.send(ev, f"[CQ:reply,id={ev.message_id}] {alian}:" + str(e))
             else:
-                await bot.send_group_msg(group_id = gid, message = "【定时任务】" + str(e))
+                await bot.send_group_msg(group_id = gid, message = f"【定时任务】{alian}:" + str(e))
 
