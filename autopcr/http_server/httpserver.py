@@ -63,8 +63,7 @@ class HttpServer:
             return {"statusCode": 200}, 200
 
         @self.app.route('/api/config', methods = ['POST'])
-        @HttpServer.wrapaccount
-        async def new_config(mgr: ModuleManager):
+        async def new_config():
             # if self.qq_only:
             #     return 'Please contact the maintenance to register', 400
             file = request.args.get('account')
