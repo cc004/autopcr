@@ -67,7 +67,7 @@ class HttpServer:
             # if self.qq_only:
             #     return 'Please contact the maintenance to register', 400
             file = request.args.get('account')
-            if file is None or not accountmgr.pathsyntax.match(file):
+            if file is None or not accountmgr.pathsyntax.fullmatch(file):
                 return 'Invalid account', 400
                 
             fn = os.path.join(CONFIG_PATH, file) + '.json'
