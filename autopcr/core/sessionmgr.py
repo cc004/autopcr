@@ -52,6 +52,7 @@ class sessionmgr(Component[apiclient]):
                         manifest: SourceIniGetMaintenanceStatusResponse = await next(SourceIniGetMaintenanceStatusRequest())
                         self._container._headers['MANIFEST-VER'] = manifest.required_manifest_ver
                         if not manifest.maintenance_message: break
+                        raise ValueError(manifest.maintenance_message)
                         match = re.search(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}', manifest.maintenance_message)
                         if match is not None:
                             end = dateutil.parser.parse(match.group())
