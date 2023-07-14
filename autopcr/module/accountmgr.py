@@ -26,13 +26,13 @@ class Account(ModuleManager):
         self._lck.release()
 
 class AccountManager:
-    pathsyntax = re.compile(r'[a-zA-Z0-9_]{1,32}')
+    pathsyntax = re.compile(r'[^\\\|?*/]{1,32}')
     def __init__(self, root: str):
         self.root = root
         self.account_lock: Dict[str, Lock] = {}
     
     def load(self, account: str) -> Account:
-        if not AccountManager.pathsyntax.match(account):
+        if not AccountManager.pathsyntax.fullmatch(account):
             raise AccountException('Invalid account name')
         return Account(self, account)
     
