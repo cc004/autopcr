@@ -295,9 +295,9 @@ async def get_config(bot, ev, tot = False):
     alian = escape(alian)
 
     for config, file in data[user_id]:
-        if not alian or config['alian'] == alian:
+        if not alian or config['alian'] == alian or len(data[user_id]) == 1:
             target = file
-            tokens.append((config['alian'], target))
+            tokens.append((escape(config['alian']), target))
 
     if not tokens:
         return False, f"[CQ:reply,id={ev.message_id}]未找到昵称为【{alian}】的账号", token
@@ -307,7 +307,7 @@ async def get_config(bot, ev, tot = False):
 
     if len(tokens) > 1:
         if not alian:
-            name = ' '.join([escape(i[0]) for i in tokens])
+            name = ' '.join([i[0] for i in tokens])
             msg = f"[CQ:reply,id={ev.message_id}]存在多个帐号，请指定一个昵称：\n{name}"
             return False, msg, token
         else:
