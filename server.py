@@ -15,6 +15,7 @@ from nonebot import on_startup
 import hoshino
 from hoshino import HoshinoBot, Service, priv
 from hoshino.config import SUPERUSERS
+from hoshino.util import escape
 from hoshino.typing import CQEvent, MessageSegment
 from ._util import get_info, get_result
 from ._task import DailyClean, FindEquip, FindMemory, FindXinsui, Task, GetLibraryImport, QuestRecommand
@@ -185,7 +186,7 @@ async def timing():
             if config['time1open'] and config['time1'] == now or  \
             config['time2open'] and config['time2'] == now and not db.is_clan_battle_time():
 
-                alian = config['alian']
+                alian = escape(config['alian'])
                 token = (alian, target)
                 if token in inqueue:
                     await bot.send_group_msg(group_id = gid, message = f"【定时任务】{alian}已在执行任务")
@@ -291,9 +292,10 @@ async def get_config(bot, ev, tot = False):
         return False, "[CQ:reply,id={ev.message_id}]请发送【#配置日常】配置", token
 
     tokens = []
+    alian = escape(alian)
 
     for config, file in data[user_id]:
-        if tot or not alian or config['alian'] == alian:
+        if not alian or config['alian'] == alian:
             target = file
             tokens.append((config['alian'], target))
 
@@ -305,7 +307,7 @@ async def get_config(bot, ev, tot = False):
 
     if len(tokens) > 1:
         if not alian:
-            name = ' '.join([i[0] for i in tokens])
+            name = ' '.join([escape(i[0]) for i in tokens])
             msg = f"[CQ:reply,id={ev.message_id}]存在多个帐号，请指定一个昵称：\n{name}"
             return False, msg, token
         else:
