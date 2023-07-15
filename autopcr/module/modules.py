@@ -47,7 +47,7 @@ class smart_normal_sweep(Module):
             raise SkipError("今日非normal庆典，不刷取")
 
         if client.keys['smart_normal_sweep_unit'] == 'favorite':
-            _, require_equip = client.data.get_need_equip(like_unit_only = True)
+            require_equip = client.data.get_equip_demand(like_unit_only = True)
         else:
             opt = {
                 'all': 1,
@@ -55,7 +55,7 @@ class smart_normal_sweep(Module):
                 'max_rank-1': db.equip_max_rank - 1,
                 'max_rank-2': db.equip_max_rank - 2,
             }
-            _, require_equip = client.data.get_need_equip(start_rank = opt[client.keys['smart_normal_sweep_unit']])
+            require_equip = client.data.get_equip_demand(start_rank = opt[client.keys['smart_normal_sweep_unit']])
 
         clean_cnt = Counter()
         quest_id = []
@@ -108,7 +108,7 @@ class smart_hard_sweep(Module):
         if self.value == "非n庆典" and client.data.is_normal_quest_double():
             raise SkipError("今日normal庆典，不刷取")
 
-        need_list, _ = client.data.get_need_memory()
+        need_list, _ = client.data.get_memory_demand()
         need_list = [(token, need - client.data.get_inventory(token)) for token, need in need_list if need > client.data.get_inventory(token)]
 
         if not need_list:
@@ -227,28 +227,28 @@ class free_gacha(Module):
             self._log(f"NEW: \n" + '\n'.join([db.get_inventory_name(item) for item in new_unit]) + '\n')
         self._log(await client.serlize_reward(reward_list))
 
-@description('商店购买最大经验药水量')
+@description('商店购买经验药水停止阈值')
 @enumtype([0, 1000, 5000, 20000, 50000, 99999])
-@default(0)
+@default(1000)
 class shop_buy_exp_count_limit(Module):
     async def do_task(self, client: pcrclient):
         client.keys['exp_count_limit'] = self.value
 
-@description('商店购买最大装备量')
-@enumtype([0, 100, 300, 600, 1000, 9999])
-@default(300)
-class shop_buy_equip_count_limit(Module):
-    async def do_task(self, client: pcrclient):
-        client.keys['equip_count_limit'] = self.value
-
-@description('商店购买最大强化石量')
+@description('商店购买强化石停止阈值')
 @enumtype([0, 100, 500, 2000, 5000, 99999])
-@default(0)
+@default(100)
 class shop_buy_equip_upper_count_limit(Module):
     async def do_task(self, client: pcrclient):
         client.keys['equip_upper_count_limit'] = self.value
 
-@description('商店购买最大记忆碎片量')
+@description('商店购买装备盈余停止阈值')
+@enumtype([0, 50, 100, 200, 500, 1000, 9999])
+@default(100)
+class shop_buy_equip_count_limit(Module):
+    async def do_task(self, client: pcrclient):
+        client.keys['equip_count_limit'] = self.value
+
+@description('商店购买记忆碎片盈余停止阈值')
 @enumtype([0, 15, 50, 120, 150, 270, 9999])
 @default(15)
 class shop_buy_unit_memory_count_limit(Module):
@@ -294,6 +294,10 @@ class shop_buyer(Module):
         result = []
 
         while True:
+            
+            equip_demand_gap = client.data.get_equip_demand_gap()
+            memory_demand_gap = client.data.get_memory_demand_gap()
+
             gold = client.data.get_shop_gold(shop_content.system_id)
             if gold < lmt:
                 raise SkipError(f"商店货币{gold}不足{lmt}，将不进行购买")
@@ -302,9 +306,9 @@ class shop_buyer(Module):
                 (item.slot_id, item.price.currency_num) for item in shop_content.item_list if not item.sold and
                     (
                         db.is_exp_upper((item.type, item.item_id)) and client.data.get_inventory((item.type, item.item_id)) < self._exp_count(client) or
-                        db.is_equip((item.type, item.item_id)) and client.data.get_inventory((item.type, item.item_id)) < self._equip_count(client) or
                         db.is_equip_upper((item.type, item.item_id)) and client.data.get_inventory((item.type, item.item_id)) < self._equip_upper_count(client) or
-                        db.is_unit_memory((item.type, item.item_id)) and client.data.get_inventory((item.type, item.item_id)) < self._unit_memory_count(client)
+                        db.is_equip((item.type, item.item_id)) and -equip_demand_gap[(item.type, item.item_id)] < self._equip_count(client) or
+                        db.is_unit_memory((item.type, item.item_id)) and -memory_demand_gap[(item.type, item.item_id)] < self._unit_memory_count(client)
                     )
             ]
 
@@ -317,6 +321,8 @@ class shop_buyer(Module):
             if slots_to_buy:
                 res = await client.shop_buy_item(shop_content.system_id, slots_to_buy)
                 result.extend(res.purchase_list)
+            # else: # 无商品购买还需要重置吗
+            #     break
 
             if shop_content.reset_count >= reset_cnt:
                 break
@@ -340,7 +346,7 @@ class normal_shop_reset_count(Module):
         client.keys['normal_shop_reset_count'] = self.value
 
 @description('通用商店购买')
-@enumtype(["none", "经验药水", "强化石", "all"])
+@enumtype(["none", "经验药水", "装备", "all"])
 @default("none")
 class normal_shop(shop_buyer):
     def coin_limit(self) -> int: return 5000000
@@ -367,7 +373,7 @@ class underground_shop_reset_count(Module):
     async def do_task(self, client: pcrclient):
         client.keys['expedition_shop_reset_count'] = self.value
 
-@description('地下城商店购买，记忆碎片+装备')
+@description('地下城商店购买')
 @enumtype(["none", "记忆碎片", "装备", "all"])
 @default("none")
 class underground_shop(shop_buyer):
@@ -382,7 +388,7 @@ class jjc_shop_reset_count(Module):
     async def do_task(self, client: pcrclient):
         client.keys['arena_shop_reset_count'] = self.value
 
-@description('jjc商店购买，记忆碎片+装备')
+@description('jjc商店购买')
 @enumtype(["none", "记忆碎片", "装备", "all"])
 @default("none")
 class jjc_shop(shop_buyer):
@@ -397,7 +403,7 @@ class pjjc_shop_reset_count(Module):
     async def do_task(self, client: pcrclient):
         client.keys['grand_arena_shop_reset_count'] = self.value
 
-@description('pjjc商店购买，记忆碎片+装备')
+@description('pjjc商店购买')
 @enumtype(["none", "记忆碎片", "装备", "all"])
 @default("none")
 class pjjc_shop(shop_buyer):
@@ -894,7 +900,7 @@ class buy_stamina_passive(Module):
 @description('每天主动购买的体力管数。仅一天第一次清日常触发。钻石数量<1w强制不触发。')
 @enumtype(["none", 1, 2, 3, 6, 9, 12])
 @default("none")
-class buy_stamina_active(Module):
+class buy_stamina_active(Module): # useless
     async def do_task(self, client: pcrclient):
         cnt = 0
         last_clean_time = db.parse_time(client.keys['_last_clean_time']) if client.keys['_last_clean_time'] else None
@@ -1224,88 +1230,6 @@ class smart_sweep(Module):
         
         self._log(await client.serlize_reward(result))
 
-'''
-class shop_buy(Module):
-    @abstractmethod
-    def system_id(self) -> int: ...
-    @abstractmethod
-    def coin_limit(self) -> int: ...
-
-    async def _get_shop_content(self, client: pcrclient):
-        for shop in (await client.get_shop_item_list()).shop_list:
-            if shop.system_id == self.system_id():
-                return shop
-        raise AbortError("商店未开启")
-
-    async def do_task(self, client: pcrclient):
-        shop_content = await self._get_shop_content(client)
-
-        prev = client.data.get_shop_gold(self.system_id())
-        
-        buy_limit = client.keys.get('shop_buy_limit', 300)
-
-        while shop_content.reset_count <= self.value:
-            
-            if client.data.get_shop_gold(self.system_id()) < self.coin_limit():
-                raise AbortError(f"商店金币小于{self.coin_limit()}，无法继续购买")
-
-            slots_to_buy = [
-                item.slot_id for item in shop_content.item_list if 
-                    item.available_num and 
-                    client.data.get_inventory((item.type, item.item_id)) < buy_limit and 
-                    not item.sold
-            ]
-            
-            if slots_to_buy:
-                await client.shop_buy_item(shop_content.system_id, slots_to_buy)
-
-            if shop_content.reset_count == self.value:
-                break
-            
-            await client.shop_reset(shop_content.system_id)
-            shop_content = await self._get_shop_content(client)
-
-        self._log(f"已花费{prev - client.data.get_shop_gold(self.system_id())}代币购买装备")
-
-@description('购买地下城币刷新次数, -1为不购买')
-@enumtype([-1, 0, 1, 2, 3, 4, 7, 10])
-@default(0)
-class dungeon_shop(shop_buy):
-    def system_id(self) -> int:
-        return 204
-    def coin_limit(self) -> int:
-        return 100000
-
-@description('购买jjc币刷新次数, -1为不购买')
-@enumtype([-1, 0, 1, 2, 3, 4, 7, 10])
-@default(0)
-class new_jjc_shop(shop_buy):
-    def system_id(self) -> int:
-        return 202
-    def coin_limit(self) -> int:
-        return 30000
-
-@description('购买pjjc币刷新次数, -1为不购买')
-@enumtype([-1, 0, 1, 2, 3, 4, 7, 10])
-@default(0)
-class new_pjjc_shop(shop_buy):
-    def system_id(self) -> int:
-        return 203
-    def coin_limit(self) -> int:
-        return 30000
-
-@description('购买限时商店')
-@booltype
-@default(True)
-class new_daily_shop(Module):
-    async def do_task(self, client: pcrclient):
-        items_to_buy = [x.slot_id for x in client.data.daily_shop.item_list if x.available_num]
-        if not items_to_buy:
-            raise SkipError(f"限时商店已购买")
-        await client.shop_buy_item(client.data.daily_shop.system_id, items_to_buy)
-        self._log(f"已购买限时商店")
-'''
-
 @description('剩余体力全部刷活动图')
 @enumtype(['none', 'n-5', 'n-10', 'n-15'])
 @default('none')
@@ -1371,7 +1295,7 @@ def register_all():
         smart_normal_sweep_unit,
         smart_normal_sweep,
 
-        buy_stamina_active,
+        # buy_stamina_active,
         all_in_hatsune,
 
         hatsune_hboss_sweep,
@@ -1382,8 +1306,8 @@ def register_all():
         mission_receive_last,
 
         shop_buy_exp_count_limit,
-        shop_buy_equip_count_limit,
         shop_buy_equip_upper_count_limit,
+        shop_buy_equip_count_limit,
         shop_buy_unit_memory_count_limit,
         normal_shop_reset_count,
         normal_shop,

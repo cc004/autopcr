@@ -84,7 +84,7 @@ class datamgr(Component[apiclient]):
         self._inventory.clear()
         self.hatsune_quest_dict.clear()
 
-    def get_need_unique_equip_material(self, unit_id: int, token: ItemType) -> int:
+    def get_unique_equip_material_demand(self, unit_id: int, token: ItemType) -> int:
         if unit_id not in db.unit_unique_equip:
             return 0
         equip_id = db.unit_unique_equip[unit_id].equip_id
@@ -181,82 +181,62 @@ class datamgr(Component[apiclient]):
 
     def get_quest_weght(self, require_equip: typing.Counter[ItemType]) -> Dict[int, float]: # weight demand
         
-        need = {token: require_equip[token] - self.get_inventory(token) for token in self._inventory if db.is_equip(token)}
-
         return (
             flow(db.normal_quest_rewards.items())
             .to_dict(lambda x: x[0], lambda x:
                 flow(x[1].items())
-                .select(lambda y: datamgr._weight_mapper(need.get(y[0], 0)) * y[1])
+                .select(lambda y: datamgr._weight_mapper(require_equip.get(y[0], 0)) * y[1])
                 .sum()
             )
         )
-        '''
-        def f(x: int, pos: int):
-            wei = [0, 0.4, 0.4, 0.2]
-            return x * wei[pos]
 
-        need = {token: num - self.get_inventory(token) 
-                for token, num in require_equip.items() 
-                if num - self.get_inventory(token) > 0}
-
-        quest_weight: Dict[int, Tuple[int, int]] = {
-                quest.quest_id: 
-                    (
-                    sum(f(
-                        need.get((eInventoryType.Equip, getattr(quest, f'reward_image_{i}')), 0), i
-                    ) for i in range(1,4)),
-                    max(f(
-                        need.get((eInventoryType.Equip, getattr(quest, f'reward_image_{i}')), 0), i
-                    ) for i in range(1,4)),
-                     )
-                for quest in db.normal_quest_data.values()
-                }
-        return quest_weight
-        '''
-
-    def get_need_equip(self, start_rank: Union[None, int] = None, like_unit_only: bool = False) -> Tuple[List[Tuple[ItemType, List[Tuple[ItemType, int]]]], typing.Counter[ItemType]]:
+    def get_equip_demand(self, start_rank: Union[None, int] = None, like_unit_only: bool = False) -> typing.Counter[ItemType]:
         cnt: typing.Counter[ItemType] = Counter()
-        result: List[Tuple[ItemType, List[Tuple[ItemType, int]]]] = []
         for unit_id in self.unit:
             if start_rank and self.unit[unit_id].promotion_level < start_rank:
                 continue
             if like_unit_only and not self.unit[unit_id].favorite_flag:
                 continue
-            token = (eInventoryType.Unit, unit_id)
             need = self.get_need_unit_need_eqiup(unit_id)
             if need:
                 cnt += need
-                result.append((token, list(need.items())))
-        return result, cnt 
+        return cnt 
 
-    def get_need_suixin(self) -> Tuple[List[Tuple[ItemType, int]], int]:
-        cnt = 0
-        result: List[Tuple[ItemType, int]] = []
-        for unit_id in self.unit:
-            token = (eInventoryType.Unit, unit_id)
-            need = self.get_need_unique_equip_material(unit_id, db.xinsui)
-            if need:
-                cnt += need
-                result.append((token, need))
-        return result, cnt 
+    def get_equip_demand_gap(self, start_rank: Union[None, int] = None, like_unit_only: bool = False) -> typing.Counter[ItemType]:
+        demand = self.get_equip_demand(start_rank, like_unit_only)
+        demand = Counter({token: demand[token] - self.get_inventory(token) for token in self._inventory if db.is_equip(token)})
+        return demand
 
-    def get_need_unique_equip_memory(self, unit_id: int, token: ItemType) -> int:
-        return self.get_need_unique_equip_material(unit_id, token)
-
-    def get_need_memory(self) -> Tuple[List[Tuple[ItemType, int]], int]:
-        cnt = 0
-        result: List[Tuple[ItemType, int]] = []
+    def get_memory_demand(self) -> typing.Counter[ItemType]:
+        result: typing.Counter[ItemType] = Counter()
         for memory_id, unit_id in db.memory_to_unit.items():
             token = (eInventoryType.Item, memory_id)
             if token not in db.inventory_name: # 未来角色
                 continue
 
-            need = self.get_need_rarity_memory(unit_id, token) + self.get_need_unique_equip_memory(unit_id, token)
-            cnt += need
-            result.append((token, need))
+            need = self.get_need_rarity_memory(unit_id, token) + self.get_unique_equip_memory_demand(unit_id, token)
+            result[token] += need
 
+        return result
+
+    def get_memory_demand_gap(self) -> typing.Counter[ItemType]: # need -- >0
+        demand = self.get_memory_demand()
+        demand = Counter({token: demand[token] - self.get_inventory(token) for token in demand})
+        return demand
+
+    def get_suixin_demand(self) -> Tuple[List[Tuple[ItemType, int]], int]:
+        cnt = 0
+        result: List[Tuple[ItemType, int]] = []
+        for unit_id in self.unit:
+            token = (eInventoryType.Unit, unit_id)
+            need = self.get_unique_equip_material_demand(unit_id, db.xinsui)
+            if need:
+                cnt += need
+                result.append((token, need))
         return result, cnt 
+
+    def get_unique_equip_memory_demand(self, unit_id: int, token: ItemType) -> int:
+        return self.get_unique_equip_material_demand(unit_id, token)
 
     def get_max_avaliable_quest(self, quests: Dict[int, TrainingQuestDatum]) -> int:
         now = datetime.datetime.now()
