@@ -157,7 +157,7 @@ class chara_fortune(Module):
 @default(True)
 class love_up(Module):
     async def do_task(self, client: pcrclient):
-        for unit in client.data.unit_love.values():
+        for unit in client.data.unit_data.values():
             unit_id = unit.chara_id * 100 + 1
             unit_name = db.get_inventory_name_san((eInventoryType.Unit, unit_id))
             love_level, total_love = db.max_total_love(client.data.unit[unit_id].unit_rarity)
@@ -532,6 +532,37 @@ class user_info(Module):
         now = db.format_time(datetime.datetime.now())
         self._log(f"{client.data.name} 体力{client.data.stamina}({db.team_max_stamina[client.data.team_level].max_stamina}) 等级{client.data.team_level} 钻石{client.data.jewel.free_jewel} mana{client.data.gold.gold_id_free} 扫荡券{client.data.get_inventory((eInventoryType.Item, 23001))} 母猪石{client.data.get_inventory((eInventoryType.Item, 90005))}\n清日常时间:{now}")
 
+@description('阅读公会剧情')
+@booltype
+@default(True)
+class guild_story_reading(Module):
+
+    async def do_task(self, client: pcrclient):
+
+        def guild_love_sum(guild_id: int) -> int:
+            return (
+            flow(getattr(db.guild_data[guild_id], f"member{i}") for i in range(1, 31)) 
+            .where(lambda x: x != 0 and x in client.data.unit_data) 
+            .sum(lambda x: client.data.unit_data[x].love_level)
+            )
+
+        read_story = set(client.data.read_story_ids)
+        read_story.add(0) # no pre story
+        for story in db.guild_story:
+            if (
+                story.story_id not in read_story and
+                story.pre_story_id in read_story and
+                guild_love_sum(story.requirement_id) >= story.love_level
+                ):
+                await client.read_story(story.story_id)
+                read_story.add(story.story_id)
+                self._log(f"阅读了{story.title}")
+
+        if not self.log:
+            raise SkipError("不存在未阅读的公会剧情")
+        client.data.read_story_ids = list(read_story)
+        self._log(f"共{len(self.log)}篇")
+
 @description('阅读角色剧情')
 @enumtype(["none", "除ue普妈圣千普千真步", "all"])
 @default("none")
@@ -553,8 +584,8 @@ class unit_story_reading(Module):
             if (
                 story.story_id not in read_story and
                 story.pre_story_id in read_story and
-                story.story_group_id in client.data.unit_love and 
-                client.data.unit_love[story.story_group_id].love_level >= story.love_level
+                story.story_group_id in client.data.unit_data and 
+                client.data.unit_data[story.story_group_id].love_level >= story.love_level
                 ):
                 await client.read_story(story.story_id)
                 read_story.add(story.story_id)
@@ -1368,6 +1399,7 @@ def register_all():
         main_story_reading,
         tower_story_reading,
         hatsune_story_reading,
+        guild_story_reading,
         unit_story_reading,
         room_upper_all,
         user_info,

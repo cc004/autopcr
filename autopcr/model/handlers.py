@@ -2,6 +2,7 @@ from . import responses, sdkrequests
 from .common import *
 from .requests import *
 from ..core.datamgr import datamgr
+from ..db.database import db
 
 def handles(cls):
     cls.__base__.update = cls.update
@@ -125,8 +126,8 @@ class RoomMultiGiveGiftResponse(responses.RoomMultiGiveGiftResponse):
 
         if self.level_info:
             for info in self.level_info.love:
-                mgr.unit_love[info.chara_id].love_level = info.current_level
-                mgr.unit_love[info.chara_id].chara_love = info.total
+                mgr.unit_data[info.chara_id].love_level = info.current_level
+                mgr.unit_data[info.chara_id].chara_love = info.total
 
 
 @handles
@@ -237,7 +238,7 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         if self.unit_list:
             mgr.unit = {unit.id: unit for unit in self.unit_list}
         if self.user_chara_info:
-            mgr.unit_love = {unit.chara_id: unit for unit in self.user_chara_info}
+            mgr.unit_data = {unit.chara_id: unit for unit in self.user_chara_info}
         mgr.stamina = self.user_info.user_stamina
         mgr.settings = self.ini_setting
         mgr.recover_stamina_exec_count = self.shop.recover_stamina.exec_count

@@ -29,7 +29,7 @@ class datamgr(Component[apiclient]):
     team_level: int = 0
     stamina: int = 0
     unit: Dict[int, UnitData] = None
-    unit_love: Dict[int, UserChara] = None
+    unit_data: Dict[int, UserChara] = None
     recover_stamina_exec_count: int = 0
     training_quest_count: TrainingQuestCount = None
     training_quest_max_count: TrainingQuestCount = None
