@@ -67,7 +67,9 @@ class smart_normal_sweep(Module):
             for i in range(10000):
 
                 if i % 3 == 0:
-                    quest_weight = client.data.get_quest_weght(require_equip)
+
+                    demand = Counter({token: require_equip[token] - client.data.get_inventory(token) for token in client.data._inventory if db.is_equip(token)})
+                    quest_weight = client.data.get_quest_weght(demand)
                     quest_id = sorted(quest_list, key = lambda x: quest_weight[x], reverse = True)
 
                 target_id = quest_id[0]
