@@ -198,8 +198,8 @@ class ModuleManager:
         try:
             client = self.get_android_client()
             await client.login()
-            _, require_equip = client.data.get_need_equip(start_rank = start_rank, like_unit_only = like_unit_only)
             quest_list: List[int] = [id for id, quest in db.normal_quest_data.items() if db.parse_time(quest.start_time) <= datetime.datetime.now()]
+            require_equip = client.data.get_equip_demand_gap(start_rank = start_rank, like_unit_only = like_unit_only)
             quest_weight = client.data.get_quest_weght(require_equip)
             quest_id = sorted(quest_list, key = lambda x: quest_weight[x], reverse = True)
             tot = []
@@ -221,15 +221,11 @@ class ModuleManager:
         try:
             client = self.get_android_client()
             await client.login()
-            result, need = client.data.get_need_equip(start_rank, like_unit_only)
-            result = sorted(result, key=lambda x: -client.data.unit[x[0][1]].promotion_level)
-            # msg = [db.get_inventory_name_san(token) + ":\n" + '\n'.join([db.get_inventory_name_san(equip[0]) + "x" + str(equip[1]) for equip in equips]) for token, equips in result]
+            demand = list(client.data.get_equip_demand_gap(start_rank, like_unit_only).items())
 
+            demand = sorted(demand, key=lambda x: x[1], reverse=True)
 
-            total = [(token, client.data.get_inventory(token) - num) for token, num in need.items()]
-            total = sorted(total, key=lambda x: x[1])
-
-            title = [f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] < 0 else "盈余"}{abs(item[1])}片' for item in total]
+            title = [f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片' for item in demand]
             return title
             # return title + msg
         except Exception as e:
@@ -240,7 +236,7 @@ class ModuleManager:
         try:
             client = self.get_android_client()
             await client.login()
-            result, need = client.data.get_need_suixin()
+            result, need = client.data.get_suixin_demand()
             result = sorted(result, key=lambda x: x[1])
             msg = [f"{db.get_inventory_name_san(item[0])}: 需要{item[1]}片" for item in result]
 
@@ -263,11 +259,10 @@ class ModuleManager:
         try:
             client = self.get_android_client()
             await client.login()
-            result, need = client.data.get_need_memory()
-            result = [(token, client.data.get_inventory(token) - need) for token, need in result]
-            result = sorted(result, key=lambda x: x[1])
+            demand = list(client.data.get_memory_demand_gap().items())
+            demand = sorted(demand, key=lambda x: x[1])
 
-            msg = [f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] < 0 else "盈余"}{abs(item[1])}片' for item in result]
+            msg = [f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片' for item in demand]
             return msg
         except Exception as e:
             traceback.print_exc()
