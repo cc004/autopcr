@@ -1,3 +1,4 @@
+from typing import List, Tuple
 import requests
 import os
 from .autopcr.http_server.httpserver import HttpServer
@@ -14,6 +15,7 @@ from nonebot import on_startup
 import hoshino
 from hoshino import HoshinoBot, Service, priv
 from hoshino.config import SUPERUSERS
+from hoshino.util import escape
 from hoshino.typing import CQEvent, MessageSegment
 from ._util import get_info, get_result
 from ._task import DailyClean, FindEquip, FindMemory, FindXinsui, Task, GetLibraryImport, QuestRecommand
@@ -21,7 +23,6 @@ from .autopcr.bsdk.validator import validate_ok_queue, validate_queue
 import datetime
 import random
 import asyncio
-import brotli
 
 register_all()
 
@@ -65,10 +66,8 @@ if address is None:
 
 address = ("https://" if useHttps else "http://") + address + "/daily/"
 
-queue = asyncio.Queue()
 inqueue = set({})
 consuming = False
-cur_task: Task = None
 validate = ""
 
 sv = Service(
@@ -85,44 +84,36 @@ sv = Service(
 async def bangzhu_text(bot, ev):
     await bot.finish(ev, sv_help, at_sender=True)
 
-async def consumer():
+async def consumer(task):
     global inqueue
-    global consuming
-    global queue
-    global cur_task
-    while True:
-        task = await queue.get()
-        consuming = True
-        cur_task = task
-        token = task.token
-        try:
-            await task.do_task()
-        except Exception as e:
-            sv.logger.error(f"执行清日常出错:" + str(e))
-            print_exc()
-            await report_to_su(None, "", "执行清日常出错:" + str(e))
-        finally:
-            inqueue.remove(token)
-            queue.task_done()
-            consuming = False
+    token = task.token
+    try:
+        await task.do_task()
+    except Exception as e:
+        sv.logger.error(f"执行清日常出错:" + str(e))
+        print_exc()
+        await report_to_su(None, "", "执行清日常出错:" + str(e))
+    finally:
+        inqueue.remove(token)
 
+'''
 async def manual_validate():
-    global cur_task
-    while True:
-        (challenge, gt, userid) = await validate_queue.get()
-        alian, _, bot, ev, qid, gid = cur_task.info 
-        url = f"https://help.tencentbot.top/geetest/?captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
-        if ev:
-            await bot.send(ev, f'[CQ:reply,id={ev.message_id}]pcr账号登录需要验证码，请完成以下链接中的验证内容后将第一行validate=后面的内容复制，并用指令#pcrval xxxx将内容发送给机器人完成验证\n验证链接')
-            await bot.send(ev, f'[CQ:reply,id={ev.message_id}]{url}')
-        else:
-            await bot.send_group_msg(group_id = gid, msg = f"【定时任务】帐号需要验证码，【{alian}】定时任务自动取消[CQ:at,qq={qid}]")
-            await validate_ok_queue.put("xcwcancle")
+global cur_task
+while True:
+    (challenge, gt, userid) = await validate_queue.get()
+    alian, _, bot, ev, qid, gid = cur_task.info 
+    url = f"https://help.tencentbot.top/geetest/?captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
+    if ev:
+        await bot.send(ev, f'[CQ:reply,id={ev.message_id}]pcr账号登录需要验证码，请完成以下链接中的验证内容后将第一行validate=后面的内容复制，并用指令#pcrval xxxx将内容发送给机器人完成验证\n验证链接')
+        await bot.send(ev, f'[CQ:reply,id={ev.message_id}]{url}')
+    else:
+        await bot.send_group_msg(group_id = gid, msg = f"【定时任务】帐号需要验证码，【{alian}】定时任务自动取消[CQ:at,qq={qid}]")
+        await validate_ok_queue.put("xcwcancle")
 
 @sv.on_prefix("#pcrval")
 async def receive_validate(bot, ev):
-    global consuming
-    if not consuming:
+global consuming
+if not consuming:
         await bot.finish(ev, "[CQ:reply,id={ev.message_id}]你在干什么？")
     validate = ev.message.extract_plain_text().strip()
     await validate_ok_queue.put(validate)
@@ -138,29 +129,40 @@ async def cancle_validate(bot, ev):
         await bot.send(c_ev, f"[CQ:reply,id={c_ev.message_id}]已取消当前【{alian}】的任务")
     else:
         await bot.send(c_ev, f"[CQ:reply,id={ev.message_id}]已取消当前【{alian}】的任务")
-
-@on_startup
-async def start_daily():
-    global queue
-    loop = asyncio.get_event_loop()
-    loop.create_task(consumer())
-    loop.create_task(manual_validate())
-
-
 '''
-@sv.scheduled_job('cron', hour='14', minute='15')
-async def auto_update_database():
-    bot = hoshino.get_bot()
-    global cron_group
-    gid = list((await sv.get_enable_groups()).keys())[0]
-    if cron_group:
-        gid = cron_group
-    msg = await do_update_database()
-    if msg.startswith("未发现新版本数据库"):
-        return
-    msg = "发现数据库更新，" + msg
-    await bot.send_group_msg(group_id = gid, message = msg)
-'''
+
+def pre_process_all(func):
+    async def wrapper(bot: HoshinoBot, ev: CQEvent):
+        ok, msg, tokens = await get_config(bot, ev, True)
+        if not ok:
+            await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + msg)
+
+        res = []
+        for token in tokens:
+            if token in inqueue:
+                await bot.send(ev, f"[CQ:reply,id={ev.message_id}]{token[0]}已在执行任务，请耐心等待")
+                continue
+            inqueue.add(token)
+            res.append(token)
+
+        await func(bot, ev, res)
+
+    return wrapper
+
+def pre_process(func):
+    async def wrapper(bot: HoshinoBot, ev: CQEvent):
+        ok, msg, token = await get_config(bot, ev)
+        if not ok:
+            await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + msg)
+
+        if token in inqueue:
+            await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]{token[0]}已在执行任务，请耐心等待")
+
+        inqueue.add(token)
+
+        await func(bot, ev, token)
+
+    return wrapper
 
 @sv.scheduled_job('interval', minutes=1)
 async def timing():
@@ -176,6 +178,7 @@ async def timing():
     await asyncio.sleep(random.randint(1, 10)) 
     data = await get_info()
     bot = hoshino.get_bot()
+    loop = asyncio.get_event_loop()
     for user_id, configs in data.items():
         for config, target in configs:
             if "time1" not in config or "time2" not in config:
@@ -183,118 +186,43 @@ async def timing():
             if config['time1open'] and config['time1'] == now or  \
             config['time2open'] and config['time2'] == now and not db.is_clan_battle_time():
 
-                alian = config['alian']
-                token = (user_id, target)
+                alian = escape(config['alian'])
+                token = (alian, target)
                 if token in inqueue:
-                    await bot.send_group_msg(group_id = gid, message = f"【定时任务】{alian}已在清日常队列里")
+                    await bot.send_group_msg(group_id = gid, message = f"【定时任务】{alian}已在执行任务")
                     continue
 
                 inqueue.add(token)
-                global consuming, queue
-                if not queue.empty() or consuming:
-                    await bot.send_group_msg(group_id = gid, message = f"【定时任务】当前有人正在清日常，已将{alian}加入等待队列中")
 
-                await queue.put(DailyClean(alian, target, bot, None, user_id, gid))
+                loop.create_task(consumer(DailyClean(token, bot, None, user_id, gid)))
 
 @sv.on_fullmatch("#cron")
 async def check_schedule(bot, ev):
     if db.is_clan_battle_time():
-        await bot.finish(ev, "当前处于会战期间，定时任务暂停")
+        await bot.finish(ev, "当前处于会战期间，定时任务2暂停")
     else:
-        await bot.finish(ev, "当前不处于会战期间，定时任务正常运行")
+        await bot.finish(ev, "当前不处于会战期间，定时任务2正常运行")
 
 @sv.on_fullmatch("#清日常所有")
-async def clear_daily_all(bot: HoshinoBot, ev: CQEvent):
-    data = await get_info()
-    user_id = None
-    alian = ""
-
-    for m in ev.message:
-        if m.type == 'at' and m.data['qq'] != 'all':
-            user_id = str(m.data['qq'])
-        elif m.type == 'text':
-            alian = str(m.data['text']).strip()
-    if user_id is None: #本人
-        user_id = str(ev.user_id)
-    else:   #指定对象
-        if not priv.check_priv(ev,priv.ADMIN):
-            await bot.finish(ev, f'[CQ:reply,id={ev.message_id}]指定用户清日常需要管理员权限')
-
-    if user_id not in data:
-        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]请发送【#配置日常】配置")
-    for config, target in data[user_id]:
-        alian = config['alian'] 
-        token = (ev.user_id, target)
-        if token in inqueue:
-            await bot.send(ev, f"[CQ:reply,id={ev.message_id}]{alian}已在清日常队列里，请耐心等待")
-            continue
-
-        inqueue.add(token)
-        global consuming, queue
-        if not queue.empty() or consuming:
-            await bot.send(ev, f"[CQ:reply,id={ev.message_id}]当前有人正在清日常，已将{alian}加入等待队列中")
-
-        await queue.put(DailyClean(alian, target, bot, ev))
-
-@sv.on_prefix("#日常报告")
-async def clear_daily_result(bot: HoshinoBot, ev: CQEvent):
-    ok, msg, alian, target = await get_config(bot, ev)
-    if not ok:
-        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + msg)
-    ok, img = await get_result(alian)
-    if not ok:
-        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + img)
-    await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
+@pre_process_all
+async def clear_daily_all(bot: HoshinoBot, ev: CQEvent, tokens: List[Tuple[str, str]]):
+    loop = asyncio.get_event_loop()
+    for token in tokens:
+        loop.create_task(consumer(DailyClean(token, bot, ev)))
 
 @sv.on_prefix("#查心碎")
-async def find_xinsui(bot: HoshinoBot, ev: CQEvent):
-    ok, msg, alian, target = await get_config(bot, ev)
-    if not ok:
-        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + msg)
-
-    token = (ev.user_id, target)
-    if token in inqueue:
-        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]{alian}已在队列里，请耐心等待")
-
-    inqueue.add(token)
-    global consuming, queue
-    if not queue.empty() or consuming:
-        await bot.send(ev, f"[CQ:reply,id={ev.message_id}]当前有人正在清日常，已将{alian}加入等待队列中")
-
-    await queue.put(FindXinsui(alian, target, bot, ev))
+@pre_process
+async def find_xinsui(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
+    await consumer(FindXinsui(token, bot, ev))
 
 @sv.on_prefix("#查记忆碎片")
-async def find_memory(bot: HoshinoBot, ev: CQEvent):
-    ok, msg, alian, target = await get_config(bot, ev)
-    if not ok:
-        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + msg)
-
-    token = (ev.user_id, target)
-    if token in inqueue:
-        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]{alian}已在队列里，请耐心等待")
-
-    inqueue.add(token)
-    global consuming, queue
-    if not queue.empty() or consuming:
-        await bot.send(ev, f"[CQ:reply,id={ev.message_id}]当前有人正在清日常，已将{alian}加入等待队列中")
-
-    await queue.put(FindMemory(alian, target, bot, ev))
+@pre_process
+async def find_memory(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
+    await consumer(FindMemory(token, bot, ev))
 
 @sv.on_prefix("#查装备")
-async def find_equip(bot: HoshinoBot, ev: CQEvent):
-    ok, msg, alian, target = await get_config(bot, ev)
-    if not ok:
-        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + msg)
-
-    token = (ev.user_id, target)
-    if token in inqueue:
-        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]{alian}已在队列里，请耐心等待")
-
-    inqueue.add(token)
-    global consuming, queue
-    if not queue.empty() or consuming:
-        await bot.send(ev, f"[CQ:reply,id={ev.message_id}]当前有人正在清日常，已将{alian}加入等待队列中")
-
+@pre_process
+async def find_equip(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
     fav = False
     try:
         if ev.message.extract_plain_text().split(' ')[-1].strip() == 'fav':
@@ -304,23 +232,12 @@ async def find_equip(bot: HoshinoBot, ev: CQEvent):
             start_rank = int(ev.message.extract_plain_text().split(' ')[-1]) 
     except:
         start_rank = None
-    await queue.put(FindEquip(like_unit_only = fav, start_rank = start_rank, alian = alian, target = target, bot = bot, ev = ev))
+
+    await consumer(FindEquip(token = token, like_unit_only = fav, start_rank = start_rank, bot = bot, ev = ev))
 
 @sv.on_prefix("#刷图推荐")
-async def quest_recommand(bot: HoshinoBot, ev: CQEvent):
-    ok, msg, alian, target = await get_config(bot, ev)
-    if not ok:
-        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + msg)
-
-    token = (ev.user_id, target)
-    if token in inqueue:
-        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]{alian}已在队列里，请耐心等待")
-
-    inqueue.add(token)
-    global consuming, queue
-    if not queue.empty() or consuming:
-        await bot.send(ev, f"[CQ:reply,id={ev.message_id}]当前有人正在清日常，已将{alian}加入等待队列中")
-
+@pre_process
+async def quest_recommand(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
     like_unit_only = False
     try:
         if ev.message.extract_plain_text().split(' ')[-1].strip() == 'fav':
@@ -330,49 +247,35 @@ async def quest_recommand(bot: HoshinoBot, ev: CQEvent):
             start_rank = int(ev.message.extract_plain_text().split(' ')[-1]) 
     except:
         start_rank = None
-    await queue.put(QuestRecommand(like_unit_only = like_unit_only, start_rank = start_rank, alian = alian, target = target, bot = bot, ev = ev))
+
+    await consumer(QuestRecommand(token = token, like_unit_only = like_unit_only, start_rank = start_rank, bot = bot, ev = ev))
 
 
-# @sv.on_prefix("#获取导入")
-# async def get_library_import(bot: HoshinoBot, ev: CQEvent):
-#     ok, msg, alian, target = await get_config(bot, ev)
-#     if not ok:
-#         await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + msg)
-#
-#     token = (ev.user_id, target)
-#     if token in inqueue:
-#         await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]{alian}已在队列里，请耐心等待")
-#
-#     inqueue.add(token)
-#     global consuming, queue
-#     if not queue.empty() or consuming:
-#         await bot.send(ev, f"[CQ:reply,id={ev.message_id}]当前有人正在清日常，已将{alian}加入等待队列中")
-#
-#     await queue.put(GetLibraryImport(alian = alian, target = target, bot = bot, ev = ev))
+@sv.on_prefix("#获取导入")
+@pre_process
+async def get_library_import(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
+    await consumer(GetLibraryImport(token = token, bot = bot, ev = ev))
 
 @sv.on_prefix("#清日常")
-async def clear_daily(bot: HoshinoBot, ev: CQEvent):
-    ok, msg, alian, target = await get_config(bot, ev)
+@pre_process
+async def clear_daily(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
+    await consumer(DailyClean(token, bot, ev))
+
+@sv.on_prefix("#日常报告")
+@pre_process
+async def clear_daily_result(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
+    alian, target = token
+    ok, img = await get_result(alian)
     if not ok:
-        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + msg)
+        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + img)
+    await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
 
-    token = (ev.user_id, target)
-    if token in inqueue:
-        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]{alian}已在清日常队列里，请耐心等待")
-
-    inqueue.add(token)
-    global consuming, queue
-    if not queue.empty() or consuming:
-        await bot.send(ev, f"[CQ:reply,id={ev.message_id}]当前有人正在清日常，已将{alian}加入等待队列中")
-
-    await queue.put(DailyClean(alian, target, bot, ev))
-
-
-async def get_config(bot, ev):
+async def get_config(bot, ev, tot = False):
     data = await get_info()
     user_id = None
     alian = ""
     target = ""
+    token = (alian, target)
 
     for m in ev.message:
         if m.type == 'at' and m.data['qq'] != 'all':
@@ -383,76 +286,41 @@ async def get_config(bot, ev):
         user_id = str(ev.user_id)
     else:   #指定对象
         if not priv.check_priv(ev,priv.ADMIN):
-            return False, '[CQ:reply,id={ev.message_id}]指定用户清日常需要管理员权限', alian, target
+            return False, '[CQ:reply,id={ev.message_id}]指定用户清日常需要管理员权限', token
 
     if user_id not in data:
-        return False, "[CQ:reply,id={ev.message_id}]请发送【#配置日常】配置", alian, target
+        return False, "[CQ:reply,id={ev.message_id}]请发送【#配置日常】配置", token
 
-    if len(data[user_id]) != 1 and not alian:
-        name = ' '.join([i[0]['alian'] for i in data[user_id]])
-        msg = f"[CQ:reply,id={ev.message_id}]存在多个账号，请指定一个昵称：\n{name}"
-        return False, msg, alian, target
-    elif len(data[user_id]) == 1:
-        config, target = data[user_id][0]
-        alian = config['alian']
-    else:
-        for config, file in data[user_id]:
-            if config['alian'] == alian:
-                target = file
-                break
-    if not target:
-        return False, f"[CQ:reply,id={ev.message_id}]未找到昵称为【{alian}】的账号", alian, target
+    tokens = []
+    alian = escape(alian)
 
-    return True, "", alian, target
+    for config, file in data[user_id]:
+        if not alian or config['alian'] == alian or len(data[user_id]) == 1:
+            target = file
+            tokens.append((escape(config['alian']), target))
+
+    if not tokens:
+        return False, f"[CQ:reply,id={ev.message_id}]未找到昵称为【{alian}】的账号", token
+
+    if tot:
+        return True, "", tokens
+
+    if len(tokens) > 1:
+        if not alian:
+            name = ' '.join([i[0] for i in tokens])
+            msg = f"[CQ:reply,id={ev.message_id}]存在多个帐号，请指定一个昵称：\n{name}"
+            return False, msg, token
+        else:
+            msg = f"[CQ:reply,id={ev.message_id}]存在{len(tokens)}个同为{alian}的帐号，请更改为不同昵称\n"
+            return False, msg, token
+
+    token = tokens[0]
+
+    return True, "", token
 
 @sv.on_fullmatch("#配置日常")
 async def config_clear_daily(bot: HoshinoBot, ev: CQEvent):
     await bot.finish(ev, address)
-
-'''
-@sv.on_fullmatch("#更新数据库")
-async def update_database(bot: HoshinoBot, ev: CQEvent):
-    await bot.send(ev, f"开始更新数据库...")
-    msg = await do_update_database()
-    await bot.finish(ev, msg)
-
-@sv.on_fullmatch("#强制更新数据库")
-async def force_update_database(bot: HoshinoBot, ev: CQEvent):
-    await bot.send(ev, f"开始强制更新数据库...")
-    msg = await do_update_database(True)
-    await bot.finish(ev, msg)
-
-async def do_update_database(force: bool = False):
-    info = f'https://redive.estertion.win/last_version_cn.json'
-
-    rsp = requests.get(info, stream=True, timeout=20)
-    data = rsp.json()
-
-    version = os.path.join(ROOT_PATH, "db.version")
-    try:
-        now_version = open(version, "r").read().strip()
-    except FileNotFoundError:
-        now_version = None
-    if not force and now_version == data['TruthVersion']:
-        return f"未发现新版本数据库，当前版本{now_version}"
-
-    url = f'https://redive.estertion.win/db/redive_cn.db.br'
-    save_path = os.path.join(ROOT_PATH, "redive_cn.db")
-    sv.logger.info(f'Downloading newest database from {url}')
-    try:
-        rsp = requests.get(url, headers={'Accept-Encoding': 'br'}, stream=True, timeout=20)
-        if 200 == rsp.status_code:
-            with open(save_path, "wb") as f:
-                f.write(brotli.decompress(rsp.content))
-            init_db()
-        else:
-            return f"下载失败：{rsp.status_code}"
-    except Exception as e:
-        return str(e)
-    with open(version, "w") as f:
-        f.write(data['TruthVersion'])
-    return f"更新成功至：{data['TruthVersion']} 版本"
-'''
 
 async def report_to_su(sess, msg_with_sess, msg_wo_sess):
     if sess:

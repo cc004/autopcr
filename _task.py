@@ -3,12 +3,14 @@ from nonebot import MessageSegment
 from hoshino.typing import MessageSegment
 
 from .autopcr.module.modulebase import ModuleManager
+from .autopcr.module.accountmgr import instance as accountmgr
 from ._util import draw, draw_line, render_forward_msg
 
 class Task():
-    def __init__(self, alian, target, bot, ev, qid = None, gid = None):
+    def __init__(self, token, bot, ev, qid = None, gid = None):
+        alian, target = token
         self.info = (alian, target, bot, ev, qid, gid)
-        self.token = (ev.user_id if ev else qid, target)
+        self.token = token
 
     @abstractclassmethod
     async def do_task(self): ...
@@ -21,9 +23,9 @@ class QuestRecommand(Task):
 
     async def do_task(self):
         alian, target, bot, ev, qid, gid = self.info 
-        mgr = ModuleManager(target)
         try:
-            resp = await mgr.get_normal_quest_recommand(self.start_rank, self.like_unit_only)
+            async with accountmgr.load(target) as mgr:
+                resp = await mgr.get_normal_quest_recommand(self.start_rank, self.like_unit_only)
             img = await draw_line(resp, alian)
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
         except Exception as e:
@@ -37,9 +39,9 @@ class FindEquip(Task):
 
     async def do_task(self):
         alian, target, bot, ev, qid, gid = self.info 
-        mgr = ModuleManager(target)
         try:
-            resp = await mgr.get_need_equip(self.start_rank, self.like_unit_only)
+            async with accountmgr.load(target) as mgr:
+                resp = await mgr.get_need_equip(self.start_rank, self.like_unit_only)
             img = await draw_line(resp, alian)
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
         except Exception as e:
@@ -48,10 +50,9 @@ class FindEquip(Task):
 class GetLibraryImport(Task):
     async def do_task(self):
         alian, target, bot, ev, qid, gid = self.info 
-        mgr = ModuleManager(target)
         try:
-            resp = await mgr.get_library_import_data()
-            print(resp)
+            async with accountmgr.load(target) as mgr:
+                resp = await mgr.get_library_import_data()
             msg = render_forward_msg([resp])
             await bot.send_group_forward_msg(group_id=ev.group_id, messages=msg)
         except Exception as e:
@@ -59,10 +60,10 @@ class GetLibraryImport(Task):
 
 class FindXinsui(Task):
     async def do_task(self):
-        alian, target, bot, ev, qid, gid = self.info 
-        mgr = ModuleManager(target)
+        alian, target, bot, ev, qid, gid = self.info
         try:
-            resp = await mgr.get_need_xinsui()
+            async with accountmgr.load(target) as mgr:
+                resp = await mgr.get_need_xinsui()
             img = await draw_line(resp, alian)
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
         except Exception as e:
@@ -70,10 +71,10 @@ class FindXinsui(Task):
 
 class FindMemory(Task):
     async def do_task(self):
-        alian, target, bot, ev, qid, gid = self.info 
-        mgr = ModuleManager(target)
+        alian, target, bot, ev, qid, gid = self.info
         try:
-            resp = await mgr.get_need_memory()
+            async with accountmgr.load(target) as mgr:
+                resp = await mgr.get_need_memory()
             img = await draw_line(resp, alian)
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
         except Exception as e:
@@ -81,9 +82,7 @@ class FindMemory(Task):
 
 class DailyClean(Task):
     async def do_task(self):
-        alian, target, bot, ev, qid, gid = self.info 
-        mgr = ModuleManager(target)
-
+        alian, target, bot, ev, qid, gid = self.info
         try:
             if ev:
                 await bot.send(ev, f"[CQ:reply,id={ev.message_id}]开始为{alian}清理日常")
@@ -93,15 +92,16 @@ class DailyClean(Task):
             print(e)
 
         try:
-            resp = await mgr.do_task()
+            async with accountmgr.load(target) as mgr:
+                resp = await mgr.do_task()
             img = await draw(resp, alian)
             if ev:
-                await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
+                await bot.send(ev, f"[CQ:reply,id={ev.message_id}] {alian}" + MessageSegment.image(f'file:///{img}'))
             else:
-                await bot.send_group_msg(group_id = gid, message = "【定时任务】" + MessageSegment.image(f'file:///{img}'))
+                await bot.send_group_msg(group_id = gid, message = f"【定时任务】{alian}" + MessageSegment.image(f'file:///{img}'))
         except Exception as e:
             if ev:
-                await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + str(e))
+                await bot.send(ev, f"[CQ:reply,id={ev.message_id}] {alian}:" + str(e))
             else:
-                await bot.send_group_msg(group_id = gid, message = "【定时任务】" + str(e))
+                await bot.send_group_msg(group_id = gid, message = f"【定时任务】{alian}:" + str(e))
 

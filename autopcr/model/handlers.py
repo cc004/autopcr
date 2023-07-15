@@ -10,7 +10,8 @@ def handles(cls):
 @handles
 class SourceIniGetMaintenanceStatusResponse(sdkrequests.SourceIniGetMaintenanceStatusResponse):
     async def update(self, mgr: datamgr, request):
-        await mgr.try_update_database(int(self.manifest_ver))
+        if self.manifest_ver:
+            await mgr.try_update_database(int(self.manifest_ver))
 
 @handles
 class ShioriQuestSkipResponse(responses.ShioriQuestSkipResponse):
