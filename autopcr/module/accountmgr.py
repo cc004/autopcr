@@ -15,7 +15,7 @@ class Account(ModuleManager):
             parent.account_lock[account] = Lock()
         self._lck = parent.account_lock[account]
         self._account = account
-        super().__init__(os.path.join(CONFIG_PATH, account) + '.json')
+        super().__init__(parent.path(account))
     
     async def __aenter__(self):
         await self._lck.acquire()
@@ -27,14 +27,24 @@ class Account(ModuleManager):
 
 class AccountManager:
     pathsyntax = re.compile(r'[^\\\|?*/]{1,32}')
+
     def __init__(self, root: str):
         self.root = root
         self.account_lock: Dict[str, Lock] = {}
+
+    def path(self, account: str) -> str:
+        return os.path.join(self.root, account + '.json')
     
     def load(self, account: str) -> Account:
         if not AccountManager.pathsyntax.fullmatch(account):
             raise AccountException('Invalid account name')
         return Account(self, account)
+
+    def delete(self, account: str):
+        if not AccountManager.pathsyntax.fullmatch(account):
+            raise AccountException('Invalid account name')
+        
+        os.remove(self.path(account))
     
     def accounts(self) -> Iterator[str]:
         for fn in os.listdir(self.root):
