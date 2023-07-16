@@ -452,10 +452,10 @@ class six_star(Module):
             pure_memory = quest.reward_image_1
             unit_id = db.pure_memory_to_unit[pure_memory]
             data = client.data.unit.get(unit_id, None) # unlock unit
-            if not data or \
-            data.unit_rarity != 6 and \
-            (not data.unlock_rarity_6_item or 
-             data.unlock_rarity_6_item and not data.unlock_rarity_6_item.slot_1) and \
+            if (not data or data.unit_rarity != 6) and \
+            (not data or 
+             not data.unlock_rarity_6_item or 
+             not data.unlock_rarity_6_item.slot_1) and \
             client.data.get_inventory((eInventoryType.Item, pure_memory)) < 50:
                 try:
                     rewards = await client.quest_skip_aware(quest_id, times, True, True)
