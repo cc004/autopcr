@@ -451,8 +451,9 @@ class six_star(Module):
         for quest_id, quest in db.six_area.items():
             pure_memory = quest.reward_image_1
             unit_id = db.pure_memory_to_unit[pure_memory]
-            data = client.data.unit[unit_id]
-            if data.unit_rarity != 6 and \
+            data = client.data.unit.get(unit_id, None) # unlock unit
+            if not data or \
+            data.unit_rarity != 6 and \
             (not data.unlock_rarity_6_item or 
              data.unlock_rarity_6_item and not data.unlock_rarity_6_item.slot_1) and \
             client.data.get_inventory((eInventoryType.Item, pure_memory)) < 50:
