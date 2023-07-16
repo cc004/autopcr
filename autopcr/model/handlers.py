@@ -213,6 +213,8 @@ class MissionAcceptResponse(responses.MissionAcceptResponse):
                 mgr.update_inventory(item)
         if self.stamina_info:
             mgr.stamina = self.stamina_info.user_stamina
+        if self.team_level:
+            mgr.team_level = self.team_level
 
 
 @handles
@@ -346,27 +348,27 @@ class GachaExecResponse(responses.GachaExecResponse):
                 mgr.update_inventory(item)
 
         if self.bonus_reward_info:
-            if self.bonus_reward_info.bonus1:
-                mgr.update_inventory(self.bonus_reward_info.bonus1)
-            if self.bonus_reward_info.bonus2:
-                mgr.update_inventory(self.bonus_reward_info.bonus2)
-            if self.bonus_reward_info.bonus3:
-                mgr.update_inventory(self.bonus_reward_info.bonus3)
-            if self.bonus_reward_info.bonus4:
-                mgr.update_inventory(self.bonus_reward_info.bonus4)
-            if self.bonus_reward_info.bonus5:
-                mgr.update_inventory(self.bonus_reward_info.bonus5)
-            if self.bonus_reward_info.bonus6:
-                mgr.update_inventory(self.bonus_reward_info.bonus6)
-            if self.bonus_reward_info.bonus7:
-                mgr.update_inventory(self.bonus_reward_info.bonus7)
-            if self.bonus_reward_info.bonus8:
-                mgr.update_inventory(self.bonus_reward_info.bonus8)
-            if self.bonus_reward_info.bonus9:
-                mgr.update_inventory(self.bonus_reward_info.bonus9)
-            if self.bonus_reward_info.bonus10:
-                mgr.update_inventory(self.bonus_reward_info.bonus10)
-
+            if self.bonus_reward_info.bonus_1:
+                mgr.update_inventory(self.bonus_reward_info.bonus_1)
+            if self.bonus_reward_info.bonus_2:
+                mgr.update_inventory(self.bonus_reward_info.bonus_2)
+            if self.bonus_reward_info.bonus_3:
+                mgr.update_inventory(self.bonus_reward_info.bonus_3)
+            if self.bonus_reward_info.bonus_4:
+                mgr.update_inventory(self.bonus_reward_info.bonus_4)
+            if self.bonus_reward_info.bonus_5:
+                mgr.update_inventory(self.bonus_reward_info.bonus_5)
+            if self.bonus_reward_info.bonus_6:
+                mgr.update_inventory(self.bonus_reward_info.bonus_6)
+            if self.bonus_reward_info.bonus_7:
+                mgr.update_inventory(self.bonus_reward_info.bonus_7)
+            if self.bonus_reward_info.bonus_8:
+                mgr.update_inventory(self.bonus_reward_info.bonus_8)
+            if self.bonus_reward_info.bonus_9:
+                mgr.update_inventory(self.bonus_reward_info.bonus_9)
+            if self.bonus_reward_info.bonus_10:
+                mgr.update_inventory(self.bonus_reward_info.bonus_10)
+_
         # if self.user_gold:
         #     mgr.gold = self.user_gold
         # bonus not set
