@@ -265,6 +265,10 @@ async def clear_daily(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
 @pre_process
 async def clear_daily_result(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
     alian, target = token
+
+    global inqueue
+    inqueue.remove(token)
+
     ok, img = await get_result(alian)
     if not ok:
         await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + img)
