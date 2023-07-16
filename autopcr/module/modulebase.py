@@ -152,10 +152,10 @@ class ModuleManager:
             'qq': "",
             'username': "",
             'password': "",
-            'time1': self.data['time1'] if 'time1' in self.data else None,
-            'time2': self.data['time2'] if 'time2' in self.data else None,
-            'time1open': self.data['time1open'] if 'time1open' in self.data else None,
-            'time2open': self.data['time2open'] if 'time2open' in self.data else None,
+            'time1': self.data.get("time1", False),
+            'time2': self.data.get("time2", False),
+            'time1open': self.data.get('time1open', "00:00"),
+            'time2open': self.data.get('time2open', "00:00"),
             'data': [{'name': m.name, 'value': m.generate_config()} for m in self.modules.values()],
             'last_result': self.data.get('_last_result', None)
         }
@@ -179,8 +179,6 @@ class ModuleManager:
             'password': self.data['password'],
             'channel': 1,
             'platform': 2
-            # 'channel': 1000,
-            # 'platform': 1
         })
         return client
 
@@ -208,7 +206,7 @@ class ModuleManager:
                 name = db.quest_name[id]
                 tokens: List[ItemType] = [i for i in db.normal_quest_rewards[id]]
                 msg = f"{name}:\n" + '\n'.join([
-                    (f'{db.get_inventory_name_san(token)}: {"缺少" if require_equip[token] - client.data.get_inventory(token) > 0 else "盈余"}{abs(require_equip[token] - client.data.get_inventory(token))}片')
+                    (f'{db.get_inventory_name_san(token)}: {"缺少" if require_equip[token] > 0 else "盈余"}{abs(require_equip[token])}片')
                     for token in tokens])
                 tot.append(msg.strip())
 
