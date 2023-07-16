@@ -368,7 +368,7 @@ class GachaExecResponse(responses.GachaExecResponse):
                 mgr.update_inventory(self.bonus_reward_info.bonus_9)
             if self.bonus_reward_info.bonus_10:
                 mgr.update_inventory(self.bonus_reward_info.bonus_10)
-_
+
         # if self.user_gold:
         #     mgr.gold = self.user_gold
         # bonus not set
