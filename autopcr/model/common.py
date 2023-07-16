@@ -1979,16 +1979,16 @@ class EquipStep(BaseModel):
 	unit_equip1: TutorialUnitEquip = None
 	unit_equip2: TutorialUnitEquip = None
 class GachaBonusResult(BaseModel):
-	bonus1: InventoryInfo = None
-	bonus2: InventoryInfo = None
-	bonus3: InventoryInfo = None
-	bonus4: InventoryInfo = None
-	bonus5: InventoryInfo = None
-	bonus6: InventoryInfo = None
-	bonus7: InventoryInfo = None
-	bonus8: InventoryInfo = None
-	bonus9: InventoryInfo = None
-	bonus10: InventoryInfo = None
+	bonus_1: InventoryInfo = None
+	bonus_2: InventoryInfo = None
+	bonus_3: InventoryInfo = None
+	bonus_4: InventoryInfo = None
+	bonus_5: InventoryInfo = None
+	bonus_6: InventoryInfo = None
+	bonus_7: InventoryInfo = None
+	bonus_8: InventoryInfo = None
+	bonus_9: InventoryInfo = None
+	bonus_10: InventoryInfo = None
 class GachaPrizeItemDetail(BaseModel):
 	rarity: int = None
 	odds: float = None
