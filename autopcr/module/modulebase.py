@@ -152,10 +152,10 @@ class ModuleManager:
             'qq': "",
             'username': "",
             'password': "",
-            'time1': self.data.get("time1", False),
-            'time2': self.data.get("time2", False),
-            'time1open': self.data.get('time1open', "00:00"),
-            'time2open': self.data.get('time2open', "00:00"),
+            'time1': self.data.get("time1", "00:00"),
+            'time2': self.data.get("time2", "00:00"),
+            'time1open': self.data.get('time1open', False),
+            'time2open': self.data.get('time2open', False),
             'data': [{'name': m.name, 'value': m.generate_config()} for m in self.modules.values()],
             'last_result': self.data.get('_last_result', None)
         }
