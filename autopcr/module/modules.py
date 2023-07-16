@@ -110,8 +110,8 @@ class smart_hard_sweep(Module):
         if self.value == "非n庆典" and client.data.is_normal_quest_double():
             raise SkipError("今日normal庆典，不刷取")
 
-        need_list, _ = client.data.get_memory_demand()
-        need_list = [(token, need - client.data.get_inventory(token)) for token, need in need_list if need > client.data.get_inventory(token)]
+        need_list = client.data.get_memory_demand_gap()
+        need_list = [(token, need) for token, need in need_list.items() if need > 0]
 
         if not need_list:
             raise SkipError("不存在缺乏的记忆碎片")
