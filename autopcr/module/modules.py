@@ -1221,16 +1221,25 @@ class smart_sweep(Module):
         result = []
         if nloop == [] and loop == []:
             raise AbortError("未找到start和loop")
+        clean_cnt = Counter()
         for quest_id, count in _sweep(): 
             try:
                 result += await client.quest_skip_aware(quest_id, count, True, True)
+                clean_cnt[quest_id] += count
             except SkipError as e:
                 pass
             except AbortError as e:
-                self._log(str(e))
+                if not self.log and not str(e).endswith("体力不足"):
+                    self._log(str(e))
                 break
         
-        self._log(await client.serlize_reward(result))
+        if clean_cnt:
+                msg = '\n'.join((db.quest_name[quest] if quest in db.quest_name else f"未知关卡{quest}") +
+                f": 刷取{cnt}次" for quest, cnt in clean_cnt.items())
+                self._log(msg)
+                self._log("---------")
+        if result:
+            self._log(await client.serlize_reward(result))
 
 @description('剩余体力全部刷活动图')
 @enumtype(['none', 'n-5', 'n-10', 'n-15'])
