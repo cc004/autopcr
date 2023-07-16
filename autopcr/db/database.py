@@ -21,6 +21,11 @@ class database():
         
         with dbmgr.session() as db:
 
+            self.guild_data: Dict[int, Guild] = (
+                Guild.query(db)
+                .to_dict(lambda x: x.guild_id, lambda x: x)
+            )
+
             self.normal_quest_data: Dict[int, QuestDatum] = (
                 QuestDatum.query(db)
                 .where(lambda x: self.is_normal_quest(x.quest_id)) 
@@ -226,17 +231,21 @@ class database():
                 .concat(TrainingQuestDatum.query(db))
                 .to_dict(lambda x: x.quest_id, lambda x: x.quest_name)
             )
+            
+            self.guild_story: List[StoryDetail] = (
+                StoryDetail.query(db)
+                .where(lambda x: x.story_id >= 3000000 and x.story_id < 4000000)
+                .to_list()
+            )
 
             self.main_story: List[StoryDetail] = (
                 StoryDetail.query(db)
                 .where(lambda x: x.story_id >= 2000000 and x.story_id < 3000000)
-                # .select(lambda x: (x.story_id, x.pre_story_id, x.unlock_quest_id, x.title))
                 .to_list()
             )
 
             self.tower_story: List[TowerStoryDetail] = (
                 TowerStoryDetail.query(db)
-                # .select(lambda x: (x.story_id, x.pre_story_id, x.unlock_quest_id, x.title, x.start_time))
                 .to_list()
             )
 

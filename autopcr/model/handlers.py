@@ -2,6 +2,7 @@ from . import responses, sdkrequests
 from .common import *
 from .requests import *
 from ..core.datamgr import datamgr
+from ..db.database import db
 
 def handles(cls):
     cls.__base__.update = cls.update
@@ -125,8 +126,8 @@ class RoomMultiGiveGiftResponse(responses.RoomMultiGiveGiftResponse):
 
         if self.level_info:
             for info in self.level_info.love:
-                mgr.unit_love[info.chara_id].love_level = info.current_level
-                mgr.unit_love[info.chara_id].chara_love = info.total
+                mgr.unit_data[info.chara_id].love_level = info.current_level
+                mgr.unit_data[info.chara_id].chara_love = info.total
 
 
 @handles
@@ -212,6 +213,8 @@ class MissionAcceptResponse(responses.MissionAcceptResponse):
                 mgr.update_inventory(item)
         if self.stamina_info:
             mgr.stamina = self.stamina_info.user_stamina
+        if self.team_level:
+            mgr.team_level = self.team_level
 
 
 @handles
@@ -237,7 +240,7 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         if self.unit_list:
             mgr.unit = {unit.id: unit for unit in self.unit_list}
         if self.user_chara_info:
-            mgr.unit_love = {unit.chara_id: unit for unit in self.user_chara_info}
+            mgr.unit_data = {unit.chara_id: unit for unit in self.user_chara_info}
         mgr.stamina = self.user_info.user_stamina
         mgr.settings = self.ini_setting
         mgr.recover_stamina_exec_count = self.shop.recover_stamina.exec_count
@@ -345,26 +348,26 @@ class GachaExecResponse(responses.GachaExecResponse):
                 mgr.update_inventory(item)
 
         if self.bonus_reward_info:
-            if self.bonus_reward_info.bonus1:
-                mgr.update_inventory(self.bonus_reward_info.bonus1)
-            if self.bonus_reward_info.bonus2:
-                mgr.update_inventory(self.bonus_reward_info.bonus2)
-            if self.bonus_reward_info.bonus3:
-                mgr.update_inventory(self.bonus_reward_info.bonus3)
-            if self.bonus_reward_info.bonus4:
-                mgr.update_inventory(self.bonus_reward_info.bonus4)
-            if self.bonus_reward_info.bonus5:
-                mgr.update_inventory(self.bonus_reward_info.bonus5)
-            if self.bonus_reward_info.bonus6:
-                mgr.update_inventory(self.bonus_reward_info.bonus6)
-            if self.bonus_reward_info.bonus7:
-                mgr.update_inventory(self.bonus_reward_info.bonus7)
-            if self.bonus_reward_info.bonus8:
-                mgr.update_inventory(self.bonus_reward_info.bonus8)
-            if self.bonus_reward_info.bonus9:
-                mgr.update_inventory(self.bonus_reward_info.bonus9)
-            if self.bonus_reward_info.bonus10:
-                mgr.update_inventory(self.bonus_reward_info.bonus10)
+            if self.bonus_reward_info.bonus_1:
+                mgr.update_inventory(self.bonus_reward_info.bonus_1)
+            if self.bonus_reward_info.bonus_2:
+                mgr.update_inventory(self.bonus_reward_info.bonus_2)
+            if self.bonus_reward_info.bonus_3:
+                mgr.update_inventory(self.bonus_reward_info.bonus_3)
+            if self.bonus_reward_info.bonus_4:
+                mgr.update_inventory(self.bonus_reward_info.bonus_4)
+            if self.bonus_reward_info.bonus_5:
+                mgr.update_inventory(self.bonus_reward_info.bonus_5)
+            if self.bonus_reward_info.bonus_6:
+                mgr.update_inventory(self.bonus_reward_info.bonus_6)
+            if self.bonus_reward_info.bonus_7:
+                mgr.update_inventory(self.bonus_reward_info.bonus_7)
+            if self.bonus_reward_info.bonus_8:
+                mgr.update_inventory(self.bonus_reward_info.bonus_8)
+            if self.bonus_reward_info.bonus_9:
+                mgr.update_inventory(self.bonus_reward_info.bonus_9)
+            if self.bonus_reward_info.bonus_10:
+                mgr.update_inventory(self.bonus_reward_info.bonus_10)
 
         # if self.user_gold:
         #     mgr.gold = self.user_gold
