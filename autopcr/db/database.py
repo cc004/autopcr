@@ -470,10 +470,22 @@ class database():
         dungeon = self.get_start_time(db.parse_time(dungeon[2]))
         return (dungeon - today).days
 
-    def get_newest_tower_id(self):
+    def get_active_hatsune(self) -> List[HatsuneSchedule]:
+        now = datetime.datetime.now()
+        return flow(self.hatsune_schedule.values()) \
+                .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.end_time)) \
+                .to_list()
+
+    def get_open_hatsune(self) -> List[HatsuneSchedule]:
+        now = datetime.datetime.now()
+        return flow(self.hatsune_schedule.values()) \
+                .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.close_time)) \
+                .to_list()
+
+    def get_newest_tower_id(self) -> int:
         return max(self.tower, key = lambda x: self.tower[x].start_time)
 
-    def max_total_love(self, rarity: int):
+    def max_total_love(self, rarity: int) -> Tuple[int, int]:
         love_info: Tuple[int, int] = (0, 0)
         for key, value in self.love_char.items():
             if rarity >= key:
@@ -538,5 +550,6 @@ class database():
                 result[key] += value
 
         return result
+
 
 db = database()
