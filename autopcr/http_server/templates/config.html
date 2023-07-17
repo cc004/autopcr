@@ -89,6 +89,7 @@
                                 <button type="button" class="btn btn-primary" id="login" onclick="selectOnChange()">保存配置信息</button>
                                 <button type="button" class="btn btn-primary" id="do_task" onclick="do_task()">执行清日常</button>
                                 <button type="button" class="btn btn-primary" id="library_import" onclick="library_import()">生成兰德索尔图书馆导入文本</button>
+                                <button type="button" class="btn btn-danger" id="delete_config" onclick="delete_config()">删除账号信息</button>
                             </div>
                             <div id="msg-group" style="margin-top: 4px; margin-bottom: 8px">
                                 <small id="msg-description" class="form-text" style="display: none;">↓导入文本↓点击复制↓&ensp;<a href="https://pcredivewiki.tw/Armory" target="_blank">兰德索尔图书馆</a></small>
@@ -296,6 +297,29 @@
                     $("#library_import").attr('disabled', false);
                 }
             })
+        }
+
+        function delete_config() {
+
+            var confirmed = confirm('确定要删除该账号？该操作不可撤销！');
+
+            if (confirmed){
+                $("#delete_config").attr('disabled', true);
+                suspend("alert-info", "已开始执行任务。");
+                $.ajax({
+                    url: '/daily/api/config' + window.location.search,
+                    type: 'delete',
+                    processData: false,
+                    success: function (ret) {
+                        suspend("alert-success", "删除账号成功！");
+                        window.location.href = "/daily/";
+                    },
+                    error: function (ret) {
+                        suspend("alert-danger", "删除账号失败: " + ret.responseText);
+                        $("#delete_config").attr('disabled', false);
+                    }
+                })
+            }
         }
 
         function do_task() {
