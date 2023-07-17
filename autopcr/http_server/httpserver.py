@@ -62,6 +62,17 @@ class HttpServer:
 
             return {"statusCode": 200}, 200
 
+        @self.app.route('/api/config', methods = ['DELETE'])
+        async def delete_config():
+
+            file = request.args.get('account')
+            if file is None or not accountmgr.pathsyntax.fullmatch(file):
+                return 'Invalid account', 400
+
+            accountmgr.delete(file)
+
+            return {"statusCode": 200}, 200
+
         @self.app.route('/api/config', methods = ['POST'])
         async def new_config():
             # if self.qq_only:
