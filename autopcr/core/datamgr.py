@@ -53,9 +53,9 @@ class datamgr(Component[apiclient]):
         self.deck_list = {}
         self.campaign_list = []
 
-    async def try_update_database(self, ver: int):
+    @staticmethod
+    async def try_update_database(ver: int):
         global lck
-
         async with lck:
             if not assetmgr.ver or assetmgr.ver < ver:
                 await assetmgr.init(ver)
