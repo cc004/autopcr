@@ -7,6 +7,7 @@
     <title>AutoPCR-登录</title>
 
     <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+    <script src="/static/js/iecheck.js"></script>
     <script src="/static/js/vendor/jquery-3.6.0.min.js"></script>
 
     <style>
@@ -53,10 +54,12 @@
             color: red;
         }
     </style>
+
 </head>
 
 <body>
     <script>
+
         function register() {
             $.ajax({
                 url: "/daily/api/config?account=" + $("#account").val(),
