@@ -1,11 +1,13 @@
 from typing import List, Tuple
-import requests
 import os
 from .autopcr.http_server.httpserver import HttpServer
 from .autopcr.module.modules import register_all
 from .autopcr.db.database import db
+from .autopcr.core.datamgr import datamgr
+from .autopcr.constants import CACHE_DIR
 import asyncio
 import os
+import glob
 import aiocqhttp
 from traceback import print_exc
 
@@ -19,7 +21,6 @@ from hoshino.util import escape
 from hoshino.typing import CQEvent, MessageSegment
 from ._util import get_info, get_result
 from ._task import DailyClean, FindEquip, FindMemory, FindXinsui, Task, GetLibraryImport, QuestRecommand
-from .autopcr.bsdk.validator import validate_ok_queue, validate_queue
 import datetime
 import random
 import asyncio
@@ -83,6 +84,14 @@ sv = Service(
 @sv.on_fullmatch(["帮助自动清日常"])
 async def bangzhu_text(bot, ev):
     await bot.finish(ev, sv_help, at_sender=True)
+
+@on_startup
+async def init():
+    dbs = glob.glob(os.path.join(CACHE_DIR, "db", "*.db"))
+    if dbs:
+        db = max(dbs)
+        version = int(os.path.basename(db).split('.')[0])
+        await datamgr.try_update_database(version)
 
 async def consumer(task):
     global inqueue

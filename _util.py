@@ -3,16 +3,16 @@ import json
 import imgkit
 import os
 from collections import defaultdict
+from .autopcr.constants import CONFIG_PATH
 import glob
 import asyncio
 
 PATH = os.path.dirname(__file__)
-CONFIG = os.path.join(PATH, "autopcr", "http_server", "config")
 RESULT = os.path.join(PATH, "result")
 
 async def get_info():
     tmp = defaultdict(list)
-    for file in glob.glob(os.path.join(CONFIG, "*.json")):
+    for file in glob.glob(os.path.join(CONFIG_PATH, "*.json")):
         with open(file, "r") as f:
             data = json.load(f)
             if 'qq' in data:

@@ -14,7 +14,6 @@ from ..db.models import TrainingQuestDatum
 from ..util.linq import flow
 from asyncio import Lock
 
-lck = Lock()
 
 class datamgr(Component[apiclient]):
     settings: IniSetting = None
@@ -53,10 +52,15 @@ class datamgr(Component[apiclient]):
         self.deck_list = {}
         self.campaign_list = []
 
-    async def try_update_database(self, ver: int):
-        global lck
+    lck = Lock()
 
-        async with lck:
+    @staticmethod
+    def lock():
+        return datamgr.lck
+
+    @staticmethod
+    async def try_update_database(ver: int):
+        async with datamgr.lock():
             if not assetmgr.ver or assetmgr.ver < ver:
                 await assetmgr.init(ver)
                 await dbmgr.update_db(assetmgr)
