@@ -674,9 +674,7 @@ class hatsune_story_reading(Module):
 class hatsune_dear_reading(Module):
     async def do_task(self, client: pcrclient):
         event_active = False
-        for event in client.data.event_statuses:
-            if event.event_type != 1 or event.period != 2:
-                continue
+        for event in db.get_open_hatsune():
             event_active = True
             resp = (await client.get_hatsune_top(event.event_id))
             if resp.unchoiced_dear_story_id_list == None:
@@ -688,7 +686,7 @@ class hatsune_dear_reading(Module):
                     self._log(f"阅读了{story.story_id}")
 
         if not event_active:
-            raise SkipError("当前无进行中的活动")
+            raise SkipError("当前无可进入的活动")
         if not self.log:
             raise SkipError("不存在未阅读的活动信赖度剧情")
         self._log(f"共{len(self.log)}篇")
@@ -701,9 +699,7 @@ class hatsune_gacha_exchange(Module):
         early_stop = False if self.value == "all" else True
         event_active = False
 
-        for event in client.data.event_statuses:
-            if event.event_type != 1 or event.period != 2:
-                continue
+        for event in db.get_open_hatsune():
             event_active = True
             res = (await client.get_hatsune_top(event.event_id))
             exchange_ticket_id = db.hatsune_item[event.event_id].gacha_ticket_id
@@ -736,7 +732,7 @@ class hatsune_gacha_exchange(Module):
             self._log(f"{event.event_id}: 已交换至" + (f"第{res.event_gacha_info.gacha_step}轮" if res.event_gacha_info.gacha_step < 6 else "第六轮及以上"))
             
         if not event_active:
-            raise SkipError("当前无进行中的活动")
+            raise SkipError("当前无可进入的活动")
 
 @description('在公会中自动随机选择一位成员点赞。')
 @booltype
@@ -771,9 +767,7 @@ class hatsune_h_sweep(Module):
         elif self.value == "all":
             area = [1, 2, 3, 4, 5]
         event_active = False
-        for event in client.data.event_statuses:
-            if event.event_type != 1 or event.period != 2: # 不知道其他类型的是什么
-                continue
+        for event in db.get_active_hatsune():
             event_active = True
             await client.get_hatsune_top(event.event_id)
             await client.get_hatsune_quest_top(event.event_id)
@@ -808,9 +802,7 @@ class hatsune_mission_accept(Module):
         is_abort = False
         is_skip = True
         event_active = False
-        for event in client.data.event_statuses:
-            if event.event_type != 1 or event.period != 2:
-                continue
+        for event in db.get_active_hatsune():
             event_active = True
             await client.get_hatsune_top(event.event_id)
             resp = await client.hatsune_mission_index(event.event_id)
@@ -847,9 +839,7 @@ class hatsune_hboss_sweep(Module):
         is_abort = False
         is_skip = True
         event_active = False
-        for event in client.data.event_statuses:
-            if event.event_type != 1 or event.period != 2:
-                continue
+        for event in db.get_active_hatsune():
             event_active = True
             resp = await client.get_hatsune_top(event.event_id)
             ticket = resp.boss_ticket_info.stock
@@ -871,7 +861,7 @@ class hatsune_hboss_sweep(Module):
                     self._log("今日vh未通关，保留30张")
                     times -= 1
                 if self.value == "保留当日及未来vh份":
-                    left_day = (db.get_start_time(db.parse_time(db.hatsune_schedule[event.event_id].end_time)) - db.get_today_start_time()).days 
+                    left_day = (db.get_start_time(db.parse_time(event.end_time)) - db.get_today_start_time()).days 
                     self._log(f"距离活动结束还有{left_day}天，保留{left_day * 30}张")
                     times -= left_day
 
@@ -1248,9 +1238,7 @@ class smart_sweep(Module):
 class all_in_hatsune(Module):
     async def do_task(self, client: pcrclient):
         quest = 0
-        for event in client.data.event_statuses: # 复刻和正常一起开的话会刷哪个？
-            if event.event_type != 1 or event.period != 2:
-                continue
+        for event in db.get_active_hatsune(): # 复刻和正常一起开的话会刷先开的那个
             if self.value == 'n-5':
                 quest = 1000 * event.event_id + 105
             elif self.value == 'n-10':
@@ -1264,7 +1252,6 @@ class all_in_hatsune(Module):
             break
         
         if not quest: raise SkipError("当前无进行中的活动")
-        
 
         count = client.data.stamina // db.quest_info[quest].stamina
 
