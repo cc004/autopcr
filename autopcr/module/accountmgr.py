@@ -1,6 +1,6 @@
 # 名字需要斟酌一下
 
-from .modulebase import ModuleManager
+from .modulemgr import ModuleManager
 import os, re
 from typing import Dict, Iterator
 from ..constants import CONFIG_PATH

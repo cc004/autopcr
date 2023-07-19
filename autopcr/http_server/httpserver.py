@@ -1,10 +1,9 @@
 import quart
 from quart import request, render_template, Blueprint
 import os
-import re
 import json
-from typing import Callable, Coroutine, Any, Tuple
-from ..module.modulebase import ModuleManager
+from typing import Callable, Coroutine, Any
+from ..module.modulemgr import ModuleManager
 from ..module.accountmgr import instance as accountmgr, AccountException
 from ..constants import CONFIG_PATH
 
@@ -98,7 +97,7 @@ class HttpServer:
             if self.qq_only:
                 return 'Please use in group', 400
             file = request.args.get('account')
-            return await mgr.do_task()
+            return await mgr.do_daily()
 
         @self.app.route('/api/library_import', methods = ['GET'])
         @HttpServer.wrapaccount
