@@ -74,7 +74,7 @@ class hatsune_hboss_sweep(Module):
                     self._log("今日vh未通关，保留30张")
                     times -= 1
                 if self.get_config('hatsune_hboss_strategy') == "保留当日及未来vh份":
-                    left_day = (db.get_start_time(db.parse_time(db.hatsune_schedule[event.event_id].end_time)) - db.get_today_start_time()).days 
+                    left_day = (db.get_start_time(db.parse_time(event.end_time)) - db.get_today_start_time()).days 
                     self._log(f"距离活动结束还有{left_day}天，保留{left_day * 30}张")
                     times -= left_day
 
@@ -137,7 +137,7 @@ class hatsune_gacha_exchange(Module):
             self._log(f"{event.event_id}: 已交换至" + (f"第{res.event_gacha_info.gacha_step}轮" if res.event_gacha_info.gacha_step < 6 else "第六轮及以上"))
             
         if not event_active:
-            raise SkipError("当前无进行中的活动")
+            raise SkipError("当前无可进入的活动")
 
 @description('领取活动任务奖励')
 @default(True)
