@@ -7,7 +7,7 @@ from ...model.enums import *
 from ...util.linq import flow
 import datetime
 
-@description('阅读公会剧情')
+@name('阅读公会剧情')
 @default(True)
 class guild_story_reading(Module):
 
@@ -37,7 +37,7 @@ class guild_story_reading(Module):
         client.data.read_story_ids = list(read_story)
         self._log(f"共{len(self.log)}篇")
 
-@description('阅读角色剧情')
+@name('阅读角色剧情')
 @default(False)
 class unit_story_reading(Module):
     async def do_task(self, client: pcrclient):
@@ -59,7 +59,7 @@ class unit_story_reading(Module):
         client.data.read_story_ids = list(read_story)
         self._log(f"共{len(self.log)}篇")
 
-@description('阅读主线剧情')
+@name('阅读主线剧情')
 @default(True)
 class main_story_reading(Module):
     async def do_task(self, client: pcrclient):
@@ -78,7 +78,7 @@ class main_story_reading(Module):
             raise SkipError("不存在未阅读的主线剧情")
         self._log(f"共{len(self.log)}篇")
 
-@description('阅读露娜塔剧情')
+@name('阅读露娜塔剧情')
 @default(True)
 class tower_story_reading(Module):
     async def do_task(self, client: pcrclient):
@@ -101,7 +101,7 @@ class tower_story_reading(Module):
             raise SkipError("不存在未阅读的露娜塔剧情")
         self._log(f"共{len(self.log)}篇")
 
-@description('阅读活动剧情')
+@name('阅读活动剧情')
 @default(True)
 class hatsune_story_reading(Module):
     async def do_task(self, client: pcrclient):
@@ -119,7 +119,8 @@ class hatsune_story_reading(Module):
         client.data.read_story_ids = list(read_story)
         self._log(f"共{len(self.log)}篇")
 
-@description('阅读活动信赖度')
+@description('仅阅读当期活动')
+@name('阅读活动信赖度')
 @default(True)
 class hatsune_dear_reading(Module):
     async def do_task(self, client: pcrclient):

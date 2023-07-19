@@ -96,7 +96,8 @@ class shop_buyer(Module):
 @singlechoice('shop_buy_equip_upper_count_limit', "强化石停止阈值", 0, [0, 100, 500, 1000, 2000, 5000, 99999])
 @singlechoice('normal_shop_buy_coin_limit', "货币停止阈值", 0, [0, 5000000, 10000000, 20000000])
 @multichoice("normal_shop_buy_kind", "购买种类", ['经验药水', '强化石'], ['经验药水', '强化石'])
-@description('通用商店购买')
+@description('')
+@name('通用商店购买')
 @default(False)
 class normal_shop(shop_buyer):
     def coin_limit(self) -> int: return self.get_config('normal_shop_buy_coin_limit')
@@ -104,9 +105,10 @@ class normal_shop(shop_buyer):
     def reset_count(self) -> int: return self.get_config('normal_shop_reset_count')
     def buy_kind(self) -> list[str]: return self.get_config('normal_shop_buy_kind')
 
-@description('限定商店购买（此项购买不使用最大值）')
 @multichoice("limit_shop_buy_kind", "购买种类", ['经验药水', '装备'], ['经验药水', '装备'])
 @singlechoice('limit_shop_buy_coin_limit', "货币停止阈值", 0, [0, 5000000, 10000000, 20000000])
+@description('此项购买不使用最大值')
+@name('限定商店购买（此项购买不使用最大值）')
 @default(False)
 class limit_shop(shop_buyer):
     def _exp_count(self, client: pcrclient): return 99999 if "经验药水" in self.get_config('limit_shop_buy_kind') else 0
@@ -116,12 +118,12 @@ class limit_shop(shop_buyer):
     def reset_count(self) -> int: return 0
     def buy_kind(self) -> list[str]: return self.get_config('limit_shop_buy_kind')
 
-@description('地下城商店购买')
 @singlechoice('shop_buy_memory_count_limit', "记忆碎片盈余停止阈值", 0, [0, 10, 20, 120, 270, 9999])
 @singlechoice('shop_buy_equip_count_limit', "装备盈余停止阈值", 0, [0, 20, 50, 100, 200, 500, 9999])
 @singlechoice('underground_shop_buy_coin_limit', "货币停止阈值", 0, [0, 10000, 100000, 150000, 200000])
 @inttype('underground_shop_reset_count', "重置次数(<=20)", 0, [i for i in range(21)])
 @multichoice("underground_shop_buy_kind", "购买种类", ['记忆碎片', '装备'], ['记忆碎片', '装备'])
+@name('地下城商店购买')
 @default(False)
 class underground_shop(shop_buyer):
     def coin_limit(self) -> int: return self.get_config('underground_shop_buy_coin_limit')
@@ -129,12 +131,12 @@ class underground_shop(shop_buyer):
     def reset_count(self) -> int: return self.get_config('underground_shop_reset_count')
     def buy_kind(self) -> list[str]: return self.get_config('underground_shop_buy_kind')
 
-@description('jjc商店购买')
 @singlechoice('shop_buy_memory_count_limit', "记忆碎片盈余停止阈值", 0, [0, 10, 20, 120, 270, 9999])
 @singlechoice('shop_buy_equip_count_limit', "装备盈余停止阈值", 0, [0, 20, 50, 100, 200, 500, 9999])
 @singlechoice('jjc_shop_buy_coin_limit', "货币停止阈值", 0, [0, 10000, 100000, 150000, 200000])
 @inttype('jjc_shop_reset_count', "重置次数(<=20)", 0, [i for i in range(21)])
 @multichoice("jjc_shop_buy_kind", "购买种类", ['记忆碎片', '装备'], ['记忆碎片', '装备'])
+@name('jjc商店购买')
 @default(False)
 class jjc_shop(shop_buyer):
     def coin_limit(self) -> int: return self.get_config('jjc_shop_buy_coin_limit')
@@ -142,12 +144,12 @@ class jjc_shop(shop_buyer):
     def reset_count(self) -> int: return self.get_config('jjc_shop_reset_count')
     def buy_kind(self) -> list[str]: return self.get_config('jjc_shop_buy_kind')
 
-@description('pjjc商店购买')
 @singlechoice('shop_buy_memory_count_limit', "记忆碎片盈余停止阈值", 0, [0, 10, 20, 120, 270, 9999])
 @singlechoice('shop_buy_equip_count_limit', "装备盈余停止阈值", 0, [0, 20, 50, 100, 200, 500, 9999])
 @singlechoice('pjjc_shop_buy_coin_limit', "货币停止阈值", 0, [0, 10000, 100000, 150000, 200000])
 @inttype('pjjc_shop_reset_count', "重置次数(<=20)", 0, [i for i in range(21)])
 @multichoice("pjjc_shop_buy_kind", "购买种类", ['记忆碎片', '装备'], ['记忆碎片', '装备'])
+@name('pjjc商店购买')
 @default(False)
 class pjjc_shop(shop_buyer):
     def coin_limit(self) -> int: return self.get_config('pjjc_shop_buy_coin_limit')

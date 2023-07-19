@@ -12,6 +12,9 @@ def default(val):
 def description(desc: str):
     return lambda cls:_wrap_init(cls, lambda self: setattr(self, 'description', desc))
 
+def name(desc: str):
+    return lambda cls:_wrap_init(cls, lambda self: setattr(self, 'name', desc))
+
 def booltype(cls):
     old = cls.do_task
     async def do_task(self, client: pcrclient):
@@ -29,7 +32,8 @@ def notimplemented(cls):
 class Module:
 
     def __init__(self, parent):
-        self.name: str = self.__class__.__name__
+        self.key: str = self.__class__.__name__
+        self.name: str = ""
         self.default: bool = False
         self.description: str = self.name
         self.config: Dict[str, Config] = {}
@@ -44,7 +48,6 @@ class Module:
     async def do_from(self, client: pcrclient):
         result = {
                 "name": self.name,
-                "desc": self.description,
                 "status": "",
                 "log" : "",
                 }
@@ -82,7 +85,8 @@ class Module:
 
     def generate_info(self):
         return {
-                'key': self.name,
+                'key': self.key,
+                'name': self.name,
                 'description': self.description,
                 'config': self.generate_config(),
                 'implemented': self.implmented
