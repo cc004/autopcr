@@ -136,7 +136,7 @@ class hatsune_dear_reading(Module):
                     self._log(f"阅读了{story.story_id}")
 
         if not event_active:
-            raise SkipError("当前无进行中的活动")
+            raise SkipError("当前无可进入的活动")
         if not self.log:
             raise SkipError("不存在未阅读的活动信赖度剧情")
         self._log(f"共{len(self.log)}篇")
