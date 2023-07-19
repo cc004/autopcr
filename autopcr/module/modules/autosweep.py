@@ -11,7 +11,8 @@ import datetime
 @inttype('sweep_recover_stamina_times', "被动恢复体力数", 0, [i for i in range(41)])
 @multichoice("normal_sweep_run_time", "执行条件", ["n庆典"], ["n庆典", "h庆典", "vh庆典", "总是执行"])
 @singlechoice("normal_sweep_consider_unit", "需求角色", "favorite", ["all", "max_rank", "max_rank-1", "max_rank-2", 'favorite'])
-@description('智能刷n图')
+@description('根据装备缺口刷n图')
+@name('智能刷n图')
 @default(False)
 class smart_normal_sweep(Module):
 
@@ -75,7 +76,8 @@ class smart_normal_sweep(Module):
 
 @inttype('sweep_recover_stamina_times', "被动恢复体力数", 0, [i for i in range(41)])
 @multichoice("hard_sweep_run_time", "执行条件", ["h庆典"], ["h庆典", "非n庆典", "总是执行"])
-@description('智能刷hard图')
+@description('根据记忆碎片缺口刷hard图')
+@name('智能刷hard图')
 @default(False)
 class smart_hard_sweep(Module):
     async def do_task(self, client: pcrclient):
@@ -119,7 +121,8 @@ class smart_hard_sweep(Module):
 @inttype('sweep_recover_stamina_times', "被动恢复体力数", 0, [i for i in range(41)])
 @singlechoice("vh_sweep_campaign_times", "vh庆典次数", 3, [0, 3, 6])
 @singlechoice("vh_sweep_times", "非vh庆典次数", 3, [0, 3, 6])
-@description('六星碎片')
+@description('根据纯净碎片缺口智能刷vh图')
+@name('智能刷very hard图')
 @default(True)
 class smart_very_hard_sweep(Module):
     async def do_task(self, client: pcrclient):
@@ -162,7 +165,8 @@ class smart_very_hard_sweep(Module):
 然后循环按次数刷取设置为loop的图
 当被动体力回复完全消耗后，刷图结束
 '''.strip())
-@default(True)
+@name("自定义刷图")
+@default(False)
 class smart_sweep(Module):
     async def do_task(self, client: pcrclient):
         nloop: List[Tuple[int, int]] = []

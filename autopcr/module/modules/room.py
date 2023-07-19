@@ -7,7 +7,8 @@ from ...model.enums import *
 from typing import List
 from ...model.requests import SendGiftData
 
-@description('收取家园体')
+@description('包括mana体力等等哦')
+@name('收取家园产物')
 @default(True)
 class room_accept_all(Module):
     async def do_task(self, client: pcrclient):
@@ -20,7 +21,8 @@ class room_accept_all(Module):
                 return
         raise SkipError('没有可收取的家园物品。')
 
-@description('升级家园家具')
+@description('等级提升时可自动升级')
+@name('升级家园家具')
 @default(True)
 class room_upper_all(Module):
     async def do_task(self, client: pcrclient):
@@ -40,7 +42,8 @@ class room_upper_all(Module):
         if not self.log:
             raise SkipError('没有可升级的家园物品。')
 
-@description('公会小屋点赞，先回赞，再随机点赞')
+@description('先回赞，再随机点赞')
+@name('公会小屋点赞')
 @default(True)
 class room_like_back(Module):
     async def do_task(self, client: pcrclient):
@@ -74,7 +77,8 @@ class room_like_back(Module):
         result = await client.serlize_reward(result)
         self._log(f"为【{'|'.join(like_user)}】点赞，获得了:\n" + result)
 
-@description('喂蛋糕')
+@description('一键发情所有角色')
+@name('喂蛋糕')
 @default(True)
 class love_up(Module):
     async def do_task(self, client: pcrclient):

@@ -6,6 +6,7 @@ from ...model.enums import *
 import random
 
 @description('在公会中自动随机选择一位成员点赞。')
+@name("公会点赞")
 @default(True)
 class clan_like(Module):
     async def do_task(self, client: pcrclient):

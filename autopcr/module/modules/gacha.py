@@ -6,7 +6,8 @@ from ...db.database import db
 from ...model.enums import *
 import datetime
 
-@description('普通扭蛋')
+@description('扭曲装备扭蛋')
+@name('普通扭蛋')
 @default(True)
 class normal_gacha(Module):
     async def do_task(self, client: pcrclient):
@@ -25,8 +26,9 @@ class normal_gacha(Module):
             msg = await client.serlize_reward(memory) + f"\n{10 - len(memory)}件装备"
         self._log(msg)
 
-@description('免费十连')
-@default(True)
+@description('有免费十连时自动抽取')
+@name('免费十连')
+@default(False)
 class free_gacha(Module):
     async def do_task(self, client: pcrclient):
         res = await client.get_gacha_index()

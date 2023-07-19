@@ -6,8 +6,9 @@ from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
 
-@description('最高级地下城扫荡')
 @singlechoice("underground_sweep", "扫荡策略", "always", ["非地下城庆典留一次数", "总是扫荡"])
+@description('会选择最高级地下城扫荡，非mana庆典时会自动保留一个次数，但第一次时需手动打一关以完成每日任务')
+@name('地下城扫荡')
 @default(True)
 class underground_skip(Module):
     async def do_task(self, client: pcrclient):
@@ -105,7 +106,7 @@ class starcup_sweep(investigate_sweep):
 
 @singlechoice("heart_sweep_times", "非心碎庆典次数", 5, [0, 5, 10, 15, 20])
 @singlechoice("heart_sweep_campaign_times", "心碎庆典次数", 5, [0, 5, 10, 15, 20])
-@description('刷取心碎3，平时次数:庆典次数')
+@name('刷取心碎3')
 @default(False)
 class xinsui3_sweep(xinsui_sweep):
     def quest_id(self) -> int:
@@ -113,7 +114,7 @@ class xinsui3_sweep(xinsui_sweep):
 
 @singlechoice("heart_sweep_times", "非心碎庆典次数", 5, [0, 5, 10, 15, 20])
 @singlechoice("heart_sweep_campaign_times", "心碎庆典次数", 5, [0, 5, 10, 15, 20])
-@description('刷取心碎2，平时次数:庆典次数')
+@name('刷取心碎2')
 @default(False)
 class xinsui2_sweep(xinsui_sweep):
     def quest_id(self) -> int:
@@ -121,7 +122,7 @@ class xinsui2_sweep(xinsui_sweep):
 
 @singlechoice("heart_sweep_times", "非心碎庆典次数", 5, [0, 5, 10, 15, 20])
 @singlechoice("heart_sweep_campaign_times", "心碎庆典次数", 5, [0, 5, 10, 15, 20])
-@description('刷取心碎1，平时次数:庆典次数')
+@name('刷取心碎1')
 @default(False)
 class xinsui1_sweep(xinsui_sweep):
     def quest_id(self) -> int:
@@ -129,7 +130,7 @@ class xinsui1_sweep(xinsui_sweep):
 
 @singlechoice("starcup_sweep_times", "非星球杯庆典次数", 5, [0, 5, 10, 15, 20])
 @singlechoice("starcup_sweep_campaign_times", "星球杯庆典次数", 5, [0, 5, 10, 15, 20])
-@description('刷取星球杯2，平时次数:庆典次数')
+@name('刷取星球杯2')
 @default(False)
 class starcup2_sweep(starcup_sweep):
     def quest_id(self) -> int:
@@ -137,7 +138,7 @@ class starcup2_sweep(starcup_sweep):
 
 @singlechoice("starcup_sweep_times", "非星球杯庆典次数", 5, [0, 5, 10, 15, 20])
 @singlechoice("starcup_sweep_campaign_times", "星球杯庆典次数", 5, [0, 5, 10, 15, 20])
-@description('刷取星球杯1，平时次数:庆典次数')
+@name('刷取星球杯1')
 @default(False)
 class starcup1_sweep(starcup_sweep):
     def quest_id(self) -> int:

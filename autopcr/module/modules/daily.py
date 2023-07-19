@@ -6,7 +6,8 @@ from ...db.database import db
 from ...model.enums import *
 import datetime
 
-@description('赛马')
+@description('选谁其实排名都一样的')
+@name("赛马")
 @default(True)
 class chara_fortune(Module):
     async def do_task(self, client: pcrclient):
@@ -18,6 +19,7 @@ class chara_fortune(Module):
         self._log(f"赛马第{client.data.cf.rank}名，获得了宝石x{res.reward_list[0].received}")
 
 @description('开始时领取任务奖励')
+@name("领取任务奖励1")
 @default(True)
 class mission_receive_first(Module):
     async def do_task(self, client: pcrclient):
@@ -31,6 +33,7 @@ class mission_receive_first(Module):
         raise SkipError("没有可领取的任务奖励")
 
 @description('结束时领取任务奖励')
+@name("领取任务奖励1")
 @default(True)
 class mission_receive_last(Module):
     async def do_task(self, client: pcrclient):
@@ -43,7 +46,8 @@ class mission_receive_last(Module):
                 return
         raise SkipError("没有可领取的任务奖励")
 
-@description('EXP探索')
+@description('自动扫荡最高等级的EXP探索')
+@name('EXP探索')
 @default(True)
 class explore_exp(Module):
     async def do_task(self, client: pcrclient):
@@ -58,7 +62,8 @@ class explore_exp(Module):
         else:
             raise SkipError("exp已扫荡")
 
-@description('MANA探索')
+@description('自动扫荡最高等级的Mana探索')
+@name('Mana探索')
 @default(True)
 class explore_mana(Module):
     async def do_task(self, client: pcrclient):
@@ -74,7 +79,8 @@ class explore_mana(Module):
             raise SkipError("mana已扫荡")
 
 @singlechoice("present_receive_strategy", "领取策略", "非体力", ["非体力", "全部"])
-@description('领取礼物箱')
+@description('领取符合条件的所有礼物箱奖励')
+@name('领取礼物箱')
 @default(True)
 class present_receive(Module):
     async def do_task(self, client: pcrclient):
@@ -108,7 +114,8 @@ class present_receive(Module):
         self._log(op + msg)
 
 
-@description('领取双场币')
+@description('领取jjc和pjjc的币')
+@name('领取双场币')
 @default(True)
 class jjc_reward(Module):
     async def do_task(self, client: pcrclient):
@@ -121,7 +128,8 @@ class jjc_reward(Module):
             await client.receive_grand_arena_reward()
         self._log(f"pjjc币x{info.reward_info.count}")
 
-@description('基本信息')
+@description('展示基本信息')
+@name('基本信息')
 @default(True)
 class user_info(Module):
     async def do_task(self, client: pcrclient):

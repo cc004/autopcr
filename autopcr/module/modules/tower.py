@@ -6,7 +6,7 @@ from ...db.database import db
 from ...model.enums import *
 import datetime
 
-@description('露娜塔回廊扫荡')
+@name('露娜塔回廊扫荡')
 @default(True)
 class tower_cloister_sweep(Module):
     async def do_task(self, client: pcrclient):

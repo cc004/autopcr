@@ -6,8 +6,9 @@ from ...db.database import db
 from ...model.enums import *
 
 @inttype('sweep_recover_stamina_times', "被动恢复体力数", 0, [i for i in range(41)])
-@description('活动h本')
 @multichoice("hatsune_h_sweep_quest", "扫荡关卡", [1,2,3,4,5], [1,2,3,4,5])
+@description('')
+@name('扫荡活动h本')
 @default(False)
 class hatsune_h_sweep(Module):
     async def do_task(self, client: pcrclient):
@@ -43,8 +44,9 @@ class hatsune_h_sweep(Module):
         if is_abort: raise AbortError("")
         if is_skip: raise SkipError("")
 
-@description('活动h本boss，未打vh保留30+未打sp保留90')
 @singlechoice("hatsune_hboss_strategy", "扫荡策略", "保留当日vh份", ["保留当日vh份", "保留当日及未来vh份"])
+@description('未打今日vh保留30+未打sp保留90')
+@name('自动扫荡活动h本boss')
 @default("none")
 class hatsune_hboss_sweep(Module):
     async def do_task(self, client: pcrclient):
@@ -96,8 +98,9 @@ class hatsune_hboss_sweep(Module):
         if is_abort: raise AbortError("")
         if is_skip: raise SkipError("")
 
-@description('讨伐证交换')
 @singlechoice("hatsune_gacha_strategy", "兑换策略", "all", ["前两轮尽早重置", "全部兑换"])
+@description('自动兑换，前两轮兑换处目标物品可选择重置')
+@name('讨伐证交换')
 @default(True)
 class hatsune_gacha_exchange(Module):
     async def do_task(self, client: pcrclient):
@@ -139,7 +142,8 @@ class hatsune_gacha_exchange(Module):
         if not event_active:
             raise SkipError("当前无可进入的活动")
 
-@description('领取活动任务奖励')
+@description('')
+@name('领取活动任务奖励')
 @default(True)
 class hatsune_mission_accept(Module):
     async def do_task(self, client: pcrclient):
@@ -177,8 +181,9 @@ class hatsune_mission_accept(Module):
         if is_skip: raise SkipError("")
 
 @singlechoice("hatsune_normal_sweep_quest", "刷取图", 15, [5, 10, 15])
-@default(False)
 @description('剩余体力全部刷活动图')
+@name('全刷活动普图')
+@default(False)
 class all_in_hatsune(Module):
     async def do_task(self, client: pcrclient):
         quest = 0
