@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html>
 
+<!-- TODO -->
+<!-- 值更新 -->
+<!-- put的js -->
+<!-- 公共变量特殊背景颜色标识 -->
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -98,40 +103,7 @@
                                     <input id="msg" type="text" class="form-control copy-text" value="value" readonly onclick="copyToClipboard()">
                                 </div>
                             </div>
-                            <div class="table-responsive">
-                                <table id="tab" class="table">
-                                    <thead class="thead-light">
-                                        <tr>
-                                            <th style="padding: 0px"></th>
-                                            <th style="max-width: 120px;">功能</th>
-                                            <th style="max-width: 120px;">配置</th>
-                                            <th style="max-width: 120px;">值</th>
-                                            <th style="min-width: 300px;">结果</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="ta">
-                                        <tr>
-                                            <td></td>
-                                            <td>自动执行时间1</td>
-                                            <td>
-                                                    <input type="checkbox" class="switch" id="time1open" onchange="selectOnChange(this)" />
-                                                    <input type="time" class="form-control" id="time1" onchange="selectOnChange(this)" />
-                                            </td>
-                                            <td>会战期间照常执行</td>
-                                            <td></td>
-                                        </tr>
-                                        <tr>
-                                            <td></td>
-                                            <td>自动执行时间2</td>
-                                            <td>
-                                                    <input type="checkbox" class="switch" id="time2open" onchange="selectOnChange(this)" />
-                                                    <input type="time" class="form-control" id="time2" onchange="selectOnChange(this)" />
-                                            </td>
-                                            <td>会战期间不执行</td>
-                                            <td></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div id="module">
                             </div>
                         </div>
                     </div>
@@ -226,41 +198,28 @@
     </script>
 
     <script type="text/javascript" charset="utf-8">
+        
+        var user_config = {}
+
         $(document).ready(function () {
             $.ajax({
                 url: "/daily/api/config" + window.location.search,
                 type: "get",
                 processData: false,
                 success: function (ret) {
-                    let ta_tab = $("#ta");
+                    let ta_tab = $("#module");
                     $("#alian").val(ret.alian);
                     $("#qq").val(ret.qq);
                     $("#username").val(ret.username);
                     $("#password").val(ret.password);
-                    $("#time1open").prop("checked",ret.time1open);
-                    $("#time2open").prop("checked",ret.time2open);
-                    $("#time1").val(ret.time1);
-                    $("#time2").val(ret.time2);
                     res = ret.last_result;
+                    user_config = ret.config;
                     ret = ret.data;
 
                     for (let i = 0; i < ret.length; ++i) {
                         let val = ret[i];
 
-                        key = val.key;
-                        desc = val.description;
-                        config = val.config;
-                        ta_tab.append(`<tr id="tr_${key}"></tr>`); //添加一列
-                        let tab = $(`#tr_${key}`); //把这一列的内容添加上
-                        tab.append(`<td id='name${cnt}'>${key}</td>`);
-
-                        now_config = item["value"];
-                        typ = item["type"];
-                        if (typ == "bool") tab.append(`<td>${get_bool_text(cnt, now_config, name, item.name)}</td>`);
-                        else tab.append(`<td id='enum_${name}'>${get_enum_text(cnt, now_config, item["candidate_value"])}</td>`);
-
-                        tab.append(`<td id='description_${name}'>${item["description"].replace(/\n/g, '<br>')}</td>`);
-                        tab.append(`<td id='result_${name}'></td>`);
+                        ta_tab.append(make_card(val)); //添加一列
                     }
                     load_result(res);
                 },
@@ -270,6 +229,94 @@
             });
         }
         );
+
+        function get_single_html(config) {
+            let res = `<select class="custom-select" id=${config.key} onchange="selectOnChange(this)">`;
+            for (let i = 0; i < config.candidates.length; i++) res += `<option value='${config.candidates[i]}' ${user_config[config.key] == config.candidates[i] ? "selected" : ""}>${config.candidates[i]}</option>`;
+            res += "</select>";
+            return res;
+        }
+
+        function get_bool_html(config) {
+            return `<input type="checkbox" class="switch" ${user_config[config.key] ? 'checked="checked"' : ""} id=${config.key} name=${config.key} onclick="checkboxOnclick(this)" />`;
+        }
+
+        function get_int_html(config) {
+            return `<input type="text" id=${config.key} value=${user_config[config.key]} class="form-control" placeholder=${config.candidates[0]}-${config.candidates[config.candidates.length-1]}`;
+        }
+        function get_multi_html(config) {
+            let res = `<select class="custom-select" multiple id=${config.key} onchange="selectOnChange(this)">`;
+            for (let i = 0; i < config.candidates.length; i++) res += `<option value='${config.candidates[i]}' ${user_config[config.key] == config.candidates[i] ? "selected" : ""}>${config.candidates[i]}</option>`;
+            res += "</select>";
+            return res;
+        }
+        function get_time_html(config) {
+            return `<input type="time" class="form-control" id=${config.key} value=${user_config[config.key]} onchange="selectOnChange(this)" />`;
+        }
+
+
+        function generate_option_HTML(config){
+            
+          switch (config.config_type) {
+            case 'single':
+                return get_single_html(config)
+                break;
+
+            case 'multi':
+                return get_multi_html(config)
+                break;
+
+            case 'int':
+                return get_int_html(config)
+                break;
+
+            case 'bool':
+                return get_bool_html(config)
+                break;
+
+            case 'time':
+                return get_time_html(config)
+                break;
+
+            }
+        }
+
+        function generate_config_HTML(config){
+            let configHTML = '';
+            configHTML += `
+                <div class="mb-3">
+                  <h6>${config.desc}</h6>
+                  ${generate_option_HTML(config)}
+                </div>
+              `;
+              return configHTML;
+        }
+
+        function make_card(m) {
+
+            let functionHTML = `
+                  <div id=card_${m.key} class="card">
+                    <div class="card-header">
+                      <h5 class="mb-0"> <input type="checkbox" class="switch" ${user_config[m.key] ? 'checked="checked"' : ""} id=${m.key} name=${m.key} onclick="checkboxOnclick(this)" /> ${m.key} </h5>
+                    </div>
+                    <div class="card-body">
+                      ${m.description}
+            `;
+
+            console.log(m)
+            for (const key in m.config) {
+                functionHTML += generate_config_HTML(m.config[key]);
+            }
+
+            functionHTML += `
+                        </div>
+                    </div>
+            `;
+
+            return functionHTML;
+
+        }
+
         
         function load_result(ret) {
             for (id in ret) {
@@ -348,23 +395,11 @@
         }
 
         function checkboxOnclick(checkbox) {
-            if (checkbox.checked) {
-                $(`[name=${checkbox.name}]`).each(function () {
-                    $(this)[0].checked = false;
-                });
-                $(`#${checkbox.id}`)[0].checked = true;
-            }
-            update_new();
-        }
+            const key = checkbox.id;
+            const value = checkbox.checked;
+            user_config[key] = value;
 
-        function get_enum_text(id, value, branchs) {
-            let res = `<select class="custom-select" id=enum${id} onchange="selectOnChange(this)">`;
-            for (let i = 0; i < branchs.length; i++) res += `<option value='select${i}' ${value == branchs[i] ? "selected" : ""}>${branchs[i]}</option>`;
-            res += "</select>";
-            return res;
-        }
-        function get_bool_text(cnt, value, name, clas) {
-            return `<input type="checkbox" class="switch" ${value ? 'checked="checked"' : ""} id='bool${cnt}_${name}' name=${clas ? clas : cnt} onclick="checkboxOnclick(this)" />`;
+            update_new();
         }
 
         function update_new() {
@@ -374,10 +409,6 @@
             config['qq'] = $("#qq").val();
             config['username'] = $("#username").val();
             config['password'] = $("#password").val();
-            config['time1'] = $("#time1").val();
-            config['time2'] = $("#time2").val();
-            config['time1open'] = $("#time1open").prop('checked')
-            config['time2open'] = $("#time2open").prop('checked')
 
             while ($(`#name${id}`).length) {
                 config[$(`#name${id}`).text()] = ($(`#enum${id} option:selected`).length ? $(`#enum${id} option:selected`).text() : $(`[id^=bool${id}]`)[0].checked);
