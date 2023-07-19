@@ -11,6 +11,7 @@ from .sweep import *
 from .tower import *
 
 daily_modules = [
+    cron1,
     chara_fortune,
     mission_receive_first,
     clan_like,
