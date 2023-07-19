@@ -103,9 +103,9 @@
                                     <thead class="thead-light">
                                         <tr>
                                             <th style="padding: 0px"></th>
-                                            <th style="max-width: 120px;">设置项</th>
+                                            <th style="max-width: 120px;">功能</th>
+                                            <th style="max-width: 120px;">配置</th>
                                             <th style="max-width: 120px;">值</th>
-                                            <th style="max-width: 120px;">说明</th>
                                             <th style="min-width: 300px;">结果</th>
                                         </tr>
                                     </thead>
@@ -232,7 +232,6 @@
                 type: "get",
                 processData: false,
                 success: function (ret) {
-                    cnt = 0;
                     let ta_tab = $("#ta");
                     $("#alian").val(ret.alian);
                     $("#qq").val(ret.qq);
@@ -244,15 +243,16 @@
                     $("#time2").val(ret.time2);
                     res = ret.last_result;
                     ret = ret.data;
+
                     for (let i = 0; i < ret.length; ++i) {
                         let val = ret[i];
-                        cnt += 1;
-                        name = val.name;
-                        item = val.value;
-                        ta_tab.append(`<tr id="tr_${name}"></tr>`); //添加一列
-                        let tab = $(`#tr_${name}`); //把这一列的内容添加上
-                        tab.append(`<td>${item["implemented"] ? "" : "未实装"}</td>`);
-                        tab.append(`<td id='name${cnt}'>${name}</td>`);
+
+                        key = val.key;
+                        desc = val.description;
+                        config = val.config;
+                        ta_tab.append(`<tr id="tr_${key}"></tr>`); //添加一列
+                        let tab = $(`#tr_${key}`); //把这一列的内容添加上
+                        tab.append(`<td id='name${cnt}'>${key}</td>`);
 
                         now_config = item["value"];
                         typ = item["type"];

@@ -93,7 +93,7 @@ class DailyClean(Task):
 
         try:
             async with accountmgr.load(target) as mgr:
-                resp = await mgr.do_task()
+                resp = await mgr.do_daily()
             img = await draw(resp, alian)
             if ev:
                 await bot.send(ev, f"[CQ:reply,id={ev.message_id}] {alian}" + MessageSegment.image(f'file:///{img}'))
