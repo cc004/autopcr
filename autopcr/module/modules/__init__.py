@@ -9,6 +9,7 @@ from .shop import *
 from .story import *
 from .sweep import *
 from .tower import *
+from .tools import *
 
 daily_modules = [
     cron1,
@@ -60,4 +61,12 @@ daily_modules = [
     unit_story_reading,
     room_upper_all,
     user_info,
+]
+
+tool_modules = [
+    get_library_import_data,
+    get_need_equip,
+    get_need_memory,
+    get_need_xinsui,
+    get_normal_quest_recommand,
 ]

@@ -380,12 +380,17 @@
         function library_import() {
             $("#library_import").attr('disabled', true);
             suspend("alert-info", "已开始执行任务。");
+            let config = {
+                config: {},
+                data: "get_library_import_data"
+            }
             $.ajax({
-                url: '/daily/api/library_import' + window.location.search,
-                type: 'get',
-                processData: false,
+                url: '/daily/api/do_single' + window.location.search,
+                type: 'post',
+                contentType: "application/json;charset=utf-8",
+                data: JSON.stringify(config),
                 success: function (ret) {
-                    $("#msg").attr('value', ret)
+                    $("#msg").attr('value', ret["result"]["get_library_import_data"]['log'])
                     $("#msg-group").css('margin-top', '0');
                     $("#msg-description").css('display', '');
                     $("#msg-input-group").css('display', '');
