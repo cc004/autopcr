@@ -93,8 +93,8 @@ class shop_buyer(Module):
 
 @inttype('normal_shop_reset_count', "重置次数(<=20)", 0, [i for i in range(21)])
 @singlechoice('shop_buy_exp_count_limit', "经验药水停止阈值", 0, [0, 100, 500, 1000, 2000, 5000, 99999])
-@singlechoice('shop_buy_equip_upper_count_limit', "强化石停止阈值", 0, [0, 100, 500, 1000, 2000, 5000, 99999])
-@singlechoice('normal_shop_buy_coin_limit', "货币停止阈值", 0, [0, 5000000, 10000000, 20000000])
+@singlechoice('shop_buy_equip_upper_count_limit', "强化石停止阈值", 0, [0, 100, 500, 1000, 2000, 5000, 9999])
+@singlechoice('normal_shop_buy_coin_limit', "货币停止阈值", 5000000, [0, 5000000, 10000000, 20000000])
 @multichoice("normal_shop_buy_kind", "购买种类", ['经验药水', '强化石'], ['经验药水', '强化石'])
 @description('')
 @name('通用商店购买')
@@ -106,7 +106,7 @@ class normal_shop(shop_buyer):
     def buy_kind(self) -> list[str]: return self.get_config('normal_shop_buy_kind')
 
 @multichoice("limit_shop_buy_kind", "购买种类", ['经验药水', '装备'], ['经验药水', '装备'])
-@singlechoice('limit_shop_buy_coin_limit', "货币停止阈值", 0, [0, 5000000, 10000000, 20000000])
+@singlechoice('limit_shop_buy_coin_limit', "货币停止阈值", 5000000, [0, 5000000, 10000000, 20000000])
 @description('此项购买不使用最大值')
 @name('限定商店购买（此项购买不使用最大值）')
 @default(False)
@@ -120,7 +120,7 @@ class limit_shop(shop_buyer):
 
 @singlechoice('shop_buy_memory_count_limit', "记忆碎片盈余停止阈值", 0, [0, 10, 20, 120, 270, 9999])
 @singlechoice('shop_buy_equip_count_limit', "装备盈余停止阈值", 0, [0, 20, 50, 100, 200, 500, 9999])
-@singlechoice('underground_shop_buy_coin_limit', "货币停止阈值", 0, [0, 10000, 100000, 150000, 200000])
+@singlechoice('underground_shop_buy_coin_limit', "货币停止阈值", 10000, [0, 10000, 50000, 100000, 200000])
 @inttype('underground_shop_reset_count', "重置次数(<=20)", 0, [i for i in range(21)])
 @multichoice("underground_shop_buy_kind", "购买种类", ['记忆碎片', '装备'], ['记忆碎片', '装备'])
 @name('地下城商店购买')
@@ -133,7 +133,7 @@ class underground_shop(shop_buyer):
 
 @singlechoice('shop_buy_memory_count_limit', "记忆碎片盈余停止阈值", 0, [0, 10, 20, 120, 270, 9999])
 @singlechoice('shop_buy_equip_count_limit', "装备盈余停止阈值", 0, [0, 20, 50, 100, 200, 500, 9999])
-@singlechoice('jjc_shop_buy_coin_limit', "货币停止阈值", 0, [0, 10000, 100000, 150000, 200000])
+@singlechoice('jjc_shop_buy_coin_limit', "货币停止阈值", 10000, [0, 10000, 50000, 100000, 200000])
 @inttype('jjc_shop_reset_count', "重置次数(<=20)", 0, [i for i in range(21)])
 @multichoice("jjc_shop_buy_kind", "购买种类", ['记忆碎片', '装备'], ['记忆碎片', '装备'])
 @name('jjc商店购买')
@@ -146,7 +146,7 @@ class jjc_shop(shop_buyer):
 
 @singlechoice('shop_buy_memory_count_limit', "记忆碎片盈余停止阈值", 0, [0, 10, 20, 120, 270, 9999])
 @singlechoice('shop_buy_equip_count_limit', "装备盈余停止阈值", 0, [0, 20, 50, 100, 200, 500, 9999])
-@singlechoice('pjjc_shop_buy_coin_limit', "货币停止阈值", 0, [0, 10000, 100000, 150000, 200000])
+@singlechoice('pjjc_shop_buy_coin_limit', "货币停止阈值", 10000, [0, 10000, 50000, 100000, 200000])
 @inttype('pjjc_shop_reset_count', "重置次数(<=20)", 0, [i for i in range(21)])
 @multichoice("pjjc_shop_buy_kind", "购买种类", ['记忆碎片', '装备'], ['记忆碎片', '装备'])
 @name('pjjc商店购买')
