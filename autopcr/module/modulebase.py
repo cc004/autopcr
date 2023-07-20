@@ -18,7 +18,7 @@ def name(desc: str):
 def booltype(cls):
     old = cls.do_task
     async def do_task(self, client: pcrclient):
-        if self.get_config(cls.name):
+        if self.get_config(cls.key):
             return await old(self, client)
         else:
             raise SkipError('功能未启用')
@@ -74,7 +74,7 @@ class Module:
         return None
 
     def get_config(self, key):
-        if key == self.name:
+        if key == self.key:
             default = self.default
         else:
             default = self.config[key].default
