@@ -93,13 +93,20 @@ class HttpServer:
         async def do_task(mgr: ModuleManager):
             if self.qq_only:
                 return 'Please use in group', 400
-            file = request.args.get('account')
             return await mgr.do_daily()
 
-        @self.app.route('/api/library_import', methods = ['GET'])
+        @self.app.route('/api/tools', methods = ['GET'])
         @HttpServer.wrapaccount
-        async def get_library(mgr: ModuleManager):
-            return await mgr.get_library_import_data()
+        async def get_tools_info(mgr: ModuleManager):
+            return mgr.generate_tools_info()
+
+        @self.app.route('/api/do_single', methods = ['POST'])
+        @HttpServer.wrapaccount
+        async def do_single(mgr: ModuleManager):
+            data = await request.get_json()
+            config = data['config']
+            module = data['data']
+            return await mgr.do_from_key(config, [module])
 
         # frontend
         @self.app.route('/', methods = ['GET'])
