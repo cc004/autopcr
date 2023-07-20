@@ -53,9 +53,6 @@ class HttpServer:
             if '_last_result' in old_data:
                 data['_last_result'] = old_data['_last_result']
             
-            if '_last_clean_time' in old_data:
-                data['_last_clean_time'] = old_data['_last_clean_time']
-
             mgr.data = data
             mgr._load_from(data)
 
