@@ -78,7 +78,10 @@ class Module:
             default = self.default
         else:
             default = self.config[key].default
-        return self._parent.get_config(key, default)
+        value = self._parent.get_config(key, default)
+        if key != self.key and self.config[key].candidates and value not in self.config[key].candidates:
+            value = default
+        return value
 
     def generate_config(self):
         return {key: self.config[key].dict() for key in self.config}

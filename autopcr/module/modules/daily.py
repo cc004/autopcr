@@ -19,7 +19,7 @@ class chara_fortune(Module):
         self._log(f"赛马第{client.data.cf.rank}名，获得了宝石x{res.reward_list[0].received}")
 
 @description('开始时领取任务奖励')
-@name("领取任务奖励1")
+@name("领取每日任务奖励1")
 @default(True)
 class mission_receive_first(Module):
     async def do_task(self, client: pcrclient):
@@ -33,7 +33,7 @@ class mission_receive_first(Module):
         raise SkipError("没有可领取的任务奖励")
 
 @description('结束时领取任务奖励')
-@name("领取任务奖励1")
+@name("领取每日任务奖励2")
 @default(True)
 class mission_receive_last(Module):
     async def do_task(self, client: pcrclient):

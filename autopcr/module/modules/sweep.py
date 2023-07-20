@@ -89,9 +89,9 @@ class xinsui_sweep(investigate_sweep):
         return db.xinsui
     def value(self, campaign: bool):
         if not campaign:
-            return self.get_config('heart_sweep_times')
+            return self.get_config(f'heart{self.quest_id() % 10}_sweep_times')
         else:
-            return self.get_config('heart_sweep_campaign_times')
+            return self.get_config(f'heart{self.quest_id() % 10}_sweep_campaign_times')
 
 class starcup_sweep(investigate_sweep):
     def is_double_drop(self, client: pcrclient) -> bool:
@@ -100,44 +100,44 @@ class starcup_sweep(investigate_sweep):
         return db.xingqiubei
     def value(self, campaign: bool):
         if not campaign:
-            return self.get_config('starcup_sweep_times')
+            return self.get_config(f'starcup{self.quest_id() % 10}_sweep_times')
         else:
-            return self.get_config('starcup_sweep_campaign_times')
+            return self.get_config(f'starcup{self.quest_id() % 10}_sweep_campaign_times')
 
-@singlechoice("heart_sweep_times", "非心碎庆典次数", 5, [0, 5, 10, 15, 20])
-@singlechoice("heart_sweep_campaign_times", "心碎庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("heart3_sweep_times", "非心碎庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("heart3_sweep_campaign_times", "心碎庆典次数", 5, [0, 5, 10, 15, 20])
 @name('刷取心碎3')
 @default(False)
 class xinsui3_sweep(xinsui_sweep):
     def quest_id(self) -> int:
         return 18001003
 
-@singlechoice("heart_sweep_times", "非心碎庆典次数", 5, [0, 5, 10, 15, 20])
-@singlechoice("heart_sweep_campaign_times", "心碎庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("heart2_sweep_times", "非心碎庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("heart2_sweep_campaign_times", "心碎庆典次数", 5, [0, 5, 10, 15, 20])
 @name('刷取心碎2')
 @default(False)
 class xinsui2_sweep(xinsui_sweep):
     def quest_id(self) -> int:
         return 18001002
 
-@singlechoice("heart_sweep_times", "非心碎庆典次数", 5, [0, 5, 10, 15, 20])
-@singlechoice("heart_sweep_campaign_times", "心碎庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("heart1_sweep_times", "非心碎庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("heart1_sweep_campaign_times", "心碎庆典次数", 5, [0, 5, 10, 15, 20])
 @name('刷取心碎1')
 @default(False)
 class xinsui1_sweep(xinsui_sweep):
     def quest_id(self) -> int:
         return 18001001
 
-@singlechoice("starcup_sweep_times", "非星球杯庆典次数", 5, [0, 5, 10, 15, 20])
-@singlechoice("starcup_sweep_campaign_times", "星球杯庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("starcup2_sweep_times", "非星球杯庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("starcup2_sweep_campaign_times", "星球杯庆典次数", 5, [0, 5, 10, 15, 20])
 @name('刷取星球杯2')
 @default(False)
 class starcup2_sweep(starcup_sweep):
     def quest_id(self) -> int:
         return 19001002
 
-@singlechoice("starcup_sweep_times", "非星球杯庆典次数", 5, [0, 5, 10, 15, 20])
-@singlechoice("starcup_sweep_campaign_times", "星球杯庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("starcup1_sweep_times", "非星球杯庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("starcup1_sweep_campaign_times", "星球杯庆典次数", 5, [0, 5, 10, 15, 20])
 @name('刷取星球杯1')
 @default(False)
 class starcup1_sweep(starcup_sweep):

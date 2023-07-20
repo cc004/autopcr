@@ -29,7 +29,7 @@ class smart_normal_sweep(Module):
                 'max_rank-1': db.equip_max_rank - 1,
                 'max_rank-2': db.equip_max_rank - 2,
             }
-            require_equip = client.data.get_equip_demand(start_rank = opt[self.get_config('smart_normal_sweep_unit')])
+            require_equip = client.data.get_equip_demand(start_rank = opt[self.get_config('normal_sweep_consider_unit')])
 
         clean_cnt = Counter()
         quest_id = []

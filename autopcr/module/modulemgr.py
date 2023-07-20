@@ -174,7 +174,7 @@ class ModuleManager:
             raise(e)
 
     async def do_daily(self):
-        await self.do_task(self.modules)
+        return await self.do_task(self.modules)
 
     async def do_task(self, modules: List[Module]):
         result: Dict[str, Dict[str, str]] = {}
