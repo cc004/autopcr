@@ -55,22 +55,20 @@ async def draw_line(data: list, alian: str):
 
 async def draw(data: dict, alian: str):
     tmp = {
-            # "id": [],
-            # "name": [],
-            "desc": [],
-            "value": [],
+            "name": [],
+            "config": [],
             "status": [],
             "result": [],
             }
-    for _, value in data.items():
-        # tmp["id"].append(key)
-        # tmp["name"].append(value['name'])
-        if value['msg'] == "功能未启用":
+    result = data['result']
+    for key in data['ordered']:
+        value = result[key]
+        if value['log'] == "功能未启用":
             continue
-        tmp["desc"].append(value['desc'])
-        tmp["value"].append(value['value'])
+        tmp["name"].append(value['name'])
+        tmp["config"].append(value['config'].replace("\n", "<br />"))
         tmp["status"].append(value['status'])
-        tmp["result"].append(value['msg'].replace("\n", "<br />"))
+        tmp["result"].append(value['log'].replace("\n", "<br />"))
 
     df = pd.DataFrame(tmp)
     df = df.style.applymap(hightlight_rule, subset=['status']).set_table_styles([{'selector' : 'thead tr', 'props' : [('background-color', '#F5F5D5!important')]}, {'selector' : 'tr:nth-child(odd)', 'props' : [('background-color', '#E0E0FF')]}, {'selector' : 'tr:nth-child(even)', 'props' : [('background-color', '#F8F8F8')]}])

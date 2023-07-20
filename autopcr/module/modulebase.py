@@ -15,16 +15,6 @@ def description(desc: str):
 def name(desc: str):
     return lambda cls:_wrap_init(cls, lambda self: setattr(self, 'name', desc))
 
-def booltype(cls):
-    old = cls.do_task
-    async def do_task(self, client: pcrclient):
-        if self.get_config(cls.key):
-            return await old(self, client)
-        else:
-            raise SkipError('功能未启用')
-    cls.do_task = do_task
-    return cls
-
 def notimplemented(cls):
     return _wrap_init(cls, lambda self: setattr(self, 'implmented', False))
 
@@ -48,12 +38,18 @@ class Module:
     async def do_from(self, client: pcrclient):
         result = {
                 "name": self.name,
+                "config": '\n'.join([f"{self.config[key].desc}: {self.get_config_str(key)}" for key in self.config]),
                 "status": "",
                 "log" : "",
                 }
         try:
             self.log.clear()
-            await self.do_task(client)
+
+            if self.get_config(self.key):
+                await self.do_task(client)
+            else:
+                raise SkipError('功能未启用')
+
             result["status"] = "success"
         except SkipError as e:
             result["log"] = str(e)
@@ -72,6 +68,12 @@ class Module:
 
     def cron_hook(self) -> int:
         return None
+
+    def get_config_str(self, key) -> str:
+        value = self.get_config(key)
+        if isinstance(value, list):
+            value = ','.join(map(str, value))
+        return str(value)
 
     def get_config(self, key):
         if key == self.key:

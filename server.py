@@ -188,12 +188,19 @@ async def timing():
     data = await get_info()
     bot = hoshino.get_bot()
     loop = asyncio.get_event_loop()
+
+    def run(config):
+        for key in [key for key in config if key.startswith("cron")]:
+            enable = config[key]
+            time = config["time_" + key]
+            clan_battle_run = config["clan_battle_run_" + key]
+            if enable and time == now and (not db.is_clan_battle_time() or clan_battle_run):
+                return True
+        return False
+
     for user_id, configs in data.items():
         for config, target in configs:
-            if "time1" not in config or "time2" not in config:
-                continue
-            if config['time1open'] and config['time1'] == now or  \
-            config['time2open'] and config['time2'] == now and not db.is_clan_battle_time():
+            if run(config):
 
                 alian = escape(config['alian'])
                 token = (alian, target)
@@ -204,13 +211,6 @@ async def timing():
                 inqueue.add(token)
 
                 loop.create_task(consumer(DailyClean(token, bot, None, user_id, gid)))
-
-@sv.on_fullmatch("#cron")
-async def check_schedule(bot, ev):
-    if db.is_clan_battle_time():
-        await bot.finish(ev, "当前处于会战期间，定时任务2暂停")
-    else:
-        await bot.finish(ev, "当前不处于会战期间，定时任务2正常运行")
 
 @sv.on_fullmatch("#清日常所有")
 @pre_process_all

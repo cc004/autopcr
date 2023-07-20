@@ -1,6 +1,6 @@
 from ..model.common import ItemType
 from ..core.pcrclient import pcrclient
-from typing import List, Dict
+from typing import List, Dict, Union
 from ..model.error import *
 from ..db.database import db
 from ..model.enums import *
@@ -177,16 +177,18 @@ class ModuleManager:
         return await self.do_task(self.modules)
 
     async def do_task(self, modules: List[Module]):
-        result: Dict[str, Dict[str, str]] = {}
+        resp: Dict[str, Union[List[str], Dict[str, Dict[str, str]]]] = {}
+        resp['ordered'] = [m.key for m in modules]
+        resp['result'] = {}
         try:
             client = self.client
             await client.login()
             for module in modules:
-                result[module.__class__.__name__] = await module.do_from(client)
+                resp['result'][module.__class__.__name__] = await module.do_from(client)
         except Exception as e:
             traceback.print_exc()
             raise(e)
         finally:
-            self.data['_last_result'] = result
-        return result
+            self.data['_last_result'] = resp['result']
+        return resp
 
