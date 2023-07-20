@@ -2,9 +2,8 @@ from abc import abstractclassmethod
 from nonebot import MessageSegment
 from hoshino.typing import MessageSegment
 
-from .autopcr.module.modulebase import ModuleManager
 from .autopcr.module.accountmgr import instance as accountmgr
-from ._util import draw, draw_line, render_forward_msg
+from ._util import draw, render_forward_msg
 
 class Task():
     def __init__(self, token, bot, ev, qid = None, gid = None):
@@ -24,9 +23,13 @@ class QuestRecommand(Task):
     async def do_task(self):
         alian, target, bot, ev, qid, gid = self.info 
         try:
+            config = {
+                    "start_rank" : self.start_rank,
+                    "like_unit_only": self.like_unit_only
+            }
             async with accountmgr.load(target) as mgr:
-                resp = await mgr.get_normal_quest_recommand(self.start_rank, self.like_unit_only)
-            img = await draw_line(resp, alian)
+                resp = await mgr.do_from_key(config, ['get_library_import_data'])
+            img = await draw(resp, alian)
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
         except Exception as e:
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + str(e))
@@ -40,9 +43,13 @@ class FindEquip(Task):
     async def do_task(self):
         alian, target, bot, ev, qid, gid = self.info 
         try:
+            config = {
+                    "start_rank" : self.start_rank,
+                    "like_unit_only": self.like_unit_only
+            }
             async with accountmgr.load(target) as mgr:
-                resp = await mgr.get_need_equip(self.start_rank, self.like_unit_only)
-            img = await draw_line(resp, alian)
+                resp = await mgr.do_from_key(config, ['get_need_equip'])
+            img = await draw(resp, alian)
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
         except Exception as e:
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + str(e))
@@ -52,7 +59,7 @@ class GetLibraryImport(Task):
         alian, target, bot, ev, qid, gid = self.info 
         try:
             async with accountmgr.load(target) as mgr:
-                resp = await mgr.get_library_import_data()
+                resp = await mgr.do_from_key({}, ["get_library_import_data"])
             msg = render_forward_msg([resp])
             await bot.send_group_forward_msg(group_id=ev.group_id, messages=msg)
         except Exception as e:
@@ -63,8 +70,8 @@ class FindXinsui(Task):
         alian, target, bot, ev, qid, gid = self.info
         try:
             async with accountmgr.load(target) as mgr:
-                resp = await mgr.get_need_xinsui()
-            img = await draw_line(resp, alian)
+                resp = await mgr.do_from_key({}, ["get_need_xinsui"])
+            img = await draw(resp, alian)
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
         except Exception as e:
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + str(e))
@@ -74,8 +81,8 @@ class FindMemory(Task):
         alian, target, bot, ev, qid, gid = self.info
         try:
             async with accountmgr.load(target) as mgr:
-                resp = await mgr.get_need_memory()
-            img = await draw_line(resp, alian)
+                resp = await mgr.do_from_key({}, ["get_library_import_data"])
+            img = await draw(resp, alian)
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
         except Exception as e:
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + str(e))
