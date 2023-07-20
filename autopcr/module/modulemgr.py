@@ -99,6 +99,7 @@ class ModuleManager:
         return await self.do_task(self.client.keys, self.daily_modules)
 
     async def do_from_key(self, config: dict, keys: List[str]):
+        config.update({key: True for key in keys})
         modules = [self.name_to_modules[m] for m in keys]
         return await self.do_task(config, modules)
 
