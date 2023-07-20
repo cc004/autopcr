@@ -1,11 +1,6 @@
 <!DOCTYPE html>
 <html>
 
-<!-- TODO -->
-<!-- 值更新 -->
-<!-- put的js -->
-<!-- 公共变量特殊背景颜色标识 -->
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,6 +11,11 @@
     <style>
         body {
             background-color: #f8f9fa;
+        }
+
+        .card {
+            margin-top: 2%;
+            margin-bottom: 2%;
         }
 
         .cart-area {
@@ -92,7 +92,7 @@
                             </div>
                             <small id="account-description" class="form-text form-text-red">注意：本服务需要存储您的用户名和密码以正常运行。若不同意存储，请勿使用。</small>
                             <div class="button-group" style="margin-top: 0px;">
-                                <button type="button" class="btn btn-primary" id="login" onclick="selectOnChange()">保存配置信息</button>
+                                <button type="button" class="btn btn-primary" id="login" onclick="update_new()">保存配置信息</button>
                                 <button type="button" class="btn btn-primary" id="do_task" onclick="do_task()">执行清日常</button>
                                 <button type="button" class="btn btn-primary" id="library_import" onclick="library_import()">生成兰德索尔图书馆导入文本</button>
                                 <button type="button" class="btn btn-danger" id="delete_config" onclick="delete_config()">删除账号信息</button>
@@ -200,6 +200,7 @@
     <script type="text/javascript" charset="utf-8">
         
         var user_config = {}
+        var share_key = {}
 
         $(document).ready(function () {
             $.ajax({
@@ -212,7 +213,7 @@
                     $("#qq").val(ret.qq);
                     $("#username").val(ret.username);
                     $("#password").val(ret.password);
-                    res = ret.last_result;
+                    result = ret.last_result;
                     user_config = ret.config;
                     ret = ret.data;
 
@@ -221,7 +222,18 @@
 
                         ta_tab.append(make_card(val)); //添加一列
                     }
-                    load_result(res);
+
+                    for (let key in share_key){
+                        if (share_key[key] > 1){
+                            $(`[name=${key}]`).css({
+                                'border-color': get_random_color(),
+                                'border-width': "3px"
+                            });
+                        }
+                    }
+
+                    load_result(result);
+
                 },
                 error: function (ret) {
                     suspend("alert-danger", "获取配置失败");
@@ -231,7 +243,7 @@
         );
 
         function get_single_html(config) {
-            let res = `<select class="custom-select" id=${config.key} onchange="selectOnChange(this)">`;
+            let res = `<select class="custom-select" id=${config.key} name=${config.key} onchange="selectOnChange(this)">`;
             for (let i = 0; i < config.candidates.length; i++) res += `<option value='${config.candidates[i]}' ${user_config[config.key] == config.candidates[i] ? "selected" : ""}>${config.candidates[i]}</option>`;
             res += "</select>";
             return res;
@@ -242,18 +254,46 @@
         }
 
         function get_int_html(config) {
-            return `<input type="text" id=${config.key} value=${user_config[config.key]} class="form-control" placeholder=${config.candidates[0]}-${config.candidates[config.candidates.length-1]}`;
+            return `<input type="text" id=${config.key} name=${config.key} value=${user_config[config.key]} onchange="selectOnChange(this)" class="form-control" placeholder=${config.candidates[0]}-${config.candidates[config.candidates.length-1]}`;
         }
+
         function get_multi_html(config) {
-            let res = `<select class="custom-select" multiple id=${config.key} onchange="selectOnChange(this)">`;
-            for (let i = 0; i < config.candidates.length; i++) res += `<option value='${config.candidates[i]}' ${user_config[config.key] == config.candidates[i] ? "selected" : ""}>${config.candidates[i]}</option>`;
+            let res = `<select class="custom-select" multiple id=${config.key} name=${config.key} onchange="selectMultiOnChange(this)">`;
+            for (let i = 0; i < config.candidates.length; i++) res += `<option value='${config.candidates[i]}' ${user_config[config.key].includes(config.candidates[i]) ? "selected" : ""}>${config.candidates[i]}</option>`;
             res += "</select>";
             return res;
         }
         function get_time_html(config) {
-            return `<input type="time" class="form-control" id=${config.key} value=${user_config[config.key]} onchange="selectOnChange(this)" />`;
+            return `<input type="time" class="form-control" id=${config.key} name=${config.key} value=${user_config[config.key]} onchange="selectOnChange(this)" />`;
         }
 
+        function selectOnChange(e) {
+            const key = e.id;
+            let value = e.value;
+            const intValue = parseInt(value)
+            if (!isNaN(intValue))
+                value = intValue;
+            user_config[key] = value;
+            $(`[name=${key}]`).val(value);
+            update_new();
+        }
+
+        function selectMultiOnChange(e) {
+            const key = e.id;
+            let value = Array.from(e.selectedOptions).map(option => option.value);
+            const intValue = value.map(option => parseInt(option))
+            if (intValue.length != 0 && !isNaN(intValue[0]))
+                value = intValue;
+            user_config[key] = value;
+            update_new();
+        }
+
+        function checkboxOnclick(checkbox) {
+            const key = checkbox.id;
+            const value = checkbox.checked;
+            user_config[key] = value;
+            update_new();
+        }
 
         function generate_option_HTML(config){
             
@@ -282,14 +322,15 @@
         }
 
         function generate_config_HTML(config){
+            share_key[config.key] = (share_key[config.key] || 0) + 1;
             let configHTML = '';
             configHTML += `
-                <div class="mb-3">
+                <div class="mb-3" name=${config.key}_card>
                   <h6>${config.desc}</h6>
                   ${generate_option_HTML(config)}
                 </div>
               `;
-              return configHTML;
+            return configHTML;
         }
 
         function make_card(m) {
@@ -297,19 +338,31 @@
             let functionHTML = `
                   <div id=card_${m.key} class="card">
                     <div class="card-header">
-                      <h5 class="mb-0"> <input type="checkbox" class="switch" ${user_config[m.key] ? 'checked="checked"' : ""} id=${m.key} name=${m.key} onclick="checkboxOnclick(this)" /> ${m.name} </h5>
+                      <h5 class="mb-0" > <input type="checkbox" class="switch" ${user_config[m.key] ? 'checked="checked"' : ""} id=${m.key} name=${m.key} onclick="checkboxOnclick(this)"  data-bs-toggle="collapse" data-bs-target="#${m.key}_config" /> ${m.name} </h5>
                     </div>
-                    <div class="card-body">
-                      ${m.description}
             `;
+        if (m.description.length !== 0){
+            functionHTML += `
+                <div class="card-body">
+                      ${m.description}
+                </div>
+              `
+        }
 
-            console.log(m)
+        if (Object.keys(m.config).length !== 0){
+            functionHTML += `<div role="ul" class="list-group list-group-flush collapse ${user_config[m.key] ? 'show' : ''}" id=${m.key}_config } >`
             for (const key in m.config) {
+                functionHTML += "<li class='list-group-item'>";
                 functionHTML += generate_config_HTML(m.config[key]);
+                functionHTML += "</li>";
             }
+            functionHTML += "</div>"
+        }
 
             functionHTML += `
-                        </div>
+                <div class="card-footer" id=${m.key}_result>
+                    无执行结果
+                </div>
                     </div>
             `;
 
@@ -317,11 +370,10 @@
 
         }
 
-        
         function load_result(ret) {
-            for (id in ret) {
-                let name = ret[id]['name']
-                $(`#result_${name}`).html(ret[id]["msg"].replace(/\n/g, '<br>'))
+            for (key in ret) {
+                $(`#${key}_result`).html(ret[key]["log"].replace(/\n/g, '<br>'))
+                $(`#${key}_result`).css("background-color", status_color(ret[key]['status']));
             }
         }
 
@@ -381,7 +433,7 @@
                     // <!-- prompt(JSON.stringify(ret), "alert-success", 60000); -->
                     suspend("alert-success", "清日常任务执行完毕。");
                     $("#do_task").attr('disabled', false);
-                    load_result(ret);
+                    load_result(ret['result']);
                 },
                 error: function (ret) {
                     suspend("alert-danger", "执行任务失败: " + ret.responseText);
@@ -390,17 +442,6 @@
             })
         }
 
-        function selectOnChange() {
-            update_new();
-        }
-
-        function checkboxOnclick(checkbox) {
-            const key = checkbox.id;
-            const value = checkbox.checked;
-            user_config[key] = value;
-
-            update_new();
-        }
 
         function update_new() {
             let config = {}; // 可以用referrer解决问题
@@ -409,11 +450,8 @@
             config['qq'] = $("#qq").val();
             config['username'] = $("#username").val();
             config['password'] = $("#password").val();
+            config['config'] = user_config;
 
-            while ($(`#name${id}`).length) {
-                config[$(`#name${id}`).text()] = ($(`#enum${id} option:selected`).length ? $(`#enum${id} option:selected`).text() : $(`[id^=bool${id}]`)[0].checked);
-                id += 1;
-            }
             $.ajax({
                 url: "/daily/api/config" + window.location.search,
                 type: "put",
@@ -433,6 +471,35 @@
                 },
             });
         }
+
+        function get_random_color() {
+          const letters = "0123456789ABCDEF";
+          let color = "#";
+
+          for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+          }
+
+          return color;
+        }
+
+         function status_color(status){
+             switch (status){
+             case "success":
+                return "#e1ffb5";
+                 break;
+             case "skip":
+                return "#c8d6fa";
+                 break;
+             case "abort":
+                return "#FFFF00";
+                 break;
+             case "error":
+                 return "#FFFFFF";
+                 break;
+             }
+         }
+
     </script>
     <script>
         function copyToClipboard() {
