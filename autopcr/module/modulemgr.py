@@ -53,25 +53,23 @@ class ModuleManager:
     def update_config(self, data):
         self._load_from(data)
 
-    def generate_config(self):
+    def generate_info(self, modules: List[Module]):
         return {
-            # 'username': self.data['username'],
-            # 'password': self.data['password'],
             'alian': self.data['alian'],
             'qq': "",
             'username': "",
             'password': "",
-            'config': {**{key: m.get_config(key) for m in self.daily_modules for key in m.config}, **{m.key: m.get_config(m.key) for m in self.daily_modules}},
-            'data': [m.generate_info() for m in self.daily_modules],
+            'config': {**{key: m.get_config(key) for m in modules for key in m.config}, **{m.key: m.get_config(m.key) for m in modules}},
+            'order': [m.key for m in modules],
+            'data': {m.key: m.generate_info() for m in modules},
             'last_result': self.data.get('_last_result', None)
         }
 
+    def generate_daily_info(self):
+        return self.generate_info(self.daily_modules)
+
     def generate_tools_info(self):
-        return {
-            'alian': self.data['alian'],
-            'config': {key: m.get_config(key) for m in self.tool_modules for key in m.config},
-            'data': [m.generate_info() for m in self.tool_modules],
-        }
+        return self.generate_info(self.tool_modules)
     
     async def do_cron(self, hour):
         if hour in self._crons:
@@ -107,7 +105,7 @@ class ModuleManager:
         self.client.keys = config
 
         resp: Dict[str, Union[List[str], Dict[str, Dict[str, str]]]] = {}
-        resp['ordered'] = [m.key for m in modules]
+        resp['order'] = [m.key for m in modules]
         resp['result'] = {}
         try:
             client = self.client

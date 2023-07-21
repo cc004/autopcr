@@ -215,10 +215,11 @@
                     $("#password").val(ret.password);
                     result = ret.last_result;
                     user_config = ret.config;
-                    ret = ret.data;
+                    const data = ret.data;
+					const module = ret.order;
 
-                    for (let i = 0; i < ret.length; ++i) {
-                        let val = ret[i];
+                    for (let i = 0; i < module.length; ++i) {
+                        let val = data[module[i]];
 
                         ta_tab.append(make_card(val)); //添加一列
                     }
@@ -382,7 +383,7 @@
             suspend("alert-info", "已开始执行任务。");
             let config = {
                 config: {},
-                data: "get_library_import_data"
+                order: ["get_library_import_data"]
             }
             $.ajax({
                 url: '/daily/api/do_single' + window.location.search,
