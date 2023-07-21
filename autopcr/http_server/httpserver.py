@@ -35,7 +35,7 @@ class HttpServer:
         @self.app.route('/api/config', methods = ['GET'])
         @HttpServer.wrapaccount
         async def get_config(mgr: ModuleManager):
-            return mgr.generate_config()
+            return mgr.generate_daily_info()
 
         @self.app.route('/api/config', methods = ['PUT'])
         @HttpServer.wrapaccount
@@ -105,8 +105,8 @@ class HttpServer:
         async def do_single(mgr: ModuleManager):
             data = await request.get_json()
             config = data['config']
-            module = data['data']
-            return await mgr.do_from_key(config, [module])
+            module = data['order'] # list
+            return await mgr.do_from_key(config, module)
 
         # frontend
         @self.app.route('/', methods = ['GET'])
