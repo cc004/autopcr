@@ -11,8 +11,14 @@ from .sweep import *
 from .tower import *
 from .tools import *
 
-daily_modules = [
+cron_modules = [
     cron1,
+    cron2,
+    cron3,
+    cron4,
+]
+
+daily_modules = [
     chara_fortune,
     mission_receive_first,
     clan_like,

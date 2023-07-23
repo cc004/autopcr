@@ -11,7 +11,8 @@ class ModuleManager:
 
     def __init__(self, filename):
         self._filename = filename
-        from .modules import daily_modules, tool_modules
+        from .modules import daily_modules, tool_modules, cron_modules
+        self.cron_modules: List[Module] = [m(self) for m in cron_modules]
         self.daily_modules: List[Module] = [m(self) for m in daily_modules]
         self.tool_modules: List[Module] = [m(self) for m in tool_modules]
         self.name_to_modules: Dict[str, Module] = {m.key: m for m in (self.daily_modules + self.tool_modules)}
@@ -66,7 +67,7 @@ class ModuleManager:
         }
 
     def generate_daily_info(self):
-        return self.generate_info(self.daily_modules)
+        return self.generate_info(self.cron_modules + self.daily_modules)
 
     def generate_tools_info(self):
         return self.generate_info(self.tool_modules)
