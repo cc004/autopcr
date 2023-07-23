@@ -233,7 +233,7 @@
                         }
                     }
 
-                    load_results(result);
+                    load_results(module, result);
 
                 },
                 error: function (ret) {
@@ -271,9 +271,8 @@
         function selectOnChange(e) {
             const key = e.id;
             let value = e.value;
-            const intValue = parseInt(value)
-            if (!isNaN(intValue))
-                value = intValue;
+			if (isDigit(value))
+                value = parseInt(value);
             user_config[key] = value;
             $(`[name=${key}]`).val(value);
             update_new();
@@ -374,12 +373,15 @@
         }
 
 		function load_result(ret, key){
-			$(`#${key}_result`).html(ret[key]["log"].replace(/\n/g, '<br>'))
-			$(`#${key}_result`).css("background-color", status_color(ret[key]['status']));
+			if (ret.hasOwnProperty(key)){
+				$(`#${key}_result`).html(ret[key]["log"].replace(/\n/g, '<br>'))
+				$(`#${key}_result`).css("background-color", status_color(ret[key]['status']));
+			}
 		}
 
-        function load_results(ret) {
-            for (key in ret) {
+        function load_results(module, ret) {
+			for (let i = 0; i < module.length; ++i) {
+				let key = module[i];
 				load_result(ret, key);
             }
         }
@@ -398,7 +400,7 @@
                 contentType: "application/json;charset=utf-8",
                 data: JSON.stringify(config),
                 success: function (ret) {
-					load_results(ret.result);
+					load_results(ret.order, ret.result);
 					$(`[flag=${flag}]`).attr('disabled', false);
                     suspend("alert-success", "任务执行成功！");
                 },
@@ -448,7 +450,7 @@
                     // <!-- prompt(JSON.stringify(ret), "alert-success", 60000); -->
                     suspend("alert-success", "清日常任务执行完毕。");
 					$(`[flag=${flag}]`).attr('disabled', false);
-                    load_results(ret['result']);
+                    load_results(ret.order, ret.result);
                 },
                 error: function (ret) {
                     suspend("alert-danger", "执行任务失败: " + ret.responseText);
@@ -542,6 +544,15 @@
 			var targetURL = '/daily/tools.html';
 			var urlWithParams = targetURL + '?' + currentURL.split('?')[1];
 			window.location.href = urlWithParams;
+		}
+
+		function isDigit(str) {
+		  for (var i = 0; i < str.length; i++) {
+			if (isNaN(parseInt(str[i]))) {
+			  return false; // 包含非数字字符
+			}
+		  }
+		  return true; // 不包含非数字字符
 		}
 
     </script>
