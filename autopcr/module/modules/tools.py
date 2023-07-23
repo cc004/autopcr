@@ -21,7 +21,7 @@ class get_library_import_data(Module):
 class get_need_memory(Module):
     async def do_task(self, client: pcrclient):
         demand = list(client.data.get_memory_demand_gap().items())
-        demand = sorted(demand, key=lambda x: x[1])
+        demand = sorted(demand, key=lambda x: x[1], reverse=True)
 
         msg = '\n'.join([f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片' for item in demand])
         self._log(msg)
