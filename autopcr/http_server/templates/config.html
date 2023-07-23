@@ -93,8 +93,8 @@
                             <small id="account-description" class="form-text form-text-red">注意：本服务需要存储您的用户名和密码以正常运行。若不同意存储，请勿使用。</small>
                             <div class="button-group" style="margin-top: 0px;">
                                 <button type="button" class="btn btn-primary" id="login" onclick="update_new()">保存配置信息</button>
-                                <button type="button" class="btn btn-primary" id="do_task" onclick="do_task()">执行清日常</button>
-                                <button type="button" class="btn btn-primary" id="library_import" onclick="library_import()">生成兰德索尔图书馆导入文本</button>
+                                <button type="button" class="btn btn-primary" id="do_task" flag="run_once" onclick="do_task(this)">执行清日常</button>
+                                <button type="button" class="btn btn-primary" id="tools" onclick="to_tools()"">实用查询</button>
                                 <button type="button" class="btn btn-danger" id="delete_config" onclick="delete_config()">删除账号信息</button>
                             </div>
                             <div id="msg-group" style="margin-top: 4px; margin-bottom: 8px">
@@ -204,7 +204,7 @@
 
         $(document).ready(function () {
             $.ajax({
-                url: "/daily/api/config" + window.location.search,
+				url: "/daily/api/{{ url }}" + window.location.search,
                 type: "get",
                 processData: false,
                 success: function (ret) {
@@ -233,7 +233,7 @@
                         }
                     }
 
-                    load_result(result);
+                    load_results(result);
 
                 },
                 error: function (ret) {
@@ -339,7 +339,9 @@
             let functionHTML = `
                   <div id=card_${m.key} class="card">
                     <div class="card-header">
-                      <h5 class="mb-0" > <input type="checkbox" class="switch" ${user_config[m.key] ? 'checked="checked"' : ""} id=${m.key} name=${m.key} onclick="checkboxOnclick(this)"  data-bs-toggle="collapse" data-bs-target="#${m.key}_config" /> ${m.name} </h5>
+                      <h5 class="mb-0" > <input type="checkbox" class="switch" ${user_config[m.key] ? 'checked="checked"' : ""} id=${m.key} name=${m.key} onclick="checkboxOnclick(this)"  data-bs-toggle="collapse" data-bs-target="#${m.key}_config" /> ${m.name} 
+					<button type="button" id=${m.key}_do_single name=${m.key} flag="run_once" class="btn btn-secondary" onclick="do_single(this)">单项执行</button>
+				</h5>
                     </div>
             `;
         if (m.description.length !== 0){
@@ -371,11 +373,40 @@
 
         }
 
-        function load_result(ret) {
+		function load_result(ret, key){
+			$(`#${key}_result`).html(ret[key]["log"].replace(/\n/g, '<br>'))
+			$(`#${key}_result`).css("background-color", status_color(ret[key]['status']));
+		}
+
+        function load_results(ret) {
             for (key in ret) {
-                $(`#${key}_result`).html(ret[key]["log"].replace(/\n/g, '<br>'))
-                $(`#${key}_result`).css("background-color", status_color(ret[key]['status']));
+				load_result(ret, key);
             }
+        }
+
+        function do_single(e) {
+			const flag = e.getAttribute('flag');
+			$(`[flag=${flag}]`).attr('disabled', true);
+            suspend("alert-info", "已开始执行任务。");
+            let config = {
+                config: user_config,
+                order: [e.name]
+            }
+            $.ajax({
+                url: '/daily/api/do_single' + window.location.search,
+                type: 'post',
+                contentType: "application/json;charset=utf-8",
+                data: JSON.stringify(config),
+                success: function (ret) {
+					load_results(ret.result);
+					$(`[flag=${flag}]`).attr('disabled', false);
+                    suspend("alert-success", "任务执行成功！");
+                },
+                error: function (ret) {
+                    suspend("alert-danger", "执行任务失败: " + ret.responseText);
+					$(`[flag=${flag}]`).attr('disabled', false);
+                }
+            })
         }
 
         function library_import() {
@@ -405,31 +436,9 @@
             })
         }
 
-        function delete_config() {
-
-            var confirmed = confirm('确定要删除该账号？该操作不可撤销！');
-
-            if (confirmed){
-                $("#delete_config").attr('disabled', true);
-                suspend("alert-info", "已开始执行任务。");
-                $.ajax({
-                    url: '/daily/api/config' + window.location.search,
-                    type: 'delete',
-                    processData: false,
-                    success: function (ret) {
-                        suspend("alert-success", "删除账号成功！");
-                        window.location.href = "/daily/";
-                    },
-                    error: function (ret) {
-                        suspend("alert-danger", "删除账号失败: " + ret.responseText);
-                        $("#delete_config").attr('disabled', false);
-                    }
-                })
-            }
-        }
-
-        function do_task() {
-            $("#do_task").attr('disabled', true);
+        function do_task(e) {
+			const flag = e.getAttribute('flag');
+			$(`[flag=${flag}]`).attr('disabled', true);
             suspend("alert-info", "已开始执行清日常任务。");
             $.ajax({
                 url: '/daily/api/do_task' + window.location.search,
@@ -438,18 +447,40 @@
                 success: function (ret) {
                     // <!-- prompt(JSON.stringify(ret), "alert-success", 60000); -->
                     suspend("alert-success", "清日常任务执行完毕。");
-                    $("#do_task").attr('disabled', false);
-                    load_result(ret['result']);
+					$(`[flag=${flag}]`).attr('disabled', false);
+                    load_results(ret['result']);
                 },
                 error: function (ret) {
                     suspend("alert-danger", "执行任务失败: " + ret.responseText);
-                    $("#do_task").attr('disabled', false);
+					$(`[flag=${flag}]`).attr('disabled', false);
                 }
             })
         }
 
+			function delete_config() {
 
-        function update_new() {
+				var confirmed = confirm('确定要删除该账号？该操作不可撤销！');
+
+				if (confirmed){
+					$("#delete_config").attr('disabled', true);
+					suspend("alert-info", "已开始执行任务。");
+					$.ajax({
+						url: '/daily/api/config' + window.location.search,
+						type: 'delete',
+						processData: false,
+						success: function (ret) {
+							suspend("alert-success", "删除账号成功！");
+							window.location.href = "/daily/";
+						},
+						error: function (ret) {
+							suspend("alert-danger", "删除账号失败: " + ret.responseText);
+							$("#delete_config").attr('disabled', false);
+						}
+					})
+				}
+			}
+
+		function update_new() {
             let config = {}; // 可以用referrer解决问题
             id = 1;
             config['alian'] = $("#alian").val();
@@ -459,7 +490,7 @@
             config['config'] = user_config;
 
             $.ajax({
-                url: "/daily/api/config" + window.location.search,
+				url: "/daily/api/{{ url }}" + window.location.search,
                 type: "put",
                 data: JSON.stringify(config),
                 contentType: "application/json;charset=utf-8",
@@ -505,6 +536,13 @@
                  break;
              }
          }
+
+		function to_tools(){
+			var currentURL = window.location.href;
+			var targetURL = '/daily/tools.html';
+			var urlWithParams = targetURL + '?' + currentURL.split('?')[1];
+			window.location.href = urlWithParams;
+		}
 
     </script>
     <script>

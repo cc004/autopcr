@@ -58,6 +58,13 @@ class HttpServer:
 
             return {"statusCode": 200}, 200
 
+        @self.app.route('/api/tools', methods = ['PUT'])
+        @HttpServer.wrapaccount
+        async def update_tools(mgr: ModuleManager):
+            # save TODO
+
+            return {"statusCode": 200}, 200
+
         @self.app.route('/api/config', methods = ['DELETE'])
         async def delete_config():
 
@@ -115,8 +122,11 @@ class HttpServer:
         
         @self.app.route('/config.html', methods = ['GET'])
         async def config():
-            return await render_template('config.html')
-        
+            return await render_template('config.html', url="config")
+
+        @self.app.route('/tools.html', methods = ['GET'])
+        async def tools():
+            return await render_template('config.html', url="tools")
 
     def run_forever(self, loop):
         self.quart.register_blueprint(self.app)
