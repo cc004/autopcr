@@ -75,6 +75,7 @@ class smart_normal_sweep(Module):
 
 
 @inttype('sweep_recover_stamina_times', "被动恢复体力数", 0, [i for i in range(41)])
+@singlechoice('hard_sweep_consider_unit_order', "刷取顺序", "缺口少优先", ["缺口少优先", "缺口大优先"])
 @multichoice("hard_sweep_run_time", "执行条件", ["h庆典"], ["h庆典", "非n庆典", "总是执行"])
 @description('根据记忆碎片缺口刷hard图')
 @name('智能刷hard图')
@@ -92,7 +93,8 @@ class smart_hard_sweep(Module):
         if not need_list:
             raise SkipError("不存在缺乏的记忆碎片")
 
-        need_list = sorted(need_list, key=lambda x: x[1])
+        reverse = True if self.get_config('hard_sweep_consider_unit_order') == '缺口大优先' else False
+        need_list = sorted(need_list, key=lambda x: x[1], reverse=reverse)
         stop = False
         for token, _ in need_list:
             if token[1] not in db.memory_quest:

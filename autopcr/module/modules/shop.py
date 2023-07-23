@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from typing import List
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
@@ -27,7 +28,7 @@ class shop_buyer(Module):
     @abstractmethod
     def reset_count(self) -> int: ...
     @abstractmethod
-    def buy_kind(self) -> list[str]: ...
+    def buy_kind(self) -> List[str]: ...
 
     async def _get_shop(self, client: pcrclient):
         res = await client.get_shop_item_list()
@@ -103,7 +104,7 @@ class normal_shop(shop_buyer):
     def coin_limit(self) -> int: return self.get_config('normal_shop_buy_coin_limit')
     def system_id(self) -> eSystemId: return eSystemId.NORMAL_SHOP
     def reset_count(self) -> int: return self.get_config('normal_shop_reset_count')
-    def buy_kind(self) -> list[str]: return self.get_config('normal_shop_buy_kind')
+    def buy_kind(self) -> List[str]: return self.get_config('normal_shop_buy_kind')
 
 @multichoice("limit_shop_buy_kind", "购买种类", ['经验药水', '装备'], ['经验药水', '装备'])
 @singlechoice('limit_shop_buy_coin_limit', "货币停止阈值", 5000000, [0, 5000000, 10000000, 20000000])
@@ -116,7 +117,7 @@ class limit_shop(shop_buyer):
     def coin_limit(self) -> int: return self.get_config('limit_shop_buy_coin_limit')
     def system_id(self) -> eSystemId: return eSystemId.LIMITED_SHOP
     def reset_count(self) -> int: return 0
-    def buy_kind(self) -> list[str]: return self.get_config('limit_shop_buy_kind')
+    def buy_kind(self) -> List[str]: return self.get_config('limit_shop_buy_kind')
 
 @singlechoice('shop_buy_memory_count_limit', "记忆碎片盈余停止阈值", 0, [0, 10, 20, 120, 270, 9999])
 @singlechoice('shop_buy_equip_count_limit', "装备盈余停止阈值", 0, [0, 20, 50, 100, 200, 500, 9999])
@@ -129,7 +130,7 @@ class underground_shop(shop_buyer):
     def coin_limit(self) -> int: return self.get_config('underground_shop_buy_coin_limit')
     def system_id(self) -> eSystemId: return eSystemId.EXPEDITION_SHOP
     def reset_count(self) -> int: return self.get_config('underground_shop_reset_count')
-    def buy_kind(self) -> list[str]: return self.get_config('underground_shop_buy_kind')
+    def buy_kind(self) -> List[str]: return self.get_config('underground_shop_buy_kind')
 
 @singlechoice('shop_buy_memory_count_limit', "记忆碎片盈余停止阈值", 0, [0, 10, 20, 120, 270, 9999])
 @singlechoice('shop_buy_equip_count_limit', "装备盈余停止阈值", 0, [0, 20, 50, 100, 200, 500, 9999])
@@ -142,7 +143,7 @@ class jjc_shop(shop_buyer):
     def coin_limit(self) -> int: return self.get_config('jjc_shop_buy_coin_limit')
     def system_id(self) -> eSystemId: return eSystemId.ARENA_SHOP
     def reset_count(self) -> int: return self.get_config('jjc_shop_reset_count')
-    def buy_kind(self) -> list[str]: return self.get_config('jjc_shop_buy_kind')
+    def buy_kind(self) -> List[str]: return self.get_config('jjc_shop_buy_kind')
 
 @singlechoice('shop_buy_memory_count_limit', "记忆碎片盈余停止阈值", 0, [0, 10, 20, 120, 270, 9999])
 @singlechoice('shop_buy_equip_count_limit', "装备盈余停止阈值", 0, [0, 20, 50, 100, 200, 500, 9999])
@@ -155,5 +156,5 @@ class pjjc_shop(shop_buyer):
     def coin_limit(self) -> int: return self.get_config('pjjc_shop_buy_coin_limit')
     def system_id(self) -> eSystemId: return eSystemId.GRAND_ARENA_SHOP
     def reset_count(self) -> int: return self.get_config('pjjc_shop_reset_count')
-    def buy_kind(self) -> list[str]: return self.get_config('pjjc_shop_buy_kind')
+    def buy_kind(self) -> List[str]: return self.get_config('pjjc_shop_buy_kind')
 
