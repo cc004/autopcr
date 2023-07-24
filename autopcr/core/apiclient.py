@@ -41,6 +41,9 @@ class ApiException(Exception):
         except ValueError:
             self.result_code = result_code
 
+class NetworkException(Exception):
+    pass
+
 TResponse = TypeVar('TResponse', bound=ResponseBase, covariant=True)
 
 class apiclient(Container["apiclient"]):
@@ -106,11 +109,19 @@ class apiclient(Container["apiclient"]):
         key = apiclient._createkey()
         request.viewer_id = b64encode(apiclient._encrypt(str(self.viewer_id).encode('utf8'), key)).decode('ascii') if request.crypted else str(self.viewer_id)
 
-        response0 = await (await aiorequests.post(self.urlroot + request.url, data=apiclient._pack(request.dict(by_alias=True), key) if request.crypted else
-            request.json(by_alias=True).encode('utf8'), headers=self._headers, timeout=10)).content
+        try:
+            resp = await aiorequests.post(self.urlroot + request.url, data=apiclient._pack(request.dict(by_alias=True), key) if request.crypted else
+                request.json(by_alias=True).encode('utf8'), headers=self._headers, timeout=10)
+            
+            if resp.status_code != 200:
+                raise NetworkException
+            
+            response0 = await resp.content
 
-        response0 = apiclient._unpack(response0)[0] if request.crypted else loads(response0)
-
+            response0 = apiclient._unpack(response0)[0] if request.crypted else loads(response0)
+        except:
+            raise NetworkException
+        
         cls = request.__class__.__orig_bases__[0].__args__[0]
 
         response1 = apiclient._no_null_key(response0)
