@@ -1,5 +1,5 @@
 from collections import Counter
-from .base import Component
+from .base import Component, RequestHandler
 from .apiclient import apiclient
 from ..model.modelbase import *
 from typing import Callable, Coroutine, Any, Set, Dict, Tuple, Union
@@ -310,7 +310,7 @@ class datamgr(Component[apiclient]):
         else:
             raise ValueError(f"未知的商店{shop_id}")
 
-    async def request(self, request: Request[TResponse], next: Callable[[Request[TResponse]], Coroutine[Any, Any, TResponse]]) -> TResponse:
-        resp = await next(request)
+    async def request(self, request: Request[TResponse], next: RequestHandler) -> TResponse:
+        resp = await next.request(request)
         if resp: await resp.update(self, request)
         return resp
