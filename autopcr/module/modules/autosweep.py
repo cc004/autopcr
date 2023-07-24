@@ -17,8 +17,13 @@ import datetime
 class smart_normal_sweep(Module):
 
     async def do_task(self, client: pcrclient):
-        if self.get_config('normal_sweep_run_time') == "n庆典" and not client.data.is_normal_quest_double():
-            raise SkipError("今日非normal庆典，不刷取")
+        run_time = set(self.get_config('normal_sweep_run_time'))
+        if not (
+        "n庆典" in run_time and client.data.is_normal_quest_double()
+        or  "h庆典" in run_time and client.data.is_hard_quest_double()
+        or  "vh庆典" in run_time and client.data.is_very_hard_quest_double()
+        or "总是执行" in run_time):
+            raise SkipError("今日不符合执行条件，不刷取")
 
         if self.get_config('normal_sweep_consider_unit') == 'favorite':
             require_equip = client.data.get_equip_demand(like_unit_only = True)
@@ -76,7 +81,7 @@ class smart_normal_sweep(Module):
 
 @inttype('sweep_recover_stamina_times', "被动恢复体力数", 0, [i for i in range(41)])
 @singlechoice('hard_sweep_consider_unit_order', "刷取顺序", "缺口少优先", ["缺口少优先", "缺口大优先"])
-@multichoice("hard_sweep_run_time", "执行条件", ["h庆典"], ["h庆典", "非n庆典", "总是执行"])
+@singlechoice("hard_sweep_run_time", "执行条件", "h庆典", ["h庆典", "非n庆典", "总是执行"])
 @description('根据记忆碎片缺口刷hard图')
 @name('智能刷hard图')
 @default(False)
@@ -96,33 +101,41 @@ class smart_hard_sweep(Module):
         reverse = True if self.get_config('hard_sweep_consider_unit_order') == '缺口大优先' else False
         need_list = sorted(need_list, key=lambda x: x[1], reverse=reverse)
         stop = False
-        for token, _ in need_list:
-            if token[1] not in db.memory_quest:
-                continue
-            tmp = []
-            for quest in db.memory_quest[token[1]]:
-                max_times = 5 if db.is_shiori_quest(quest.quest_id) else 3
-                try:
-                    resp = await client.quest_skip_aware(quest.quest_id, max_times)
-                    tmp += resp
-                except SkipError:
-                    pass
-                except AbortError as e:
-                    stop = True
-                    if str(e).endswith("体力不足"):
-                        if not tmp and not self.log: self._log(str(e))
-                    else:
-                        if tmp: self._log(await client.serlize_reward(tmp, token))
-                        raise e
+        clean_cnt = Counter()
+        tmp = []
+        try:
+            for token, _ in need_list:
+                for quest in db.memory_quest.get(token, []):
+                    max_times = 5 if db.is_shiori_quest(quest.quest_id) else 3
+                    try:
+                        resp = await client.quest_skip_aware(quest.quest_id, max_times)
+                        clean_cnt[quest.quest_id] += max_times
+                        tmp.extend([item for item in resp if (item.type, item.id) == token]) 
+                    except SkipError:
+                        pass
+                    except AbortError as e:
+                        stop = True
+                        if str(e).endswith("体力不足"):
+                            if not tmp and not self.log: self._log(str(e))
+                        else:
+                            raise e
+                        break
+                if stop:
                     break
+        except:
+            raise 
+        finally:
+            if clean_cnt:
+                msg = '\n'.join((db.quest_name[quest] if quest in db.quest_name else f"未知关卡{quest}") +
+                f": 刷取{cnt}次" for quest, cnt in clean_cnt.items())
+                self._log(msg)
+                self._log("---------")
             if tmp:
-                self._log(await client.serlize_reward(tmp, token))
-            if stop:
-                break
+                self._log(await client.serlize_reward(tmp))
 
 @inttype('sweep_recover_stamina_times', "被动恢复体力数", 0, [i for i in range(41)])
-@singlechoice("vh_sweep_campaign_times", "vh庆典次数", 3, [0, 3, 6])
-@singlechoice("vh_sweep_times", "非vh庆典次数", 3, [0, 3, 6])
+@singlechoice("vh_sweep_campaign_times", "庆典次数", 3, [0, 3, 6])
+@singlechoice("vh_sweep_times", "非庆典次数", 3, [0, 3, 6])
 @description('根据纯净碎片缺口智能刷vh图')
 @name('智能刷very hard图')
 @default(True)

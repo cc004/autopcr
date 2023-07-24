@@ -6,7 +6,7 @@ from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
 
-@singlechoice("underground_sweep", "扫荡策略", "always", ["非地下城庆典留一次数", "总是扫荡"])
+@singlechoice("underground_sweep", "扫荡策略", "总是扫荡", ["非庆典留一次数", "总是扫荡"])
 @description('会选择最高级地下城扫荡，非mana庆典时会自动保留一个次数，但第一次时需手动打一关以完成每日任务')
 @name('地下城扫荡')
 @default(True)
@@ -104,40 +104,40 @@ class starcup_sweep(investigate_sweep):
         else:
             return self.get_config(f'starcup{self.quest_id() % 10}_sweep_campaign_times')
 
-@singlechoice("heart3_sweep_times", "非心碎庆典次数", 5, [0, 5, 10, 15, 20])
-@singlechoice("heart3_sweep_campaign_times", "心碎庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("heart3_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("heart3_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
 @name('刷取心碎3')
 @default(False)
 class xinsui3_sweep(xinsui_sweep):
     def quest_id(self) -> int:
         return 18001003
 
-@singlechoice("heart2_sweep_times", "非心碎庆典次数", 5, [0, 5, 10, 15, 20])
-@singlechoice("heart2_sweep_campaign_times", "心碎庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("heart2_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("heart2_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
 @name('刷取心碎2')
 @default(False)
 class xinsui2_sweep(xinsui_sweep):
     def quest_id(self) -> int:
         return 18001002
 
-@singlechoice("heart1_sweep_times", "非心碎庆典次数", 5, [0, 5, 10, 15, 20])
-@singlechoice("heart1_sweep_campaign_times", "心碎庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("heart1_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("heart1_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
 @name('刷取心碎1')
 @default(False)
 class xinsui1_sweep(xinsui_sweep):
     def quest_id(self) -> int:
         return 18001001
 
-@singlechoice("starcup2_sweep_times", "非星球杯庆典次数", 5, [0, 5, 10, 15, 20])
-@singlechoice("starcup2_sweep_campaign_times", "星球杯庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("starcup2_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("starcup2_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
 @name('刷取星球杯2')
 @default(False)
 class starcup2_sweep(starcup_sweep):
     def quest_id(self) -> int:
         return 19001002
 
-@singlechoice("starcup1_sweep_times", "非星球杯庆典次数", 5, [0, 5, 10, 15, 20])
-@singlechoice("starcup1_sweep_campaign_times", "星球杯庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("starcup1_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("starcup1_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
 @name('刷取星球杯1')
 @default(False)
 class starcup1_sweep(starcup_sweep):

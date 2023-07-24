@@ -39,7 +39,7 @@ class shop_buyer(Module):
 
     async def do_task(self, client: pcrclient):
         lmt = self.coin_limit()
-        reset_cnt = client.keys.get(self.reset_count(), 0)
+        reset_cnt = self.reset_count()
 
         shop_content = await self._get_shop(client)
 
@@ -70,6 +70,7 @@ class shop_buyer(Module):
             cost_gold = sum([item[1] for item in target])
 
             if cost_gold > gold: # 货币不足
+                self._log(f"商店货币{gold}不足购买需求的{cost_gold}，停止购买")
                 break
             
             if slots_to_buy:
@@ -79,6 +80,7 @@ class shop_buyer(Module):
             #     break
 
             if shop_content.reset_count >= reset_cnt:
+                self._log(f"商店已重置{shop_content.reset_count}次，停止购买")
                 break
             
             await client.shop_reset(shop_content.system_id)
@@ -92,10 +94,10 @@ class shop_buyer(Module):
             msg = await client.serlize_reward(result)
             self._log(msg)
 
-@inttype('normal_shop_reset_count', "重置次数(<=20)", 0, [i for i in range(21)])
-@singlechoice('shop_buy_exp_count_limit', "经验药水停止阈值", 0, [0, 100, 500, 1000, 2000, 5000, 99999])
-@singlechoice('shop_buy_equip_upper_count_limit', "强化石停止阈值", 0, [0, 100, 500, 1000, 2000, 5000, 9999])
+@singlechoice('shop_buy_exp_count_limit', "经验药水停止阈值", 99999, [100, 500, 1000, 2000, 5000, 99999])
+@singlechoice('shop_buy_equip_upper_count_limit', "强化石停止阈值", 9999, [100, 500, 1000, 2000, 5000, 9999])
 @singlechoice('normal_shop_buy_coin_limit', "货币停止阈值", 5000000, [0, 5000000, 10000000, 20000000])
+@inttype('normal_shop_reset_count', "重置次数(<=20)", 0, [i for i in range(21)])
 @multichoice("normal_shop_buy_kind", "购买种类", ['经验药水', '强化石'], ['经验药水', '强化石'])
 @description('')
 @name('通用商店购买')
@@ -106,10 +108,10 @@ class normal_shop(shop_buyer):
     def reset_count(self) -> int: return self.get_config('normal_shop_reset_count')
     def buy_kind(self) -> List[str]: return self.get_config('normal_shop_buy_kind')
 
-@multichoice("limit_shop_buy_kind", "购买种类", ['经验药水', '装备'], ['经验药水', '装备'])
 @singlechoice('limit_shop_buy_coin_limit', "货币停止阈值", 5000000, [0, 5000000, 10000000, 20000000])
+@multichoice("limit_shop_buy_kind", "购买种类", ['经验药水', '装备'], ['经验药水', '装备'])
 @description('此项购买不使用最大值')
-@name('限定商店购买（此项购买不使用最大值）')
+@name('限定商店购买')
 @default(False)
 class limit_shop(shop_buyer):
     def _exp_count(self, client: pcrclient): return 99999 if "经验药水" in self.get_config('limit_shop_buy_kind') else 0
