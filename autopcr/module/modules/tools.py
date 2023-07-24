@@ -16,12 +16,15 @@ class get_library_import_data(Module):
         self._log(msg)
 
 @description('根据每个角色拉满星级、开专、升级至当前最高专所需的记忆碎片减去库存的结果')
+@booltype("sweep_get_able_unit_memory", "地图可刷取角色", False)
 @name('获取记忆碎片缺口')
 @default(True)
 class get_need_memory(Module):
     async def do_task(self, client: pcrclient):
         demand = list(client.data.get_memory_demand_gap().items())
         demand = sorted(demand, key=lambda x: x[1], reverse=True)
+        if self.get_config("sweep_get_able_unit_memory"):
+            demand = [i for i in demand if i[0] in db.memory_quest]
 
         msg = '\n'.join([f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片' for item in demand])
         self._log(msg)

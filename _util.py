@@ -61,7 +61,7 @@ async def draw(data: dict, alian: str):
             "result": [],
             }
     result = data['result']
-    for key in data['ordered']:
+    for key in data['order']:
         value = result[key]
         if value['log'] == "功能未启用":
             continue

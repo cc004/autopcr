@@ -103,11 +103,11 @@ class database():
                 .to_dict(lambda x: x.id, lambda x: x)
             )
 
-            self.memory_quest: Dict[int, List[QuestDatum]] = (
+            self.memory_quest: Dict[ItemType, List[QuestDatum]] = (
                 QuestDatum.query(db)
                 .where(lambda x: self.is_hard_quest(x.quest_id))
                 .group_by(lambda x: x.reward_image_1)
-                .to_dict(lambda x: x.key, lambda x:
+                .to_dict(lambda x: (eInventoryType.Item, x.key), lambda x:
                     x.to_list()
                 )
             )

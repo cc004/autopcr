@@ -6,49 +6,38 @@ from .autopcr.module.accountmgr import instance as accountmgr
 from ._util import draw, render_forward_msg
 
 class Task():
-    def __init__(self, token, bot, ev, qid = None, gid = None):
+    def __init__(self, token, bot, ev, qid = None, gid = None, config = {}):
         alian, target = token
         self.info = (alian, target, bot, ev, qid, gid)
+        self.config = config
         self.token = token
 
     @abstractclassmethod
     async def do_task(self): ...
 
 class QuestRecommand(Task):
-    def __init__(self, start_rank = None, like_unit_only = None, *args, **kwargs):
-        self.start_rank = start_rank
-        self.like_unit_only = like_unit_only
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     async def do_task(self):
         alian, target, bot, ev, qid, gid = self.info 
         try:
-            config = {
-                    "start_rank" : self.start_rank,
-                    "like_unit_only": self.like_unit_only
-            }
             async with accountmgr.load(target) as mgr:
-                resp = await mgr.do_from_key(config, ['get_library_import_data'])
+                resp = await mgr.do_from_key(self.config, ['get_normal_quest_recommand'])
             img = await draw(resp, alian)
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
         except Exception as e:
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + str(e))
 
 class FindEquip(Task):
-    def __init__(self, start_rank = None, like_unit_only = None, *args, **kwargs):
-        self.start_rank = start_rank
-        self.like_unit_only = like_unit_only
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     async def do_task(self):
         alian, target, bot, ev, qid, gid = self.info 
         try:
-            config = {
-                    "start_rank" : self.start_rank,
-                    "like_unit_only": self.like_unit_only
-            }
             async with accountmgr.load(target) as mgr:
-                resp = await mgr.do_from_key(config, ['get_need_equip'])
+                resp = await mgr.do_from_key(self.config, ['get_need_equip'])
             img = await draw(resp, alian)
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
         except Exception as e:
@@ -59,7 +48,7 @@ class GetLibraryImport(Task):
         alian, target, bot, ev, qid, gid = self.info 
         try:
             async with accountmgr.load(target) as mgr:
-                resp = await mgr.do_from_key({}, ["get_library_import_data"])
+                resp = await mgr.do_from_key(self.config, ["get_library_import_data"])
             msg = render_forward_msg([resp])
             await bot.send_group_forward_msg(group_id=ev.group_id, messages=msg)
         except Exception as e:
@@ -70,7 +59,7 @@ class FindXinsui(Task):
         alian, target, bot, ev, qid, gid = self.info
         try:
             async with accountmgr.load(target) as mgr:
-                resp = await mgr.do_from_key({}, ["get_need_xinsui"])
+                resp = await mgr.do_from_key(self.config, ["get_need_xinsui"])
             img = await draw(resp, alian)
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
         except Exception as e:
@@ -81,7 +70,7 @@ class FindMemory(Task):
         alian, target, bot, ev, qid, gid = self.info
         try:
             async with accountmgr.load(target) as mgr:
-                resp = await mgr.do_from_key({}, ["get_library_import_data"])
+                resp = await mgr.do_from_key(self.config, ["get_need_memory"])
             img = await draw(resp, alian)
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
         except Exception as e:
