@@ -393,7 +393,7 @@ class pcrclient(apiclient):
         result: List[InventoryInfo] = []
         async def skip(times):
             while self.data.stamina < info.stamina * times:
-                if self.keys.get('buy_stamina_passive', 0) > self.data.recover_stamina_exec_count:
+                if self.keys.get('sweep_recover_stamina_times', 0) > self.data.recover_stamina_exec_count:
                     await self.recover_stamina()
                 else:
                     raise AbortError(f"任务{name}体力不足")
