@@ -54,11 +54,11 @@ class underground_skip(Module):
                     self._log(f"还有{rest}次挑战次数，进行扫荡")
                     rest = await do_sweep(infos.enter_area_id)
                 else:
-                    if self.get_config('underground_sweep') == "总是执行":
+                    if self.get_config('underground_sweep') == "总是扫荡":
                         rest = await do_sweep(infos.enter_area_id)
                         
         if rest:
-            if double_mana or self.get_config('underground_sweep') == "总是执行":
+            if double_mana or self.get_config('underground_sweep') == "总是扫荡":
                 await do_sweep()
             else:
                 await do_enter()
