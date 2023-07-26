@@ -192,7 +192,7 @@ async def timing():
         for key in [key for key in config if key.startswith("cron")]:
             enable = config[key]
             time = config.get("time_" + key, "25:00")
-            clan_battle_run = config.get("clan_battle_run_" + key, False)
+            clan_battle_run = config.get("clanbattle_run_" + key, False)
             if enable and time == now and (not db.is_clan_battle_time() or clan_battle_run):
                 return True
         return False
