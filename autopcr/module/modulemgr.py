@@ -117,6 +117,6 @@ class ModuleManager:
             traceback.print_exc()
             raise(e)
         finally:
-            self.data['_last_result'].update(resp['result'])
+            self.data.set_default('_last_result', {}).update(resp['result'])
         return resp
 
