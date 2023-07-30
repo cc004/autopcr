@@ -94,8 +94,8 @@ class shop_buyer(Module):
             msg = await client.serlize_reward(result)
             self._log(msg)
 
-@singlechoice('shop_buy_exp_count_limit', "经验药水停止阈值", 99999, [100, 500, 1000, 2000, 5000, 99999])
-@singlechoice('shop_buy_equip_upper_count_limit', "强化石停止阈值", 9999, [100, 500, 1000, 2000, 5000, 9999])
+@singlechoice('shop_buy_exp_count_limit', "经验药水停止阈值", 99999, [100, 1000, 5000, 10000, 50000, 99999])
+@singlechoice('shop_buy_equip_upper_count_limit', "强化石停止阈值", 99999, [100, 1000, 5000, 10000, 50000, 99999])
 @singlechoice('normal_shop_buy_coin_limit', "货币停止阈值", 5000000, [0, 5000000, 10000000, 20000000])
 @inttype('normal_shop_reset_count', "重置次数(<=20)", 0, [i for i in range(21)])
 @multichoice("normal_shop_buy_kind", "购买种类", ['经验药水', '强化石'], ['经验药水', '强化石'])
