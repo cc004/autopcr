@@ -98,7 +98,7 @@ class hatsune_hboss_sweep(Module):
         if is_abort: raise AbortError("")
         if is_skip: raise SkipError("")
 
-@singlechoice("hatsune_gacha_strategy", "兑换策略", "all", ["前两轮尽早重置", "全部兑换"])
+@singlechoice("hatsune_gacha_strategy", "兑换策略", "全部兑换", ["前两轮尽早重置", "全部兑换"])
 @description('自动兑换，前两轮兑换处目标物品可选择重置')
 @name('讨伐证交换')
 @default(True)

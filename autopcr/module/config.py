@@ -23,6 +23,7 @@ def _wrap_init(cls, setter):
 
 def config_option(key:str, desc: str, default, candidates: list = [], config_type='str'):
     from .modulebase import Module
+    assert(not candidates or default in candidates or all(item in candidates for item in default))
     def wrapper(cls: Module):
         config = Config(key=key, desc=desc, default=default, candidates=candidates, config_type=config_type)
         cls.config[key] = config
