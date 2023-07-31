@@ -69,6 +69,8 @@ class hatsune_hboss_sweep(Module):
             try: 
                 if not boss_info[hboss_id].is_unlocked:
                     raise AbortError(f"h本boss未解锁")
+                if not boss_info[hboss_id].kill_num:
+                    raise AbortError(f"h本boss未首通")
                 if not boss_info[spboss_id].kill_num:
                     self._log("sp未通关，保留90张")
                     times -= 3
