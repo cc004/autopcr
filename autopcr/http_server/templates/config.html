@@ -93,16 +93,20 @@
                             <small id="account-description" class="form-text form-text-red">注意：本服务需要存储您的用户名和密码以正常运行。若不同意存储，请勿使用。</small>
                             <div class="button-group" style="margin-top: 0px;">
                                 <button type="button" class="btn btn-primary" id="login" onclick="update_new()">保存配置信息</button>
+								{% if url == "config" %}
                                 <button type="button" class="btn btn-primary" id="do_task" flag="run_once" onclick="do_task(this)">执行清日常</button>
                                 <button type="button" class="btn btn-primary" id="tools" onclick="to_tools()"">实用查询</button>
+								{% endif %}
                                 <button type="button" class="btn btn-danger" id="delete_config" onclick="delete_config()">删除账号信息</button>
                             </div>
+
                             <div id="msg-group" style="margin-top: 4px; margin-bottom: 8px">
                                 <small id="msg-description" class="form-text" style="display: none;">↓导入文本↓点击复制↓&ensp;<a href="https://pcredivewiki.tw/Armory" target="_blank">兰德索尔图书馆</a></small>
                                 <div id="msg-input-group" class="input-group" style="margin-top: 2px; margin-bottom: 6px; display: none;">
                                     <input id="msg" type="text" class="form-control copy-text" value="value" readonly onclick="copyToClipboard()">
                                 </div>
                             </div>
+
                             <div id="module">
                             </div>
                         </div>

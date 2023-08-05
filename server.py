@@ -4,10 +4,9 @@ from .autopcr.http_server.httpserver import HttpServer
 from .autopcr.db.database import db
 from .autopcr.core.datamgr import datamgr
 from .autopcr.constants import CACHE_DIR
+from .autopcr.module.accountmgr import instance as accountmgr
+from .autopcr.db.dbstart import db_start
 import asyncio
-import os
-import glob
-import aiocqhttp
 from traceback import print_exc
 
 import nonebot
@@ -22,7 +21,6 @@ from ._util import get_info, get_result
 from ._task import DailyClean, FindEquip, FindMemory, FindXinsui, Task, GetLibraryImport, QuestRecommand
 import datetime
 import random
-import asyncio
 
 address = None # 填你的公网IP或域名，不填则会自动尝试获取
 useHttps = False
@@ -86,11 +84,7 @@ async def bangzhu_text(bot, ev):
 
 @on_startup
 async def init():
-    dbs = glob.glob(os.path.join(CACHE_DIR, "db", "*.db"))
-    if dbs:
-        db = max(dbs)
-        version = int(os.path.basename(db).split('.')[0])
-        await datamgr.try_update_database(version)
+    await db_start()
 
 async def consumer(task):
     global inqueue
@@ -182,34 +176,26 @@ async def timing():
 
     hour = datetime.datetime.now().hour
     minute = datetime.datetime.now().minute
-    now = f"{hour}".rjust(2, '0') + ":" + f"{minute}".rjust(2, '0')
     await asyncio.sleep(random.randint(1, 10)) 
-    accounts = await get_info()
     bot = hoshino.get_bot()
     loop = asyncio.get_event_loop()
 
-    def run(config):
-        for key in [key for key in config if key.startswith("cron")]:
-            enable = config[key]
-            time = config.get("time_" + key, "25:00")
-            clan_battle_run = config.get("clanbattle_run_" + key, False)
-            if enable and time == now and (not db.is_clan_battle_time() or clan_battle_run):
-                return True
-        return False
+    for account in accountmgr.accounts():
+        async with accountmgr.load(account) as mgr:
+            if not mgr.is_cron_run(hour, minute):
+                continue
 
-    for user_id, datas in accounts.items():
-        for data, target in datas:
-            if run(data.get('config', {})):
+            alian = escape(mgr.alian)
+            target = mgr._account
+            user_id = mgr.qq
+            token = (alian, target)
+            if token in inqueue:
+                await bot.send_group_msg(group_id = gid, message = f"【定时任务】{alian}已在执行任务")
+                continue
 
-                alian = escape(data['alian'])
-                token = (alian, target)
-                if token in inqueue:
-                    await bot.send_group_msg(group_id = gid, message = f"【定时任务】{alian}已在执行任务")
-                    continue
+            inqueue.add(token)
 
-                inqueue.add(token)
-
-                loop.create_task(consumer(DailyClean(token, bot, None, user_id, gid)))
+            loop.create_task(consumer(DailyClean(token, bot, None, user_id, gid)))
 
 @sv.on_fullmatch(f"{prefix}清日常所有")
 @pre_process_all

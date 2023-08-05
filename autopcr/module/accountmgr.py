@@ -1,10 +1,13 @@
 # 名字需要斟酌一下
 
+from autopcr.core.pcrclient import pcrclient
 from .modulemgr import ModuleManager
 import os, re
-from typing import Dict, Iterator
+from typing import Dict, Iterator, List
 from ..constants import CONFIG_PATH
 from asyncio import Lock
+import json
+from .modulebase import Module
 
 class AccountException(Exception):
     pass
@@ -15,15 +18,69 @@ class Account(ModuleManager):
             parent.account_lock[account] = Lock()
         self._lck = parent.account_lock[account]
         self._account = account
-        super().__init__(parent.path(account))
+        self._filename = parent.path(account)
+
+        with open(self._filename, 'r') as f:
+            self.data = json.load(f)
+
+        self.qq = self.data.get("qq", "")
+        self.alian = self.data.get("alian", "未知")
+        super().__init__(self.data.get("config", {}), self)
     
     async def __aenter__(self):
         await self._lck.acquire()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        self.save_config()
+        await self.save_data()
         self._lck.release()
+
+    async def save_data(self):
+        with open(self._filename, 'w') as f:
+            json.dump(self.data, f)
+
+    async def set_result(self, result):
+        self.data.setdefault('_last_result', {}).update(result)
+
+    def get_client(self) -> pcrclient:
+        return self.get_android_client()
+
+    def get_ios_client(self) -> pcrclient: # Header TODO
+        client = pcrclient({
+            'account': self.data['username'],
+            'password': self.data['password'],
+            'channel': 1000,
+            'platform': 1
+        })
+        return client
+
+    def get_android_client(self) -> pcrclient:
+        client = pcrclient({
+            'account': self.data['username'],
+            'password': self.data['password'],
+            'channel': 1,
+            'platform': 2
+        })
+        return client
+
+    def generate_info(self):
+        return {
+            'alian': self.data['alian'],
+            'qq': "",
+            'username': "",
+            'password': "",
+            'last_result': self.data.get('_last_result', {})
+        }
+
+    def generate_daily_info(self):
+        info = self.generate_info()
+        info.update(super().generate_daily_config())
+        return info
+
+    def generate_tools_info(self):
+        info = self.generate_info()
+        info.update(super().generate_tools_config())
+        return info
 
 class AccountManager:
     pathsyntax = re.compile(r'[^\\\|?*/]{1,32}')
@@ -43,7 +100,6 @@ class AccountManager:
     def delete(self, account: str):
         if not AccountManager.pathsyntax.fullmatch(account):
             raise AccountException('Invalid account name')
-        
         os.remove(self.path(account))
     
     def accounts(self) -> Iterator[str]:

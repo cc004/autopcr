@@ -3,8 +3,7 @@ from quart import request, render_template, Blueprint
 import os
 import json
 from typing import Callable, Coroutine, Any
-from ..module.modulemgr import ModuleManager
-from ..module.accountmgr import instance as accountmgr, AccountException
+from ..module.accountmgr import Account, instance as accountmgr, AccountException
 from ..constants import CONFIG_PATH
 
 class HttpServer:
@@ -17,7 +16,7 @@ class HttpServer:
         self.qq_only = qq_only
     
     @staticmethod
-    def wrapaccount(func: Callable[[ModuleManager], Coroutine[Any, Any, Any]]):
+    def wrapaccount(func: Callable[[Account], Coroutine[Any, Any, Any]]):
         async def wrapper():
             acc = request.args.get('account')
             if acc is None:
@@ -34,12 +33,12 @@ class HttpServer:
         # backend
         @self.app.route('/api/config', methods = ['GET'])
         @HttpServer.wrapaccount
-        async def get_config(mgr: ModuleManager):
+        async def get_config(mgr: Account):
             return mgr.generate_daily_info()
 
         @self.app.route('/api/config', methods = ['PUT'])
         @HttpServer.wrapaccount
-        async def update_config(mgr: ModuleManager):
+        async def update_config(mgr: Account):
             data = await request.get_json()
             old_data = mgr.data
 
@@ -54,13 +53,12 @@ class HttpServer:
                 data['_last_result'] = old_data['_last_result']
             
             mgr.data = data
-            mgr._load_from(data)
 
             return {"statusCode": 200}, 200
 
         @self.app.route('/api/tools', methods = ['PUT'])
         @HttpServer.wrapaccount
-        async def update_tools(mgr: ModuleManager):
+        async def update_tools(mgr: Account):
             # save TODO
 
             return {"statusCode": 200}, 200
@@ -90,26 +88,25 @@ class HttpServer:
                 return 'Account already exists', 400
 
             data = await request.get_json()
-            print(data)
             with open(fn, 'w') as f:
                 f.write(json.dumps(data))
             return '', 204
 
         @self.app.route('/api/do_task', methods= ['GET'])
         @HttpServer.wrapaccount
-        async def do_task(mgr: ModuleManager):
+        async def do_task(mgr: Account):
             if self.qq_only:
                 return 'Please use in group', 400
             return await mgr.do_daily()
 
         @self.app.route('/api/tools', methods = ['GET'])
         @HttpServer.wrapaccount
-        async def get_tools_info(mgr: ModuleManager):
+        async def get_tools_info(mgr: Account):
             return mgr.generate_tools_info()
 
         @self.app.route('/api/do_single', methods = ['POST'])
         @HttpServer.wrapaccount
-        async def do_single(mgr: ModuleManager):
+        async def do_single(mgr: Account):
             data = await request.get_json()
             config = data['config']
             module = data['order'] # list
