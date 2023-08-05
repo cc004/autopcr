@@ -1,6 +1,6 @@
 # 名字需要斟酌一下
 
-from autopcr.core.pcrclient import pcrclient
+from ..core.pcrclient import pcrclient
 from .modulemgr import ModuleManager
 import os, re
 from typing import Dict, Iterator, List
