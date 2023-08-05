@@ -51,7 +51,7 @@ async def login1(account,password):
     data["user_id"]=account
     data["validate"]=""
     data["pwd"]=rsacr.rsacreate(rsa['hash']+password,public_key)
-    data=setsign(data)
+    data=setsign(data).encode("utf-8")
     return await sendpost(bililogin+"api/client/login",data)
 async def login2(account,password,challenge,gt_user,validate):
     data=json.loads(modolrsa)
@@ -67,7 +67,7 @@ async def login2(account,password,challenge,gt_user,validate):
     data["validate"]=validate
     data["seccode"]=validate+"|jordan"
     data["pwd"]=rsacr.rsacreate(rsa['hash']+password,public_key)
-    data=setsign(data)
+    data=setsign(data).encode("utf-8")
     return await sendpost(bililogin+"api/client/login",data)
 async def captch():
     data=json.loads(modolcaptch)
