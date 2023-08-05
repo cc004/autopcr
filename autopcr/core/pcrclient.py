@@ -7,11 +7,11 @@ from ..db.database import db
 from typing import Tuple, Union
 
 class pcrclient(apiclient):
-    def __init__(self, *args, **kwargs):
-        super().__init__()
+    def __init__(self, platform, *args, **kwargs):
+        super().__init__(platform)
         self.keys = {}
         self.data = datamgr()
-        self.session = sessionmgr(*args, **kwargs)
+        self.session = sessionmgr(platform, *args, **kwargs)
         self.register(errorhandler())
         self.register(self.data)
         self.register(self.session)

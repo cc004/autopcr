@@ -551,5 +551,4 @@ class database():
 
         return result
 
-
 db = database()

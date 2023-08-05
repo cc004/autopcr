@@ -2,6 +2,7 @@ from ..core.pcrclient import pcrclient
 from typing import List, Dict, Union
 from ..model.error import *
 from ..model.enums import *
+from ..db.database import db
 from .modulebase import Module
 
 import json
@@ -9,90 +10,62 @@ import traceback
 class ModuleManager:
     _modules: List[type] = []
 
-    def __init__(self, filename):
-        self._filename = filename
+    def __init__(self, config, parent):
         from .modules import daily_modules, tool_modules, cron_modules
+        from .accountmgr import Account
+
+        self.parent: Account = parent
         self.cron_modules: List[Module] = [m(self) for m in cron_modules]
         self.daily_modules: List[Module] = [m(self) for m in daily_modules]
         self.tool_modules: List[Module] = [m(self) for m in tool_modules]
         self.name_to_modules: Dict[str, Module] = {m.key: m for m in (self.daily_modules + self.tool_modules)}
+        self.client = self.parent.get_client()
         self._crons = []
-        self._load_config()
+        self._load_config(config)
     
-    def _load_config(self):
+    def _load_config(self, config):
         try:
-            with open(self._filename, 'r') as f:
-                self.data = json.load(f)
-            self.client = self.get_android_client()
-            self._load_from(self.data.get('config', {}))
+            self._crons.clear()
+            for key, value in config.items():
+                self.client.keys[key] = value
+
+            for key in [key for key in config if key.startswith("cron")]:
+                enable = config[key]
+                if enable:
+                    time = config.get("time_" + key, "25:00")
+                    hour, minute = time.split(":")
+                    is_clan_battle_run = config.get("clanbattle_run_" + key, False)
+                    self._crons.append((int(hour), int(minute), is_clan_battle_run))
         except:
             traceback.print_exc()
             raise
     
-    def _load_from(self, data):
-        self._crons.clear()
-        for key, value in data.items():
-            self.client.keys[key] = value
-            
-        # for name, module in self.modules.items():
-        #     if name in data:
-        #         module.open = data[name]
-        #         self.data[name] = data[name]
-        #     cron = module.cron_hook()
-        #     if cron: self._crons.append(cron)
-        # # 这里对time1和time2进行兼容
-        # if data.get('time1open', False): self._crons.append(int((data['time1'] or "06:00").split(':')[0]))
-        # if data.get('time2open', False): self._crons.append(int((data['time2'] or "18:00").split(':')[0]))
-    
-    def save_config(self):
-        with open(self._filename, 'w') as f:
-            json.dump(self.data, f)
+    def is_cron_run(self, nhour, nminute):
+        clan_battle_time = db.is_clan_battle_time()
+        for hour, minute, is_clan_battle_run in self._crons:
+            if hour == nhour and minute == nminute and (is_clan_battle_run or not clan_battle_time):
+                return True
+        return False
     
     def get_config(self, name, default):
         return self.client.keys.get(name, default)
-    
-    def update_config(self, data):
-        self._load_from(data)
 
-    def generate_info(self, modules: List[Module]):
+    def generate_config(self, modules: List[Module]):
         return {
-            'alian': self.data['alian'],
-            'qq': "",
-            'username': "",
-            'password': "",
             'config': {**{key: m.get_config(key) for m in modules for key in m.config}, **{m.key: m.get_config(m.key) for m in modules}},
             'order': [m.key for m in modules],
             'data': {m.key: m.generate_info() for m in modules},
-            'last_result': self.data.get('_last_result', None)
         }
 
-    def generate_daily_info(self):
-        return self.generate_info(self.cron_modules + self.daily_modules)
+    def generate_daily_config(self):
+        return self.generate_config(self.cron_modules + self.daily_modules)
 
-    def generate_tools_info(self):
-        return self.generate_info(self.tool_modules)
+    def generate_tools_config(self):
+        return self.generate_config(self.tool_modules)
     
-    async def do_cron(self, hour):
-        if hour in self._crons:
+    async def do_cron(self, hour, minute):
+        if self.is_cron_run(hour, minute):
             await self.do_daily()
-
-    def get_ios_client(self) -> pcrclient: # Header TODO
-        client = pcrclient({
-            'account': self.data['username'],
-            'password': self.data['password'],
-            'channel': 1000,
-            'platform': 1
-        })
-        return client
-
-    def get_android_client(self) -> pcrclient:
-        client = pcrclient({
-            'account': self.data['username'],
-            'password': self.data['password'],
-            'channel': 1,
-            'platform': 2
-        })
-        return client
 
     async def do_daily(self):
         return await self.do_task(self.client.keys, self.daily_modules)
@@ -117,6 +90,6 @@ class ModuleManager:
             traceback.print_exc()
             raise(e)
         finally:
-            self.data.setdefault('_last_result', {}).update(resp['result'])
+            await self.parent.set_result(resp['result'])
         return resp
 
