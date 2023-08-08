@@ -94,8 +94,8 @@ class shop_buyer(Module):
             msg = await client.serlize_reward(result)
             self._log(msg)
 
-@singlechoice('shop_buy_exp_count_limit', "经验药水停止阈值", 99999, [100, 1000, 5000, 10000, 50000, 99999])
-@singlechoice('shop_buy_equip_upper_count_limit', "强化石停止阈值", 99999, [100, 1000, 5000, 10000, 50000, 99999])
+@singlechoice('shop_buy_exp_count_limit', "经验药水停止阈值", 99000, [100, 1000, 5000, 10000, 50000, 99000])
+@singlechoice('shop_buy_equip_upper_count_limit', "强化石停止阈值", 99000, [100, 1000, 5000, 10000, 50000, 99000])
 @singlechoice('normal_shop_buy_coin_limit', "货币停止阈值", 5000000, [0, 5000000, 10000000, 20000000])
 @inttype('normal_shop_reset_count', "重置次数(<=20)", 0, [i for i in range(21)])
 @multichoice("normal_shop_buy_kind", "购买种类", ['经验药水', '强化石'], ['经验药水', '强化石'])
@@ -121,8 +121,8 @@ class limit_shop(shop_buyer):
     def reset_count(self) -> int: return 0
     def buy_kind(self) -> List[str]: return self.get_config('limit_shop_buy_kind')
 
-@singlechoice('shop_buy_memory_count_limit', "记忆碎片盈余停止阈值", 0, [0, 10, 20, 120, 270, 9999])
-@singlechoice('shop_buy_equip_count_limit', "装备盈余停止阈值", 0, [0, 20, 50, 100, 200, 500, 9999])
+@singlechoice('shop_buy_memory_count_limit', "记忆碎片盈余停止阈值", 0, [0, 10, 20, 120, 270, 9900])
+@singlechoice('shop_buy_equip_count_limit', "装备盈余停止阈值", 0, [0, 20, 50, 100, 200, 500, 9900])
 @singlechoice('underground_shop_buy_coin_limit', "货币停止阈值", 10000, [0, 10000, 50000, 100000, 200000])
 @inttype('underground_shop_reset_count', "重置次数(<=20)", 0, [i for i in range(21)])
 @multichoice("underground_shop_buy_kind", "购买种类", ['记忆碎片', '装备'], ['记忆碎片', '装备'])
@@ -134,8 +134,8 @@ class underground_shop(shop_buyer):
     def reset_count(self) -> int: return self.get_config('underground_shop_reset_count')
     def buy_kind(self) -> List[str]: return self.get_config('underground_shop_buy_kind')
 
-@singlechoice('shop_buy_memory_count_limit', "记忆碎片盈余停止阈值", 0, [0, 10, 20, 120, 270, 9999])
-@singlechoice('shop_buy_equip_count_limit', "装备盈余停止阈值", 0, [0, 20, 50, 100, 200, 500, 9999])
+@singlechoice('shop_buy_memory_count_limit', "记忆碎片盈余停止阈值", 0, [0, 10, 20, 120, 270, 9900])
+@singlechoice('shop_buy_equip_count_limit', "装备盈余停止阈值", 0, [0, 20, 50, 100, 200, 500, 9900])
 @singlechoice('jjc_shop_buy_coin_limit', "货币停止阈值", 10000, [0, 10000, 50000, 100000, 200000])
 @inttype('jjc_shop_reset_count', "重置次数(<=20)", 0, [i for i in range(21)])
 @multichoice("jjc_shop_buy_kind", "购买种类", ['记忆碎片', '装备'], ['记忆碎片', '装备'])
@@ -147,8 +147,8 @@ class jjc_shop(shop_buyer):
     def reset_count(self) -> int: return self.get_config('jjc_shop_reset_count')
     def buy_kind(self) -> List[str]: return self.get_config('jjc_shop_buy_kind')
 
-@singlechoice('shop_buy_memory_count_limit', "记忆碎片盈余停止阈值", 0, [0, 10, 20, 120, 270, 9999])
-@singlechoice('shop_buy_equip_count_limit', "装备盈余停止阈值", 0, [0, 20, 50, 100, 200, 500, 9999])
+@singlechoice('shop_buy_memory_count_limit', "记忆碎片盈余停止阈值", 0, [0, 10, 20, 120, 270, 9900])
+@singlechoice('shop_buy_equip_count_limit', "装备盈余停止阈值", 0, [0, 20, 50, 100, 200, 500, 9900])
 @singlechoice('pjjc_shop_buy_coin_limit', "货币停止阈值", 10000, [0, 10000, 50000, 100000, 200000])
 @inttype('pjjc_shop_reset_count', "重置次数(<=20)", 0, [i for i in range(21)])
 @multichoice("pjjc_shop_buy_kind", "购买种类", ['记忆碎片', '装备'], ['记忆碎片', '装备'])
