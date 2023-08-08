@@ -1,14 +1,12 @@
 from typing import List, Tuple
 import os
 from .autopcr.http_server.httpserver import HttpServer
-from .autopcr.module.modules import register_all
 from .autopcr.db.database import db
 from .autopcr.core.datamgr import datamgr
 from .autopcr.constants import CACHE_DIR
+from .autopcr.module.accountmgr import instance as accountmgr
+from .autopcr.db.dbstart import db_start
 import asyncio
-import os
-import glob
-import aiocqhttp
 from traceback import print_exc
 
 import nonebot
@@ -23,9 +21,6 @@ from ._util import get_info, get_result
 from ._task import DailyClean, FindEquip, FindMemory, FindXinsui, Task, GetLibraryImport, QuestRecommand
 import datetime
 import random
-import asyncio
-
-register_all()
 
 address = None # 填你的公网IP或域名，不填则会自动尝试获取
 useHttps = False
@@ -37,15 +32,17 @@ app.register_blueprint(server.app)
 ROOT_PATH = os.path.dirname(__file__)
 cron_group = "" # 定时任务的通知群
 
-sv_help = """
-[#清日常 [昵称]] 开始清日常，当该qq下有多个账号时需指定昵称
-[#清日常所有] 开始清该qq号下所有号的日常
-[#配置日常] 配置日常
-[#日常报告] 获取最近一次清日常的报告
-[#查心碎 [昵称]] 查询缺口心碎
-[#查记忆碎片 [昵称]] 查询缺口记忆碎片
-[#查装备 [昵称] [rank] [fav]] 查询缺口装备，[rank]为数字，只查询>=rank的角色缺口装备，fav表示只查询favorite的角色
-[#刷图推荐 [昵称] [rank] [fav]] 查询缺口装备的刷图推荐，格式同上
+prefix = '#'
+
+sv_help = f"""
+[{prefix}清日常 [昵称]] 开始清日常，当该qq下有多个账号时需指定昵称
+[{prefix}清日常所有] 开始清该qq号下所有号的日常
+[{prefix}配置日常] 配置日常
+[{prefix}日常报告] 获取最近一次清日常的报告
+[{prefix}查心碎 [昵称]] 查询缺口心碎
+[{prefix}查记忆碎片 [昵称] [可刷取]] 查询缺口记忆碎片，可刷取只仅查看h图可刷的碎片
+[{prefix}查装备 [昵称] [rank] [fav]] 查询缺口装备，[rank]为数字，只查询>=rank的角色缺口装备，fav表示只查询favorite的角色
+[{prefix}刷图推荐 [昵称] [rank] [fav]] 查询缺口装备的刷图推荐，格式同上
 """
 
 if address is None:
@@ -87,11 +84,7 @@ async def bangzhu_text(bot, ev):
 
 @on_startup
 async def init():
-    dbs = glob.glob(os.path.join(CACHE_DIR, "db", "*.db"))
-    if dbs:
-        db = max(dbs)
-        version = int(os.path.basename(db).split('.')[0])
-        await datamgr.try_update_database(version)
+    await db_start()
 
 async def consumer(task):
     global inqueue
@@ -183,68 +176,74 @@ async def timing():
 
     hour = datetime.datetime.now().hour
     minute = datetime.datetime.now().minute
-    now = f"{hour}".rjust(2, '0') + ":" + f"{minute}".rjust(2, '0')
     await asyncio.sleep(random.randint(1, 10)) 
-    data = await get_info()
     bot = hoshino.get_bot()
     loop = asyncio.get_event_loop()
-    for user_id, configs in data.items():
-        for config, target in configs:
-            if "time1" not in config or "time2" not in config:
+
+    for account in accountmgr.accounts():
+        async with accountmgr.load(account) as mgr:
+            if not mgr.is_cron_run(hour, minute):
                 continue
-            if config['time1open'] and config['time1'] == now or  \
-            config['time2open'] and config['time2'] == now and not db.is_clan_battle_time():
 
-                alian = escape(config['alian'])
-                token = (alian, target)
-                if token in inqueue:
-                    await bot.send_group_msg(group_id = gid, message = f"【定时任务】{alian}已在执行任务")
-                    continue
+            alian = escape(mgr.alian)
+            target = mgr._account
+            user_id = mgr.qq
+            token = (alian, target)
+            if token in inqueue:
+                await bot.send_group_msg(group_id = gid, message = f"【定时任务】{alian}已在执行任务")
+                continue
 
-                inqueue.add(token)
+            inqueue.add(token)
 
-                loop.create_task(consumer(DailyClean(token, bot, None, user_id, gid)))
+            loop.create_task(consumer(DailyClean(token, bot, None, user_id, gid)))
 
-@sv.on_fullmatch("#cron")
-async def check_schedule(bot, ev):
-    if db.is_clan_battle_time():
-        await bot.finish(ev, "当前处于会战期间，定时任务2暂停")
-    else:
-        await bot.finish(ev, "当前不处于会战期间，定时任务2正常运行")
-
-@sv.on_fullmatch("#清日常所有")
+@sv.on_fullmatch(f"{prefix}清日常所有")
 @pre_process_all
 async def clear_daily_all(bot: HoshinoBot, ev: CQEvent, tokens: List[Tuple[str, str]]):
     loop = asyncio.get_event_loop()
     for token in tokens:
         loop.create_task(consumer(DailyClean(token, bot, ev)))
 
-@sv.on_prefix("#查心碎")
+@sv.on_prefix(f"{prefix}查心碎")
 @pre_process
 async def find_xinsui(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
     await consumer(FindXinsui(token, bot, ev))
 
-@sv.on_prefix("#查记忆碎片")
+@sv.on_prefix(f"{prefix}查记忆碎片")
 @pre_process
 async def find_memory(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
-    await consumer(FindMemory(token, bot, ev))
+    sweep_get_able_unit_memory = False
+    try:
+        if ev.message.extract_plain_text().split(' ')[-1].strip() == '可刷取':
+            sweep_get_able_unit_memory = True
+    except:
+        pass
 
-@sv.on_prefix("#查装备")
+    config = {
+            "sweep_get_able_unit_memory" : sweep_get_able_unit_memory,
+    }
+    await consumer(FindMemory(token = token, config = config, bot = bot, ev = ev))
+
+@sv.on_prefix(f"{prefix}查装备")
 @pre_process
 async def find_equip(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
-    fav = False
+    like_unit_only = False
     try:
         if ev.message.extract_plain_text().split(' ')[-1].strip() == 'fav':
-            fav = True
+            like_unit_only = True
             start_rank = int(ev.message.extract_plain_text().split(' ')[-2]) 
         else:
             start_rank = int(ev.message.extract_plain_text().split(' ')[-1]) 
     except:
         start_rank = None
 
-    await consumer(FindEquip(token = token, like_unit_only = fav, start_rank = start_rank, bot = bot, ev = ev))
+    config = {
+            "start_rank" : start_rank,
+            "like_unit_only": like_unit_only
+    }
+    await consumer(FindEquip(token = token, config = config, bot = bot, ev = ev))
 
-@sv.on_prefix("#刷图推荐")
+@sv.on_prefix(f"{prefix}刷图推荐")
 @pre_process
 async def quest_recommand(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
     like_unit_only = False
@@ -257,20 +256,24 @@ async def quest_recommand(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
     except:
         start_rank = None
 
-    await consumer(QuestRecommand(token = token, like_unit_only = like_unit_only, start_rank = start_rank, bot = bot, ev = ev))
+    config = {
+            "start_rank" : start_rank,
+            "like_unit_only": like_unit_only
+    }
+    await consumer(QuestRecommand(token = token, config = config, bot = bot, ev = ev))
 
 
-@sv.on_prefix("#获取导入")
+@sv.on_prefix(f"{prefix}获取导入")
 @pre_process
 async def get_library_import(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
     await consumer(GetLibraryImport(token = token, bot = bot, ev = ev))
 
-@sv.on_prefix("#清日常")
+@sv.on_prefix(f"{prefix}清日常")
 @pre_process
 async def clear_daily(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
     await consumer(DailyClean(token, bot, ev))
 
-@sv.on_prefix("#日常报告")
+@sv.on_prefix(f"{prefix}日常报告")
 @pre_process
 async def clear_daily_result(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
     alian, target = token
@@ -331,7 +334,7 @@ async def get_config(bot, ev, tot = False):
 
     return True, "", token
 
-@sv.on_fullmatch("#配置日常")
+@sv.on_fullmatch(f"{prefix}配置日常")
 async def config_clear_daily(bot: HoshinoBot, ev: CQEvent):
     await bot.finish(ev, address)
 

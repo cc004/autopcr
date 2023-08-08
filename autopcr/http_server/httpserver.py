@@ -1,11 +1,9 @@
 import quart
 from quart import request, render_template, Blueprint
 import os
-import re
 import json
-from typing import Callable, Coroutine, Any, Tuple
-from ..module.modulebase import ModuleManager
-from ..module.accountmgr import instance as accountmgr, AccountException
+from typing import Callable, Coroutine, Any
+from ..module.accountmgr import Account, instance as accountmgr, AccountException
 from ..constants import CONFIG_PATH
 
 class HttpServer:
@@ -18,7 +16,7 @@ class HttpServer:
         self.qq_only = qq_only
     
     @staticmethod
-    def wrapaccount(func: Callable[[ModuleManager], Coroutine[Any, Any, Any]]):
+    def wrapaccount(func: Callable[[Account], Coroutine[Any, Any, Any]]):
         async def wrapper():
             acc = request.args.get('account')
             if acc is None:
@@ -35,12 +33,12 @@ class HttpServer:
         # backend
         @self.app.route('/api/config', methods = ['GET'])
         @HttpServer.wrapaccount
-        async def get_config(mgr: ModuleManager):
-            return mgr.generate_config()
+        async def get_config(mgr: Account):
+            return mgr.generate_daily_info()
 
         @self.app.route('/api/config', methods = ['PUT'])
         @HttpServer.wrapaccount
-        async def update_config(mgr: ModuleManager):
+        async def update_config(mgr: Account):
             data = await request.get_json()
             old_data = mgr.data
 
@@ -54,11 +52,14 @@ class HttpServer:
             if '_last_result' in old_data:
                 data['_last_result'] = old_data['_last_result']
             
-            if '_last_clean_time' in old_data:
-                data['_last_clean_time'] = old_data['_last_clean_time']
-
             mgr.data = data
-            mgr._load_from(data)
+
+            return {"statusCode": 200}, 200
+
+        @self.app.route('/api/tools', methods = ['PUT'])
+        @HttpServer.wrapaccount
+        async def update_tools(mgr: Account):
+            # save TODO
 
             return {"statusCode": 200}, 200
 
@@ -87,23 +88,29 @@ class HttpServer:
                 return 'Account already exists', 400
 
             data = await request.get_json()
-            print(data)
             with open(fn, 'w') as f:
                 f.write(json.dumps(data))
             return '', 204
 
         @self.app.route('/api/do_task', methods= ['GET'])
         @HttpServer.wrapaccount
-        async def do_task(mgr: ModuleManager):
+        async def do_task(mgr: Account):
             if self.qq_only:
                 return 'Please use in group', 400
-            file = request.args.get('account')
-            return await mgr.do_task()
+            return await mgr.do_daily()
 
-        @self.app.route('/api/library_import', methods = ['GET'])
+        @self.app.route('/api/tools', methods = ['GET'])
         @HttpServer.wrapaccount
-        async def get_library(mgr: ModuleManager):
-            return await mgr.get_library_import_data()
+        async def get_tools_info(mgr: Account):
+            return mgr.generate_tools_info()
+
+        @self.app.route('/api/do_single', methods = ['POST'])
+        @HttpServer.wrapaccount
+        async def do_single(mgr: Account):
+            data = await request.get_json()
+            config = data['config']
+            module = data['order'] # list
+            return await mgr.do_from_key(config, module)
 
         # frontend
         @self.app.route('/', methods = ['GET'])
@@ -112,8 +119,11 @@ class HttpServer:
         
         @self.app.route('/config.html', methods = ['GET'])
         async def config():
-            return await render_template('config.html')
-        
+            return await render_template('config.html', url="config")
+
+        @self.app.route('/tools.html', methods = ['GET'])
+        async def tools():
+            return await render_template('config.html', url="tools")
 
     def run_forever(self, loop):
         self.quart.register_blueprint(self.app)
