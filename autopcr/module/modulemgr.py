@@ -33,9 +33,10 @@ class ModuleManager:
                 enable = config[key]
                 if enable:
                     time = config.get("time_" + key, "25:00")
-                    hour, minute = time.split(":")
-                    is_clan_battle_run = config.get("clanbattle_run_" + key, False)
-                    self._crons.append((int(hour), int(minute), is_clan_battle_run))
+                    if time: # in some case time is None
+                        hour, minute = time.split(":")
+                        is_clan_battle_run = config.get("clanbattle_run_" + key, False)
+                        self._crons.append((int(hour), int(minute), is_clan_battle_run))
         except:
             traceback.print_exc()
             raise
