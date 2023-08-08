@@ -52,13 +52,15 @@ class apiclient(Container["apiclient"]):
     urlroot: str = 'https://l3-prod-all-gs-gzlj.bilibiligame.net/'
     _requestid: str = ''
     _sessionid: str=  ''
-    def __init__(self):
+    def __init__(self, platform):
         super().__init__()
         self._headers = {}
-        for key in DEFAULT_HEADERS.keys():
-            self._headers[key] = DEFAULT_HEADERS[key]
-        # for key in iosHeaders.keys():
-        #     self._headers[key] = iosHeaders[key]
+        if platform == 2:
+            for key in DEFAULT_HEADERS.keys():
+                self._headers[key] = DEFAULT_HEADERS[key]
+        else:
+            for key in IOS_HEADERS.keys():
+                self._headers[key] = IOS_HEADERS[key]
         self._lck = Lock()
     
     @property
