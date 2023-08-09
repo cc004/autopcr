@@ -242,22 +242,19 @@ class datamgr(Component[apiclient]):
     def get_unique_equip_memory_demand(self, unit_id: int, token: ItemType) -> int:
         return self.get_unique_equip_material_demand(unit_id, token)
 
-    def get_max_avaliable_quest(self, quests: Dict[int, TrainingQuestDatum]) -> int:
+    def get_max_quest(self, quests: Dict[int, TrainingQuestDatum], available = False) -> int:
         now = datetime.datetime.now()
-        result = 0
-        for quest_id, quest in quests.items():
-            start_time = db.parse_time(quest.start_time)
-            if now < start_time:
-                continue
-            if quest_id in self.quest_dict and self.quest_dict[quest_id].clear_flg == 3:
-                result = max(result, quest_id)
-        return result
+        return (
+            flow(quests.keys())
+            .where(lambda x: now >= db.parse_time(quests[x].start_time) and quests[x].quest_id in self.quest_dict and (not available or self.quest_dict[x].clear_flg == 3))
+            .max()
+        )
 
-    def get_max_avaliable_quest_exp(self) -> int:
-        return self.get_max_avaliable_quest(db.training_quest_exp)
+    def get_max_quest_exp(self, sweep_available = False) -> int:
+        return self.get_max_quest(db.training_quest_exp, sweep_available)
 
-    def get_max_avaliable_quest_mana(self) -> int:
-        return self.get_max_avaliable_quest(db.training_quest_mana)
+    def get_max_quest_mana(self, sweep_available = False) -> int:
+        return self.get_max_quest(db.training_quest_mana, sweep_available)
 
     def update_inventory(self, item: InventoryInfo):
         token = (item.type, item.id)
