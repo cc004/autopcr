@@ -181,6 +181,7 @@ class smart_very_hard_sweep(Module):
 当被动体力回复完全消耗后，刷图结束
 '''.strip())
 @name("自定义刷图")
+@inttype('sweep_recover_stamina_times', "被动恢复体力数", 0, [i for i in range(41)])
 @default(False)
 class smart_sweep(Module):
     async def do_task(self, client: pcrclient):
