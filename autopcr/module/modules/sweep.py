@@ -6,6 +6,52 @@ from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
 
+class explore_sweep(Module):
+    @abstractmethod
+    def remain_cnt(self, client: pcrclient) -> int: ...
+    @abstractmethod
+    def get_max_quest(self, client: pcrclient, sweep_available: bool = False) -> int: ...
+    @abstractmethod
+    def not_max_stop(self): ...
+
+    async def do_task(self, client: pcrclient):
+        remain_cnt = self.remain_cnt(client)
+        if remain_cnt:
+            quest_id = self.get_max_quest(client, sweep_available = True)
+            if not quest_id:
+                raise AbortError("不存在可扫荡的探索")
+            if self.not_max_stop() and self.get_max_quest(client) != quest_id:
+                raise AbortError(f"最高级探索{self.get_max_quest}未通关，不扫荡")
+            name = db.quest_name[quest_id]
+            await client.training_quest_skip(quest_id, remain_cnt)
+            self._log(f"{name}扫荡{remain_cnt}次")
+        else:
+            raise SkipError("今日已扫荡")
+
+@description('自动扫荡可扫荡的最高等级的EXP探索')
+@name('EXP探索')
+@booltype("exp_not_max_stop", "非最高不扫荡", True)
+@default(True)
+class explore_exp(explore_sweep):
+    def remain_cnt(self, client: pcrclient) -> int: 
+        return client.data.training_quest_max_count.exp_quest - client.data.training_quest_count.exp_quest
+    def get_max_quest(self, client: pcrclient, sweep_available: bool = False) -> int:
+        return client.data.get_max_quest_exp(sweep_available)
+    def not_max_stop(self): 
+        return self.get_config("exp_not_max_stop")
+
+@description('自动扫荡可扫荡的最高等级的Mana探索')
+@name('Mana探索')
+@booltype("mana_not_max_stop", "非最高不扫荡", True)
+@default(True)
+class explore_mana(explore_sweep):
+    def remain_cnt(self, client: pcrclient) -> int: 
+        return client.data.training_quest_max_count.gold_quest - client.data.training_quest_count.gold_quest
+    def get_max_quest(self, client: pcrclient, sweep_available: bool = False) -> int:
+        return client.data.get_max_quest_mana(sweep_available)
+    def not_max_stop(self): 
+        return self.get_config("mana_not_max_stop")
+
 @singlechoice("underground_sweep", "扫荡策略", "总是扫荡", ["非庆典留一次数", "总是扫荡"])
 @description('会选择最高级地下城扫荡，非mana庆典时会自动保留一个次数，但第一次时需手动打一关以完成每日任务')
 @name('地下城扫荡')
