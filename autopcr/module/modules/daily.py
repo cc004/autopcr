@@ -46,38 +46,6 @@ class mission_receive_last(Module):
                 return
         raise SkipError("没有可领取的任务奖励")
 
-@description('自动扫荡最高等级的EXP探索')
-@name('EXP探索')
-@default(True)
-class explore_exp(Module):
-    async def do_task(self, client: pcrclient):
-        exp_quest_remain = client.data.training_quest_max_count.exp_quest - client.data.training_quest_count.exp_quest
-        if exp_quest_remain:
-            quest_id = client.data.get_max_avaliable_quest_exp()
-            if not quest_id:
-                raise AbortError("不存在可扫荡的exp探索")
-            name = db.quest_name[quest_id]
-            await client.training_quest_skip(quest_id, exp_quest_remain)
-            self._log(f"{name}扫荡{exp_quest_remain}次")
-        else:
-            raise SkipError("exp已扫荡")
-
-@description('自动扫荡最高等级的Mana探索')
-@name('Mana探索')
-@default(True)
-class explore_mana(Module):
-    async def do_task(self, client: pcrclient):
-        gold_quest_remain = client.data.training_quest_max_count.gold_quest - client.data.training_quest_count.gold_quest
-        if gold_quest_remain:
-            quest_id = client.data.get_max_avaliable_quest_mana()
-            if not quest_id:
-                raise AbortError("不存在可扫荡的mana探索")
-            name = db.quest_name[quest_id]
-            await client.training_quest_skip(quest_id, gold_quest_remain)
-            self._log(f"{name}扫荡{gold_quest_remain}次")
-        else:
-            raise SkipError("mana已扫荡")
-
 @singlechoice("present_receive_strategy", "领取策略", "非体力", ["非体力", "全部"])
 @description('领取符合条件的所有礼物箱奖励')
 @name('领取礼物箱')
