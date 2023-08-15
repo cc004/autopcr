@@ -208,7 +208,8 @@ class datamgr(Component[apiclient]):
 
     def get_equip_demand_gap(self, start_rank: Union[None, int] = None, like_unit_only: bool = False) -> typing.Counter[ItemType]:
         demand = self.get_equip_demand(start_rank, like_unit_only)
-        demand = Counter({token: demand[token] - self.get_inventory(token) for token in self._inventory if db.is_equip(token)})
+        all = set(self._inventory) | set(demand)
+        demand = Counter({token: demand[token] - self.get_inventory(token) for token in all if db.is_equip(token)})
         return demand
 
     def get_memory_demand(self) -> typing.Counter[ItemType]:
