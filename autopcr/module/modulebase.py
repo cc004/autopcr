@@ -82,8 +82,8 @@ class Module:
             default = self.config[key].default
         value = self._parent.get_config(key, default)
         if key != self.key and self.config[key].candidates and (
-            value not in self.config[key].candidates and
-            any(item not in self.config[key].candidates for item in value)
+            not isinstance(value, list) and value not in self.config[key].candidates or
+            isinstance(value, list) and any(item not in self.config[key].candidates for item in value)
             ):
             value = default
         return value
