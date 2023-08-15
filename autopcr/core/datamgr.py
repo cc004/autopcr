@@ -242,11 +242,13 @@ class datamgr(Component[apiclient]):
     def get_unique_equip_memory_demand(self, unit_id: int, token: ItemType) -> int:
         return self.get_unique_equip_material_demand(unit_id, token)
 
-    def get_max_quest(self, quests: Dict[int, TrainingQuestDatum], available = False) -> int:
+    def get_max_quest(self, quests: Dict[int, TrainingQuestDatum], sweep_available = False) -> int:
         now = datetime.datetime.now()
         return (
             flow(quests.keys())
-            .where(lambda x: now >= db.parse_time(quests[x].start_time) and quests[x].quest_id in self.quest_dict and (not available or self.quest_dict[x].clear_flg == 3))
+            .where(lambda x: now >= db.parse_time(quests[x].start_time) and 
+                   (not sweep_available or 
+                   (quests[x].quest_id in self.quest_dict and self.quest_dict[x].clear_flg == 3)))
             .max()
         )
 
