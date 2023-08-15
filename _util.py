@@ -16,7 +16,7 @@ async def get_info():
         with open(file, "r") as f:
             data = json.load(f)
             if 'qq' in data:
-                account = os.path.basename(file).split('.')[0]
+                account = '.'.join(os.path.basename(file).split('.')[:-1])
                 tmp[data['qq']].append((data, account))
     return tmp
 
