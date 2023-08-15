@@ -353,7 +353,7 @@ class database():
             
             self.campaign_gacha: Dict[int, CampaignFreegacha] = (
                 CampaignFreegacha.query(db)
-                .to_dict(lambda x: x.campaign_id, lambda x: CampaignFreegacha)
+                .to_dict(lambda x: x.campaign_id, lambda x: x)
             )
             
             self.love_char: Dict[int, Tuple[int, int]] = (
