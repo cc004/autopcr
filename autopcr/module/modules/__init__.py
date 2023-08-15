@@ -32,6 +32,7 @@ daily_modules = [
     tower_cloister_sweep,
     smart_very_hard_sweep,
     jjc_reward,
+    xinsui4_sweep,
     xinsui3_sweep,
     xinsui2_sweep,
     xinsui1_sweep,
