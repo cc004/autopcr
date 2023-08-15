@@ -20,8 +20,9 @@ class explore_sweep(Module):
             quest_id = self.get_max_quest(client, sweep_available = True)
             if not quest_id:
                 raise AbortError("不存在可扫荡的探索")
-            if self.not_max_stop() and self.get_max_quest(client) != quest_id:
-                raise AbortError(f"最高级探索{self.get_max_quest}未通关，不扫荡")
+            max_quest = self.get_max_quest(client)
+            if self.not_max_stop() and max_quest != quest_id:
+                raise AbortError(f"最高级探索{max_quest}未通关，不扫荡")
             name = db.quest_name[quest_id]
             await client.training_quest_skip(quest_id, remain_cnt)
             self._log(f"{name}扫荡{remain_cnt}次")
