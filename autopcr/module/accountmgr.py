@@ -22,6 +22,7 @@ class Account(ModuleManager):
 
         with open(self._filename, 'r') as f:
             self.data = json.load(f)
+            self.old_data = self.data
 
         self.qq = self.data.get("qq", "")
         self.alian = self.data.get("alian", "未知")
@@ -32,7 +33,8 @@ class Account(ModuleManager):
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.save_data()
+        if self.data != self.old_data:
+            await self.save_data()
         self._lck.release()
 
     async def save_data(self):
