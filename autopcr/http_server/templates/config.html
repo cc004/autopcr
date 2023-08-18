@@ -1,574 +1,171 @@
 <!DOCTYPE html>
-<html>
-
+<html data-bs-theme="auto" lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AutoPCR-主界面</title>
-    <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="/static/css/Switch.css" />
-    <script src="/static/js/iecheck.js"></script>
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-
-        .card {
-            margin-top: 2%;
-            margin-bottom: 2%;
-        }
-
-        .cart-area {
-            margin-top: 5%;
-            margin-bottom: 5%;
-        }
-
-        .config-section {
-            padding: 20px;
-            background-color: #fff;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .config-header {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-
-        .config-info {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-start;
-            align-items: flex-start;
-            gap: 0px 20px;
-        }
-
-        .config-info > .form-group {
-            width: 256px;
-            margin-bottom: 0px;
-        }
-
-        .button-group .btn {
-            margin-top: 4px;
-        }
-
-        .copy-text {
-            font-size: 8px;
-            user-select: all;
-            cursor: pointer;
-            max-width: 520px;
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>AutoPCR</title>
+    <script>
+        (function() {
+            // JavaScript snippet handling Dark/Light mode switching
+            const getStoredTheme = () => localStorage.getItem('theme');
+            const setStoredTheme = theme => localStorage.setItem('theme', theme);
+            const forcedTheme = document.documentElement.getAttribute('data-bss-forced-theme');
+            const getPreferredTheme = () => {
+                if (forcedTheme) return forcedTheme;
+                const storedTheme = getStoredTheme();
+                if (storedTheme) {
+                    return storedTheme;
+                }
+                const pageTheme = document.documentElement.getAttribute('data-bs-theme');
+                if (pageTheme) {
+                    return pageTheme;
+                }
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
             }
-
-        #ta td:nth-child(5) {
-            min-width: 150px;
-        }
-
-        .form-text-red {
-            color: red;
-        }
-    </style>
+            const setTheme = theme => {
+                if (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.setAttribute('data-bs-theme', 'dark');
+                } else {
+                    document.documentElement.setAttribute('data-bs-theme', theme);
+                }
+            }
+            setTheme(getPreferredTheme());
+            const showActiveTheme = (theme, focus = false) => {
+                const themeSwitchers = [].slice.call(document.querySelectorAll('.theme-switcher'));
+                if (!themeSwitchers.length) return;
+                document.querySelectorAll('[data-bs-theme-value]').forEach(element => {
+                    element.classList.remove('active');
+                    element.setAttribute('aria-pressed', 'false');
+                });
+                for (const themeSwitcher of themeSwitchers) {
+                    const btnToActivate = themeSwitcher.querySelector('[data-bs-theme-value="' + theme + '"]');
+                    if (btnToActivate) {
+                        btnToActivate.classList.add('active');
+                        btnToActivate.setAttribute('aria-pressed', 'true');
+                    }
+                }
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                const storedTheme = getStoredTheme();
+                if (storedTheme !== 'light' && storedTheme !== 'dark') {
+                    setTheme(getPreferredTheme());
+                }
+            });
+            window.addEventListener('DOMContentLoaded', () => {
+                showActiveTheme(getPreferredTheme());
+                document.querySelectorAll('[data-bs-theme-value]')
+                    .forEach(toggle => {
+                        toggle.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const theme = toggle.getAttribute('data-bs-theme-value');
+                            setStoredTheme(theme);
+                            setTheme(theme);
+                            showActiveTheme(theme);
+                        })
+                    })
+            });
+        })();
+    </script>
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/Roboto.css">
+    <link rel="stylesheet" href="assets/css/Roboto%20Slab.css">
+    <link rel="stylesheet" href="assets/css/config.css">
 </head>
-
 <body>
-    <main>
-        <div class="cart-area">
-            <div class="container">
-                <div class="row justify-content-center">
-                    <div id="card" class="col-md-10">
-                        <div class="config-section">
-                            <div id="alertContainer" class="alert-container"></div>
-                            <h3 class="config-header">配置信息：</h3>
-                            <div class="config-info">
-                                <div class="form-group">
-                                    <label>一般配置：</label>
-                                    <input type="text" class="form-control" id="alian" placeholder="昵称" />
-                                    <input type="text" class="form-control" id="qq" placeholder="QQ号" style="margin-top: 10px;" />
-                                </div>
-                                <div class="form-group">
-                                    <label>账号配置：</label>
-                                    <input type="text" class="form-control" id="username" placeholder="PCR登录用户名" />
-                                    <input type="text" class="form-control" id="password" placeholder="PCR登录密码" style="margin-top: 10px;" />
-                                </div>
-                            </div>
-                            <small id="account-description" class="form-text form-text-red">注意：本服务需要存储您的用户名和密码以正常运行。若不同意存储，请勿使用。</small>
-                            <div class="button-group" style="margin-top: 0px;">
-                                <button type="button" class="btn btn-primary" id="login" onclick="update_new()">保存配置信息</button>
-								{% if url == "config" %}
-                                <button type="button" class="btn btn-primary" id="do_task" flag="run_once" onclick="do_task(this)">执行清日常</button>
-                                <button type="button" class="btn btn-primary" id="tools" onclick="to_tools()"">实用查询</button>
-								{% endif %}
-                                <button type="button" class="btn btn-danger" id="delete_config" onclick="delete_config()">删除账号信息</button>
-                            </div>
-
-                            <div id="msg-group" style="margin-top: 4px; margin-bottom: 8px">
-                                <small id="msg-description" class="form-text" style="display: none;">↓导入文本↓点击复制↓&ensp;<a href="https://pcredivewiki.tw/Armory" target="_blank">兰德索尔图书馆</a></small>
-                                <div id="msg-input-group" class="input-group" style="margin-top: 2px; margin-bottom: 6px; display: none;">
-                                    <input id="msg" type="text" class="form-control copy-text" value="value" readonly onclick="copyToClipboard()">
-                                </div>
-                            </div>
-
-                            <div id="module">
+    <div class="container-fluid mx-auto">
+        <div class="row py-3">
+            <div class="col-12 col-lg-8 m-auto">
+                <div id="card-main" class="card" style="box-shadow: 0px 0px 10px var(--bs-tertiary-color);max-height: calc(100vh - 2rem)!important;">
+                    <div class="hstack card-header" style="font-weight: bold;border-bottom-style: none;">
+                        <h4 class="mb-0" style="font-weight: bold;border-bottom-style: none;">AutoPCR</h4>
+                        <div class="theme-switcher dropdown ms-auto"><button id="themeDropdown" class="btn btn-link dropdown-toggle ms-auto" aria-expanded="false" data-bs-toggle="dropdown" type="button" style="color: var(--bs-body-color);"><svg class="bi bi-sun-fill mb-1" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"></path>
+                                </svg></button>
+                            <div class="dropdown-menu" aria-labelledby="themeDropdown">
+                                <a class="dropdown-item d-flex align-items-center" href="#" data-bs-theme-value="light">
+                                    <svg class="bi bi-sun-fill opacity-50 me-2" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"></path>
+                                    </svg>Light</a>
+                                <a class="dropdown-item d-flex align-items-center" href="#" data-bs-theme-value="dark">
+                                    <svg class="bi bi-moon-stars-fill opacity-50 me-2" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"></path>
+                                        <path d="M10.794 3.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387a1.734 1.734 0 0 0-1.097 1.097l-.387 1.162a.217.217 0 0 1-.412 0l-.387-1.162A1.734 1.734 0 0 0 9.31 6.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387a1.734 1.734 0 0 0 1.097-1.097l.387-1.162zM13.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732l-.774-.258a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732L13.863.1z"></path>
+                                    </svg>Dark</a>
+                                <a class="dropdown-item d-flex align-items-center" href="#" data-bs-theme-value="auto"><svg class="bi bi-circle-half opacity-50 me-2" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M8 15A7 7 0 1 0 8 1v14zm0 1A8 8 0 1 1 8 0a8 8 0 0 1 0 16z"></path>
+                                    </svg>Auto</a>
                             </div>
                         </div>
                     </div>
+                    <div id="tab-main">
+                        <ul class="nav nav-tabs card-header" role="tablist" id="tab-items" style="padding-top: 0;padding-bottom: 0;">
+                            <li class="nav-item" role="presentation"><a class="nav-link active" role="tab" data-bs-toggle="tab" href="#tab-1">账号配置</a></li>
+                            <li class="nav-item" role="presentation"><a class="nav-link" role="tab" data-bs-toggle="tab" href="#tab-2">清日常及配置</a></li>
+                            <li class="nav-item" role="presentation"><a class="nav-link" role="tab" data-bs-toggle="tab" href="#tab-3">实用信息</a></li>
+                        </ul>
+                        <div id="main-tab-content" class="tab-content card-body">
+                            <div class="tab-pane fade show active" role="tabpanel" id="tab-1">
+                                <div class="row g-0">
+                                    <div class="col">
+                                        <div class="hstack gap-2 flex-wrap">
+                                            <form id="form-normal-config">
+                                                <label class="form-label">一般配置：</label>
+                                                <input class="form-control" type="text" data-bs-toggle="tooltip" data-bss-tooltip="" id="input-alian" placeholder="昵称" title="昵称"><input class="form-control mt-1" type="text" data-bs-toggle="tooltip" data-bss-tooltip="" id="input-qqnum" placeholder="QQ号" inputmode="numeric" oninput="value=value.replace(/\D/g,&#39;&#39;)" title="QQ号">
+                                            </form>
+                                            <form id="form-account-config">
+                                                <label class="form-label">账号配置：</label>
+                                                <input class="form-control" type="text" data-bs-toggle="tooltip" data-bss-tooltip="" id="input-uname" placeholder="PCR登录用户名" title="PCR登录用户名"><input class="form-control mt-1" type="text" data-bs-toggle="tooltip" data-bss-tooltip="" id="input-upwd" placeholder="PCR登录密码" title="PCR登录密码">
+                                            </form>
+                                        </div><small style="font-size: 13px;color: #ff0000;">注意：本服务需要存储您的用户名和密码以正常运行。若不同意存储，请勿使用。</small>
+                                        <form class="d-flex gap-1">
+                                            <button class="btn btn-primary" id="btn-save" type="button" onclick="update_new()">
+                                                <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true" style="margin-right: 4px;"></span>
+                                                保存配置</button>
+                                            <button class="btn btn-primary" id="btn-reset" type="button" onclick="reset_config_form()">
+                                                <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true" style="margin-right: 4px;"></span>
+                                                重置表单</button>
+                                            <button id="delete_config" class="btn btn-danger" type="button" data-bs-toggle="modal" data-bs-target="#modal-1">
+                                                <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true" style="margin-right: 4px;"></span>
+                                                删除账号信息</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" role="tabpanel" id="tab-2">
+                                <iframe id="iframe-action" src="" style="width: 100%;border: none;"></iframe>
+                            </div>
+                            <div class="tab-pane fade" role="tabpanel" id="tab-3">
+                                <iframe id="iframe-info" src="" style="width: 100%;border: none;"></iframe>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer"></div>
+                    <div id="toast-container-1" class="toast-container p-1 top-0 end-0"></div>
                 </div>
             </div>
         </div>
-    </main>
-
-    <script src="/static/js/vendor/jquery-3.6.0.min.js"></script>
-    <script src="/static/js/bootstrap.min.js"></script>
-    <script src="/static/js/isotope.pkgd.min.js"></script>
-    <script src="/static/js/imagesloaded.pkgd.min.js"></script>
-    <script src="/static/js/jquery.magnific-popup.min.js"></script>
-    <script src="/static/js/jquery.countdown.min.js"></script>
-    <script src="/static/js/jquery-ui.min.js"></script>
-    <script src="/static/js/slick.min.js"></script>
-    <script src="/static/js/ajax-form.js"></script>
-    <script src="/static/js/wow.min.js"></script>
-    <script src="/static/js/aos.js"></script>
-    <script src="/static/js/plugins.js"></script>
-    <script src="/static/js/main.js"></script>
-    <script src="/static/js/bootbox.min.js"></script>
-
-    <script type="text/javascript">
-        var prompt = function (message, style, time) {
-            style = style === undefined ? "alert-success" : style;
-            time = time === undefined ? 3000 : time;
-
-            var alertBox = $('<div class="alert" role="alert"></div>')
-                .addClass(style)
-                .text(message)
-                .css({
-                    position: "absolute",
-                    "z-index": 99999,
-                    });
-            $('#alertContainer').append(alertBox);
-            alertBox.hide().slideDown();
-            setTimeout(function() {
-                alertBox.slideUp(function() {
-                $(this).remove();
-                });
-            }, time);
-
-        };
-        // 成功提示
-        var success_prompt = function (message, time) {
-            prompt(message, "alert-success", time);
-        };
-
-        // 失败提示
-        var fail_prompt = function (message, time) {
-            prompt(message, "alert-danger", time);
-        };
-
-        // 提醒
-        var warning_prompt = function (message, time) {
-            prompt(message, "alert-warning", time);
-        };
-
-        // 信息提示
-        var info_prompt = function (message, time) {
-            prompt(message, "alert-info", time);
-        };
-
-        // 信息提示
-        var alert_prompt = function (message, time) {
-            prompt(message, "alert-primary", time);
-        };
-
-        function suspend(str, message = "") {
-            // document.scrollingElement.scrollTop = 0; //让页面滚动到最顶部
-            switch (str) {
-                case "alert-success":
-                    success_prompt(message != "" ? message : "提交成功");
-                    break;
-                case "alert-warning":
-                    warning_prompt(message != "" ? message : "错误警告");
-                    break;
-                case "alert-danger":
-                    fail_prompt(message != "" ? message : "提交失败");
-                    break;
-                case "alert-info":
-                    info_prompt(message != "" ? message : "未查询到数据");
-                    break;
-                case "alert-info2":
-                    info_prompt(message != "" ? message : "未查询到数据");
-                    break;
-                default:
-                    alert_prompt("未查询到数据");
-            }
-        }
-    </script>
-
-    <script type="text/javascript" charset="utf-8">
-        
-        var user_config = {}
-        var share_key = {}
-
-        $(document).ready(function () {
-            $.ajax({
-				url: "/daily/api/{{ url }}" + window.location.search,
-                type: "get",
-                processData: false,
-                success: function (ret) {
-                    let ta_tab = $("#module");
-                    $("#alian").val(ret.alian);
-                    $("#qq").val(ret.qq);
-                    $("#username").val(ret.username);
-                    $("#password").val(ret.password);
-                    result = ret.last_result;
-                    user_config = ret.config;
-                    const data = ret.data;
-					const module = ret.order;
-
-                    for (let i = 0; i < module.length; ++i) {
-                        let val = data[module[i]];
-
-                        ta_tab.append(make_card(val)); //添加一列
-                    }
-
-                    for (let key in share_key){
-                        if (share_key[key] > 1){
-                            $(`[name=${key}]`).css({
-                                'border-color': get_random_color(),
-                                'border-width': "3px"
-                            });
-                        }
-                    }
-
-                    load_results(module, result);
-
-                },
-                error: function (ret) {
-                    suspend("alert-danger", "获取配置失败");
-                },
-            });
-        }
-        );
-
-        function get_single_html(config) {
-            let res = `<select class="custom-select" id=${config.key} name=${config.key} onchange="selectOnChange(this)">`;
-            for (let i = 0; i < config.candidates.length; i++) res += `<option value='${config.candidates[i]}' ${user_config[config.key] == config.candidates[i] ? "selected" : ""}>${config.candidates[i]}</option>`;
-            res += "</select>";
-            return res;
-        }
-
-        function get_bool_html(config) {
-            return `<input type="checkbox" class="switch" ${user_config[config.key] ? 'checked="checked"' : ""} id=${config.key} name=${config.key} onclick="checkboxOnclick(this)" />`;
-        }
-
-        function get_int_html(config) {
-            return `<input type="text" id=${config.key} name=${config.key} value=${user_config[config.key]} onchange="selectOnChange(this)" class="form-control" placeholder=${config.candidates[0]}-${config.candidates[config.candidates.length-1]}`;
-        }
-
-        function get_multi_html(config) {
-            let res = `<select class="custom-select" multiple id=${config.key} name=${config.key} onchange="selectMultiOnChange(this)">`;
-            for (let i = 0; i < config.candidates.length; i++) res += `<option value='${config.candidates[i]}' ${user_config[config.key].includes(config.candidates[i]) ? "selected" : ""}>${config.candidates[i]}</option>`;
-            res += "</select>";
-            return res;
-        }
-        function get_time_html(config) {
-            return `<input type="time" class="form-control" id=${config.key} name=${config.key} value=${user_config[config.key]} onchange="selectOnChange(this)" />`;
-        }
-
-        function selectOnChange(e) {
-            const key = e.id;
-            let value = e.value;
-			if (isDigit(value))
-                value = parseInt(value);
-            user_config[key] = value;
-            $(`[name=${key}]`).val(value);
-            update_new();
-        }
-
-        function selectMultiOnChange(e) {
-            const key = e.id;
-            let value = Array.from(e.selectedOptions).map(option => option.value);
-            const intValue = value.map(option => parseInt(option))
-            if (intValue.length != 0 && !isNaN(intValue[0]))
-                value = intValue;
-            user_config[key] = value;
-            update_new();
-        }
-
-        function checkboxOnclick(checkbox) {
-            const key = checkbox.id;
-            const value = checkbox.checked;
-            user_config[key] = value;
-            update_new();
-        }
-
-        function generate_option_HTML(config){
-            
-          switch (config.config_type) {
-            case 'single':
-                return get_single_html(config)
-                break;
-
-            case 'multi':
-                return get_multi_html(config)
-                break;
-
-            case 'int':
-                return get_int_html(config)
-                break;
-
-            case 'bool':
-                return get_bool_html(config)
-                break;
-
-            case 'time':
-                return get_time_html(config)
-                break;
-
-            }
-        }
-
-        function generate_config_HTML(config){
-            share_key[config.key] = (share_key[config.key] || 0) + 1;
-            let configHTML = '';
-            configHTML += `
-                <div class="mb-3" name=${config.key}_card>
-                  <h6>${config.desc}</h6>
-                  ${generate_option_HTML(config)}
+    </div>
+    <div class="modal fade" role="dialog" tabindex="-1" id="modal-1">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">确认删除？</h4><button class="btn-close" type="button" aria-label="Close" data-bs-dismiss="modal"></button>
                 </div>
-              `;
-            return configHTML;
-        }
-
-        function make_card(m) {
-
-            let functionHTML = `
-                  <div id=card_${m.key} class="card">
-                    <div class="card-header">
-                      <h5 class="mb-0" > <input type="checkbox" class="switch" ${user_config[m.key] ? 'checked="checked"' : ""} id=${m.key} name=${m.key} onclick="checkboxOnclick(this)"  data-bs-toggle="collapse" data-bs-target="#${m.key}_config" /> ${m.name} 
-					<button type="button" id=${m.key}_do_single name=${m.key} flag="run_once" class="btn btn-secondary" onclick="do_single(this)">单项执行</button>
-				</h5>
-                    </div>
-            `;
-        if (m.description.length !== 0){
-            functionHTML += `
-                <div class="card-body">
-                      ${m.description}
+                <div class="modal-body">
+                    <p>即将从服务器上彻底删除该账号及所有相关信息。<br>此操作不可逆。</p>
                 </div>
-              `
-        }
-
-        if (Object.keys(m.config).length !== 0){
-            functionHTML += `<div role="ul" class="list-group list-group-flush collapse ${user_config[m.key] ? 'show' : ''}" id=${m.key}_config } >`
-            for (const key in m.config) {
-                functionHTML += "<li class='list-group-item'>";
-                functionHTML += generate_config_HTML(m.config[key]);
-                functionHTML += "</li>";
-            }
-            functionHTML += "</div>"
-        }
-
-            functionHTML += `
-                <div class="card-footer" id=${m.key}_result>
-                    无执行结果
+                <div class="modal-footer">
+                    <button class="btn btn-light" type="button" data-bs-dismiss="modal">取消</button>
+                    <button class="btn btn-danger" type="button" data-bs-dismiss="modal" onclick="delete_config()">确认</button>
                 </div>
-                    </div>
-            `;
-
-            return functionHTML;
-
-        }
-
-		function load_result(ret, key){
-			if (ret.hasOwnProperty(key)){
-				$(`#${key}_result`).html(ret[key]["log"].replace(/\n/g, '<br>'))
-				$(`#${key}_result`).css("background-color", status_color(ret[key]['status']));
-			}
-		}
-
-        function load_results(module, ret) {
-			for (let i = 0; i < module.length; ++i) {
-				let key = module[i];
-				load_result(ret, key);
-            }
-        }
-
-        function do_single(e) {
-			const flag = e.getAttribute('flag');
-			$(`[flag=${flag}]`).attr('disabled', true);
-            suspend("alert-info", "已开始执行任务。");
-            let config = {
-                config: user_config,
-                order: [e.name]
-            }
-            $.ajax({
-                url: '/daily/api/do_single' + window.location.search,
-                type: 'post',
-                contentType: "application/json;charset=utf-8",
-                data: JSON.stringify(config),
-                success: function (ret) {
-					load_results(ret.order, ret.result);
-					$(`[flag=${flag}]`).attr('disabled', false);
-                    suspend("alert-success", "任务执行成功！");
-                },
-                error: function (ret) {
-                    suspend("alert-danger", "执行任务失败: " + ret.responseText);
-					$(`[flag=${flag}]`).attr('disabled', false);
-                }
-            })
-        }
-
-        function library_import() {
-            $("#library_import").attr('disabled', true);
-            suspend("alert-info", "已开始执行任务。");
-            let config = {
-                config: {},
-                order: ["get_library_import_data"]
-            }
-            $.ajax({
-                url: '/daily/api/do_single' + window.location.search,
-                type: 'post',
-                contentType: "application/json;charset=utf-8",
-                data: JSON.stringify(config),
-                success: function (ret) {
-                    $("#msg").attr('value', ret["result"]["get_library_import_data"]['log'])
-                    $("#msg-group").css('margin-top', '0');
-                    $("#msg-description").css('display', '');
-                    $("#msg-input-group").css('display', '');
-                    $("#library_import").attr('disabled', false);
-                    suspend("alert-success", "任务执行成功！");
-                },
-                error: function (ret) {
-                    suspend("alert-danger", "执行任务失败: " + ret.responseText);
-                    $("#library_import").attr('disabled', false);
-                }
-            })
-        }
-
-        function do_task(e) {
-			const flag = e.getAttribute('flag');
-			$(`[flag=${flag}]`).attr('disabled', true);
-            suspend("alert-info", "已开始执行清日常任务。");
-            $.ajax({
-                url: '/daily/api/do_task' + window.location.search,
-                type: 'get',
-                processData: false,
-                success: function (ret) {
-                    // <!-- prompt(JSON.stringify(ret), "alert-success", 60000); -->
-                    suspend("alert-success", "清日常任务执行完毕。");
-					$(`[flag=${flag}]`).attr('disabled', false);
-                    load_results(ret.order, ret.result);
-                },
-                error: function (ret) {
-                    suspend("alert-danger", "执行任务失败: " + ret.responseText);
-					$(`[flag=${flag}]`).attr('disabled', false);
-                }
-            })
-        }
-
-			function delete_config() {
-
-				var confirmed = confirm('确定要删除该账号？该操作不可撤销！');
-
-				if (confirmed){
-					$("#delete_config").attr('disabled', true);
-					suspend("alert-info", "已开始执行任务。");
-					$.ajax({
-						url: '/daily/api/config' + window.location.search,
-						type: 'delete',
-						processData: false,
-						success: function (ret) {
-							suspend("alert-success", "删除账号成功！");
-							window.location.href = "/daily/";
-						},
-						error: function (ret) {
-							suspend("alert-danger", "删除账号失败: " + ret.responseText);
-							$("#delete_config").attr('disabled', false);
-						}
-					})
-				}
-			}
-
-		function update_new() {
-            let config = {}; // 可以用referrer解决问题
-            id = 1;
-            config['alian'] = $("#alian").val();
-            config['qq'] = $("#qq").val();
-            config['username'] = $("#username").val();
-            config['password'] = $("#password").val();
-            config['config'] = user_config;
-
-            $.ajax({
-				url: "/daily/api/{{ url }}" + window.location.search,
-                type: "put",
-                data: JSON.stringify(config),
-                contentType: "application/json;charset=utf-8",
-                processData: false,
-                success: function (ret) {
-                    if (ret.statusCode == 200) {
-                        suspend("alert-success", ret.message);
-                    } else {
-                        alert("本次修改保存失败：" + ret.message + "\n如有需要，请联系管理员\n点击确定将为您刷新页面");
-                        location.reload(true);
-                    }
-                },
-                error: function (ret) {
-                    suspend("alert-danger", "本次修改保存失败");
-                },
-            });
-        }
-
-        function get_random_color() {
-          const letters = "0123456789ABCDEF";
-          let color = "#";
-
-          for (let i = 0; i < 6; i++) {
-            color += letters[Math.floor(Math.random() * 16)];
-          }
-
-          return color;
-        }
-
-         function status_color(status){
-             switch (status){
-             case "success":
-                return "#e1ffb5";
-                 break;
-             case "skip":
-                return "#c8d6fa";
-                 break;
-             case "abort":
-                return "#FFFF00";
-                 break;
-             case "error":
-                 return "#FFFFFF";
-                 break;
-             }
-         }
-
-		function to_tools(){
-			var currentURL = window.location.href;
-			var targetURL = '/daily/tools.html';
-			var urlWithParams = targetURL + '?' + currentURL.split('?')[1];
-			window.location.href = urlWithParams;
-		}
-
-		function isDigit(str) {
-		  for (var i = 0; i < str.length; i++) {
-			if (isNaN(parseInt(str[i]))) {
-			  return false; // 包含非数字字符
-			}
-		  }
-		  return true; // 不包含非数字字符
-		}
-
-    </script>
-    <script>
-        function copyToClipboard() {
-        var copyText = document.getElementById("msg");
-        copyText.select();
-        copyText.setSelectionRange(0, 99999); /* 兼容移动设备 */
-        document.execCommand("copy");
-        suspend("alert-success", "内容已复制到剪贴板！");
-        }
-    </script>
+            </div>
+        </div>
+    </div>
+    <script src="assets/js/iecheck.js"></script>
+    <script>var jinjaUrlConfig = "{{ url }}";</script>
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/bootstrap/js/bootstrap.min.js"></script>
+    <script src="assets/js/bs-init.js"></script>
+    <script src="assets/js/config.js"></script>
 </body>
-
 </html>
