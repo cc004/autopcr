@@ -8,7 +8,7 @@ from ..constants import CONFIG_PATH
 
 class HttpServer:
     def __init__(self, host = '0.0.0.0', port = 2, qq_only = False):
-        self.app = Blueprint('autopcr', __name__, static_folder='statics', static_url_path='/statics', url_prefix="/daily")
+        self.app = Blueprint('autopcr', __name__, static_folder='assets', static_url_path='/assets', url_prefix="/daily")
         self.quart = quart.Quart(__name__)
         self.host = host
         self.port = port
@@ -121,9 +121,13 @@ class HttpServer:
         async def config():
             return await render_template('config.html', url="config")
 
-        @self.app.route('/tools.html', methods = ['GET'])
+        @self.app.route('/info.html', methods = ['GET'])
         async def tools():
-            return await render_template('config.html', url="tools")
+            return await render_template('info.html', url="tools")
+        
+        @self.app.route('/action.html', methods = ['GET'])
+        async def action():
+            return await render_template('action.html', url="config")
 
     def run_forever(self, loop):
         self.quart.register_blueprint(self.app)
