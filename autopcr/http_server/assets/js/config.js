@@ -2,31 +2,41 @@ const iframeActionID = 'iframe-action'
 const iframeInfoID = 'iframe-info'
 const toastContainerID = 'toast-container-1'
 const configFormID = ['form-normal-config', 'form-account-config'];
+var share_ret = undefined
 $(document).ready(function () {
+    document.getElementById('card-main').style.pointerEvents = 'none';
+    ready_info_get(true)
     $(`#${iframeActionID}`).attr('src', 'action.html' + window.location.search);
     $(`#${iframeInfoID}`).attr('src', 'info.html' + window.location.search);
+    document.getElementById('card-main').style.pointerEvents = 'auto';
+}
+);
+function ready_info_get(toggle) {
+    document.getElementById('main-tab-content').style.pointerEvents = 'none';
     $.ajax({
         url: `/daily/api/${jinjaUrlConfig}` + window.location.search,
         type: "get",
         processData: false,
         success: function (ret) {
+            share_ret = ret
             $("#input-alian").val(ret.alian);
             $("#input-qqnum").val(ret.qq);
             $("#input-uname").val(ret.username);
             $("#input-upwd").val(ret.password);
             user_config = ret.config;
-            if (ret.username || ret.alian) {
+            if ((share_ret.username || share_ret.alian) && toggle) {
                 $("#tab-main a[href='#tab-2']").tab("show");
             } else {
                 $("tab-main a[href='#tab-1']").tab("show");
             }
+            document.getElementById('main-tab-content').style.pointerEvents = 'auto';
         },
         error: function (ret) {
+            document.getElementById('card-main').style.pointerEvents = 'none';
             show_toast('error', '获取配置失败。', `${ret.responseText}`);
         },
     });
 }
-);
 function updateElementHeight() {
     var viewportHeight = window.innerHeight;
     var elementPos = document.getElementById('tab-items').getBoundingClientRect().bottom;
@@ -133,7 +143,6 @@ function update_new() {
     config['qq'] = $("#input-qqnum").val();
     config['username'] = $("#input-uname").val();
     config['password'] = $("#input-upwd").val();
-    config['config'] = user_config;
     $.ajax({
         url: `/daily/api/${jinjaUrlConfig}` + window.location.search,
         type: "put",
@@ -142,7 +151,7 @@ function update_new() {
         processData: false,
         success: function (ret) {
             if (ret.statusCode == 200) {
-                document.getElementById('main-tab-content').style.pointerEvents = 'auto';
+                ready_info_get(false);
                 show_toast('success', '本次修改保存成功。')
             } else {
                 show_toast('error', '本次修改保存失败。', `将于三秒后刷新页面，如有需要请联系管理员。\n${ret.message}`);
