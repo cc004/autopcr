@@ -162,6 +162,33 @@ function set_tag(status, element) {
             break;
     }
 }
+function update_new() {
+    let config = {};
+    config['config'] = user_config;
+    $.ajax({
+        url: `/daily/api/${jinjaUrl}` + window.location.search,
+        type: "put",
+        data: JSON.stringify(config),
+        contentType: "application/json;charset=utf-8",
+        processData: false,
+        success: function (ret) {
+            if (ret.statusCode == 200) {
+                show_toast('success', '本次修改保存成功。')
+            } else {
+                show_toast('error', '本次修改保存失败。', `将于三秒后刷新页面，如有需要请联系管理员。\n${ret.message}`);
+                setTimeout(function() {
+                    location.reload(true);
+                }, 3000);
+            }
+        },
+        error: function (ret) {
+            show_toast('error', '本次修改保存失败。', `将于三秒后刷新页面，如有需要请联系管理员。\n${ret.message}`);
+            setTimeout(function() {
+                location.reload(true);
+            }, 3000);
+        },
+    });
+}
 function load_results(module, ret) {
     for (let i = 0; i < module.length; ++i) {
         load_result(ret, module[i]);
