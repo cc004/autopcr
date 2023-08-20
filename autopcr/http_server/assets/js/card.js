@@ -43,7 +43,7 @@ function switch_toggle_collapse(switchID) {
     const _switch = document.getElementById(switchID);
     const button = document.querySelector(`[data-bs-toggle="collapse"][data-bs-target="#collapse-${switchID}"]`);
     _switch.addEventListener("change", function () {
-        if (_switch.checked && (button.getAttribute('aria-expanded') == 'false')) {
+        if (_switch.checked ^ (button.getAttribute('aria-expanded') == 'true')) {
             var clickEvent = new MouseEvent("click");
             button.dispatchEvent(clickEvent);
         }
