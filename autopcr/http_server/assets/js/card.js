@@ -108,7 +108,7 @@ function get_multi_html(config) {
     return res;
 }
 function get_int_html(config) {
-    return `<input id=${config.key} class="form-control" type="text" value=${user_config[config.key]} onchange="selectOnChange(this)" placeholder=${config.candidates[0]} ~ ${config.candidates[config.candidates.length - 1]} oninput="value=value.replace(/\D/g,'')" />`;
+    return `<input id=${config.key} class="form-control" type="text" value=${user_config[config.key]} onchange="selectOnChange(this)" oninput="value=value.replace(/\D/g,&#39;&#39;)" name=${config.key} placeholder=${config.candidates[0]} ~ ${config.candidates[config.candidates.length - 1]} oninput="value=value.replace(/\D/g,'')" />`;
 }
 function get_bool_html(config) {
     let res = `<div class="input-group-text form-control form-switch px-3" style="min-width: fit-content;">`
@@ -205,8 +205,8 @@ function selectOnChange(e) {
     if (isDigit(value))
         value = parseInt(value);
     user_config[key] = value;
-    $(`[name=${key}]`).val(value);
     update_new();
+    $(`[name=${key}]`).val(value);
 }
 function isDigit(str) {
     for (var i = 0; i < str.length; i++) {
