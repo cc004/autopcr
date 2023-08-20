@@ -92,8 +92,8 @@
                     </div>
                     <div id="card-index" class="card-body">
                         <form><label class="form-label">账号：</label>
-                            <input id="account" class="form-control" type="text" placeholder="1~32位，字母/数字/下划线" />
-                            <small class="text-danger" style="font-size: 13px;">注意：账号为唯一凭据，请勿泄露！</small>
+                            <input id="account" class="form-control" type="text" placeholder="1~32位，字母/数字/下划线" oninput="value=value.replace(/[^a-zA-Z0-9_]/g, '')" maxlength="32" />
+                            <small class="text-danger" style="font-size: 13px;">注意：第一次使用请输入账号后点击注册。<br>账号为唯一凭据，请勿泄露！</small>
                             <button class="btn btn-primary w-100 my-2" type="button" onclick="login()">登录</button>
                             <button class="btn btn-primary w-100" type="button" onclick="register()">注册</button>
                         </form>
