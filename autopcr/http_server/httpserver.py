@@ -92,6 +92,19 @@ class HttpServer:
                 f.write(json.dumps(data))
             return '', 204
 
+        @self.app.route('/api/login', methods = ['GET'])
+        async def login_account_check():
+            # if self.qq_only:
+            #     return 'Please contact the maintenance to register', 400
+            file = request.args.get('account')
+            if file is None or not accountmgr.pathsyntax.fullmatch(file):
+                return 'Invalid account', 400
+
+            if os.path.exists(os.path.join(CONFIG_PATH, file) + '.json'):
+                return 'Account exists', 200
+            else:
+                return 'Account does not exists', 400
+
         @self.app.route('/api/do_task', methods= ['GET'])
         @HttpServer.wrapaccount
         async def do_task(mgr: Account):
