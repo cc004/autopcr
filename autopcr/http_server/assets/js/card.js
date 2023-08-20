@@ -127,7 +127,7 @@ function set_tag(status, element) {
     }
     const textDict = {
         'success': `运行成功`,
-        'info': `检查输出`,
+        'info': `跳过运行`,
         'warning': `运行中止`,
         'error': `运行出错`,
     }
