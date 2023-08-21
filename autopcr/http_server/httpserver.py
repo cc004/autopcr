@@ -8,7 +8,7 @@ from ..constants import CONFIG_PATH
 
 class HttpServer:
     def __init__(self, host = '0.0.0.0', port = 2, qq_only = False):
-        self.app = Blueprint('autopcr', __name__, static_folder='statics', static_url_path='/statics', url_prefix="/daily")
+        self.app = Blueprint('autopcr', __name__, static_folder='assets', static_url_path='/assets', url_prefix="/daily")
         self.quart = quart.Quart(__name__)
         self.host = host
         self.port = port
@@ -92,6 +92,19 @@ class HttpServer:
                 f.write(json.dumps(data))
             return '', 204
 
+        @self.app.route('/api/login', methods = ['GET'])
+        async def login_account_check():
+            # if self.qq_only:
+            #     return 'Please contact the maintenance to register', 400
+            file = request.args.get('account')
+            if file is None or not accountmgr.pathsyntax.fullmatch(file):
+                return 'Invalid account', 400
+
+            if os.path.exists(os.path.join(CONFIG_PATH, file) + '.json'):
+                return 'Account exists', 200
+            else:
+                return 'Account does not exists', 400
+
         @self.app.route('/api/do_task', methods= ['GET'])
         @HttpServer.wrapaccount
         async def do_task(mgr: Account):
@@ -121,9 +134,13 @@ class HttpServer:
         async def config():
             return await render_template('config.html', url="config")
 
-        @self.app.route('/tools.html', methods = ['GET'])
+        @self.app.route('/info.html', methods = ['GET'])
         async def tools():
-            return await render_template('config.html', url="tools")
+            return await render_template('info.html', url="tools")
+        
+        @self.app.route('/action.html', methods = ['GET'])
+        async def action():
+            return await render_template('action.html', url="config")
 
     def run_forever(self, loop):
         self.quart.register_blueprint(self.app)

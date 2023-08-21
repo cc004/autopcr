@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html data-bs-theme="auto" lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>AutoPCR</title>
+    <script>
+        (function() {
+            // JavaScript snippet handling Dark/Light mode switching
+            const getStoredTheme = () => localStorage.getItem('theme');
+            const setStoredTheme = theme => localStorage.setItem('theme', theme);
+            const forcedTheme = document.documentElement.getAttribute('data-bss-forced-theme');
+            const getPreferredTheme = () => {
+                if (forcedTheme) return forcedTheme;
+                const storedTheme = getStoredTheme();
+                if (storedTheme) {
+                    return storedTheme;
+                }
+                const pageTheme = document.documentElement.getAttribute('data-bs-theme');
+                if (pageTheme) {
+                    return pageTheme;
+                }
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            const setTheme = theme => {
+                if (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.setAttribute('data-bs-theme', 'dark');
+                } else {
+                    document.documentElement.setAttribute('data-bs-theme', theme);
+                }
+            }
+            setTheme(getPreferredTheme());
+            const showActiveTheme = (theme, focus = false) => {
+                const themeSwitchers = [].slice.call(document.querySelectorAll('.theme-switcher'));
+                if (!themeSwitchers.length) return;
+                document.querySelectorAll('[data-bs-theme-value]').forEach(element => {
+                    element.classList.remove('active');
+                    element.setAttribute('aria-pressed', 'false');
+                });
+                for (const themeSwitcher of themeSwitchers) {
+                    const btnToActivate = themeSwitcher.querySelector('[data-bs-theme-value="' + theme + '"]');
+                    if (btnToActivate) {
+                        btnToActivate.classList.add('active');
+                        btnToActivate.setAttribute('aria-pressed', 'true');
+                    }
+                }
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                const storedTheme = getStoredTheme();
+                if (storedTheme !== 'light' && storedTheme !== 'dark') {
+                    setTheme(getPreferredTheme());
+                }
+            });
+            window.addEventListener('DOMContentLoaded', () => {
+                showActiveTheme(getPreferredTheme());
+                document.querySelectorAll('[data-bs-theme-value]')
+                    .forEach(toggle => {
+                        toggle.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const theme = toggle.getAttribute('data-bs-theme-value');
+                            setStoredTheme(theme);
+                            setTheme(theme);
+                            showActiveTheme(theme);
+                        })
+                    })
+            });
+        })();
+    </script>
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/Roboto.css">
+    <link rel="stylesheet" href="assets/css/Roboto%20Slab.css">
+    <link rel="stylesheet" href="assets/css/action.css">
+</head>
+<body style="max-height: 100vh;">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-12 w-100 p-0">
+                <div class="hstack flex-wrap sticky-top" style="pointer-events: none;">
+                    <form class="bg-primary-subtle border rounded d-flex flex-wrap gap-1 sticky-top p-1" style="pointer-events: auto;">
+                        <button id="do_task" class="btn btn-primary disabled"  type="button" flag="run_once">
+                            <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true" style="margin-right: 4px;"></span>
+                            <span role="status">执行已启用（暂不可用</span></button>
+                        <button id="do_selected_task" class="btn btn-primary disabled" type="button">
+                            <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true" style="margin-right: 4px;"></span>
+                            <span role="status">执行已选中（暂不可用</span></button></form>
+                </div>
+                <div id="card-stack" class="vstack">
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="assets/js/iecheck.js"></script>
+    <script>var jinjaUrl = "{{ url }}";</script>
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/bootstrap/js/bootstrap.min.js"></script>
+    <script src="assets/js/bs-init.js"></script>
+    <script src="assets/js/card.js"></script>
+    <script src="assets/js/info.js"></script>
+</body>
+</html>
