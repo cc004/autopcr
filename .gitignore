@@ -11,3 +11,4 @@ clans/*
 farm_config.json
 table.csv
 .vscode/
+.idea/
