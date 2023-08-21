@@ -17,7 +17,7 @@ from hoshino import HoshinoBot, Service, priv
 from hoshino.config import SUPERUSERS
 from hoshino.util import escape
 from hoshino.typing import CQEvent, MessageSegment
-from ._util import get_info, get_result
+from ._util import get_result
 from ._task import DailyClean, FindEquip, FindMemory, FindXinsui, Task, GetLibraryImport, QuestRecommand
 import datetime
 import random
@@ -186,7 +186,7 @@ async def timing():
                 continue
 
             alian = escape(mgr.alian)
-            target = mgr._account
+            target = account
             user_id = mgr.qq
             token = (alian, target)
             if token in inqueue:
@@ -287,11 +287,10 @@ async def clear_daily_result(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str
     await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
 
 async def get_config(bot, ev, tot = False):
-    data = await get_info()
     user_id = None
     alian = ""
-    target = ""
-    token = (alian, target)
+    file = ""
+    token = (alian, file)
 
     for m in ev.message:
         if m.type == 'at' and m.data['qq'] != 'all':
@@ -304,35 +303,38 @@ async def get_config(bot, ev, tot = False):
         if not priv.check_priv(ev,priv.ADMIN):
             return False, '[CQ:reply,id={ev.message_id}]指定用户清日常需要管理员权限', token
 
-    if user_id not in data:
-        return False, "[CQ:reply,id={ev.message_id}]请发送【#配置日常】配置", token
-
-    tokens = []
+    accounts = []
     alian = escape(alian)
 
-    for config, file in data[user_id]:
-        if not alian or config['alian'] == alian or len(data[user_id]) == 1:
-            target = file
-            tokens.append((escape(config['alian']), target))
+    for file in accountmgr.accounts():
+        async with accountmgr.load(file) as account:
+            if account.qq == user_id:
+                accounts.append((escape(account.alian), file))
 
-    if not tokens:
-        return False, f"[CQ:reply,id={ev.message_id}]未找到昵称为【{alian}】的账号", token
+    if not accounts:
+        return False, "[CQ:reply,id={ev.message_id}]请发送【#配置日常】配置", token
 
     if tot:
-        return True, "", tokens
+        return True, "", accounts
 
-    if len(tokens) > 1:
-        if not alian:
-            name = ' '.join([i[0] for i in tokens])
-            msg = f"[CQ:reply,id={ev.message_id}]存在多个帐号，请指定一个昵称：\n{name}"
-            return False, msg, token
-        else:
-            msg = f"[CQ:reply,id={ev.message_id}]存在{len(tokens)}个同为{alian}的帐号，请更改为不同昵称\n"
-            return False, msg, token
+    if len(accounts) == 1:
+        return True, "", accounts[0]
 
-    token = tokens[0]
+    if not alian:
+        name = ' '.join([i[0] for i in accounts])
+        msg = f"[CQ:reply,id={ev.message_id}]存在多个帐号，请指定一个昵称：\n{name}"
+        return False, msg, token
+    
+    accounts = [account for account in accounts if account[0] == alian]
 
-    return True, "", token
+    if not accounts:
+        return False, f"[CQ:reply,id={ev.message_id}]未找到昵称为【{alian}】的账号", token
+
+    if len(accounts) > 1:
+        msg = f"[CQ:reply,id={ev.message_id}]存在{len(accounts)}个同为{alian}的帐号，请更改为不同昵称\n"
+        return False, msg, token
+
+    return True, "", accounts[0]
 
 @sv.on_fullmatch(f"{prefix}配置日常")
 async def config_clear_daily(bot: HoshinoBot, ev: CQEvent):
