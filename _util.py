@@ -10,16 +10,6 @@ import asyncio
 PATH = os.path.dirname(__file__)
 RESULT = os.path.join(PATH, "result")
 
-async def get_info():
-    tmp = defaultdict(list)
-    for file in glob.glob(os.path.join(CONFIG_PATH, "*.json")):
-        with open(file, "r") as f:
-            data = json.load(f)
-            if 'qq' in data:
-                account = '.'.join(os.path.basename(file).split('.')[:-1])
-                tmp[data['qq']].append((data, account))
-    return tmp
-
 async def get_result(alian):
     file = os.path.join(RESULT, f"{alian}.jpg")
     if not os.path.exists(file):

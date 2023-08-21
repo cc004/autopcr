@@ -92,5 +92,5 @@ class get_normal_quest_recommand(Module):
                 for token in tokens])
             tot.append(msg.strip())
 
-        msg = '\n'.join(tot)
+        msg = '\n--------\n'.join(tot)
         self._log(msg)
