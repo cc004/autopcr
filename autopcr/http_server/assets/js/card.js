@@ -92,7 +92,7 @@ function generate_option_HTML(config) {
     }
 }
 function get_single_html(config) {
-    let res = `<select id=${config.key} class="form-select" name=${config.key} onchange="selectOnChange(this)">`
+    let res = `<select id=${config.key} class="form-select" style="min-width: fit-content;" name=${config.key} onchange="selectOnChange(this)">`
     for (let i = 0; i < config.candidates.length; i++) {
         res += `<option value='${config.candidates[i]}' ${user_config[config.key] == config.candidates[i] ? "selected" : ""}>${config.candidates[i]}</option>`;
     }
@@ -100,7 +100,7 @@ function get_single_html(config) {
     return res;
 }
 function get_multi_html(config) {
-    let res = `<select id=${config.key} class="form-select" multiple name=${config.key} onchange="selectMultiOnChange(this)">`;
+    let res = `<select id=${config.key} class="form-select" style="min-width: fit-content;" multiple name=${config.key} onchange="selectMultiOnChange(this)">`;
     for (let i = 0; i < config.candidates.length; i++) {
         res += `<option value='${config.candidates[i]}' ${user_config[config.key].includes(config.candidates[i]) ? "selected" : ""}>${config.candidates[i]}</option>`;
     }
@@ -108,7 +108,7 @@ function get_multi_html(config) {
     return res;
 }
 function get_int_html(config) {
-    return `<input id=${config.key} class="form-control" type="text" value=${user_config[config.key]} onchange="selectOnChange(this)" oninput="value=value.replace(/\D/g,&#39;&#39;)" name=${config.key} placeholder=${config.candidates[0]} ~ ${config.candidates[config.candidates.length - 1]} oninput="value=value.replace(/\D/g,'')" />`;
+    return `<input id=${config.key} class="form-control" style="min-width: fit-content;" type="text" value=${user_config[config.key]} onchange="selectOnChange(this)" oninput="value=value.replace(/\D/g,&#39;&#39;)" name=${config.key} placeholder=${config.candidates[0]} ~ ${config.candidates[config.candidates.length - 1]} oninput="value=value.replace(/\D/g,'')" />`;
 }
 function get_bool_html(config) {
     let res = `<div class="input-group-text form-control form-switch px-3" style="min-width: fit-content;">`
@@ -116,7 +116,7 @@ function get_bool_html(config) {
     return res
 }
 function get_time_html(config) {
-    return `<input id=${config.key} class="form-control" type="time" name=${config.key} value=${user_config[config.key]} onchange="selectOnChange(this)" />`;
+    return `<input id=${config.key} class="form-control" style="min-width: fit-content;" type="time" name=${config.key} value=${user_config[config.key]} onchange="selectOnChange(this)" />`;
 }
 function set_tag(status, element) {
     const classDict = {
