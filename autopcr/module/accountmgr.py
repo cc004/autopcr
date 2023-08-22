@@ -22,7 +22,7 @@ class Account(ModuleManager):
 
         with open(self._filename, 'r') as f:
             self.data = json.load(f)
-            self.old_data = self.data
+            self.old_data = self.data.copy()
 
         self.qq = self.data.get("qq", "")
         self.alian = self.data.get("alian", "未知")
@@ -42,7 +42,7 @@ class Account(ModuleManager):
             json.dump(self.data, f)
 
     async def set_result(self, result):
-        self.data.setdefault('_last_result', {}).update(result)
+        self.data['_last_result'] = result
 
     def get_client(self) -> pcrclient:
         return self.get_android_client()
