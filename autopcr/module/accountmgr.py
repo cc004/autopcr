@@ -42,7 +42,7 @@ class Account(ModuleManager):
             json.dump(self.data, f)
 
     async def set_result(self, result):
-        self.data['_last_result'] = result
+        self.data.setdefault('_last_result', {}).update(result)
 
     def get_client(self) -> pcrclient:
         return self.get_android_client()
@@ -71,16 +71,15 @@ class Account(ModuleManager):
             'qq': "",
             'username': "",
             'password': "",
-            'last_result': self.data.get('_last_result', {})
         }
 
     def generate_daily_info(self):
-        info = self.generate_info()
+        info = { 'last_result': self.data.get('_last_result', {}) }
         info.update(super().generate_daily_config())
         return info
 
     def generate_tools_info(self):
-        info = self.generate_info()
+        info = { 'last_result': self.data.get('_last_result', {}) }
         info.update(super().generate_tools_config())
         return info
 
