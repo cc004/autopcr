@@ -2,29 +2,26 @@ const iframeActionID = 'iframe-action'
 const iframeInfoID = 'iframe-info'
 const toastContainerID = 'toast-container-1'
 const configFormID = ['form-normal-config', 'form-account-config'];
-var share_ret = undefined
 $(document).ready(function () {
     document.getElementById('card-main').style.pointerEvents = 'none';
-    ready_info_get(true)
+    ready_get_info(true)
     $(`#${iframeActionID}`).attr('src', 'action.html' + window.location.search);
     $(`#${iframeInfoID}`).attr('src', 'info.html' + window.location.search);
     document.getElementById('card-main').style.pointerEvents = 'auto';
 }
 );
-function ready_info_get(toggle) {
+function ready_get_info(toggle) {
     document.getElementById('main-tab-content').style.pointerEvents = 'none';
-
     $.ajax({
-        url: `/daily/api/info` + window.location.search,
+        url: `/daily/api/${jinjaUrlConfig}` + window.location.search,
         type: "get",
         processData: false,
         success: function (ret) {
-            share_ret = ret
             $("#input-alian").val(ret.alian);
             $("#input-qqnum").val(ret.qq);
             $("#input-uname").val(ret.username);
             $("#input-upwd").val(ret.password);
-            if ((share_ret.username || share_ret.alian) && toggle) {
+            if ((ret.username || ret.alian) && toggle) {
                 $("#tab-main a[href='#tab-2']").tab("show");
             } else {
                 $("tab-main a[href='#tab-1']").tab("show");
@@ -34,19 +31,6 @@ function ready_info_get(toggle) {
         error: function (ret) {
             document.getElementById('card-main').style.pointerEvents = 'none';
             show_toast('error', '获取个人信息失败。', `${ret.responseText}`);
-        },
-    });
-    $.ajax({
-        url: `/daily/api/${jinjaUrlConfig}` + window.location.search,
-        type: "get",
-        processData: false,
-        success: function (ret) {
-            user_config = ret.config;
-            document.getElementById('main-tab-content').style.pointerEvents = 'auto';
-        },
-        error: function (ret) {
-            document.getElementById('card-main').style.pointerEvents = 'none';
-            show_toast('error', '获取配置失败。', `${ret.responseText}`);
         },
     });
 }
@@ -83,6 +67,7 @@ function toggle_spinner(status = 'hidden', element) {
             }
             break
         default:
+            spanEl.addClass("visually-hidden")
             break;
     }
 };
@@ -133,6 +118,7 @@ function delete_config() {
     let element = $("#delete_config")
     element.attr('disabled', true);
     toggle_spinner('show', element[0])
+    document.getElementById('card-main').style.pointerEvents = 'none';
     $.ajax({
         url: '/daily/api/config' + window.location.search,
         type: 'delete',
@@ -146,6 +132,7 @@ function delete_config() {
             show_toast('error', "删除账号失败。", ret.responseText)
             toggle_spinner('hidden', element[0])
             element.attr('disabled', false);
+            document.getElementById('card-main').style.pointerEvents = 'auto';
         }
     })
 }
@@ -157,7 +144,7 @@ function update_info() {
     config['username'] = $("#input-uname").val();
     config['password'] = $("#input-upwd").val();
     $.ajax({
-        url: `/daily/api/info` + window.location.search,
+        url: `/daily/api/${jinjaUrlConfig}` + window.location.search,
         type: "put",
         data: JSON.stringify(config),
         contentType: "application/json;charset=utf-8",
