@@ -2,6 +2,7 @@ const iframeActionID = 'iframe-action'
 const iframeInfoID = 'iframe-info'
 const toastContainerID = 'toast-container-1'
 const configFormID = ['form-normal-config', 'form-account-config'];
+let savedRet = undefined
 $(document).ready(function () {
     document.getElementById('card-main').style.pointerEvents = 'none';
     ready_get_info(true)
@@ -17,6 +18,7 @@ function ready_get_info(toggle) {
         type: "get",
         processData: false,
         success: function (ret) {
+            savedRet = ret
             $("#input-alian").val(ret.alian);
             $("#input-qqnum").val(ret.qq);
             $("#input-uname").val(ret.username);
@@ -139,10 +141,10 @@ function delete_config() {
 function update_info() {
     let config = {};
     document.getElementById('main-tab-content').style.pointerEvents = 'none';
-    config['alian'] = $("#input-alian").val();
-    config['qq'] = $("#input-qqnum").val();
-    config['username'] = $("#input-uname").val();
-    config['password'] = $("#input-upwd").val();
+    config['alian'] = savedRet.alian == $("#input-alian").val() ? "" : $("#input-alian").val();
+    config['qq'] = savedRet.qq == $("#input-qqnum").val() ? "" : $("#input-qqnum").val();
+    config['username'] = savedRet.username == $("#input-uname").val() ? "" : $("#input-uname").val();
+    config['password'] = savedRet.password == $("#input-upwd").val() ? "" : $("#input-upwd").val();
     $.ajax({
         url: `/daily/api/${jinjaUrlConfig}` + window.location.search,
         type: "put",
@@ -150,7 +152,8 @@ function update_info() {
         contentType: "application/json;charset=utf-8",
         processData: false,
         success: function (ret) {
-			show_toast('success', '本次修改保存成功。')
+            show_toast('success', '本次修改保存成功。')
+            document.getElementById('main-tab-content').style.pointerEvents = 'auto';
         },
         error: function (ret) {
             show_toast('error', '本次修改保存失败。', `将于三秒后刷新页面，如有需要请联系管理员。\n${ret.responseText}`);

@@ -49,7 +49,7 @@ class HttpServer:
                 return "QQ Only!", 400
             
             for key in ['alian', 'username', 'password', 'qq']:
-                if data[key]:
+                if data[key] and len(data[key]) <= 64:
                     mgr.data[key] = data[key]
 
             return "ok", 200
