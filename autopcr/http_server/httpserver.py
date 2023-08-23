@@ -45,13 +45,12 @@ class HttpServer:
         @HttpServer.wrapaccount
         async def update_info(mgr: Account):
             data = await request.get_json()
-            if not data['username'] or not data['password'] or not data['qq'] and self.qq_only:
-                return "Incomplete account", 400
-
-            mgr.data['alian'] = data['alian']
-            mgr.data['username'] = data['username']
-            mgr.data['password'] = data['password']
-            mgr.data['qq'] = data['qq']
+            if self.qq_only:
+                return "QQ Only!", 400
+            
+            for key in ['alian', 'username', 'password', 'qq']:
+                if data[key]:
+                    mgr.data[key] = data[key]
 
             return "ok", 200
 
@@ -140,7 +139,7 @@ class HttpServer:
         
         @self.app.route('/config.html', methods = ['GET'])
         async def config():
-            return await render_template('config.html', url="config")
+            return await render_template('config.html', url="info")
 
         @self.app.route('/info.html', methods = ['GET'])
         async def tools():
