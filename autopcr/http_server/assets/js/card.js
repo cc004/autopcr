@@ -162,14 +162,9 @@ function set_tag(status, element) {
             break;
     }
 }
+
 function update_new() {
-    let config = {};
-    let share_ret = window.parent.share_ret
-    config['alian'] = share_ret.alian;
-    config['qq'] = share_ret.qq;
-    config['username'] = "";
-    config['password'] = "";
-    config['config'] = user_config;
+    let config = user_config
     $.ajax({
         url: `/daily/api/${jinjaUrl}` + window.location.search,
         type: "put",
@@ -177,17 +172,10 @@ function update_new() {
         contentType: "application/json;charset=utf-8",
         processData: false,
         success: function (ret) {
-            if (ret.statusCode == 200) {
-                show_toast('success', '修改保存成功。')
-            } else {
-                show_toast('error', '修改保存失败。', `将于三秒后刷新页面。\n如需帮助，请联系管理员。\n${ret.message}`);
-                setTimeout(function() {
-                    location.reload(true);
-                }, 3000);
-            }
+			show_toast('success', '修改保存成功。')
         },
         error: function (ret) {
-            show_toast('error', '修改保存失败。', `将于三秒后刷新页面。\n如需帮助，请联系管理员。\n${ret.message}`);
+            show_toast('error', '修改保存失败。', `将于三秒后刷新页面。\n如需帮助，请联系管理员。\n${ret.responseText}`);
             setTimeout(function() {
                 location.reload(true);
             }, 3000);

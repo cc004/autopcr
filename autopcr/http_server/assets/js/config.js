@@ -13,8 +13,9 @@ $(document).ready(function () {
 );
 function ready_info_get(toggle) {
     document.getElementById('main-tab-content').style.pointerEvents = 'none';
+
     $.ajax({
-        url: `/daily/api/${jinjaUrlConfig}` + window.location.search,
+        url: `/daily/api/info` + window.location.search,
         type: "get",
         processData: false,
         success: function (ret) {
@@ -23,12 +24,24 @@ function ready_info_get(toggle) {
             $("#input-qqnum").val(ret.qq);
             $("#input-uname").val(ret.username);
             $("#input-upwd").val(ret.password);
-            user_config = ret.config;
             if ((share_ret.username || share_ret.alian) && toggle) {
                 $("#tab-main a[href='#tab-2']").tab("show");
             } else {
                 $("tab-main a[href='#tab-1']").tab("show");
             }
+            document.getElementById('main-tab-content').style.pointerEvents = 'auto';
+        },
+        error: function (ret) {
+            document.getElementById('card-main').style.pointerEvents = 'none';
+            show_toast('error', '获取个人信息失败。', `${ret.responseText}`);
+        },
+    });
+    $.ajax({
+        url: `/daily/api/${jinjaUrlConfig}` + window.location.search,
+        type: "get",
+        processData: false,
+        success: function (ret) {
+            user_config = ret.config;
             document.getElementById('main-tab-content').style.pointerEvents = 'auto';
         },
         error: function (ret) {
@@ -136,7 +149,7 @@ function delete_config() {
         }
     })
 }
-function update_new() {
+function update_info() {
     let config = {};
     document.getElementById('main-tab-content').style.pointerEvents = 'none';
     config['alian'] = $("#input-alian").val();
@@ -144,24 +157,16 @@ function update_new() {
     config['username'] = $("#input-uname").val();
     config['password'] = $("#input-upwd").val();
     $.ajax({
-        url: `/daily/api/${jinjaUrlConfig}` + window.location.search,
+        url: `/daily/api/info` + window.location.search,
         type: "put",
         data: JSON.stringify(config),
         contentType: "application/json;charset=utf-8",
         processData: false,
         success: function (ret) {
-            if (ret.statusCode == 200) {
-                ready_info_get(false);
-                show_toast('success', '本次修改保存成功。')
-            } else {
-                show_toast('error', '本次修改保存失败。', `将于三秒后刷新页面，如有需要请联系管理员。\n${ret.message}`);
-                setTimeout(function() {
-                    location.reload(true);
-                }, 3000);
-            }
+			show_toast('success', '本次修改保存成功。')
         },
         error: function (ret) {
-            show_toast('error', '本次修改保存失败。', `将于三秒后刷新页面，如有需要请联系管理员。\n${ret.message}`);
+            show_toast('error', '本次修改保存失败。', `将于三秒后刷新页面，如有需要请联系管理员。\n${ret.responseText}`);
             setTimeout(function() {
                 location.reload(true);
             }, 3000);
