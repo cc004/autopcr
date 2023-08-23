@@ -2004,16 +2004,16 @@ class Notification(BaseModel):
 	equip_donation: EquipDonateNotification = None
 	mission: List[MissionNotice] = None
 class PrizeRewardInfo(BaseModel):
-	prize1: PrizeRewardInfoDetail = None
-	prize2: PrizeRewardInfoDetail = None
-	prize3: PrizeRewardInfoDetail = None
-	prize4: PrizeRewardInfoDetail = None
-	prize5: PrizeRewardInfoDetail = None
-	prize6: PrizeRewardInfoDetail = None
-	prize7: PrizeRewardInfoDetail = None
-	prize8: PrizeRewardInfoDetail = None
-	prize9: PrizeRewardInfoDetail = None
-	prize10: PrizeRewardInfoDetail = None
+	prize_1: PrizeRewardInfoDetail = None
+	prize_2: PrizeRewardInfoDetail = None
+	prize_3: PrizeRewardInfoDetail = None
+	prize_4: PrizeRewardInfoDetail = None
+	prize_5: PrizeRewardInfoDetail = None
+	prize_6: PrizeRewardInfoDetail = None
+	prize_7: PrizeRewardInfoDetail = None
+	prize_8: PrizeRewardInfoDetail = None
+	prize_9: PrizeRewardInfoDetail = None
+	prize_10: PrizeRewardInfoDetail = None
 class TutorialQuestStart(BaseModel):
 	quest_wave_info: List[WaveEnemyInfoList] = None
 	limit_time: int = None

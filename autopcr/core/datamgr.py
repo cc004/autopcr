@@ -112,7 +112,7 @@ class datamgr(Component[apiclient]):
             Counter((eInventoryType.Equip, equip.id) for equip in unit.equip_slot if equip.is_slot)
         )
 
-    def get_need_rarity_memory(self, unit_id: int, token: ItemType) -> int:
+    def get_rarity_memory_demand(self, unit_id: int, token: ItemType) -> int:
         rarity = -1
         if unit_id in self.unit:
             unit_data = self.unit[unit_id]
@@ -219,7 +219,7 @@ class datamgr(Component[apiclient]):
             if token not in db.inventory_name: # 未来角色
                 continue
 
-            need = self.get_need_rarity_memory(unit_id, token) + self.get_unique_equip_memory_demand(unit_id, token)
+            need = self.get_rarity_memory_demand(unit_id, token) + self.get_unique_equip_memory_demand(unit_id, token)
             result[token] += need
 
         return result
