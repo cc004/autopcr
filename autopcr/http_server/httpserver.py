@@ -45,8 +45,8 @@ class HttpServer:
         @HttpServer.wrapaccount
         async def update_info(mgr: Account):
             data = await request.get_json()
-            if self.qq_only:
-                return "QQ Only!", 400
+            if self.qq_only and not data['qq']:
+                return "Need QQ!", 400
             
             for key in ['alian', 'username', 'password', 'qq']:
                 if data[key] and len(data[key]) <= 64:
