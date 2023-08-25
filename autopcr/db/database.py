@@ -345,17 +345,27 @@ class database():
                 .to_dict(lambda x: x.dungeon_area_id, lambda x: x.dungeon_name)
             )
             
-            self.gacha_list: Dict[int, List[CampaignFreegachaDatum]] = (
+            self.free_gacha_list: Dict[int, List[CampaignFreegachaDatum]] = (
                 CampaignFreegachaDatum.query(db)
                 .group_by(lambda x: x.campaign_id)
                 .to_dict(lambda x: x.key, lambda x: x.to_list())
+            )
+
+            self.gacha_data: Dict[int, GachaDatum] = (
+                GachaDatum.query(db)
+                .to_dict(lambda x: x.gacha_id, lambda x: x)
+            )
+
+            self.prizegacha_data: Dict[int, PrizegachaDatum] = (
+                PrizegachaDatum.query(db)
+                .to_dict(lambda x: x.prizegacha_id, lambda x: x)
             )
             
             self.campaign_gacha: Dict[int, CampaignFreegacha] = (
                 CampaignFreegacha.query(db)
                 .to_dict(lambda x: x.campaign_id, lambda x: x)
             )
-            
+
             self.love_char: Dict[int, Tuple[int, int]] = (
                 LoveChara.query(db)
                 .group_by(lambda x: x.rarity)

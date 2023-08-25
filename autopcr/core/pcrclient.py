@@ -33,6 +33,12 @@ class pcrclient(apiclient):
         req = GachaIndexRequest()
         return await self.request(req)
 
+    async def gacha_select_prize(self, prizegacha_id: int, item_id: int):
+        req = GachaSelectPrizeRequest()
+        req.prizegacha_id = prizegacha_id
+        req.item_id = item_id
+        return await self.request(req)
+
     async def exec_gacha(self, gacha_id: int, gacha_times: int, exchange_id: int, draw_type: int, current_cost_num: int, campaign_id: int):
         req = GachaExecRequest()
         req.gacha_id = gacha_id
