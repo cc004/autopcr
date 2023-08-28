@@ -162,7 +162,6 @@ function set_tag(status, element) {
             break;
     }
 }
-
 function update_new() {
     let config = user_config
     $.ajax({
