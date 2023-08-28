@@ -10,8 +10,8 @@ from ...model.enums import *
 class shop_buyer(Module):
     def _get_count(self, client: pcrclient, name: str, key: str):
         if name not in self.buy_kind():
-            return 0
-        return client.keys.get(key, 0)
+            return -999999
+        return client.keys.get(key, -999999)
     def _exp_count(self, client: pcrclient):
         return self._get_count(client, '经验药水', 'shop_buy_exp_count_limit')
     def _equip_count(self, client: pcrclient):
