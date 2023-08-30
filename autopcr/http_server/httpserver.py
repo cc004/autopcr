@@ -45,7 +45,7 @@ class HttpServer:
         @HttpServer.wrapaccount
         async def update_info(mgr: Account):
             data = await request.get_json()
-            if not(data['username'] and data['password']) and not (mgr.data['username'] and mgr.data['password']):
+            if not(data['username'] or mgr.data['username'] ) or not (data['password'] or mgr.data['password']):
                 return 'Incomplete Account!', 400
             elif self.qq_only and not (data['qq'] or mgr.qq):
                 return "Need QQ!", 400
