@@ -5,7 +5,7 @@ import asyncio
 
 server = HttpServer(port=13200)
 
-# queue_crons()
+queue_crons()
 
 asyncio.get_event_loop().create_task(db_start())
 
