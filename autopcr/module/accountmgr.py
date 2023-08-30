@@ -69,17 +69,19 @@ class Account(ModuleManager):
         def _mask_str(mask_str: str) -> str:
             if not isinstance(mask_str, str):
                 raise ValueError("Input must be a string")
-            elif len(mask_str) <= 1:
-                return "*" * len(mask_str)
-            elif len(mask_str) == 2:
-                return mask_str[0] + "*"
             else:
-                return mask_str[0] + "*" * (len(mask_str) - 2) + mask_str[-1]
+                return "*" * 7 + mask_str[-1]
+            # elif len(mask_str) <= 1:
+            #     return "*" * len(mask_str)
+            # elif len(mask_str) == 2:
+            #     return mask_str[0] + "*"
+            # else:
+            #     return mask_str[0] + "*" * (len(mask_str) - 2) + mask_str[-1]
         return {
             'alian': self.data['alian'],
             'qq': _mask_str(self.data['qq']),
             'username': _mask_str(self.data['username']),
-            'password': len(self.data['password']) * "*",
+            'password': 8 * "*",
         }
 
     def generate_daily_info(self):
