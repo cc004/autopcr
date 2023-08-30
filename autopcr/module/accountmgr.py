@@ -69,6 +69,8 @@ class Account(ModuleManager):
         def _mask_str(mask_str: str) -> str:
             if not isinstance(mask_str, str):
                 raise ValueError("Input must be a string")
+            elif not mask_str:
+                return ""
             else:
                 return "*" * 7 + mask_str[-1]
             # elif len(mask_str) <= 1:
