@@ -110,17 +110,20 @@
                                         <div class="hstack gap-2 flex-wrap">
                                             <form id="form-normal-config">
                                                 <label class="form-label">一般配置：</label>
-                                                <input class="form-control" type="text" data-bs-toggle="tooltip" data-bss-tooltip="" id="input-alian" placeholder="昵称" title="昵称"><input class="form-control mt-1" type="text" data-bs-toggle="tooltip" data-bss-tooltip="" id="input-qqnum" placeholder="QQ号" inputmode="numeric" oninput="value=value.replace(/\D/g,&#39;&#39;)" title="QQ号">
+                                                <input class="form-control" type="text" data-bs-toggle="tooltip" data-bss-tooltip="" id="input-alian" placeholder="昵称" title="昵称" maxlength="64">
+                                                <input class="form-control mt-1" type="text" data-bs-toggle="tooltip" data-bss-tooltip="" id="input-qqnum" placeholder="QQ号" inputmode="numeric" oninput="value=value.replace(/\D/g,&#39;&#39;)" title="QQ号" maxlength="64">
                                             </form>
                                             <form id="form-account-config">
                                                 <label class="form-label">账号配置：</label>
-                                                <input class="form-control" type="text" data-bs-toggle="tooltip" data-bss-tooltip="" id="input-uname" placeholder="PCR登录用户名" title="PCR登录用户名"><input class="form-control mt-1" type="text" data-bs-toggle="tooltip" data-bss-tooltip="" id="input-upwd" placeholder="PCR登录密码" title="PCR登录密码">
+                                                <input class="form-control" type="text" data-bs-toggle="tooltip" data-bss-tooltip="" id="input-uname" placeholder="PCR登录用户名" title="PCR登录用户名" maxlength="64">
+                                                <input class="form-control mt-1" type="password" data-bs-toggle="tooltip" data-bss-tooltip="" id="input-upwd" placeholder="PCR登录密码" title="PCR登录密码" maxlength="64">
                                             </form>
-                                        </div><small style="font-size: 13px;color: #ff0000;">注意：本服务需要存储您的用户名和密码以正常运行。若不同意存储，请勿使用。</small>
+                                        </div>
+                                        <small style="font-size: 13px;color: #ff0000;">注意：本服务需要存储您的用户名和密码以正常运行。若不同意存储，请勿使用。<br/>除昵称外，其他项的信息不会完整显示。</small>
                                         <form class="d-flex gap-1">
-                                            <button class="btn btn-primary" id="btn-save" type="button" onclick="update_new()">
+                                            <button class="btn btn-primary" id="btn-save" type="button" onclick="update_info()">
                                                 <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true" style="margin-right: 4px;"></span>
-                                                保存配置</button>
+                                                保存信息</button>
                                             <button class="btn btn-primary" id="btn-reset" type="button" onclick="reset_config_form()">
                                                 <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true" style="margin-right: 4px;"></span>
                                                 重置表单</button>

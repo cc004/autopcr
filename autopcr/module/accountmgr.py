@@ -42,7 +42,7 @@ class Account(ModuleManager):
             json.dump(self.data, f)
 
     async def set_result(self, result):
-        self.data['_last_result'] = result
+        self.data.setdefault('_last_result', {}).update(result)
 
     def get_client(self) -> pcrclient:
         return self.get_android_client()
@@ -66,21 +66,33 @@ class Account(ModuleManager):
         return client
 
     def generate_info(self):
+        def _mask_str(mask_str: str) -> str:
+            if not isinstance(mask_str, str):
+                raise ValueError("Input must be a string")
+            elif not mask_str:
+                return ""
+            else:
+                return "*" * 7 + mask_str[-1]
+            # elif len(mask_str) <= 1:
+            #     return "*" * len(mask_str)
+            # elif len(mask_str) == 2:
+            #     return mask_str[0] + "*"
+            # else:
+            #     return mask_str[0] + "*" * (len(mask_str) - 2) + mask_str[-1]
         return {
             'alian': self.data['alian'],
-            'qq': "",
-            'username': "",
-            'password': "",
-            'last_result': self.data.get('_last_result', {})
+            'qq': _mask_str(self.data['qq']),
+            'username': _mask_str(self.data['username']),
+            'password': 8 * "*",
         }
 
     def generate_daily_info(self):
-        info = self.generate_info()
+        info = { 'last_result': self.data.get('_last_result', {}) }
         info.update(super().generate_daily_config())
         return info
 
     def generate_tools_info(self):
-        info = self.generate_info()
+        info = { 'last_result': self.data.get('_last_result', {}) }
         info.update(super().generate_tools_config())
         return info
 
