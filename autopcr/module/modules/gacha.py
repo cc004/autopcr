@@ -1,3 +1,4 @@
+from ...model.custom import GachaReward
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
@@ -53,39 +54,11 @@ class free_gacha(Module):
                 break
         else:
             raise ValueError("target gacha not found")
-        reward_list = []
-        new_unit = []
-        unit_rarity = Counter()
-        prize_rarity = Counter()
-        if target_gacha.selected_item_id == 0:
-            self._log("未选择奖励碎片")
-            prizegacha_id = db.gacha_data[target_gacha.id].prizegacha_id
-            if db.prizegacha_data[prizegacha_id].prize_memory_id_2 != 0:
-                raise AbortError("可选碎片大于一种，请自行手动选择")
-            item_id = db.prizegacha_data[prizegacha_id].prize_memory_id_1
-            await client.gacha_select_prize(prizegacha_id, item_id)
-            self._log(f"选择了{db.get_inventory_name_san((eInventoryType.Item, item_id))}")
+
+        gacha_reward: GachaReward = GachaReward()
 
         while cnt > 0:
-            resp = await client.exec_gacha(target_gacha.id, 10, target_gacha.exchange_id, 6, cnt, res.campaign_info.campaign_id)
+            gacha_reward += await client.exec_gacha_aware(target_gacha, 10, 6, cnt, res.campaign_info.campaign_id)
             cnt -= 1
 
-            new_unit += [item for item in resp.reward_info_list if item.type == eInventoryType.Unit]
-            reward_list += [item for item in resp.reward_info_list if item.type != eInventoryType.Unit]
-
-            unit_rarity += Counter(item.unit_data.unit_rarity for item in resp.reward_info_list if item.type == eInventoryType.Unit)
-            unit_rarity += Counter(item.exchange_data.rarity for item in resp.reward_info_list if item.type != eInventoryType.Unit)
-
-            if resp.prize_reward_info:
-                prize_rarity += Counter(prize.rarity for prize in vars(resp.prize_reward_info).values() if prize is not None)
-                reward_list += [item for prize in vars(resp.prize_reward_info).values() if prize is not None for item in prize.rewards]
-            if resp.bonus_reward_info:
-                reward_list += [item for item in vars(resp.bonus_reward_info).values() if item is not None]
-
-        if new_unit:
-            self._log(f"NEW: \n" + '\n'.join([db.get_inventory_name(item) for item in new_unit]) + '\n')
-        if unit_rarity:
-            self._log(' '.join(["★"*i + f"x{cnt}" for i, cnt in unit_rarity.items()]))
-        if prize_rarity:
-            self._log(' '.join([f"{i}等" + f"x{cnt}" for i, cnt in prize_rarity.items()]))
-        self._log(await client.serlize_reward(reward_list))
+        self._log(await client.serlize_gacha_reward(gacha_reward))

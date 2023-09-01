@@ -5,6 +5,7 @@ from ...core.pcrclient import pcrclient
 from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
+from ...model.custom import ItemType
 
 class explore_sweep(Module):
     @abstractmethod

@@ -5,6 +5,7 @@ from ..model.modelbase import *
 from typing import Callable, Coroutine, Any, Set, Dict, Tuple, Union
 import typing
 from ..model.common import *
+from ..model.custom import ItemType
 import datetime
 import json, base64, gzip
 from ..db.assetmgr import instance as assetmgr
@@ -44,6 +45,7 @@ class datamgr(Component[apiclient]):
     tower_status: TowerStatus = None
     deck_list: Dict[ePartyType, LoadDeckData] = None
     campaign_list: List[int] = None
+    gacha_point: Dict[int, GachaPointInfo] = None
 
     def __init__(self):
         self.finishedQuest = set()
@@ -267,6 +269,12 @@ class datamgr(Component[apiclient]):
             self.jewel.free_jewel = item.stock
         elif item.type == eInventoryType.Unit:
             self.unit[item.id] = item.unit_data
+            if item.id not in self.unit_data:
+                unit_id = item.id // 100
+                self.unit_data[unit_id] = UserChara()
+                self.unit_data[unit_id].chara_id = unit_id
+                self.unit_data[unit_id].chara_love = 0
+                self.unit_data[unit_id].love_level = 0
         else:
             self._inventory[token] = item.stock
 
