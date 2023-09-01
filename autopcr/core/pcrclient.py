@@ -39,6 +39,38 @@ class pcrclient(apiclient):
         req.item_id = item_id
         return await self.request(req)
 
+    async def exec_gacha_aware(self, target_gacha: GachaParameter, gacha_times: int, draw_type: eGachaDrawType, current_cost_num: int, campaign_id: int) -> GachaReward:
+
+        if draw_type == 2 and current_cost_num < 1500:
+            raise AbortError(f"宝石{current_cost_num}不足1500")
+
+        if target_gacha.selected_item_id == 0:
+            prizegacha_id = db.gacha_data[target_gacha.id].prizegacha_id
+            if db.prizegacha_data[prizegacha_id].prize_memory_id_2 != 0:
+                raise AbortError("可选碎片大于一种，请自行手动选择")
+            item_id = db.prizegacha_data[prizegacha_id].prize_memory_id_1
+            await self.gacha_select_prize(prizegacha_id, item_id)
+
+        if target_gacha.exchange_id in self.data.gacha_point and  \
+        self.data.gacha_point[target_gacha.exchange_id].current_point >= self.data.gacha_point[target_gacha.exchange_id].max_point:
+            raise AbortError(f"已达到天井{self.data.gacha_point[target_gacha.exchange_id].current_point}pt，请上号兑换角色") 
+            # auto exchange TODO
+
+        if draw_type == 2: # 怎么回传没有宝石数
+            tot = 1500
+            mine = min(tot, self.data.jewel.free_jewel)
+
+            tot -= mine
+            self.data.jewel.free_jewel -= mine
+            if tot:
+                self.data.jewel.jewel -= tot
+
+        resp = await self.exec_gacha(target_gacha.id, gacha_times, target_gacha.exchange_id, draw_type, current_cost_num, campaign_id)
+
+        reward: GachaReward = GachaReward(resp)
+
+        return reward
+
     async def exec_gacha(self, gacha_id: int, gacha_times: int, exchange_id: int, draw_type: int, current_cost_num: int, campaign_id: int):
         req = GachaExecRequest()
         req.gacha_id = gacha_id
@@ -332,6 +364,19 @@ class pcrclient(apiclient):
         req = MissionAcceptRequest()
         req.type = 1
         await self.request(req)
+
+    async def serlize_gacha_reward(self, gacha: GachaReward):
+        res = ""
+        if gacha.new_unit:
+            res += f"NEW: \n" + '\n'.join([db.get_inventory_name(item) for item in gacha.new_unit]) + '\n'
+        if gacha.unit_rarity:
+            res += ' '.join(["★"*i + f"x{cnt}" for i, cnt in gacha.unit_rarity.items()]) + '\n'
+        if gacha.prize_rarity:
+            res += ' '.join([f"{i}等" + f"x{cnt}" for i, cnt in gacha.prize_rarity.items()]) + '\n'
+
+        res += await self.serlize_reward(gacha.reward_list)
+
+        return res
     
     async def serlize_reward(self, reward_list: List[InventoryInfo], target: Union[ItemType, None] = None):
         result = []

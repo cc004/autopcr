@@ -5,7 +5,8 @@ from sqlalchemy import Column, Float, Index, Integer, Table, Text, UniqueConstra
 from sqlalchemy.sql.sqltypes import NullType
 from sqlalchemy.orm import Session, declarative_base
 from typing import Generic, TypeVar, List, Iterator, Tuple
-from ..model.common import eInventoryType, ItemType
+from ..model.common import eInventoryType
+from ..model.custom import ItemType
 from ..util.linq import flow
 
 T = TypeVar('T')

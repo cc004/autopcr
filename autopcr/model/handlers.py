@@ -250,6 +250,7 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         mgr.tower_status = self.tower_status
         mgr.deck_list = {deck.deck_number:deck for deck in self.deck_list}
         mgr.campaign_list = self.campaign_list
+        mgr.gacha_point = {gacha.exchange_id: gacha for gacha in self.gacha_point_info_list}
 
 
 @handles
@@ -348,30 +349,18 @@ class GachaExecResponse(responses.GachaExecResponse):
                 mgr.update_inventory(item)
 
         if self.bonus_reward_info:
-            if self.bonus_reward_info.bonus_1:
-                mgr.update_inventory(self.bonus_reward_info.bonus_1)
-            if self.bonus_reward_info.bonus_2:
-                mgr.update_inventory(self.bonus_reward_info.bonus_2)
-            if self.bonus_reward_info.bonus_3:
-                mgr.update_inventory(self.bonus_reward_info.bonus_3)
-            if self.bonus_reward_info.bonus_4:
-                mgr.update_inventory(self.bonus_reward_info.bonus_4)
-            if self.bonus_reward_info.bonus_5:
-                mgr.update_inventory(self.bonus_reward_info.bonus_5)
-            if self.bonus_reward_info.bonus_6:
-                mgr.update_inventory(self.bonus_reward_info.bonus_6)
-            if self.bonus_reward_info.bonus_7:
-                mgr.update_inventory(self.bonus_reward_info.bonus_7)
-            if self.bonus_reward_info.bonus_8:
-                mgr.update_inventory(self.bonus_reward_info.bonus_8)
-            if self.bonus_reward_info.bonus_9:
-                mgr.update_inventory(self.bonus_reward_info.bonus_9)
-            if self.bonus_reward_info.bonus_10:
-                mgr.update_inventory(self.bonus_reward_info.bonus_10)
+            for item in vars(self.bonus_reward_info).values():
+                if item is not None:
+                    mgr.update_inventory(item)
 
-        # if self.user_gold:
-        #     mgr.gold = self.user_gold
-        # bonus not set
+        if self.prize_reward_info:
+            for prize in vars(self.prize_reward_info).values():
+                if prize is not None:
+                    for item in prize.rewards:
+                        mgr.update_inventory(item)
+
+        if self.gacha_point_info:
+            mgr.gacha_point[self.gacha_point_info.exchange_id] = self.gacha_point_info
 
 
 @handles
