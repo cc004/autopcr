@@ -403,3 +403,16 @@ class eCampaignCategory(Enum):
     GOLD_DROP_AMOUNT_HATSUNE_REVIVAL_HARD = 242
     PLAYER_EXP_AMOUNT_HATSUNE_REVIVAL_NORMAL = 251
     PLAYER_EXP_AMOUNT_HATSUNE_REVIVAL_HARD = 252
+
+class eGachaDrawType(Enum):
+    Free = 1
+    Payment = 2
+    Ticket = 3
+    Discount = 4
+    CampaignSingle = 5
+    Campaign10Shot = 6
+    StartDash = 7
+    Legend = 8
+    SpecialTicket = 9
+    SpFesCmapaign10Shot = 10
+    INVALID_VALUE = -1

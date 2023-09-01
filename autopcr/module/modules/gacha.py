@@ -21,7 +21,7 @@ class normal_gacha(Module):
                 break
         if normal_gacha.free_exec_times != 0:
             raise SkipError("已进行过普通扭蛋")
-        resp = await client.exec_gacha(normal_gacha.id, 10, 0, 1, -1, 0)
+        resp = await client.exec_gacha(normal_gacha.id, 10, 0, eGachaDrawType.Free, -1, 0)
         memory = [i for i in resp.reward_info_list if db.is_unit_memory((i.type, i.id))]
         msg = "10件装备"
         if memory:
@@ -58,7 +58,7 @@ class free_gacha(Module):
         gacha_reward: GachaReward = GachaReward()
 
         while cnt > 0:
-            gacha_reward += await client.exec_gacha_aware(target_gacha, 10, 6, cnt, res.campaign_info.campaign_id)
+            gacha_reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Campaign10Shot, cnt, res.campaign_info.campaign_id)
             cnt -= 1
 
         self._log(await client.serlize_gacha_reward(gacha_reward))

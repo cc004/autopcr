@@ -29,13 +29,16 @@ class gacha_start(Module):
                 break
         else:
             raise AbortError(f"未找到卡池{gacha_id}")
+        if target_gacha.type != eGachaType.Payment:
+            raise AbortError("非宝石抽卡池")
+
         reward = GachaReward()
         always = self.get_config('cc_until_get')
         cnt = 0
         try:
             while True:
                 cnt += 1
-                reward += await client.exec_gacha_aware(target_gacha, 10, 2, client.data.jewel.free_jewel + client.data.jewel.jewel, 0)
+                reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Payment, client.data.jewel.free_jewel + client.data.jewel.jewel, 0)
                 if not always or self.can_stop(reward.new_unit, db.gacha_exchange_chara[target_gacha.exchange_id]) :
                     break
         except:

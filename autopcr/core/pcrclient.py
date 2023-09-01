@@ -39,7 +39,7 @@ class pcrclient(apiclient):
         req.item_id = item_id
         return await self.request(req)
 
-    async def exec_gacha_aware(self, target_gacha: GachaParameter, gacha_times: int, draw_type: int, current_cost_num: int, campaign_id: int) -> GachaReward:
+    async def exec_gacha_aware(self, target_gacha: GachaParameter, gacha_times: int, draw_type: eGachaDrawType, current_cost_num: int, campaign_id: int) -> GachaReward:
 
         if draw_type == 2 and current_cost_num < 1500:
             raise AbortError(f"宝石{current_cost_num}不足1500")
