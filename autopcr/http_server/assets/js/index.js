@@ -1,5 +1,5 @@
 function check_input(e) {
-    e.value=e.value.replace(/[^a-zA-Z0-9_]/g, '')
+    e.value=e.value.replace(/[\\\|?*/]/g, '')
     let btnLogin = document.getElementById("btn-login");
     let btnReg = document.getElementById("btn-register");
     if (e.value === "") {
