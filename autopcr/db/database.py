@@ -1,7 +1,8 @@
 import time
 from typing import Set, Dict, Tuple
 import typing
-from ..model.common import eInventoryType, eCampaignCategory, RoomUserItem, InventoryInfo, ItemType
+from ..model.common import eInventoryType, eCampaignCategory, RoomUserItem, InventoryInfo
+from ..model.custom import ItemType
 import datetime
 from collections import Counter
 from .dbmgr import dbmgr
@@ -344,6 +345,12 @@ class database():
                 DungeonArea.query(db)
                 .to_dict(lambda x: x.dungeon_area_id, lambda x: x.dungeon_name)
             )
+
+            self.gacha_exchange_chara: Dict[int, List[GachaExchangeLineup]] = (
+                GachaExchangeLineup.query(db)
+                .group_by(lambda x: x.exchange_id)
+                .to_dict(lambda x: x.key, lambda x: x.to_list())
+            )
             
             self.free_gacha_list: Dict[int, List[CampaignFreegachaDatum]] = (
                 CampaignFreegachaDatum.query(db)
@@ -560,5 +567,12 @@ class database():
                 result[key] += value
 
         return result
+
+    def get_cur_gacha(self):
+        now = datetime.datetime.now()
+        return flow(self.gacha_data.values()) \
+        .where(lambda x: self.parse_time(x.start_time) <= now and now <= self.parse_time(x.end_time)) \
+        .select(lambda x: f"{x.gacha_id}: {x.gacha_name}-{x.pick_up_chara_text}") \
+        .to_list()
 
 db = database()
