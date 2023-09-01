@@ -1,4 +1,7 @@
 from typing import List
+
+from ...db.models import GachaExchangeLineup
+from ...model.custom import GachaReward
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
@@ -6,6 +9,44 @@ from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
 import datetime
+
+@description('来发十连，或者直到出货')
+@name('抽卡')
+@singlechoice("pool_id", "池子", db.get_cur_gacha()[0], db.get_cur_gacha())
+@booltype("cc_until_get", "抽到出", False)
+@default(True)
+class gacha_start(Module):
+    def can_stop(self, new, exchange: List[GachaExchangeLineup]):
+        r = set(item.unit_id for item in exchange)
+        return any(item.id in r for item in new)
+
+    async def do_task(self, client: pcrclient):
+        gacha_id = int(self.get_config('pool_id').split(':')[0])
+        resp = await client.get_gacha_index()
+        for gacha in resp.gacha_info:
+            if gacha.id == gacha_id:
+                target_gacha = gacha
+                break
+        else:
+            raise AbortError(f"未找到卡池{gacha_id}")
+        if target_gacha.type != eGachaType.Payment:
+            raise AbortError("非宝石抽卡池")
+
+        reward = GachaReward()
+        always = self.get_config('cc_until_get')
+        cnt = 0
+        try:
+            while True:
+                cnt += 1
+                reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Payment, client.data.jewel.free_jewel + client.data.jewel.jewel, 0)
+                if not always or self.can_stop(reward.new_unit, db.gacha_exchange_chara[target_gacha.exchange_id]) :
+                    break
+        except:
+            raise 
+        finally:
+            self._log(f"抽取了{cnt}次十连")
+            self._log(await client.serlize_gacha_reward(reward))
+            self._log(f"当前pt为{client.data.gacha_point[target_gacha.exchange_id].current_point}")
 
 @description('获得可导入到兰德索尔图书馆的账号数据')
 @name('兰德索尔图书馆导入数据')

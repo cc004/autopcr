@@ -3,7 +3,8 @@ from ..util.linq import flow
 from ..constants import DATA_DIR
 from collections import Counter
 from typing import Dict, Counter as TCounter
-from ..model.enums import eInventoryType, ItemType
+from ..model.common import eInventoryType
+from ..model.custom import ItemType
 
 def read_from(filename: str) -> object:
     with open(filename, 'r', encoding='utf-8') as f:
