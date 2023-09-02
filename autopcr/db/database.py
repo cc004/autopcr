@@ -455,23 +455,26 @@ class database():
     def is_shiori_quest(self, quest_id: int) -> bool:
         return quest_id // 1000000 == 20
 
-    def is_heart_piece_double(self, campaign_id: int) -> bool:
+    def is_heart_piece_campaign(self, campaign_id: int) -> bool:
         return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.ITEM_DROP_AMOUNT_UNIQUE_EQUIP
 
-    def is_star_cup_double(self, campaign_id: int) -> bool:
+    def is_star_cup_campaign(self, campaign_id: int) -> bool:
         return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.ITEM_DROP_AMOUNT_HIGH_RARITY_EQUIP
 
-    def is_normal_quest_double(self, campaign_id: int) -> bool:
+    def is_normal_quest_campaign(self, campaign_id: int) -> bool:
         return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.ITEM_DROP_AMOUNT_NORMAL
 
-    def is_hard_quest_double(self, campaign_id: int) -> bool:
+    def is_hard_quest_campaign(self, campaign_id: int) -> bool:
         return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.ITEM_DROP_AMOUNT_HARD
 
-    def is_very_hard_quest_double(self, campaign_id: int) -> bool:
+    def is_very_hard_quest_campaign(self, campaign_id: int) -> bool:
         return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.ITEM_DROP_AMOUNT_VERY_HARD
 
-    def is_dungeon_mana_double(self, campaign_id: int) -> bool:
+    def is_dungeon_mana_campaign(self, campaign_id: int) -> bool:
         return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.GOLD_DROP_AMOUNT_DUNGEON
+
+    def get_campaign_times(self, campaign_id: int) -> float:
+        return self.campaign_schedule[campaign_id].value
 
     def get_dungeon_mana_before_day(self) -> int:
         now = datetime.datetime.now()

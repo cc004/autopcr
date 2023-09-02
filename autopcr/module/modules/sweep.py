@@ -88,7 +88,7 @@ class underground_skip(Module):
             else:
                 raise AbortError("不存在已完成讨伐的地下城")
 
-        double_mana = client.data.is_dungeon_mana_double()
+        double_mana = client.data.is_dungeon_mana_campaign()
         rest = infos.rest_challenge_count[0].count
         if infos.enter_area_id != 0:
             dungeon_name = db.dungeon_name[infos.enter_area_id]
@@ -123,8 +123,12 @@ class investigate_sweep(Module):
     def target_item(self) -> ItemType: ...
     @abstractmethod
     def value(self, campaign: bool) -> int: ...
+    @abstractmethod
+    def force_stop(self, client: pcrclient) -> bool: ...
 
     async def do_task(self, client: pcrclient):
+        if self.force_stop(client):
+            raise SkipError("今日强制不刷取")
         times = self.value(self.is_double_drop(client))
         result = await client.quest_skip_aware(self.quest_id(), times, True, True)
         msg = await client.serlize_reward(result, self.target_item())
@@ -132,9 +136,11 @@ class investigate_sweep(Module):
 
 class xinsui_sweep(investigate_sweep):
     def is_double_drop(self, client: pcrclient) -> bool:
-        return client.data.is_heart_piece_double()
+        return client.data.is_heart_piece_campaign()
     def target_item(self) -> ItemType:
         return db.xinsui
+    def force_stop(self, client: pcrclient) -> bool:
+        return any(client.data.is_campaign(campaign) for campaign in client.keys.get("force_stop_heart_sweep", [])) # TODO FIX
     def value(self, campaign: bool):
         if not campaign:
             return self.get_config(f'heart{self.quest_id() % 10}_sweep_times')
@@ -143,9 +149,11 @@ class xinsui_sweep(investigate_sweep):
 
 class starcup_sweep(investigate_sweep):
     def is_double_drop(self, client: pcrclient) -> bool:
-        return client.data.is_star_cup_double()
+        return client.data.is_star_cup_campaign()
     def target_item(self) -> ItemType:
         return db.xingqiubei
+    def force_stop(self, client: pcrclient) -> bool:
+        return any(client.data.is_campaign(campaign) for campaign in client.keys.get("force_stop_star_cup_sweep", [])) # TODO FIX
     def value(self, campaign: bool):
         if not campaign:
             return self.get_config(f'starcup{self.quest_id() % 10}_sweep_times')
