@@ -419,6 +419,17 @@ class pcrclient(apiclient):
             (quest in db.tower_quest and self.data.tower_status.cleared_floor_num >= db.tower_quest[quest].floor_num)
         )
 
+    @property
+    def stamina_recover_cnt(self) -> int:
+        if self.data.is_normal_quest_campaign():
+            times = min(4, self.data.get_normal_quest_campaign_times())
+            return self.keys.get(f'sweep_recover_stamina_times_n{times}', 0)
+        elif self.data.is_hard_quest_campaign():
+            times = min(3, self.data.get_hard_quest_campaign_times())
+            return self.keys.get(f'sweep_recover_stamina_times_h{times}', 0)
+        else:
+            return self.keys.get(f'sweep_recover_stamina_times', 0)
+
     async def quest_skip_aware(self, quest: int, times: int, recover: bool = False, is_total: bool = False):
         name = db.quest_name[quest] if quest in db.quest_name else f"未知关卡{quest}"
         if db.is_hatsune_quest(quest):
@@ -444,7 +455,7 @@ class pcrclient(apiclient):
         result: List[InventoryInfo] = []
         async def skip(times):
             while self.data.stamina < info.stamina * times:
-                if self.keys.get('sweep_recover_stamina_times', 0) > self.data.recover_stamina_exec_count:
+                if self.stamina_recover_cnt > self.data.recover_stamina_exec_count:
                     await self.recover_stamina()
                 else:
                     raise AbortError(f"任务{name}体力不足")
