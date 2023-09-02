@@ -10,10 +10,12 @@ function make_card(m) {
                 </div>
             </div>
             <h5 style="margin: 0;margin-left: 12px;">${m.name}</h5>
-            <div class="hstack gap-1 ms-auto" style="margin-right: -10px;">
-                <button id=${m.key}_do_single class="btn btn-primary" type="button" onclick="do_single(this)" name=${m.name} key=${m.key} flag="run_once">
+            <div class="hstack gap-1 ms-auto" style="margin-right: -10px;">`;
+	if (m.runnable){
+		moduleCardHTML += ` <button id=${m.key}_do_single class="btn btn-primary" type="button" onclick="do_single(this)" name=${m.name} key=${m.key} flag="run_once">
                 <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true" style="margin-right: 4px;"></span>执行此项</button>
             `;
+	}
     if (user_config[m.key]) {
         moduleCardHTML += `
         <button id=${m.key}_collapse_toggle class="btn btn-icon" type="button" style="border-style: none;" data-bs-toggle="collapse" data-bs-target="#collapse-${m.key}" aria-expanded="true" aria-controls="collapse-${m.key}" href="#collapse-${m.key}">
@@ -33,7 +35,7 @@ function make_card(m) {
     }
     moduleCardHTML += `<div class="d-flex justify-content-center" style="margin: var(--bs-card-spacer-y) var(--bs-card-spacer-x);">
     <div class="row d-flex flex-wrap w-100 gap-1">
-        <div class="col" style="max-width: 40%;min-width: 20%;"><label class="form-label" style="font-weight: bold;">描述：</label>`;
+        <div class="col-sm" style="min-width: 20%;"><label class="form-label" style="font-weight: bold;">描述：</label>`;
     if (m.description.length !== 0) {
         moduleCardHTML += `
                     <p class="mb-0">${m.description}</p>
@@ -56,10 +58,8 @@ function make_card(m) {
         moduleCardHTML += `</form>`
     }
     moduleCardHTML += `</div>`
-    moduleCardHTML += `<div class="col-auto p-0">
-    <div class="vr h-100"></div>
-    </div>`
-    moduleCardHTML += `<div class="col"><label class="form-label" style="font-weight: bold;">运行结果：</label>
+    moduleCardHTML += `<div class="col-sm custom-divider">
+	<label class="form-label" style="font-weight: bold;">运行结果：</label>
     <small id=${m.key}_result_tag class="text-nowrap py-1 px-2 fw-semibold border rounded-2">null</small>
     <p id=${m.key}_result class="text-info-emphasis" style="margin-bottom: 0;">暂无运行结果。</p>
     </div>`;

@@ -33,7 +33,7 @@ function make_card(m) {
     }
     moduleCardHTML += `<div class="d-flex justify-content-center" style="margin: var(--bs-card-spacer-y) var(--bs-card-spacer-x);">
     <div class="row d-flex flex-wrap w-100 gap-1">
-        <div class="col" style="max-width: 40%;min-width: 20%;"><label class="form-label" style="font-weight: bold;">描述：</label>`;
+        <div class="col-sm" style="max-width: 40%;min-width: 20%;"><label class="form-label" style="font-weight: bold;">描述：</label>`;
     if (m.description.length !== 0) {
         moduleCardHTML += `
                     <p class="mb-0">${m.description}</p>
@@ -56,10 +56,7 @@ function make_card(m) {
         moduleCardHTML += `</form>`
     }
     moduleCardHTML += `</div>`
-    moduleCardHTML += `<div class="col-auto p-0">
-    <div class="vr h-100"></div>
-    </div>`
-    moduleCardHTML += `<div class="col d-flex flex-column">
+    moduleCardHTML += `<div class="col-sm custom-divider d-flex flex-column">
     <div><label class="form-label" style="font-weight: bold;">运行结果：</label>
     <small id=${m.key}_result_tag class="text-nowrap py-1 px-2 fw-semibold border rounded-2">null</small></div>
     <div class="vstack">
