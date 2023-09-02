@@ -9,6 +9,7 @@ from ...model.enums import *
 @description('定时执行')
 @name("定时任务1")
 @default(False)
+@notrunnable
 class cron1(Module):
     async def do_task(self, client: pcrclient):
         pass
@@ -18,6 +19,7 @@ class cron1(Module):
 @description('定时执行')
 @name("定时任务2")
 @default(False)
+@notrunnable
 class cron2(Module):
     async def do_task(self, client: pcrclient):
         pass
@@ -28,6 +30,7 @@ class cron2(Module):
 @description('定时执行')
 @name("定时任务3")
 @default(False)
+@notrunnable
 class cron3(Module):
     async def do_task(self, client: pcrclient):
         pass
@@ -37,6 +40,7 @@ class cron3(Module):
 @description('定时执行')
 @name("定时任务4")
 @default(False)
+@notrunnable
 class cron4(Module):
     async def do_task(self, client: pcrclient):
         pass

@@ -18,6 +18,9 @@ def name(desc: str):
 def notimplemented(cls):
     return _wrap_init(cls, lambda self: setattr(self, 'implmented', False))
 
+def notrunnable(cls):
+    return _wrap_init(cls, lambda self: setattr(self, 'runnable', False))
+
 # refers to a schudule to be done
 class Module:
 
@@ -25,6 +28,7 @@ class Module:
         self.key: str = self.__class__.__name__
         self.name: str = ""
         self.default: bool = False
+        self.runnable: bool = True
         self.description: str = self.name
         self.config: Dict[str, Config] = {}
         self.implmented = True
@@ -97,7 +101,8 @@ class Module:
                 'name': self.name,
                 'description': self.description,
                 'config': self.generate_config(),
-                'implemented': self.implmented
+                'implemented': self.implmented,
+                'runnable': self.runnable
                 }
 
     def _log(self, msg):
