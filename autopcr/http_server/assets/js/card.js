@@ -28,6 +28,9 @@ $(document).ready(function () {
 function show_toast(status, text, desc = null) {
     window.parent.show_toast(status, text, desc)
 }
+function show_validate(url) {
+    window.parent.show_validate(url)
+}
 function _icon_rotate() {
     const buttons = document.querySelectorAll('.btn-icon');
     buttons.forEach(button => {
@@ -244,6 +247,7 @@ function do_single(e) {
             toggle_spinner('hidden', e);
         }
     })
+	query_validate(e);
 }
 function do_all_task(e) {
     const flag = e.getAttribute('flag');
@@ -266,4 +270,40 @@ function do_all_task(e) {
             $(`[flag=${flag}]`).attr('disabled', false);
         }
     })
+	query_validate(e);
 };
+
+var cnt = 0
+
+function query_validate(e){
+	if (cnt > 120){
+		cnt = 0;
+		return;
+	}
+    $.ajax({
+        url: '/daily/api/query_validate' + window.location.search,
+        type: 'get',
+        processData: false,
+        success: function (ret) {
+			if (ret.status === 200) {
+				cnt = 0
+			  // 200 OK，不需要验证，结束循环
+			}
+        },
+        error: function (ret) {
+			cnt += 1;
+			if (ret.status === 404) {
+			  // 404 Not Found，未找到验证请求，等待一秒后继续发送请求
+			  setTimeout(query_validate, 1000);
+			} else if (ret.status === 400) {
+			  // 400 Bad Request 
+			  show_toast("error", "验证查询失败。", `${ret.responseText}`);
+			  cnt = 0
+			} else if (ret.status === 401) {
+			  // 401 Unauthorized，抛出错误，继续轮训，可能二次验证
+			  show_validate(ret.responseText)
+			  setTimeout(query_validate, 1000);
+			}
+        }
+    })
+}
