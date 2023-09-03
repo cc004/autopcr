@@ -62,7 +62,6 @@ if address is None:
 if address is None:
     address = "127.0.0.1"
 
-host = address
 address = ("https://" if useHttps else "http://") + address + "/daily/"
 
 inqueue = set({})
@@ -99,10 +98,9 @@ async def check_validate(task):
                 del validate_dict[username]
                 break
 
-            url = host + url
+            url = address + url.lstrip("/daily/")
             if ev:
-                await bot.send(ev, f'[CQ:reply,id={ev.message_id}]pcr账号登录需要验证码，请点击以下链接在120秒内完成认证')
-                await bot.send(ev, f'[CQ:reply,id={ev.message_id}]{url}')
+                await bot.send(ev, f'[CQ:reply,id={ev.message_id}]pcr账号登录需要验证码，请点击以下链接在120秒内完成认证:\n{url}')
             else:
                 await bot.send_group_msg(group_id = gid, msg = f"【定时任务】帐号需要验证码，【{alian}】定时任务自动取消[CQ:at,qq={qid}]")
 
@@ -220,13 +218,19 @@ async def find_memory(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
 @pre_process
 async def shilian(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
     cc_until_get = False
+    pool_id = 0
     try:
         if ev.message.extract_plain_text().split(' ')[-1].strip() == '抽到出':
             cc_until_get = True
     except:
         pass
+    try:
+        pool_id = ev.message.extract_plain_text().split(' ')[-2].strip()
+    except:
+        pass
 
     config = {
+            "pool_id" : pool_id,
             "cc_until_get" : cc_until_get,
     }
     await consumer(Gacha(token = token, config = config, bot = bot, ev = ev))
