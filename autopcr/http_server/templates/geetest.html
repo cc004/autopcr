@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <script src="https://apps.bdimg.com/libs/jquery/1.11.3/jquery.min.js"></script>
     <script>
+        var id = 0;
         var myMeta = document.createElement("meta");
         if (myMeta.name = "viewport",
             /(iPhone|iPad|iPod|iOS)/i.test(navigator.userAgent) && -1 < navigator.userAgent.indexOf("OS")) {
@@ -26,6 +28,7 @@
     <link rel="stylesheet" href="https://static.biligame.com/sdk/geetest/css/captcha.css?v=8bb7455f2.css"
         type="text/css">
 </head>
+
 <body base-width="900">
     <script>
         var widthVar = 0
@@ -549,8 +552,10 @@
             return n ? decodeURIComponent(n[1]) : null
         }
         function getParams() {
+            id = getParam("id");
             var e = {
                 code: getParam("code"),
+                id: getParam("id"),
                 data: {
                     captcha_type: getParam("captcha_type"),
                     challenge: getParam("challenge"),
@@ -647,58 +652,69 @@
         function bookCallBack(e) {
             if (e) {
                 var t = e.captcha_type || 2;
-                document.body.innerHTML="";
-                if (t == 1)
-                {
-                    /*
-                var xmlhttp = new XMLHttpRequest();
-                var url = "https://help.tencentbot.top/arena_geetest_result/api.php";
-                var data = {
-                    challenge: e.challenge,
-                    validate: e.validate,
-                    seccode: e.seccode,
-                    userid: e.userid
-                };
-                xmlhttp.open('POST', url, true);
-                xmlhttp.send(JSON.stringify(data));*/
-                document.writeln("validate=" + e.validate)
-                //document.write('<br/>')
-                var body = document.getElementsByTagName('body')[0]
-                var a = document.createElement('textarea')
-                body.appendChild(a)
-                a.innerHTML = e.validate
-                a.id='biao1'
-                a.style="resize:none"
-                a.readOnly=true
-                a.onclick=function abcdef()
-                {
-var Url=document.getElementById("biao1");
-Url.select(); // 选择对象
-document.execCommand("Copy"); // 执行浏览器复制命令
-alert("已复制好，可贴粘。");
-}
-                document.writeln("seccode=" + e.seccode)
-                document.write('<br/>')
-                var b=document.createElement('textarea')
-                body.appendChild(b)
-                b.innerHTML = e.seccode
-                b.id='biao2'
-                b.style="resize:none"
-                b.readOnly=true
-    b.onclick=function bcdef()
-{
-var Url2=document.getElementById("biao2");
-Url2.select(); // 选择对象
-document.execCommand("Copy"); // 执行浏览器复制命令
-alert("已复制好，可贴粘。");
-}
-document.writeln("点击文本框复制")
+                document.body.innerHTML = "";
+                if (t == 1) {
+                    var xmlhttp = new XMLHttpRequest();
+                    var url = "/daily/api/validate";
+                    console.log(e);
+                    var data = {
+                        id: id,
+                        challenge: e.challenge,
+                        validate: e.validate,
+                        seccode: e.seccode,
+                        userid: e.userid
+                    };
+                    xmlhttp.open('POST', url, true);
+                    xmlhttp.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+					xmlhttp.onreadystatechange = function () {
+						if (xmlhttp.readyState === 4) {
+							if (xmlhttp.status === 200) {
+								// 请求成功后关闭页面
+								parent.postMessage('closeModal', '*');
+								window.close();
+							} else {
+								// 处理请求失败的情况
+								console.error('请求失败:', xmlhttp.status);
+							}
+						}
+					};
+                    xmlhttp.send(JSON.stringify(data));
+
+                    //document.writeln("validate=" + e.validate)
+                    ////document.write('<br/>')
+                    //var body = document.getElementsByTagName('body')[0]
+                    //var a = document.createElement('textarea')
+                    //body.appendChild(a)
+                    //a.innerHTML = e.validate
+                    //a.id = 'biao1'
+                    //a.style = "resize:none"
+                    //a.readOnly = true
+                    //a.onclick = function abcdef() {
+                    //    var Url = document.getElementById("biao1");
+                    //    Url.select(); // 选择对象
+                    //    document.execCommand("Copy"); // 执行浏览器复制命令
+                    //    alert("已复制好，可贴粘。");
+                    //}
+                    //document.writeln("seccode=" + e.seccode)
+                    //document.write('<br/>')
+                    //var b = document.createElement('textarea')
+                    //body.appendChild(b)
+                    //b.innerHTML = e.seccode
+                    //b.id = 'biao2'
+                    //b.style = "resize:none"
+                    //b.readOnly = true
+                    //b.onclick = function bcdef() {
+                    //    var Url2 = document.getElementById("biao2");
+                    //    Url2.select(); // 选择对象
+                    //    document.execCommand("Copy"); // 执行浏览器复制命令
+                    //    alert("已复制好，可贴粘。");
+                    //}
+                    //document.writeln("点击文本框复制")
                 }
-                else
-                {
-                document.writeln("captcha=" + e.captcha_code)
-                document.write('<br/>')
-                document.writeln("token=" + e.token)
+                else {
+                    document.writeln("captcha=" + e.captcha_code)
+                    document.write('<br/>')
+                    document.writeln("token=" + e.token)
                 }
             }
         }
@@ -741,4 +757,5 @@ document.writeln("点击文本框复制")
             });
     </script>
 </body>
+
 </html>

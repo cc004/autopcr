@@ -11,6 +11,7 @@ class Task():
         self.info = (alian, target, bot, ev, qid, gid)
         self.config = config
         self.token = token
+        self.username = accountmgr.load(target, readonly=True).username
 
     @abstractclassmethod
     async def do_task(self): ...
@@ -71,6 +72,17 @@ class FindMemory(Task):
         try:
             async with accountmgr.load(target) as mgr:
                 resp = await mgr.do_from_key(self.config, ["get_need_memory"])
+            img = await draw(resp, alian)
+            await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
+        except Exception as e:
+            await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + str(e))
+
+class Gacha(Task):
+    async def do_task(self):
+        alian, target, bot, ev, qid, gid = self.info
+        try:
+            async with accountmgr.load(target) as mgr:
+                resp = await mgr.do_from_key(self.config, ["gacha_start"])
             img = await draw(resp, alian)
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
         except Exception as e:

@@ -1,18 +1,31 @@
-from ..util import aiorequests
+from ..util import aiorequests, questutils
 from json import dumps, loads
 import asyncio
 
-validate_queue = asyncio.Queue()
-validate_ok_queue = asyncio.Queue()
+validate_dict = {}
+validate_ok_dict = {}
 
-async def manualValidator(gt, challenge, userid):
-    await validate_queue.put((challenge, gt, userid))
-    validate = await validate_ok_queue.get()
-    if validate == "xcwcancle":
-        raise ValueError("登录被终止")
-    return {"challenge": challenge, "gt_user_id": userid, "validate" : validate}
+async def manualValidator(account, gt, challenge, userid):
+    id = questutils.create_quest_token()
+    url = f"/daily/geetest.html?id={id}&captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
+    validate_dict[account] = url
+    for _ in range(120):
+        if id not in validate_ok_dict:
+            await asyncio.sleep(1)
+        else:
+            info = {
+                "challenge": validate_ok_dict[id]['challenge'], 
+                "gt_user_id": validate_ok_dict[id]['userid'], 
+                "validate" : validate_ok_dict[id]['validate'], 
+            }
+            del validate_ok_dict[id]
+            break
+    else:
+        raise ValueError("验证码验证超时")
 
-async def autoValidator(gt, challenge, userid):
+    return info
+
+async def autoValidator(account, gt, challenge, userid):
     url = f"https://pcrd.tencentbot.top/geetest_renew?captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
     # url = f"http://help.tencentbot.top/geetest?captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
     validate = ""
@@ -38,6 +51,7 @@ async def autoValidator(gt, challenge, userid):
         uuid = res["uuid"]
         msg = [f"uuid={uuid}"]
         ccnt = 0
+        ret = None
         while ccnt < 10:
             ccnt += 1
             res = await (await aiorequests.get(url=f"https://pcrd.tencentbot.top/check/{uuid}", headers=header)).content
@@ -62,14 +76,16 @@ async def autoValidator(gt, challenge, userid):
                 elif info == "in running":
                     await asyncio.sleep(8)
                 elif 'validate' in info:
-                    return info
+                    ret = info
             if ccnt >= 10:
+                break
                 raise Exception("Captcha failed")
     except:
         raise
     #await bot.send_private_msg(user_id=acinfo['admin'], message=f"thread{ordd}: succ={succ} validate={validate}")
-    print(f"farm: failed")
+    if not ret:
+        ret = await manualValidator(account, gt, challenge, userid)
 
     # captcha_lck.release()
     # await captcha_lck.acquire()
-    return None
+    return ret
