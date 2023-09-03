@@ -8,6 +8,7 @@ from ..constants import CONFIG_PATH
 from asyncio import Lock
 import json
 from .modulebase import Module
+from copy import deepcopy
 
 class AccountException(Exception):
     pass
@@ -23,7 +24,7 @@ class Account(ModuleManager):
 
         with open(self._filename, 'r') as f:
             self.data = json.load(f)
-            self.old_data = self.data.copy()
+            self.old_data = deepcopy(self.data)
 
         self.qq = self.data.get("qq", "")
         self.alian = self.data.get("alian", "未知")
