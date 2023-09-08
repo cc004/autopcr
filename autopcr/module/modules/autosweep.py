@@ -8,7 +8,6 @@ from ...model.enums import *
 from collections import Counter
 import datetime
 
-@inttype('sweep_recover_stamina_times', "被动恢复体力数", 0, [i for i in range(41)])
 @multichoice("normal_sweep_run_time", "执行条件", ["n庆典"], ["n庆典", "h庆典", "vh庆典", "总是执行"])
 @singlechoice("normal_sweep_consider_unit", "需求角色", "favorite", ["all", "max_rank", "max_rank-1", "max_rank-2", 'favorite'])
 @description('根据装备缺口刷n图')
@@ -19,9 +18,9 @@ class smart_normal_sweep(Module):
     async def do_task(self, client: pcrclient):
         run_time = set(self.get_config('normal_sweep_run_time'))
         if not (
-        "n庆典" in run_time and client.data.is_normal_quest_double()
-        or  "h庆典" in run_time and client.data.is_hard_quest_double()
-        or  "vh庆典" in run_time and client.data.is_very_hard_quest_double()
+        "n庆典" in run_time and client.data.is_normal_quest_campaign()
+        or  "h庆典" in run_time and client.data.is_hard_quest_campaign()
+        or  "vh庆典" in run_time and client.data.is_very_hard_quest_campaign()
         or "总是执行" in run_time):
             raise SkipError("今日不符合执行条件，不刷取")
 
@@ -79,17 +78,17 @@ class smart_normal_sweep(Module):
                 self._log(await client.serlize_reward(tmp))
 
 
-@inttype('sweep_recover_stamina_times', "被动恢复体力数", 0, [i for i in range(41)])
 @singlechoice('hard_sweep_consider_unit_order', "刷取顺序", "缺口少优先", ["缺口少优先", "缺口大优先"])
+@booltype('hard_sweep_consider_high_rarity_first', "三星角色优先", False)
 @singlechoice("hard_sweep_run_time", "执行条件", "h庆典", ["h庆典", "非n庆典", "总是执行"])
 @description('根据记忆碎片缺口刷hard图')
 @name('智能刷hard图')
 @default(False)
 class smart_hard_sweep(Module):
     async def do_task(self, client: pcrclient):
-        if self.get_config('hard_sweep_run_time') == "h庆典" and not client.data.is_hard_quest_double():
+        if self.get_config('hard_sweep_run_time') == "h庆典" and not client.data.is_hard_quest_campaign():
             raise SkipError("今日非hard庆典，不刷取")
-        if self.get_config('hard_sweep_run_time') == "非n庆典" and client.data.is_normal_quest_double():
+        if self.get_config('hard_sweep_run_time') == "非n庆典" and client.data.is_normal_quest_campaign():
             raise SkipError("今日normal庆典，不刷取")
 
         need_list = client.data.get_memory_demand_gap()
@@ -98,8 +97,12 @@ class smart_hard_sweep(Module):
         if not need_list:
             raise SkipError("不存在缺乏的记忆碎片")
 
-        reverse = True if self.get_config('hard_sweep_consider_unit_order') == '缺口大优先' else False
-        need_list = sorted(need_list, key=lambda x: x[1], reverse=reverse)
+        reverse = -1 if self.get_config('hard_sweep_consider_unit_order') == '缺口大优先' else 1
+        high_rarity_first = self.get_config('hard_sweep_consider_high_rarity_first')
+        need_list = sorted(need_list, key=lambda x: (
+            - db.unit_data[db.memory_to_unit[x[0][1]]].rarity * high_rarity_first, 
+            x[1] * reverse))
+
         stop = False
         clean_cnt = Counter()
         tmp = []
@@ -133,7 +136,6 @@ class smart_hard_sweep(Module):
             if tmp:
                 self._log(await client.serlize_reward(tmp))
 
-@inttype('sweep_recover_stamina_times', "被动恢复体力数", 0, [i for i in range(41)])
 @singlechoice("vh_sweep_campaign_times", "庆典次数", 3, [0, 3, 6])
 @singlechoice("vh_sweep_times", "非庆典次数", 3, [0, 3, 6])
 @description('根据纯净碎片缺口智能刷vh图')
@@ -142,7 +144,7 @@ class smart_hard_sweep(Module):
 class smart_very_hard_sweep(Module):
     async def do_task(self, client: pcrclient):
         times = 3
-        if not client.data.is_very_hard_quest_double():
+        if not client.data.is_very_hard_quest_campaign():
             times = self.get_config('vh_sweep_times')
         else:
             times = self.get_config('vh_sweep_campaign_times')
@@ -181,7 +183,6 @@ class smart_very_hard_sweep(Module):
 当被动体力回复完全消耗后，刷图结束
 '''.strip())
 @name("自定义刷图")
-@inttype('sweep_recover_stamina_times', "被动恢复体力数", 0, [i for i in range(41)])
 @default(False)
 class smart_sweep(Module):
     async def do_task(self, client: pcrclient):

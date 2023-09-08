@@ -8,34 +8,39 @@ from ..constants import CONFIG_PATH
 from asyncio import Lock
 import json
 from .modulebase import Module
+from copy import deepcopy
 
 class AccountException(Exception):
     pass
 
 class Account(ModuleManager):
-    def __init__(self, parent: 'AccountManager', account: str):
+    def __init__(self, parent: 'AccountManager', account: str, readonly: bool = False):
         if not account in parent.account_lock:
             parent.account_lock[account] = Lock()
         self._lck = parent.account_lock[account]
         self._account = account
         self._filename = parent.path(account)
+        self.readonly = readonly
 
         with open(self._filename, 'r') as f:
             self.data = json.load(f)
-            self.old_data = self.data.copy()
+            self.old_data = deepcopy(self.data)
 
         self.qq = self.data.get("qq", "")
         self.alian = self.data.get("alian", "未知")
+        self.username = self.data.get("username", "")
         super().__init__(self.data.get("config", {}), self)
     
     async def __aenter__(self):
-        await self._lck.acquire()
+        if not self.readonly:
+            await self._lck.acquire()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        if self.data != self.old_data:
-            await self.save_data()
-        self._lck.release()
+        if not self.readonly:
+            if self.data != self.old_data:
+                await self.save_data()
+            self._lck.release()
 
     async def save_data(self):
         with open(self._filename, 'w') as f:
@@ -105,11 +110,11 @@ class AccountManager:
 
     def path(self, account: str) -> str:
         return os.path.join(self.root, account + '.json')
-    
-    def load(self, account: str) -> Account:
+
+    def load(self, account: str, readonly: bool = False) -> Account:
         if not AccountManager.pathsyntax.fullmatch(account):
             raise AccountException('Invalid account name')
-        return Account(self, account)
+        return Account(self, account, readonly)
 
     def delete(self, account: str):
         if not AccountManager.pathsyntax.fullmatch(account):

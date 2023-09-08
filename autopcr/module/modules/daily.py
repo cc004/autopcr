@@ -6,6 +6,22 @@ from ...db.database import db
 from ...model.enums import *
 import datetime
 
+@description('全局生效，优先级n4>n3>h3>n2>h2')
+@name("全局配置")
+@default(True)
+@inttype('sweep_recover_stamina_times', "平时被动恢复体力数", 0, [i for i in range(41)])
+@inttype('sweep_recover_stamina_times_n2', "n2被动恢复体力数", 0, [i for i in range(41)])
+@inttype('sweep_recover_stamina_times_n3', "n3被动恢复体力数", 0, [i for i in range(41)])
+@inttype('sweep_recover_stamina_times_n4', "n4及以上被动恢复体力数", 0, [i for i in range(41)])
+@inttype('sweep_recover_stamina_times_h2', "h2被动恢复体力数", 0, [i for i in range(41)])
+@inttype('sweep_recover_stamina_times_h3', "h3及以上被动恢复体力数", 0, [i for i in range(41)])
+@multichoice("force_stop_heart_sweep", "强制不刷心碎庆典", [], ["n2", "n3", "n4及以上", "h2", "h3及以上"])
+@multichoice("force_stop_star_cup_sweep", "强制不刷星球杯庆典", [], ["n2", "n3", "n4及以上", "h2", "h3及以上"])
+@notrunnable
+class global_config(Module):
+    async def do_task(self, client: pcrclient):
+        pass
+
 @description('选谁其实排名都一样的')
 @name("赛马")
 @default(True)
@@ -102,6 +118,8 @@ class jjc_reward(Module):
 class user_info(Module):
     async def do_task(self, client: pcrclient):
         now = db.format_time(datetime.datetime.now())
-        self._log(f"{client.data.name} 体力{client.data.stamina}({db.team_max_stamina[client.data.team_level].max_stamina}) 等级{client.data.team_level} 钻石{client.data.jewel.free_jewel} mana{client.data.gold.gold_id_free} 扫荡券{client.data.get_inventory((eInventoryType.Item, 23001))} 母猪石{client.data.get_inventory((eInventoryType.Item, 90005))}\n清日常时间:{now}")
+        self._log(f"{client.data.name} 体力{client.data.stamina}({db.team_max_stamina[client.data.team_level].max_stamina}) 等级{client.data.team_level} 钻石{client.data.jewel.free_jewel} mana{client.data.gold.gold_id_free} 扫荡券{client.data.get_inventory((eInventoryType.Item, 23001))} 母猪石{client.data.get_inventory((eInventoryType.Item, 90005))}")
+        self._log(f"已购买体力数：{client.data.recover_stamina_exec_count}")
+        self._log(f"清日常时间:{now}")
 
 

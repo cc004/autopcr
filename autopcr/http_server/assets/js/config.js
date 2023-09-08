@@ -1,6 +1,7 @@
 const iframeActionID = 'iframe-action'
 const iframeInfoID = 'iframe-info'
 const toastContainerID = 'toast-container-1'
+const validateContainerID = 'validate-container-1'
 const configFormID = ['form-normal-config', 'form-account-config'];
 let savedRet = undefined
 $(document).ready(function () {
@@ -73,6 +74,39 @@ function toggle_spinner(status = 'hidden', element) {
             break;
     }
 };
+function show_validate(url) {
+	let res = `
+	<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+			<div class="modal-content">
+				<div class="modal-header">
+					  <h5 class="modal-title" id="staticBackdropLabel">登录需要验证</h5>
+					  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<iframe src="${url}" frameborder="0" width="100%" style="max-height: 100vh;" height="500"></iframe>
+
+				</div>
+				<div class="modal-footer">
+					  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+				</div>
+			</div>
+		</div>
+	</div>
+`
+
+    $(`#${validateContainerID}`).html(res);
+	$(document).ready(function() {
+		let modal = new bootstrap.Modal(document.getElementById('staticBackdrop'));
+		modal.show();
+
+		window.addEventListener('message', function (event) {
+			if (event.data === 'closeModal') {
+				modal.hide();
+			}
+		});
+	});
+}
 function show_toast(status, text, desc = null) {
     const classDict = {
         'success': [`text-success-emphasis`, `bg-success-subtle`, `border-success-subtle`],

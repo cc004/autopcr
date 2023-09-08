@@ -29,7 +29,7 @@ class datamgr(Component[apiclient]):
     team_level: int = 0
     stamina: int = 0
     unit: Dict[int, UnitData] = None
-    unit_data: Dict[int, UserChara] = None
+    unit_love_data: Dict[int, UserChara] = None
     recover_stamina_exec_count: int = 0
     training_quest_count: TrainingQuestCount = None
     training_quest_max_count: TrainingQuestCount = None
@@ -68,23 +68,62 @@ class datamgr(Component[apiclient]):
                 await dbmgr.update_db(assetmgr)
                 db.update(dbmgr)
 
-    def is_heart_piece_double(self) -> bool:
-        return any(db.is_heart_piece_double(campaign_id) for campaign_id in self.campaign_list)
+    def is_heart_piece_campaign(self) -> bool:
+        return any(db.is_heart_piece_campaign(campaign_id) for campaign_id in self.campaign_list)
 
-    def is_star_cup_double(self) -> bool:
-        return any(db.is_star_cup_double(campaign_id) for campaign_id in self.campaign_list)
+    def is_star_cup_campaign(self) -> bool:
+        return any(db.is_star_cup_campaign(campaign_id) for campaign_id in self.campaign_list)
 
-    def is_normal_quest_double(self) -> bool:
-        return any(db.is_normal_quest_double(campaign_id) for campaign_id in self.campaign_list)
+    def is_normal_quest_campaign(self) -> bool:
+        return any(db.is_normal_quest_campaign(campaign_id) for campaign_id in self.campaign_list)
 
-    def is_hard_quest_double(self) -> bool:
-        return any(db.is_hard_quest_double(campaign_id) for campaign_id in self.campaign_list)
+    def is_hard_quest_campaign(self) -> bool:
+        return any(db.is_hard_quest_campaign(campaign_id) for campaign_id in self.campaign_list)
 
-    def is_very_hard_quest_double(self) -> bool:
-        return any(db.is_very_hard_quest_double(campaign_id) for campaign_id in self.campaign_list)
+    def is_very_hard_quest_campaign(self) -> bool:
+        return any(db.is_very_hard_quest_campaign(campaign_id) for campaign_id in self.campaign_list)
 
-    def is_dungeon_mana_double(self) -> bool:
-        return any(db.is_dungeon_mana_double(campaign_id) for campaign_id in self.campaign_list)
+    def is_dungeon_mana_campaign(self) -> bool:
+        return any(db.is_dungeon_mana_campaign(campaign_id) for campaign_id in self.campaign_list)
+
+    def is_campaign(self, campaign: str) -> bool:
+        campaign_list = {
+            "n2": lambda: self.get_normal_quest_campaign_times() == 2,
+            "n3": lambda: self.get_normal_quest_campaign_times() == 3,
+            "n4及以上": lambda: self.get_normal_quest_campaign_times() >= 4,
+            "h2": lambda: self.get_hard_quest_campaign_times() == 2,
+            "h3及以上": lambda: self.get_hard_quest_campaign_times() >= 3,
+            "vh2": lambda: self.get_very_hard_quest_campaign_times() == 2,
+            "vh3": lambda: self.get_very_hard_quest_campaign_times() == 3,
+        }
+        if campaign not in campaign_list:
+            raise ValueError(f"不支持的庆典查询：{campaign}")
+        return campaign_list[campaign]()
+
+    def get_campaign_times(self, condition_func) -> int:
+        times = [db.get_campaign_times(campaign_id) for campaign_id in self.campaign_list if condition_func(campaign_id)]
+        if not times:
+            return 0
+        assert(len(times) == 1)
+        return int(times[0] // 1000)
+
+    def get_heart_piece_campaign_times(self) -> int:
+        return self.get_campaign_times(db.is_heart_piece_campaign)
+
+    def get_star_cup_campaign_times(self) -> int:
+        return self.get_campaign_times(db.is_star_cup_campaign)
+
+    def get_normal_quest_campaign_times(self) -> int:
+        return self.get_campaign_times(db.is_normal_quest_campaign)
+
+    def get_hard_quest_campaign_times(self) -> int:
+        return self.get_campaign_times(db.is_hard_quest_campaign)
+
+    def get_very_hard_quest_campaign_times(self) -> int:
+        return self.get_campaign_times(db.is_very_hard_quest_campaign)
+
+    def get_dungeon_mana_campaign_times(self) -> int:
+        return self.get_campaign_times(db.is_dungeon_mana_campaign)
 
     def clear_inventory(self):
         self._inventory.clear()
@@ -269,12 +308,12 @@ class datamgr(Component[apiclient]):
             self.jewel.free_jewel = item.stock
         elif item.type == eInventoryType.Unit:
             self.unit[item.id] = item.unit_data
-            if item.id not in self.unit_data:
+            if item.id not in self.unit_love_data:
                 unit_id = item.id // 100
-                self.unit_data[unit_id] = UserChara()
-                self.unit_data[unit_id].chara_id = unit_id
-                self.unit_data[unit_id].chara_love = 0
-                self.unit_data[unit_id].love_level = 0
+                self.unit_love_data[unit_id] = UserChara()
+                self.unit_love_data[unit_id].chara_id = unit_id
+                self.unit_love_data[unit_id].chara_love = 0
+                self.unit_love_data[unit_id].love_level = 0
         else:
             self._inventory[token] = item.stock
 
