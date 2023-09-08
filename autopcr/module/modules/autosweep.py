@@ -79,6 +79,7 @@ class smart_normal_sweep(Module):
 
 
 @singlechoice('hard_sweep_consider_unit_order', "刷取顺序", "缺口少优先", ["缺口少优先", "缺口大优先"])
+@booltype('hard_sweep_consider_high_rarity_first', "三星角色优先", False)
 @singlechoice("hard_sweep_run_time", "执行条件", "h庆典", ["h庆典", "非n庆典", "总是执行"])
 @description('根据记忆碎片缺口刷hard图')
 @name('智能刷hard图')
@@ -96,8 +97,12 @@ class smart_hard_sweep(Module):
         if not need_list:
             raise SkipError("不存在缺乏的记忆碎片")
 
-        reverse = True if self.get_config('hard_sweep_consider_unit_order') == '缺口大优先' else False
-        need_list = sorted(need_list, key=lambda x: x[1], reverse=reverse)
+        reverse = -1 if self.get_config('hard_sweep_consider_unit_order') == '缺口大优先' else 1
+        high_rarity_first = self.get_config('hard_sweep_consider_high_rarity_first')
+        need_list = sorted(need_list, key=lambda x: (
+            - db.unit_data[db.memory_to_unit[x[0][1]]].rarity * high_rarity_first, 
+            x[1] * reverse))
+
         stop = False
         clean_cnt = Counter()
         tmp = []

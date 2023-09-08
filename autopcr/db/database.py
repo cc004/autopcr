@@ -109,7 +109,7 @@ class database():
                 .where(lambda x: self.is_hard_quest(x.quest_id))
                 .group_by(lambda x: x.reward_image_1)
                 .to_dict(lambda x: (eInventoryType.Item, x.key), lambda x:
-                    x.to_list()
+                         x.to_list()[::-1]
                 )
             )
 
@@ -321,6 +321,11 @@ class database():
                 UnitRarity.query(db)
                 .group_by(lambda x: x.unit_material_id)
                 .to_dict(lambda x: x.key, lambda x: x.first().unit_id)
+            )
+
+            self.unit_data: Dict[int, UnitDatum] = (
+                UnitDatum.query(db)
+                .to_dict(lambda x: x.unit_id, lambda x: x)
             )
             
 
