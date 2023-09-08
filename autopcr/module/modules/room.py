@@ -82,7 +82,7 @@ class room_like_back(Module):
 @default(True)
 class love_up(Module):
     async def do_task(self, client: pcrclient):
-        for unit in client.data.unit_data.values():
+        for unit in client.data.unit_love_data.values():
             unit_id = unit.chara_id * 100 + 1
             unit_name = db.get_inventory_name_san((eInventoryType.Unit, unit_id))
             love_level, total_love = db.max_total_love(client.data.unit[unit_id].unit_rarity)

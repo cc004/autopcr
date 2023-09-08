@@ -19,6 +19,7 @@ cron_modules = [
 ]
 
 daily_modules = [
+    global_config,
     chara_fortune,
     mission_receive_first,
     clan_like,
@@ -48,9 +49,9 @@ daily_modules = [
     all_in_hatsune,
 
     hatsune_hboss_sweep,
-    hatsune_mission_accept,
+    hatsune_mission_accept1,
     hatsune_gacha_exchange,
-    hatsune_mission_accept,
+    hatsune_mission_accept2,
 
     mission_receive_last,
 

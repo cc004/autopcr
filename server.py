@@ -18,7 +18,7 @@ from hoshino.config import SUPERUSERS
 from hoshino.util import escape
 from hoshino.typing import CQEvent, MessageSegment
 from ._util import get_result
-from ._task import DailyClean, FindEquip, FindMemory, FindXinsui, Task, GetLibraryImport, QuestRecommand
+from ._task import DailyClean, FindEquip, FindMemory, FindXinsui, Task, GetLibraryImport, QuestRecommand, Gacha
 import datetime
 import random
 
@@ -86,9 +86,34 @@ async def bangzhu_text(bot, ev):
 async def init():
     await db_start()
 
+async def check_validate(task):
+    username = task.username
+    alian, _, bot, ev, qid, gid = task.info 
+    
+    from .autopcr.bsdk.validator import validate_dict
+    for _ in range(120):
+        if username in validate_dict:
+            url = validate_dict[username]
+            if url == "ok":
+                del validate_dict[username]
+                break
+
+            url = address + url.lstrip("/daily/")
+            if ev:
+                await bot.send(ev, f'[CQ:reply,id={ev.message_id}]pcr账号登录需要验证码，请点击以下链接在120秒内完成认证:\n{url}')
+            else:
+                await bot.send_group_msg(group_id = gid, msg = f"【定时任务】帐号需要验证码，【{alian}】定时任务自动取消[CQ:at,qq={qid}]")
+
+            del validate_dict[username]
+
+        else:
+            await asyncio.sleep(1)
+
 async def consumer(task):
     global inqueue
     token = task.token
+    loop = asyncio.get_event_loop()
+    loop.create_task(check_validate(task))
     try:
         await task.do_task()
     except Exception as e:
@@ -97,41 +122,6 @@ async def consumer(task):
         await report_to_su(None, "", "执行清日常出错:" + str(e))
     finally:
         inqueue.remove(token)
-
-'''
-async def manual_validate():
-global cur_task
-while True:
-    (challenge, gt, userid) = await validate_queue.get()
-    alian, _, bot, ev, qid, gid = cur_task.info 
-    url = f"https://help.tencentbot.top/geetest/?captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
-    if ev:
-        await bot.send(ev, f'[CQ:reply,id={ev.message_id}]pcr账号登录需要验证码，请完成以下链接中的验证内容后将第一行validate=后面的内容复制，并用指令#pcrval xxxx将内容发送给机器人完成验证\n验证链接')
-        await bot.send(ev, f'[CQ:reply,id={ev.message_id}]{url}')
-    else:
-        await bot.send_group_msg(group_id = gid, msg = f"【定时任务】帐号需要验证码，【{alian}】定时任务自动取消[CQ:at,qq={qid}]")
-        await validate_ok_queue.put("xcwcancle")
-
-@sv.on_prefix("#pcrval")
-async def receive_validate(bot, ev):
-global consuming
-if not consuming:
-        await bot.finish(ev, "[CQ:reply,id={ev.message_id}]你在干什么？")
-    validate = ev.message.extract_plain_text().strip()
-    await validate_ok_queue.put(validate)
-
-@sv.on_prefix("#取消")
-async def cancle_validate(bot, ev):
-    global consuming
-    if not consuming:
-        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]你在干什么？")
-    alian, _, _, c_ev, _, _ = cur_task.info 
-    await validate_ok_queue.put("xcwcancle")
-    if c_ev:
-        await bot.send(c_ev, f"[CQ:reply,id={c_ev.message_id}]已取消当前【{alian}】的任务")
-    else:
-        await bot.send(c_ev, f"[CQ:reply,id={ev.message_id}]已取消当前【{alian}】的任务")
-'''
 
 def pre_process_all(func):
     async def wrapper(bot: HoshinoBot, ev: CQEvent):
@@ -224,6 +214,27 @@ async def find_memory(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
     }
     await consumer(FindMemory(token = token, config = config, bot = bot, ev = ev))
 
+@sv.on_prefix(f"{prefix}来发十连")
+@pre_process
+async def shilian(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
+    cc_until_get = False
+    pool_id = 0
+    try:
+        if ev.message.extract_plain_text().split(' ')[-1].strip() == '抽到出':
+            cc_until_get = True
+    except:
+        pass
+    try:
+        pool_id = ev.message.extract_plain_text().split(' ')[-2].strip()
+    except:
+        pass
+
+    config = {
+            "pool_id" : pool_id,
+            "cc_until_get" : cc_until_get,
+    }
+    await consumer(Gacha(token = token, config = config, bot = bot, ev = ev))
+
 @sv.on_prefix(f"{prefix}查装备")
 @pre_process
 async def find_equip(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
@@ -307,7 +318,7 @@ async def get_config(bot, ev, tot = False):
     alian = escape(alian)
 
     for file in accountmgr.accounts():
-        async with accountmgr.load(file) as account:
+        async with accountmgr.load(file, readonly = True) as account:
             if account.qq == user_id:
                 accounts.append((escape(account.alian), file))
 

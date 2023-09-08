@@ -5,3 +5,18 @@
 .form-item-spacing-1 > * {
   margin-bottom: 8px;
 }
+
+.custom-divider {
+    border-left: 1px solid #ccc;
+    height: 100%;
+}
+
+@media (max-width: 576px) {
+	.custom-divider {
+	  border-left: none;
+	  border-top: 1px solid #ccc;
+	  width: 100%;
+	  height: auto;
+	  padding-top: 2%;
+	}
+}

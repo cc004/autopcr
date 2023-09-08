@@ -54,6 +54,9 @@ class sessionmgr(Component[apiclient]):
             self._sdkaccount = None
             await self._bililogin()
 
+        from ..bsdk.validator import validate_dict
+        validate_dict[self._account['account']] = "ok"
+
     async def _login(self, next: RequestHandler):
         if os.path.exists(self.cacheFile):
             with open(self.cacheFile, 'r') as fp:

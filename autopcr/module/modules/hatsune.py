@@ -5,7 +5,6 @@ from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
 
-@inttype('sweep_recover_stamina_times', "被动恢复体力数", 0, [i for i in range(41)])
 @multichoice("hatsune_h_sweep_quest", "扫荡关卡", [1,2,3,4,5], [1,2,3,4,5])
 @description('')
 @name('扫荡活动h本')
@@ -144,10 +143,7 @@ class hatsune_gacha_exchange(Module):
         if not event_active:
             raise SkipError("当前无可进入的活动")
 
-@description('')
-@name('领取活动任务奖励')
-@default(True)
-class hatsune_mission_accept(Module):
+class hatsune_mission_accept_base(Module):
     async def do_task(self, client: pcrclient):
         is_error = False
         is_abort = False
@@ -181,6 +177,18 @@ class hatsune_mission_accept(Module):
         if is_error: raise ValueError("")
         if is_abort: raise AbortError("")
         if is_skip: raise SkipError("")
+
+@description('讨伐证兑换前领取奖励')
+@name('领取活动任务奖励1')
+@default(True)
+class hatsune_mission_accept1(hatsune_mission_accept_base):
+    pass
+
+@description('讨伐证兑换后领取奖励')
+@name('领取活动任务奖励2')
+@default(True)
+class hatsune_mission_accept2(hatsune_mission_accept_base):
+    pass
 
 @singlechoice("hatsune_normal_sweep_quest", "刷取图", 15, [5, 10, 15])
 @description('剩余体力全部刷活动图')

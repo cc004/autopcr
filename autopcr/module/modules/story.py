@@ -16,8 +16,8 @@ class guild_story_reading(Module):
         def guild_love_sum(guild_id: int) -> int:
             return (
             flow(getattr(db.guild_data[guild_id], f"member{i}") for i in range(1, 31)) 
-            .where(lambda x: x != 0 and x in client.data.unit_data) 
-            .sum(lambda x: client.data.unit_data[x].love_level)
+            .where(lambda x: x != 0 and x in client.data.unit_love_data) 
+            .sum(lambda x: client.data.unit_love_data[x].love_level)
             )
 
         read_story = set(client.data.read_story_ids)
@@ -47,8 +47,8 @@ class unit_story_reading(Module):
             if (
                 story.story_id not in read_story and
                 story.pre_story_id in read_story and
-                story.story_group_id in client.data.unit_data and 
-                client.data.unit_data[story.story_group_id].love_level >= story.love_level
+                story.story_group_id in client.data.unit_love_data and 
+                client.data.unit_love_data[story.story_group_id].love_level >= story.love_level
                 ):
                 await client.read_story(story.story_id)
                 read_story.add(story.story_id)
