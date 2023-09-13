@@ -225,7 +225,11 @@ async def shilian(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
     except:
         pass
     try:
-        pool_id = ev.message.extract_plain_text().split(' ')[-2].strip()
+        msg = ev.message.extract_plain_text().split(' ')
+        if cc_until_get:
+            pool_id = msg[-3].strip() + " " + msg[-2].strip()
+        else:
+            pool_id = msg[-2].strip() + " " + msg[-1].strip()
     except:
         pass
 
