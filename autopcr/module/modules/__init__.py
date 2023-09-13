@@ -71,6 +71,10 @@ daily_modules = [
     user_info,
 ]
 
+hidden_modules = [
+    gacha_start
+]
+
 tool_modules = [
     get_library_import_data,
     get_need_equip,

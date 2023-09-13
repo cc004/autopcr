@@ -21,6 +21,8 @@ class gacha_start(Module):
         return any(item.id in r for item in new)
 
     async def do_task(self, client: pcrclient):
+        if ':' not in self.get_config('pool_id'):
+            raise ValueError("配置格式不正确")
         gacha_id = int(self.get_config('pool_id').split(':')[0])
         resp = await client.get_gacha_index()
         for gacha in resp.gacha_info:
@@ -37,8 +39,8 @@ class gacha_start(Module):
         cnt = 0
         try:
             while True:
-                cnt += 1
                 reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Payment, client.data.jewel.free_jewel + client.data.jewel.jewel, 0)
+                cnt += 1
                 if not always or self.can_stop(reward.new_unit, db.gacha_exchange_chara[target_gacha.exchange_id]) :
                     break
         except:
