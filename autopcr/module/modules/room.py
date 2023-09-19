@@ -58,7 +58,7 @@ class room_like_back(Module):
         while pos < like_history.today_be_liked_count or cnt < 10:
             viewer_id = 0
             if pos < like_history.today_be_liked_count:
-                viewer_id = like_history.like_history[pos].viewer_id
+                viewer_id = like_history.be_liked_history[pos].viewer_id
             user = await client.room_visit(viewer_id)
             pos += 1
             if user.room_user_info.today_like_flag:
