@@ -416,3 +416,35 @@ class eGachaDrawType(Enum):
     SpecialTicket = 9
     SpFesCmapaign10Shot = 10
     INVALID_VALUE = -1
+
+class ePeriod(Enum):
+    NONE = 0
+    LOGIN_PERIOD = 1
+    ANNIVERSARY_PERIOD = 2
+
+class eEventType(Enum):
+    HATSUNE = 1
+    INVALID_VALUE = -1
+
+class eEventSubStoryStatus(Enum):
+    UNREAD = 1
+    READED = 2
+    ADDED = 3
+    INVALID_VALUE = -1
+
+class eBattleLogType(Enum):
+	MISS = 1
+	SET_DAMAGE = 2
+	SET_ABNORMAL = 3
+	SET_RECOVERY = 4
+	SET_BUFF_DEBUFF = 5
+	SET_STATE = 6
+	BUTTON_TAP = 7
+	SET_ENERGY = 8
+	DAMAGE_CHARGE = 9
+	GIVE_VALUE_ADDITIONAL = 10
+	GIVE_VALUE_MULTIPLY = 11
+	WAVE_END_HP = 12
+	WAVE_END_DAMAGE_AMOUNT = 13
+	BREAK = 14
+	INVALID_VALUE = -1
