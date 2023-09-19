@@ -106,3 +106,6 @@ class sessionmgr(Component[apiclient]):
             if ex.status == 3 and self.auto_relogin:
                 self._logged = False
             raise
+
+    async def clear_session(self):
+        self._logged = False

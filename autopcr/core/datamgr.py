@@ -357,7 +357,11 @@ class datamgr(Component[apiclient]):
         else:
             raise ValueError(f"未知的商店{shop_id}")
 
+    def is_empty_deck(self, party_type: ePartyType):
+        return all(value == 0 for key, value in vars(self.deck_list[party_type]).items() if key.startswith('unit_id'))
+
     async def request(self, request: Request[TResponse], next: RequestHandler) -> TResponse:
         resp = await next.request(request)
         if resp: await resp.update(self, request)
         return resp
+

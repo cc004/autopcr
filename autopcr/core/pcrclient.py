@@ -23,6 +23,37 @@ class pcrclient(apiclient):
     async def login(self):
         await self.request(None)
 
+    async def logout(self):
+        await self.session.clear_session()
+
+    async def arena_apply(self, battle_viewer_id: int, opponent_rank: int):
+        req = ArenaApplyRequest()
+        req.battle_viewer_id = battle_viewer_id
+        req.opponent_rank = opponent_rank
+        return await self.request(req)
+
+    async def arena_start(self, token: str, battle_viewer_id: int, remain_battle_number: int, disable_skin: int):
+        req = ArenaStartRequest()
+        req.token = token
+        req.battle_viewer_id = battle_viewer_id
+        req.remain_battle_number = remain_battle_number
+        req.disable_skin = disable_skin
+        return await self.request(req)
+
+    async def grand_arena_apply(self, battle_viewer_id: int, opponent_rank: int):
+        req = GrandArenaApplyRequest()
+        req.battle_viewer_id = battle_viewer_id
+        req.opponent_rank = opponent_rank
+        return await self.request(req)
+
+    async def grand_arena_start(self, token: str, battle_viewer_id: int, remain_battle_number: int, disable_skin: int):
+        req = GrandArenaStartRequest()
+        req.token = token
+        req.battle_viewer_id = battle_viewer_id
+        req.remain_battle_number = remain_battle_number
+        req.disable_skin = disable_skin
+        return await self.request(req)
+
     async def multi_give_gift(self, unit_id: int, cakes: List[SendGiftData]):
         req = RoomMultiGiveGiftRequest()
         req.unit_id = unit_id
@@ -268,12 +299,18 @@ class pcrclient(apiclient):
         req.join_condition = cond
         await self.request(req)
 
-    async def get_clan_info(self) -> ClanData:
+    async def get_clan_info(self):
         if self.data.clan == 0: return None
         req = ClanInfoRequest()
         req.clan_id = self.data.clan
         req.get_user_equip = 0
-        return (await self.request(req)).clan
+        return (await self.request(req))
+
+    async def request_equip(self, equip_id: int, clan_id: int):
+        req = EquipRequestRequest()
+        req.equip_id = equip_id
+        req.clan_id = clan_id
+        return await self.request(req)
     
     async def donate_equip(self, request: EquipRequests, times: int):
         req = EquipDonateRequest()
