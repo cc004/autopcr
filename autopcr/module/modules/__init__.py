@@ -53,6 +53,8 @@ daily_modules = [
     hatsune_gacha_exchange,
     hatsune_mission_accept2,
 
+    jjc_daily,
+    pjjc_daily,
     mission_receive_last,
 
     normal_shop,

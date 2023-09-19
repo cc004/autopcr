@@ -4,6 +4,7 @@ from ...core.pcrclient import pcrclient
 from ...model.error import *
 from ...model.enums import *
 import random
+from ...db.database import db
 
 @description('在公会中自动随机选择一位成员点赞。')
 @name("公会点赞")
@@ -12,9 +13,10 @@ class clan_like(Module):
     async def do_task(self, client: pcrclient):
         if client.data.clan_like_count:
             raise SkipError('今日点赞次数已用完。')
-        info = await client.get_clan_info()
-        if not info:
+        clan = await client.get_clan_info()
+        if not clan:
             raise AbortError("未加入公会")
+        info = clan.clan
         members = [(x.viewer_id, x.name) for x in info.members if x.viewer_id != client.viewer_id]
         if len(members) == 0: raise AbortError("No other members in clan")
         rnd = random.choice(members)
