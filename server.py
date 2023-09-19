@@ -316,7 +316,7 @@ async def get_config(bot, ev, tot = False):
         user_id = str(ev.user_id)
     else:   #指定对象
         if not priv.check_priv(ev,priv.ADMIN):
-            return False, '[CQ:reply,id={ev.message_id}]指定用户清日常需要管理员权限', token
+            return False, f'[CQ:reply,id={ev.message_id}]指定用户清日常需要管理员权限', token
 
     accounts = []
     alian = escape(alian)
@@ -327,7 +327,7 @@ async def get_config(bot, ev, tot = False):
                 accounts.append((escape(account.alian), file))
 
     if not accounts:
-        return False, "[CQ:reply,id={ev.message_id}]请发送【#配置日常】配置", token
+        return False, f"[CQ:reply,id={ev.message_id}]请发送【{prefix}配置日常】配置", token
 
     if tot:
         return True, "", accounts
