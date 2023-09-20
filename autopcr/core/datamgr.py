@@ -136,12 +136,12 @@ class datamgr(Component[apiclient]):
         rank = self.unit[unit_id].unique_equip_slot[0].rank if unit_id in self.unit and self.unit[unit_id].unique_equip_slot else -1
         return (
             flow(db.unique_equip_required[equip_id].items())
-            .where(lambda x: x[0] > rank)
+            .where(lambda x: x[0] >= rank)
             .select(lambda x: x[1][token])
             .sum()
         )
 
-    def get_need_unit_need_eqiup(self, unit_id: int) -> typing.Counter[ItemType]:
+    def get_unit_eqiup_demand(self, unit_id: int) -> typing.Counter[ItemType]:
         unit = self.unit[unit_id]
         rank = unit.promotion_level
 
@@ -242,7 +242,7 @@ class datamgr(Component[apiclient]):
                 continue
             if like_unit_only and not self.unit[unit_id].favorite_flag:
                 continue
-            need = self.get_need_unit_need_eqiup(unit_id)
+            need = self.get_unit_eqiup_demand(unit_id)
             if need:
                 cnt += need
         return cnt 
