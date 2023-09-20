@@ -194,6 +194,11 @@ async def clear_daily_all(bot: HoshinoBot, ev: CQEvent, tokens: List[Tuple[str, 
     for token in tokens:
         loop.create_task(consumer(DailyClean(token, bot, ev)))
 
+@sv.on_fullmatch(f"{prefix}卡池")
+async def gacha_current(bot: HoshinoBot, ev: CQEvent):
+    msg = '\n'.join(db.get_cur_gacha())
+    await bot.finish(ev, msg)
+
 @sv.on_prefix(f"{prefix}查心碎")
 @pre_process
 async def find_xinsui(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):

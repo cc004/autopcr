@@ -153,6 +153,13 @@ class datamgr(Component[apiclient]):
             Counter((eInventoryType.Equip, equip.id) for equip in unit.equip_slot if equip.is_slot)
         )
 
+    def get_exceed_level_unit_demand(self, unit_id: int, token: ItemType) -> int:
+        if unit_id in self.unit and self.unit[unit_id].exceed_stage:
+            return 0
+        if unit_id not in db.exceed_level_unit_required: # 怎么还没有环奈
+            return 0
+        return db.exceed_level_unit_required[unit_id].consume_num_1 # 1 memory 2 ring
+
     def get_rarity_memory_demand(self, unit_id: int, token: ItemType) -> int:
         rarity = -1
         if unit_id in self.unit:
@@ -260,7 +267,7 @@ class datamgr(Component[apiclient]):
             if token not in db.inventory_name: # 未来角色
                 continue
 
-            need = self.get_rarity_memory_demand(unit_id, token) + self.get_unique_equip_memory_demand(unit_id, token)
+            need = self.get_rarity_memory_demand(unit_id, token) + self.get_unique_equip_memory_demand(unit_id, token) + self.get_exceed_level_unit_demand(unit_id, token)
             result[token] += need
 
         return result
