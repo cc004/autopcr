@@ -117,6 +117,11 @@ class database():
                 UnitUniqueEquip.query(db)
                 .to_dict(lambda x: x.unit_id, lambda x: x)
             )
+
+            self.exceed_level_unit_required: Dict[int, ExceedLevelUnit] = (
+                ExceedLevelUnit.query(db)
+                .to_dict(lambda x: x.unit_id, lambda x: x)
+            )
             
             self.rarity_up_required: Dict[int, Dict[int, typing.Counter[ItemType]]] = (
                 UnitRarity.query(db)
