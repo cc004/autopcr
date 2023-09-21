@@ -309,8 +309,12 @@ class ePromotionLevel(Enum):
     Green1 = 21
     Green2 = 22
     Green3 = 23
-    Green4 = 24
+    Orange1 = 24
+    Orange2 = 25
+    Orange3 = 26
+    Orange4 = 27
     INVALID_VALUE = -1
+
 class eClanChatPlayButtonCondition(Enum):
     NONE = 0
     UNOPENED_MINI_GAME_IN_EVENT = 1
@@ -424,12 +428,6 @@ class ePeriod(Enum):
 
 class eEventType(Enum):
     HATSUNE = 1
-    INVALID_VALUE = -1
-
-class eEventSubStoryStatus(Enum):
-    UNREAD = 1
-    READED = 2
-    ADDED = 3
     INVALID_VALUE = -1
 
 class eBattleLogType(Enum):

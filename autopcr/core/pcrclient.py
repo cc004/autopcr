@@ -349,6 +349,12 @@ class pcrclient(apiclient):
         req.quest_id = quest
         req.random_count = times
         return await self.request(req)
+
+    async def equip_get_request(self, clan_id: int, message_id: int):
+        req = EquipGetRequestRequest()
+        req.clan_id = clan_id
+        req.message_id = message_id
+        return await self.request(req)
     
     async def getrequests(self):
         req = ClanChatInfoListRequest()

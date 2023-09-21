@@ -63,6 +63,7 @@ daily_modules = [
     jjc_shop,
     pjjc_shop,
     
+    clan_equip_request,
     love_up,
     main_story_reading,
     tower_story_reading,
