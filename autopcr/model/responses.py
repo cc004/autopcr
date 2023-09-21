@@ -260,6 +260,7 @@ class ClanInfoResponse(ResponseBase):
 	clan_status: eUserClanJoinStatus = None
 	user_equip: List[InventoryInfoShort] = None
 	have_join_request: int = None
+	have_new_equip_donation: int = None
 	unread_liked_count: int = None
 	is_equip_request_finish_checked: int = None
 	add_present_count: int = None

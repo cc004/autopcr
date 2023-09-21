@@ -284,6 +284,11 @@ class database():
                 .to_list()
             )
 
+            self.equip_data: Dict[int, EquipmentDatum] = (
+                EquipmentDatum.query(db)
+                .to_dict(lambda x: x.equipment_id, lambda x: x)
+            )
+
             self.inventory_name: Dict[ItemType, str] = (
                 EquipmentDatum.query(db)
                 .select(lambda x: (eInventoryType(eInventoryType.Equip), x.equipment_id, x.equipment_name))
