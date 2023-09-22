@@ -4,6 +4,7 @@ from ...core.pcrclient import pcrclient
 from ...model.error import *
 from ...model.enums import *
 import random
+import datetime
 from ...db.database import db
 
 @description('在公会中自动随机选择一位成员点赞。')
@@ -34,13 +35,12 @@ class clan_equip_request(Module):
         if not clan:
             raise AbortError("未加入公会")
 
-        if clan.have_new_equip_donation:
+        if datetime.datetime.now().timestamp() > clan.latest_request_time + client.data.settings.clan.equipment_request_interval:
             res = await client.equip_get_request(clan.clan.detail.clan_id, 0)
-            self._log(f"收到{db.get_inventory_name_san((eInventoryType.Equip, res.request.equip_id))}x{res.receive_donation_sum}：" + ' '.join(f"{user.name}x{user.num}" for user in res.request.history))
-            clan.is_equip_request_finish_checked = 1
-
-        if not clan.is_equip_request_finish_checked:
-            raise AbortError("当前请求尚未结束")
+            msg = f"收到{db.get_inventory_name_san((eInventoryType.Equip, res.request.equip_id))}x{res.request.donation_num}：" + ' '.join(f"{user.name}x{user.num}" for user in res.request.history)
+            self._log(msg.strip("："))
+        else:
+            raise SkipError("当前请求尚未结束")
 
         fav = (self.get_config('clan_equip_request_consider_unit') == 'favorite')
         demand = client.data.get_equip_demand_gap(like_unit_only=fav)
