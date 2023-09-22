@@ -18,7 +18,7 @@ from hoshino.config import SUPERUSERS
 from hoshino.util import escape
 from hoshino.typing import CQEvent, MessageSegment
 from ._util import get_result
-from ._task import DailyClean, FindEquip, FindMemory, FindXinsui, Task, GetLibraryImport, QuestRecommand, Gacha
+from ._task import DailyClean, FindEquip, FindMemory, FindXinsui, Task, GetLibraryImport, QuestRecommand, Gacha, ClanBattleSupport
 import datetime
 import random
 
@@ -198,6 +198,11 @@ async def clear_daily_all(bot: HoshinoBot, ev: CQEvent, tokens: List[Tuple[str, 
 async def gacha_current(bot: HoshinoBot, ev: CQEvent):
     msg = '\n'.join(db.get_cur_gacha())
     await bot.finish(ev, msg)
+
+@sv.on_prefix(f"{prefix}公会支援")
+@pre_process
+async def clan_support(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
+    await consumer(ClanBattleSupport(token, bot, ev))
 
 @sv.on_prefix(f"{prefix}查心碎")
 @pre_process

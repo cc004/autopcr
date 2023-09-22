@@ -50,6 +50,29 @@ class gacha_start(Module):
             self._log(await client.serlize_gacha_reward(reward))
             self._log(f"当前pt为{client.data.gacha_point[target_gacha.exchange_id].current_point}")
 
+@description('查看会战支援角色的详细数据，拒绝内鬼！')
+@name('会战支援数据')
+@default(True)
+class get_clan_support_unit(Module):
+    async def do_task(self, client: pcrclient):
+        await client.get_clan_battle_top(client.data.clan, 1, client.data.get_shop_gold(eSystemId.CLAN_BATTLE_SHOP))
+        unit_list = await client.get_clan_battle_support_unit_list(client.data.clan)
+        msg = []
+        for unit in unit_list.support_unit_list:
+            strongest, info = await client.serialize_unit_info(unit.unit_data)
+            msg.append((unit.unit_data.id, strongest, unit.owner_name, info))
+
+        for unit in client.data.dispatch_units:
+            if unit.position == eClanSupportMemberType.CLAN_BATTLE_SUPPORT_UNIT_1 or unit.position == eClanSupportMemberType.CLAN_BATTLE_SUPPORT_UNIT_2:
+                strongest, info = await client.serialize_unit_info(client.data.unit[unit.unit_id])
+                msg.append((unit.unit_id, strongest, client.name, info))
+
+        msg = sorted(msg, key=lambda x:(x[0], x[1]))
+        for unit_id, strongest, owner_name, unit_info in msg:
+            unit_name = db.get_inventory_name_san((eInventoryType.Unit, unit_id))
+            info = f'{unit_name}({owner_name}): {"满中满" if strongest else "非满警告！"}\n{unit_info}\n'
+            self._log(info)
+
 @description('获得可导入到兰德索尔图书馆的账号数据')
 @name('兰德索尔图书馆导入数据')
 @default(True)
