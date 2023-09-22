@@ -446,3 +446,11 @@ class eBattleLogType(Enum):
 	WAVE_END_DAMAGE_AMOUNT = 13
 	BREAK = 14
 	INVALID_VALUE = -1
+
+class eClanSupportMemberType(Enum):
+    NONE = 0
+    DUNGEON_SUPPORT_UNIT_1 = 1
+    DUNGEON_SUPPORT_UNIT_2 = 2
+    CLAN_BATTLE_SUPPORT_UNIT_1 = 3
+    CLAN_BATTLE_SUPPORT_UNIT_2 = 4
+

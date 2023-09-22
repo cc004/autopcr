@@ -46,6 +46,7 @@ class datamgr(Component[apiclient]):
     deck_list: Dict[ePartyType, LoadDeckData] = None
     campaign_list: List[int] = None
     gacha_point: Dict[int, GachaPointInfo] = None
+    dispatch_units: List[UnitDataForClanMember] = None
 
     def __init__(self):
         self.finishedQuest = set()
@@ -129,10 +130,10 @@ class datamgr(Component[apiclient]):
         self._inventory.clear()
         self.hatsune_quest_dict.clear()
 
-    def get_unique_equip_material_demand(self, unit_id: int, token: ItemType) -> int:
+    def get_unique_equip_material_demand(self, equip_slot:int, unit_id: int, token: ItemType) -> int:
         if unit_id not in db.unit_unique_equip:
             return 0
-        equip_id = db.unit_unique_equip[unit_id].equip_id
+        equip_id = db.unit_unique_equip[equip_slot][unit_id].equip_id
         rank = self.unit[unit_id].unique_equip_slot[0].rank if unit_id in self.unit and self.unit[unit_id].unique_equip_slot else -1
         return (
             flow(db.unique_equip_required[equip_id].items())
@@ -146,7 +147,7 @@ class datamgr(Component[apiclient]):
         rank = unit.promotion_level
 
         return db.craft_equip(
-            flow(db.unit_promotion[unit_id].items())
+            flow(db.unit_promotion_equip_count[unit_id].items())
             .where(lambda x: x[0] >= rank)
             .select(lambda x: x[1])
             .sum(seed=Counter()) - 
@@ -282,14 +283,14 @@ class datamgr(Component[apiclient]):
         result: List[Tuple[ItemType, int]] = []
         for unit_id in self.unit:
             token = (eInventoryType.Unit, unit_id)
-            need = self.get_unique_equip_material_demand(unit_id, db.xinsui)
+            need = self.get_unique_equip_material_demand(1, unit_id, db.xinsui)
             if need:
                 cnt += need
                 result.append((token, need))
         return result, cnt 
 
     def get_unique_equip_memory_demand(self, unit_id: int, token: ItemType) -> int:
-        return self.get_unique_equip_material_demand(unit_id, token)
+        return self.get_unique_equip_material_demand(1, unit_id, token)
 
     def get_max_quest(self, quests: Dict[int, TrainingQuestDatum], sweep_available = False) -> int:
         now = datetime.datetime.now()

@@ -251,6 +251,7 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         mgr.deck_list = {deck.deck_number:deck for deck in self.deck_list}
         mgr.campaign_list = self.campaign_list
         mgr.gacha_point = {gacha.exchange_id: gacha for gacha in self.gacha_point_info_list}
+        mgr.dispatch_units = self.dispatch_units
 
 
 @handles

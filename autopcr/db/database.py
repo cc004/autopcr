@@ -73,7 +73,16 @@ class database():
                 )
             )
 
-            self.unit_promotion: Dict[int, Dict[int, typing.Counter[ItemType]]] = (
+            self.unit_promotion: Dict[int, Dict[int, UnitPromotion]] = (
+                UnitPromotion.query(db)
+                .group_by(lambda x: x.unit_id)
+                .to_dict(lambda x: x.key, lambda x:
+                    x.to_dict(lambda y: y.promotion_level, lambda y: y
+                    )
+                )
+            )
+
+            self.unit_promotion_equip_count: Dict[int, Dict[int, typing.Counter[ItemType]]] = (
                 UnitPromotion.query(db)
                 .group_by(lambda x: x.unit_id)
                 .to_dict(lambda x: x.key, lambda x:
@@ -91,7 +100,7 @@ class database():
             )
 
             self.equip_max_rank_equip_num: int = max(
-                len(x.get(self.equip_max_rank, {})) for x in self.unit_promotion.values()
+                len(x.get(self.equip_max_rank, {})) for x in self.unit_promotion_equip_count.values()
             )
 
             self.hatsune_schedule: Dict[int, HatsuneSchedule] = (
@@ -113,10 +122,23 @@ class database():
                 )
             )
 
-            self.unit_unique_equip: Dict[int, UnitUniqueEquip] = (
+            self.unit_unique_equip: Dict[int, Dict[int, UnitUniqueEquip]] = (
                 UnitUniqueEquip.query(db)
-                .to_dict(lambda x: x.unit_id, lambda x: x)
+                .group_by(lambda x: x.equip_slot)
+                .to_dict(lambda x: x.key, lambda x: 
+                    x.to_dict(lambda x: x.unit_id, lambda x: x))
             )
+
+            self.unique_equipment_enhance_data: Dict[int, Dict[int, UniqueEquipmentEnhanceDatum]] = (
+                UniqueEquipmentEnhanceDatum.query(db)
+                .group_by(lambda x: x.equip_slot)
+                .to_dict(lambda x: x.key, lambda x: 
+                     x.to_dict(lambda x: x.enhance_level, lambda x: x))
+            )
+
+            self.unique_equipment_max_level: Dict[int, int] = {
+                equip_slot: max(self.unique_equipment_enhance_data[equip_slot].keys()) for equip_slot in self.unique_equipment_enhance_data
+            }
 
             self.exceed_level_unit_required: Dict[int, ExceedLevelUnit] = (
                 ExceedLevelUnit.query(db)
@@ -265,10 +287,12 @@ class database():
                 .to_dict(lambda x: x.tower_quest_id, lambda x: x)
             )
 
-            self.team_max_stamina: Dict[int, ExperienceTeam] = (
+            self.team_info: Dict[int, ExperienceTeam] = (
                 ExperienceTeam.query(db)
                 .to_dict(lambda x: x.team_level, lambda x: x)
             )
+
+            self.team_max_level: int = max(self.team_info.keys()) - 1
 
             self.event_story: List[EventStoryDetail] = (
                 EventStoryDetail.query(db)
@@ -287,6 +311,13 @@ class database():
             self.equip_data: Dict[int, EquipmentDatum] = (
                 EquipmentDatum.query(db)
                 .to_dict(lambda x: x.equipment_id, lambda x: x)
+            )
+
+            self.equipment_enhance_data: Dict[int, Dict[int, EquipmentEnhanceDatum]] = (
+                EquipmentEnhanceDatum.query(db)
+                .group_by(lambda x: x.promotion_level)
+                .to_dict(lambda x: x.key, lambda x: 
+                     x.to_dict(lambda x: x.equipment_enhance_level, lambda x: x))
             )
 
             self.inventory_name: Dict[ItemType, str] = (
@@ -592,5 +623,16 @@ class database():
         .where(lambda x: self.parse_time(x.start_time) <= now and now <= self.parse_time(x.end_time)) \
         .select(lambda x: f"{x.gacha_id}: {x.gacha_name}-{x.pick_up_chara_text}") \
         .to_list()
+
+    def get_equip_star_from_pt(self, equip_id: int, enhancement_pt: int):
+        equip = self.equip_data[equip_id]
+        history_star = [star for star, enhancement_data in self.equipment_enhance_data[equip.promotion_level].items() if enhancement_data.total_point <= enhancement_pt]
+        star = max([0] + history_star)
+        return star
+
+    def get_unique_equip_level_from_pt(self, equip_slot: int, enhancement_pt: int):
+        histort_level = [star for star, enhancement_data in self.unique_equipment_enhance_data[equip_slot].items() if enhancement_data.total_point <= enhancement_pt]
+        level = max([1] + histort_level)
+        return level
 
 db = database()
