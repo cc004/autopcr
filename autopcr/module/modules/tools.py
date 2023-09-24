@@ -67,7 +67,7 @@ class get_clan_support_unit(Module):
                 strongest, info = await client.serialize_unit_info(client.data.unit[unit.unit_id])
                 msg.append((unit.unit_id, strongest, client.name, info))
 
-        msg = sorted(msg, key=lambda x:(x[0], x[1]))
+        msg = sorted(msg, key=lambda x:(x[0], -x[1]))
         for unit_id, strongest, owner_name, unit_info in msg:
             unit_name = db.get_inventory_name_san((eInventoryType.Unit, unit_id))
             info = f'{unit_name}({owner_name}): {"满中满" if strongest else "非满警告！"}\n{unit_info}\n'
