@@ -1,9 +1,8 @@
 .dropdown-menu {
-    left: auto !important;
-    right: 0 !important;
+  left: auto!important;
+  right: 0!important;
 }
-
 .toast {
-    max-width: 16rem;
-    --bs-toast-spacing: 1rem;
+  max-width: 16rem;
+  --bs-toast-spacing: 1rem;
 }

@@ -1,13 +1,10 @@
-# type: ignore
+#type: ignore
 from typing import List, Optional
 from .modelbase import *
 from pydantic import Field
 
-
 class ToolSdkLoginResponse(ResponseBase):
     is_risk: bool = False
-
-
 class ToolSdkLoginRequest(Request[ToolSdkLoginResponse]):
     uid: str = None
     access_key: str = None
@@ -19,39 +16,29 @@ class ToolSdkLoginRequest(Request[ToolSdkLoginResponse]):
     captcha_type: str = None
     image_token: str = None
     captcha_code: str = None
-
     @property
     def url(self) -> str:
         return "tool/sdk_login"
 
-
 class CheckGameStartResponse(ResponseBase):
     now_tutorial: bool = False
-
-
 class CheckGameStartRequest(Request[CheckGameStartResponse]):
     apptype: int = None
     campaign_data: str = None
     campaign_user: int = None
-
     @property
     def url(self) -> str:
         return "check/game_start"
 
-
 class SourceIniIndexResponse(ResponseBase):
     server: List[str] = None
-
-
 class SourceIniIndexRequest(Request[SourceIniIndexResponse]):
     @property
     def url(self) -> str:
         return "source_ini/index?format=json"
-
     @property
     def crypted(self) -> bool:
         return False
-
 
 class SourceIniGetMaintenanceStatusResponse(ResponseBase):
     _json: int = Field(alias='json')
@@ -70,13 +57,11 @@ class SourceIniGetMaintenanceStatusResponse(ResponseBase):
     patch_ver: str = None
     resource: List[str] = None
     maintenance_message: str = None
-
-
 class SourceIniGetMaintenanceStatusRequest(Request[SourceIniGetMaintenanceStatusResponse]):
     @property
     def url(self) -> str:
         return "source_ini/get_maintenance_status?format=json"
-
     @property
     def crypted(self) -> bool:
         return False
+

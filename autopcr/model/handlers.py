@@ -4,18 +4,15 @@ from .requests import *
 from ..core.datamgr import datamgr
 from ..db.database import db
 
-
 def handles(cls):
     cls.__base__.update = cls.update
     return None
-
 
 @handles
 class SourceIniGetMaintenanceStatusResponse(sdkrequests.SourceIniGetMaintenanceStatusResponse):
     async def update(self, mgr: datamgr, request):
         if self.manifest_ver:
             await mgr.try_update_database(int(self.manifest_ver))
-
 
 @handles
 class ShioriQuestSkipResponse(responses.ShioriQuestSkipResponse):
@@ -38,7 +35,6 @@ class ShioriQuestSkipResponse(responses.ShioriQuestSkipResponse):
             mgr.stamina = self.user_info.user_stamina
         mgr.quest_dict[request.quest_id].daily_clear_count = self.daily_clear_count
 
-
 @handles
 class TrainingQuestSkipResponse(responses.TrainingQuestSkipResponse):
     async def update(self, mgr: datamgr, request: TrainingQuestSkipRequest):
@@ -60,7 +56,6 @@ class TrainingQuestSkipResponse(responses.TrainingQuestSkipResponse):
 class TrainingQuestFinishResponse(responses.TrainingQuestFinishResponse):
     async def update(self, mgr: datamgr, request):
         mgr.training_quest_count = self.quest_challenge_count
-
 
 @handles
 class StoryViewingResponse(responses.StoryViewingResponse):
@@ -200,7 +195,6 @@ class QuestRecoverChallengeResponse(responses.QuestRecoverChallengeResponse):
         mgr.jewel = self.user_jewel
         mgr.quest_dict[self.user_quest.quest_id].daily_recovery_count = self.user_quest.daily_recovery_count
 
-
 @handles
 class PresentReceiveAllResponse(responses.PresentReceiveAllResponse):
     async def update(self, mgr: datamgr, request):
@@ -254,7 +248,7 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         mgr.unlock_story_ids = self.unlock_story_ids
         mgr.event_statuses = self.event_statuses
         mgr.tower_status = self.tower_status
-        mgr.deck_list = {deck.deck_number: deck for deck in self.deck_list}
+        mgr.deck_list = {deck.deck_number:deck for deck in self.deck_list}
         mgr.campaign_list = self.campaign_list
         mgr.gacha_point = {gacha.exchange_id: gacha for gacha in self.gacha_point_info_list}
 
@@ -262,10 +256,7 @@ class LoadIndexResponse(responses.LoadIndexResponse):
 @handles
 class HomeIndexResponse(responses.HomeIndexResponse):
     async def update(self, mgr: datamgr, request):
-        mgr.finishedQuest = set([q.quest_id for q in self.quest_list if q.result_type > 0] + [q.quest_id for q in
-                                                                                              self.shiori_quest_info.quest_list
-                                                                                              if
-                                                                                              q.result_type > 0] if self.shiori_quest_info else [])
+        mgr.finishedQuest = set([q.quest_id for q in self.quest_list if q.result_type > 0] + [q.quest_id for q in self.shiori_quest_info.quest_list if q.result_type > 0] if self.shiori_quest_info else [])
         mgr.clan = self.user_clan.clan_id
         mgr.donation_num = self.user_clan.donation_num
         mgr.dungeon_area_id = self.dungeon_info.enter_area_id
@@ -444,7 +435,6 @@ class ClanLikeResponse(responses.ClanLikeResponse):
         mgr.stamina = self.stamina_info.user_stamina
         mgr.clan_like_count = 1
 
-
 @handles
 class ClanInfoResponse(responses.ClanInfoResponse):
     async def update(self, mgr: datamgr, request):
@@ -462,7 +452,6 @@ class ArenaTimeRewardAcceptResponse(responses.ArenaTimeRewardAcceptResponse):
     async def update(self, mgr: datamgr, request):
         if self.reward_info:
             mgr.update_inventory(self.reward_info)
-
 
 @handles
 class DeckUpdateResponse(responses.DeckUpdateResponse):

@@ -5,7 +5,6 @@ from ...model.error import *
 from ...model.enums import *
 import random
 
-
 @description('在公会中自动随机选择一位成员点赞。')
 @name("公会点赞")
 @default(True)
@@ -21,3 +20,4 @@ class clan_like(Module):
         rnd = random.choice(members)
         await client.clan_like(rnd[0])
         self._log(f"为【{rnd[1]}】点赞")
+

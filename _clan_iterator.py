@@ -2,8 +2,8 @@
 from autopcr.model.responses import *
 from autopcr.core import pcrclient, ApiException, sessionmgr
 
-
 def run_task():
+
     import asyncio
 
     accounts = []
@@ -68,13 +68,13 @@ def run_task():
                 x for x in dismissed_t if x < last_ok
             ]
             json.dump(dismissed, open('dismissed.json', 'w'))
-
+        
         fout.close()
 
     async def worker(account):
         nonlocal current, last_ok
         client = pcrclient(account)
-
+        
         for comp in client._components:
             if type(comp) is sessionmgr:
                 comp: sessionmgr
@@ -88,7 +88,7 @@ def run_task():
             async with id_lck:
                 id = ids[current]
                 current += 1
-                if id > last_ok + 10000:  # 1w个都没成功，认为已经无法成功
+                if id > last_ok + 10000: # 1w个都没成功，认为已经无法成功
                     await run_once_saveall()
                     break
             while True:
@@ -128,8 +128,7 @@ def run_task():
     os.system(f'ClanAnalyzer.exe dbs/clan_{date}.log')
 
     os.remove(f'dbs/clan_{date}.log')
-
-
+    
 import datetime
 import time
 

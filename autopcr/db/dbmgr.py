@@ -4,7 +4,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 import os
 
-
 class dbmgr:
     def __init__(self):
         self.ver = None
@@ -20,9 +19,8 @@ class dbmgr:
                 f.write(data)
             print(f'db version {self.ver} updated')
         self._engine = create_engine(f'sqlite:///{self._dbpath}')
-
+    
     def session(self) -> Session:
         return Session(self._engine)
-
-
+        
 instance = dbmgr()

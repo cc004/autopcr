@@ -18,23 +18,23 @@ class AsyncResponse:
     @property
     def ok(self) -> bool:
         return self.raw_response.ok
-
+    
     @property
     def status_code(self) -> int:
         return self.raw_response.status_code
-
+    
     @property
     def headers(self):
         return self.raw_response.headers
-
+    
     @property
     def url(self):
         return self.raw_response.url
-
+    
     @property
     def encoding(self):
         return self.raw_response.encoding
-
+    
     @property
     def cookies(self):
         return self.raw_response.cookies
@@ -55,7 +55,7 @@ class AsyncResponse:
 
     async def json(self, **kwargs) -> Any:
         return await run_sync_func(self.raw_response.json, **kwargs)
-
+    
     def raise_for_status(self):
         self.raw_response.raise_for_status()
 

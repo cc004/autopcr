@@ -10,124 +10,121 @@
 
 <body>
 
-<div>
-    <div id="captcha">
-        <div onclick="start_captcha()" id="text">
-            请先点我生成
-        </div>
-        <div id="wait" class="show">
-            <div class="loading">
-                <div class="loading-dot"></div>
-                <div class="loading-dot"></div>
-                <div class="loading-dot"></div>
-                <div class="loading-dot"></div>
+    <div>
+        <div id="captcha">
+            <div onclick="start_captcha()" id="text">
+                请先点我生成
+            </div>
+            <div id="wait" class="show">
+                <div class="loading">
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                </div>
             </div>
         </div>
     </div>
-</div>
-<br>
+    <br>
 
 
-<div>
+    <div>
 
-    <input class="inp" id="validate" type="text">
-</div>
-<br>
+        <input class="inp" id="validate" type="text">
+    </div>
+    <br>
 
 
-<script src="assets/js/jquery.min.js"></script>
-<script src="assets/js/gt.js"></script>
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/gt.js"></script>
 
-<script>
-    function getParam(variable) {
-        var query = window.location.search.substring(1);
-        var vars = query.split("&");
-        for (var i = 0; i < vars.length; i++) {
-            var pair = vars[i].split("=");
-            if (pair[0] == variable) {
-                return pair[1];
+    <script>
+        function getParam(variable) {
+            var query = window.location.search.substring(1);
+            var vars = query.split("&");
+            for (var i = 0; i < vars.length; i++) {
+                var pair = vars[i].split("=");
+                if (pair[0] == variable) { return pair[1]; }
             }
+            return (false);
         }
-        return (false);
-    }
+        var handler = function (captchaObj) {
+            captchaObj.appendTo('#captcha');
+            captchaObj.onReady(function () {
+                $("#wait").hide();
+                captchaObj.verify();
+            });
+            captchaObj.onSuccess(function () {
 
-    var handler = function (captchaObj) {
-        captchaObj.appendTo('#captcha');
-        captchaObj.onReady(function () {
-            $("#wait").hide();
-            captchaObj.verify();
-        });
-        captchaObj.onSuccess(function () {
+                var result = captchaObj.getValidate();
 
-            var result = captchaObj.getValidate();
+				var xmlhttp = new XMLHttpRequest();
+				var url = "/daily/api/validate";
+				var data = {
+					id: getParam("id"),
+					challenge: result.geetest_challenge,
+					validate: result.geetest_validate,
+					userid: getParam("userid")
+				};
+				xmlhttp.open('POST', url, true);
+				xmlhttp.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+				xmlhttp.onreadystatechange = function () {
+					if (xmlhttp.readyState === 4) {
+						if (xmlhttp.status === 200) {
+							// 请求成功后关闭页面
+							parent.postMessage('closeModal', '*');
+							window.close();
+						} else {
+							// 处理请求失败的情况
+							console.error('请求失败:', xmlhttp.status);
+						}
+					}
+				};
+				xmlhttp.send(JSON.stringify(data));
 
-            var xmlhttp = new XMLHttpRequest();
-            var url = "/daily/api/validate";
-            var data = {
-                id: getParam("id"),
-                challenge: result.geetest_challenge,
-                validate: result.geetest_validate,
-                userid: getParam("userid")
-            };
-            xmlhttp.open('POST', url, true);
-            xmlhttp.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
-            xmlhttp.onreadystatechange = function () {
-                if (xmlhttp.readyState === 4) {
-                    if (xmlhttp.status === 200) {
-                        // 请求成功后关闭页面
-                        parent.postMessage('closeModal', '*');
-                        window.close();
-                    } else {
-                        // 处理请求失败的情况
-                        console.error('请求失败:', xmlhttp.status);
-                    }
-                }
-            };
-            xmlhttp.send(JSON.stringify(data));
+                //var validate = $('#validate')[0];
+                // validate.value = "vl:" + result.geetest_validate + ";" + "ch:" + result.geetest_challenge + ";";
+                //validate.value = result.geetest_validate;
+                //validate.select();//选中文本
+                //document.execCommand("copy");
+                //alert("已复制好，可贴粘。");
+                //validate.value = result.geetest_validate;
+            });
+            captchaObj.onError(function (error) {
+                alert(error.msg);
+            });
+            captchaObj.onClose(function () {
+                alert("请先验证");
+                captchaObj.reset();
+                captchaObj.verify();
+            });
+            // 更多前端接口说明请参见：http://docs.geetest.com/install/client/web-front/
+        };
 
-            //var validate = $('#validate')[0];
-            // validate.value = "vl:" + result.geetest_validate + ";" + "ch:" + result.geetest_challenge + ";";
-            //validate.value = result.geetest_validate;
-            //validate.select();//选中文本
-            //document.execCommand("copy");
-            //alert("已复制好，可贴粘。");
-            //validate.value = result.geetest_validate;
-        });
-        captchaObj.onError(function (error) {
-            alert(error.msg);
-        });
-        captchaObj.onClose(function () {
-            alert("请先验证");
-            captchaObj.reset();
-            captchaObj.verify();
-        });
-        // 更多前端接口说明请参见：http://docs.geetest.com/install/client/web-front/
-    };
+        //window.onload = function () {
+        function start_captcha() {
+            $('#text').hide();
+            $('#wait').show();
+            var gt = getParam("gt");
+            var challenge = getParam("challenge");
+            // 调用 initGeetest 进行初始化
+            // 参数1：配置参数
+            // 参数2：回调，回调的第一个参数验证码对象，之后可以使用它调用相应的接口
+            initGeetest({
+                // 以下 4 个配置参数为必须，不能缺少
+                gt: gt,
+                challenge: challenge,
+                offline: false, // 表示用户后台检测极验服务器是否宕机
+                new_captcha: true, // 用于宕机时表示是新验证码的宕机
 
-    //window.onload = function () {
-    function start_captcha() {
-        $('#text').hide();
-        $('#wait').show();
-        var gt = getParam("gt");
-        var challenge = getParam("challenge");
-        // 调用 initGeetest 进行初始化
-        // 参数1：配置参数
-        // 参数2：回调，回调的第一个参数验证码对象，之后可以使用它调用相应的接口
-        initGeetest({
-            // 以下 4 个配置参数为必须，不能缺少
-            gt: gt,
-            challenge: challenge,
-            offline: false, // 表示用户后台检测极验服务器是否宕机
-            new_captcha: true, // 用于宕机时表示是新验证码的宕机
+                product: "bind", // 产品形式，包括：float，popup
+                width: "300px",
+                https: true
 
-            product: "bind", // 产品形式，包括：float，popup
-            width: "300px",
-            https: true
-
-            // 更多前端配置参数说明请参见：http://docs.geetest.com/install/client/web-front/
-        }, handler);
-    };
-</script>
+                // 更多前端配置参数说明请参见：http://docs.geetest.com/install/client/web-front/
+            }, handler);
+        };
+    </script>
 </body>
 
 </html>
