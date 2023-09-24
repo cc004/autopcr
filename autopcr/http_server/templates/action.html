@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <title>AutoPCR</title>
     <script>
-        (function() {
+        (function () {
             // JavaScript snippet handling Dark/Light mode switching
             const getStoredTheme = () => localStorage.getItem('theme');
             const setStoredTheme = theme => localStorage.setItem('theme', theme);
@@ -72,29 +72,34 @@
     <link rel="stylesheet" href="assets/css/action.css">
 </head>
 <body style="max-height: 100vh;">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-lg-12 w-100 p-0">
-                <div class="hstack flex-wrap sticky-top" style="pointer-events: none;">
-                    <form class="bg-primary-subtle border rounded d-flex flex-wrap gap-1 sticky-top p-1" style="pointer-events: auto;">
-                        <button id="do_task" class="btn btn-primary"  type="button" flag="run_once" onclick="do_all_task(this)">
-                            <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true" style="margin-right: 4px;"></span>
-                            <span role="status">执行已启用</span></button>
-                        <button id="do_selected_task" class="btn btn-primary disabled" type="button">
-                            <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true" style="margin-right: 4px;"></span>
-                            <span role="status">执行已选中（暂不可用</span></button></form>
-                </div>
-                <div id="card-stack" class="vstack">
-                </div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-12 w-100 p-0">
+            <div class="hstack flex-wrap sticky-top" style="pointer-events: none;">
+                <form class="bg-primary-subtle border rounded d-flex flex-wrap gap-1 sticky-top p-1"
+                      style="pointer-events: auto;">
+                    <button id="do_task" class="btn btn-primary" type="button" flag="run_once"
+                            onclick="do_all_task(this)">
+                        <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true"
+                              style="margin-right: 4px;"></span>
+                        <span role="status">执行已启用</span></button>
+                    <button id="do_selected_task" class="btn btn-primary disabled" type="button">
+                        <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true"
+                              style="margin-right: 4px;"></span>
+                        <span role="status">执行已选中（暂不可用</span></button>
+                </form>
+            </div>
+            <div id="card-stack" class="vstack">
             </div>
         </div>
     </div>
-    <script src="assets/js/iecheck.js"></script>
-    <script>var jinjaUrl = "{{ url }}";</script>
-    <script src="assets/js/jquery.min.js"></script>
-    <script src="assets/bootstrap/js/bootstrap.min.js"></script>
-    <script src="assets/js/bs-init.js"></script>
-    <script src="assets/js/card.js"></script>
-    <script src="assets/js/action.js"></script>
+</div>
+<script src="assets/js/iecheck.js"></script>
+<script>var jinjaUrl = "{{ url }}";</script>
+<script src="assets/js/jquery.min.js"></script>
+<script src="assets/bootstrap/js/bootstrap.min.js"></script>
+<script src="assets/js/bs-init.js"></script>
+<script src="assets/js/card.js"></script>
+<script src="assets/js/action.js"></script>
 </body>
 </html>

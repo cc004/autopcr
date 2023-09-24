@@ -46,6 +46,7 @@ quests = [int(x) for x in '''
 
 import random
 
+
 async def quest_pass(client: pcrclient, quest_id: int):
     if quest_id in client.data.quest_dict and client.data.quest_dict[quest_id].clear_flg:
         print(f'quest {quest_id} already passed')
@@ -78,26 +79,27 @@ async def quest_pass(client: pcrclient, quest_id: int):
 
     party = client.data.deck_list[ePartyType.QUEST]
     if party.unit_id1:
-        info = UnitHpInfo(viewer_id=client.viewer_id, unit_id=party.unit_id1, hp = random.randint(10, 100))
+        info = UnitHpInfo(viewer_id=client.viewer_id, unit_id=party.unit_id1, hp=random.randint(10, 100))
         req.unit_hp_list.append(info)
     if party.unit_id2:
-        info = UnitHpInfo(viewer_id=client.viewer_id, unit_id=party.unit_id2, hp = random.randint(10, 100))
+        info = UnitHpInfo(viewer_id=client.viewer_id, unit_id=party.unit_id2, hp=random.randint(10, 100))
         req.unit_hp_list.append(info)
     if party.unit_id3:
-        info = UnitHpInfo(viewer_id=client.viewer_id, unit_id=party.unit_id3, hp = random.randint(10, 100))
+        info = UnitHpInfo(viewer_id=client.viewer_id, unit_id=party.unit_id3, hp=random.randint(10, 100))
         req.unit_hp_list.append(info)
     if party.unit_id4:
-        info = UnitHpInfo(viewer_id=client.viewer_id, unit_id=party.unit_id4, hp = random.randint(10, 100))
+        info = UnitHpInfo(viewer_id=client.viewer_id, unit_id=party.unit_id4, hp=random.randint(10, 100))
         req.unit_hp_list.append(info)
     if party.unit_id5:
-        info = UnitHpInfo(viewer_id=client.viewer_id, unit_id=party.unit_id5, hp = random.randint(10, 100))
+        info = UnitHpInfo(viewer_id=client.viewer_id, unit_id=party.unit_id5, hp=random.randint(10, 100))
         req.unit_hp_list.append(info)
-    
+
     for enemy in resp.enemy_list:
-        info = UnitHpInfo(viewer_id=0, unit_id=enemy.id, hp = 0)
+        info = UnitHpInfo(viewer_id=0, unit_id=enemy.id, hp=0)
         req.unit_hp_list.append(info)
 
     resp = await client.request(req)
+
 
 async def main(client: pcrclient):
     await client.login()
@@ -121,7 +123,8 @@ async def main(client: pcrclient):
                 pass
 
     await client.request(ArenaInfoRequest())
-    
+
+
 accounts = []
 
 with open('farm_config.json', 'r') as fp:

@@ -13,10 +13,12 @@ T = TypeVar('T')
 
 DeclarativeBase = declarative_base()
 
+
 class Base(Generic[T]):
     @classmethod
     def query(cls, session: Session) -> flow[T]:
         return flow(session.query(cls).all())
+
 
 class ActualUnitBackground(DeclarativeBase, Base["ActualUnitBackground"]):
     __tablename__ = 'actual_unit_background'
@@ -1524,7 +1526,8 @@ class DungeonSpecialEnemySetting(DeclarativeBase, Base["DungeonSpecialEnemySetti
     __tablename__ = 'dungeon_special_enemy_setting'
     __table_args__ = (
         UniqueConstraint('special_battle_id', 'disp_order'),
-        Index('dungeon_special_enemy_setting_0_special_battle_id_1_enemy_identify', 'special_battle_id', 'enemy_identify', unique=True)
+        Index('dungeon_special_enemy_setting_0_special_battle_id_1_enemy_identify', 'special_battle_id',
+              'enemy_identify', unique=True)
     )
 
     id: int = Column(Integer, primary_key=True)
@@ -1670,11 +1673,13 @@ class EnemyParameter(DeclarativeBase, Base["EnemyParameter"]):
     break_durability: int = Column(Integer, nullable=False)
     virtual_hp: int = Column(Integer, nullable=False)
 
+
 class Reward:
     def __init__(self, reward_type: int, reward_id: int, reward_num: int, odds: int):
         self.reward_item: ItemType = (eInventoryType(reward_type), reward_id)
         self.reward_num = reward_num
         self.odds = odds
+
 
 class EnemyRewardDatum(DeclarativeBase, Base["EnemyRewardDatum"]):
     __tablename__ = 'enemy_reward_data'
@@ -4733,6 +4738,7 @@ class QuestDatum(DeclarativeBase, Base["QuestDatum"]):
         yield self.wave_group_id_2
         yield self.wave_group_id_3
 
+
 class QuestDefeatNotice(DeclarativeBase, Base["QuestDefeatNotice"]):
     __tablename__ = 'quest_defeat_notice'
 
@@ -6211,6 +6217,7 @@ class SpskillLvInitializeDatum(DeclarativeBase, Base["SpskillLvInitializeDatum"]
 
     initialize_skill_id: int = Column(Integer, primary_key=True)
     base_skill_id: int = Column(Integer, nullable=False)
+
 
 class SrtAction(DeclarativeBase, Base["SrtAction"]):
     __tablename__ = 'srt_action'
@@ -8257,6 +8264,7 @@ class WaveGroupDatum(DeclarativeBase, Base["WaveGroupDatum"]):
         yield self.drop_reward_id_3
         yield self.drop_reward_id_4
         yield self.drop_reward_id_5
+
 
 class Worldmap(DeclarativeBase, Base["Worldmap"]):
     __tablename__ = 'worldmap'

@@ -4,6 +4,7 @@ from .apiclient import apiclient, ApiException, NetworkException
 from ..model.modelbase import *
 from traceback import print_exc
 
+
 class errorhandler(Component[apiclient]):
     async def request(self, request: Request[TResponse], next: RequestHandler) -> TResponse:
         while True:

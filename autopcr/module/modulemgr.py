@@ -7,6 +7,8 @@ from .modulebase import Module
 
 import json
 import traceback
+
+
 class ModuleManager:
     _modules: List[type] = []
 
@@ -22,7 +24,7 @@ class ModuleManager:
         self.client = self.parent.get_client()
         self._crons = []
         self._load_config(config)
-    
+
     def _load_config(self, config):
         try:
             self._crons.clear()
@@ -33,27 +35,28 @@ class ModuleManager:
                 enable = config[key]
                 if enable:
                     time = config.get("time_" + key, "25:00")
-                    if time: # in some case time is None
+                    if time:  # in some case time is None
                         hour, minute = time.split(":")
                         is_clan_battle_run = config.get("clanbattle_run_" + key, False)
                         self._crons.append((int(hour), int(minute), is_clan_battle_run))
         except:
             traceback.print_exc()
             raise
-    
+
     def is_cron_run(self, nhour, nminute):
         clan_battle_time = db.is_clan_battle_time()
         for hour, minute, is_clan_battle_run in self._crons:
             if hour == nhour and minute == nminute and (is_clan_battle_run or not clan_battle_time):
                 return True
         return False
-    
+
     def get_config(self, name, default):
         return self.client.keys.get(name, default)
 
     def generate_config(self, modules: List[Module]):
         return {
-            'config': {**{key: m.get_config(key) for m in modules for key in m.config}, **{m.key: m.get_config(m.key) for m in modules}},
+            'config': {**{key: m.get_config(key) for m in modules for key in m.config},
+                       **{m.key: m.get_config(m.key) for m in modules}},
             'order': [m.key for m in modules],
             'data': {m.key: m.generate_info() for m in modules},
         }
@@ -63,7 +66,7 @@ class ModuleManager:
 
     def generate_tools_config(self):
         return self.generate_config(self.tool_modules)
-    
+
     async def do_cron(self, hour, minute):
         if self.is_cron_run(hour, minute):
             await self.do_daily()
@@ -89,8 +92,7 @@ class ModuleManager:
                 resp['result'][module.__class__.__name__] = await module.do_from(client)
         except Exception as e:
             traceback.print_exc()
-            raise(e)
+            raise (e)
         finally:
             await self.parent.set_result(resp['result'])
         return resp
-

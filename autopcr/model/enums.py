@@ -1,6 +1,7 @@
 from enum import IntEnum as Enum
 from typing import Tuple
 
+
 class eInventoryType(Enum):
     TreasureBox = 0
     Unit = 1
@@ -21,18 +22,24 @@ class eInventoryType(Enum):
     RoomItemLevelUp = 901
     Other = 999
     INVALID_VALUE = -1
+
+
 class eClanJoinCondition(Enum):
     CONDITION_NONE = 0
     EVERYONE = 1
     ONLY_INVITATION = 2
     DISABLE = 3
     INVALID_VALUE = -1
+
+
 class eExchangeStaminaState(Enum):
     NONE = 0
     ALL_EXCHANGE = 1
     PART_EXCHANGE = 2
     NOT_EXCHANGE = 3
     INVALID_VALUE = -1
+
+
 class eItemType(Enum):
     Experience = 1
     Cashing = 2
@@ -57,11 +64,15 @@ class eItemType(Enum):
     GrowthItem = 21
     Tutorial = 99
     INVALID_VALUE = -1
+
+
 class eEventSubStoryStatus(Enum):
     UNREAD = 1
     READED = 2
     ADDED = 3
     INVALID_VALUE = -1
+
+
 class eSystemId(Enum):
     ERROR = 0
     NORMAL_QUEST = 101
@@ -162,20 +173,28 @@ class eSystemId(Enum):
     SHIORI_EVENT_COMMON_BOSS = 8008
     SHIORI_EVENT_VERY_HARD_BOSS = 8010
     INVALID_VALUE = -1
+
+
 class ePkbHappenMode(Enum):
     DRAMATIC = 1
     SIMPLE = 2
     INVALID_VALUE = -1
+
+
 class eShopItemBannerType(Enum):
     NONE = 0
     RED_RIBBON = 1
     BLUE_RIBBON = 2
     INVALID_VALUE = -1
+
+
 class eClanRole(Enum):
     MEMBER = 0
     SUB_LEADER = 30
     LEADER = 40
     INVALID_VALUE = -1
+
+
 class eClanChatMessageType(Enum):
     MESSAGE = 0
     STAMP = 1
@@ -193,26 +212,36 @@ class eClanChatMessageType(Enum):
     UNREAD = 14
     MINI_GAME_SCORE = 15
     INVALID_VALUE = -1
+
+
 class eRewardLimitType(Enum):
     NO_LIMIT = 0
     HAS_LIMIT = 1
     INVALID_VALUE = -1
+
+
 class eStoryStatus(Enum):
     LOCKED = 1
     UNVIEWED = 2
     VIEWING = 3
     INVALID_VALUE = -1
+
+
 class eGachaType(Enum):
     Gold = 1
     Payment = 2
     FreeOnly = 3
     INVALID_VALUE = -1
+
+
 class eBGMKey(Enum):
     HOME = 200
     ROOM_1F = 210
     ROOM_2F = 211
     ROOM_3F = 212
     INVALID_VALUE = -1
+
+
 class ePartyType(Enum):
     QUEST = 1
     ARENA = 2
@@ -253,18 +282,24 @@ class ePartyType(Enum):
     KAISER_BATTLE_SUB_3 = 1003
     KAISER_BATTLE_SUB_4 = 1004
     INVALID_VALUE = -1
+
+
 class eMissionStatusType(Enum):
     NoClear = 0
     EnableReceive = 1
     AlreadyReceive = 2
     ChallengePeriodEnd = 101
     INVALID_VALUE = -1
+
+
 class eSrtCatalogStatus(Enum):
     EnemyUnlock = 1
     EnemyReaded = 2
     PlayerUnlock = 3
     PlayerReaded = 4
     INVALID_VALUE = -1
+
+
 class eClanActivityGuideline(Enum):
     GUIDELINE_NONE = 0
     GUIDELINE_1 = 1
@@ -285,6 +320,8 @@ class eClanActivityGuideline(Enum):
     GUIDELINE_16 = 16
     GUIDELINE_17 = 17
     INVALID_VALUE = -1
+
+
 class ePromotionLevel(Enum):
     Bronze = 1
     Copper1 = 2
@@ -311,6 +348,8 @@ class ePromotionLevel(Enum):
     Green3 = 23
     Green4 = 24
     INVALID_VALUE = -1
+
+
 class eClanChatPlayButtonCondition(Enum):
     NONE = 0
     UNOPENED_MINI_GAME_IN_EVENT = 1
@@ -319,6 +358,8 @@ class eClanChatPlayButtonCondition(Enum):
     GAME_TABLE_PURCHASED_AFTER_GAME_TABLE_ADD = 4
     GAME_TABLE_UNPURCHASED_AFTER_GAME_TABLE_ADD = 5
     INVALID_VALUE = -1
+
+
 class eUserClanJoinStatus(Enum):
     NONE = 0
     REQUEST = 1
@@ -329,6 +370,7 @@ class eUserClanJoinStatus(Enum):
     CANCEL = 6
     EXPULSION = 7
     INVALID_VALUE = -1
+
 
 class eCampaignCategory(Enum):
     HALF_STAMINA_NORMAL = 11
@@ -403,6 +445,7 @@ class eCampaignCategory(Enum):
     GOLD_DROP_AMOUNT_HATSUNE_REVIVAL_HARD = 242
     PLAYER_EXP_AMOUNT_HATSUNE_REVIVAL_NORMAL = 251
     PLAYER_EXP_AMOUNT_HATSUNE_REVIVAL_HARD = 252
+
 
 class eGachaDrawType(Enum):
     Free = 1

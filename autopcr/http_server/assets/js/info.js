@@ -67,6 +67,7 @@ function make_card(m) {
     moduleCardHTML += `</div></div></div></div>`;
     return moduleCardHTML;
 }
+
 function load_result(ret, key) {
     let objTag = $(`#${key}_result_tag`);
     let objResult = $(`#${key}_result`);
@@ -78,9 +79,10 @@ function load_result(ret, key) {
         objResult.val(`暂无运行结果。`);
     }
 }
+
 function copy_val(e) {
     e.select();
     e.setSelectionRange(0, 999999);
     navigator.clipboard.writeText($(e).val())
     show_toast('success', "内容已复制到剪贴板。")
-    }
+}

@@ -1,9 +1,10 @@
-
 from .bsgamesdk import login
 from .validator import autoValidator, manualValidator
 
+
 async def _defaultLogger(msg):
     print(msg)
+
 
 class bsdkclient:
     '''
@@ -16,7 +17,7 @@ class bsdkclient:
     '''
 
     def __init__(self, acccountinfo, captchaVerifier=autoValidator, errlogger=_defaultLogger):
-    # def __init__(self, acccountinfo, captchaVerifier=manualValidator, errlogger=_defaultLogger):
+        # def __init__(self, acccountinfo, captchaVerifier=manualValidator, errlogger=_defaultLogger):
         self.account = acccountinfo['account']
         self.pwd = acccountinfo['password']
         self.platform = acccountinfo['platform']
