@@ -6,20 +6,26 @@ from typing import Dict
 from .config import Config, _wrap_init
 import traceback
 
+
 def default(val):
-    return lambda cls:_wrap_init(cls, lambda self: setattr(self, 'default', val))
+    return lambda cls: _wrap_init(cls, lambda self: setattr(self, 'default', val))
+
 
 def description(desc: str):
-    return lambda cls:_wrap_init(cls, lambda self: setattr(self, 'description', desc))
+    return lambda cls: _wrap_init(cls, lambda self: setattr(self, 'description', desc))
+
 
 def name(desc: str):
-    return lambda cls:_wrap_init(cls, lambda self: setattr(self, 'name', desc))
+    return lambda cls: _wrap_init(cls, lambda self: setattr(self, 'name', desc))
+
 
 def notimplemented(cls):
     return _wrap_init(cls, lambda self: setattr(self, 'implmented', False))
 
+
 def notrunnable(cls):
     return _wrap_init(cls, lambda self: setattr(self, 'runnable', False))
+
 
 # refers to a schudule to be done
 class Module:
@@ -37,15 +43,16 @@ class Module:
         self.log = []
 
     @abstractmethod
-    async def do_task(self, client: pcrclient): ...
+    async def do_task(self, client: pcrclient):
+        ...
 
     async def do_from(self, client: pcrclient):
         result = {
-                "name": self.name,
-                "config": '\n'.join([f"{self.config[key].desc}: {self.get_config_str(key)}" for key in self.config]),
-                "status": "",
-                "log" : "",
-                }
+            "name": self.name,
+            "config": '\n'.join([f"{self.config[key].desc}: {self.get_config_str(key)}" for key in self.config]),
+            "status": "",
+            "log": "",
+        }
         try:
             self.log.clear()
 
@@ -86,9 +93,9 @@ class Module:
             default = self.config[key].default
         value = self._parent.get_config(key, default)
         if key != self.key and self.config[key].candidates and (
-            not isinstance(value, list) and value not in self.config[key].candidates or
-            isinstance(value, list) and any(item not in self.config[key].candidates for item in value)
-            ):
+                not isinstance(value, list) and value not in self.config[key].candidates or
+                isinstance(value, list) and any(item not in self.config[key].candidates for item in value)
+        ):
             value = default
         return value
 
@@ -97,14 +104,13 @@ class Module:
 
     def generate_info(self):
         return {
-                'key': self.key,
-                'name': self.name,
-                'description': self.description,
-                'config': self.generate_config(),
-                'implemented': self.implmented,
-                'runnable': self.runnable
-                }
+            'key': self.key,
+            'name': self.name,
+            'description': self.description,
+            'config': self.generate_config(),
+            'implemented': self.implmented,
+            'runnable': self.runnable
+        }
 
     def _log(self, msg):
         self.log.append(msg)
-

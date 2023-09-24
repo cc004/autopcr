@@ -4,6 +4,7 @@ from ...core.pcrclient import pcrclient
 from ...model.error import *
 from ...model.enums import *
 
+
 @timetype("time_cron1", "执行时间", "00:00")
 @booltype("clanbattle_run_cron1", "会战期间执行", False)
 @description('定时执行')
@@ -13,6 +14,7 @@ from ...model.enums import *
 class cron1(Module):
     async def do_task(self, client: pcrclient):
         pass
+
 
 @timetype("time_cron2", "执行时间", "00:00")
 @booltype("clanbattle_run_cron2", "会战期间执行", False)
@@ -35,6 +37,7 @@ class cron3(Module):
     async def do_task(self, client: pcrclient):
         pass
 
+
 @timetype("time_cron4", "执行时间", "00:00")
 @booltype("clanbattle_run_cron4", "会战期间执行", False)
 @description('定时执行')
@@ -44,4 +47,3 @@ class cron3(Module):
 class cron4(Module):
     async def do_task(self, client: pcrclient):
         pass
-

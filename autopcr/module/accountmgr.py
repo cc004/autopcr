@@ -10,8 +10,10 @@ import json
 from .modulebase import Module
 from copy import deepcopy
 
+
 class AccountException(Exception):
     pass
+
 
 class Account(ModuleManager):
     def __init__(self, parent: 'AccountManager', account: str, readonly: bool = False):
@@ -30,7 +32,7 @@ class Account(ModuleManager):
         self.alian = self.data.get("alian", "未知")
         self.username = self.data.get("username", "")
         super().__init__(self.data.get("config", {}), self)
-    
+
     async def __aenter__(self):
         if not self.readonly:
             await self._lck.acquire()
@@ -52,7 +54,7 @@ class Account(ModuleManager):
     def get_client(self) -> pcrclient:
         return self.get_android_client()
 
-    def get_ios_client(self) -> pcrclient: # Header TODO
+    def get_ios_client(self) -> pcrclient:  # Header TODO
         client = pcrclient({
             'account': self.data['username'],
             'password': self.data['password'],
@@ -84,6 +86,7 @@ class Account(ModuleManager):
             #     return mask_str[0] + "*"
             # else:
             #     return mask_str[0] + "*" * (len(mask_str) - 2) + mask_str[-1]
+
         return {
             'alian': self.data['alian'],
             'qq': _mask_str(self.data['qq']),
@@ -92,14 +95,15 @@ class Account(ModuleManager):
         }
 
     def generate_daily_info(self):
-        info = { 'last_result': self.data.get('_last_result', {}) }
+        info = {'last_result': self.data.get('_last_result', {})}
         info.update(super().generate_daily_config())
         return info
 
     def generate_tools_info(self):
-        info = { 'last_result': self.data.get('_last_result', {}) }
+        info = {'last_result': self.data.get('_last_result', {})}
         info.update(super().generate_tools_config())
         return info
+
 
 class AccountManager:
     pathsyntax = re.compile(r'[^\\\|?*/]{1,32}')
@@ -120,7 +124,7 @@ class AccountManager:
         if not AccountManager.pathsyntax.fullmatch(account):
             raise AccountException('Invalid account name')
         os.remove(self.path(account))
-    
+
     def accounts(self) -> Iterator[str]:
         for fn in os.listdir(self.root):
             if fn.endswith('.json'):

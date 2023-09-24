@@ -1,4 +1,3 @@
-
 from .datamgr import datamgr
 from .sessionmgr import sessionmgr
 from .misc import errorhandler

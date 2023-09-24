@@ -11,11 +11,11 @@ function make_card(m) {
             </div>
             <h5 style="margin: 0;margin-left: 12px;">${m.name}</h5>
             <div class="hstack gap-1 ms-auto" style="margin-right: -10px;">`;
-	if (m.runnable){
-		moduleCardHTML += ` <button id=${m.key}_do_single class="btn btn-primary" type="button" onclick="do_single(this)" name=${m.name} key=${m.key} flag="run_once">
+    if (m.runnable) {
+        moduleCardHTML += ` <button id=${m.key}_do_single class="btn btn-primary" type="button" onclick="do_single(this)" name=${m.name} key=${m.key} flag="run_once">
                 <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true" style="margin-right: 4px;"></span>执行此项</button>
             `;
-	}
+    }
     if (user_config[m.key]) {
         moduleCardHTML += `
         <button id=${m.key}_collapse_toggle class="btn btn-icon" type="button" style="border-style: none;" data-bs-toggle="collapse" data-bs-target="#collapse-${m.key}" aria-expanded="true" aria-controls="collapse-${m.key}" href="#collapse-${m.key}">
@@ -66,6 +66,7 @@ function make_card(m) {
     moduleCardHTML += `</div></div></div></div>`;
     return moduleCardHTML;
 }
+
 function set_result_color(status, element) {
     const classDict = {
         'success': `text-success-emphasis`,
@@ -99,6 +100,7 @@ function set_result_color(status, element) {
             break;
     }
 }
+
 function load_result(ret, key) {
     let objTag = $(`#${key}_result_tag`);
     let objResult = $(`#${key}_result`);

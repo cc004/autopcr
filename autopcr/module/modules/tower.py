@@ -6,6 +6,7 @@ from ...db.database import db
 from ...model.enums import *
 import datetime
 
+
 @name('露娜塔回廊扫荡')
 @default(True)
 class tower_cloister_sweep(Module):
@@ -32,4 +33,3 @@ class tower_cloister_sweep(Module):
             self._log(f"扫荡了{times}次，获得了:\n" + result)
         else:
             raise SkipError("回廊已扫荡")
-

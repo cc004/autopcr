@@ -8,6 +8,7 @@ from ...model.enums import *
 import datetime
 from collections import Counter
 
+
 @description('扭曲装备扭蛋')
 @name('普通扭蛋')
 @default(True)
@@ -17,7 +18,7 @@ class normal_gacha(Module):
         normal_gacha: GachaParameter = None
         for gacha in resp.gacha_info:
             if gacha.type == eGachaType.FreeOnly and gacha.cost_num_single == 0:
-                normal_gacha = gacha 
+                normal_gacha = gacha
                 break
         if normal_gacha.free_exec_times != 0:
             raise SkipError("已进行过普通扭蛋")
@@ -27,6 +28,7 @@ class normal_gacha(Module):
         if memory:
             msg = await client.serlize_reward(memory) + f"\n{10 - len(memory)}件装备"
         self._log(msg)
+
 
 @description('有免费十连时自动抽取')
 @name('免费十连')
@@ -58,7 +60,8 @@ class free_gacha(Module):
         gacha_reward: GachaReward = GachaReward()
 
         while cnt > 0:
-            gacha_reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Campaign10Shot, cnt, res.campaign_info.campaign_id)
+            gacha_reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Campaign10Shot, cnt,
+                                                          res.campaign_info.campaign_id)
             cnt -= 1
 
         self._log(await client.serlize_gacha_reward(gacha_reward))

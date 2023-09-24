@@ -101,10 +101,11 @@ class datamgr(Component[apiclient]):
         return campaign_list[campaign]()
 
     def get_campaign_times(self, condition_func) -> int:
-        times = [db.get_campaign_times(campaign_id) for campaign_id in self.campaign_list if condition_func(campaign_id)]
+        times = [db.get_campaign_times(campaign_id) for campaign_id in self.campaign_list if
+                 condition_func(campaign_id)]
         if not times:
             return 0
-        assert(len(times) == 1)
+        assert (len(times) == 1)
         return int(times[0] // 1000)
 
     def get_heart_piece_campaign_times(self) -> int:
@@ -133,7 +134,8 @@ class datamgr(Component[apiclient]):
         if unit_id not in db.unit_unique_equip:
             return 0
         equip_id = db.unit_unique_equip[unit_id].equip_id
-        rank = self.unit[unit_id].unique_equip_slot[0].rank if unit_id in self.unit and self.unit[unit_id].unique_equip_slot else -1
+        rank = self.unit[unit_id].unique_equip_slot[0].rank if unit_id in self.unit and self.unit[
+            unit_id].unique_equip_slot else -1
         return (
             flow(db.unique_equip_required[equip_id].items())
             .where(lambda x: x[0] > rank)
@@ -149,7 +151,7 @@ class datamgr(Component[apiclient]):
             flow(db.unit_promotion[unit_id].items())
             .where(lambda x: x[0] >= rank)
             .select(lambda x: x[1])
-            .sum(seed=Counter()) - 
+            .sum(seed=Counter()) -
             Counter((eInventoryType.Equip, equip.id) for equip in unit.equip_slot if equip.is_slot)
         )
 
@@ -170,18 +172,21 @@ class datamgr(Component[apiclient]):
     def get_library_unit_data(self) -> List:
         result = []
         for unit in self.unit.values():
-            if unit.id == 170101 or unit.id == 170201: # 竟然没有春环
+            if unit.id == 170101 or unit.id == 170201:  # 竟然没有春环
                 continue
             equip_slot = ""
             for equip in unit.equip_slot:
                 equip_slot += "1" if equip.is_slot else "0"
-            result.append({ 
+            result.append({
                 "e": equip_slot,
                 "p": unit.promotion_level,
                 "r": str(unit.unit_rarity),
                 "u": hex(unit.id // 100)[2:],
                 "t": f"{db.equip_max_rank}.{db.equip_max_rank_equip_num}",
-                "q": str(db.unique_equip_rank[unit.unique_equip_slot[0].rank].enhance_level) if unit.unique_equip_slot and unit.unique_equip_slot[0].rank > 0 else "0",
+                "q": str(
+                    db.unique_equip_rank[unit.unique_equip_slot[0].rank].enhance_level) if unit.unique_equip_slot and
+                                                                                           unit.unique_equip_slot[
+                                                                                               0].rank > 0 else "0",
                 "b": "true" if unit.exceed_stage else "false",
                 "f": False
             })
@@ -189,7 +194,8 @@ class datamgr(Component[apiclient]):
 
     def get_library_equip_data(self) -> List:
         result = []
-        candidate = [item for item in db.inventory_name if db.is_equip(item) and item not in db.equip_craft] + [db.xinsui]
+        candidate = [item for item in db.inventory_name if db.is_equip(item) and item not in db.equip_craft] + [
+            db.xinsui]
         for equip in candidate:
             result.append({
                 "c": hex(self.get_inventory(equip))[2:],
@@ -212,7 +218,7 @@ class datamgr(Component[apiclient]):
 
     def get_library_import_data(self) -> str:
         result = []
-        result.append(self.get_library_unit_data()) 
+        result.append(self.get_library_unit_data())
         result.append(self.get_library_equip_data())
         result.append(self.get_library_memory_data())
         json_str = json.dumps(result)
@@ -224,18 +230,19 @@ class datamgr(Component[apiclient]):
     def _weight_mapper(cnt: int) -> float:
         return max(0, cnt) + max(0, cnt + 300) * .1 + max(0, cnt + 600) * .01 + max(0, cnt + 900) * .001
 
-    def get_quest_weght(self, require_equip: typing.Counter[ItemType]) -> Dict[int, float]: # weight demand
-        
+    def get_quest_weght(self, require_equip: typing.Counter[ItemType]) -> Dict[int, float]:  # weight demand
+
         return (
             flow(db.normal_quest_rewards.items())
             .to_dict(lambda x: x[0], lambda x:
-                flow(x[1].items())
-                .select(lambda y: datamgr._weight_mapper(require_equip.get(y[0], 0)) * y[1])
-                .sum()
-            )
+            flow(x[1].items())
+                     .select(lambda y: datamgr._weight_mapper(require_equip.get(y[0], 0)) * y[1])
+                     .sum()
+                     )
         )
 
-    def get_equip_demand(self, start_rank: Union[None, int] = None, like_unit_only: bool = False) -> typing.Counter[ItemType]:
+    def get_equip_demand(self, start_rank: Union[None, int] = None, like_unit_only: bool = False) -> typing.Counter[
+        ItemType]:
         cnt: typing.Counter[ItemType] = Counter()
         for unit_id in self.unit:
             if start_rank and self.unit[unit_id].promotion_level < start_rank:
@@ -245,9 +252,10 @@ class datamgr(Component[apiclient]):
             need = self.get_need_unit_need_eqiup(unit_id)
             if need:
                 cnt += need
-        return cnt 
+        return cnt
 
-    def get_equip_demand_gap(self, start_rank: Union[None, int] = None, like_unit_only: bool = False) -> typing.Counter[ItemType]:
+    def get_equip_demand_gap(self, start_rank: Union[None, int] = None, like_unit_only: bool = False) -> typing.Counter[
+        ItemType]:
         demand = self.get_equip_demand(start_rank, like_unit_only)
         all = set(self._inventory) | set(demand)
         demand = Counter({token: demand[token] - self.get_inventory(token) for token in all if db.is_equip(token)})
@@ -257,7 +265,7 @@ class datamgr(Component[apiclient]):
         result: typing.Counter[ItemType] = Counter()
         for memory_id, unit_id in db.memory_to_unit.items():
             token = (eInventoryType.Item, memory_id)
-            if token not in db.inventory_name: # 未来角色
+            if token not in db.inventory_name:  # 未来角色
                 continue
 
             need = self.get_rarity_memory_demand(unit_id, token) + self.get_unique_equip_memory_demand(unit_id, token)
@@ -265,7 +273,7 @@ class datamgr(Component[apiclient]):
 
         return result
 
-    def get_memory_demand_gap(self) -> typing.Counter[ItemType]: # need -- >0
+    def get_memory_demand_gap(self) -> typing.Counter[ItemType]:  # need -- >0
         demand = self.get_memory_demand()
         demand = Counter({token: demand[token] - self.get_inventory(token) for token in demand})
         return demand
@@ -279,25 +287,25 @@ class datamgr(Component[apiclient]):
             if need:
                 cnt += need
                 result.append((token, need))
-        return result, cnt 
+        return result, cnt
 
     def get_unique_equip_memory_demand(self, unit_id: int, token: ItemType) -> int:
         return self.get_unique_equip_material_demand(unit_id, token)
 
-    def get_max_quest(self, quests: Dict[int, TrainingQuestDatum], sweep_available = False) -> int:
+    def get_max_quest(self, quests: Dict[int, TrainingQuestDatum], sweep_available=False) -> int:
         now = datetime.datetime.now()
         return (
             flow(quests.keys())
-            .where(lambda x: now >= db.parse_time(quests[x].start_time) and 
-                   (not sweep_available or 
-                   (quests[x].quest_id in self.quest_dict and self.quest_dict[x].clear_flg == 3)))
+            .where(lambda x: now >= db.parse_time(quests[x].start_time) and
+                             (not sweep_available or
+                              (quests[x].quest_id in self.quest_dict and self.quest_dict[x].clear_flg == 3)))
             .max()
         )
 
-    def get_max_quest_exp(self, sweep_available = False) -> int:
+    def get_max_quest_exp(self, sweep_available=False) -> int:
         return self.get_max_quest(db.training_quest_exp, sweep_available)
 
-    def get_max_quest_mana(self, sweep_available = False) -> int:
+    def get_max_quest_mana(self, sweep_available=False) -> int:
         return self.get_max_quest(db.training_quest_mana, sweep_available)
 
     def update_inventory(self, item: InventoryInfo):
@@ -328,7 +336,7 @@ class datamgr(Component[apiclient]):
             return self.settings.equip_recover_challenge_count.recovery_max_count
         elif db.is_star_cup_quest(quest):
             return self.settings.high_rarity_equip_recover_challenge_count.recovery_max_count
-        else: # hatsune, shiori 0
+        else:  # hatsune, shiori 0
             return self.settings.hatsune_recover_challenge_count.recovery_max_count
 
     def get_inventory(self, item: ItemType) -> int:
@@ -338,21 +346,21 @@ class datamgr(Component[apiclient]):
         self._inventory[item] = value
 
     def get_shop_gold(self, shop_id: int) -> int:
-        if shop_id == eSystemId.NORMAL_SHOP: # 正常商店
+        if shop_id == eSystemId.NORMAL_SHOP:  # 正常商店
             return self.gold.gold_id_free + self.gold.gold_id_pay
-        if shop_id == eSystemId.LIMITED_SHOP: # 限定商店
+        if shop_id == eSystemId.LIMITED_SHOP:  # 限定商店
             return self.gold.gold_id_free + self.gold.gold_id_pay
-        elif shop_id == eSystemId.ARENA_SHOP: # jjc店
+        elif shop_id == eSystemId.ARENA_SHOP:  # jjc店
             return self.get_inventory((eInventoryType.Item, 90003))
-        elif shop_id == eSystemId.GRAND_ARENA_SHOP: # pjjc店
+        elif shop_id == eSystemId.GRAND_ARENA_SHOP:  # pjjc店
             return self.get_inventory((eInventoryType.Item, 90004))
-        elif shop_id == eSystemId.EXPEDITION_SHOP: # 地下城店
+        elif shop_id == eSystemId.EXPEDITION_SHOP:  # 地下城店
             return self.get_inventory((eInventoryType.Item, 90002))
-        elif shop_id == eSystemId.CLAN_BATTLE_SHOP: # 会战店
+        elif shop_id == eSystemId.CLAN_BATTLE_SHOP:  # 会战店
             return self.get_inventory((eInventoryType.Item, 90006))
-        elif shop_id == eSystemId.MEMORY_PIECE_SHOP: # 女神店
+        elif shop_id == eSystemId.MEMORY_PIECE_SHOP:  # 女神店
             return self.get_inventory((eInventoryType.Item, 90005))
-        elif shop_id == eSystemId.COUNTER_STOP_SHOP: # 大师店
+        elif shop_id == eSystemId.COUNTER_STOP_SHOP:  # 大师店
             return self.get_inventory((eInventoryType.Item, 90008))
         else:
             raise ValueError(f"未知的商店{shop_id}")

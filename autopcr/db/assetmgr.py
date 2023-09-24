@@ -1,9 +1,10 @@
-#type: ignore
+# type: ignore
 from typing import List, Callable
 from ..util import aiorequests
 from ..constants import CACHE_DIR
 import os, pydantic
 import UnityPy
+
 
 class content(pydantic.BaseModel):
     url: str = None
@@ -28,7 +29,7 @@ class content(pydantic.BaseModel):
             category=category,
             children=[]
         )
-    
+
     @staticmethod
     async def from_url(urlroot: str, url: str, category: str) -> List["content"]:
         lines = (await (await aiorequests.get(f'{urlroot}{url}')).text).split('\n')
@@ -45,9 +46,10 @@ class content(pydantic.BaseModel):
         mgr.registries[self.url] = self
         for child in self.children:
             child.register_to(mgr)
-        
+
     async def download(self, urlgetter) -> bytes:
         return await (await aiorequests.get(urlgetter(self.md5))).content
+
 
 class assetmgr:
     def __init__(self):
@@ -60,7 +62,7 @@ class assetmgr:
     @property
     def manifest(self) -> str:
         return f'{self.res}/Manifest'
-    
+
     @property
     def pool(self) -> str:
         return f'{self.res}/pool'
@@ -72,14 +74,15 @@ class assetmgr:
         cacheFile = os.path.join(CACHE_DIR, 'manifest', f'{ver}.json')
         try:
             self.root = content.parse_file(cacheFile)
-            
+
             print(f'manifest version {ver} loaded from cache')
         except:
             self.root = content(
                 url='manifest/manifest_assetmanifest',
                 type='every',
                 category='AssetBundles/Android',
-                children=await content.from_url(f'{self.manifest}/AssetBundles/Android/{ver}/', 'manifest/manifest_assetmanifest', 'AssetBundles/Android')
+                children=await content.from_url(f'{self.manifest}/AssetBundles/Android/{ver}/',
+                                                'manifest/manifest_assetmanifest', 'AssetBundles/Android')
             )
             with open(cacheFile, 'w') as f:
                 f.write(self.root.json())
@@ -88,10 +91,12 @@ class assetmgr:
 
     async def download(self, url: str) -> bytes:
         content = self.registries[url]
+
         def genHash(hash):
             return f'{self.pool}/{content.category}/{hash[:2]}/{hash}'
+
         return await content.download(genHash)
- 
+
     async def db(self) -> bytes:
         ab = UnityPy.load(await self.download('a/masterdata_master.unity3d'))
         asset = ab.objects[0].read()
