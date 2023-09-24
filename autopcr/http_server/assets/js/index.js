@@ -1,5 +1,5 @@
 function check_input(e) {
-    e.value = e.value.replace(/[\\\|?*/]/g, '')
+    e.value=e.value.replace(/[\\\|?*/]/g, '')
     let btnLogin = document.getElementById("btn-login");
     let btnReg = document.getElementById("btn-register");
     if (e.value === "") {
@@ -10,7 +10,6 @@ function check_input(e) {
         btnReg.removeAttribute("disabled");
     }
 }
-
 function register() {
     document.getElementById('card-index').style.pointerEvents = 'none';
     $.ajax({
@@ -34,7 +33,6 @@ function register() {
         }
     });
 }
-
 function login() {
     document.getElementById('card-index').style.pointerEvents = 'none';
     let account = $("#account").val()
@@ -51,8 +49,7 @@ function login() {
         }
     });
 }
-
-document.addEventListener('keydown', function (event) {
+document.addEventListener('keydown', function(event) {
     if (event.key === "Enter") {
         event.preventDefault();
         login();

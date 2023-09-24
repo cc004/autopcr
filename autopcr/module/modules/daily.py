@@ -6,7 +6,6 @@ from ...db.database import db
 from ...model.enums import *
 import datetime
 
-
 @description('全局生效，优先级n4>n3>h3>n2>h2')
 @name("全局配置")
 @default(True)
@@ -23,7 +22,6 @@ class global_config(Module):
     async def do_task(self, client: pcrclient):
         pass
 
-
 @description('选谁其实排名都一样的')
 @name("赛马")
 @default(True)
@@ -35,7 +33,6 @@ class chara_fortune(Module):
             raise SkipError("今日已赛马")
         res = await client.draw_chara_fortune()
         self._log(f"赛马第{client.data.cf.rank}名，获得了宝石x{res.reward_list[0].received}")
-
 
 @description('开始时领取任务奖励')
 @name("领取每日任务奖励1")
@@ -51,7 +48,6 @@ class mission_receive_first(Module):
                 return
         raise SkipError("没有可领取的任务奖励")
 
-
 @description('结束时领取任务奖励')
 @name("领取每日任务奖励2")
 @default(True)
@@ -65,7 +61,6 @@ class mission_receive_last(Module):
                 self._log("领取了任务奖励，获得了:\n" + reward)
                 return
         raise SkipError("没有可领取的任务奖励")
-
 
 @singlechoice("present_receive_strategy", "领取策略", "非体力", ["非体力", "全部"])
 @description('领取符合条件的所有礼物箱奖励')
@@ -85,8 +80,7 @@ class present_receive(Module):
         while not stop:
             present = await client.present_index()
             for present in present.present_info_list:
-                if not is_exclude_stamina or not (
-                        present.reward_type == eInventoryType.Stamina and present.reward_id == 93001):
+                if not is_exclude_stamina or not (present.reward_type == eInventoryType.Stamina and present.reward_id == 93001):
                     print(present.reward_type, present.reward_id)
                     res = await client.present_receive_all(is_exclude_stamina)
                     if not res.rewards:
@@ -118,14 +112,14 @@ class jjc_reward(Module):
             await client.receive_grand_arena_reward()
         self._log(f"pjjc币x{info.reward_info.count}")
 
-
 @description('展示基本信息')
 @name('基本信息')
 @default(True)
 class user_info(Module):
     async def do_task(self, client: pcrclient):
         now = db.format_time(datetime.datetime.now())
-        self._log(
-            f"{client.data.name} 体力{client.data.stamina}({db.team_max_stamina[client.data.team_level].max_stamina}) 等级{client.data.team_level} 钻石{client.data.jewel.free_jewel} mana{client.data.gold.gold_id_free} 扫荡券{client.data.get_inventory((eInventoryType.Item, 23001))} 母猪石{client.data.get_inventory((eInventoryType.Item, 90005))}")
+        self._log(f"{client.data.name} 体力{client.data.stamina}({db.team_max_stamina[client.data.team_level].max_stamina}) 等级{client.data.team_level} 钻石{client.data.jewel.free_jewel} mana{client.data.gold.gold_id_free} 扫荡券{client.data.get_inventory((eInventoryType.Item, 23001))} 母猪石{client.data.get_inventory((eInventoryType.Item, 90005))}")
         self._log(f"已购买体力数：{client.data.recover_stamina_exec_count}")
         self._log(f"清日常时间:{now}")
+
+

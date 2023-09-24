@@ -6,7 +6,6 @@ from .datamgr import datamgr
 from ..db.database import db
 from typing import Tuple, Union
 
-
 class pcrclient(apiclient):
     def __init__(self, platform, *args, **kwargs):
         super().__init__(platform)
@@ -16,7 +15,7 @@ class pcrclient(apiclient):
         self.register(errorhandler())
         self.register(self.data)
         self.register(self.session)
-
+    
     @property
     def name(self) -> str:
         return self.data.name
@@ -40,8 +39,7 @@ class pcrclient(apiclient):
         req.item_id = item_id
         return await self.request(req)
 
-    async def exec_gacha_aware(self, target_gacha: GachaParameter, gacha_times: int, draw_type: eGachaDrawType,
-                               current_cost_num: int, campaign_id: int) -> GachaReward:
+    async def exec_gacha_aware(self, target_gacha: GachaParameter, gacha_times: int, draw_type: eGachaDrawType, current_cost_num: int, campaign_id: int) -> GachaReward:
 
         if draw_type == 2 and current_cost_num < 1500:
             raise AbortError(f"宝石{current_cost_num}不足1500")
@@ -53,14 +51,12 @@ class pcrclient(apiclient):
             item_id = db.prizegacha_data[prizegacha_id].prize_memory_id_1
             await self.gacha_select_prize(prizegacha_id, item_id)
 
-        if target_gacha.exchange_id in self.data.gacha_point and \
-                self.data.gacha_point[target_gacha.exchange_id].current_point >= self.data.gacha_point[
-            target_gacha.exchange_id].max_point:
-            raise AbortError(
-                f"已达到天井{self.data.gacha_point[target_gacha.exchange_id].current_point}pt，请上号兑换角色")
+        if target_gacha.exchange_id in self.data.gacha_point and  \
+        self.data.gacha_point[target_gacha.exchange_id].current_point >= self.data.gacha_point[target_gacha.exchange_id].max_point:
+            raise AbortError(f"已达到天井{self.data.gacha_point[target_gacha.exchange_id].current_point}pt，请上号兑换角色") 
             # auto exchange TODO
 
-        if draw_type == 2:  # 怎么回传没有宝石数
+        if draw_type == 2: # 怎么回传没有宝石数
             tot = 1500
             mine = min(tot, self.data.jewel.free_jewel)
 
@@ -69,15 +65,13 @@ class pcrclient(apiclient):
             if tot:
                 self.data.jewel.jewel -= tot
 
-        resp = await self.exec_gacha(target_gacha.id, gacha_times, target_gacha.exchange_id, draw_type,
-                                     current_cost_num, campaign_id)
+        resp = await self.exec_gacha(target_gacha.id, gacha_times, target_gacha.exchange_id, draw_type, current_cost_num, campaign_id)
 
         reward: GachaReward = GachaReward(resp)
 
         return reward
 
-    async def exec_gacha(self, gacha_id: int, gacha_times: int, exchange_id: int, draw_type: int, current_cost_num: int,
-                         campaign_id: int):
+    async def exec_gacha(self, gacha_id: int, gacha_times: int, exchange_id: int, draw_type: int, current_cost_num: int, campaign_id: int):
         req = GachaExecRequest()
         req.gacha_id = gacha_id
         req.gacha_times = gacha_times
@@ -87,8 +81,7 @@ class pcrclient(apiclient):
         req.campaign_id = campaign_id
         return await self.request(req)
 
-    async def exec_hatsune_gacha(self, event_id: int, gacha_id: int, gacha_times: int, current_cost_num: int,
-                                 loop_box_multi_gacha_flag: int):
+    async def exec_hatsune_gacha(self, event_id: int, gacha_id: int, gacha_times: int, current_cost_num: int, loop_box_multi_gacha_flag: int):
         req = EventGachaExecRequest()
         req.event_id = event_id
         req.gacha_id = gacha_id
@@ -170,7 +163,7 @@ class pcrclient(apiclient):
     async def tower_cloister_battle_skip(self, times: int):
         req = CloisterBattleSkipRequest()
         req.skip_count = times
-        req.quest_id = db.tower_area[self.data.tower_status.cleared_floor_num].cloister_quest_id  # TODO
+        req.quest_id = db.tower_area[self.data.tower_status.cleared_floor_num].cloister_quest_id # TODO
         req.current_ticket_num = self.data.get_inventory((eInventoryType.Item, 23001))
         return await self.request(req)
 
@@ -182,7 +175,7 @@ class pcrclient(apiclient):
     async def hatsune_mission_receive(self, event_id: int, type: int):
         req = HatsuneMissionAcceptRequest()
         req.event_id = event_id
-        req.type = type
+        req.type = type 
         req.buy_id = 0
         req.id = 0
         return await self.request(req)
@@ -221,7 +214,7 @@ class pcrclient(apiclient):
         req = HatsuneQuestTopRequest()
         req.event_id = event
         return await self.request(req)
-
+    
     async def present_receive_all(self, is_exclude_stamina: bool):
         req = PresentReceiveAllRequest()
         req.time_filter = -1
@@ -251,22 +244,22 @@ class pcrclient(apiclient):
         req.clan_id = self.data.clan
         req.remove_viewer_id = user
         return await self.request(req)
-
+    
     async def invite_to_clan(self, user: int, msg: str = ''):
         req = ClanInviteRequest()
         req.invite_message = msg
         req.invited_viewer_id = user
         return await self.request(req)
-
+    
     async def invite_to_clan2(self, other: "pcrclient"):
         await self.invite_to_clan(other.viewer_id)
         for page in range(5):
             if await other.accept_clan_invitation(self.data.clan, page):
                 return
-
-    async def create_clan(self, name: str = "默认名字", description: str = "默认描述",
-                          cond: eClanJoinCondition = eClanJoinCondition.ONLY_INVITATION,
-                          guildLine: eClanActivityGuideline = eClanActivityGuideline.GUIDELINE_1):
+    
+    async def create_clan(self, name: str = "默认名字", description: str = "默认描述", 
+        cond: eClanJoinCondition = eClanJoinCondition.ONLY_INVITATION,
+        guildLine: eClanActivityGuideline = eClanActivityGuideline.GUIDELINE_1):
         req = ClanCreateRequest()
         req.activity = guildLine
         req.clan_battle_mode = 0
@@ -281,7 +274,7 @@ class pcrclient(apiclient):
         req.clan_id = self.data.clan
         req.get_user_equip = 0
         return (await self.request(req)).clan
-
+    
     async def donate_equip(self, request: EquipRequests, times: int):
         req = EquipDonateRequest()
         req.clan_id = self.data.clan
@@ -289,7 +282,7 @@ class pcrclient(apiclient):
         req.donation_num = times
         req.message_id = request.message_id
         return await self.request(req)
-
+    
     async def quest_skip(self, quest: int, times: int):
         req = QuestSkipRequest()
         req.current_ticket_num = self.data.get_inventory((eInventoryType.Item, 23001))
@@ -312,41 +305,40 @@ class pcrclient(apiclient):
         req.use_ticket_num = times
         req.current_ticket_num = self.data.get_inventory((eInventoryType.Item, 23001))
         return await self.request(req)
-
+    
     async def training_quest_skip(self, quest: int, times: int):
         req = TrainingQuestSkipRequest()
         req.current_ticket_num = self.data.get_inventory((eInventoryType.Item, 23001))
         req.quest_id = quest
         req.random_count = times
         return await self.request(req)
-
+    
     async def getrequests(self):
         req = ClanChatInfoListRequest()
         req.clan_id = self.data.clan
         req.count = 100
-        req.direction = 1  # RequestDirection.UP
+        req.direction = 1 # RequestDirection.UP
         req.search_date = "2099-12-31"
         req.start_message_id = 0
         req.update_message_ids = []
         req.wait_interval = 3
         resp = await self.request(req)
-        times = {msg.message_id: msg.create_time for msg in resp.clan_chat_message if
-                 msg.message_type == eClanChatMessageType.DONATION}
+        times = {msg.message_id : msg.create_time for msg in resp.clan_chat_message if msg.message_type == eClanChatMessageType.DONATION}
         return (equip for equip in resp.equip_requests if times[equip.message_id] > self.server_time - 28800)
-
+    
     async def recover_stamina(self):
         req = ShopRecoverStaminaRequest()
         req.current_currency_num = self.data.jewel.free_jewel + self.data.jewel.jewel
         return await self.request(req)
-
+    
     async def get_arena_info(self):
         req = ArenaInfoRequest()
         return await self.request(req)
-
+    
     async def get_grand_arena_info(self):
         req = GrandArenaInfoRequest()
         return await self.request(req)
-
+    
     async def receive_arena_reward(self):
         req = ArenaTimeRewardAcceptRequest()
         return await self.request(req)
@@ -359,11 +351,11 @@ class pcrclient(apiclient):
         req = DungeonSkipRequest()
         req.dungeon_area_id = dungeon_area_id
         return await self.request(req)
-
+    
     async def receive_grand_arena_reward(self):
         req = GrandArenaTimeRewardAcceptRequest()
         return await self.request(req)
-
+    
     async def receive_all(self):
         await self.request(RoomReceiveItemAllRequest())
         req = PresentReceiveAllRequest()
@@ -378,14 +370,14 @@ class pcrclient(apiclient):
         if gacha.new_unit:
             res += f"NEW: \n" + '\n'.join([db.get_inventory_name(item) for item in gacha.new_unit]) + '\n'
         if gacha.unit_rarity:
-            res += ' '.join(["★" * i + f"x{cnt}" for i, cnt in gacha.unit_rarity.items()]) + '\n'
+            res += ' '.join(["★"*i + f"x{cnt}" for i, cnt in gacha.unit_rarity.items()]) + '\n'
         if gacha.prize_rarity:
             res += ' '.join([f"{i}等" + f"x{cnt}" for i, cnt in gacha.prize_rarity.items()]) + '\n'
 
         res += await self.serlize_reward(gacha.reward_list)
 
         return res
-
+    
     async def serlize_reward(self, reward_list: List[InventoryInfo], target: Union[ItemType, None] = None):
         result = []
         rewards = {}
@@ -397,12 +389,12 @@ class pcrclient(apiclient):
                     rewards[(reward.id, reward.type)][0] += reward.count
                     rewards[(reward.id, reward.type)][1] = max(reward.stock, rewards[(reward.id, reward.type)][1])
         reward_item = list(rewards.values())
-        reward_item = sorted(reward_item, key=lambda x: x[0], reverse=True)
+        reward_item = sorted(reward_item, key = lambda x: x[0], reverse = True)
         for value in reward_item:
             try:
                 result.append(f"{db.get_inventory_name(value[2])}x{value[0]}({value[1]})")
             except:
-                result.append(f"未知物品({value[2], type},{value[2].id})x{value[0]}({value[1]})")
+                result.append(f"未知物品({value[2],type},{value[2].id})x{value[0]}({value[1]})")
         if target is not None and len(result) == 0:
             result.append(f"{db.get_inventory_name_san(target)}x0({self.data.get_inventory(target)})")
         return '\n'.join(result)
@@ -412,7 +404,7 @@ class pcrclient(apiclient):
         req.quest_id = quest
         req.current_currency_num = self.data.jewel.free_jewel + self.data.jewel.jewel
         return await self.request(req)
-
+    
     async def present_index(self) -> PresentIndexResponse:
         req = PresentIndexRequest()
         req.time_filter = -1
@@ -423,9 +415,8 @@ class pcrclient(apiclient):
 
     async def unlock_quest_id(self, quest: int):
         return (
-                (quest in self.data.quest_dict and self.data.quest_dict[quest].clear_flg > 0) or
-                (quest in db.tower_quest and self.data.tower_status.cleared_floor_num >= db.tower_quest[
-                    quest].floor_num)
+            (quest in self.data.quest_dict and self.data.quest_dict[quest].clear_flg > 0) or 
+            (quest in db.tower_quest and self.data.tower_status.cleared_floor_num >= db.tower_quest[quest].floor_num)
         )
 
     @property
@@ -456,12 +447,12 @@ class pcrclient(apiclient):
                 raise AbortError(f"任务{name}未通关或不存在")
             qinfo = self.data.quest_dict[quest]
 
-            if qinfo.clear_flg != 3:  # 怎么会少一个a
+            if qinfo.clear_flg != 3: # 怎么会少一个a
                 raise AbortError(f"任务{name}未三星")
+
 
         info = db.quest_info[quest]
         result: List[InventoryInfo] = []
-
         async def skip(times):
             while self.data.stamina < info.stamina * times:
                 if self.stamina_recover_cnt > self.data.recover_stamina_exec_count:
@@ -476,12 +467,10 @@ class pcrclient(apiclient):
                 return await self.hatsune_quest_skip(event, quest, times)
             else:
                 return await self.quest_skip(quest, times)
-
         if info.daily_limit:
             if is_total:
                 times -= qinfo.daily_clear_count
-            max_times = ((self.data.recover_max_time(
-                quest) if recover else 0) + 1) * info.daily_limit - qinfo.daily_clear_count
+            max_times = ((self.data.recover_max_time(quest) if recover else 0) + 1) * info.daily_limit - qinfo.daily_clear_count
             times = min(times, max_times)
             if times <= 0:
                 raise SkipError(f"任务{name}已达最大次数")
@@ -497,7 +486,7 @@ class pcrclient(apiclient):
                         result = result + result_list.reward_list
                 if resp.bonus_reward_list:
                     result = result + resp.bonus_reward_list
-
+                    
                 times -= t
                 remain -= t
         else:
@@ -558,7 +547,7 @@ class pcrclient(apiclient):
 
         return result
     '''
-
+    
     async def refresh(self):
         req = HomeIndexRequest()
         req.message_id = 1
@@ -566,7 +555,7 @@ class pcrclient(apiclient):
         req.is_first = 1
         req.tips_id_list = []
         await self.request(req)
-
+    
     async def reset_dungeon(self):
         req = DungeonResetRequest()
         req.dungeon_area_id = self.data.dungeon_area_id
@@ -615,7 +604,7 @@ class pcrclient(apiclient):
         if not self.data.dungeon_avaliable: return
         if self.data.dungeon_area_id != 0:
             await self.reset_dungeon()
-        area = await self.enter_dungeon(31001)  # 云海的山脉
+        area = await self.enter_dungeon(31001) # 云海的山脉
         for unit in await self.get_dungeon_unit():
             if unit.owner_viewer_id == viewer_id:
                 if unit.unit_data.unit_level > self.data.team_level + self.data.settings.dungeon.support_lv_band:
@@ -629,7 +618,7 @@ class pcrclient(apiclient):
                 req.unit_id_5 = 0
                 await self.request(req)
                 req = DungeonBattleStartRequest()
-                req.quest_id = 31001001  # 云海的山脉第一层
+                req.quest_id = 31001001 # 云海的山脉第一层
                 dispatch_unit = DungeonBattleStartUnit()
                 dispatch_unit.owner_viewer_id = unit.owner_viewer_id
                 dispatch_unit.unit_id = unit.unit_data.id

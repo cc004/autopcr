@@ -1,10 +1,9 @@
 .rotate-icon {
-    transform: rotate(180deg) scale(1.30) !important;
-    transition: transform 0.35s ease;
+  transform: rotate(180deg) scale(1.30) !important;
+  transition: transform 0.35s ease;
 }
-
 .form-item-spacing-1 > * {
-    margin-bottom: 8px;
+  margin-bottom: 8px;
 }
 
 .custom-divider {
@@ -13,11 +12,11 @@
 }
 
 @media (max-width: 576px) {
-    .custom-divider {
-        border-left: none;
-        border-top: 1px solid #ccc;
-        width: 100%;
-        height: auto;
-        padding-top: 2%;
-    }
+	.custom-divider {
+	  border-left: none;
+	  border-top: 1px solid #ccc;
+	  width: 100%;
+	  height: auto;
+	  padding-top: 2%;
+	}
 }

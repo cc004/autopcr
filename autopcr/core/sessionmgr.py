@@ -6,7 +6,6 @@ from ..model.models import *
 from ..constants import CACHE_DIR
 import hashlib
 
-
 class sessionmgr(Component[apiclient]):
     def __init__(self, account, *arg, **kwargs):
         super().__init__()
@@ -31,12 +30,12 @@ class sessionmgr(Component[apiclient]):
     async def _bililogin(self):
         uid, access_key = await self.bsdk.login()
         self._sdkaccount = {
-            'uid': uid,
-            'access_key': access_key
+                'uid': uid,
+                'access_key': access_key
         }
         with open(self.cacheFile, 'w') as fp:
             json.dump(self._sdkaccount, fp)
-
+    
     async def _ensure_token(self, next: RequestHandler):
         while True:
             if self._sdkaccount and self._sdkaccount['access_key']:
@@ -51,7 +50,7 @@ class sessionmgr(Component[apiclient]):
                         break
                 except ApiException:
                     pass
-
+            
             self._sdkaccount = None
             await self._bililogin()
 
@@ -64,23 +63,22 @@ class sessionmgr(Component[apiclient]):
                 self._sdkaccount = json.load(fp)
         while True:
             try:
-                self._container.urlroot = f'http://{(await next.request(SourceIniIndexRequest())).server[0]}'.replace(
-                    '\t', '')
+                self._container.urlroot = f'http://{(await next.request(SourceIniIndexRequest())).server[0]}'.replace('\t', '')
                 manifest = await next.request(SourceIniGetMaintenanceStatusRequest())
                 self._container._headers['MANIFEST-VER'] = manifest.required_manifest_ver
                 if manifest.maintenance_message:
                     raise ValueError(manifest.maintenance_message)
-
+                
                 await self._ensure_token(next)
-
+                
                 req = CheckGameStartRequest()
                 req.apptype = 0
                 req.campaign_data = ''
                 req.campaign_user = random.randint(0, 100000) & ~1
-
+                
                 if not (await next.request(req)).now_tutorial:
                     raise ValueError("账号未过完教程")
-
+                
                 await next.request(CheckAgreementRequest())
 
                 req = LoadIndexRequest()

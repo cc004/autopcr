@@ -5,14 +5,13 @@ const validateContainerID = 'validate-container-1'
 const configFormID = ['form-normal-config', 'form-account-config'];
 let savedRet = undefined
 $(document).ready(function () {
-        document.getElementById('card-main').style.pointerEvents = 'none';
-        ready_get_info(true)
-        $(`#${iframeActionID}`).attr('src', 'action.html' + window.location.search);
-        $(`#${iframeInfoID}`).attr('src', 'info.html' + window.location.search);
-        document.getElementById('card-main').style.pointerEvents = 'auto';
-    }
+    document.getElementById('card-main').style.pointerEvents = 'none';
+    ready_get_info(true)
+    $(`#${iframeActionID}`).attr('src', 'action.html' + window.location.search);
+    $(`#${iframeInfoID}`).attr('src', 'info.html' + window.location.search);
+    document.getElementById('card-main').style.pointerEvents = 'auto';
+}
 );
-
 function ready_get_info(toggle) {
     document.getElementById('main-tab-content').style.pointerEvents = 'none';
     $.ajax({
@@ -38,7 +37,6 @@ function ready_get_info(toggle) {
         },
     });
 }
-
 function updateElementHeight() {
     var viewportHeight = window.innerHeight;
     var elementPos = document.getElementById('tab-items').getBoundingClientRect().bottom;
@@ -46,7 +44,6 @@ function updateElementHeight() {
     document.getElementById(iframeActionID).style.height = result + 'px';
     document.getElementById(iframeInfoID).style.height = result + 'px';
 }
-
 window.onresize = updateElementHeight;
 window.onload = updateElementHeight;
 var themeDropdownItems = document.querySelectorAll("#themeDropdown + .dropdown-menu a");
@@ -59,7 +56,6 @@ themeDropdownItems.forEach(function (item) {
         childWindowInfo.document.body.setAttribute("data-bs-theme", themeValue);
     });
 });
-
 function toggle_spinner(status = 'hidden', element) {
     let spanEl = $(element).children("span.spinner-border")
     switch (status) {
@@ -78,9 +74,8 @@ function toggle_spinner(status = 'hidden', element) {
             break;
     }
 };
-
 function show_validate(url) {
-    let res = `
+	let res = `
 	<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
 		<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
 			<div class="modal-content">
@@ -101,18 +96,17 @@ function show_validate(url) {
 `
 
     $(`#${validateContainerID}`).html(res);
-    $(document).ready(function () {
-        let modal = new bootstrap.Modal(document.getElementById('staticBackdrop'));
-        modal.show();
+	$(document).ready(function() {
+		let modal = new bootstrap.Modal(document.getElementById('staticBackdrop'));
+		modal.show();
 
-        window.addEventListener('message', function (event) {
-            if (event.data === 'closeModal') {
-                modal.hide();
-            }
-        });
-    });
+		window.addEventListener('message', function (event) {
+			if (event.data === 'closeModal') {
+				modal.hide();
+			}
+		});
+	});
 }
-
 function show_toast(status, text, desc = null) {
     const classDict = {
         'success': [`text-success-emphasis`, `bg-success-subtle`, `border-success-subtle`],
@@ -126,7 +120,7 @@ function show_toast(status, text, desc = null) {
         var res = `<div id="toast" class="toast" role="alert">
         <div class="toast-header">
         <strong class="me-auto">${text}</strong>
-        <small>${date.toLocaleTimeString('en-US', {hour12: false})}</small>
+        <small>${date.toLocaleTimeString('en-US', { hour12: false })}</small>
         <button class="btn-close ms-2 mb-1 close" type="button" aria-label="Close" data-bs-dismiss="toast"></button></div>
         <div class="toast-body" role="alert">
         <p>${desc}</p>
@@ -135,7 +129,7 @@ function show_toast(status, text, desc = null) {
         var res = `<div id="toast" class="toast" role="alert">
         <div class="toast-body d-flex align-items-center" role="alert" style="padding: var(--bs-toast-padding-y) var(--bs-toast-padding-x);">
         <strong class="me-auto">${text}</strong>
-        <small>${date.toLocaleTimeString('en-US', {hour12: false})}</small>
+        <small>${date.toLocaleTimeString('en-US', { hour12: false })}</small>
         <button class="btn-close ms-2 mb-1 close" type="button" aria-label="Close" data-bs-dismiss="toast" style="margin-right: calc(-.5 * var(--bs-toast-padding-x));"></button>
         </div></div>`;
     }
@@ -156,7 +150,6 @@ function show_toast(status, text, desc = null) {
         toastElement.parentNode.removeChild(toastElement);
     });
 }
-
 function delete_config() {
     let element = $("#delete_config")
     element.attr('disabled', true);
@@ -179,7 +172,6 @@ function delete_config() {
         }
     })
 }
-
 function update_info() {
     let config = {};
     document.getElementById('main-tab-content').style.pointerEvents = 'none';
@@ -199,13 +191,12 @@ function update_info() {
         },
         error: function (ret) {
             show_toast('error', '本次修改保存失败。', `将于三秒后刷新页面，如有需要请联系管理员。\n${ret.responseText}`);
-            setTimeout(function () {
+            setTimeout(function() {
                 location.reload(true);
             }, 3000);
         },
     });
 }
-
 function reset_config_form() {
     configFormID.forEach(function (item) {
         document.getElementById(item).reset();

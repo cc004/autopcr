@@ -38,7 +38,7 @@ daily_modules = [
     xinsui2_sweep,
     xinsui1_sweep,
     starcup2_sweep,
-    starcup1_sweep,
+    starcup1_sweep, 
     hatsune_h_sweep,
     hatsune_dear_reading,
     present_receive,
@@ -60,7 +60,7 @@ daily_modules = [
     underground_shop,
     jjc_shop,
     pjjc_shop,
-
+    
     love_up,
     main_story_reading,
     tower_story_reading,

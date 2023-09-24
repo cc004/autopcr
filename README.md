@@ -1,5 +1,4 @@
 # autopcr
-
 自动清日常
 bug反馈/意见/交流群: 885228564
 
@@ -22,6 +21,5 @@ url前缀为`/daily`
 使用前请更新Hoshino到最新版，并**更新Hoshino的配置文件`__bot__.py`**
 
 ## Credits
-
 - aiorequests 来自 [HoshinoBot](https://github.com/Ice-Cirno/HoshinoBot)
 - 前端html来自 [AutoPCR_Archived](https://github.com/watermellye/AutoPCR_Archived)

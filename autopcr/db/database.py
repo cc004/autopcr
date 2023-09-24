@@ -11,7 +11,6 @@ from ..util.linq import flow
 from queue import SimpleQueue
 from .constdata import extra_drops
 
-
 class database():
     heart: ItemType = (eInventoryType.Equip, 140000)
     xinsui: ItemType = (eInventoryType.Equip, 140001)
@@ -20,8 +19,9 @@ class database():
     jewel: ItemType = (eInventoryType.Jewel, 91002)
 
     def update(self, dbmgr: dbmgr):
-
+        
         with dbmgr.session() as db:
+
             self.guild_data: Dict[int, Guild] = (
                 Guild.query(db)
                 .to_dict(lambda x: x.guild_id, lambda x: x)
@@ -29,7 +29,7 @@ class database():
 
             self.normal_quest_data: Dict[int, QuestDatum] = (
                 QuestDatum.query(db)
-                .where(lambda x: self.is_normal_quest(x.quest_id))
+                .where(lambda x: self.is_normal_quest(x.quest_id)) 
                 .to_dict(lambda x: x.quest_id, lambda x: x)
             )
 
@@ -46,19 +46,19 @@ class database():
             self.normal_quest_rewards: Dict[int, typing.Counter[ItemType]] = (
                 flow(self.normal_quest_data.values())
                 .to_dict(lambda x: x.quest_id, lambda x:
-                flow(x.get_wave_group_ids())
-                         .where(lambda y: y != 0)
-                         .select_many(lambda y: self.wave_groups[y].get_drop_reward_ids())
-                         .where(lambda y: y != 0)
-                         .select_many(lambda y: self.reward_groups[y].get_rewards())
-                         .where(lambda y: y != 0 and y.reward_item[0] == eInventoryType.Equip)
-                         .select(lambda y: Counter({y.reward_item: y.reward_num * y.odds / 100.0}))
-                         .sum(seed=Counter()) +
-                extra_drops.get(x.quest_id // 1000, Counter())
-                         )
+                    flow(x.get_wave_group_ids())
+                    .where(lambda y: y != 0)
+                    .select_many(lambda y: self.wave_groups[y].get_drop_reward_ids())
+                    .where(lambda y: y != 0)
+                    .select_many(lambda y: self.reward_groups[y].get_rewards())
+                    .where(lambda y: y != 0 and y.reward_item[0] == eInventoryType.Equip)
+                    .select(lambda y: Counter({y.reward_item: y.reward_num * y.odds / 100.0}))
+                    .sum(seed=Counter()) + 
+                    extra_drops.get(x.quest_id // 1000, Counter())
+                )
             )
-
-            self.unique_equip_rank: Dict[int, UniqueEquipmentEnhanceDatum] = (  # 第二维是int？
+            
+            self.unique_equip_rank: Dict[int, UniqueEquipmentEnhanceDatum] = ( # 第二维是int？
                 UniqueEquipmentEnhanceDatum.query(db)
                 .group_by(lambda x: x.rank)
                 .to_dict(lambda x: x.key, lambda x: x.max(lambda y: y.enhance_level))
@@ -66,24 +66,24 @@ class database():
 
             self.equip_craft: Dict[ItemType, List[Tuple[ItemType, int]]] = (
                 EquipmentCraft.query(db)
-                .to_dict(lambda x: (eInventoryType.Equip, x.equipment_id), lambda x:
-                flow(x.get_materials())
-                         .where(lambda y: y[0][1] != 0 and y[1] != 0)
-                         .to_list()
-                         )
+                .to_dict(lambda x: (eInventoryType.Equip, x.equipment_id), lambda x: 
+                    flow(x.get_materials())
+                    .where(lambda y: y[0][1] != 0 and y[1] != 0)
+                    .to_list()
+                )
             )
 
             self.unit_promotion: Dict[int, Dict[int, typing.Counter[ItemType]]] = (
                 UnitPromotion.query(db)
                 .group_by(lambda x: x.unit_id)
                 .to_dict(lambda x: x.key, lambda x:
-                x.to_dict(lambda y: y.promotion_level, lambda y:
-                Counter(flow(range(1, 7))
+                    x.to_dict(lambda y: y.promotion_level, lambda y:
+                        Counter(flow(range(1, 7))
                         .select(lambda z: getattr(y, f'equip_slot_{z}'))
                         .where(lambda z: z != 999999)
                         .to_dict(lambda z: (eInventoryType.Equip, z), lambda _: 1)
-                        ))
-                         )
+                    ))
+                )
             )
 
             self.equip_max_rank: int = max(
@@ -98,7 +98,7 @@ class database():
                 HatsuneSchedule.query(db)
                 .to_dict(lambda x: x.event_id, lambda x: x)
             )
-
+            
             self.campaign_schedule: Dict[int, CampaignSchedule] = (
                 CampaignSchedule.query(db)
                 .to_dict(lambda x: x.id, lambda x: x)
@@ -109,15 +109,15 @@ class database():
                 .where(lambda x: self.is_hard_quest(x.quest_id))
                 .group_by(lambda x: x.reward_image_1)
                 .to_dict(lambda x: (eInventoryType.Item, x.key), lambda x:
-                x.to_list()[::-1]
-                         )
+                         x.to_list()[::-1]
+                )
             )
 
             self.unit_unique_equip: Dict[int, UnitUniqueEquip] = (
                 UnitUniqueEquip.query(db)
                 .to_dict(lambda x: x.unit_id, lambda x: x)
             )
-
+            
             self.rarity_up_required: Dict[int, Dict[int, typing.Counter[ItemType]]] = (
                 UnitRarity.query(db)
                 .select(lambda x: (
@@ -135,16 +135,16 @@ class database():
                         x.key[1],
                         x.sum(lambda y: y.material_count)
                     )
-                            ))
+                ))
                 .group_by(lambda x: x[0])
                 .to_dict(lambda x: x.key, lambda x:
-                x.group_by(lambda y: y[1])
-                         .to_dict(lambda y: y.key, lambda y:
-                Counter(y.group_by(lambda z: (eInventoryType.Item, z[2]))
+                    x.group_by(lambda y: y[1])
+                    .to_dict(lambda y: y.key, lambda y:
+                        Counter(y.group_by(lambda z: (eInventoryType.Item, z[2]))
                         .to_dict(lambda z: z.key, lambda z: z.sum(lambda w: w[3]))
                         )
-                                  )
-                         )
+                    )
+                )
             )
 
             self.unique_equip_required: Dict[int, Dict[int, typing.Counter[ItemType]]] = (
@@ -187,13 +187,13 @@ class database():
                 ) if (x[2], x[3]) == self.heart else x)
                 .group_by(lambda x: x[0])
                 .to_dict(lambda x: x.key, lambda x:
-                x.group_by(lambda y: y[1])
-                         .to_dict(lambda y: y.key, lambda y:
-                Counter(y.group_by(lambda z: (z[2], z[3]))
+                    x.group_by(lambda y: y[1])
+                    .to_dict(lambda y: y.key, lambda y:
+                        Counter(y.group_by(lambda z: (z[2], z[3]))
                         .to_dict(lambda z: z.key, lambda z: z.sum(lambda w: w[4]))
                         )
-                                  )
-                         )
+                    )
+                )
             )
 
             self.training_quest_exp: Dict[int, TrainingQuestDatum] = (
@@ -207,7 +207,7 @@ class database():
                 .where(lambda x: x.area_id == 21001)
                 .to_dict(lambda x: x.quest_id, lambda x: x)
             )
-
+            
             self.chara_fortune_schedule: Dict[int, CharaFortuneSchedule] = (
                 CharaFortuneSchedule.query(db)
                 .to_dict(lambda x: x.fortune_id, lambda x: x)
@@ -232,7 +232,7 @@ class database():
                 .concat(TrainingQuestDatum.query(db))
                 .to_dict(lambda x: x.quest_id, lambda x: x.quest_name)
             )
-
+            
             self.guild_story: List[StoryDetail] = (
                 StoryDetail.query(db)
                 .where(lambda x: x.story_id >= 3000000 and x.story_id < 4000000)
@@ -268,14 +268,14 @@ class database():
             self.event_story: List[EventStoryDetail] = (
                 EventStoryDetail.query(db)
                 .where(lambda x: x.visible_type == 0)
-                # .select(lambda x: (x.story_id, x.pre_story_id, x.title))
+                #.select(lambda x: (x.story_id, x.pre_story_id, x.title))
                 .to_list()
             )
 
             self.unit_story: List[StoryDetail] = (
                 StoryDetail.query(db)
                 .where(lambda x: x.story_id >= 1000000 and x.story_id < 2000000)
-                # .select(lambda x: (x.story_id, x.pre_story_id, x.story_group_id, x.love_level, x.title))
+                #.select(lambda x: (x.story_id, x.pre_story_id, x.story_group_id, x.love_level, x.title))
                 .to_list()
             )
 
@@ -310,13 +310,13 @@ class database():
                 RoomItem.query(db)
                 .to_dict(lambda x: x.id, lambda x: x)
             )
-
+            
             self.daily_mission: Set[int] = (
                 DailyMissionDatum.query(db)
                 .select(lambda x: x.daily_mission_id)
                 .to_set()
             )
-
+            
             self.memory_to_unit: Dict[int, int] = (
                 UnitRarity.query(db)
                 .group_by(lambda x: x.unit_material_id)
@@ -327,13 +327,14 @@ class database():
                 UnitDatum.query(db)
                 .to_dict(lambda x: x.unit_id, lambda x: x)
             )
+            
 
             self.pure_memory_to_unit: Dict[int, int] = (
                 UnlockRarity6.query(db)
                 .where(lambda x: x.slot_id == 1)
                 .to_dict(lambda x: x.material_id, lambda x: x.unit_id)
             )
-
+            
             self.six_area: Dict[int, QuestDatum] = (
                 QuestDatum.query(db)
                 .where(lambda x: self.is_very_hard_quest(x.quest_id))
@@ -344,7 +345,7 @@ class database():
                 TowerSchedule.query(db)
                 .to_dict(lambda x: x.tower_schedule_id, lambda x: x)
             )
-
+            
             self.dungeon_name: Dict[int, str] = (
                 DungeonArea.query(db)
                 .to_dict(lambda x: x.dungeon_area_id, lambda x: x.dungeon_name)
@@ -355,7 +356,7 @@ class database():
                 .group_by(lambda x: x.exchange_id)
                 .to_dict(lambda x: x.key, lambda x: x.to_list())
             )
-
+            
             self.free_gacha_list: Dict[int, List[CampaignFreegachaDatum]] = (
                 CampaignFreegachaDatum.query(db)
                 .group_by(lambda x: x.campaign_id)
@@ -371,7 +372,7 @@ class database():
                 PrizegachaDatum.query(db)
                 .to_dict(lambda x: x.prizegacha_id, lambda x: x)
             )
-
+            
             self.campaign_gacha: Dict[int, CampaignFreegacha] = (
                 CampaignFreegacha.query(db)
                 .to_dict(lambda x: x.campaign_id, lambda x: x)
@@ -381,14 +382,14 @@ class database():
                 LoveChara.query(db)
                 .group_by(lambda x: x.rarity)
                 .to_dict(lambda x: x.key, lambda x:
-                x.select(lambda i: (i.love_level, i.total_love)).max()
-                         )
+                    x.select(lambda i: (i.love_level, i.total_love)).max()
+                )
             )
 
             self.love_cake: List[ItemDatum] = (
                 ItemDatum.query(db)
                 .where(lambda x: x.item_id >= 50000 and x.item_id < 51000)
-                # .select(lambda x: (x.item_id, x.value))
+                #.select(lambda x: (x.item_id, x.value))
                 .to_list()
             )
 
@@ -397,9 +398,9 @@ class database():
             self.quest_to_event: Dict[int, HatsuneQuest] = (
                 HatsuneQuest.query(db)
                 .concat(ShioriQuest.query(db))
-                .to_dict(lambda x: x.quest_id, lambda x: x)  # 类型不一致，Hatsune和Shiori是否分开？
+                .to_dict(lambda x: x.quest_id, lambda x: x) # 类型不一致，Hatsune和Shiori是否分开？
             )
-
+            
             self.hatsune_item: Dict[int, HatsuneItem] = (
                 HatsuneItem.query(db)
                 .to_dict(lambda x: x.event_id, lambda x: x)
@@ -436,9 +437,7 @@ class database():
         return item[0] == eInventoryType.Equip and item[1] >= 101000 and item[1] < 140000
 
     def is_room_item_level_upable(self, team_level: int, item: RoomUserItem) -> bool:
-        return item.room_item_level < self.room_item[
-            item.room_item_id].max_level and team_level // 10 >= item.room_item_level and (
-                    item.level_up_end_time is None or item.level_up_end_time < time.time())
+        return item.room_item_level < self.room_item[item.room_item_id].max_level and team_level // 10 >= item.room_item_level and (item.level_up_end_time is None or item.level_up_end_time < time.time())
 
     def is_normal_quest(self, quest_id: int) -> bool:
         return quest_id // 1000000 == 11
@@ -465,8 +464,7 @@ class database():
         return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.ITEM_DROP_AMOUNT_UNIQUE_EQUIP
 
     def is_star_cup_campaign(self, campaign_id: int) -> bool:
-        return self.campaign_schedule[
-            campaign_id].campaign_category == eCampaignCategory.ITEM_DROP_AMOUNT_HIGH_RARITY_EQUIP
+        return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.ITEM_DROP_AMOUNT_HIGH_RARITY_EQUIP
 
     def is_normal_quest_campaign(self, campaign_id: int) -> bool:
         return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.ITEM_DROP_AMOUNT_NORMAL
@@ -488,8 +486,8 @@ class database():
         dungeon = (
             flow(self.campaign_schedule.values())
             .where(
-                lambda x: x.campaign_category == eCampaignCategory.GOLD_DROP_AMOUNT_DUNGEON and
-                          db.parse_time(x.start_time) > now
+                lambda x: x.campaign_category == eCampaignCategory.GOLD_DROP_AMOUNT_DUNGEON and 
+                db.parse_time(x.start_time) > now
             )
             .min(lambda x: x.start_time)
         )
@@ -500,17 +498,17 @@ class database():
     def get_active_hatsune(self) -> List[HatsuneSchedule]:
         now = datetime.datetime.now()
         return flow(self.hatsune_schedule.values()) \
-            .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.end_time)) \
-            .to_list()
+                .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.end_time)) \
+                .to_list()
 
     def get_open_hatsune(self) -> List[HatsuneSchedule]:
         now = datetime.datetime.now()
         return flow(self.hatsune_schedule.values()) \
-            .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.close_time)) \
-            .to_list()
+                .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.close_time)) \
+                .to_list()
 
     def get_newest_tower_id(self) -> int:
-        return max(self.tower, key=lambda x: self.tower[x].start_time)
+        return max(self.tower, key = lambda x: self.tower[x].start_time)
 
     def max_total_love(self, rarity: int) -> Tuple[int, int]:
         love_info: Tuple[int, int] = (0, 0)
@@ -542,7 +540,7 @@ class database():
         return False
 
     def parse_time(self, time: str) -> datetime.datetime:
-        if time.count(':') == 1:  # 怎么以前没有秒的
+        if time.count(':') == 1: # 怎么以前没有秒的
             time += ":00"
         return datetime.datetime.strptime(time, '%Y/%m/%d %H:%M:%S')
 
@@ -550,11 +548,10 @@ class database():
         return time.strftime("%Y/%m/%d %H:%M:%S")
 
     def get_start_time(self, time: datetime.datetime) -> datetime.datetime:
-        shift_time = datetime.timedelta(hours=5);
+        shift_time = datetime.timedelta(hours = 5);
 
         time -= shift_time
-        time -= datetime.timedelta(hours=time.hour, minutes=time.minute, seconds=time.second,
-                                   microseconds=time.microsecond)
+        time -= datetime.timedelta(hours = time.hour, minutes = time.minute, seconds = time.second, microseconds = time.microsecond)
         time += shift_time
 
         return time
@@ -562,13 +559,13 @@ class database():
     def get_today_start_time(self) -> datetime.datetime:
         return self.get_start_time(datetime.datetime.now())
 
-    def craft_equip(self, source: typing.Counter[ItemType]) -> typing.Counter[ItemType]:  # 依赖关系不深，没必要写成拓扑图求解
+    def craft_equip(self, source: typing.Counter[ItemType]) -> typing.Counter[ItemType]: # 依赖关系不深，没必要写成拓扑图求解
         result: typing.Counter[ItemType] = Counter()
 
         queue = SimpleQueue()
         for key, value in source.items():
             queue.put((key, value))
-
+        
         while not queue.empty():
             key, value = queue.get()
             if key in self.equip_craft:
@@ -582,9 +579,8 @@ class database():
     def get_cur_gacha(self):
         now = datetime.datetime.now()
         return flow(self.gacha_data.values()) \
-            .where(lambda x: self.parse_time(x.start_time) <= now and now <= self.parse_time(x.end_time)) \
-            .select(lambda x: f"{x.gacha_id}: {x.gacha_name}-{x.pick_up_chara_text}") \
-            .to_list()
-
+        .where(lambda x: self.parse_time(x.start_time) <= now and now <= self.parse_time(x.end_time)) \
+        .select(lambda x: f"{x.gacha_id}: {x.gacha_name}-{x.pick_up_chara_text}") \
+        .to_list()
 
 db = database()

@@ -10,7 +10,6 @@ from ...db.database import db
 from ...model.enums import *
 import datetime
 
-
 @description('来发十连，或者直到出货')
 @name('抽卡')
 @singlechoice("pool_id", "池子", db.get_cur_gacha()[0], db.get_cur_gacha())
@@ -39,17 +38,15 @@ class gacha_start(Module):
         try:
             while True:
                 cnt += 1
-                reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Payment,
-                                                        client.data.jewel.free_jewel + client.data.jewel.jewel, 0)
-                if not always or self.can_stop(reward.new_unit, db.gacha_exchange_chara[target_gacha.exchange_id]):
+                reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Payment, client.data.jewel.free_jewel + client.data.jewel.jewel, 0)
+                if not always or self.can_stop(reward.new_unit, db.gacha_exchange_chara[target_gacha.exchange_id]) :
                     break
         except:
-            raise
+            raise 
         finally:
             self._log(f"抽取了{cnt}次十连")
             self._log(await client.serlize_gacha_reward(reward))
             self._log(f"当前pt为{client.data.gacha_point[target_gacha.exchange_id].current_point}")
-
 
 @description('获得可导入到兰德索尔图书馆的账号数据')
 @name('兰德索尔图书馆导入数据')
@@ -58,7 +55,6 @@ class get_library_import_data(Module):
     async def do_task(self, client: pcrclient):
         msg = client.data.get_library_import_data()
         self._log(msg)
-
 
 @description('根据每个角色拉满星级、开专、升级至当前最高专所需的记忆碎片减去库存的结果')
 @booltype("sweep_get_able_unit_memory", "地图可刷取角色", False)
@@ -71,11 +67,8 @@ class get_need_memory(Module):
         if self.get_config("sweep_get_able_unit_memory"):
             demand = [i for i in demand if i[0] in db.memory_quest]
 
-        msg = '\n'.join(
-            [f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片' for item in
-             demand])
+        msg = '\n'.join([f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片' for item in demand])
         self._log(msg)
-
 
 @description('根据每个角色开专、升级至当前最高专所需的心碎减去库存的结果，大心转换成10心碎')
 @name('获取心碎缺口')
@@ -99,7 +92,6 @@ class get_need_xinsui(Module):
         msg = '\n'.join(msg)
         self._log(msg)
 
-
 @inttype("start_rank", "起始品级", 1, [i for i in range(1, 99)])
 @booltype("like_unit_only", "收藏角色", False)
 @description('统计指定角色拉满品级所需的装备减去库存的结果，不考虑仓库中的大件装备')
@@ -114,11 +106,8 @@ class get_need_equip(Module):
 
         demand = sorted(demand, key=lambda x: x[1], reverse=True)
 
-        msg = '\n'.join(
-            [f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片' for item in
-             demand])
+        msg = '\n'.join([f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片' for item in demand])
         self._log(msg)
-
 
 @inttype("start_rank", "起始品级", 1, [i for i in range(1, 99)])
 @booltype("like_unit_only", "收藏角色", False)
@@ -130,19 +119,17 @@ class get_normal_quest_recommand(Module):
         start_rank: int = self.get_config("start_rank")
         like_unit_only: bool = self.get_config("like_unit_only")
 
-        quest_list: List[int] = [id for id, quest in db.normal_quest_data.items() if
-                                 db.parse_time(quest.start_time) <= datetime.datetime.now()]
-        require_equip = client.data.get_equip_demand_gap(start_rank=start_rank, like_unit_only=like_unit_only)
+        quest_list: List[int] = [id for id, quest in db.normal_quest_data.items() if db.parse_time(quest.start_time) <= datetime.datetime.now()]
+        require_equip = client.data.get_equip_demand_gap(start_rank = start_rank, like_unit_only = like_unit_only)
         quest_weight = client.data.get_quest_weght(require_equip)
-        quest_id = sorted(quest_list, key=lambda x: quest_weight[x], reverse=True)
+        quest_id = sorted(quest_list, key = lambda x: quest_weight[x], reverse = True)
         tot = []
         for i in range(10):
             id = quest_id[i]
             name = db.quest_name[id]
             tokens: List[ItemType] = [i for i in db.normal_quest_rewards[id]]
             msg = f"{name}:\n" + '\n'.join([
-                (
-                    f'{db.get_inventory_name_san(token)}: {"缺少" if require_equip[token] > 0 else "盈余"}{abs(require_equip[token])}片')
+                (f'{db.get_inventory_name_san(token)}: {"缺少" if require_equip[token] > 0 else "盈余"}{abs(require_equip[token])}片')
                 for token in tokens])
             tot.append(msg.strip())
 
