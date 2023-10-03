@@ -30,24 +30,33 @@ class clan_like(Module):
 @singlechoice("clan_equip_request_consider_unit", "需求角色", "all", ["all", 'favorite'])
 @default(False)
 class clan_equip_request(Module):
+    color_to_promotion = {
+            'all': 0,
+            "Brozen": 2,
+            "Silver": 3,
+            "Gold": 4,
+            "Purple": 5,
+            "Red": 6,
+            "Green": 7,
+    }
     async def do_task(self, client: pcrclient):
         clan = await client.get_clan_info()
         if not clan:
             raise AbortError("未加入公会")
 
-        if datetime.datetime.now().timestamp() > clan.latest_request_time + client.data.settings.clan.equipment_request_interval:
+        if clan.latest_request_time and datetime.datetime.now().timestamp() <= clan.latest_request_time + client.data.settings.clan.equipment_request_interval:
+            raise SkipError("当前请求尚未结束")
+        elif clan.latest_request_time:
             res = await client.equip_get_request(clan.clan.detail.clan_id, 0)
             msg = f"收到{db.get_inventory_name_san((eInventoryType.Equip, res.request.equip_id))}x{res.request.donation_num}：" + ' '.join(f"{user.name}x{user.num}" for user in res.request.history)
             self._log(msg.strip("："))
-        else:
-            raise SkipError("当前请求尚未结束")
 
         fav = (self.get_config('clan_equip_request_consider_unit') == 'favorite')
         demand = client.data.get_equip_demand_gap(like_unit_only=fav)
         config_color: str = self.get_config('clan_equip_request_color')
-        target_level = set(level for color, level in vars(ePromotionLevel).items() if color.startswith(config_color))
+        target_level = self.color_to_promotion[config_color]
 
-        consider_equip = [(equip_id, num) for (item_type, equip_id), num in demand.items() if db.equip_data[equip_id].enable_donation and (db.equip_data[equip_id].promotion_level in target_level or config_color == 'all')]
+        consider_equip = [(equip_id, num) for (item_type, equip_id), num in demand.items() if db.equip_data[equip_id].enable_donation and (db.equip_data[equip_id].promotion_level == target_level or config_color == 'all')]
         consider_equip = sorted(consider_equip, key=lambda x: x[1], reverse=True)
 
         if consider_equip:
