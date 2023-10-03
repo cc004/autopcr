@@ -131,7 +131,7 @@ class datamgr(Component[apiclient]):
         self.hatsune_quest_dict.clear()
 
     def get_unique_equip_material_demand(self, equip_slot:int, unit_id: int, token: ItemType) -> int:
-        if unit_id not in db.unit_unique_equip:
+        if unit_id not in db.unit_unique_equip[equip_slot]:
             return 0
         equip_id = db.unit_unique_equip[equip_slot][unit_id].equip_id
         rank = self.unit[unit_id].unique_equip_slot[0].rank if unit_id in self.unit and self.unit[unit_id].unique_equip_slot else -1
