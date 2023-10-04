@@ -79,6 +79,7 @@ hidden_modules = [
 ]
 
 tool_modules = [
+    jjc_back,
     get_clan_support_unit,
     get_library_import_data,
     get_need_equip,
