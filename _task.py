@@ -1,6 +1,7 @@
 from abc import abstractclassmethod, abstractproperty
 from nonebot import MessageSegment
 from hoshino.typing import MessageSegment
+import traceback
 
 from .autopcr.module.accountmgr import instance as accountmgr
 from ._util import draw, render_forward_msg
@@ -20,22 +21,27 @@ class TaskList(Task):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    @abstractproperty
+    @abstractclassmethod
     def do_module_list(self) -> list: ...
 
     async def do_task(self):
         alian, target, bot, ev, qid, gid = self.info
         try:
             async with accountmgr.load(target) as mgr:
-                resp = await mgr.do_from_key(self.config, self.do_module_list)
+                resp = await mgr.do_from_key(self.config, self.do_module_list())
             img = await draw(resp, alian)
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
         except Exception as e:
+            traceback.print_exc()
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + str(e))
 
 class ClanBattleSupport(TaskList):
     def do_module_list(self) -> list:
         return ["get_clan_support_unit"]
+
+class JJCBack(TaskList):
+    def do_module_list(self) -> list:
+        return ["jjc_back"]
 
 class QuestRecommand(Task):
     def do_module_list(self) -> list:

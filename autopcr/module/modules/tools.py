@@ -73,6 +73,59 @@ class get_clan_support_unit(Module):
             info = f'{unit_name}({owner_name}): {"满中满" if strongest else "非满警告！"}\n{unit_info}\n'
             self._log(info)
 
+@description('查询jjc回刺阵容')
+@name('jjc回刺查询')
+@default(True)
+class jjc_back(Module):
+    async def get_opponent_info(self, client: pcrclient, viewer_id: int):
+        for page in range(1, 6):
+            ranking = {info.viewer_id: info for info in (await client.arena_rank(20, page)).ranking}
+            if viewer_id in ranking:
+                return ranking[viewer_id]
+        raise AbortError("对手不在前100名，无法查询")
+
+    async def do_task(self, client: pcrclient):
+        try:
+            from hoshino.modules.priconne.arena.arena import do_query
+            from hoshino.modules.priconne.arena import render_atk_def_teams
+        except Exception as e:
+            print(e)
+            raise AbortError("仅支持插件端")
+
+        rank = (await client.get_arena_info()).arena_info.rank
+        history = await client.get_arena_history()
+        if not history.versus_result_list:
+            raise SkipError("没有被刺记录")
+        history = history.versus_result_list[0]
+        timestamp = history.versus_time
+        target = history.opponent_user
+        self._log(f"{target.user_name}: {datetime.datetime.fromtimestamp(timestamp)}")
+        target_info = await self.get_opponent_info(client, target.viewer_id)
+        self._log(f"对方排名：{target_info.rank}, 您当前排名：{rank}")
+        if rank < target_info.rank:
+            raise SkipError(f"对方排名位于您排名之后")
+        deck_info = [unit.id for unit in target_info.arena_deck]
+        short_info = [unit.id // 100 for unit in target_info.arena_deck]
+        res = await do_query(short_info, 2)
+        defen = [db.get_inventory_name_san((eInventoryType.Unit, x)) for x in deck_info]
+        defen = f"防守方【{' '.join(defen)}】"
+        if res is None:
+            raise AbortError(f'{defen}\n数据库未返回数据，请再次尝试查询或前往pcrdfans.com')
+        if res == []:
+            raise AbortError(f'{defen}\n抱歉没有查询到解法\n※没有作业说明随便拆 发挥你的想象力～★\n作业上传请前往pcrdfans.com')
+
+        res = res[:min(8, len(res))] 
+        teams = await render_atk_def_teams(res)
+        from io import BytesIO
+        import base64
+        img_byte_array = BytesIO()
+        teams = teams.convert("RGB")
+        teams.save(img_byte_array, format="JPEG")
+        teams = base64.b64encode(img_byte_array.getvalue()).decode()
+        pic = f'<img src="data:image/jpeg;base64,{teams}" alt="Image">'
+        msg = [defen, pic]
+        self._log('\n'.join(msg))
+
 @description('获得可导入到兰德索尔图书馆的账号数据')
 @name('兰德索尔图书馆导入数据')
 @default(True)

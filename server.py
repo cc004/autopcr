@@ -18,7 +18,7 @@ from hoshino.config import SUPERUSERS
 from hoshino.util import escape
 from hoshino.typing import CQEvent, MessageSegment
 from ._util import get_result
-from ._task import DailyClean, FindEquip, FindMemory, FindXinsui, Task, GetLibraryImport, QuestRecommand, Gacha, ClanBattleSupport
+from ._task import *
 import datetime
 import random
 
@@ -208,6 +208,11 @@ async def clan_support(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
 @pre_process
 async def find_xinsui(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
     await consumer(FindXinsui(token, bot, ev))
+
+@sv.on_prefix(f"{prefix}jjc回刺")
+@pre_process
+async def jjc_back(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
+    await consumer(JJCBack(token, bot, ev))
 
 @sv.on_prefix(f"{prefix}查记忆碎片")
 @pre_process

@@ -26,6 +26,37 @@ class pcrclient(apiclient):
     async def logout(self):
         await self.session.clear_session()
 
+    async def skill_level_up(self, unit_id: int, skill_levelup_list: List[SkillLevelUpDetail]):
+        req = SkillLevelUpRequest()
+        req.unit_id = unit_id
+        req.skill_levelup_list = skill_levelup_list
+        return await self.request(req)
+
+    async def unit_free_level_up(self, unit_id: int, after_level: int):
+        req = UnitFreeLevelUpRequest()
+        req.unit_id = unit_id
+        req.after_level = after_level
+        return await self.request(req)
+
+    async def unit_free_promotion(self, unit_id: int, target_promotion_level: int):
+        req = UnitFreePromotionRequest()
+        req.unit_id = unit_id
+        req.target_promotion_level = target_promotion_level
+        return await self.request(req)
+
+    async def unit_free_equip(self, unit_id: int, equip_slot_num_list: List[int]):
+        req = UnitFreeEquipRequest()
+        req.unit_id = unit_id
+        req.equip_slot_num_list = equip_slot_num_list
+        return await self.request(req)
+
+    async def equipment_free_enhance(self, unit_id: int, equip_slot_num: int, after_equip_level: int):
+        req = EquipmentFreeEnhanceRequest()
+        req.unit_id = unit_id
+        req.equip_slot_num = equip_slot_num
+        req.after_equip_level = after_equip_level
+        return await self.request(req)
+
     async def get_clan_battle_top(self, clan_id: int, is_first: int, current_clan_battle_coin: int):
         req = ClanBattleTopRequest()
         req.clan_id = clan_id
@@ -36,6 +67,12 @@ class pcrclient(apiclient):
     async def get_clan_battle_support_unit_list(self, clan_id: int):
         req = ClanBattleSupportUnitList2Request()
         req.clan_id = clan_id
+        return await self.request(req)
+
+    async def arena_rank(self, limit: int, page: int):
+        req = ArenaRankingRequest()
+        req.limit = limit
+        req.page = page
         return await self.request(req)
 
     async def arena_apply(self, battle_viewer_id: int, opponent_rank: int):
@@ -384,6 +421,10 @@ class pcrclient(apiclient):
     async def recover_stamina(self):
         req = ShopRecoverStaminaRequest()
         req.current_currency_num = self.data.jewel.free_jewel + self.data.jewel.jewel
+        return await self.request(req)
+
+    async def get_arena_history(self):
+        req = ArenaHistoryRequest()
         return await self.request(req)
     
     async def get_arena_info(self):
