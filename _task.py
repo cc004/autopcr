@@ -43,27 +43,27 @@ class JJCBack(TaskList):
     def do_module_list(self) -> list:
         return ["jjc_back"]
 
-class QuestRecommand(Task):
+class QuestRecommand(TaskList):
     def do_module_list(self) -> list:
         return ["get_normal_quest_recommand"]
 
-class FindEquip(Task):
+class FindEquip(TaskList):
     def do_module_list(self) -> list:
         return ["get_need_equip"]
 
-class GetLibraryImport(Task):
+class GetLibraryImport(TaskList):
     def do_module_list(self) -> list:
         return ["get_library_import_data"]
 
-class FindXinsui(Task):
+class FindXinsui(TaskList):
     def do_module_list(self) -> list:
         return ["get_need_xinsui"]
 
-class FindMemory(Task):
+class FindMemory(TaskList):
     def do_module_list(self) -> list:
         return ["get_need_memory"]
 
-class Gacha(Task):
+class Gacha(TaskList):
     def do_module_list(self) -> list:
         return ["gacha_start"]
 
