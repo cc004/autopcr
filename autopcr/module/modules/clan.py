@@ -48,7 +48,7 @@ class clan_equip_request(Module):
             raise SkipError("当前请求尚未结束")
         elif clan.latest_request_time:
             res = await client.equip_get_request(clan.clan.detail.clan_id, 0)
-            msg = f"收到{db.get_inventory_name_san((eInventoryType.Equip, res.request.equip_id))}x{res.request.donation_num}：" + ' '.join(f"{user.name}x{user.num}" for user in res.request.history)
+            msg = f"收到{db.get_equip_name(res.request.equip_id)}x{res.request.donation_num}：" + ' '.join(f"{user.name}x{user.num}" for user in res.request.history)
             self._log(msg.strip("："))
 
         fav = (self.get_config('clan_equip_request_consider_unit') == 'favorite')
@@ -62,6 +62,6 @@ class clan_equip_request(Module):
         if consider_equip:
             (equip_id, num) = consider_equip[0]
             await client.request_equip(equip_id, clan.clan.detail.clan_id)
-            self._log(f"请求【{db.get_inventory_name_san((eInventoryType.Equip, equip_id))}】装备，缺口数量为{num}")
+            self._log(f"请求【{db.get_equip_name(equip_id)}】装备，缺口数量为{num}")
         else:
             raise AbortError("没有可请求的装备")

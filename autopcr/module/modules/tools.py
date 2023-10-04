@@ -69,7 +69,7 @@ class get_clan_support_unit(Module):
 
         msg = sorted(msg, key=lambda x:(x[0], -x[1]))
         for unit_id, strongest, owner_name, unit_info in msg:
-            unit_name = db.get_inventory_name_san((eInventoryType.Unit, unit_id))
+            unit_name = db.get_unit_name(unit_id)
             info = f'{unit_name}({owner_name}): {"满中满" if strongest else "非满警告！"}\n{unit_info}\n'
             self._log(info)
 
