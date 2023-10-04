@@ -30,7 +30,7 @@ class unit_controller(Module):
             skill_level_up_detail.current_level = current_level
             await client.skill_level_up(unit_id, [skill_level_up_detail])
         else:
-            raise ValueError("暂不支持非免费品级提升")
+            raise ValueError("暂不支持非免费技能提升")
 
     async def unit_skill_up_aware(self, unit: UnitData, location: int, skill: SkillLevelInfo, target_skill_level: int, client: pcrclient, limit: GrowthParameter = None):
         if limit:
