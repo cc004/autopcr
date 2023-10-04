@@ -10,6 +10,7 @@ from .story import *
 from .sweep import *
 from .tower import *
 from .tools import *
+from .unit import *
 
 cron_modules = [
     cron1,
@@ -55,6 +56,9 @@ daily_modules = [
 
     jjc_daily,
     pjjc_daily,
+    unit_equip_enhance_up,
+    unit_skill_level_up,
+
     mission_receive_last,
 
     normal_shop,
