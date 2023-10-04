@@ -15,6 +15,31 @@ class SourceIniGetMaintenanceStatusResponse(sdkrequests.SourceIniGetMaintenanceS
             await mgr.try_update_database(int(self.manifest_ver))
 
 @handles
+class SkillLevelUpResponse(responses.SkillLevelUpResponse):
+    async def update(self, mgr: datamgr, request):
+        mgr.unit[self.unit_data.id] = self.unit_data
+
+@handles
+class UnitFreeLevelUpResponse(responses.UnitFreeLevelUpResponse):
+    async def update(self, mgr: datamgr, request):
+        mgr.unit[self.unit_data.id] = self.unit_data
+
+@handles
+class UnitFreePromotionResponse(responses.UnitFreePromotionResponse):
+    async def update(self, mgr: datamgr, request):
+        mgr.unit[self.unit_data.id] = self.unit_data
+
+@handles
+class UnitFreeEquipResponse(responses.UnitFreeEquipResponse):
+    async def update(self, mgr: datamgr, request):
+        mgr.unit[self.unit_data.id] = self.unit_data
+
+@handles
+class EquipmentFreeEnhanceResponse(responses.EquipmentFreeEnhanceResponse):
+    async def update(self, mgr: datamgr, request):
+        mgr.unit[self.unit_data.id] = self.unit_data
+
+@handles
 class ShioriQuestSkipResponse(responses.ShioriQuestSkipResponse):
     async def update(self, mgr: datamgr, request):
         if self.quest_result_list:
@@ -206,6 +231,11 @@ class PresentReceiveAllResponse(responses.PresentReceiveAllResponse):
 
 
 @handles
+class MissionIndexResponse(responses.MissionIndexResponse):
+    async def update(self, mgr: datamgr, request):
+        mgr.missions = self.missions
+
+@handles
 class MissionAcceptResponse(responses.MissionAcceptResponse):
     async def update(self, mgr: datamgr, request):
         if self.rewards:
@@ -241,6 +271,7 @@ class LoadIndexResponse(responses.LoadIndexResponse):
             mgr.unit = {unit.id: unit for unit in self.unit_list}
         if self.user_chara_info:
             mgr.unit_love_data = {unit.chara_id: unit for unit in self.user_chara_info}
+        mgr.growth_unit = {unit.unit_id: unit for unit in self.growth_unit_list}
         mgr.stamina = self.user_info.user_stamina
         mgr.settings = self.ini_setting
         mgr.recover_stamina_exec_count = self.shop.recover_stamina.exec_count
@@ -265,6 +296,7 @@ class HomeIndexResponse(responses.HomeIndexResponse):
         mgr.training_quest_max_count = self.training_quest_max_count
         mgr.quest_dict = {q.quest_id: q for q in self.quest_list}
         shiori_dict = {q.quest_id: q for q in self.shiori_quest_info.quest_list} if self.shiori_quest_info else {}
+        mgr.missions = self.missions
         mgr.quest_dict.update(shiori_dict)
 
         if self.dungeon_info.dungeon_area:

@@ -352,16 +352,20 @@ class database():
                 .to_dict(lambda x: x.id, lambda x: x)
             )
             
-            self.daily_mission: Set[int] = (
+            self.daily_mission_data: Dict[int, DailyMissionDatum] = (
                 DailyMissionDatum.query(db)
-                .select(lambda x: x.daily_mission_id)
-                .to_set()
+                .to_dict(lambda x: x.daily_mission_id, lambda x: x)
             )
             
             self.memory_to_unit: Dict[int, int] = (
                 UnitRarity.query(db)
                 .group_by(lambda x: x.unit_material_id)
                 .to_dict(lambda x: x.key, lambda x: x.first().unit_id)
+            )
+
+            self.growth_parameter: Dict[int, GrowthParameter] = (
+                GrowthParameter.query(db)
+                .to_dict(lambda x: x.growth_id, lambda x: x)
             )
 
             self.unit_data: Dict[int, UnitDatum] = (
@@ -459,8 +463,32 @@ class database():
         except:
             return f"未知物品({item[1]})"
 
+    def get_unit_name(self, unit_id: int) -> str:
+        try:
+            return self.inventory_name[(eInventoryType.Unit, unit_id)]
+        except:
+            return f"未知角色({unit_id})"
+
+    def get_equip_name(self, equip_id: int) -> str:
+        try:
+            return self.inventory_name[(eInventoryType.Equip, equip_id)]
+        except:
+            return f"未知装备({equip_id})"
+
+    def get_item_name(self, item_id: int) -> str:
+        try:
+            return self.inventory_name[(eInventoryType.Item, item_id)]
+        except:
+            return f"未知装备({item_id})"
+
+    def get_room_item_name(self, item_id: int) -> str:
+        try:
+            return self.inventory_name[(eInventoryType.RoomItem, item_id)]
+        except:
+            return f"未知装备({item_id})"
+
     def is_daily_mission(self, mission_id: int) -> bool:
-        return mission_id in self.daily_mission
+        return mission_id in self.daily_mission_data
 
     def is_exp_upper(self, item: ItemType) -> bool:
         return item[0] == eInventoryType.Item and item[1] >= 20000 and item[1] < 21000

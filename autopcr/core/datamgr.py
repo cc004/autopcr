@@ -28,6 +28,8 @@ class datamgr(Component[apiclient]):
     donation_num: int = 0
     team_level: int = 0
     stamina: int = 0
+    missions: List[UserMissionInfo] = None
+    growth_unit: Dict[int, GrowthInfo] = None
     unit: Dict[int, UnitData] = None
     unit_love_data: Dict[int, UserChara] = None
     recover_stamina_exec_count: int = 0
@@ -367,6 +369,15 @@ class datamgr(Component[apiclient]):
 
     def is_empty_deck(self, party_type: ePartyType):
         return all(value == 0 for key, value in vars(self.deck_list[party_type]).items() if key.startswith('unit_id'))
+
+    def is_mission_finished(self, system_id: int):
+        return len(list(
+            flow(self.missions)
+            .where(lambda x: 
+                   db.is_daily_mission(x.mission_id) and
+                   x.mission_status != eMissionStatusType.NoClear and 
+                   db.daily_mission_data[x.mission_id].system_id == system_id)
+        )) != 0
 
     async def request(self, request: Request[TResponse], next: RequestHandler) -> TResponse:
         resp = await next.request(request)
