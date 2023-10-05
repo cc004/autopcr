@@ -7,7 +7,7 @@ from ...db.models import GrowthParameter
 from ...model.enums import *
 from ...model.common import SkillLevelInfo, SkillLevelUpDetail, UnitData
 
-class unit_controller(Module):
+class UnitController(Module):
 
     async def is_growth_unit(self, unit_id: int, client: pcrclient) -> Union[GrowthParameter, None]:
         unit_name = db.get_unit_name(unit_id)
@@ -97,7 +97,7 @@ class unit_controller(Module):
 @name('完成装备强化任务')
 @singlechoice("equip_enhance_up_unit", "强化角色", "100101:日和莉", [f"{unit}:{db.unit_data[unit].unit_name}" for unit in db.unit_data])
 @default(False)
-class unit_equip_enhance_up(unit_controller):
+class unit_equip_enhance_up(UnitController):
     async def do_task(self, client: pcrclient):
         if client.data.is_mission_finished(eSystemId.UNIT_EQUIP_ENHANCE):
             raise SkipError("今日已完成装备强化任务")
@@ -128,7 +128,7 @@ class unit_equip_enhance_up(unit_controller):
 @name('完成技能升级任务')
 @singlechoice("level_up_unit", "强化角色", "100101:日和莉", [f"{unit}:{db.unit_data[unit].unit_name}" for unit in db.unit_data])
 @default(False)
-class unit_skill_level_up(unit_controller):
+class unit_skill_level_up(UnitController):
     async def do_task(self, client: pcrclient):
         if client.data.is_mission_finished(eSystemId.UNIT_SKILL_LVUP):
             raise SkipError("今日已完成技能升级任务")

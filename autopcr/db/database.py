@@ -479,13 +479,13 @@ class database():
         try:
             return self.inventory_name[(eInventoryType.Item, item_id)]
         except:
-            return f"未知装备({item_id})"
+            return f"未知物品({item_id})"
 
     def get_room_item_name(self, item_id: int) -> str:
         try:
             return self.inventory_name[(eInventoryType.RoomItem, item_id)]
         except:
-            return f"未知装备({item_id})"
+            return f"未知房间物品({item_id})"
 
     def is_daily_mission(self, mission_id: int) -> bool:
         return mission_id in self.daily_mission_data
