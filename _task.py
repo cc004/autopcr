@@ -29,7 +29,7 @@ class TaskList(Task):
         try:
             async with accountmgr.load(target) as mgr:
                 resp = await mgr.do_from_key(self.config, self.do_module_list())
-            img = await draw(resp, alian)
+            img = await draw(resp, alian + '_'.join(self.do_module_list()))
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
         except Exception as e:
             traceback.print_exc()
