@@ -1,7 +1,9 @@
 from typing import List
 
+from ...model.common import ChangeRarityUnit
+
 from ...db.models import GachaExchangeLineup
-from ...model.custom import GachaReward
+from ...model.custom import GachaReward, ArenaQueryResponse
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
@@ -73,10 +75,33 @@ class get_clan_support_unit(Module):
             info = f'{unit_name}({owner_name}): {"满中满" if strongest else "非满警告！"}\n{unit_info}\n'
             self._log(info)
 
-@description('查询jjc回刺阵容')
+@description('查询jjc回刺阵容，并自动设置进攻队伍')
 @name('jjc回刺查询')
 @default(True)
 class jjc_back(Module):
+    async def rank_team(self, team: List[ArenaQueryResponse]):
+        def score(x):
+            good = team[x].up
+            bad = team[x].down
+            total = good + bad
+            bad_ratio = bad / total if total else 0
+            return (bad_ratio, x)
+
+        id = list(range(len(team)))
+        return sorted(id, key=lambda x: score(x))
+
+    async def choose_best_team(self, team: List[ArenaQueryResponse], rank_id: List[int], client: pcrclient):
+        all_have = [id for id in rank_id if all(unit.id in client.data.unit and client.data.unit[unit.id].promotion_level > db.equip_max_rank - 3 for unit in team[id].atk)]
+        return None if not all_have else all_have[0]
+
+    async def update_deck(self, units: List[int], client: pcrclient):
+        star_change_unit = [unit for unit in units if client.data.unit[unit].unit_rarity == 5 and client.data.unit[unit].battle_rarity != 0]
+        if star_change_unit:
+            res = [ChangeRarityUnit(unit_id=unit_id, battle_rarity=5) for unit_id in star_change_unit]
+            self._log(f"将{'|'.join([db.get_unit_name(unit_id) for unit_id in star_change_unit])}调至5星")
+            await client.unit_change_rarity(res)
+        await client.deck_update(ePartyType.ARENA, units)
+
     async def get_opponent_info(self, client: pcrclient, viewer_id: int):
         for page in range(1, 6):
             ranking = {info.viewer_id: info for info in (await client.arena_rank(20, page)).ranking}
@@ -106,8 +131,10 @@ class jjc_back(Module):
             raise SkipError(f"对方排名位于您排名之后")
         deck_info = [unit.id for unit in target_info.arena_deck]
         short_info = [unit.id // 100 for unit in target_info.arena_deck]
+
         res = await do_query(short_info, 2)
-        defen = [db.get_inventory_name_san((eInventoryType.Unit, x)) for x in deck_info]
+
+        defen = [db.get_unit_name(x) for x in deck_info]
         defen = f"防守方【{' '.join(defen)}】"
         if res is None:
             raise AbortError(f'{defen}\n数据库未返回数据，请再次尝试查询或前往pcrdfans.com')
@@ -116,6 +143,30 @@ class jjc_back(Module):
 
         res = res[:min(8, len(res))] 
         teams = await render_atk_def_teams(res)
+        # [
+        #   atk: List[Chara(id, star, equip)]
+        #   up: int,
+        #   down: int,
+        # ]
+
+        obj = [{ **re,
+                 **{ 'atk': [{
+                    'id': unit.id * 100 + 1,
+                    'star': unit.star,
+                    'equip': unit.equip } for unit in re['atk']]
+                   }
+                } for re in res]
+        obj = [ArenaQueryResponse.parse_obj(o) for o in obj]
+
+        rank_id = await self.rank_team(obj)
+        best_team_id = await self.choose_best_team(obj, rank_id, client)
+        if best_team_id is not None:
+            self._log(f"选择第{best_team_id + 1}支队伍作为进攻方队伍")
+            team = [unit.id for unit in obj[best_team_id].atk][::-1]
+            await self.update_deck(team, client)
+        else:
+            self._log("未找到合适队伍，请自行选择")
+
         from io import BytesIO
         import base64
         img_byte_array = BytesIO()
