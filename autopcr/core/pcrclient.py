@@ -26,6 +26,19 @@ class pcrclient(apiclient):
     async def logout(self):
         await self.session.clear_session()
 
+    async def deck_update(self, deck_number: int, units: List[int]):
+        req = DeckUpdateRequest()
+        req.deck_number = deck_number
+        cnt = len(units)
+        for i in range(1, 6):
+            setattr(req, f"unit_id_{i}",units[i - 1] if i <= cnt else 0) 
+        return await self.request(req)
+
+    async def unit_change_rarity(self, change_rarity_unit_list: List[ChangeRarityUnit]):
+        req = ChangeRarityRequest()
+        req.change_rarity_unit_list = change_rarity_unit_list
+        return await self.request(req)
+
     async def skill_level_up(self, unit_id: int, skill_levelup_list: List[SkillLevelUpDetail]):
         req = SkillLevelUpRequest()
         req.unit_id = unit_id
