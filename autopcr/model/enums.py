@@ -259,6 +259,39 @@ class eMissionStatusType(Enum):
     AlreadyReceive = 2
     ChallengePeriodEnd = 101
     INVALID_VALUE = -1
+class eMissionCategory(Enum):
+    PLAYERLV = 101
+    CLEARRANK = 102
+    RANK = 103
+    TUTORIAL = 104
+    LINK = 105
+    LOGIN = 106
+    VOTE = 107
+    FRIEND = 108
+    FRIEND_BATTLE = 109
+    EMBLEM = 110
+    QUEST = 200
+    MAINQUEST = 201
+    TRAINING_QUEST = 202
+    DUNGEON = 204
+    ARENA = 205
+    BALENA = 206
+    PALENA = 207
+    TOWER = 208
+    UNIT_EXPAND = 209
+    CHARA = 301
+    REINFORCE = 302
+    SKILL = 303
+    EQUIPMENT = 304
+    ROOM = 305
+    GACHA = 401
+    SHOP = 402
+    JEWEL_BUY = 403
+    GOLD_BUY = 404
+    BUY = 405
+    CLAN = 501
+    EVENT = 601
+    STORY = 602
 class eSrtCatalogStatus(Enum):
     EnemyUnlock = 1
     EnemyReaded = 2
@@ -309,8 +342,12 @@ class ePromotionLevel(Enum):
     Green1 = 21
     Green2 = 22
     Green3 = 23
-    Green4 = 24
+    Orange1 = 24
+    Orange2 = 25
+    Orange3 = 26
+    Orange4 = 27
     INVALID_VALUE = -1
+
 class eClanChatPlayButtonCondition(Enum):
     NONE = 0
     UNOPENED_MINI_GAME_IN_EVENT = 1
@@ -415,4 +452,50 @@ class eGachaDrawType(Enum):
     Legend = 8
     SpecialTicket = 9
     SpFesCmapaign10Shot = 10
+    INVALID_VALUE = -1
+
+class ePeriod(Enum):
+    NONE = 0
+    LOGIN_PERIOD = 1
+    ANNIVERSARY_PERIOD = 2
+
+class eEventType(Enum):
+    HATSUNE = 1
+    INVALID_VALUE = -1
+
+class eBattleLogType(Enum):
+	MISS = 1
+	SET_DAMAGE = 2
+	SET_ABNORMAL = 3
+	SET_RECOVERY = 4
+	SET_BUFF_DEBUFF = 5
+	SET_STATE = 6
+	BUTTON_TAP = 7
+	SET_ENERGY = 8
+	DAMAGE_CHARGE = 9
+	GIVE_VALUE_ADDITIONAL = 10
+	GIVE_VALUE_MULTIPLY = 11
+	WAVE_END_HP = 12
+	WAVE_END_DAMAGE_AMOUNT = 13
+	BREAK = 14
+	INVALID_VALUE = -1
+
+class eClanSupportMemberType(Enum):
+    NONE = 0
+    DUNGEON_SUPPORT_UNIT_1 = 1
+    DUNGEON_SUPPORT_UNIT_2 = 2
+    CLAN_BATTLE_SUPPORT_UNIT_1 = 3
+    CLAN_BATTLE_SUPPORT_UNIT_2 = 4
+
+class eSkillLocationCategory(Enum):
+    NO_SKILLSLOT = 0
+    UNION_BURST_SKILL = 101
+    MAIN_SKILL_1 = 201
+    MAIN_SKILL_2 = 202
+    EX_SKILL_1 = 301
+    EX_SKILL_2 = 302
+    EX_SKILL_3 = 303
+    FREE_SKILL_1 = 401
+    FREE_SKILL_2 = 402
+    FREE_SKILL_3 = 403
     INVALID_VALUE = -1

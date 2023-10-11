@@ -11,14 +11,15 @@ class ModuleManager:
     _modules: List[type] = []
 
     def __init__(self, config, parent):
-        from .modules import daily_modules, tool_modules, cron_modules
+        from .modules import daily_modules, tool_modules, cron_modules, hidden_modules
         from .accountmgr import Account
 
         self.parent: Account = parent
         self.cron_modules: List[Module] = [m(self) for m in cron_modules]
         self.daily_modules: List[Module] = [m(self) for m in daily_modules]
         self.tool_modules: List[Module] = [m(self) for m in tool_modules]
-        self.name_to_modules: Dict[str, Module] = {m.key: m for m in (self.daily_modules + self.tool_modules)}
+        self.hidden_modules: List[Module] = [m(self) for m in hidden_modules]
+        self.name_to_modules: Dict[str, Module] = {m.key: m for m in (self.daily_modules + self.tool_modules + self.hidden_modules)}
         self.client = self.parent.get_client()
         self._crons = []
         self._load_config(config)

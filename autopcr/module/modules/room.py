@@ -37,7 +37,7 @@ class room_upper_all(Module):
         for x in room.user_room_item_list:
             if db.is_room_item_level_upable(client.data.team_level, x):
                 await client.room_level_up_item(floors[x.serial_id], x)
-                self._log(f"开始升级{db.get_inventory_name_san((eInventoryType.RoomItem, x.room_item_id))}至{x.room_item_level + 1}级")
+                self._log(f"开始升级{db.get_room_item_name(x.room_item_id)}至{x.room_item_level + 1}级")
 
         if not self.log:
             raise SkipError('没有可升级的家园物品。')
@@ -58,7 +58,7 @@ class room_like_back(Module):
         while pos < like_history.today_be_liked_count or cnt < 10:
             viewer_id = 0
             if pos < like_history.today_be_liked_count:
-                viewer_id = like_history.like_history[pos].viewer_id
+                viewer_id = like_history.be_liked_history[pos].viewer_id
             user = await client.room_visit(viewer_id)
             pos += 1
             if user.room_user_info.today_like_flag:
@@ -84,7 +84,7 @@ class love_up(Module):
     async def do_task(self, client: pcrclient):
         for unit in client.data.unit_love_data.values():
             unit_id = unit.chara_id * 100 + 1
-            unit_name = db.get_inventory_name_san((eInventoryType.Unit, unit_id))
+            unit_name = db.get_unit_name(unit_id)
             love_level, total_love = db.max_total_love(client.data.unit[unit_id].unit_rarity)
             if unit.chara_love < total_love:
                 dis = total_love - unit.chara_love

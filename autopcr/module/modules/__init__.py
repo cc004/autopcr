@@ -10,6 +10,7 @@ from .story import *
 from .sweep import *
 from .tower import *
 from .tools import *
+from .unit import *
 
 cron_modules = [
     cron1,
@@ -53,6 +54,11 @@ daily_modules = [
     hatsune_gacha_exchange,
     hatsune_mission_accept2,
 
+    jjc_daily,
+    pjjc_daily,
+    unit_equip_enhance_up,
+    unit_skill_level_up,
+
     mission_receive_last,
 
     normal_shop,
@@ -61,6 +67,7 @@ daily_modules = [
     jjc_shop,
     pjjc_shop,
     
+    clan_equip_request,
     love_up,
     main_story_reading,
     tower_story_reading,
@@ -71,7 +78,13 @@ daily_modules = [
     user_info,
 ]
 
+hidden_modules = [
+    gacha_start
+]
+
 tool_modules = [
+    jjc_back,
+    get_clan_support_unit,
     get_library_import_data,
     get_need_equip,
     get_need_memory,

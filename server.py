@@ -18,7 +18,7 @@ from hoshino.config import SUPERUSERS
 from hoshino.util import escape
 from hoshino.typing import CQEvent, MessageSegment
 from ._util import get_result
-from ._task import DailyClean, FindEquip, FindMemory, FindXinsui, Task, GetLibraryImport, QuestRecommand, Gacha
+from ._task import *
 import datetime
 import random
 
@@ -43,6 +43,7 @@ sv_help = f"""
 [{prefix}查记忆碎片 [昵称] [可刷取]] 查询缺口记忆碎片，可刷取只仅查看h图可刷的碎片
 [{prefix}查装备 [昵称] [rank] [fav]] 查询缺口装备，[rank]为数字，只查询>=rank的角色缺口装备，fav表示只查询favorite的角色
 [{prefix}刷图推荐 [昵称] [rank] [fav]] 查询缺口装备的刷图推荐，格式同上
+[{prefix}公会支援] 查询公会支援角色配置
 """
 
 if address is None:
@@ -194,10 +195,25 @@ async def clear_daily_all(bot: HoshinoBot, ev: CQEvent, tokens: List[Tuple[str, 
     for token in tokens:
         loop.create_task(consumer(DailyClean(token, bot, ev)))
 
+@sv.on_fullmatch(f"{prefix}卡池")
+async def gacha_current(bot: HoshinoBot, ev: CQEvent):
+    msg = '\n'.join(db.get_cur_gacha())
+    await bot.finish(ev, msg)
+
+@sv.on_prefix(f"{prefix}公会支援")
+@pre_process
+async def clan_support(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
+    await consumer(ClanBattleSupport(token, bot, ev))
+
 @sv.on_prefix(f"{prefix}查心碎")
 @pre_process
 async def find_xinsui(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
     await consumer(FindXinsui(token, bot, ev))
+
+@sv.on_prefix(f"{prefix}jjc回刺")
+@pre_process
+async def jjc_back(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
+    await consumer(JJCBack(token, bot, ev))
 
 @sv.on_prefix(f"{prefix}查记忆碎片")
 @pre_process
@@ -225,7 +241,11 @@ async def shilian(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
     except:
         pass
     try:
-        pool_id = ev.message.extract_plain_text().split(' ')[-2].strip()
+        msg = ev.message.extract_plain_text().split(' ')
+        if cc_until_get:
+            pool_id = msg[-3].strip() + " " + msg[-2].strip()
+        else:
+            pool_id = msg[-2].strip() + " " + msg[-1].strip()
     except:
         pass
 
@@ -312,7 +332,7 @@ async def get_config(bot, ev, tot = False):
         user_id = str(ev.user_id)
     else:   #指定对象
         if not priv.check_priv(ev,priv.ADMIN):
-            return False, '[CQ:reply,id={ev.message_id}]指定用户清日常需要管理员权限', token
+            return False, f'[CQ:reply,id={ev.message_id}]指定用户清日常需要管理员权限', token
 
     accounts = []
     alian = escape(alian)
@@ -323,7 +343,7 @@ async def get_config(bot, ev, tot = False):
                 accounts.append((escape(account.alian), file))
 
     if not accounts:
-        return False, "[CQ:reply,id={ev.message_id}]请发送【#配置日常】配置", token
+        return False, f"[CQ:reply,id={ev.message_id}]请发送【{prefix}配置日常】配置", token
 
     if tot:
         return True, "", accounts

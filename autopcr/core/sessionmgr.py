@@ -1,7 +1,7 @@
 from .base import Component, RequestHandler
 from .apiclient import apiclient, ApiException
 from ..bsdk.bsdkclient import bsdkclient
-import asyncio, json, re, os, random
+import json, os, random
 from ..model.models import *
 from ..constants import CACHE_DIR
 import hashlib
@@ -48,6 +48,27 @@ class sessionmgr(Component[apiclient]):
                     )
                     if not (await next.request(req)).is_risk:
                         break
+                    else:
+                        for _ in range(5):
+                            from ..bsdk.bsgamesdk import captch
+                            cap=await captch()
+                            captch_done=await self.bsdk.captchaVerifier(self.bsdk.account, cap['gt'], cap['challenge'], cap['gt_user_id'])
+                            req = ToolSdkLoginRequest(
+                                uid=self._sdkaccount['uid'],
+                                access_key=self._sdkaccount['access_key'],
+                                platform=str(self._platform),
+                                channel_id=str(self._channel),
+                                challenge=captch_done['challenge'],
+                                validate_=captch_done['validate'],
+                                seccode=capch_done['validate']+"|jordan",
+                                captcha_type='1',
+                                image_token='',
+                                captcha_code='',
+                            )
+                            if not (await next.request(req)).is_risk:
+                                break
+                        else:
+                            raise ValueError("登录失败，帐号存在风险")
                 except ApiException:
                     pass
             
@@ -106,3 +127,6 @@ class sessionmgr(Component[apiclient]):
             if ex.status == 3 and self.auto_relogin:
                 self._logged = False
             raise
+
+    async def clear_session(self):
+        self._logged = False

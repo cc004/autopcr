@@ -114,7 +114,7 @@ class smart_hard_sweep(Module):
                         resp = await client.quest_skip_aware(quest.quest_id, max_times)
                         clean_cnt[quest.quest_id] += max_times
                         tmp.extend([item for item in resp if (item.type, item.id) == token]) 
-                    except SkipError:
+                    except SkipError as e:
                         pass
                     except AbortError as e:
                         stop = True
@@ -135,6 +135,8 @@ class smart_hard_sweep(Module):
                 self._log("---------")
             if tmp:
                 self._log(await client.serlize_reward(tmp))
+            if not self.log:
+                self._log("需刷取的碎片图均无次数")
 
 @singlechoice("vh_sweep_campaign_times", "庆典次数", 3, [0, 3, 6])
 @singlechoice("vh_sweep_times", "非庆典次数", 3, [0, 3, 6])

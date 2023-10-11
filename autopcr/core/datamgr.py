@@ -28,6 +28,8 @@ class datamgr(Component[apiclient]):
     donation_num: int = 0
     team_level: int = 0
     stamina: int = 0
+    missions: List[UserMissionInfo] = None
+    growth_unit: Dict[int, GrowthInfo] = None
     unit: Dict[int, UnitData] = None
     unit_love_data: Dict[int, UserChara] = None
     recover_stamina_exec_count: int = 0
@@ -46,6 +48,7 @@ class datamgr(Component[apiclient]):
     deck_list: Dict[ePartyType, LoadDeckData] = None
     campaign_list: List[int] = None
     gacha_point: Dict[int, GachaPointInfo] = None
+    dispatch_units: List[UnitDataForClanMember] = None
 
     def __init__(self):
         self.finishedQuest = set()
@@ -129,29 +132,36 @@ class datamgr(Component[apiclient]):
         self._inventory.clear()
         self.hatsune_quest_dict.clear()
 
-    def get_unique_equip_material_demand(self, unit_id: int, token: ItemType) -> int:
-        if unit_id not in db.unit_unique_equip:
+    def get_unique_equip_material_demand(self, equip_slot:int, unit_id: int, token: ItemType) -> int:
+        if unit_id not in db.unit_unique_equip[equip_slot]:
             return 0
-        equip_id = db.unit_unique_equip[unit_id].equip_id
+        equip_id = db.unit_unique_equip[equip_slot][unit_id].equip_id
         rank = self.unit[unit_id].unique_equip_slot[0].rank if unit_id in self.unit and self.unit[unit_id].unique_equip_slot else -1
         return (
             flow(db.unique_equip_required[equip_id].items())
-            .where(lambda x: x[0] > rank)
+            .where(lambda x: x[0] >= rank)
             .select(lambda x: x[1][token])
             .sum()
         )
 
-    def get_need_unit_need_eqiup(self, unit_id: int) -> typing.Counter[ItemType]:
+    def get_unit_eqiup_demand(self, unit_id: int) -> typing.Counter[ItemType]:
         unit = self.unit[unit_id]
         rank = unit.promotion_level
 
         return db.craft_equip(
-            flow(db.unit_promotion[unit_id].items())
+            flow(db.unit_promotion_equip_count[unit_id].items())
             .where(lambda x: x[0] >= rank)
             .select(lambda x: x[1])
             .sum(seed=Counter()) - 
             Counter((eInventoryType.Equip, equip.id) for equip in unit.equip_slot if equip.is_slot)
         )
+
+    def get_exceed_level_unit_demand(self, unit_id: int, token: ItemType) -> int:
+        if unit_id in self.unit and self.unit[unit_id].exceed_stage:
+            return 0
+        if unit_id not in db.exceed_level_unit_required: # 怎么还没有环奈
+            return 0
+        return db.exceed_level_unit_required[unit_id].consume_num_1 # 1 memory 2 ring
 
     def get_rarity_memory_demand(self, unit_id: int, token: ItemType) -> int:
         rarity = -1
@@ -242,7 +252,7 @@ class datamgr(Component[apiclient]):
                 continue
             if like_unit_only and not self.unit[unit_id].favorite_flag:
                 continue
-            need = self.get_need_unit_need_eqiup(unit_id)
+            need = self.get_unit_eqiup_demand(unit_id)
             if need:
                 cnt += need
         return cnt 
@@ -260,7 +270,7 @@ class datamgr(Component[apiclient]):
             if token not in db.inventory_name: # 未来角色
                 continue
 
-            need = self.get_rarity_memory_demand(unit_id, token) + self.get_unique_equip_memory_demand(unit_id, token)
+            need = self.get_rarity_memory_demand(unit_id, token) + self.get_unique_equip_memory_demand(unit_id, token) + self.get_exceed_level_unit_demand(unit_id, token) * 0
             result[token] += need
 
         return result
@@ -275,14 +285,14 @@ class datamgr(Component[apiclient]):
         result: List[Tuple[ItemType, int]] = []
         for unit_id in self.unit:
             token = (eInventoryType.Unit, unit_id)
-            need = self.get_unique_equip_material_demand(unit_id, db.xinsui)
+            need = self.get_unique_equip_material_demand(1, unit_id, db.xinsui)
             if need:
                 cnt += need
                 result.append((token, need))
         return result, cnt 
 
     def get_unique_equip_memory_demand(self, unit_id: int, token: ItemType) -> int:
-        return self.get_unique_equip_material_demand(unit_id, token)
+        return self.get_unique_equip_material_demand(1, unit_id, token)
 
     def get_max_quest(self, quests: Dict[int, TrainingQuestDatum], sweep_available = False) -> int:
         now = datetime.datetime.now()
@@ -357,7 +367,20 @@ class datamgr(Component[apiclient]):
         else:
             raise ValueError(f"未知的商店{shop_id}")
 
+    def is_empty_deck(self, party_type: ePartyType):
+        return all(value == 0 for key, value in vars(self.deck_list[party_type]).items() if key.startswith('unit_id'))
+
+    def is_mission_finished(self, system_id: int):
+        return len(list(
+            flow(self.missions)
+            .where(lambda x: 
+                   db.is_daily_mission(x.mission_id) and
+                   x.mission_status != eMissionStatusType.NoClear and 
+                   db.daily_mission_data[x.mission_id].system_id == system_id)
+        )) != 0
+
     async def request(self, request: Request[TResponse], next: RequestHandler) -> TResponse:
         resp = await next.request(request)
         if resp: await resp.update(self, request)
         return resp
+
