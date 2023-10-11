@@ -204,7 +204,7 @@ async def timing():
 async def clear_daily_all(bot: HoshinoBot, ev: CQEvent, tokens: List[Tuple[str, str]]):
     loop = asyncio.get_event_loop()
     for token in tokens:
-        loop.create_task(consumer(DailyClean(token, bot, ev, qid=ev.user_id)))
+        loop.create_task(consumer(DailyClean(token, bot, ev)))
 
 
 @sv.on_fullmatch(f"{prefix}卡池")
