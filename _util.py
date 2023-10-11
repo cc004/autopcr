@@ -49,7 +49,7 @@ async def draw_line(data: list, alian: str):
     return file
 
 
-async def draw(data: dict, alian: str, qid):
+async def draw(data: dict, alian: str, qid: int):
     tmp = {
         "name": [],
         "config": [],
