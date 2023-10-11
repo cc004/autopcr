@@ -23,6 +23,99 @@ class pcrclient(apiclient):
     async def login(self):
         await self.request(None)
 
+    async def logout(self):
+        await self.session.clear_session()
+
+    async def deck_update(self, deck_number: int, units: List[int]):
+        req = DeckUpdateRequest()
+        req.deck_number = deck_number
+        cnt = len(units)
+        for i in range(1, 6):
+            setattr(req, f"unit_id_{i}",units[i - 1] if i <= cnt else 0) 
+        return await self.request(req)
+
+    async def unit_change_rarity(self, change_rarity_unit_list: List[ChangeRarityUnit]):
+        req = ChangeRarityRequest()
+        req.change_rarity_unit_list = change_rarity_unit_list
+        return await self.request(req)
+
+    async def skill_level_up(self, unit_id: int, skill_levelup_list: List[SkillLevelUpDetail]):
+        req = SkillLevelUpRequest()
+        req.unit_id = unit_id
+        req.skill_levelup_list = skill_levelup_list
+        return await self.request(req)
+
+    async def unit_free_level_up(self, unit_id: int, after_level: int):
+        req = UnitFreeLevelUpRequest()
+        req.unit_id = unit_id
+        req.after_level = after_level
+        return await self.request(req)
+
+    async def unit_free_promotion(self, unit_id: int, target_promotion_level: int):
+        req = UnitFreePromotionRequest()
+        req.unit_id = unit_id
+        req.target_promotion_level = target_promotion_level
+        return await self.request(req)
+
+    async def unit_free_equip(self, unit_id: int, equip_slot_num_list: List[int]):
+        req = UnitFreeEquipRequest()
+        req.unit_id = unit_id
+        req.equip_slot_num_list = equip_slot_num_list
+        return await self.request(req)
+
+    async def equipment_free_enhance(self, unit_id: int, equip_slot_num: int, after_equip_level: int):
+        req = EquipmentFreeEnhanceRequest()
+        req.unit_id = unit_id
+        req.equip_slot_num = equip_slot_num
+        req.after_equip_level = after_equip_level
+        return await self.request(req)
+
+    async def get_clan_battle_top(self, clan_id: int, is_first: int, current_clan_battle_coin: int):
+        req = ClanBattleTopRequest()
+        req.clan_id = clan_id
+        req.is_first = is_first
+        req.current_clan_battle_coin = current_clan_battle_coin
+        return await self.request(req)
+
+    async def get_clan_battle_support_unit_list(self, clan_id: int):
+        req = ClanBattleSupportUnitList2Request()
+        req.clan_id = clan_id
+        return await self.request(req)
+
+    async def arena_rank(self, limit: int, page: int):
+        req = ArenaRankingRequest()
+        req.limit = limit
+        req.page = page
+        return await self.request(req)
+
+    async def arena_apply(self, battle_viewer_id: int, opponent_rank: int):
+        req = ArenaApplyRequest()
+        req.battle_viewer_id = battle_viewer_id
+        req.opponent_rank = opponent_rank
+        return await self.request(req)
+
+    async def arena_start(self, token: str, battle_viewer_id: int, remain_battle_number: int, disable_skin: int):
+        req = ArenaStartRequest()
+        req.token = token
+        req.battle_viewer_id = battle_viewer_id
+        req.remain_battle_number = remain_battle_number
+        req.disable_skin = disable_skin
+        return await self.request(req)
+
+    async def grand_arena_apply(self, battle_viewer_id: int, opponent_rank: int):
+        req = GrandArenaApplyRequest()
+        req.battle_viewer_id = battle_viewer_id
+        req.opponent_rank = opponent_rank
+        return await self.request(req)
+
+    async def grand_arena_start(self, token: str, battle_viewer_id: int, remain_battle_number: int, disable_skin: int):
+        req = GrandArenaStartRequest()
+        req.token = token
+        req.battle_viewer_id = battle_viewer_id
+        req.remain_battle_number = remain_battle_number
+        req.disable_skin = disable_skin
+        return await self.request(req)
+
     async def multi_give_gift(self, unit_id: int, cakes: List[SendGiftData]):
         req = RoomMultiGiveGiftRequest()
         req.unit_id = unit_id
@@ -268,12 +361,18 @@ class pcrclient(apiclient):
         req.join_condition = cond
         await self.request(req)
 
-    async def get_clan_info(self) -> ClanData:
+    async def get_clan_info(self):
         if self.data.clan == 0: return None
         req = ClanInfoRequest()
         req.clan_id = self.data.clan
         req.get_user_equip = 0
-        return (await self.request(req)).clan
+        return (await self.request(req))
+
+    async def request_equip(self, equip_id: int, clan_id: int):
+        req = EquipRequestRequest()
+        req.equip_id = equip_id
+        req.clan_id = clan_id
+        return await self.request(req)
     
     async def donate_equip(self, request: EquipRequests, times: int):
         req = EquipDonateRequest()
@@ -312,6 +411,12 @@ class pcrclient(apiclient):
         req.quest_id = quest
         req.random_count = times
         return await self.request(req)
+
+    async def equip_get_request(self, clan_id: int, message_id: int):
+        req = EquipGetRequestRequest()
+        req.clan_id = clan_id
+        req.message_id = message_id
+        return await self.request(req)
     
     async def getrequests(self):
         req = ClanChatInfoListRequest()
@@ -329,6 +434,10 @@ class pcrclient(apiclient):
     async def recover_stamina(self):
         req = ShopRecoverStaminaRequest()
         req.current_currency_num = self.data.jewel.free_jewel + self.data.jewel.jewel
+        return await self.request(req)
+
+    async def get_arena_history(self):
+        req = ArenaHistoryRequest()
         return await self.request(req)
     
     async def get_arena_info(self):
@@ -398,6 +507,60 @@ class pcrclient(apiclient):
         if target is not None and len(result) == 0:
             result.append(f"{db.get_inventory_name_san(target)}x0({self.data.get_inventory(target)})")
         return '\n'.join(result)
+
+    async def serialize_unit_info(self, unit_data: Union[UnitData, UnitDataLight]) -> Tuple[bool, str]:
+        info = []
+        ok = True
+        def add_info(prefix, cur, expect = None):
+            if expect:
+                nonlocal ok
+                info.append(f'{prefix}:{cur}/{expect}')
+                ok &= (cur == expect)
+            else:
+                info.append(f'{prefix}:{cur}')
+        unit_id = unit_data.id
+        add_info("等级", unit_data.unit_level, db.team_max_level)
+        if unit_data.battle_rarity:
+            add_info("星级", f"{unit_data.battle_rarity}-{unit_data.unit_rarity}")
+        else:
+            add_info("星级", f"{unit_data.unit_rarity}")
+        add_info("品级", unit_data.promotion_level, db.equip_max_rank)
+        for id, union_burst in enumerate(unit_data.union_burst):
+            if union_burst.skill_level:
+                add_info(f"ub{id}", union_burst.skill_level, unit_data.unit_level)
+        for id, skill in enumerate(unit_data.main_skill):
+            if skill.skill_level:
+                add_info(f"skill{id}", skill.skill_level, unit_data.unit_level)
+        for id, skill in enumerate(unit_data.ex_skill):
+            if skill.skill_level:
+                add_info(f"ex{id}", skill.skill_level, unit_data.unit_level)
+        equip_info = []
+        for id, equip in enumerate(unit_data.equip_slot):
+            equip_id = getattr(db.unit_promotion[unit_id][unit_data.promotion_level], f'equip_slot_{id + 1}')
+            if not equip.is_slot:
+                if equip_id != 999999:
+                    equip_info.append('-')
+                    ok = False
+                else:
+                    equip_info.append('*')
+            else:
+                star = db.get_equip_star_from_pt(equip_id, equip.enhancement_pt)
+                ok &= (star == 5)
+                equip_info.append(str(star))
+        equip_info = '/'.join(equip_info)
+        add_info("装备", equip_info)
+
+        for id, equip in enumerate(unit_data.unique_equip_slot):
+            equip_slot = id + 1
+            have_unique = (equip_slot in db.unit_unique_equip and unit_id in db.unit_unique_equip[equip_slot])
+            max_level = 0 if not have_unique else db.unique_equipment_max_level[equip_slot]
+            if have_unique:
+                if not equip.is_slot:
+                    add_info(f"专武{id}", '-', max_level)
+                else:
+                    add_info(f"专武{id}", db.get_unique_equip_level_from_pt(equip_slot, equip.enhancement_pt), max_level)
+        
+        return ok, ' '.join(info)
 
     async def recover_challenge(self, quest: int):
         req = QuestRecoverChallengeRequest()

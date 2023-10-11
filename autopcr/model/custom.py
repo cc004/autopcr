@@ -2,7 +2,7 @@ from __future__ import annotations
 from .enums import eInventoryType
 from typing import List, Tuple, Counter as CounterType
 from collections import Counter
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 ItemType = Tuple[eInventoryType, int]
 
@@ -40,3 +40,15 @@ class GachaReward():
         self.prize_rarity += oth.prize_rarity
 
         return self
+
+
+class ArenaQueryUnit(BaseModel):
+    equip: bool = None
+    id: int = None
+    star: int = None
+
+class ArenaQueryResponse(BaseModel):
+    id: int = None
+    atk: List[ArenaQueryUnit] = None
+    up: int = None
+    down: int = None

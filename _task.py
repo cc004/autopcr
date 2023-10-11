@@ -1,6 +1,7 @@
-from abc import abstractclassmethod
+from abc import abstractclassmethod, abstractproperty
 from nonebot import MessageSegment
 from hoshino.typing import MessageSegment
+import traceback
 
 from .autopcr.module.accountmgr import instance as accountmgr
 from ._util import draw, render_forward_msg
@@ -16,77 +17,55 @@ class Task():
     @abstractclassmethod
     async def do_task(self): ...
 
-class QuestRecommand(Task):
+class TaskList(Task):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    async def do_task(self):
-        alian, target, bot, ev, qid, gid = self.info 
-        try:
-            async with accountmgr.load(target) as mgr:
-                resp = await mgr.do_from_key(self.config, ['get_normal_quest_recommand'])
-            img = await draw(resp, alian)
-            await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
-        except Exception as e:
-            await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + str(e))
+    @abstractclassmethod
+    def do_module_list(self) -> list: ...
 
-class FindEquip(Task):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    async def do_task(self):
-        alian, target, bot, ev, qid, gid = self.info 
-        try:
-            async with accountmgr.load(target) as mgr:
-                resp = await mgr.do_from_key(self.config, ['get_need_equip'])
-            img = await draw(resp, alian)
-            await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
-        except Exception as e:
-            await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + str(e))
-
-class GetLibraryImport(Task):
-    async def do_task(self):
-        alian, target, bot, ev, qid, gid = self.info 
-        try:
-            async with accountmgr.load(target) as mgr:
-                resp = await mgr.do_from_key(self.config, ["get_library_import_data"])
-            msg = render_forward_msg([resp])
-            await bot.send_group_forward_msg(group_id=ev.group_id, messages=msg)
-        except Exception as e:
-            await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + str(e))
-
-class FindXinsui(Task):
     async def do_task(self):
         alian, target, bot, ev, qid, gid = self.info
         try:
             async with accountmgr.load(target) as mgr:
-                resp = await mgr.do_from_key(self.config, ["get_need_xinsui"])
-            img = await draw(resp, alian)
+                resp = await mgr.do_from_key(self.config, self.do_module_list())
+            img = await draw(resp, alian + '_'.join(self.do_module_list()))
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
         except Exception as e:
+            traceback.print_exc()
             await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + str(e))
 
-class FindMemory(Task):
-    async def do_task(self):
-        alian, target, bot, ev, qid, gid = self.info
-        try:
-            async with accountmgr.load(target) as mgr:
-                resp = await mgr.do_from_key(self.config, ["get_need_memory"])
-            img = await draw(resp, alian)
-            await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
-        except Exception as e:
-            await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + str(e))
+class ClanBattleSupport(TaskList):
+    def do_module_list(self) -> list:
+        return ["get_clan_support_unit"]
 
-class Gacha(Task):
-    async def do_task(self):
-        alian, target, bot, ev, qid, gid = self.info
-        try:
-            async with accountmgr.load(target) as mgr:
-                resp = await mgr.do_from_key(self.config, ["gacha_start"])
-            img = await draw(resp, alian)
-            await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
-        except Exception as e:
-            await bot.send(ev, f"[CQ:reply,id={ev.message_id}]" + str(e))
+class JJCBack(TaskList):
+    def do_module_list(self) -> list:
+        return ["jjc_back"]
+
+class QuestRecommand(TaskList):
+    def do_module_list(self) -> list:
+        return ["get_normal_quest_recommand"]
+
+class FindEquip(TaskList):
+    def do_module_list(self) -> list:
+        return ["get_need_equip"]
+
+class GetLibraryImport(TaskList):
+    def do_module_list(self) -> list:
+        return ["get_library_import_data"]
+
+class FindXinsui(TaskList):
+    def do_module_list(self) -> list:
+        return ["get_need_xinsui"]
+
+class FindMemory(TaskList):
+    def do_module_list(self) -> list:
+        return ["get_need_memory"]
+
+class Gacha(TaskList):
+    def do_module_list(self) -> list:
+        return ["gacha_start"]
 
 class DailyClean(Task):
     async def do_task(self):

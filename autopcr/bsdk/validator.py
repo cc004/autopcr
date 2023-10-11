@@ -1,5 +1,5 @@
 from ..util import aiorequests, questutils
-from json import dumps, loads
+from json import loads
 import asyncio
 
 validate_dict = {}
@@ -26,45 +26,30 @@ async def manualValidator(account, gt, challenge, userid):
     return info
 
 async def autoValidator(account, gt, challenge, userid):
-    url = f"https://pcrd.tencentbot.top/geetest_renew?captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
-    # url = f"http://help.tencentbot.top/geetest?captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
-    validate = ""
-    '''
-    url = f"https://help.tencentbot.top/geetest/?captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
-    print(url)
-    validate = input()
-    return validate
-    '''
+    url = f"https://pcrd.tencentbot.top/geetest_renew"
     header = {"Content-Type": "application/json", "User-Agent": "autopcr/1.0.0"}
-    succ = 0
     info = ""
-    print(url)
-    #await bot.send_private_msg(user_id=acinfo['admin'], message=f"thread{ordd}: Auto verifying\n欲手动过码，请发送 validate{ordd} manual")
     print(f"farm: Auto verifying")
+    ret = None
     try:
-        # res = await (await aiorequests.post(url="http://pcrd.tencentbot.top/validate", data=dumps({"url": url}), headers=header)).content
-        res = await (await aiorequests.get(url=url, headers=header)).content
-        print(res)
-        #if str(res.status_code) != "200":
-        #    continue
+        res = await aiorequests.get(url=url, headers=header)
+        res.raise_for_status()
+        res = await res.content
         res = loads(res)
         uuid = res["uuid"]
         msg = [f"uuid={uuid}"]
         ccnt = 0
-        ret = None
         while ccnt < 10:
             ccnt += 1
-            res = await (await aiorequests.get(url=f"https://pcrd.tencentbot.top/check/{uuid}", headers=header)).content
-            #if str(res.status_code) != "200":
-            #    continue
-            print(res)
+            res = await aiorequests.get(url=f"https://pcrd.tencentbot.top/check/{uuid}", headers=header)
+            res.raise_for_status()
+            res = await res.content
             res = loads(res)
             if "queue_num" in res:
                 nu = res["queue_num"]
                 msg.append(f"queue_num={nu}")
                 tim = min(int(nu), 3) * 10
                 msg.append(f"sleep={tim}")
-                #await bot.send_private_msg(user_id=acinfo['admin'], message=f"thread{ordd}: \n" + "\n".join(msg))
                 print(f"farm:\n" + "\n".join(msg))
                 msg = []
                 print(f'farm: {uuid} in queue, sleep {tim} seconds')
@@ -72,20 +57,14 @@ async def autoValidator(account, gt, challenge, userid):
             else:
                 info = res["info"]
                 if info in ["fail", "url invalid"]:
-                    break
+                    raise Exception("Captcha failed")
                 elif info == "in running":
                     await asyncio.sleep(8)
                 elif 'validate' in info:
                     ret = info
             if ccnt >= 10:
-                break
                 raise Exception("Captcha failed")
     except:
-        raise
-    #await bot.send_private_msg(user_id=acinfo['admin'], message=f"thread{ordd}: succ={succ} validate={validate}")
-    if not ret:
-        ret = await manualValidator(account, gt, challenge, userid)
+        if not ret: ret = await manualValidator(account, gt, challenge, userid)
 
-    # captcha_lck.release()
-    # await captcha_lck.acquire()
     return ret
