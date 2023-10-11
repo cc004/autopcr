@@ -10,12 +10,14 @@ import asyncio
 PATH = os.path.dirname(__file__)
 RESULT = os.path.join(PATH, "result")
 
-async def get_result(alian):
-    file = os.path.join(RESULT, f"{alian}.jpg")
+
+async def get_result(alian, qid):
+    file = os.path.join(RESULT, f"{alian}_{str(qid)}.jpg")
     if not os.path.exists(file):
         return False, "不存在最近一次清日常记录"
     else:
         return True, file
+
 
 def hightlight_rule(value):
     if value == "success":
@@ -30,26 +32,30 @@ def hightlight_rule(value):
         color = "#FFFFFF"
     return f"background-color: {color}"
 
+
 async def draw_line(data: list, alian: str):
     tmp = {
-            "msg": [],
-            }
+        "msg": [],
+    }
     for value in data:
         tmp["msg"].append(value.replace("\n", "<br />"))
 
     df = pd.DataFrame(tmp)
-    df = df.style.set_table_styles([{'selector' : 'thead tr', 'props' : [('background-color', '#F5F5D5!important')]}, {'selector' : 'tr:nth-child(odd)', 'props' : [('background-color', '#E0E0FF')]}, {'selector' : 'tr:nth-child(even)', 'props' : [('background-color', '#F8F8F8')]}])
+    df = df.style.set_table_styles([{'selector': 'thead tr', 'props': [('background-color', '#F5F5D5!important')]},
+                                    {'selector': 'tr:nth-child(odd)', 'props': [('background-color', '#E0E0FF')]},
+                                    {'selector': 'tr:nth-child(even)', 'props': [('background-color', '#F8F8F8')]}])
     file = os.path.join(RESULT, f"{alian}_tmp.jpg")
     imgkit.from_string(df.to_html(index=False, escape=False), file)
     return file
 
-async def draw(data: dict, alian: str):
+
+async def draw(data: dict, alian: str, qid):
     tmp = {
-            "name": [],
-            "config": [],
-            "status": [],
-            "result": [],
-            }
+        "name": [],
+        "config": [],
+        "status": [],
+        "result": [],
+    }
     result = data['result']
     for key in data['order']:
         value = result[key]
@@ -61,10 +67,14 @@ async def draw(data: dict, alian: str):
         tmp["result"].append(value['log'].replace("\n", "<br />"))
 
     df = pd.DataFrame(tmp)
-    df = df.style.applymap(hightlight_rule, subset=['status']).set_table_styles([{'selector' : 'thead tr', 'props' : [('background-color', '#F5F5D5!important')]}, {'selector' : 'tr:nth-child(odd)', 'props' : [('background-color', '#E0E0FF')]}, {'selector' : 'tr:nth-child(even)', 'props' : [('background-color', '#F8F8F8')]}])
-    file = os.path.join(RESULT, f"{alian}.jpg")
+    df = df.style.applymap(hightlight_rule, subset=['status']).set_table_styles(
+        [{'selector': 'thead tr', 'props': [('background-color', '#F5F5D5!important')]},
+         {'selector': 'tr:nth-child(odd)', 'props': [('background-color', '#E0E0FF')]},
+         {'selector': 'tr:nth-child(even)', 'props': [('background-color', '#F8F8F8')]}])
+    file = os.path.join(RESULT, f"{alian}_{str(qid)}.jpg")
     imgkit.from_string(df.to_html(index=False, escape=False), file)
     return file
+
 
 def render_forward_msg(msg_list: list, uid=244115379, name='兰德索尔图书馆管理员'):
     forward_msg = []
@@ -79,6 +89,7 @@ def render_forward_msg(msg_list: list, uid=244115379, name='兰德索尔图书�
         })
     return forward_msg
 
-if __name__ == "__main__":
-    asyncio.run(draw(json.loads(open("test.json" ,"r").read()), "test"))
 
+if __name__ == "__main__":
+    # asyncio.run(draw(json.loads(open("test.json" ,"r").read()), "test"))
+    pass

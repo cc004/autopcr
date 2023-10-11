@@ -22,7 +22,7 @@ from ._task import *
 import datetime
 import random
 
-address = None # 填你的公网IP或域名，不填则会自动尝试获取
+address = None  # 填你的公网IP或域名，不填则会自动尝试获取
 useHttps = False
 
 server = HttpServer(qq_only=True)
@@ -30,7 +30,7 @@ app = nonebot.get_bot().server_app
 app.register_blueprint(server.app)
 
 ROOT_PATH = os.path.dirname(__file__)
-cron_group = "" # 定时任务的通知群
+cron_group = ""  # 定时任务的通知群
 
 prefix = '#'
 
@@ -49,6 +49,7 @@ sv_help = f"""
 if address is None:
     try:
         from hoshino.config import PUBLIC_ADDRESS
+
         address = PUBLIC_ADDRESS
     except:
         pass
@@ -56,6 +57,7 @@ if address is None:
 if address is None:
     try:
         import socket
+
         address = socket.gethostbyname(socket.gethostname())
     except:
         pass
@@ -70,27 +72,30 @@ consuming = False
 validate = ""
 
 sv = Service(
-        name="自动清日常",
-        use_priv=priv.NORMAL,  # 使用权限
-        manage_priv=priv.ADMIN,  # 管理权限
-        visible=False,  # False隐藏
-        enable_on_default=False,  # 是否默认启用
-        bundle='pcr工具',  # 属于哪一类
-        help_=sv_help  # 帮助文本
-        )
+    name="自动清日常",
+    use_priv=priv.NORMAL,  # 使用权限
+    manage_priv=priv.ADMIN,  # 管理权限
+    visible=False,  # False隐藏
+    enable_on_default=False,  # 是否默认启用
+    bundle='pcr工具',  # 属于哪一类
+    help_=sv_help  # 帮助文本
+)
+
 
 @sv.on_fullmatch(["帮助自动清日常"])
 async def bangzhu_text(bot, ev):
     await bot.finish(ev, sv_help, at_sender=True)
 
+
 @on_startup
 async def init():
     await db_start()
 
+
 async def check_validate(task):
     username = task.username
-    alian, _, bot, ev, qid, gid = task.info 
-    
+    alian, _, bot, ev, qid, gid = task.info
+
     from .autopcr.bsdk.validator import validate_dict
     for _ in range(120):
         if username in validate_dict:
@@ -101,14 +106,17 @@ async def check_validate(task):
 
             url = address + url.lstrip("/daily/")
             if ev:
-                await bot.send(ev, f'[CQ:reply,id={ev.message_id}]pcr账号登录需要验证码，请点击以下链接在120秒内完成认证:\n{url}')
+                await bot.send(ev,
+                               f'[CQ:reply,id={ev.message_id}]pcr账号登录需要验证码，请点击以下链接在120秒内完成认证:\n{url}')
             else:
-                await bot.send_group_msg(group_id = gid, msg = f"【定时任务】帐号需要验证码，【{alian}】定时任务自动取消[CQ:at,qq={qid}]")
+                await bot.send_group_msg(group_id=gid,
+                                         msg=f"【定时任务】帐号需要验证码，【{alian}】定时任务自动取消[CQ:at,qq={qid}]")
 
             del validate_dict[username]
 
         else:
             await asyncio.sleep(1)
+
 
 async def consumer(task):
     global inqueue
@@ -123,6 +131,7 @@ async def consumer(task):
         await report_to_su(None, "", "执行清日常出错:" + str(e))
     finally:
         inqueue.remove(token)
+
 
 def pre_process_all(func):
     async def wrapper(bot: HoshinoBot, ev: CQEvent):
@@ -142,6 +151,7 @@ def pre_process_all(func):
 
     return wrapper
 
+
 def pre_process(func):
     async def wrapper(bot: HoshinoBot, ev: CQEvent):
         ok, msg, token = await get_config(bot, ev)
@@ -157,9 +167,9 @@ def pre_process(func):
 
     return wrapper
 
+
 @sv.scheduled_job('interval', minutes=1)
 async def timing():
-
     global cron_group
     gid = list((await sv.get_enable_groups()).keys())[0]
     if cron_group:
@@ -167,7 +177,7 @@ async def timing():
 
     hour = datetime.datetime.now().hour
     minute = datetime.datetime.now().minute
-    await asyncio.sleep(random.randint(1, 10)) 
+    await asyncio.sleep(random.randint(1, 10))
     bot = hoshino.get_bot()
     loop = asyncio.get_event_loop()
 
@@ -181,19 +191,21 @@ async def timing():
             user_id = mgr.qq
             token = (alian, target)
             if token in inqueue:
-                await bot.send_group_msg(group_id = gid, message = f"【定时任务】{alian}已在执行任务")
+                await bot.send_group_msg(group_id=gid, message=f"【定时任务】{alian}已在执行任务")
                 continue
 
             inqueue.add(token)
 
             loop.create_task(consumer(DailyClean(token, bot, None, user_id, gid)))
 
+
 @sv.on_fullmatch(f"{prefix}清日常所有")
 @pre_process_all
 async def clear_daily_all(bot: HoshinoBot, ev: CQEvent, tokens: List[Tuple[str, str]]):
     loop = asyncio.get_event_loop()
     for token in tokens:
-        loop.create_task(consumer(DailyClean(token, bot, ev)))
+        loop.create_task(consumer(DailyClean(token, bot, ev, qid=ev.user_id)))
+
 
 @sv.on_fullmatch(f"{prefix}卡池")
 async def gacha_current(bot: HoshinoBot, ev: CQEvent):
@@ -226,9 +238,10 @@ async def find_memory(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
         pass
 
     config = {
-            "sweep_get_able_unit_memory" : sweep_get_able_unit_memory,
+        "sweep_get_able_unit_memory": sweep_get_able_unit_memory,
     }
-    await consumer(FindMemory(token = token, config = config, bot = bot, ev = ev))
+    await consumer(FindMemory(token=token, config=config, bot=bot, ev=ev))
+
 
 @sv.on_prefix(f"{prefix}来发十连")
 @pre_process
@@ -250,10 +263,11 @@ async def shilian(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
         pass
 
     config = {
-            "pool_id" : pool_id,
-            "cc_until_get" : cc_until_get,
+        "pool_id": pool_id,
+        "cc_until_get": cc_until_get,
     }
-    await consumer(Gacha(token = token, config = config, bot = bot, ev = ev))
+    await consumer(Gacha(token=token, config=config, bot=bot, ev=ev))
+
 
 @sv.on_prefix(f"{prefix}查装备")
 @pre_process
@@ -262,17 +276,18 @@ async def find_equip(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
     try:
         if ev.message.extract_plain_text().split(' ')[-1].strip() == 'fav':
             like_unit_only = True
-            start_rank = int(ev.message.extract_plain_text().split(' ')[-2]) 
+            start_rank = int(ev.message.extract_plain_text().split(' ')[-2])
         else:
-            start_rank = int(ev.message.extract_plain_text().split(' ')[-1]) 
+            start_rank = int(ev.message.extract_plain_text().split(' ')[-1])
     except:
         start_rank = None
 
     config = {
-            "start_rank" : start_rank,
-            "like_unit_only": like_unit_only
+        "start_rank": start_rank,
+        "like_unit_only": like_unit_only
     }
-    await consumer(FindEquip(token = token, config = config, bot = bot, ev = ev))
+    await consumer(FindEquip(token=token, config=config, bot=bot, ev=ev))
+
 
 @sv.on_prefix(f"{prefix}刷图推荐")
 @pre_process
@@ -281,28 +296,30 @@ async def quest_recommand(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
     try:
         if ev.message.extract_plain_text().split(' ')[-1].strip() == 'fav':
             like_unit_only = True
-            start_rank = int(ev.message.extract_plain_text().split(' ')[-2]) 
+            start_rank = int(ev.message.extract_plain_text().split(' ')[-2])
         else:
-            start_rank = int(ev.message.extract_plain_text().split(' ')[-1]) 
+            start_rank = int(ev.message.extract_plain_text().split(' ')[-1])
     except:
         start_rank = None
 
     config = {
-            "start_rank" : start_rank,
-            "like_unit_only": like_unit_only
+        "start_rank": start_rank,
+        "like_unit_only": like_unit_only
     }
-    await consumer(QuestRecommand(token = token, config = config, bot = bot, ev = ev))
+    await consumer(QuestRecommand(token=token, config=config, bot=bot, ev=ev))
 
 
 @sv.on_prefix(f"{prefix}获取导入")
 @pre_process
 async def get_library_import(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
-    await consumer(GetLibraryImport(token = token, bot = bot, ev = ev))
+    await consumer(GetLibraryImport(token=token, bot=bot, ev=ev))
+
 
 @sv.on_prefix(f"{prefix}清日常")
 @pre_process
 async def clear_daily(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
     await consumer(DailyClean(token, bot, ev))
+
 
 @sv.on_prefix(f"{prefix}日常报告")
 @pre_process
@@ -312,12 +329,13 @@ async def clear_daily_result(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str
     global inqueue
     inqueue.remove(token)
 
-    ok, img = await get_result(alian)
+    ok, img = await get_result(alian, ev.user_id)
     if not ok:
         await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + img)
     await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
 
-async def get_config(bot, ev, tot = False):
+
+async def get_config(bot, ev, tot=False):
     user_id = None
     alian = ""
     file = ""
@@ -328,7 +346,7 @@ async def get_config(bot, ev, tot = False):
             user_id = str(m.data['qq'])
         elif m.type == 'text':
             alian = str(m.data['text']).strip().split(' ')[0]
-    if user_id is None: #本人
+    if user_id is None:  # 本人
         user_id = str(ev.user_id)
     else:   #指定对象
         if not priv.check_priv(ev,priv.ADMIN):
@@ -338,7 +356,7 @@ async def get_config(bot, ev, tot = False):
     alian = escape(alian)
 
     for file in accountmgr.accounts():
-        async with accountmgr.load(file, readonly = True) as account:
+        async with accountmgr.load(file, readonly=True) as account:
             if account.qq == user_id:
                 accounts.append((escape(account.alian), file))
 
@@ -355,7 +373,7 @@ async def get_config(bot, ev, tot = False):
         name = ' '.join([i[0] for i in accounts])
         msg = f"[CQ:reply,id={ev.message_id}]存在多个帐号，请指定一个昵称：\n{name}"
         return False, msg, token
-    
+
     accounts = [account for account in accounts if account[0] == alian]
 
     if not accounts:
@@ -367,9 +385,11 @@ async def get_config(bot, ev, tot = False):
 
     return True, "", accounts[0]
 
+
 @sv.on_fullmatch(f"{prefix}配置日常")
 async def config_clear_daily(bot: HoshinoBot, ev: CQEvent):
     await bot.finish(ev, address)
+
 
 async def report_to_su(sess, msg_with_sess, msg_wo_sess):
     if sess:
