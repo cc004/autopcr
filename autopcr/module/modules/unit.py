@@ -95,7 +95,7 @@ class UnitController(Module):
 
 @description('仅支持光辉球角色')
 @name('完成装备强化任务')
-@singlechoice("equip_enhance_up_unit", "强化角色", "100101:日和莉", [f"{unit}:{db.unit_data[unit].unit_name}" for unit in db.unit_data])
+@singlechoice("equip_enhance_up_unit", "强化角色", "100101:日和莉", [f"{unit}:{db.unit_data[unit].unit_name}" for unit in db.unlock_unit_condition])
 @default(False)
 class unit_equip_enhance_up(UnitController):
     async def do_task(self, client: pcrclient):
@@ -126,7 +126,7 @@ class unit_equip_enhance_up(UnitController):
 
 @description('仅支持光辉球角色')
 @name('完成技能升级任务')
-@singlechoice("level_up_unit", "强化角色", "100101:日和莉", [f"{unit}:{db.unit_data[unit].unit_name}" for unit in db.unit_data])
+@singlechoice("level_up_unit", "强化角色", "100101:日和莉", [f"{unit}:{db.unit_data[unit].unit_name}" for unit in db.unlock_unit_condition])
 @default(False)
 class unit_skill_level_up(UnitController):
     async def do_task(self, client: pcrclient):
