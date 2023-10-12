@@ -372,7 +372,11 @@ class database():
                 UnitDatum.query(db)
                 .to_dict(lambda x: x.unit_id, lambda x: x)
             )
-            
+
+            self.unlock_unit_condition: Dict[int, UnlockUnitCondition] = (
+                UnlockUnitCondition.query(db)
+                .to_dict(lambda x: x.unit_id, lambda x: x)
+            )
 
             self.pure_memory_to_unit: Dict[int, int] = (
                 UnlockRarity6.query(db)
