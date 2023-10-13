@@ -6,7 +6,7 @@ DATA_DIR = os.path.join(ROOT_DIR, './data/')
 CONFIG_PATH = os.path.join(ROOT_DIR, 'autopcr/http_server/config') # 兼容旧版
 
 
-VERSION = "9.9.6"
+VERSION = "6.2.1"
 
 DEFAULT_HEADERS = {
     'Accept-Encoding': 'gzip',
