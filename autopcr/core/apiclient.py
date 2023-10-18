@@ -160,6 +160,7 @@ class apiclient(Container["apiclient"]):
             version = search(r'v?([4-9]\.\d\.\d)(\.\d)*', response0['data_headers']["store_url"]).group(0)
             self._headers['APP-VER'] = version
             refresh_headers(version)
+            print(f"版本已更新至{version}")
             raise ApiException(f"版本已更新:{version}",
                                response.data.server_error.status,
                                response.data_headers.result_code
