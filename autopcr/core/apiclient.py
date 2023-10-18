@@ -1,3 +1,5 @@
+from re import search
+
 from .base import Container
 from ..model.modelbase import *
 from asyncio import Lock
@@ -10,7 +12,7 @@ from hashlib import md5
 from Crypto.Cipher import AES
 from base64 import b64encode, b64decode
 from traceback import print_exc
-from ..constants import DEFAULT_HEADERS, IOS_HEADERS
+from ..constants import DEFAULT_HEADERS, IOS_HEADERS, refresh_headers
 
 import json
 from enum import Enum
@@ -29,7 +31,7 @@ class CuteResultCode(Enum):
     API_RESULT_RESPONSE_DECODE_ERROR = 219
     RESULT_CODE_MAINTENANCE_FROM = 2700
     RESULT_CODE_MAINTENANCE_TO = 2999
-    
+
 
 class ApiException(Exception):
 
@@ -62,7 +64,7 @@ class apiclient(Container["apiclient"]):
             for key in IOS_HEADERS.keys():
                 self._headers[key] = IOS_HEADERS[key]
         self._lck = Lock()
-    
+
     @property
     def name(self) -> str:
         return 'undefined'
@@ -114,32 +116,32 @@ class apiclient(Container["apiclient"]):
         try:
             resp = await aiorequests.post(self.urlroot + request.url, data=apiclient._pack(request.dict(by_alias=True), key) if request.crypted else
                 request.json(by_alias=True).encode('utf8'), headers=self._headers, timeout=10)
-            
+
             if resp.status_code != 200:
                 raise NetworkException
-            
+
             response0 = await resp.content
 
             response0 = apiclient._unpack(response0)[0] if request.crypted else loads(response0)
         except:
             raise NetworkException
-        
+
         cls = request.__class__.__orig_bases__[0].__args__[0]
 
         response1 = apiclient._no_null_key(response0)
-        
+
         # with open('req.log', 'a') as fp:
         #     fp.write(json.dumps(response0))
         #     fp.write("\n-------\n")
         #     fp.write(json.dumps(response1))
 
         response: Response[TResponse] = Response[cls].parse_obj(response1)
-        
+
         # with open('req.log', 'a') as fp:
         #    fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
         #    fp.write(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
         #    fp.write(json.dumps(json.loads(response.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
-        
+
         if response.data_headers.servertime:
             self.server_time = response.data_headers.servertime
 
@@ -154,7 +156,17 @@ class apiclient(Container["apiclient"]):
         if response.data_headers.viewer_id:
             self.viewer_id = int(response.data_headers.viewer_id)
 
-        
+        if "check/game_start" == request.url and "store_url" in response0['data_headers']:
+            version = search(r'v?([4-9]\.\d\.\d)(\.\d)*', response0['data_headers']["store_url"]).group(0)
+            self._headers['APP-VER'] = version
+            refresh_headers(version)
+            print(f"版本已更新至{version}")
+            raise ApiException(f"版本已更新:{version}",
+                               response.data.server_error.status,
+                               response.data_headers.result_code
+                               )
+
+
         if response.data.server_error and "维护" not in response.data.server_error.message:
             print(f'pcrclient: /{request.url} api failed {response.data.server_error}')
             raise ApiException(response.data.server_error.message,
