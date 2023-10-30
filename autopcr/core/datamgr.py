@@ -270,7 +270,7 @@ class datamgr(Component[apiclient]):
             if token not in db.inventory_name: # 未来角色
                 continue
 
-            need = self.get_rarity_memory_demand(unit_id, token) + self.get_unique_equip_memory_demand(unit_id, token) + self.get_exceed_level_unit_demand(unit_id, token) * 0
+            need = self.get_rarity_memory_demand(unit_id, token) + self.get_unique_equip_memory_demand(unit_id, token) + self.get_exceed_level_unit_demand(unit_id, token)
             result[token] += need
 
         return result
