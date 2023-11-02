@@ -47,6 +47,7 @@ class unit_story_reading(Module):
             if (
                 story.story_id not in read_story and
                 story.pre_story_id in read_story and
+                story.pre_story_id_2 in read_story and
                 story.story_group_id in client.data.unit_love_data and 
                 client.data.unit_love_data[story.story_group_id].love_level >= story.love_level
                 ):
