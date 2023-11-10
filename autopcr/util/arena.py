@@ -142,6 +142,8 @@ class ArenaQuery:
             raise ValueError("仅支持4或5人的近似解查询")
         candidate: List[str] = [key for key in self.buffer if self.is_approximate_team(*self.anti_key(key), units, region)]
         result: List[ArenaQueryResult] = [ret for key in candidate for ret in self.load_result(key)]
+
+        result = sorted(result, key=lambda x: self.attack_score(x), reverse=True)
         return result
 
     def attack_score(self, record: ArenaQueryResult) -> float: # the bigger, the better

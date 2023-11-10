@@ -65,7 +65,7 @@ class ArenaQueryResult(BaseModel):
     liked: bool = False
     disliked: bool = False
 
-PLACEHOLDER = ArenaQueryResult(down=999,atk=[ArenaQueryUnit(id=0, equip=False, star=0)])
+PLACEHOLDER = ArenaQueryResult(down=99999,atk=[ArenaQueryUnit(id=0, equip=False, star=0)])
 
 class ArenaQueryPage(BaseModel):
     page: int 
