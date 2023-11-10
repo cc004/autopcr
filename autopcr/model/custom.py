@@ -61,7 +61,7 @@ class ArenaQueryResult(BaseModel):
     private: bool = False
     group: bool = False
     updated: str = ""
-    comment: List[ArenaQueryComment] = []
+    # comment: List[ArenaQueryComment] = []
     liked: bool = False
     disliked: bool = False
 
