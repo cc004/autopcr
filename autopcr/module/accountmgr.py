@@ -3,12 +3,12 @@
 from ..core.pcrclient import pcrclient
 from .modulemgr import ModuleManager
 import os, re
-from typing import Dict, Iterator, List
+from typing import Dict, Iterator
 from ..constants import CONFIG_PATH
 from asyncio import Lock
 import json
-from .modulebase import Module
 from copy import deepcopy
+import hashlib
 
 class AccountException(Exception):
     pass
@@ -21,6 +21,7 @@ class Account(ModuleManager):
         self._account = account
         self._filename = parent.path(account)
         self.readonly = readonly
+        self.id = hashlib.md5(account.encode('utf-8')).hexdigest()
 
         with open(self._filename, 'r') as f:
             self.data = json.load(f)
