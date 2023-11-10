@@ -44,8 +44,8 @@ class ArenaQuery:
     def __get_auth_key(self):
         key = ""
         try: 
-            from hoshino.config.priconne.arena import AUTH_KEY
-            key = AUTH_KEY
+            from hoshino.config.priconne import arena
+            key = arena.AUTH_KEY
         except:
             from ..constants import AUTH_KEY
             key = AUTH_KEY
@@ -95,13 +95,13 @@ class ArenaQuery:
         return self.is_recent_time(self.buffer.get(key, 0)) and self.is_exist_result(key)
 
     def key(self, defend: List[int], region: ArenaRegion) -> str:
-        return ''.join([str(x) for x in sorted(defend)]) + str(region)
+        return ''.join([str(x // 100) for x in sorted(defend)]) + str(int(region))
 
     def anti_key(self, key: str) -> Tuple[List[int], ArenaRegion]:
         region = ArenaRegion(int(key[-1]))
         key = key[:-1]
         from textwrap import wrap
-        units = list(map(int, wrap(key, 5)))
+        units = list(map(lambda x: int(x) * 100 + 1, wrap(key, 4)))
         return (units, region)
 
     def save(self, defend: List[int], region: ArenaRegion, result: List[ArenaQueryResult]):
