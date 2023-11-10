@@ -667,4 +667,7 @@ class database():
         level = max([1] + histort_level)
         return level
 
+    def deck_sort_unit(self, units: List[int]):
+        return sorted(units, key=lambda x: self.unit_data[x].search_area_width)
+
 db = database()
