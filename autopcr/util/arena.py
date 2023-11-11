@@ -1,10 +1,10 @@
-from typing import List, Tuple
+from typing import List, Set, Tuple
 import json, asyncio, time
 from os.path import join, exists
-from random import random
+from random import random, choice, sample
 from math import log
 
-from ..model.custom import PLACEHOLDER, ArenaRegion, ArenaQueryResult, ArenaQueryResponse
+from ..model.custom import PLACEHOLDER, ArenaQueryType, ArenaQueryUnit, ArenaRegion, ArenaQueryResult, ArenaQueryResponse
 from . import aiorequests 
 
 try:
@@ -141,17 +141,25 @@ class ArenaQuery:
         if len(units) > 5 or len(units) < 4:
             raise ValueError("仅支持4或5人的近似解查询")
         candidate: List[str] = [key for key in self.buffer if self.is_approximate_team(*self.anti_key(key), units, region)]
-        result: List[ArenaQueryResult] = [ret for key in candidate for ret in self.load_result(key)]
+        result: List[ArenaQueryResult] = [ret.__setattr__('query_type', ArenaQueryType.APPROXIMATION) or ret for key in candidate for ret in self.load_result(key)]
 
         result = sorted(result, key=lambda x: self.attack_score(x), reverse=True)
         return result
 
     def attack_score(self, record: ArenaQueryResult) -> float: # the bigger, the better
-        up_vote = int(record.up)
-        down_vote = int(record.down)
-        val_1 = up_vote / (down_vote + up_vote + 0.0001) * 2 - 1  # 赞踩比占比 [-1, 1]
-        val_2 = log(up_vote + down_vote + 0.01, 100)  # 置信度占比（log(100)）[-1,+inf]
-        return val_1 + val_2 + random() / 1000  # 阵容推荐度权值
+        confidence_level = 0.95
+        up_vote = record.up
+        down_vote = record.down
+
+        total_vote = up_vote + down_vote
+        if total_vote == 0:
+            return 0
+
+        from statsmodels.stats.proportion import proportion_confint
+        positive_rate_ci = proportion_confint(up_vote, total_vote, alpha=1-confidence_level, method='wilson')
+        negative_rate_ci = proportion_confint(down_vote, total_vote, alpha=1-confidence_level, method='wilson')
+        composite_score = positive_rate_ci[1] - negative_rate_ci[0]
+        return composite_score
 
     async def get_other_region_result(self, defen: List[int], region: ArenaRegion) -> List[ArenaQueryResult]:
         query_seq = {
@@ -173,49 +181,84 @@ class ArenaQuery:
             print(f'不存在它服缓存')
         return result
 
-    async def get_attack(self, defen: List[int], region : ArenaRegion = ArenaRegion.CN) -> List[ArenaQueryResult]:
+    async def get_attack(self, available_unit: Set[int], defen: List[int], region : ArenaRegion = ArenaRegion.CN) -> List[ArenaQueryResult]:
+        result = []
+
         if len(defen) < 4:
             raise ValueError("暂不支持少于4人的搜索")
         elif len(defen) > 5:
             raise ValueError("不支持大于5人的搜索")
         elif len(defen) == 4:
-            return await self.get_approximate_attack(defen, region)
-
-        key = self.key(defen, region)
-
-        result = []
-        if self.is_recent_buffer(key):
-            print(f'存在本服({region})近缓存，直接使用')
-            result = self.load_result(key)
+            result = await self.get_approximate_attack(defen, region)
         else:
-            degrade_result = self.load_result(key) if self.is_exist_result(key) else await self.get_other_region_result(defen, region)
-            result = await self.query(defen, region)
-            if not result:
-                if degrade_result:
-                    print(f'使用缓存')
-                    result = degrade_result
-                else:
-                    print(f'查询近似解')
-                    return await self.get_approximate_attack(defen, region)
+            key = self.key(defen, region)
 
+            if self.is_recent_buffer(key):
+                print(f'存在本服({region})近缓存，直接使用')
+                result = self.load_result(key)
+            else:
+                degrade_result = self.load_result(key) if self.is_exist_result(key) else await self.get_other_region_result(defen, region)
+                result = await self.query(defen, region)
+                if not result:
+                    if degrade_result:
+                        print(f'使用缓存')
+                        result = degrade_result
+                    else:
+                        print(f'查询近似解')
+                        result = await self.get_approximate_attack(defen, region)
+
+        result = [team for team in result if all(unit.id in available_unit for unit in team.atk)]
         result = sorted(result, key=lambda x: self.attack_score(x), reverse=True)
         return result
 
-    async def get_multi_attack(self, defens: List[List[int]], region : ArenaRegion = ArenaRegion.CN) -> List[List[ArenaQueryResult]]:
-        attacks = [await self.get_attack(defen, region) + [PLACEHOLDER] for defen in defens]
+    def build_placeholder_result(self, units: List[int]) -> ArenaQueryResult:
+        ret = ArenaQueryResult(down=10)
+        ret.atk = [ArenaQueryUnit(id=unit, equip=False,star=5) for unit in units]
+        ret.query_type = ArenaQueryType.PLACEHOLDER
+        return ret
+
+    def replace_placeholder(self, available_unit: Set[int], teams: List[ArenaQueryResult]) -> List[ArenaQueryResult]:
+        placeholder = [index for index, value in enumerate(teams) if value == PLACEHOLDER]
+        if len(placeholder) != 1:
+            raise ValueError("仅支持替换一个占位符")
+        placeholder = placeholder[0]
+
+        candidate_unit = available_unit - set(unit.id for team in teams for unit in team.atk)
+        candidates = [key for key in self.buffer if all(unit_id in candidate_unit for unit_id in self.anti_key(key)[0])]
+        if candidates:
+            candidates = self.anti_key(choice((candidates)))[0]
+        else:
+            candidates = sample(list(available_unit), 5)
+        teams[placeholder] = self.build_placeholder_result(candidates)
+        return teams
+
+    def have_placeholder(self, teams: List[ArenaQueryResult]) -> bool:
+        return PLACEHOLDER in teams
+
+    async def get_multi_attack(self, available_unit: Set[int], defens: List[List[int]], region : ArenaRegion = ArenaRegion.CN) -> List[List[ArenaQueryResult]]:
+        attacks = [await self.get_attack(available_unit, defen, region) + [PLACEHOLDER] for defen in defens]
         from itertools import product
         cartesian = product(*attacks)
-        candidates: List[Tuple[ArenaQueryResult]] = list(filter(lambda x: len(set(unit.id for attack in x for unit in attack.atk)) == sum(1 for attack in x for unit in attack.atk) , cartesian)) # only allow one placeholder
+        candidates: List[List[ArenaQueryResult]] = list(
+                map(lambda x: list(x), 
+                    filter(lambda x: len(set(unit.id for attack in x for unit in attack.atk)) == 
+                           sum(1 for attack in x for unit in attack.atk), 
+                           cartesian))) # only allow one placeholder
 
+        candidates = [team if not self.have_placeholder(team) else self.replace_placeholder(available_unit, team) for team in candidates]
         candidates = sorted(candidates, key=lambda x: sum(self.attack_score(attack) for attack in x), reverse=True)
-        attacks = [list(attack) for attack in candidates]
-        return attacks
+        return candidates
 
     def str_result(self, result: List[ArenaQueryResult]):
         msg = ""
         from ..db.database import db
         for ret in result:
-            msg += f'''【{" ".join([db.get_unit_name(unit.id) for unit in ret.atk])}】 {ret.up}/{ret.down}\n'''
+            tail = f"{ret.up}/{ret.down}"
+            if ret.query_type == ArenaQueryType.APPROXIMATION:
+                tail += f"(近似解)"
+            elif ret.query_type == ArenaQueryType.PLACEHOLDER:
+                tail = f"凑解"
+            msg += f'''【{" ".join([db.get_unit_name(unit.id) for unit in ret.atk])}】 {tail}\n'''
 
         return msg
 
