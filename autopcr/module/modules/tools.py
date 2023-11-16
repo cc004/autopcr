@@ -308,7 +308,9 @@ class pjjc_back(Arena):
             ranking = {info.viewer_id: info for info in (await client.grand_arena_rank(20, page)).ranking}
             if viewer_id in ranking:
                 return ranking[viewer_id]
-        raise AbortError("对手不在前100名，无法查询")
+        # raise AbortError("对手不在前100名，无法查询")
+        ret = GrandArenaSearchOpponent(viewer_id=viewer_id)
+        return ret
 
     async def get_arena_history(self, client: pcrclient) -> List[GrandArenaHistoryInfo]:
         return (await client.get_grand_arena_history()).grand_arena_history_list
@@ -318,12 +320,13 @@ class pjjc_back(Arena):
 
     async def get_defend_from_info(self, info: GrandArenaSearchOpponent) -> List[List[int]]:
         ret = []
-        if info.grand_arena_deck.first[0].id != 2:
-            ret.append([unit.id for unit in info.grand_arena_deck.first])
-        if info.grand_arena_deck.second[0].id != 2:
-            ret.append([unit.id for unit in info.grand_arena_deck.second])
-        if info.grand_arena_deck.third[0].id != 2:
-            ret.append([unit.id for unit in info.grand_arena_deck.third])
+        if info.grand_arena_deck:
+            if info.grand_arena_deck.first and info.grand_arena_deck.first[0].id != 2:
+                ret.append([unit.id for unit in info.grand_arena_deck.first])
+            if info.grand_arena_deck.second and info.grand_arena_deck.second[0].id != 2:
+                ret.append([unit.id for unit in info.grand_arena_deck.second])
+            if info.grand_arena_deck.third and info.grand_arena_deck.third[0].id != 2:
+                ret.append([unit.id for unit in info.grand_arena_deck.third])
         
         if len(ret) < 2:
             ret = self.find_cache(str(info.viewer_id))
