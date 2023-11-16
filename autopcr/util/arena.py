@@ -155,11 +155,14 @@ class ArenaQuery:
         if total_vote == 0:
             return 0
 
+        def mean(x) -> float:
+            return (x[0] + x[1]) / 2
+
         from statsmodels.stats.proportion import proportion_confint
         positive_rate_ci = proportion_confint(up_vote, total_vote, alpha=1-confidence_level, method='wilson')
         negative_rate_ci = proportion_confint(down_vote, total_vote, alpha=1-confidence_level, method='wilson')
-        composite_score = positive_rate_ci[1] - negative_rate_ci[0]
-        return composite_score
+        composite_score = mean(positive_rate_ci) - mean(negative_rate_ci)
+        return composite_score 
 
     async def get_other_region_result(self, defen: List[int], region: ArenaRegion) -> List[ArenaQueryResult]:
         query_seq = {
