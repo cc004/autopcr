@@ -1,15 +1,16 @@
-from typing import List
+from typing import List, Set
 
-from ...model.common import ChangeRarityUnit
+from ...model.common import ChangeRarityUnit, DeckListData, GrandArenaHistoryDetailInfo, GrandArenaHistoryInfo, GrandArenaSearchOpponent, ProfileUserInfo, RankingSearchOpponent, VersusResult, VersusResultDetail
 
 from ...db.models import GachaExchangeLineup
-from ...model.custom import GachaReward, ArenaQueryResponse
+from ...model.custom import ArenaQueryResult, ArenaRegion, GachaReward
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
 from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
+from ...util.arena import instance as ArenaQuery
 import datetime
 
 @description('来发十连，或者直到出货')
@@ -75,107 +76,279 @@ class get_clan_support_unit(Module):
             info = f'{unit_name}({owner_name}): {"满中满" if strongest else "非满警告！"}\n{unit_info}\n'
             self._log(info)
 
-@description('查询jjc回刺阵容，并自动设置进攻队伍')
+class Arena(Module):
+
+    def target_rank(self) -> int: ...
+
+    def present_defend(self, defen: Union[List[List[int]], List[int]]) -> str: ...
+
+    def present_attack(self, attack: Union[List[List[ArenaQueryResult]], List[ArenaQueryResult]]) -> str: ...
+
+    def get_rank_from_user_info(self, user_info: ProfileUserInfo) -> int: ...
+
+    async def self_rank(self, client: pcrclient) -> int: ...
+
+    async def choose_best_team(self, team: Union[List[ArenaQueryResult], List[List[ArenaQueryResult]]], rank_id: List[int], client: pcrclient) -> int: ...
+
+    async def update_deck(self, units: Union[List[ArenaQueryResult], ArenaQueryResult], client: pcrclient): ...
+
+    async def get_rank_info(self, client: pcrclient, rank: int) -> Union[RankingSearchOpponent, GrandArenaSearchOpponent]: ...
+
+    async def get_opponent_info(self, client: pcrclient, viewer_id: int) -> Union[RankingSearchOpponent, GrandArenaSearchOpponent]: ...
+
+    async def get_arena_history(self, client: pcrclient) -> Union[List[VersusResult], List[GrandArenaHistoryInfo]]: ...
+
+    async def get_history_detail(self, log_id: int, client: pcrclient) -> Union[VersusResultDetail, GrandArenaHistoryDetailInfo]: ...
+
+    async def get_defend_from_info(self, info: Union[RankingSearchOpponent, GrandArenaSearchOpponent]) -> Union[List[List[int]], List[int]]: ...
+
+    async def get_defend_from_histroy_detail(self, history_detail: Union[VersusResultDetail, GrandArenaHistoryDetailInfo]) -> Union[List[List[int]], List[int]]: ...
+
+
+    async def get_attack_team(self, defen: Union[List[List[int]], List[int]]) -> Union[List[List[ArenaQueryResult]], List[ArenaQueryResult]]: ...
+
+    async def get_defend(self, client: pcrclient) -> Union[List[List[int]], List[int]]:
+        target_rank: int = self.target_rank()
+        self_rank = await self.self_rank(client)
+
+        if target_rank:
+            target = await self.get_rank_info(client, target_rank)
+            self._log(f"{target.user_name}({target_rank})")
+            defend = await self.get_defend_from_info(target)
+            target_info = (await client.get_profile(target.viewer_id)).user_info
+        else:
+            history = await self.get_arena_history(client)
+            if not history:
+                raise SkipError("没有被刺记录")
+            history = history[0]
+            target = history.opponent_user
+
+            self._log(f"{target.user_name}: {datetime.datetime.fromtimestamp(history.versus_time)} {'刺' if history.is_challenge else '被刺'}")
+
+            target_info = (await client.get_profile(target.viewer_id)).user_info
+            target_rank = self.get_rank_from_user_info(target_info)
+
+            if history.is_challenge:
+                history_detail = await self.get_history_detail(history.log_id, client)
+                defend = await self.get_defend_from_histroy_detail(history_detail)
+            else:
+                target = await self.get_opponent_info(client, target.viewer_id)
+                defend = await self.get_defend_from_info(target)
+
+        self._log(f"{self_rank} -> {target_rank}({target_info.user_name})")
+
+        return defend
+
+
+    async def do_task(self, client: pcrclient):
+        self.available_unit: Set[int] = set(unit_id for unit_id in client.data.unit if client.data.unit[unit_id].promotion_level >= 7)
+
+        defend = await self.get_defend(client)
+        attack = await self.get_attack_team(defend)
+
+        defend_str = self.present_defend(defend)
+
+        if attack == []:
+            raise AbortError(f'{defend_str}\n抱歉没有查询到解法\n※没有作业说明随便拆 发挥你的想象力～★\n')
+
+        rank_id = list(range(len(attack)))
+        best_team_id = await self.choose_best_team(attack, rank_id, client)
+        if best_team_id >= 0: # it always be the first one now
+            self._log(f"选择第{best_team_id + 1}支队伍作为进攻方队伍")
+            await self.update_deck(attack[best_team_id], client)
+        else:
+            self._log("未找到合适队伍，请自行选择")
+
+        attack_str = self.present_attack(attack[:max(8, best_team_id + 1)])
+        msg = [defend_str, "-------", attack_str]
+        self._log('\n'.join(msg))
+
+        # from io import BytesIO
+        # import base64
+        # img_byte_array = BytesIO()
+        # teams = teams.convert("RGB")
+        # teams.save(img_byte_array, format="JPEG")
+        # teams = base64.b64encode(img_byte_array.getvalue()).decode()
+        # pic = f'<img src="data:image/jpeg;base64,{teams}" alt="Image">'
+
+
+@description('查询jjc回刺阵容，并自动设置进攻队伍，对手排名0则查找对战纪录第一条')
 @name('jjc回刺查询')
 @default(True)
-class jjc_back(Module):
-    async def rank_team(self, team: List[ArenaQueryResponse]):
-        def score(x):
-            good = team[x].up
-            bad = team[x].down
-            total = good + bad
-            bad_ratio = bad / total if total else 0
-            return (bad_ratio, x)
+@inttype("opponent_jjc_rank", "对手排名", 0, [i for i in range(0, 101)])
+class jjc_back(Arena):
 
-        id = list(range(len(team)))
-        return sorted(id, key=lambda x: score(x))
+    def target_rank(self) -> int:
+        return self.get_config("opponent_jjc_rank")
 
-    async def choose_best_team(self, team: List[ArenaQueryResponse], rank_id: List[int], client: pcrclient):
-        all_have = [id for id in rank_id if all(unit.id in client.data.unit and client.data.unit[unit.id].promotion_level > db.equip_max_rank - 3 for unit in team[id].atk)]
-        return None if not all_have else all_have[0]
+    async def self_rank(self, client: pcrclient) -> int: 
+        return (await client.get_arena_info()).arena_info.rank
 
-    async def update_deck(self, units: List[int], client: pcrclient):
-        star_change_unit = [unit for unit in units if client.data.unit[unit].unit_rarity == 5 and client.data.unit[unit].battle_rarity != 0]
+    def get_rank_from_user_info(self, user_info: ProfileUserInfo) -> int:
+        return user_info.arena_rank 
+
+    def present_defend(self, defen: List[int]) -> str:
+        msg = [db.get_unit_name(x) for x in defen]
+        msg = f"防守方【{' '.join(msg)}】"
+        return msg
+
+    def present_attack(self, attack: List[ArenaQueryResult]) -> str:
+        msg = ArenaQuery.str_result(attack)
+        return msg
+
+    async def choose_best_team(self, team: List[ArenaQueryResult], rank_id: List[int], client: pcrclient) -> int: 
+        all_have = [id for id in rank_id if all(
+            unit.id in client.data.unit and 
+            client.data.unit[unit.id].promotion_level > 7 
+            for unit in team[id].atk)]
+        return -1 if not all_have else all_have[0]
+
+    async def update_deck(self, units: ArenaQueryResult, client: pcrclient):
+        units_id = [unit.id for unit in units.atk]
+        star_change_unit = [unit for unit in units_id if client.data.unit[unit].unit_rarity == 5 and client.data.unit[unit].battle_rarity != 0]
         if star_change_unit:
             res = [ChangeRarityUnit(unit_id=unit_id, battle_rarity=5) for unit_id in star_change_unit]
             self._log(f"将{'|'.join([db.get_unit_name(unit_id) for unit_id in star_change_unit])}调至5星")
             await client.unit_change_rarity(res)
-        await client.deck_update(ePartyType.ARENA, units)
+        await client.deck_update(ePartyType.ARENA, units_id)
 
-    async def get_opponent_info(self, client: pcrclient, viewer_id: int):
+    async def get_rank_info(self, client: pcrclient, rank: int) -> RankingSearchOpponent: 
+        for page in range(1, 6):
+            ranking = {info.rank: info for info in (await client.arena_rank(20, page)).ranking}
+            if rank in ranking:
+                return ranking[rank]
+        raise AbortError("对手不在前100名，无法查询")
+
+    async def get_opponent_info(self, client: pcrclient, viewer_id: int) -> RankingSearchOpponent: 
         for page in range(1, 6):
             ranking = {info.viewer_id: info for info in (await client.arena_rank(20, page)).ranking}
             if viewer_id in ranking:
                 return ranking[viewer_id]
         raise AbortError("对手不在前100名，无法查询")
 
-    async def do_task(self, client: pcrclient):
-        try:
-            from hoshino.modules.priconne.arena.arena import do_query
-            from hoshino.modules.priconne.arena import render_atk_def_teams
-        except Exception as e:
-            print(e)
-            raise AbortError("仅支持插件端")
+    async def get_arena_history(self, client: pcrclient) -> List[VersusResult]:
+        return (await client.get_arena_history()).versus_result_list
 
-        rank = (await client.get_arena_info()).arena_info.rank
-        history = await client.get_arena_history()
-        if not history.versus_result_list:
-            raise SkipError("没有被刺记录")
-        history = history.versus_result_list[0]
-        timestamp = history.versus_time
-        target = history.opponent_user
-        self._log(f"{target.user_name}: {datetime.datetime.fromtimestamp(timestamp)}")
-        target_info = await self.get_opponent_info(client, target.viewer_id)
-        self._log(f"对方排名：{target_info.rank}, 您当前排名：{rank}")
-        if rank < target_info.rank:
-            raise SkipError(f"对方排名位于您排名之后")
-        deck_info = [unit.id for unit in target_info.arena_deck]
-        short_info = [unit.id // 100 for unit in target_info.arena_deck]
+    async def get_history_detail(self, log_id: int, client: pcrclient) -> VersusResultDetail:
+        return (await client.get_arena_history_detail(log_id)).versus_result_detail
 
-        res = await do_query(short_info, 2)
+    async def get_defend_from_info(self, info: RankingSearchOpponent) -> List[int]:
+        return [unit.id for unit in info.arena_deck]
 
-        defen = [db.get_unit_name(x) for x in deck_info]
-        defen = f"防守方【{' '.join(defen)}】"
-        if res is None:
-            raise AbortError(f'{defen}\n数据库未返回数据，请再次尝试查询或前往pcrdfans.com')
-        if res == []:
-            raise AbortError(f'{defen}\n抱歉没有查询到解法\n※没有作业说明随便拆 发挥你的想象力～★\n作业上传请前往pcrdfans.com')
+    async def get_defend_from_histroy_detail(self, history_detail: VersusResultDetail) -> List[int]:
+        return [unit.id for unit in history_detail.vs_user_arena_deck]
 
-        res = res[:min(8, len(res))] 
-        teams = await render_atk_def_teams(res)
-        # [
-        #   atk: List[Chara(id, star, equip)]
-        #   up: int,
-        #   down: int,
-        # ]
+    async def get_attack_team(self, defen: List[int]) -> List[ArenaQueryResult]:
+        return await ArenaQuery.get_attack(self.available_unit, defen)
 
-        obj = [{ **re,
-                 **{ 'atk': [{
-                    'id': unit.id * 100 + 1,
-                    'star': unit.star,
-                    'equip': unit.equip } for unit in re['atk']]
-                   }
-                } for re in res]
-        obj = [ArenaQueryResponse.parse_obj(o) for o in obj]
+@description('查询pjjc回刺阵容，并自动设置进攻队伍，对手排名0则查找对战纪录第一条')
+@name('pjjc回刺查询')
+@default(True)
+@inttype("opponent_pjjc_rank", "对手排名", 0, [i for i in range(0, 101)])
+class pjjc_back(Arena):
+    def target_rank(self) -> int:
+        return self.get_config("opponent_pjjc_rank")
 
-        rank_id = await self.rank_team(obj)
-        best_team_id = await self.choose_best_team(obj, rank_id, client)
-        if best_team_id is not None:
-            self._log(f"选择第{best_team_id + 1}支队伍作为进攻方队伍")
-            team = [unit.id for unit in obj[best_team_id].atk][::-1]
-            await self.update_deck(team, client)
-        else:
-            self._log("未找到合适队伍，请自行选择")
+    def present_defend(self, defen: List[List[int]]) -> str:
+        msg = [' '.join([db.get_unit_name(y) for y in x]) for x in defen]
+        msg = '\n'.join(msg)
+        msg = f"防守方\n{msg}"
+        return msg
 
-        from io import BytesIO
-        import base64
-        img_byte_array = BytesIO()
-        teams = teams.convert("RGB")
-        teams.save(img_byte_array, format="JPEG")
-        teams = base64.b64encode(img_byte_array.getvalue()).decode()
-        pic = f'<img src="data:image/jpeg;base64,{teams}" alt="Image">'
-        msg = [defen, pic]
-        self._log('\n'.join(msg))
+    def present_attack(self, attack: List[List[ArenaQueryResult]]) -> str:
+        msg = [ArenaQuery.str_result(x) for x in attack]
+        msg = '\n\n'.join(msg)
+        return msg
+
+    def get_rank_from_user_info(self, user_info: ProfileUserInfo) -> int:
+        return user_info.grand_arena_rank 
+
+    async def self_rank(self, client: pcrclient) -> int:
+        return (await client.get_grand_arena_info()).grand_arena_info.rank
+
+    async def choose_best_team(self, team: List[List[ArenaQueryResult]], rank_id: List[int], client: pcrclient) -> int:
+        all_have = [id for id in rank_id if all(
+            unit.id in client.data.unit and 
+            client.data.unit[unit.id].promotion_level > 7
+            for units in team[id] 
+                for unit in units.atk)]
+        return -1 if not all_have else all_have[0]
+
+    async def update_deck(self, units: List[ArenaQueryResult], client: pcrclient):
+        units_id = [[uni.id for uni in unit.atk] for unit in units]
+        star_change_unit = [uni_id for unit_id in units_id for uni_id in unit_id if 
+                            client.data.unit[uni_id].unit_rarity == 5 and 
+                            client.data.unit[uni_id].battle_rarity != 0]
+        if star_change_unit:
+            res = [ChangeRarityUnit(unit_id=unit_id, battle_rarity=5) for unit_id in star_change_unit]
+            self._log(f"将{'|'.join([db.get_unit_name(unit_id) for unit_id in star_change_unit])}调至5星")
+            await client.unit_change_rarity(res)
+
+        deck_list = []
+        for i, unit_id in enumerate(units_id):
+            deck_number = getattr(ePartyType, f"GRAND_ARENA_{i + 1}")
+            sorted_unit_id = db.deck_sort_unit(unit_id)
+
+            deck = DeckListData()
+            deck.deck_number = deck_number
+            deck.unit_list = sorted_unit_id
+            deck_list.append(deck)
+
+        await client.deck_update_list(deck_list)
+
+    async def get_rank_info(self, client: pcrclient, rank: int) -> GrandArenaSearchOpponent:
+        for page in range(1, 6):
+            ranking = {info.rank: info for info in (await client.grand_arena_rank(20, page)).ranking}
+            if rank in ranking:
+                return ranking[rank]
+        raise AbortError("对手不在前100名，无法查询")
+
+    async def get_opponent_info(self, client: pcrclient, viewer_id: int) -> GrandArenaSearchOpponent:
+        for page in range(1, 6):
+            ranking = {info.viewer_id: info for info in (await client.grand_arena_rank(20, page)).ranking}
+            if viewer_id in ranking:
+                return ranking[viewer_id]
+        # raise AbortError("对手不在前100名，无法查询")
+        ret = GrandArenaSearchOpponent(viewer_id=viewer_id)
+        return ret
+
+    async def get_arena_history(self, client: pcrclient) -> List[GrandArenaHistoryInfo]:
+        return (await client.get_grand_arena_history()).grand_arena_history_list
+
+    async def get_history_detail(self, log_id: int, client: pcrclient) -> GrandArenaHistoryDetailInfo:
+        return (await client.get_grand_arena_history_detail(log_id)).grand_arena_history_detail
+
+    async def get_defend_from_info(self, info: GrandArenaSearchOpponent) -> List[List[int]]:
+        ret = []
+        if info.grand_arena_deck:
+            if info.grand_arena_deck.first and info.grand_arena_deck.first[0].id != 2:
+                ret.append([unit.id for unit in info.grand_arena_deck.first])
+            if info.grand_arena_deck.second and info.grand_arena_deck.second[0].id != 2:
+                ret.append([unit.id for unit in info.grand_arena_deck.second])
+            if info.grand_arena_deck.third and info.grand_arena_deck.third[0].id != 2:
+                ret.append([unit.id for unit in info.grand_arena_deck.third])
+        
+        if len(ret) < 2:
+            ret = self.find_cache(str(info.viewer_id))
+            if ret is None:
+                raise AbortError("未知的对手防守，请尝试进攻一次")
+            print("读取缓存队伍阵容")
+        return ret
+
+    async def get_defend_from_histroy_detail(self, history_detail: GrandArenaHistoryDetailInfo) -> List[List[int]]:
+        ret = []
+        if history_detail.vs_user_grand_arena_deck.first[0].id != 2:
+            ret.append([unit.id for unit in history_detail.vs_user_grand_arena_deck.first])
+        if history_detail.vs_user_grand_arena_deck.second[0].id != 2:
+            ret.append([unit.id for unit in history_detail.vs_user_grand_arena_deck.second])
+        if history_detail.vs_user_grand_arena_deck.third[0].id != 2:
+            ret.append([unit.id for unit in history_detail.vs_user_grand_arena_deck.third])
+        self.save_cache(str(history_detail.vs_user_viewer_id), ret)
+        return ret
+
+    async def get_attack_team(self, defen: List[List[int]]) -> List[List[ArenaQueryResult]]:
+        return await ArenaQuery.get_multi_attack(self.available_unit, defen)
+
 
 @description('获得可导入到兰德索尔图书馆的账号数据')
 @name('兰德索尔图书馆导入数据')
