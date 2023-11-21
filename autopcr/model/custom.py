@@ -41,14 +41,55 @@ class GachaReward():
 
         return self
 
+from enum import IntEnum as Enum
+class ArenaRegion(Enum):
+    ALL = 1
+    CN = 2
+    TW = 3
+    JP = 4
+class ArenaQueryType(Enum):
+    NORMAL = 0
+    APPROXIMATION = 1
+    PLACEHOLDER = 2
 
 class ArenaQueryUnit(BaseModel):
-    equip: bool = None
-    id: int = None
-    star: int = None
+    equip: bool 
+    id: int 
+    star: int 
+
+class ArenaQueryComment(BaseModel):
+    id: str
+    date: str
+    msg: str
+    avatar: int
+
+class ArenaQueryResult(BaseModel):
+    id: str = ""
+    atk: List[ArenaQueryUnit] = []
+    up: int = 0
+    down: int = 0
+    iseditor: bool = False
+    private: bool = False
+    group: bool = False
+    updated: str = ""
+    # comment: List[ArenaQueryComment] = []
+    liked: bool = False
+    disliked: bool = False
+    query_type: ArenaQueryType = ArenaQueryType.NORMAL
+
+PLACEHOLDER = ArenaQueryResult(down=99999,atk=[ArenaQueryUnit(id=0, equip=False, star=0)])
+
+class ArenaQueryPage(BaseModel):
+    page: int 
+    hasMore: bool
+
+class ArenaQueryData(BaseModel):
+    result: List[ArenaQueryResult]
+    page: ArenaQueryPage
 
 class ArenaQueryResponse(BaseModel):
-    id: int = None
-    atk: List[ArenaQueryUnit] = None
-    up: int = None
-    down: int = None
+    code: int 
+    message: str
+    data: ArenaQueryData
+    version: str
+

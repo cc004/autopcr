@@ -11,3 +11,4 @@ markupsafe~=2.0.1
 UnityPy~=1.10.1
 SQLAlchemy~=2.0.17
 Brotli~=1.0.9
+statsmodels~=0.14.0

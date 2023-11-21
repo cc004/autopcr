@@ -225,7 +225,30 @@ async def find_xinsui(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
 @sv.on_prefix(f"{prefix}jjc回刺")
 @pre_process
 async def jjc_back(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
-    await consumer(JJCBack(token, bot, ev))
+    opponent_jjc_rank = 0
+    try:
+        opponent_jjc_rank = int(ev.message.extract_plain_text().split(' ')[-1].strip())
+    except:
+        pass
+
+    config = {
+        "opponent_jjc_rank": opponent_jjc_rank,
+    }
+    await consumer(JJCBack(token, bot, ev, config=config))
+
+@sv.on_prefix(f"{prefix}pjjc回刺")
+@pre_process
+async def pjjc_back(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
+    opponent_pjjc_rank = 0
+    try:
+        opponent_pjjc_rank = int(ev.message.extract_plain_text().split(' ')[-1].strip())
+    except:
+        pass
+
+    config = {
+        "opponent_pjjc_rank": opponent_pjjc_rank,
+    }
+    await consumer(PJJCBack(token, bot, ev, config=config))
 
 @sv.on_prefix(f"{prefix}查记忆碎片")
 @pre_process

@@ -46,6 +46,10 @@ class JJCBack(TaskList):
     def do_module_list(self) -> list:
         return ["jjc_back"]
 
+class PJJCBack(TaskList):
+    def do_module_list(self) -> list:
+        return ["pjjc_back"]
+
 class QuestRecommand(TaskList):
     def do_module_list(self) -> list:
         return ["get_normal_quest_recommand"]

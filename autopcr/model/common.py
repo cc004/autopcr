@@ -1698,6 +1698,7 @@ class UnitDataLight(BaseModel):
 class VersusResult(BaseModel):
 	log_id: int = None
 	versus_time: int = None
+	is_challenge: int = None
 	win_or_lose: int = None
 	opponent_user: OpponentUser = None
 class ArenaWaveInfo(BaseModel):

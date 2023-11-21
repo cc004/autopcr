@@ -30,8 +30,14 @@ class pcrclient(apiclient):
         req = DeckUpdateRequest()
         req.deck_number = deck_number
         cnt = len(units)
+        units = db.deck_sort_unit(units)
         for i in range(1, 6):
             setattr(req, f"unit_id_{i}",units[i - 1] if i <= cnt else 0) 
+        return await self.request(req)
+
+    async def deck_update_list(self, deck_list: List):
+        req = DeckUpdateListRequest()
+        req.deck_list = deck_list
         return await self.request(req)
 
     async def unit_change_rarity(self, change_rarity_unit_list: List[ChangeRarityUnit]):
@@ -80,6 +86,12 @@ class pcrclient(apiclient):
     async def get_clan_battle_support_unit_list(self, clan_id: int):
         req = ClanBattleSupportUnitList2Request()
         req.clan_id = clan_id
+        return await self.request(req)
+
+    async def grand_arena_rank(self, limit: int, page: int):
+        req = GrandArenaRankingRequest()
+        req.limit = limit
+        req.page = page
         return await self.request(req)
 
     async def arena_rank(self, limit: int, page: int):
@@ -438,6 +450,20 @@ class pcrclient(apiclient):
 
     async def get_arena_history(self):
         req = ArenaHistoryRequest()
+        return await self.request(req)
+
+    async def get_grand_arena_history(self):
+        req = GrandArenaHistoryRequest()
+        return await self.request(req)
+
+    async def get_arena_history_detail(self, log_id: int):
+        req = ArenaHistoryDetailRequest()
+        req.log_id = log_id
+        return await self.request(req)
+
+    async def get_grand_arena_history_detail(self, log_id: int):
+        req = GrandArenaHistoryDetailRequest()
+        req.log_id = log_id
         return await self.request(req)
     
     async def get_arena_info(self):
