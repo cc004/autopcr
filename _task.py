@@ -80,7 +80,7 @@ class DailyClean(Task):
         try:
             if ev:
                 await bot.send(ev, f"[CQ:reply,id={ev.message_id}]开始为{alian}清理日常")
-            else:
+            elif gid:
                 await bot.send_group_msg(group_id=gid, message=f"【定时任务】开始为{alian}清理日常")
         except Exception as e:  # 风控，怕report_to_su还失败，就不整了
             print(e)
@@ -91,11 +91,11 @@ class DailyClean(Task):
             img = await draw(resp, alian, qid)
             if ev:
                 await bot.send(ev, f"[CQ:reply,id={ev.message_id}] {alian}" + MessageSegment.image(f'file:///{img}'))
-            else:
+            elif gid:
                 await bot.send_group_msg(group_id=gid,
                                          message=f"【定时任务】{alian}" + MessageSegment.image(f'file:///{img}'))
         except Exception as e:
             if ev:
                 await bot.send(ev, f"[CQ:reply,id={ev.message_id}] {alian}:" + str(e))
-            else:
+            elif gid:
                 await bot.send_group_msg(group_id=gid, message=f"【定时任务】{alian}:" + str(e))

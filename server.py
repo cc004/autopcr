@@ -171,9 +171,13 @@ def pre_process(func):
 @sv.scheduled_job('interval', minutes=1)
 async def timing():
     global cron_group
-    gid = list((await sv.get_enable_groups()).keys())[0]
+    gid = None
     if cron_group:
         gid = cron_group
+    else:
+        enable_group = list((await sv.get_enable_groups()).keys())
+        if enable_group:
+            gid = enable_group[0]
 
     hour = datetime.datetime.now().hour
     minute = datetime.datetime.now().minute
@@ -191,7 +195,8 @@ async def timing():
             user_id = mgr.qq
             token = (alian, target)
             if token in inqueue:
-                await bot.send_group_msg(group_id=gid, message=f"【定时任务】{alian}已在执行任务")
+                if gid:
+                    await bot.send_group_msg(group_id=gid, message=f"【定时任务】{alian}已在执行任务")
                 continue
 
             inqueue.add(token)
