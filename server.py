@@ -87,7 +87,7 @@ class DailyTaskCallback(callback):
         self.gid = gid
         self.qid = qid
         self.alian = alian
-        
+
     async def send(self, msg: str = '', img: str = ''):
         msg += MessageSegment.image(img) if img else ''
         await self.bot.send_group_msg(group_id=self.gid, message=f"【定时任务】{msg}")
@@ -133,7 +133,7 @@ async def check_validate(task: Task):
 
             url = address + url.lstrip("/daily/")
             
-            task.callback.request_validate(url)
+            await task.callback.request_validate(url)
 
             del validate_dict[username]
 
