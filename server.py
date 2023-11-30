@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Union
 import os
 from .autopcr.http_server.httpserver import HttpServer
 from .autopcr.db.database import db
@@ -81,6 +81,38 @@ sv = Service(
     help_=sv_help  # 帮助文本
 )
 
+class DailyTaskCallback(callback):
+    def __init__(self, bot: HoshinoBot, gid: Union[str, int, None], alian: str, qid: int):
+        self.bot = bot
+        self.gid = gid
+        self._qid = qid
+        self.alian = alian
+
+    def qid(self):
+        return self._qid
+
+    async def send(self, msg: str = '', img: str = ''):
+        if self.gid:
+            msg += MessageSegment.image(img) if img else ''
+            await self.bot.send_group_msg(group_id=self.gid, message=f"【定时任务】{msg}")
+
+    async def request_validate(self, url: str):
+        if self.gid:
+            await self.bot.send_group_msg(group_id=self.gid,
+                msg=f"【定时任务】帐号需要验证码，【{self.alian}】定时任务自动取消[CQ:at,qq={self.qid}]")
+
+class InvokedTaskCallback(callback):
+    def __init__(self, bot: HoshinoBot, ev: CQEvent):
+        self.bot = bot
+        self.ev = ev
+        
+    async def send(self, msg: str = '', img: str = ''):
+        msg += MessageSegment.image(img) if img else ''
+        await self.bot.send(self.ev, message=f"[CQ:reply,id={self.ev.message_id}] {msg}")
+        
+    async def request_validate(self, url: str):
+        await self.bot.send_group_msg(self.ev,
+            msg=f"[CQ:reply,id={self.ev.message_id}]pcr账号登录需要验证码，请点击以下链接在120秒内完成认证:\n{url}")
 
 @sv.on_fullmatch(["帮助自动清日常"])
 async def bangzhu_text(bot, ev):
@@ -92,9 +124,9 @@ async def init():
     await db_start()
 
 
-async def check_validate(task):
+async def check_validate(task: Task):
     username = task.username
-    alian, _, bot, ev, qid, gid = task.info
+    alian, _ = task.token
 
     from .autopcr.bsdk.validator import validate_dict
     for _ in range(120):
@@ -105,12 +137,8 @@ async def check_validate(task):
                 break
 
             url = address + url.lstrip("/daily/")
-            if ev:
-                await bot.send(ev,
-                               f'[CQ:reply,id={ev.message_id}]pcr账号登录需要验证码，请点击以下链接在120秒内完成认证:\n{url}')
-            else:
-                await bot.send_group_msg(group_id=gid,
-                                         msg=f"【定时任务】帐号需要验证码，【{alian}】定时任务自动取消[CQ:at,qq={qid}]")
+            
+            await task.callback.request_validate(url)
 
             del validate_dict[username]
 
@@ -118,7 +146,7 @@ async def check_validate(task):
             await asyncio.sleep(1)
 
 
-async def consumer(task):
+async def consumer(task: Task):
     global inqueue
     token = task.token
     loop = asyncio.get_event_loop()
@@ -201,7 +229,7 @@ async def timing():
 
             inqueue.add(token)
 
-            loop.create_task(consumer(DailyClean(token, bot, None, user_id, gid)))
+            loop.create_task(consumer(DailyClean(token, DailyTaskCallback(bot, gid, alian, user_id))))
 
 
 @sv.on_fullmatch(f"{prefix}清日常所有")
@@ -209,7 +237,7 @@ async def timing():
 async def clear_daily_all(bot: HoshinoBot, ev: CQEvent, tokens: List[Tuple[str, str]]):
     loop = asyncio.get_event_loop()
     for token in tokens:
-        loop.create_task(consumer(DailyClean(token, bot, ev)))
+        loop.create_task(consumer(DailyClean(token, InvokedTaskCallback(bot, ev))))
 
 
 @sv.on_fullmatch(f"{prefix}卡池")
@@ -220,12 +248,12 @@ async def gacha_current(bot: HoshinoBot, ev: CQEvent):
 @sv.on_prefix(f"{prefix}公会支援")
 @pre_process
 async def clan_support(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
-    await consumer(ClanBattleSupport(token, bot, ev))
+    await consumer(ClanBattleSupport(token, InvokedTaskCallback(bot, ev)))
 
 @sv.on_prefix(f"{prefix}查心碎")
 @pre_process
 async def find_xinsui(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
-    await consumer(FindXinsui(token, bot, ev))
+    await consumer(FindXinsui(token, InvokedTaskCallback(bot, ev)))
 
 @sv.on_prefix(f"{prefix}jjc回刺")
 @pre_process
@@ -239,7 +267,7 @@ async def jjc_back(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
     config = {
         "opponent_jjc_rank": opponent_jjc_rank,
     }
-    await consumer(JJCBack(token, bot, ev, config=config))
+    await consumer(JJCBack(token, InvokedTaskCallback(bot, ev), config=config))
 
 @sv.on_prefix(f"{prefix}pjjc回刺")
 @pre_process
@@ -253,7 +281,7 @@ async def pjjc_back(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
     config = {
         "opponent_pjjc_rank": opponent_pjjc_rank,
     }
-    await consumer(PJJCBack(token, bot, ev, config=config))
+    await consumer(PJJCBack(token, InvokedTaskCallback(bot, ev), config=config))
 
 @sv.on_prefix(f"{prefix}查记忆碎片")
 @pre_process
@@ -268,7 +296,7 @@ async def find_memory(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
     config = {
         "sweep_get_able_unit_memory": sweep_get_able_unit_memory,
     }
-    await consumer(FindMemory(token=token, config=config, bot=bot, ev=ev))
+    await consumer(FindMemory(token, InvokedTaskCallback(bot, ev), config=config))
 
 
 @sv.on_prefix(f"{prefix}来发十连")
@@ -294,7 +322,7 @@ async def shilian(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
         "pool_id": pool_id,
         "cc_until_get": cc_until_get,
     }
-    await consumer(Gacha(token=token, config=config, bot=bot, ev=ev))
+    await consumer(Gacha(token, InvokedTaskCallback(bot, ev), config=config))
 
 
 @sv.on_prefix(f"{prefix}查装备")
@@ -314,7 +342,7 @@ async def find_equip(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
         "start_rank": start_rank,
         "like_unit_only": like_unit_only
     }
-    await consumer(FindEquip(token=token, config=config, bot=bot, ev=ev))
+    await consumer(FindEquip(token, InvokedTaskCallback(bot, ev), config=config))
 
 
 @sv.on_prefix(f"{prefix}刷图推荐")
@@ -334,7 +362,7 @@ async def quest_recommand(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
         "start_rank": start_rank,
         "like_unit_only": like_unit_only
     }
-    await consumer(QuestRecommand(token=token, config=config, bot=bot, ev=ev))
+    await consumer(QuestRecommand(token, InvokedTaskCallback(bot, ev), config=config))
 
 
 @sv.on_prefix(f"{prefix}获取导入")
@@ -346,7 +374,7 @@ async def get_library_import(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str
 @sv.on_prefix(f"{prefix}清日常")
 @pre_process
 async def clear_daily(bot: HoshinoBot, ev: CQEvent, token: Tuple[str, str]):
-    await consumer(DailyClean(token, bot, ev))
+    await consumer(DailyClean(token, InvokedTaskCallback(bot, ev)))
 
 
 @sv.on_prefix(f"{prefix}日常报告")
@@ -420,11 +448,14 @@ async def config_clear_daily(bot: HoshinoBot, ev: CQEvent):
 
 
 async def report_to_su(sess, msg_with_sess, msg_wo_sess):
-    if sess:
-        await sess.send(msg_with_sess)
-    else:
-        bot = hoshino.get_bot()
-        sid = bot.get_self_ids()
-        if len(sid) > 0:
-            sid = random.choice(sid)
-            await bot.send_private_msg(self_id=sid, user_id=SUPERUSERS[0], message=msg_wo_sess)
+    try:
+        if sess:
+            await sess.send(msg_with_sess)
+        else:
+            bot = hoshino.get_bot()
+            sid = bot.get_self_ids()
+            if len(sid) > 0:
+                sid = random.choice(sid)
+                await bot.send_private_msg(self_id=sid, user_id=SUPERUSERS[0], message=msg_wo_sess)
+    except:
+        pass
