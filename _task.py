@@ -11,9 +11,6 @@ class callback:
     @abstractmethod
     async def request_validate(self, url: str): ...
 
-    @abstractproperty
-    def qid(self): ...
-
 class Task():
     def __init__(self, token, callback: callback, config={}):
         _, target = token
