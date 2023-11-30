@@ -88,12 +88,13 @@ class DailyTaskCallback(callback):
         self._qid = qid
         self.alian = alian
 
+    @property
     def qid(self):
         return self._qid
 
     async def send(self, msg: str = '', img: str = ''):
         if self.gid:
-            msg += MessageSegment.image(img) if img else ''
+            msg += MessageSegment.image(f'file:///{img}') if img else ''
             await self.bot.send_group_msg(group_id=self.gid, message=f"【定时任务】{msg}")
 
     async def request_validate(self, url: str):
@@ -105,9 +106,14 @@ class InvokedTaskCallback(callback):
     def __init__(self, bot: HoshinoBot, ev: CQEvent):
         self.bot = bot
         self.ev = ev
+        self._qid = ev.user_id
+
+    @property
+    def qid(self):
+        return self._qid
         
     async def send(self, msg: str = '', img: str = ''):
-        msg += MessageSegment.image(img) if img else ''
+        msg += MessageSegment.image(f'file:///{img}') if img else ''
         await self.bot.send(self.ev, message=f"[CQ:reply,id={self.ev.message_id}] {msg}")
         
     async def request_validate(self, url: str):
