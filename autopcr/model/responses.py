@@ -1909,3 +1909,23 @@ class VoteExecResponse(ResponseBase):
 class VoteTopResponse(ResponseBase):
 	voted_unit: VotedUnit = None
 	ranking: VoteRanking = None
+
+# 布丁小游戏 Start
+class PsyTopResponse(ResponseBase):
+	psy_setting: dict = None
+	drama_list: list = None
+	cooking_status: list = None
+
+class StartCookingResponse(ResponseBase):
+	cooking_status: list = None
+	material_count: int = None
+
+class GetPuddingResponse(ResponseBase):
+	cooking_status: list = None
+	material_count: int = None
+	pudding: dict = None
+
+class PsyReadDramaResponse(ResponseBase):
+	release_pudding_id_list: list = None
+
+# 布丁小游戏 End

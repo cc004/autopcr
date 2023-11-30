@@ -829,3 +829,26 @@ class pcrclient(apiclient):
                 await self.request(req)
                 break
         await self.reset_dungeon()
+
+    # 布丁小游戏 Start
+
+    async def psy_top(self):
+        req = PsyTopRequest()
+        return await self.request(req)
+
+    async def start_cooking(self, frame_list: list):
+        req = StartCookingRequest()
+        req.start_cooking_frame_id_list = frame_list
+        return await self.request(req)
+
+    async def get_pudding(self, frame_list: list):
+        req = GetPuddingRequest()
+        req.frame_id_list = frame_list
+        return await self.request(req)
+
+    async def psy_read_drama(self, drama_id: int):
+        req = PsyReadDramaRequest()
+        req.drama_id = drama_id
+        return await self.request(req)
+
+    # 布丁小游戏 End
