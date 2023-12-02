@@ -83,6 +83,7 @@ hidden_modules = [
 ]
 
 tool_modules = [
+    cook_pudding,
     jjc_back,
     pjjc_back,
     get_clan_support_unit,

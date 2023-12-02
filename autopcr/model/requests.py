@@ -2683,3 +2683,35 @@ class VoteTopRequest(Request[VoteTopResponse]):
 	@property
 	def url(self) -> str:
 		return "vote/top"
+
+# 布丁小游戏 Start
+
+class PsyTopRequest(Request[PsyTopResponse]):
+	from_system_id: int = 6001
+	@property
+	def url(self) -> str:
+		return "psy/top"
+
+class StartCookingRequest(Request[StartCookingResponse]):
+	start_cooking_frame_id_list: list = None
+	get_pudding_frame_id_list: list = []
+	from_system_id: int = 6001
+	@property
+	def url(self) -> str:
+		return "psy/start_cooking"
+
+class GetPuddingRequest(Request[GetPuddingResponse]):
+	frame_id_list: list = None
+	from_system_id: int = 6001
+	@property
+	def url(self) -> str:
+		return "psy/get_pudding"
+
+class PsyReadDramaRequest(Request[PsyReadDramaResponse]):
+	drama_id: int = None
+	from_system_id: int = 6001
+	@property
+	def url(self) -> str:
+		return "psy/read_drama"
+
+# 布丁小游戏 End
