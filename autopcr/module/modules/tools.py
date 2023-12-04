@@ -1,7 +1,7 @@
 from typing import List, Set
 
 from ...model.common import ChangeRarityUnit, DeckListData, GrandArenaHistoryDetailInfo, GrandArenaHistoryInfo, GrandArenaSearchOpponent, ProfileUserInfo, RankingSearchOpponent, VersusResult, VersusResultDetail
-
+from ...model.responses import PsyTopResponse
 from ...db.models import GachaExchangeLineup
 from ...model.custom import ArenaQueryResult, ArenaRegion, GachaReward, ItemType
 from ..modulebase import *
@@ -12,6 +12,84 @@ from ...db.database import db
 from ...model.enums import *
 from ...util.arena import instance as ArenaQuery
 import datetime
+
+@name('【活动限时】一键做布丁')
+@default(True)
+@description('一键做+吃布丁，直到清空你的材料库存。<br/>顺便还能把剧情也看了。')
+class cook_pudding(Module):
+    async def do_task(self, client: pcrclient):
+        is_error = False
+        is_abort = False
+        is_skip = True
+        event_active = False
+        for event in db.get_active_hatsune():
+            if event.event_id != 10080:
+                continue
+            else:
+                is_skip = False
+                event_active = True
+            resp = await client.get_hatsune_top(event.event_id)
+
+            nboss_id = event.event_id * 100 + 1
+            boss_info = {boss.boss_id: boss for boss in resp.boss_battle_info}
+
+            async def read_drama(psy_top_resp: PsyTopResponse):
+                drama_list = [item.drama_id for item in psy_top_resp.drama_list if item.read_status == 0]
+                if len(drama_list) != 0:
+                    for did in drama_list:
+                        await client.psy_read_drama(did)
+                return len(drama_list)
+
+            try:
+                if not boss_info[nboss_id].is_unlocked:
+                    raise AbortError(f"n本boss未解锁")
+                if not boss_info[nboss_id].kill_num:
+                    raise AbortError(f"n本boss未首通")
+
+                resp = await client.psy_top()
+                stock = client.data.get_inventory((eInventoryType.Item, int(resp.psy_setting.material_item_id)))
+                if stock < 1:
+                    read_drama = await read_drama(resp)
+                    raise AbortError(f"材料不足。\n阅读了{read_drama}个剧情。")
+
+                cooking_frame = []
+                for item in resp.cooking_status:
+                    cooking_frame.append(item.frame_id)
+                if len(cooking_frame) != 0:
+                    await client.get_pudding(cooking_frame)
+
+                times = (stock // int(resp.psy_setting.use_material_count)) // 24
+                over = (stock // int(resp.psy_setting.use_material_count)) % 24
+
+                if times > 0:
+                    for i in range(times):
+                        frame_list = [x for x in range(1, 25)]
+                        await client.start_cooking(frame_list)
+                        await client.get_pudding(frame_list)
+
+                frame_list = [x for x in range(1, over + 1)]
+                await client.start_cooking(frame_list)
+                await client.get_pudding(frame_list)
+
+                resp = await client.psy_top()
+                read_drama = await read_drama(resp)
+
+                self._log(f"做了{times * 24 + over}个布丁。\n阅读了{read_drama}个剧情。")
+
+            except SkipError as e:
+                self._log(f"{event.event_id}: {str(e)}")
+            except AbortError as e:
+                is_abort = True
+                self._log(f"{event.event_id}: {str(e)}")
+            except Exception as e:
+                is_error = True
+                self._log(f"{event.event_id}: {str(e)}")
+
+        if not event_active: raise SkipError("当前无进行中的活动。")
+        if is_error: raise ValueError("")
+        if is_abort: raise AbortError("")
+        if is_skip: raise SkipError("")
+
 
 @description('来发十连，或者直到出货')
 @name('抽卡')
