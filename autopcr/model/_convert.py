@@ -2242,6 +2242,11 @@ for x in urls_t:
 urls2 = dict()
 urls['CheckAgreement'] = 'check/check_agreement'
 urls2['CheckAgreement'] = 'CheckAgreement'
+urls2['RoomClanMember'] = 'RoomClanMembers'
+urls2['RoomReceiveItemAll'] = 'RoomReceiveAll'
+urls2['RoomMysetList'] = 'RoomGetMysetList'
+urls2['DimensionFaultReset'] = 'TdfReset'
+urls2['AccountDeleteRequest'] = 'AccountDeleteDeleteRequest'
 urls['GetFriendSupportUnitList'] = 'SupportUnitGetFriendSupportUnitList'
 urls['GetTipsList'] = 'TipsGetTipsList'
 

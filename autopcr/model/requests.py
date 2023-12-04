@@ -21,6 +21,9 @@ class UniqueEquipMultiEnhanceRequest(Request[UniqueEquipMultiEnhanceResponse]):
 	def url(self) -> str:
 		return "equipment/multi_enhance_unique"
 class AccountDeleteRequestRequest(Request[AccountDeleteRequestResponse]):
+	@property
+	def url(self) -> str:
+		return "account_delete/delete_request"
 	pass
 class AccountDeleteCancelRequest(Request[AccountDeleteCancelResponse]):
 	@property
@@ -748,6 +751,9 @@ class DimensionFaultTopRequest(Request[DimensionFaultTopResponse]):
 	def url(self) -> str:
 		return "tdf/top"
 class DimensionFaultResetRequest(Request[DimensionFaultResetResponse]):
+	@property
+	def url(self) -> str:
+		return "tdf/reset"
 	pass
 class DimensionFaultSupportUnitListRequest(Request[DimensionFaultSupportUnitListResponse]):
 	is_treasure: int = None
@@ -2318,6 +2324,9 @@ class RoomLikeHistoryRequest(Request[RoomLikeHistoryResponse]):
 		return "room/like_history"
 	pass
 class RoomClanMemberRequest(Request[RoomClanMemberResponse]):
+	@property
+	def url(self) -> str:
+		return "room/clan_members"
 	pass
 class RoomExtendStorageRequest(Request[RoomExtendStorageResponse]):
 	storage_num: int = None
@@ -2390,8 +2399,14 @@ class RoomReceiveItemRequest(Request[RoomReceiveItemResponse]):
 	def url(self) -> str:
 		return "room/receive"
 class RoomReceiveItemAllRequest(Request[RoomReceiveItemAllResponse]):
+	@property
+	def url(self) -> str:
+		return "room/receive_all"
 	pass
 class RoomMysetListRequest(Request[RoomMysetListResponse]):
+	@property
+	def url(self) -> str:
+		return "room/get_myset_list"
 	pass
 class RoomMysetSaveRequest(Request[RoomMysetSaveResponse]):
 	myset_index: int = None
