@@ -60,7 +60,7 @@ class sessionmgr(Component[apiclient]):
                                 channel_id=str(self._channel),
                                 challenge=captch_done['challenge'],
                                 validate_=captch_done['validate'],
-                                seccode=capch_done['validate']+"|jordan",
+                                seccode=captch_done['validate']+"|jordan",
                                 captcha_type='1',
                                 image_token='',
                                 captcha_code='',

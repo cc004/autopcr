@@ -3,7 +3,7 @@ from typing import List, Set
 from ...model.common import ChangeRarityUnit, DeckListData, GrandArenaHistoryDetailInfo, GrandArenaHistoryInfo, GrandArenaSearchOpponent, ProfileUserInfo, RankingSearchOpponent, VersusResult, VersusResultDetail
 
 from ...db.models import GachaExchangeLineup
-from ...model.custom import ArenaQueryResult, ArenaRegion, GachaReward
+from ...model.custom import ArenaQueryResult, ArenaRegion, GachaReward, ItemType
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient

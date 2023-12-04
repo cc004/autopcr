@@ -1,7 +1,7 @@
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
