@@ -12,7 +12,7 @@ class callback:
     async def request_validate(self, url: str): ...
 
     @abstractproperty
-    def qid(self): ...
+    def qid(self) -> int: ...
 
 class Task():
     def __init__(self, token, callback: callback, config={}):
@@ -38,10 +38,10 @@ class TaskList(Task):
             async with accountmgr.load(target) as mgr:
                 resp = await mgr.do_from_key(self.config, self.do_module_list())
             img = await draw(resp, alian + '_' + '_'.join(self.do_module_list()), self.callback.qid)
-            self.callback.send(img = img)
+            await self.callback.send(img = img)
         except Exception as e:
             traceback.print_exc()
-            self.callback.send(msg = str(e))
+            await self.callback.send(msg = str(e))
 
 class ClanBattleSupport(TaskList):
     def do_module_list(self) -> list:

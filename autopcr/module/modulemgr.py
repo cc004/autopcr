@@ -35,7 +35,7 @@ class ModuleManager:
                 if enable:
                     time = config.get("time_" + key, "25:00")
                     if time: # in some case time is None
-                        hour, minute = time.split(":")
+                        hour, minute = time.split(":")[0:2]
                         is_clan_battle_run = config.get("clanbattle_run_" + key, False)
                         self._crons.append((int(hour), int(minute), is_clan_battle_run))
         except:

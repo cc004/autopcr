@@ -1,6 +1,6 @@
 from __future__ import annotations
 from .enums import eInventoryType
-from typing import List, Tuple, Counter as CounterType
+from typing import List, Optional, Tuple, Counter as CounterType
 from collections import Counter
 from pydantic import BaseModel, Field
 
@@ -90,6 +90,6 @@ class ArenaQueryData(BaseModel):
 class ArenaQueryResponse(BaseModel):
     code: int 
     message: str
-    data: ArenaQueryData
+    data: Optional[ArenaQueryData]
     version: str
 

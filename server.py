@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Union
 import os
 from .autopcr.http_server.httpserver import HttpServer
 from .autopcr.db.database import db
@@ -82,27 +82,38 @@ sv = Service(
 )
 
 class DailyTaskCallback(callback):
-    def __init__(self, bot: HoshinoBot, gid: int, alian: str, qid: int):
+    def __init__(self, bot: HoshinoBot, gid: Union[str, int, None], alian: str, qid: int):
         self.bot = bot
         self.gid = gid
-        self.qid = qid
+        self._qid = qid
         self.alian = alian
-        
+
+    @property
+    def qid(self):
+        return self._qid
+
     async def send(self, msg: str = '', img: str = ''):
-        msg += MessageSegment.image(img) if img else ''
-        await self.bot.send_group_msg(group_id=self.gid, message=f"【定时任务】{msg}")
+        if self.gid:
+            msg += MessageSegment.image(f'file:///{img}') if img else ''
+            await self.bot.send_group_msg(group_id=self.gid, message=f"【定时任务】{msg}")
 
     async def request_validate(self, url: str):
-        await self.bot.send_group_msg(group_id=self.gid,
-            msg=f"【定时任务】帐号需要验证码，【{self.alian}】定时任务自动取消[CQ:at,qq={self.qid}]")
+        if self.gid:
+            await self.bot.send_group_msg(group_id=self.gid,
+                msg=f"【定时任务】帐号需要验证码，【{self.alian}】定时任务自动取消[CQ:at,qq={self.qid}]")
 
 class InvokedTaskCallback(callback):
     def __init__(self, bot: HoshinoBot, ev: CQEvent):
         self.bot = bot
         self.ev = ev
+        self._qid = ev.user_id
+
+    @property
+    def qid(self):
+        return self._qid
         
     async def send(self, msg: str = '', img: str = ''):
-        msg += MessageSegment.image(img) if img else ''
+        msg += MessageSegment.image(f'file:///{img}') if img else ''
         await self.bot.send(self.ev, message=f"[CQ:reply,id={self.ev.message_id}] {msg}")
         
     async def request_validate(self, url: str):
@@ -133,7 +144,7 @@ async def check_validate(task: Task):
 
             url = address + url.lstrip("/daily/")
             
-            task.callback.request_validate(url)
+            await task.callback.request_validate(url)
 
             del validate_dict[username]
 
@@ -194,9 +205,13 @@ def pre_process(func):
 @sv.scheduled_job('interval', minutes=1)
 async def timing():
     global cron_group
-    gid = list((await sv.get_enable_groups()).keys())[0]
+    gid = None
     if cron_group:
         gid = cron_group
+    else:
+        enable_group = list((await sv.get_enable_groups()).keys())
+        if enable_group:
+            gid = enable_group[0]
 
     hour = datetime.datetime.now().hour
     minute = datetime.datetime.now().minute
@@ -214,7 +229,8 @@ async def timing():
             user_id = mgr.qq
             token = (alian, target)
             if token in inqueue:
-                await bot.send_group_msg(group_id=gid, message=f"【定时任务】{alian}已在执行任务")
+                if gid:
+                    await bot.send_group_msg(group_id=gid, message=f"【定时任务】{alian}已在执行任务")
                 continue
 
             inqueue.add(token)
@@ -438,11 +454,14 @@ async def config_clear_daily(bot: HoshinoBot, ev: CQEvent):
 
 
 async def report_to_su(sess, msg_with_sess, msg_wo_sess):
-    if sess:
-        await sess.send(msg_with_sess)
-    else:
-        bot = hoshino.get_bot()
-        sid = bot.get_self_ids()
-        if len(sid) > 0:
-            sid = random.choice(sid)
-            await bot.send_private_msg(self_id=sid, user_id=SUPERUSERS[0], message=msg_wo_sess)
+    try:
+        if sess:
+            await sess.send(msg_with_sess)
+        else:
+            bot = hoshino.get_bot()
+            sid = bot.get_self_ids()
+            if len(sid) > 0:
+                sid = random.choice(sid)
+                await bot.send_private_msg(self_id=sid, user_id=SUPERUSERS[0], message=msg_wo_sess)
+    except:
+        pass
