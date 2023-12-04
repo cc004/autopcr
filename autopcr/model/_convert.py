@@ -2385,10 +2385,6 @@ for (file, text) in yieldFiles():
 	if is_common:
 		commons[classname] = (fp.getvalue(), types)
 
-refered_enum.append('eGachaDrawType')
-refered_enum.append('eClanSupportMemberType')
-refered_enum.append('eSkillLocationCategory')
-
 used = set(['int', 'str', 'bool', 'float'])
 while len(commons) > 0:
 	for key in [x for x in commons]:
@@ -2397,7 +2393,7 @@ while len(commons) > 0:
 			used.add(key)
 			commons.pop(key)
 			continue
-for classname in set(refered_enum):
+for classname in set(refered_enum).union(set(['eGachaDrawType', 'eClanSupportMemberType', 'eSkillLocationCategory'])):
 	fp = fp_enum
 	text = fileCache[classname + '.cs']
 	fp.write(f'class {classname}(Enum):\n')
