@@ -4,7 +4,7 @@ import os
 
 member = re.compile(r'(public) ([A-Za-z0-9_<>\[\\\]]*?) ([A-Za-z0-9_]*?)( \{ get; .*?set; \})?\n')
 enum = re.compile('\s*([A-Za-z0-9_]+?)( = (-?[0-9]*))?,?\n')
-upper = re.compile('([A-Z]|(?<!\d)\d)')
+upper = re.compile('([A-Z]|(?<=rarity)6)')
 addtask = re.compile('addTask\(eApiType\.(.*?), (new ApiManager.)?([^ ]*?)PostParam')
 list = re.compile('List<(.*)>')
 fp_common = open('common.py', 'w')
@@ -2382,6 +2382,7 @@ for (file, text) in yieldFiles():
 
 refered_enum.append('eGachaDrawType')
 refered_enum.append('eClanSupportMemberType')
+refered_enum.append('eSkillLocationCategory')
 
 used = set(['int', 'str', 'bool', 'float'])
 while len(commons) > 0:
