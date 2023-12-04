@@ -2254,9 +2254,9 @@ class TowerCloisterBattleRetireResponse(ResponseBase):
 	is_joined_clan: int = None
 class TowerCloisterBattleStartResponse(ResponseBase):
 	user_unit: List[UnitData] = None
-	versus_user_unit_1: List[UnitData] = None
-	versus_user_unit_2: List[UnitData] = None
-	versus_user_unit_3: List[UnitData] = None
+	versus_user_unit1: List[UnitData] = None
+	versus_user_unit2: List[UnitData] = None
+	versus_user_unit3: List[UnitData] = None
 	user_gold: UserGold = None
 	battle_log_id: int = None
 	seed: int = None
@@ -2302,9 +2302,9 @@ class TowerReplayResponse(ResponseBase):
 	party_list: TowerReplayPartyList = None
 	versus_user_unit: List[UnitData] = None
 	team_level: int = None
-	team_level_1: int = None
-	team_level_2: int = None
-	team_level_3: int = None
+	team_level1: int = None
+	team_level2: int = None
+	team_level3: int = None
 class TowerReplayReportResponse(ResponseBase):
 	pass
 class TowerResetResponse(ResponseBase):

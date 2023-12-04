@@ -729,11 +729,11 @@ class DailyTaskGetRewardsRequest(Request[DailyTaskGetRewardsResponse]):
 	pass
 class DeckUpdateRequest(Request[DeckUpdateResponse]):
 	deck_number: int = None
-	unit_id__1: int = None
-	unit_id__2: int = None
-	unit_id__3: int = None
-	unit_id__4: int = None
-	unit_id__5: int = None
+	unit_id_1: int = None
+	unit_id_2: int = None
+	unit_id_3: int = None
+	unit_id_4: int = None
+	unit_id_5: int = None
 	@property
 	def url(self) -> str:
 		return "deck/update"
@@ -1628,11 +1628,11 @@ class KaiserBattleTopRequest(Request[KaiserBattleTopResponse]):
 	pass
 class KaiserBattleUpdateDeckRequest(Request[KaiserBattleUpdateDeckResponse]):
 	kaiser_boss_id: int = None
-	unit_id__1: int = None
-	unit_id__2: int = None
-	unit_id__3: int = None
-	unit_id__4: int = None
-	unit_id__5: int = None
+	unit_id_1: int = None
+	unit_id_2: int = None
+	unit_id_3: int = None
+	unit_id_4: int = None
+	unit_id_5: int = None
 	@property
 	def url(self) -> str:
 		return "kaiser_battle/update_deck"
@@ -1727,11 +1727,11 @@ class LegionBattleTopRequest(Request[LegionBattleTopResponse]):
 		return "legion_battle/top"
 class LegionBattleUpdateDeckRequest(Request[LegionBattleUpdateDeckResponse]):
 	legion_boss_id: int = None
-	unit_id__1: int = None
-	unit_id__2: int = None
-	unit_id__3: int = None
-	unit_id__4: int = None
-	unit_id__5: int = None
+	unit_id_1: int = None
+	unit_id_2: int = None
+	unit_id_3: int = None
+	unit_id_4: int = None
+	unit_id_5: int = None
 	@property
 	def url(self) -> str:
 		return "legion_battle/update_deck"
@@ -1869,11 +1869,11 @@ class MirokuBattleTopRequest(Request[MirokuBattleTopResponse]):
 		return "miroku_battle/top"
 class MirokuBattleUpdateDeckRequest(Request[MirokuBattleUpdateDeckResponse]):
 	sre_boss_id: int = None
-	unit_id__1: int = None
-	unit_id__2: int = None
-	unit_id__3: int = None
-	unit_id__4: int = None
-	unit_id__5: int = None
+	unit_id_1: int = None
+	unit_id_2: int = None
+	unit_id_3: int = None
+	unit_id_4: int = None
+	unit_id_5: int = None
 	@property
 	def url(self) -> str:
 		return "miroku_battle/update_deck"
@@ -1904,11 +1904,11 @@ class SetMyPartyRequest(Request[SetMyPartyResponse]):
 	party_number: int = None
 	party_label_type: int = None
 	party_name: str = None
-	unit_id__1: int = None
-	unit_id__2: int = None
-	unit_id__3: int = None
-	unit_id__4: int = None
-	unit_id__5: int = None
+	unit_id_1: int = None
+	unit_id_2: int = None
+	unit_id_3: int = None
+	unit_id_4: int = None
+	unit_id_5: int = None
 	change_rarity_unit_list: List[ChangeRarityUnit] = None
 	@property
 	def url(self) -> str:
@@ -2035,11 +2035,11 @@ class FriendBattleTopRequest(Request[FriendBattleTopResponse]):
 class FriendBattleUpdateDeckRequest(Request[FriendBattleUpdateDeckResponse]):
 	deck_number: int = None
 	deck_name: str = None
-	unit_id__1: int = None
-	unit_id__2: int = None
-	unit_id__3: int = None
-	unit_id__4: int = None
-	unit_id__5: int = None
+	unit_id_1: int = None
+	unit_id_2: int = None
+	unit_id_3: int = None
+	unit_id_4: int = None
+	unit_id_5: int = None
 	mask_bit_flag: int = None
 	@property
 	def url(self) -> str:
@@ -2822,11 +2822,11 @@ class SreEventTopRequest(Request[SreEventTopResponse]):
 class SreEventUpdateDeckRequest(Request[SreEventUpdateDeckResponse]):
 	sre_id: int = None
 	deck_number: int = None
-	unit_id__1: int = None
-	unit_id__2: int = None
-	unit_id__3: int = None
-	unit_id__4: int = None
-	unit_id__5: int = None
+	unit_id_1: int = None
+	unit_id_2: int = None
+	unit_id_3: int = None
+	unit_id_4: int = None
+	unit_id_5: int = None
 	@property
 	def url(self) -> str:
 		return "sre/update_deck"

@@ -36,9 +36,9 @@ class BattleLogData(BaseModel):
 	source_is_own_unit: int = None
 	action_id: int = None
 	frame: int = None
-	value_1: int = None
-	value_2: int = None
-	value_3: int = None
+	value1: int = None
+	value2: int = None
+	value3: int = None
 	duration: int = None
 	current_value: int = None
 	wave_count: int = None
@@ -88,10 +88,10 @@ class CampaignDate(BaseModel):
 	end_time: str = None
 class CampaignGachaInfo(BaseModel):
 	campaign_id: int = None
-	fg_1_exec_cnt: int = None
-	fg_1_last_exec_time: int = None
-	fg_10_exec_cnt: int = None
-	fg_10_last_exec_time: int = None
+	fg1_exec_cnt: int = None
+	fg1_last_exec_time: int = None
+	fg10_exec_cnt: int = None
+	fg10_last_exec_time: int = None
 class CampaignTarget(BaseModel):
 	viewer_id: int = None
 	target_flag: bool = None
@@ -256,11 +256,11 @@ class DearStoryInfo(BaseModel):
 	is_choiced: int = None
 class DeckData(BaseModel):
 	deck_number: ePartyType = None
-	unit_id_1: int = None
-	unit_id_2: int = None
-	unit_id_3: int = None
-	unit_id_4: int = None
-	unit_id_5: int = None
+	unit_id1: int = None
+	unit_id2: int = None
+	unit_id3: int = None
+	unit_id4: int = None
+	unit_id5: int = None
 class DeckListData(BaseModel):
 	deck_number: int = None
 	unit_list: List[int] = None
@@ -359,9 +359,9 @@ class EventSpecialBattleExRankingInfo(BaseModel):
 	rank: int = None
 	appear_num: int = None
 	total_attack_num: int = None
-	total_attack_num_mode_1: int = None
-	total_attack_num_mode_2: int = None
-	total_attack_num_mode_3: int = None
+	total_attack_num_mode1: int = None
+	total_attack_num_mode2: int = None
+	total_attack_num_mode3: int = None
 	new: int = None
 class EventSpecialEnemyUnit(BaseModel):
 	unit_id: int = None
@@ -458,18 +458,18 @@ class GrowthParameterList(BaseModel):
 	unit_level: int = None
 	skill_level: int = None
 	promotion_level: int = None
-	equipment_1: int = None
-	equipment_2: int = None
-	equipment_3: int = None
-	equipment_4: int = None
-	equipment_5: int = None
-	equipment_6: int = None
+	equipment1: int = None
+	equipment2: int = None
+	equipment3: int = None
+	equipment4: int = None
+	equipment5: int = None
+	equipment6: int = None
 	love_level: int = None
 	growth_id_list: List[int] = None
-	unique_equip_strength_point_1: int = None
-	unique_equip_strength_point_2: int = None
-	unique_equip_rank_1: int = None
-	unique_equip_rank_2: int = None
+	unique_equip_strength_point1: int = None
+	unique_equip_strength_point2: int = None
+	unique_equip_rank1: int = None
+	unique_equip_rank2: int = None
 class HatsuneEventBossEnemyInfo(BaseModel):
 	boss_id: int = None
 	enemy_identify: int = None
@@ -584,16 +584,16 @@ class LimitSetting(BaseModel):
 	limit_bank_free_gold: int = None
 class LoadDeckData(BaseModel):
 	deck_number: ePartyType = None
-	unit_id_1: int = None
-	unit_id_2: int = None
-	unit_id_3: int = None
-	unit_id_4: int = None
-	unit_id_5: int = None
-	battle_rarity_1: int = None
-	battle_rarity_2: int = None
-	battle_rarity_3: int = None
-	battle_rarity_4: int = None
-	battle_rarity_5: int = None
+	unit_id1: int = None
+	unit_id2: int = None
+	unit_id3: int = None
+	unit_id4: int = None
+	unit_id5: int = None
+	battle_rarity1: int = None
+	battle_rarity2: int = None
+	battle_rarity3: int = None
+	battle_rarity4: int = None
+	battle_rarity5: int = None
 class LoginBonusData(BaseModel):
 	campaign_id: int = None
 	total_count: int = None
@@ -771,11 +771,11 @@ class PostMultiUnlockRarity6Slot(BaseModel):
 class PracticeDeckData(BaseModel):
 	deck_number: int = None
 	deck_name: str = None
-	unit_id_1: int = None
-	unit_id_2: int = None
-	unit_id_3: int = None
-	unit_id_4: int = None
-	unit_id_5: int = None
+	unit_id1: int = None
+	unit_id2: int = None
+	unit_id3: int = None
+	unit_id4: int = None
+	unit_id5: int = None
 	mask_bit_flag: int = None
 class PresentHistoryInfo(BaseModel):
 	present_id: int = None
@@ -783,10 +783,10 @@ class PresentHistoryInfo(BaseModel):
 	reward_id: int = None
 	reward_count: int = None
 	message_id: int = None
-	message_param_value_1: int = None
-	message_param_value_2: int = None
-	message_param_value_3: int = None
-	message_param_value_4: int = None
+	message_param_value1: int = None
+	message_param_value2: int = None
+	message_param_value3: int = None
+	message_param_value4: int = None
 	create_time: int = None
 class PresentParameter(BaseModel):
 	present_id: int = None
@@ -795,10 +795,10 @@ class PresentParameter(BaseModel):
 	reward_count: int = None
 	reward_rarity: int = None
 	message_id: int = None
-	message_param_value_1: int = None
-	message_param_value_2: int = None
-	message_param_value_3: int = None
-	message_param_value_4: int = None
+	message_param_value1: int = None
+	message_param_value2: int = None
+	message_param_value3: int = None
+	message_param_value4: int = None
 	reward_limit_flag: eRewardLimitType = None
 	reward_limit_time: int = None
 	create_time: int = None
@@ -1410,12 +1410,12 @@ class UnitUnionBurstTimeline(BaseModel):
 	is_battle_finish: int = None
 class UnlockRarity6Slot(BaseModel):
 	quest_clear: int = None
-	slot_1: int = None
-	slot_2: int = None
-	slot_3: int = None
-	status_1: int = None
-	status_2: int = None
-	status_3: int = None
+	slot1: int = None
+	slot2: int = None
+	slot3: int = None
+	status1: int = None
+	status2: int = None
+	status3: int = None
 class UnreadMessageList(BaseModel):
 	equip_requests: List[EquipRequests] = None
 class UnreadStoryNoticeSetting(BaseModel):
@@ -1532,17 +1532,17 @@ class VersusResultDetail(BaseModel):
 	vs_user_arena_deck: List[UnitDataForView] = None
 	damage_list: List[UnitDamageInfo] = None
 class VotedUnit(BaseModel):
-	rarity_1: int = None
-	rarity_2: int = None
-	rarity_3: int = None
+	rarity1: int = None
+	rarity2: int = None
+	rarity3: int = None
 class VoteRank(BaseModel):
 	rank: int = None
 	unit_id: int = None
 	ratio: int = None
 class VoteRanking(BaseModel):
-	rarity_1: List[VoteRank] = None
-	rarity_2: List[VoteRank] = None
-	rarity_3: List[VoteRank] = None
+	rarity1: List[VoteRank] = None
+	rarity2: List[VoteRank] = None
+	rarity3: List[VoteRank] = None
 class ArenaWaveResult(BaseModel):
 	unit_damage_list: List[UnitDamageInfo] = None
 	unit_hp_list: List[UnitHpInfo] = None
@@ -1745,7 +1745,7 @@ class GachaParameter(BaseModel):
 	last_discount_gacha_time: int = None
 	recommend_unit: List[RecommendUnit] = None
 	url_param: str = None
-	ticket_id_10: int = None
+	ticket_id10: int = None
 	selected_item_id: int = None
 	bonus_item_list: List[GachaBonusItem] = None
 	free_gacha_campaign_id: int = None
@@ -2022,9 +2022,9 @@ class TowerReplayPartyInfo(BaseModel):
 	power: int = None
 	unit_info: List[ReplayUnitDataForView] = None
 class TowerReplayPartyStatusList(BaseModel):
-	party_status_1: List[TowerUnit] = None
-	party_status_2: List[TowerUnit] = None
-	party_status_3: List[TowerUnit] = None
+	party_status1: List[TowerUnit] = None
+	party_status2: List[TowerUnit] = None
+	party_status3: List[TowerUnit] = None
 class TowerReplaySummary(BaseModel):
 	team_level: int = None
 	win_party: int = None
@@ -2071,7 +2071,7 @@ class UnitData(BaseModel):
 	skin_data: SkinData = None
 	identify_num: int = None
 	favorite_flag: int = None
-	unlock_rarity_6_item: UnlockRarity6Slot = None
+	unlock_rarity6_item: UnlockRarity6Slot = None
 	ex_equip_slot: List[ExtraEquipSlot] = None
 	cb_ex_equip_slot: List[ExtraEquipSlot] = None
 	total_hp_without_extra: int = None
@@ -2119,7 +2119,7 @@ class UnitDataLight(BaseModel):
 	skin_data: SkinData = None
 	identify_num: int = None
 	favorite_flag: int = None
-	unlock_rarity_6_item: UnlockRarity6Slot = None
+	unlock_rarity6_item: UnlockRarity6Slot = None
 	ex_equip_slot: List[ExtraEquipSlot] = None
 	cb_ex_equip_slot: List[ExtraEquipSlot] = None
 class UserMyParty(BaseModel):
@@ -2127,21 +2127,21 @@ class UserMyParty(BaseModel):
 	party_number: int = None
 	party_label_type: int = None
 	party_name: str = None
-	unit_id_1: int = None
-	unit_id_2: int = None
-	unit_id_3: int = None
-	unit_id_4: int = None
-	unit_id_5: int = None
-	battle_rarity_1: int = None
-	battle_rarity_2: int = None
-	battle_rarity_3: int = None
-	battle_rarity_4: int = None
-	battle_rarity_5: int = None
-	ex_equip_1: MyPartyExEquipInfo = None
-	ex_equip_2: MyPartyExEquipInfo = None
-	ex_equip_3: MyPartyExEquipInfo = None
-	ex_equip_4: MyPartyExEquipInfo = None
-	ex_equip_5: MyPartyExEquipInfo = None
+	unit_id1: int = None
+	unit_id2: int = None
+	unit_id3: int = None
+	unit_id4: int = None
+	unit_id5: int = None
+	battle_rarity1: int = None
+	battle_rarity2: int = None
+	battle_rarity3: int = None
+	battle_rarity4: int = None
+	battle_rarity5: int = None
+	ex_equip1: MyPartyExEquipInfo = None
+	ex_equip2: MyPartyExEquipInfo = None
+	ex_equip3: MyPartyExEquipInfo = None
+	ex_equip4: MyPartyExEquipInfo = None
+	ex_equip5: MyPartyExEquipInfo = None
 class VersusResult(BaseModel):
 	log_id: int = None
 	versus_time: int = None
@@ -2247,16 +2247,16 @@ class FriendBattleInfo(BaseModel):
 	favorite_unit: UnitDataForView = None
 	deck_list: List[FriendDeckInfo] = None
 class GachaGrowthUnitInfo(BaseModel):
-	growth_1: GrowthInfo = None
-	growth_2: GrowthInfo = None
-	growth_3: GrowthInfo = None
-	growth_4: GrowthInfo = None
-	growth_5: GrowthInfo = None
-	growth_6: GrowthInfo = None
-	growth_7: GrowthInfo = None
-	growth_8: GrowthInfo = None
-	growth_9: GrowthInfo = None
-	growth_10: GrowthInfo = None
+	growth1: GrowthInfo = None
+	growth2: GrowthInfo = None
+	growth3: GrowthInfo = None
+	growth4: GrowthInfo = None
+	growth5: GrowthInfo = None
+	growth6: GrowthInfo = None
+	growth7: GrowthInfo = None
+	growth8: GrowthInfo = None
+	growth9: GrowthInfo = None
+	growth10: GrowthInfo = None
 class GachaStep(BaseModel):
 	gacha_index: TutorialGachaIndex = None
 class GrandArenaHistoryInfo(BaseModel):
@@ -2401,9 +2401,9 @@ class TowerExPartyInfo(BaseModel):
 	second: List[UnitData] = None
 	third: List[UnitData] = None
 class TowerReplayPartyList(BaseModel):
-	party_1: List[UnitData] = None
-	party_2: List[UnitData] = None
-	party_3: List[UnitData] = None
+	party1: List[UnitData] = None
+	party2: List[UnitData] = None
+	party3: List[UnitData] = None
 class TravelAppearEventData(BaseModel):
 	still_id: int = None
 	reward_list: List[InventoryInfo] = None
@@ -2501,23 +2501,23 @@ class EquipDonateNotification(BaseModel):
 	equip_list: List[InventoryInfo] = None
 	request: EquipRequests = None
 class EquipStep(BaseModel):
-	unit_equip_1: TutorialUnitEquip = None
-	unit_equip_2: TutorialUnitEquip = None
+	unit_equip1: TutorialUnitEquip = None
+	unit_equip2: TutorialUnitEquip = None
 class GachaBonusResult(BaseModel):
-	bonus_1: InventoryInfo = None
-	bonus_2: InventoryInfo = None
-	bonus_3: InventoryInfo = None
-	bonus_4: InventoryInfo = None
-	bonus_5: InventoryInfo = None
-	bonus_6: InventoryInfo = None
-	bonus_7: InventoryInfo = None
-	bonus_8: InventoryInfo = None
-	bonus_9: InventoryInfo = None
-	bonus_10: InventoryInfo = None
+	bonus1: InventoryInfo = None
+	bonus2: InventoryInfo = None
+	bonus3: InventoryInfo = None
+	bonus4: InventoryInfo = None
+	bonus5: InventoryInfo = None
+	bonus6: InventoryInfo = None
+	bonus7: InventoryInfo = None
+	bonus8: InventoryInfo = None
+	bonus9: InventoryInfo = None
+	bonus10: InventoryInfo = None
 class GachaPrizeItemDetail(BaseModel):
 	rarity: int = None
 	odds: float = None
-	odds_in_10th: float = None
+	odds_in10th: float = None
 	reward_list: List[InventoryInfo] = None
 class HatsuneLoginBonusData(BaseModel):
 	todays_count: int = None
@@ -2529,16 +2529,16 @@ class Notification(BaseModel):
 	equip_donation: EquipDonateNotification = None
 	mission: List[MissionNotice] = None
 class PrizeRewardInfo(BaseModel):
-	prize_1: PrizeRewardInfoDetail = None
-	prize_2: PrizeRewardInfoDetail = None
-	prize_3: PrizeRewardInfoDetail = None
-	prize_4: PrizeRewardInfoDetail = None
-	prize_5: PrizeRewardInfoDetail = None
-	prize_6: PrizeRewardInfoDetail = None
-	prize_7: PrizeRewardInfoDetail = None
-	prize_8: PrizeRewardInfoDetail = None
-	prize_9: PrizeRewardInfoDetail = None
-	prize_10: PrizeRewardInfoDetail = None
+	prize1: PrizeRewardInfoDetail = None
+	prize2: PrizeRewardInfoDetail = None
+	prize3: PrizeRewardInfoDetail = None
+	prize4: PrizeRewardInfoDetail = None
+	prize5: PrizeRewardInfoDetail = None
+	prize6: PrizeRewardInfoDetail = None
+	prize7: PrizeRewardInfoDetail = None
+	prize8: PrizeRewardInfoDetail = None
+	prize9: PrizeRewardInfoDetail = None
+	prize10: PrizeRewardInfoDetail = None
 class TutorialQuestStart(BaseModel):
 	quest_wave_info: List[WaveEnemyInfoList] = None
 	limit_time: int = None
