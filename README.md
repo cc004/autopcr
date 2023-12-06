@@ -23,3 +23,4 @@ url前缀为`/daily`
 ## Credits
 - aiorequests 来自 [HoshinoBot](https://github.com/Ice-Cirno/HoshinoBot)
 - 前端html来自 [AutoPCR_Archived](https://github.com/watermellye/AutoPCR_Archived)
+- ~~模型生成来自 [PcrotoGen](https://github.com/cc004/PcrotoGen)~~
