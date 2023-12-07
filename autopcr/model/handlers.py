@@ -3,6 +3,8 @@ from .common import *
 from .requests import *
 from ..core.datamgr import datamgr
 from ..db.database import db
+from pydantic.fields import ModelField
+from typing import Optional
 
 def handles(cls):
     cls.__base__.update = cls.update
@@ -493,3 +495,9 @@ class DeckUpdateResponse(responses.DeckUpdateResponse):
         deck.unit_id3 = request.unit_id_3
         deck.unit_id4 = request.unit_id_4
         deck.unit_id5 = request.unit_id_5
+
+# 菜 就别玩
+HatsuneTopResponse.__annotations__['event_status'] = HatsuneEventStatus
+HatsuneTopResponse.__fields__['event_status'].type_ = Optional[HatsuneEventStatus]
+HatsuneTopResponse.__fields__['event_status'].annotation = HatsuneEventStatus
+HatsuneTopResponse.__fields__['event_status'].shape = 1 # singleton

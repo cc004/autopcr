@@ -84,7 +84,8 @@ class sessionmgr(Component[apiclient]):
                 self._sdkaccount = json.load(fp)
         while True:
             try:
-                self._container.urlroot = f'http://{(await next.request(SourceIniIndexRequest())).server[0]}'.replace('\t', '')
+                self._container.servers = [f'http://{server}'.replace('\t', '') for server in (await next.request(SourceIniIndexRequest())).server]
+                self._container.active_server = 0
                 manifest = await next.request(SourceIniGetMaintenanceStatusRequest())
                 self._container._headers['MANIFEST-VER'] = manifest.required_manifest_ver
                 if manifest.maintenance_message:
