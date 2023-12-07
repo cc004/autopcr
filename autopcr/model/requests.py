@@ -3643,3 +3643,41 @@ class VoteTopRequest(Request[VoteTopResponse]):
     @property
     def url(self) -> str:
         return "vote/top"
+class EquipEnhanceMaxRequest(Request[EquipEnhanceMaxResponse]):
+    unit_id: int = None
+    equip_slot_num: int = None
+    @property
+    def url(self) -> str:
+        return "equipment/enhance_max"
+class SeasonPassBuyLevelRequest(Request[SeasonPassBuyLevelResponse]):
+    season_id: int = None
+    current_currency_num: int = None
+    cost_jewel_num: int = None
+    current_level: int = None
+    add_level: int = None
+    @property
+    def url(self) -> str:
+        return "season_ticket_new/buy_level"
+class SeasonPassIndexRequest(Request[SeasonPassIndexResponse]):
+    season_id: int = None
+    @property
+    def url(self) -> str:
+        return "season_ticket_new/index"
+class SeasonPassMissionAcceptRequest(Request[SeasonPassMissionAcceptResponse]):
+    season_id: int = None
+    mission_id: int = None
+    @property
+    def url(self) -> str:
+        return "season_ticket_new/accept"
+class SeasonPassRewardAcceptRequest(Request[SeasonPassRewardAcceptResponse]):
+    season_id: int = None
+    level: int = None
+    index: int = None
+    @property
+    def url(self) -> str:
+        return "season_ticket_new/reward"
+class TestBuyTicketRequest(Request[TestBuyTicketResponse]):
+    season_id: int = None
+    @property
+    def url(self) -> str:
+        return "test/buy_ticket"

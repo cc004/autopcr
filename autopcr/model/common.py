@@ -2493,3 +2493,9 @@ class VoteRanking(BaseModel):
     rarity_1: List[VoteRank] = None
     rarity_2: List[VoteRank] = None
     rarity_3: List[VoteRank] = None
+class ExchangeRewards(BaseModel):
+    id: int = None
+    type: int = None
+    count: int = None
+    stock: int = None
+    received: int = None
