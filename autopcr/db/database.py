@@ -1,7 +1,8 @@
 import time
 from typing import Set, Dict, Tuple
 import typing
-from ..model.common import eInventoryType, eCampaignCategory, RoomUserItem, InventoryInfo
+from ..model.enums import eCampaignCategory
+from ..model.common import eInventoryType, RoomUserItem, InventoryInfo
 from ..model.custom import ItemType
 import datetime
 from collections import Counter

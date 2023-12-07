@@ -299,12 +299,10 @@ class HomeIndexResponse(responses.HomeIndexResponse):
         mgr.missions = self.missions
         mgr.quest_dict.update(shiori_dict)
 
-        if self.dungeon_info.dungeon_area:
-            type = self.dungeon_info.dungeon_area[0].dungeon_type
+        if self.dungeon_info.rest_challenge_count:
             for count in self.dungeon_info.rest_challenge_count:
-                if count.dungeon_type == type:
-                    mgr.dungeon_avaliable = count.count > 0
-                    break
+                mgr.dungeon_avaliable = count.count > 0
+                break
 
 
 @handles
