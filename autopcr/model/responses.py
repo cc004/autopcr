@@ -2615,3 +2615,38 @@ class VoteExecResponse(ResponseBase):
 class VoteTopResponse(ResponseBase):
     voted_unit: VotedUnit = None
     ranking: VoteRanking = None
+class EquipEnhanceMaxResponse(ResponseBase):
+    unit_data: UnitData = None
+    user_jewel: UserJewel = None
+class SeasonPassBuyLevelResponse(ResponseBase):
+    user_jewel: UserJewel = None
+    seasonpass_level: int = None
+    user_point: int = None
+    point_limit_flag: int = None
+    exchange_rewards: List[ExchangeRewards] = None
+class SeasonPassIndexResponse(ResponseBase):
+    is_buy: int = None
+    seasonpass_level: int = None
+    user_point: int = None
+    weekly_point: int = None
+    missions: List[UserMissionInfo] = None
+    received_rewards: List[int] = None
+    daily_reset_time: int = None
+    weekly_reset_time: int = None
+class SeasonPassMissionAcceptResponse(ResponseBase):
+    seasonpass_level: int = None
+    user_point: int = None
+    weekly_point: int = None
+    point_limit_flag: int = None
+    exchange_rewards: List[ExchangeRewards] = None
+    rewards: List[InventoryInfo] = None
+    add_present_count: int = None
+    release_contents: List[ReleaseContentData] = None
+    room_item_level_mission: List[int] = None
+class SeasonPassRewardAcceptResponse(ResponseBase):
+    stamina_info: UserStaminaInfo = None
+    rewards: List[InventoryInfo] = None
+    add_present_count: int = None
+    received_rewards: List[int] = None
+class TestBuyTicketResponse(ResponseBase):
+    ticket_status: int = None
