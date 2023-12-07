@@ -1,6 +1,6 @@
-from enum import Enum
+from enum import IntEnum
 
-class eInventoryType(Enum):
+class eInventoryType(IntEnum):
     TreasureBox = 0
     Unit = 1
     Item = 2
@@ -24,7 +24,7 @@ class eInventoryType(Enum):
     Other = 999
     INVALID_VALUE = -1
 
-class ePromotionLevel(Enum):
+class ePromotionLevel(IntEnum):
     LEVEL_1 = 1
     LEVEL_2 = 2
     LEVEL_3 = 3
@@ -59,7 +59,7 @@ class ePromotionLevel(Enum):
     LEVEL_32 = 32
     INVALID_VALUE = -1
 
-class ePartyType(Enum):
+class ePartyType(IntEnum):
     QUEST = 1
     ARENA = 2
     ARENA_DEF = 3
@@ -116,20 +116,20 @@ class ePartyType(Enum):
     MIROKU_MAIN_BATTLE = 3008
     INVALID_VALUE = -1
 
-class eClanRole(Enum):
+class eClanRole(IntEnum):
     MEMBER = 0
     SUB_LEADER = 30
     LEADER = 40
     INVALID_VALUE = -1
 
-class eMissionStatusType(Enum):
+class eMissionStatusType(IntEnum):
     NoClear = 0
     EnableReceive = 1
     AlreadyReceive = 2
     ChallengePeriodEnd = 101
     INVALID_VALUE = -1
 
-class eClanChatMessageType(Enum):
+class eClanChatMessageType(IntEnum):
     MESSAGE = 0
     STAMP = 1
     DONATION = 2
@@ -148,7 +148,7 @@ class eClanChatMessageType(Enum):
     MINI_GAME_TAQ_RECRUITMENT = 16
     INVALID_VALUE = -1
 
-class eClanChatPlayButtonCondition(Enum):
+class eClanChatPlayButtonCondition(IntEnum):
     NONE = 0
     UNOPENED_MINI_GAME_IN_EVENT = 1
     OPENED_MINI_GAME_IN_EVENT = 2
@@ -157,7 +157,7 @@ class eClanChatPlayButtonCondition(Enum):
     GAME_TABLE_UNPURCHASED_AFTER_GAME_TABLE_ADD = 5
     INVALID_VALUE = -1
 
-class eUserClanJoinStatus(Enum):
+class eUserClanJoinStatus(IntEnum):
     NONE = 0
     REQUEST = 1
     JOINING = 2
@@ -168,14 +168,14 @@ class eUserClanJoinStatus(Enum):
     EXPULSION = 7
     INVALID_VALUE = -1
 
-class eClanJoinCondition(Enum):
+class eClanJoinCondition(IntEnum):
     CONDITION_NONE = 0
     EVERYONE = 1
     ONLY_INVITATION = 2
     DISABLE = 3
     INVALID_VALUE = -1
 
-class eClanActivityGuideline(Enum):
+class eClanActivityGuideline(IntEnum):
     GUIDELINE_NONE = 0
     GUIDELINE_1 = 1
     GUIDELINE_2 = 2
@@ -196,20 +196,20 @@ class eClanActivityGuideline(Enum):
     GUIDELINE_17 = 17
     INVALID_VALUE = -1
 
-class eGachaType(Enum):
+class eGachaType(IntEnum):
     Gold = 1
     Payment = 2
     FreeOnly = 3
     INVALID_VALUE = -1
 
-class eEventSubStoryStatus(Enum):
+class eEventSubStoryStatus(IntEnum):
     UNREAD = 1
     READED = 2
     ADDED = 3
     PUZZLE_PLACED = 4
     INVALID_VALUE = -1
 
-class eSystemId(Enum):
+class eSystemId(IntEnum):
     ERROR = 0
     NORMAL_QUEST = 101
     HARD_QUEST = 102
@@ -323,21 +323,21 @@ class eSystemId(Enum):
     SHIORI_EVENT_VERY_HARD_BOSS = 8010
     INVALID_VALUE = -1
 
-class eShopItemBannerType(Enum):
+class eShopItemBannerType(IntEnum):
     NONE = 0
     RED_RIBBON = 1
     BLUE_RIBBON = 2
     GREEN_RIBBON = 3
     INVALID_VALUE = -1
 
-class eExchangeStaminaState(Enum):
+class eExchangeStaminaState(IntEnum):
     NONE = 0
     ALL_EXCHANGE = 1
     PART_EXCHANGE = 2
     NOT_EXCHANGE = 3
     INVALID_VALUE = -1
 
-class eTaqBuyStatus(Enum):
+class eTaqBuyStatus(IntEnum):
     NONE = 0
     BUY_TAQ = 1
     BUY_GAMETABLE = 2
@@ -345,51 +345,51 @@ class eTaqBuyStatus(Enum):
     NOT_CAN_BUY_GAMETABLE = 4
     INVALID_VALUE = -1
 
-class eBGMKey(Enum):
+class eBGMKey(IntEnum):
     HOME = 200
     ROOM_1F = 210
     ROOM_2F = 211
     ROOM_3F = 212
     INVALID_VALUE = -1
 
-class ePkbHappenMode(Enum):
+class ePkbHappenMode(IntEnum):
     DRAMATIC = 1
     SIMPLE = 2
     INVALID_VALUE = -1
 
-class eRewardLimitType(Enum):
+class eRewardLimitType(IntEnum):
     NO_LIMIT = 0
     HAS_LIMIT = 1
     INVALID_VALUE = -1
 
-class eStoryStatus(Enum):
+class eStoryStatus(IntEnum):
     LOCKED = 1
     UNVIEWED = 2
     VIEWING = 3
     INVALID_VALUE = -1
 
-class eSrtCatalogStatus(Enum):
+class eSrtCatalogStatus(IntEnum):
     EnemyUnlock = 1
     EnemyReaded = 2
     PlayerUnlock = 3
     PlayerReaded = 4
     INVALID_VALUE = -1
 
-class eTaqDifficultyLevel(Enum):
+class eTaqDifficultyLevel(IntEnum):
     NONE = 0
     NORMAL = 1
     HARD = 2
     VERY_HARD = 3
     INVALID_VALUE = -1
 
-class eTaqQuizType(Enum):
+class eTaqQuizType(IntEnum):
     NONE = 0
     PRICONNE_CONTAIN = 1
     NORMAL = 2
     BOTH = 3
     INVALID_VALUE = -1
 
-class eTaqEntryType(Enum):
+class eTaqEntryType(IntEnum):
     NONE = 0
     ALL = 1
     CLAN_ONLY = 2
@@ -397,7 +397,7 @@ class eTaqEntryType(Enum):
     RETRY_SAME_MEMBER = 4
     INVALID_VALUE = -1
 
-class eTaqGameServerStatus(Enum):
+class eTaqGameServerStatus(IntEnum):
     NONE = 0
     ROOM = 1
     ANSWER_WAIT = 2
@@ -405,7 +405,7 @@ class eTaqGameServerStatus(Enum):
     RESULT = 4
     INVALID_VALUE = -1
 
-class eTaqQuizStatus(Enum):
+class eTaqQuizStatus(IntEnum):
     UNLOCK = 0
     QUESTION_UNREADED = 1
     QUESTION_READED = 2
@@ -413,7 +413,7 @@ class eTaqQuizStatus(Enum):
     ANSWER_READED = 4
     INVALID_VALUE = -1
 
-class eTravelStartType(Enum):
+class eTravelStartType(IntEnum):
     NORMAL = 1
     RESTART = 2
     BULK = 3
@@ -421,14 +421,14 @@ class eTravelStartType(Enum):
     RESTART_AND_ADD = 9
     INVALID_VALUE = -1
 
-class eClanSupportMemberType(Enum):
+class eClanSupportMemberType(IntEnum):
     NONE = 0
     DUNGEON_SUPPORT_UNIT_1 = 1
     DUNGEON_SUPPORT_UNIT_2 = 2
     CLAN_BATTLE_SUPPORT_UNIT_1 = 3
     CLAN_BATTLE_SUPPORT_UNIT_2 = 4
 
-class eGachaDrawType(Enum):
+class eGachaDrawType(IntEnum):
     Free = 1
     Payment = 2
     Ticket = 3
@@ -442,7 +442,7 @@ class eGachaDrawType(Enum):
     SpFesDiscount10Shot = 11
     INVALID_VALUE = -1
 
-class eSkillLocationCategory(Enum):
+class eSkillLocationCategory(IntEnum):
     NO_SKILLSLOT = 0
     UNION_BURST_SKILL = 101
     MAIN_SKILL_1 = 201
@@ -454,4 +454,109 @@ class eSkillLocationCategory(Enum):
     FREE_SKILL_2 = 402
     FREE_SKILL_3 = 403
     INVALID_VALUE = -1
+
+class eCampaignCategory(IntEnum):
+    NONE = 0
+    HALF_STAMINA_NORMAL = 11
+    HALF_STAMINA_HARD = 12
+    HALF_STAMINA_BOTH = 13
+    HALF_STAMINA_UNIQUE_EQUIP = 14
+    HALF_STAMINA_HIGH_RARITY_EQUIP = 15
+    HALF_STAMINA_VERY_HARD = 16
+    ITEM_DROP_RARE_NORMAL = 21
+    ITEM_DROP_RARE_HARD = 22
+    ITEM_DROP_RARE_BOTH = 23
+    ITEM_DROP_RARE_VERY_HARD = 24
+    ITEM_DROP_AMOUNT_NORMAL = 31
+    ITEM_DROP_AMOUNT_HARD = 32
+    ITEM_DROP_AMOUNT_BOTH = 33
+    ITEM_DROP_AMOUNT_EXP_TRAINING = 34
+    ITEM_DROP_AMOUNT_DUNGEON = 35
+    ITEM_DROP_AMOUNT_UNIQUE_EQUIP = 37
+    ITEM_DROP_AMOUNT_HIGH_RARITY_EQUIP = 38
+    ITEM_DROP_AMOUNT_VERY_HARD = 39
+    GOLD_DROP_AMOUNT_NORMAL = 41
+    GOLD_DROP_AMOUNT_HARD = 42
+    GOLD_DROP_AMOUNT_BOTH = 43
+    GOLD_DROP_AMOUNT_GOLD_TRAINING = 44
+    GOLD_DROP_AMOUNT_DUNGEON = 45
+    GOLD_DROP_AMOUNT_HIGH_RARITY_EQUIP = 48
+    GOLD_DROP_AMOUNT_VERY_HARD = 49
+    COIN_DROP_AMOUNT_DUNGEON = 51
+    COOL_TIME_ARENA = 61
+    COOL_TIME_GRAND_ARENA = 62
+    CHALLENGE_NUM_TRAINING = 71
+    CHALLENGE_NUM_DUNGEON = 72
+    CHALLENGE_NUM_ARENA = 73
+    CHALLENGE_NUM_GRAND_ARENA = 74
+    PLAYER_EXP_AMOUNT_NORMAL = 81
+    PLAYER_EXP_AMOUNT_HARD = 82
+    PLAYER_EXP_AMOUNT_VERY_HARD = 83
+    PLAYER_EXP_AMOUNT_UNIQUE_EQUIP = 84
+    PLAYER_EXP_AMOUNT_HIGH_RARITY_EQUIP = 85
+    MASTER_COIN_DROP_TOTAL = 90
+    MASTER_COIN_DROP_NORMAL = 91
+    MASTER_COIN_DROP_HARD = 92
+    MASTER_COIN_DROP_VERY_HARD = 93
+    MASTER_COIN_DROP_UNIQUE_EQUIP = 94
+    MASTER_COIN_DROP_HIGH_RARITY_EQUIP = 95
+    MASTER_COIN_DROP_EVENT_NORMAL = 96
+    MASTER_COIN_DROP_EVENT_HARD = 97
+    MASTER_COIN_DROP_REVIVAL_NORMAL = 98
+    MASTER_COIN_DROP_REVIVAL_HARD = 99
+    MASTER_COIN_DROP_SHIORI_NORMAL = 100
+    MASTER_COIN_DROP_SHIORI_HARD = 101
+    HALF_STAMINA_HATSUNE_NORMAL = 111
+    HALF_STAMINA_HATSUNE_HARD = 112
+    HALF_STAMINA_HATSUNE_BOTH = 113
+    ITEM_DROP_RARE_HATSUNE_NORMAL = 121
+    ITEM_DROP_RARE_HATSUNE_HARD = 122
+    ITEM_DROP_RARE_HATSUNE_BOTH = 123
+    ITEM_DROP_AMOUNT_HATSUNE_NORMAL = 131
+    ITEM_DROP_AMOUNT_HATSUNE_HARD = 132
+    ITEM_DROP_AMOUNT_HATSUNE_BOTH = 133
+    GOLD_DROP_AMOUNT_HATSUNE_NORMAL = 141
+    GOLD_DROP_AMOUNT_HATSUNE_HARD = 142
+    GOLD_DROP_AMOUNT_HATSUNE_BOTH = 143
+    PLAYER_EXP_AMOUNT_HATSUNE_NORMAL = 151
+    PLAYER_EXP_AMOUNT_HATSUNE_HARD = 152
+    PLAYER_EXP_AMOUNT_HATSUNE_BOTH = 153
+    HATSUNE_CATEGORY_MIN = 111
+    HATSUNE_CATEGORY_MAX = 153
+    HALF_STAMINA_HATSUNE_REVIVAL_NORMAL = 211
+    HALF_STAMINA_HATSUNE_REVIVAL_HARD = 212
+    ITEM_DROP_RARE_HATSUNE_REVIVAL_NORMAL = 221
+    ITEM_DROP_RARE_HATSUNE_REVIVAL_HARD = 222
+    ITEM_DROP_AMOUNT_HATSUNE_REVIVAL_NORMAL = 231
+    ITEM_DROP_AMOUNT_HATSUNE_REVIVAL_HARD = 232
+    GOLD_DROP_AMOUNT_HATSUNE_REVIVAL_NORMAL = 241
+    GOLD_DROP_AMOUNT_HATSUNE_REVIVAL_HARD = 242
+    PLAYER_EXP_AMOUNT_HATSUNE_REVIVAL_NORMAL = 251
+    PLAYER_EXP_AMOUNT_HATSUNE_REVIVAL_HARD = 252
+    HATSUNE_REVIVAL_CATEGORY_MIN = 211
+    HATSUNE_REVIVAL_CATEGORY_MAX = 252
+    HALF_STAMINA_SHIORI_NORMAL = 311
+    HALF_STAMINA_SHIORI_HARD = 312
+    ITEM_DROP_RARE_SHIORI_NORMAL = 321
+    ITEM_DROP_RARE_SHIORI_HARD = 322
+    ITEM_DROP_AMOUNT_SHIORI_NORMAL = 331
+    ITEM_DROP_AMOUNT_SHIORI_HARD = 332
+    GOLD_DROP_AMOUNT_SHIORI_NORMAL = 341
+    GOLD_DROP_AMOUNT_SHIORI_HARD = 342
+    PLAYER_EXP_AMOUNT_SHIORI_NORMAL = 351
+    PLAYER_EXP_AMOUNT_SHIORI_HARD = 352
+    SHIORI_REVIVAL_CATEGORY_MIN = 311
+    SHIORI_REVIVAL_CATEGORY_MAX = 352
+    EX_EQUIPMENT_DRAW_NUM_UP_TRAVEL = 411
+    MASTER_COIN_DROP_AMOUNT_TRAVEL = 412
+    EX_EQUIPMENT_ENHANCEMENTPT_DROP_AMOUNT_TRAVEL = 413
+    EQUIPMENT_DROP_AMOUNT_TRAVEL = 414
+    EXP_POTION_DROP_AMOUNT_TRAVEL = 415
+    MEMORY_PIECE_DROP_AMOUNT_TRAVEL = 416
+    GOLD_DROP_AMOUNT_TRAVEL = 417
+    DECREASE_TIME_TRAVEL = 418
+    ITEM_DROP_AMOUNT_SECRET_DUNGEON = 531
+    GOLD_DROP_AMOUNT_SECRET_DUNGEON = 541
+    MASTER_COIN_DROP_SECRET_DUNGEON = 551
+    DUNGEON_COIN_DROP_SECRET_DUNGEON = 552
 
