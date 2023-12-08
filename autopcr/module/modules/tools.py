@@ -49,8 +49,8 @@ class cook_pudding(Module):
                 resp = await client.psy_top()
                 stock = client.data.get_inventory((eInventoryType.Item, int(resp.psy_setting.material_item_id)))
                 if stock < 1:
-                    read_drama = await read_drama(resp)
-                    raise AbortError(f"材料不足。\n阅读了{read_drama}个剧情。")
+                    read_cnt = await read_drama(resp)
+                    raise AbortError(f"材料不足。\n阅读了{read_cnt}个剧情。")
 
                 cooking_frame = []
                 for item in resp.cooking_status:
@@ -67,14 +67,15 @@ class cook_pudding(Module):
                         await client.start_cooking(frame_list)
                         await client.get_pudding(frame_list)
 
-                frame_list = [x for x in range(1, over + 1)]
-                await client.start_cooking(frame_list)
-                await client.get_pudding(frame_list)
+                if over > 0:
+                    frame_list = [x for x in range(1, over + 1)]
+                    await client.start_cooking(frame_list)
+                    await client.get_pudding(frame_list)
 
                 resp = await client.psy_top()
-                read_drama = await read_drama(resp)
+                read_cnt = await read_drama(resp)
 
-                self._log(f"做了{times * 24 + over}个布丁。\n阅读了{read_drama}个剧情。")
+                self._log(f"做了{times * 24 + over}个布丁。\n阅读了{read_cnt}个剧情。")
 
             except SkipError as e:
                 self._log(f"{event.event_id}: {str(e)}")
