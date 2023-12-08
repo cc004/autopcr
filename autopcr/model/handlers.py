@@ -501,3 +501,8 @@ HatsuneTopResponse.__annotations__['event_status'] = HatsuneEventStatus
 HatsuneTopResponse.__fields__['event_status'].type_ = Optional[HatsuneEventStatus]
 HatsuneTopResponse.__fields__['event_status'].annotation = HatsuneEventStatus
 HatsuneTopResponse.__fields__['event_status'].shape = 1 # singleton
+
+DungeonQueryUnit.__annotations__['skill_limit_counter'] = int
+DungeonQueryUnit.__fields__['skill_limit_counter'].type_ = Optional[int]
+DungeonQueryUnit.__fields__['skill_limit_counter'].annotation = int
+DungeonQueryUnit.__fields__['skill_limit_counter'].shape = 1 # singleton
