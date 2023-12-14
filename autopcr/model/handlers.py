@@ -1,3 +1,5 @@
+from pydantic.class_validators import make_generic_validator
+from pydantic.validators import int_validator
 from . import responses, sdkrequests
 from .common import *
 from .requests import *
@@ -499,10 +501,13 @@ class DeckUpdateResponse(responses.DeckUpdateResponse):
 # 菜 就别玩
 HatsuneTopResponse.__annotations__['event_status'] = HatsuneEventStatus
 HatsuneTopResponse.__fields__['event_status'].type_ = Optional[HatsuneEventStatus]
+HatsuneTopResponse.__fields__['event_status'].outer_type_ = Optional[HatsuneEventStatus]
 HatsuneTopResponse.__fields__['event_status'].annotation = HatsuneEventStatus
 HatsuneTopResponse.__fields__['event_status'].shape = 1 # singleton
 
-DungeonQueryUnit.__annotations__['skill_limit_counter'] = int
-DungeonQueryUnit.__fields__['skill_limit_counter'].type_ = Optional[int]
-DungeonQueryUnit.__fields__['skill_limit_counter'].annotation = int
-DungeonQueryUnit.__fields__['skill_limit_counter'].shape = 1 # singleton
+DungeonUnit.__annotations__['skill_limit_counter'] = int
+DungeonUnit.__fields__['skill_limit_counter'].type_ = Optional[int]
+DungeonUnit.__fields__['skill_limit_counter'].outer_type_ = Optional[int]
+DungeonUnit.__fields__['skill_limit_counter'].validators = [make_generic_validator(int_validator)] # singleton
+DungeonUnit.__fields__['skill_limit_counter'].annotation = int
+DungeonUnit.__fields__['skill_limit_counter'].shape = 1 # singleton
