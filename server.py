@@ -31,6 +31,7 @@ app.register_blueprint(server.app)
 
 ROOT_PATH = os.path.dirname(__file__)
 cron_group = ""  # 定时任务的通知群
+cron_notic_enable = True # 定时任务通知开关
 
 prefix = '#'
 
@@ -93,12 +94,12 @@ class DailyTaskCallback(callback):
         return self._qid
 
     async def send(self, msg: str = '', img: str = ''):
-        if self.gid:
+        if cron_notic_enable and self.gid:
             msg += MessageSegment.image(f'file:///{img}') if img else ''
             await self.bot.send_group_msg(group_id=self.gid, message=f"【定时任务】{msg}")
 
     async def request_validate(self, url: str):
-        if self.gid:
+        if cron_notic_enable and self.gid:
             await self.bot.send_group_msg(group_id=self.gid,
                 msg=f"【定时任务】帐号需要验证码，【{self.alian}】定时任务自动取消[CQ:at,qq={self.qid}]")
 
@@ -229,7 +230,7 @@ async def timing():
             user_id = mgr.qq
             token = (alian, target)
             if token in inqueue:
-                if gid:
+                if cron_notic_enable and gid:
                     await bot.send_group_msg(group_id=gid, message=f"【定时任务】{alian}已在执行任务")
                 continue
 

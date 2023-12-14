@@ -128,7 +128,9 @@ class ArenaQuery:
                 res = ArenaQueryResponse.parse_obj(res)
                 if res.code:
                     raise ValueError(f'服务器报错：返回值{res.code}')
-                return res.data.result
+                return res.data.result if res.data else []
+            except aiorequests.requests.Timeout as e:
+                return []
             except Exception as e:
                 raise e
 
