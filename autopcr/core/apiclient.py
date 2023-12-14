@@ -51,7 +51,8 @@ TResponse = TypeVar('TResponse', bound=ResponseBase, covariant=True)
 class apiclient(Container["apiclient"]):
     server_time: int = 0
     viewer_id: int = 0
-    urlroot: str = 'https://l3-prod-all-gs-gzlj.bilibiligame.net/'
+    servers: list = ['https://l3-prod-all-gs-gzlj.bilibiligame.net/']
+    active_server: int = 0
     _requestid: str = ''
     _sessionid: str=  ''
     def __init__(self, platform):
@@ -113,8 +114,10 @@ class apiclient(Container["apiclient"]):
         key = apiclient._createkey()
         request.viewer_id = b64encode(apiclient._encrypt(str(self.viewer_id).encode('utf8'), key)).decode('ascii') if request.crypted else str(self.viewer_id)
 
+        urlroot = self.servers[self.active_server]
+        
         try:
-            resp = await aiorequests.post(self.urlroot + request.url, data=apiclient._pack(request.dict(by_alias=True), key) if request.crypted else
+            resp = await aiorequests.post(urlroot + request.url, data=apiclient._pack(request.dict(by_alias=True), key) if request.crypted else
                 request.json(by_alias=True).encode('utf8'), headers=self._headers, timeout=10)
 
             if resp.status_code != 200:

@@ -830,25 +830,26 @@ class pcrclient(apiclient):
                 break
         await self.reset_dungeon()
 
-    # 布丁小游戏 Start
-
-    async def psy_top(self):
+    async def psy_top(self, from_system_id: eSystemId = eSystemId.HATSUNE_TOP):
         req = PsyTopRequest()
+        req.from_system_id = from_system_id
         return await self.request(req)
 
-    async def start_cooking(self, frame_list: list):
-        req = StartCookingRequest()
+    async def start_cooking(self, frame_list: List[int], from_system_id: eSystemId = eSystemId.HATSUNE_TOP):
+        req = PsyStartCookingRequest()
         req.start_cooking_frame_id_list = frame_list
+        req.get_pudding_frame_id_list = []
+        req.from_system_id = from_system_id
         return await self.request(req)
 
-    async def get_pudding(self, frame_list: list):
-        req = GetPuddingRequest()
+    async def get_pudding(self, frame_list: List[int], from_system_id: eSystemId = eSystemId.HATSUNE_TOP):
+        req = PsyGetPuddingRequest()
         req.frame_id_list = frame_list
+        req.from_system_id = from_system_id
         return await self.request(req)
 
-    async def psy_read_drama(self, drama_id: int):
+    async def psy_read_drama(self, drama_id: int, from_system_id: eSystemId = eSystemId.HATSUNE_TOP):
         req = PsyReadDramaRequest()
         req.drama_id = drama_id
+        req.from_system_id = from_system_id
         return await self.request(req)
-
-    # 布丁小游戏 End
