@@ -1,7 +1,8 @@
 import time
 from typing import Set, Dict, Tuple
 import typing
-from ..model.common import eInventoryType, eCampaignCategory, RoomUserItem, InventoryInfo
+from ..model.enums import eCampaignCategory
+from ..model.common import eInventoryType, RoomUserItem, InventoryInfo
 from ..model.custom import ItemType
 import datetime
 from collections import Counter
@@ -337,7 +338,11 @@ class database():
                 )
                 .concat(
                     EmblemDatum.query(db)
-                    .select(lambda x: (eInventoryType(x.type), x.emblem_id, x.emblem_name))
+                    .select(lambda x: (eInventoryType.Emblem, x.emblem_id, x.emblem_name))
+                )
+                .concat(
+                    CustomMypage.query(db)
+                    .select(lambda x: (eInventoryType.CustomMypage, x.still_id, x.still_name))
                 )
                 .to_dict(lambda x: (x[0], x[1]), lambda x: x[2])
             )
