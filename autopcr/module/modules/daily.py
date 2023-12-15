@@ -64,8 +64,8 @@ class mission_receive_last(Module):
                 return
         raise SkipError("没有可领取的任务奖励")
 
-@description('领取女神祭任务')
-@name("")
+@description('')
+@name("领取女神祭任务")
 @default(True)
 class seasonpass_accept(Module):
     async def do_task(self, client: pcrclient):
@@ -83,9 +83,9 @@ class seasonpass_accept(Module):
             else:
                 raise SkipError("没有可领取的女神祭任务")
 
-@description('领取女神祭奖励')
+@description('')
 @booltype('seasonpass_reward_stamina_exclude', "不领取体力", True)
-@name("")
+@name("领取女神祭奖励")
 @default(True)
 class seasonpass_reward(Module):
     async def do_task(self, client: pcrclient):
@@ -96,7 +96,8 @@ class seasonpass_reward(Module):
         for seasonpass in seasonpasses: # it len should be 1
             seasonpass_id = seasonpass.season_id 
             resp = await client.season_ticket_new_index(seasonpass_id)
-            unreceive_reward = [reward for reward in resp.received_rewards if reward % 10 != db.seasonpass_level_reward_full_sign(reward // 10)]
+            VIP = resp.is_buy
+            unreceive_reward = [reward for reward in resp.received_rewards if reward % 10 != db.seasonpass_level_reward_full_sign(reward // 10, VIP)]
             if unreceive_reward:
                 rewards = []
                 if receive_all: 
@@ -110,12 +111,14 @@ class seasonpass_reward(Module):
                             not db.is_stamina_type(db.seasonpass_level_reward[level].free_reward_type):
                             resp = await client.season_ticket_new_reward(seasonpass_id, level, 0)
                             rewards += resp.rewards
-                        if not (status & 2) and \
+                        if VIP and \
+                            not (status & 2) and \
                             db.seasonpass_level_reward[level].charge_reward_num_1 and \
                             not db.is_stamina_type(db.seasonpass_level_reward[level].charge_reward_type_1):
                             resp = await client.season_ticket_new_reward(seasonpass_id, level, 1)
                             rewards += resp.rewards
-                        if not (status & 4) and \
+                        if VIP and \
+                            not (status & 4) and \
                             db.seasonpass_level_reward[level].charge_reward_num_2 and \
                             not db.is_stamina_type(db.seasonpass_level_reward[level].charge_reward_type_2):
                             resp = await client.season_ticket_new_reward(seasonpass_id, level, 2)

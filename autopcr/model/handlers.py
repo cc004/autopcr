@@ -498,6 +498,20 @@ class DeckUpdateResponse(responses.DeckUpdateResponse):
         deck.unit_id4 = request.unit_id_4
         deck.unit_id5 = request.unit_id_5
 
+@handles
+class SeasonPassRewardAcceptResponse(responses.SeasonPassRewardAcceptResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.rewards:
+            for reward in self.rewards:
+                mgr.update_inventory(reward)
+
+@handles
+class SeasonPassMissionAcceptResponse(responses.SeasonPassMissionAcceptResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.rewards:
+            for reward in self.rewards:
+                mgr.update_inventory(reward)
+
 # 菜 就别玩
 HatsuneTopResponse.__annotations__['event_status'] = HatsuneEventStatus
 HatsuneTopResponse.__fields__['event_status'].type_ = Optional[HatsuneEventStatus]
