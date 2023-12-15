@@ -712,4 +712,7 @@ class database():
     def is_stamina_type(self, type_id: int) -> bool:
         return type_id in [eInventoryType.Stamina, eInventoryType.SeasonPassStamina]
 
+    def chara_love2lovel_level(self, chara_love: int):
+        return min([0] + [love[0] for love in self.love_char.values() if love[1] <= chara_love])
+
 db = database()
