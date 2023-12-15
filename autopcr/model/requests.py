@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 from .modelbase import Request
 from .responses import *
 from .common import *
