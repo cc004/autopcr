@@ -23,6 +23,16 @@ class database():
         
         with dbmgr.session() as db:
 
+            self.seasonpass_level_reward: Dict[int, SeasonpassLevelReward] = (
+                SeasonpassLevelReward.query(db)
+                .to_dict(lambda x: x.level_id, lambda x: x)
+            )
+
+            self.seasonpass_foundation: Dict[int, SeasonpassFoundation] = (
+                SeasonpassFoundation.query(db)
+                .to_dict(lambda x: x.season_id, lambda x: x)
+            )
+
             self.guild_data: Dict[int, Guild] = (
                 Guild.query(db)
                 .to_dict(lambda x: x.guild_id, lambda x: x)
@@ -585,6 +595,28 @@ class database():
                 .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.close_time)) \
                 .to_list()
 
+    def get_active_seasonpass(self) -> List[SeasonpassFoundation]:
+        now = datetime.datetime.now()
+        return flow(self.seasonpass_foundation.values()) \
+                .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.limit_time)) \
+                .to_list()
+
+    def get_open_seasonpass(self) -> List[SeasonpassFoundation]:
+        now = datetime.datetime.now()
+        return flow(self.seasonpass_foundation.values()) \
+                .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.end_time)) \
+                .to_list()
+
+    def seasonpass_level_reward_full_sign(self, level: int) -> int:
+        ret = 0
+        if self.seasonpass_level_reward[level].free_reward_num:
+            ret |= 1
+        if self.seasonpass_level_reward[level].charge_reward_type_1:
+            ret |= 2
+        if self.seasonpass_level_reward[level].charge_reward_type_2:
+            ret |= 4
+        return ret
+
     def get_newest_tower_id(self) -> int:
         return max(self.tower, key = lambda x: self.tower[x].start_time)
 
@@ -674,5 +706,8 @@ class database():
 
     def deck_sort_unit(self, units: List[int]):
         return sorted(units, key=lambda x: self.unit_data[x].search_area_width)
+
+    def is_stamina_type(self, type_id: int) -> bool:
+        return type_id in [eInventoryType.Stamina, eInventoryType.SeasonPassStamina]
 
 db = database()
