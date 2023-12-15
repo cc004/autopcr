@@ -532,6 +532,7 @@ class BossReward(BaseModel):
     id: int = None
     kill_time: int = None
     reward_info: List[InventoryInfo] = None
+    period: int = None
 class RankResult(BaseModel):
     clan_battle_id: int = None
     period: int = None
@@ -1314,6 +1315,7 @@ class UserInfo(BaseModel):
     stamina_full_recovery_time: int = None
     arena_rank: int = None
     invite_accept_flag: int = None
+    reg_time: int = None
 class UserBankGoldInfo(BaseModel):
     bank_gold: int = None
     highest_bank_gold: int = None
@@ -1570,7 +1572,7 @@ class IniSetting(BaseModel):
     multiple_skip: BulkSkipSetting = None
     friend_support_unit: FriendSupportUnitIniSetting = None
     kaiser_battle: KaiserBattleIniSetting = None
-    legion_battle: StoryRaidEvenBattletIniSetting = None
+    legion_battle: LegionBattleIniSetting = None
     sre: StoryRaidEvenBattletIniSetting = None
     serial_code: SerialCodeIniSetting = None
     arena_skip_upper_rank: int = None
@@ -1835,6 +1837,7 @@ class PresentHistoryInfo(BaseModel):
     message_param_value_3: int = None
     message_param_value_4: int = None
     create_time: int = None
+    message_text: str = None
 class PresentParameter(BaseModel):
     present_id: int = None
     reward_type: eInventoryType = None
@@ -1849,6 +1852,7 @@ class PresentParameter(BaseModel):
     reward_limit_flag: eRewardLimitType = None
     reward_limit_time: int = None
     create_time: int = None
+    message_text: str = None
 class ArenaCountInfo(BaseModel):
     battle_number: int = None
 class GrandArenaCountInfo(BaseModel):
@@ -2493,6 +2497,23 @@ class VoteRanking(BaseModel):
     rarity_1: List[VoteRank] = None
     rarity_2: List[VoteRank] = None
     rarity_3: List[VoteRank] = None
+class SeasonPassData(BaseModel):
+    SeasonPassRewards: Dict[int, List[int]] = None
+    HasBuy: bool = None
+    point_limit_flag: int = None
+    exchange_rewards: List[InventoryInfo] = None
+    season_id: int = None
+    is_buy: int = None
+    seasonpass_level: int = None
+    user_point: int = None
+    weekly_point: int = None
+    missions: List[UserMissionInfo] = None
+    received_rewards: List[int] = None
+class LegionBattleIniSetting(BaseModel):
+    support_limit: int = None
+    support_change_interval: int = None
+    remaining_count_max: int = None
+    limit_unit_level: int = None
 class ExchangeRewards(BaseModel):
     id: int = None
     type: int = None
