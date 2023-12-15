@@ -101,7 +101,7 @@ class sessionmgr(Component[apiclient]):
                 if not (await next.request(req)).now_tutorial:
                     raise ValueError("账号未过完教程")
                 
-                await next.request(CheckAgreementRequest())
+                # await next.request(CheckAgreementRequest())
 
                 req = LoadIndexRequest()
                 req.carrier = "OPPO"
