@@ -646,6 +646,7 @@ class GachaExecResponse(ResponseBase):
     add_present_count: int = None
     bonus_reward_info: GachaBonusResult = None
     growth_unit_info: GachaGrowthUnitInfo = None
+    user_gold: UserGold = None
 class GachaIndexResponse(ResponseBase):
     gacha_info: List[GachaParameter] = None
     nngtime: int = None
@@ -981,6 +982,9 @@ class HomeIndexResponse(ResponseBase):
     taq_banner_status: eTaqBuyStatus = None
     taq_coop_room_id: int = None
     acquired_release_coin: List[AcquiredReleaseCoin] = None
+    season_ticket: SeasonPassData = None
+    custom_season_pack_alert: List[int] = None
+    custom_season_pack_end_time: List[int] = None
 class ItemETicketExchangeResponse(ResponseBase):
     reward_list: List[InventoryInfo] = None
     item_data: List[InventoryInfo] = None
@@ -1222,6 +1226,8 @@ class LoadIndexResponse(ResponseBase):
     sdgl: int = None
     sdgl_start: int = None
     sdgl_end: int = None
+    evmb: int = None
+    trb: int = None
 class LoadNextDayIndexResponse(ResponseBase):
     daily_reset_time: int = None
     login_bonus_list: LoginBonusList = None
@@ -1258,6 +1264,7 @@ class LoadNextDayIndexResponse(ResponseBase):
     tpc: int = None
     wcst: int = None
     hapi: int = None
+    trb: int = None
 class MirokuBattleFinishResponse(ResponseBase):
     damage_result: int = None
     attack_count: int = None
