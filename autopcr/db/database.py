@@ -361,6 +361,8 @@ class database():
             self.inventory_name[(eInventoryType.TeamExp, 92001)] = "经验"
             self.inventory_name[(eInventoryType.Jewel, 91002)] = "宝石"
             self.inventory_name[(eInventoryType.Gold, 94002)] = "mana"
+            self.inventory_name[(eInventoryType.SeasonPassPoint, 98002)] = "祝福经验值"
+            self.inventory_name[(eInventoryType.SeasonPassStamina, 93002)] = "星尘体力药剂"
 
             self.room_item: Dict[int, RoomItem] = (
                 RoomItem.query(db)
@@ -607,13 +609,13 @@ class database():
                 .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.end_time)) \
                 .to_list()
 
-    def seasonpass_level_reward_full_sign(self, level: int) -> int:
+    def seasonpass_level_reward_full_sign(self, level: int, VIP: bool) -> int:
         ret = 0
         if self.seasonpass_level_reward[level].free_reward_num:
             ret |= 1
-        if self.seasonpass_level_reward[level].charge_reward_type_1:
+        if VIP and self.seasonpass_level_reward[level].charge_reward_type_1:
             ret |= 2
-        if self.seasonpass_level_reward[level].charge_reward_type_2:
+        if VIP and self.seasonpass_level_reward[level].charge_reward_type_2:
             ret |= 4
         return ret
 
