@@ -613,9 +613,9 @@ class database():
         ret = 0
         if self.seasonpass_level_reward[level].free_reward_num:
             ret |= 1
-        if VIP and self.seasonpass_level_reward[level].charge_reward_type_1:
+        if VIP and self.seasonpass_level_reward[level].charge_reward_num_1:
             ret |= 2
-        if VIP and self.seasonpass_level_reward[level].charge_reward_type_2:
+        if VIP and self.seasonpass_level_reward[level].charge_reward_num_2:
             ret |= 4
         return ret
 
