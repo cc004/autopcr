@@ -1,7 +1,12 @@
-from typing import List
+from typing import List, Dict
 from .enums import *
 from pydantic import BaseModel, Field
 
+class LegionBattleIniSetting(BaseModel):
+    support_limit: int = None
+    support_change_interval: int = None
+    remaining_count_max: int = None
+    limit_unit_level: int = None
 class SkillLevelInfo(BaseModel):
     skill_id: int = None
     skill_level: int = None
@@ -2509,11 +2514,6 @@ class SeasonPassData(BaseModel):
     weekly_point: int = None
     missions: List[UserMissionInfo] = None
     received_rewards: List[int] = None
-class LegionBattleIniSetting(BaseModel):
-    support_limit: int = None
-    support_change_interval: int = None
-    remaining_count_max: int = None
-    limit_unit_level: int = None
 class ExchangeRewards(BaseModel):
     id: int = None
     type: int = None
