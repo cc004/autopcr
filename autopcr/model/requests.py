@@ -320,6 +320,7 @@ class ClanBattleFinishRequest(Request[ClanBattleFinishResponse]):
     timeline: List[UnitUnionBurstTimeline] = None
     battle_time: int = None
     start_remain_time: int = None
+    battle_log: str = None
     @property
     def url(self) -> str:
         return "clan_battle/finish"
@@ -3103,6 +3104,7 @@ class TowerExBattleFinishRequest(Request[TowerExBattleFinishResponse]):
     fps: int = None
     auto_clear: int = None
     is_skipped: int = None
+    battle_log_list: List[str] = None
     @property
     def url(self) -> str:
         return "tower/ex_battle_finish"
