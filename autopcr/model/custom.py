@@ -66,13 +66,14 @@ class ArenaQueryComment(BaseModel):
 class ArenaQueryResult(BaseModel):
     id: str = ""
     atk: List[ArenaQueryUnit] = []
+    deff: List[ArenaQueryUnit] = Field(default = [], alias="def")
     up: int = 0
     down: int = 0
     iseditor: bool = False
     private: bool = False
     group: bool = False
     updated: str = ""
-    # comment: List[ArenaQueryComment] = []
+    comment: Optional[List[ArenaQueryComment]] = []
     liked: bool = False
     disliked: bool = False
     query_type: ArenaQueryType = ArenaQueryType.NORMAL

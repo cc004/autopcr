@@ -492,11 +492,11 @@ class ArenaTimeRewardAcceptResponse(responses.ArenaTimeRewardAcceptResponse):
 class DeckUpdateResponse(responses.DeckUpdateResponse):
     async def update(self, mgr: datamgr, request: DeckUpdateRequest):
         deck = mgr.deck_list[ePartyType(request.deck_number)]
-        deck.unit_id1 = request.unit_id_1
-        deck.unit_id2 = request.unit_id_2
-        deck.unit_id3 = request.unit_id_3
-        deck.unit_id4 = request.unit_id_4
-        deck.unit_id5 = request.unit_id_5
+        deck.unit_id_1 = request.unit_id_1
+        deck.unit_id_2 = request.unit_id_2
+        deck.unit_id_3 = request.unit_id_3
+        deck.unit_id_4 = request.unit_id_4
+        deck.unit_id_5 = request.unit_id_5
 
 @handles
 class SeasonPassRewardAcceptResponse(responses.SeasonPassRewardAcceptResponse):

@@ -200,15 +200,15 @@ class Arena(Module):
             if not history:
                 raise SkipError("没有被刺记录")
             history = history[0]
+            history_detail = await self.get_history_detail(history.log_id, client)
             target = history.opponent_user
 
-            self._log(f"{target.user_name}: {datetime.datetime.fromtimestamp(history.versus_time)} {'刺' if history.is_challenge else '被刺'}")
+            self._log(f"{target.user_name}: {datetime.datetime.fromtimestamp(history.versus_time)} {'刺' if history_detail.is_challenge else '被刺'}")
 
             target_info = (await client.get_profile(target.viewer_id)).user_info
             target_rank = self.get_rank_from_user_info(target_info)
 
-            if history.is_challenge:
-                history_detail = await self.get_history_detail(history.log_id, client)
+            if history_detail.is_challenge:
                 defend = await self.get_defend_from_histroy_detail(history_detail)
             else:
                 target = await self.get_opponent_info(client, target.viewer_id)
