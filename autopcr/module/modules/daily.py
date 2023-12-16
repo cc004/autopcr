@@ -113,9 +113,10 @@ class seasonpass_reward(Module):
             seasonpass_id = seasonpass.season_id 
             resp = await client.season_ticket_new_index(seasonpass_id)
             VIP = resp.is_buy
+            if VIP: self._log("拥有神秘请柬的骑士君")
             unreceive_reward = [self.to_key(reward) for reward in resp.received_rewards if reward != db.seasonpass_level_reward_full_sign(reward // 10, VIP)]
+            rewards = []
             if unreceive_reward:
-                rewards = []
                 if receive_all: 
                     resp = await client.season_ticket_new_reward(seasonpass_id, 0, 0)
                     rewards = resp.rewards
@@ -144,10 +145,10 @@ class seasonpass_reward(Module):
                                            db.seasonpass_level_reward[reward.level].charge_reward_type_2,
                                            2)
                         
-                if rewards:
-                    reward = await client.serlize_reward(rewards)
-                    self._log(f"领取了女神祭奖励，获得了:\n{reward}")
-            if not self.log:
+            if rewards:
+                reward = await client.serlize_reward(rewards)
+                self._log(f"领取了女神祭奖励，获得了:\n{reward}")
+            else:
                 raise SkipError("没有可领取的女神祭奖励")
 
 @singlechoice("present_receive_strategy", "领取策略", "非体力", ["非体力", "全部"])
