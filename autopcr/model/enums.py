@@ -20,8 +20,12 @@ class eInventoryType(IntEnum):
     BankGold = 17
     ExtraEquip = 18
     CustomMyPageFrame = 19
+    EquipmentBox = 50
+    SeasonPassStamina = 51
     RoomItemLevelUp = 901
-    Other = 999
+    SeasonPassPoint = 1001
+    SeasonPassLevel = 1002
+    Other = 9999
     INVALID_VALUE = -1
 
 class ePromotionLevel(IntEnum):

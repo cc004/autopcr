@@ -23,6 +23,16 @@ class database():
         
         with dbmgr.session() as db:
 
+            self.seasonpass_level_reward: Dict[int, SeasonpassLevelReward] = (
+                SeasonpassLevelReward.query(db)
+                .to_dict(lambda x: x.level_id, lambda x: x)
+            )
+
+            self.seasonpass_foundation: Dict[int, SeasonpassFoundation] = (
+                SeasonpassFoundation.query(db)
+                .to_dict(lambda x: x.season_id, lambda x: x)
+            )
+
             self.guild_data: Dict[int, Guild] = (
                 Guild.query(db)
                 .to_dict(lambda x: x.guild_id, lambda x: x)
@@ -351,6 +361,8 @@ class database():
             self.inventory_name[(eInventoryType.TeamExp, 92001)] = "经验"
             self.inventory_name[(eInventoryType.Jewel, 91002)] = "宝石"
             self.inventory_name[(eInventoryType.Gold, 94002)] = "mana"
+            self.inventory_name[(eInventoryType.SeasonPassPoint, 98002)] = "祝福经验值"
+            self.inventory_name[(eInventoryType.SeasonPassStamina, 93002)] = "星尘体力药剂"
 
             self.room_item: Dict[int, RoomItem] = (
                 RoomItem.query(db)
@@ -585,6 +597,29 @@ class database():
                 .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.close_time)) \
                 .to_list()
 
+    def get_active_seasonpass(self) -> List[SeasonpassFoundation]:
+        now = datetime.datetime.now()
+        return flow(self.seasonpass_foundation.values()) \
+                .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.limit_time)) \
+                .to_list()
+
+    def get_open_seasonpass(self) -> List[SeasonpassFoundation]:
+        now = datetime.datetime.now()
+        return flow(self.seasonpass_foundation.values()) \
+                .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.end_time)) \
+                .to_list()
+
+    def seasonpass_level_reward_full_sign(self, level: int, VIP: int) -> int:
+        ret = 0
+        if self.seasonpass_level_reward[level].free_reward_num:
+            ret |= 1
+        if VIP and self.seasonpass_level_reward[level].charge_reward_num_1:
+            ret |= 2
+        if VIP and self.seasonpass_level_reward[level].charge_reward_num_2:
+            ret |= 4
+        ret = ret + level * 10
+        return ret
+
     def get_newest_tower_id(self) -> int:
         return max(self.tower, key = lambda x: self.tower[x].start_time)
 
@@ -674,5 +709,11 @@ class database():
 
     def deck_sort_unit(self, units: List[int]):
         return sorted(units, key=lambda x: self.unit_data[x].search_area_width)
+
+    def is_stamina_type(self, type_id: int) -> bool:
+        return type_id in [eInventoryType.Stamina, eInventoryType.SeasonPassStamina]
+
+    def chara_love2lovel_level(self, chara_love: int):
+        return min([0] + [love[0] for love in self.love_char.values() if love[1] <= chara_love])
 
 db = database()

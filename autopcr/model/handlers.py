@@ -155,7 +155,7 @@ class RoomMultiGiveGiftResponse(responses.RoomMultiGiveGiftResponse):
 
         if self.level_info:
             for info in self.level_info.love:
-                mgr.unit_love_data[info.chara_id].love_level = info.current_level
+                mgr.unit_love_data[info.chara_id].love_level = db.chara_love2lovel_level(info.total)
                 mgr.unit_love_data[info.chara_id].chara_love = info.total
 
 
@@ -492,11 +492,25 @@ class ArenaTimeRewardAcceptResponse(responses.ArenaTimeRewardAcceptResponse):
 class DeckUpdateResponse(responses.DeckUpdateResponse):
     async def update(self, mgr: datamgr, request: DeckUpdateRequest):
         deck = mgr.deck_list[ePartyType(request.deck_number)]
-        deck.unit_id1 = request.unit_id_1
-        deck.unit_id2 = request.unit_id_2
-        deck.unit_id3 = request.unit_id_3
-        deck.unit_id4 = request.unit_id_4
-        deck.unit_id5 = request.unit_id_5
+        deck.unit_id_1 = request.unit_id_1
+        deck.unit_id_2 = request.unit_id_2
+        deck.unit_id_3 = request.unit_id_3
+        deck.unit_id_4 = request.unit_id_4
+        deck.unit_id_5 = request.unit_id_5
+
+@handles
+class SeasonPassRewardAcceptResponse(responses.SeasonPassRewardAcceptResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.rewards:
+            for reward in self.rewards:
+                mgr.update_inventory(reward)
+
+@handles
+class SeasonPassMissionAcceptResponse(responses.SeasonPassMissionAcceptResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.rewards:
+            for reward in self.rewards:
+                mgr.update_inventory(reward)
 
 # 菜 就别玩
 HatsuneTopResponse.__annotations__['event_status'] = HatsuneEventStatus

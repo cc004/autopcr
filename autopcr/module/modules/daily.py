@@ -1,3 +1,6 @@
+from typing import List
+
+from ...model.common import InventoryInfo
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
@@ -63,6 +66,90 @@ class mission_receive_last(Module):
                 self._log("领取了任务奖励，获得了:\n" + reward)
                 return
         raise SkipError("没有可领取的任务奖励")
+
+@description('')
+@name("领取女神祭任务")
+@default(True)
+class seasonpass_accept(Module):
+    async def do_task(self, client: pcrclient):
+        seasonpasses = db.get_active_seasonpass()
+        if not seasonpasses:
+            raise SkipError("目前无进行中的女神祭")
+        for seasonpass in seasonpasses: # it should be 1
+            seasonpass_id = seasonpass.season_id 
+            resp = await client.season_ticket_new_index(seasonpass_id)
+            if any(mission.mission_status == eMissionStatusType.EnableReceive for mission in resp.missions):
+                resp = await client.season_ticket_new_accept(seasonpass_id, 0)
+                reward = await client.serlize_reward(resp.rewards)
+                self._log(f"领取了女神祭任务，获得了{reward}")
+                self._log(f"当前女神祭等级：{resp.seasonpass_level}")
+            else:
+                raise SkipError("没有可领取的女神祭任务")
+
+@description('')
+@booltype('seasonpass_reward_stamina_exclude', "不领取体力", True)
+@name("领取女神祭奖励")
+@default(True)
+class seasonpass_reward(Module):
+
+    class Reward:
+        level: int
+        status: List[int]
+
+    def to_key(self, reward: int) -> Reward:
+        level = reward // 10
+        status = reward % 10
+        ret = self.Reward()
+        ret.level = level
+        ret.status = [((status >> i) & 1) for i in range(3)]
+        return ret
+
+    async def do_task(self, client: pcrclient):
+        receive_all = not self.get_config('seasonpass_reward_stamina_exclude')
+        seasonpasses = db.get_open_seasonpass()
+        if not seasonpasses:
+            raise SkipError("目前无女神祭庆典")
+        for seasonpass in seasonpasses: # it len should be 1
+            seasonpass_id = seasonpass.season_id 
+            resp = await client.season_ticket_new_index(seasonpass_id)
+            VIP = resp.is_buy
+            if VIP: self._log("拥有神秘请柬的骑士君")
+            unreceive_reward = [self.to_key(reward) for reward in resp.received_rewards if reward != db.seasonpass_level_reward_full_sign(reward // 10, VIP)]
+            rewards = []
+            if unreceive_reward:
+                if receive_all: 
+                    resp = await client.season_ticket_new_reward(seasonpass_id, 0, 0)
+                    rewards = resp.rewards
+                else:
+                    async def check_reward(reward: seasonpass_reward.Reward, full_reward: seasonpass_reward.Reward, reward_type: int, index: int) -> List[InventoryInfo]: 
+                        if full_reward.status[index] and \
+                        not reward.status[index] and \
+                        not db.is_stamina_type(reward_type):
+                            resp = await client.season_ticket_new_reward(seasonpass_id, reward.level, index)
+                            return resp.rewards
+                        else:
+                            return []
+                        
+
+                    for reward in unreceive_reward:
+                        rewards += await check_reward(reward, 
+                                           self.to_key(db.seasonpass_level_reward_full_sign(reward.level, VIP)), 
+                                           db.seasonpass_level_reward[reward.level].free_reward_type,
+                                           0)
+                        rewards += await check_reward(reward, 
+                                           self.to_key(db.seasonpass_level_reward_full_sign(reward.level, VIP)), 
+                                           db.seasonpass_level_reward[reward.level].charge_reward_type_1,
+                                           1)
+                        rewards += await check_reward(reward, 
+                                           self.to_key(db.seasonpass_level_reward_full_sign(reward.level, VIP)), 
+                                           db.seasonpass_level_reward[reward.level].charge_reward_type_2,
+                                           2)
+                        
+            if rewards:
+                reward = await client.serlize_reward(rewards)
+                self._log(f"领取了女神祭奖励，获得了:\n{reward}")
+            else:
+                raise SkipError("没有可领取的女神祭奖励")
 
 @singlechoice("present_receive_strategy", "领取策略", "非体力", ["非体力", "全部"])
 @description('领取符合条件的所有礼物箱奖励')
