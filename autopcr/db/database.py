@@ -610,13 +610,14 @@ class database():
                 .to_list()
 
     def seasonpass_level_reward_full_sign(self, level: int, VIP: int) -> int:
-        ret = level * 10
+        ret = 0
         if self.seasonpass_level_reward[level].free_reward_num:
             ret |= 1
         if VIP and self.seasonpass_level_reward[level].charge_reward_num_1:
             ret |= 2
         if VIP and self.seasonpass_level_reward[level].charge_reward_num_2:
             ret |= 4
+        ret = ret + level * 10
         return ret
 
     def get_newest_tower_id(self) -> int:
