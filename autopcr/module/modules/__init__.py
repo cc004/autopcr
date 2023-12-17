@@ -60,6 +60,8 @@ daily_modules = [
     unit_skill_level_up,
 
     mission_receive_last,
+    seasonpass_accept,
+    seasonpass_reward,
 
     normal_shop,
     limit_shop,

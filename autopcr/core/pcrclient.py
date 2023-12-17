@@ -26,6 +26,24 @@ class pcrclient(apiclient):
     async def logout(self):
         await self.session.clear_session()
 
+    async def season_ticket_new_index(self, season_id: int):
+        req = SeasonPassIndexRequest()
+        req.season_id = season_id
+        return await self.request(req)
+
+    async def season_ticket_new_reward(self, season_id: int, level: int, index: int):
+        req = SeasonPassRewardAcceptRequest()
+        req.season_id = season_id
+        req.level = level
+        req.index = index
+        return await self.request(req)
+
+    async def season_ticket_new_accept(self, season_id: int, mission_id: int):
+        req = SeasonPassMissionAcceptRequest()
+        req.season_id = season_id
+        req.mission_id = mission_id
+        return await self.request(req)
+
     async def deck_update(self, deck_number: int, units: List[int]):
         req = DeckUpdateRequest()
         req.deck_number = deck_number
