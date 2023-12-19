@@ -74,7 +74,22 @@ async def old_draw(data: dict, alian: str, qid: int):
     imgkit.from_string(df.to_html(index=False, escape=False), file)
     return file
 
-def color():
+def dark_color():
+    return {
+        'bg': '#222529',
+        'odd_row_cell_bg': '#3A3A3C',
+        'even_row_cell_bg': '#2C2C2E',
+        'header_bg': '#1C1C1E',
+        'font': '#DFE2E6',
+        'rowline': 'white',
+        'colline': 'white',
+        'success': '#255035',
+        'skip': '#35778D',
+        'abort': '#937526',
+        'error': '#79282C',
+    }
+
+def light_color():
     return {
         'bg': 'white',
         'odd_row_cell_bg': '#EEEEEE',
@@ -89,15 +104,26 @@ def color():
         'error': 'red',
     }
 
+def color():
+    from datetime import datetime
+    now = datetime.now()
+    is_night = not(now.hour < 18 and now.hour > 8)
+    if is_night:
+        return dark_color()
+    else:
+        return light_color()
+
 async def draw(data: dict, alian: str, qid: int):
     content = []
     header = ["序号", "名字","配置","状态","结果"]
     result = data['result']
-    for i, key in enumerate(data['order']):
+    cnt = 0
+    for key in data['order']:
         value = result[key]
         if value['log'] == "功能未启用":
             continue
-        content.append([str(i), value['name'].strip(), value['config'].strip(), "#"+value['status'].strip(), value['log'].strip()])
+        cnt += 1
+        content.append([str(cnt), value['name'].strip(), value['config'].strip(), "#"+value['status'].strip(), value['log'].strip()])
     from .draw_table import grid2img
     from PIL import ImageFont 
     font_path = os.path.join(DATA, "微软雅黑.ttf")
