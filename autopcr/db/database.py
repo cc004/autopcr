@@ -716,4 +716,10 @@ class database():
     def chara_love2lovel_level(self, chara_love: int):
         return min([0] + [love[0] for love in self.love_char.values() if love[1] <= chara_love])
 
+    def is_gacha_today_end(self, gacha_id: int) -> bool:
+        gacha_data = self.gacha_data[gacha_id]
+        end_time = self.parse_time(gacha_data.end_time)
+        now = datetime.datetime.now()
+        return now > self.get_start_time(end_time)
+
 db = database()
