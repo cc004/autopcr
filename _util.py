@@ -107,7 +107,7 @@ def light_color():
 def color():
     from datetime import datetime
     now = datetime.now()
-    is_night = not(now.hour < 18 and now.hour > 8)
+    is_night = not(now.hour < 18 and now.hour > 7)
     if is_night:
         return dark_color()
     else:
