@@ -3,31 +3,41 @@
 from ..core.pcrclient import pcrclient
 from .modulemgr import ModuleManager
 import os, re
-from typing import Dict, Iterator
+from typing import Dict, Iterator, Tuple
 from ..constants import CONFIG_PATH
 from asyncio import Lock
 import json
 from copy import deepcopy
 import hashlib
+from ..db.database import db
+import datetime
 
 class AccountException(Exception):
     pass
 
 class Account(ModuleManager):
-    def __init__(self, parent: 'AccountManager', account: str, readonly: bool = False):
+    def __init__(self, parent: 'AccountManager', qid: str, account: str, readonly: bool = False, create_when_no_exist: bool = False):
         if not account in parent.account_lock:
             parent.account_lock[account] = Lock()
         self._lck = parent.account_lock[account]
         self._account = account
-        self._filename = parent.path(account)
+        self._filename = parent.path(qid, account)
+        self._parent = parent
         self.readonly = readonly
         self.id = hashlib.md5(account.encode('utf-8')).hexdigest()
+
+        if not os.path.exists(self._filename):
+            if create_when_no_exist:
+                with open(self._filename, 'w') as f:
+                    f.write('{"username": "", "password": "", "alian": ""}')
+            else:
+                raise AccountException("account no exist")
 
         with open(self._filename, 'r') as f:
             self.data = json.load(f)
             self.old_data = deepcopy(self.data)
 
-        self.qq = self.data.get("qq", "")
+        self.qq = qid
         self.alian = self.data.get("alian", "未知")
         self.username = self.data.get("username", "")
         super().__init__(self.data.get("config", {}), self)
@@ -49,6 +59,7 @@ class Account(ModuleManager):
 
     async def set_result(self, result):
         self.data.setdefault('_last_result', {}).update(result)
+        self.data['_last_clean_time'] = db.format_time(datetime.datetime.now())
 
     def get_client(self) -> pcrclient:
         return self.get_android_client()
@@ -79,16 +90,13 @@ class Account(ModuleManager):
                 return ""
             else:
                 return "*" * 7 + mask_str[-1]
-            # elif len(mask_str) <= 1:
-            #     return "*" * len(mask_str)
-            # elif len(mask_str) == 2:
-            #     return mask_str[0] + "*"
-            # else:
-            #     return mask_str[0] + "*" * (len(mask_str) - 2) + mask_str[-1]
+        last_clean_time = self.data.setdefault('_last_result', {}).get("_last_clean_time", "")
         return {
-            'alian': self.data['alian'],
-            'qq': _mask_str(self.data['qq']),
-            'username': _mask_str(self.data['username']),
+            'file': self._account,
+            'alian': self.alian,
+            'qq': self.qq,
+            'username': _mask_str(self.username),
+            'last_clean_time': last_clean_time,
             'password': 8 * "*",
         }
 
@@ -102,6 +110,9 @@ class Account(ModuleManager):
         info.update(super().generate_tools_config())
         return info
 
+    def delete(self):
+        self._parent.delete(self.qq, self._account)
+
 class AccountManager:
     pathsyntax = re.compile(r'[^\\\|?*/]{1,32}')
 
@@ -109,23 +120,39 @@ class AccountManager:
         self.root = root
         self.account_lock: Dict[str, Lock] = {}
 
-    def path(self, account: str) -> str:
-        return os.path.join(self.root, account + '.json')
+    def qid_path(self, qid: str) -> str:
+        return os.path.join(self.root, qid)
 
-    def load(self, account: str, readonly: bool = False) -> Account:
+    def path(self, qid: str, account: str) -> str:
+        return os.path.join(self.qid_path(qid), account + '.json')
+
+    def load(self, qid: str, account: str, readonly: bool = False, create_when_no_exist: bool = False) -> Account:
         if not AccountManager.pathsyntax.fullmatch(account):
             raise AccountException('Invalid account name')
-        return Account(self, account, readonly)
+        return Account(self, qid, account, readonly, create_when_no_exist)
 
-    def delete(self, account: str):
+    def delete(self, qid: str, account: str = ""):
         if not AccountManager.pathsyntax.fullmatch(account):
             raise AccountException('Invalid account name')
-        os.remove(self.path(account))
-    
-    def accounts(self) -> Iterator[str]:
-        for fn in os.listdir(self.root):
+        if account:
+            os.remove(self.path(qid, account))
+        else: 
+            os.removedirs(self.qid_path(qid))
+
+    def accounts(self, qid: str) -> Iterator[str]:
+        for fn in os.listdir(self.qid_path(qid)):
             if fn.endswith('.json'):
                 yield fn[:-5]
+
+    def qids(self) -> Iterator[str]:
+        for fn in os.listdir(self.root):
+            if fn.isdigit() and os.path.isdir(fn):
+                yield fn
+
+    def all_accounts(self) -> Iterator[Tuple[str, str]]:
+        for qid in self.qids():
+            for account in self.accounts(qid):
+                yield (qid, account)
 
 
 instance = AccountManager(os.path.join(CONFIG_PATH))

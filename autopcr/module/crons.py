@@ -11,12 +11,12 @@ async def _cron(task):
         await task(hour, minute)
 
 async def _run_crons(hour, minute):
-    for account in accountmgr.accounts():
-        async def task(account):
-            async with accountmgr.load(account) as mgr:
+    for qid, account in accountmgr.all_accounts():
+        async def task(qid, account):
+            async with accountmgr.load(qid, account) as mgr:
                 print(f'Doing cron#{hour}:{minute} for {account}, crons = {mgr._crons}')
                 await mgr.do_cron(hour, minute)
-        asyncio.get_event_loop().create_task(task(account))
+        asyncio.get_event_loop().create_task(task(qid, account))
 
 
 def queue_crons():

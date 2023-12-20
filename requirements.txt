@@ -10,3 +10,5 @@ SQLAlchemy~=2.0.17
 Pillow~=9.5.0
 Brotli~=1.0.9
 statsmodels~=0.14.0
+redis~=5.0.1
+quart_session~=3.0.0
