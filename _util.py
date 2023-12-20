@@ -1,15 +1,10 @@
-import pandas as pd
 import json
-import imgkit
 import os
-from collections import defaultdict
-from .autopcr.constants import CONFIG_PATH
-import glob
 import asyncio
 
 PATH = os.path.dirname(__file__)
 RESULT = os.path.join(PATH, "result")
-
+DATA = os.path.join(PATH, "data")
 
 async def get_result(alian, qid):
     file = os.path.join(RESULT, f"{alian}_{str(qid)}.jpg")
@@ -40,16 +35,18 @@ async def draw_line(data: list, alian: str):
     for value in data:
         tmp["msg"].append(value.replace("\n", "<br />"))
 
+    import pandas as pd
     df = pd.DataFrame(tmp)
     df = df.style.set_table_styles([{'selector': 'thead tr', 'props': [('background-color', '#F5F5D5!important')]},
                                     {'selector': 'tr:nth-child(odd)', 'props': [('background-color', '#E0E0FF')]},
                                     {'selector': 'tr:nth-child(even)', 'props': [('background-color', '#F8F8F8')]}])
     file = os.path.join(RESULT, f"{alian}_tmp.jpg")
+    import imgkit
     imgkit.from_string(df.to_html(index=False, escape=False), file)
     return file
 
 
-async def draw(data: dict, alian: str, qid: int):
+async def old_draw(data: dict, alian: str, qid: int):
     tmp = {
         "name": [],
         "config": [],
@@ -66,15 +63,74 @@ async def draw(data: dict, alian: str, qid: int):
         tmp["status"].append(value['status'])
         tmp["result"].append(value['log'].replace("\n", "<br />"))
 
+    import pandas as pd
     df = pd.DataFrame(tmp)
     df = df.style.applymap(hightlight_rule, subset=['status']).set_table_styles(
         [{'selector': 'thead tr', 'props': [('background-color', '#F5F5D5!important')]},
          {'selector': 'tr:nth-child(odd)', 'props': [('background-color', '#E0E0FF')]},
          {'selector': 'tr:nth-child(even)', 'props': [('background-color', '#F8F8F8')]}])
     file = os.path.join(RESULT, f"{alian}_{str(qid)}.jpg")
+    import imgkit
     imgkit.from_string(df.to_html(index=False, escape=False), file)
     return file
 
+def dark_color():
+    return {
+        'bg': '#222529',
+        'odd_row_cell_bg': '#3A3A3C',
+        'even_row_cell_bg': '#2C2C2E',
+        'header_bg': '#1C1C1E',
+        'font': '#DFE2E6',
+        'rowline': 'white',
+        'colline': 'white',
+        'success': '#255035',
+        'skip': '#35778D',
+        'abort': '#937526',
+        'error': '#79282C',
+    }
+
+def light_color():
+    return {
+        'bg': 'white',
+        'odd_row_cell_bg': '#EEEEEE',
+        'even_row_cell_bg': 'white',
+        'header_bg': '#C8C8C9',
+        'font': 'black',
+        'rowline': 'black',
+        'colline': 'black',
+        'success': '#E1FFB5',
+        'skip': '#C8D6FA',
+        'abort': 'yellow',
+        'error': 'red',
+    }
+
+def color():
+    from datetime import datetime
+    now = datetime.now()
+    is_night = not(now.hour < 18 and now.hour > 7)
+    if is_night:
+        return dark_color()
+    else:
+        return light_color()
+
+async def draw(data: dict, alian: str, qid: int):
+    content = []
+    header = ["序号", "名字","配置","状态","结果"]
+    result = data['result']
+    cnt = 0
+    for key in data['order']:
+        value = result[key]
+        if value['log'] == "功能未启用":
+            continue
+        cnt += 1
+        content.append([str(cnt), value['name'].strip(), value['config'].strip(), "#"+value['status'].strip(), value['log'].strip()])
+    from .draw_table import grid2img
+    from PIL import ImageFont 
+    font_path = os.path.join(DATA, "微软雅黑.ttf")
+    img = grid2img(content, header, colors=color(), font=ImageFont.truetype(font_path, size=30), stock=True)
+    file = os.path.join(RESULT, f"{alian}_{str(qid)}.jpg")
+    img.save(file, format='JPEG')
+    return file
 
 def render_forward_msg(msg_list: list, uid=244115379, name='兰德索尔图书馆管理员'):
     forward_msg = []
@@ -91,5 +147,8 @@ def render_forward_msg(msg_list: list, uid=244115379, name='兰德索尔图书�
 
 
 if __name__ == "__main__":
-    # asyncio.run(draw(json.loads(open("test.json" ,"r").read()), "test"))
-    pass
+    import time
+    st = time.time()
+    asyncio.run(draw(json.loads(open("test.json" ,"r").read()), "test", 1))
+    ed = time.time()
+    print(ed - st)

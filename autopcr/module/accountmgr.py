@@ -45,7 +45,7 @@ class Account(ModuleManager):
 
     async def save_data(self):
         with open(self._filename, 'w') as f:
-            json.dump(self.data, f, ensure_ascii=False)
+            json.dump(self.data, f)
 
     async def set_result(self, result):
         self.data.setdefault('_last_result', {}).update(result)
