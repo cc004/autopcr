@@ -83,7 +83,7 @@ sv = Service(
 )
 
 class DailyTaskCallback(callback):
-    def __init__(self, bot: HoshinoBot, gid: Union[str, int, None], alian: str, qid: int):
+    def __init__(self, bot: HoshinoBot, gid: Union[str, int, None], alian: str, qid: str):
         self.bot = bot
         self.gid = gid
         self._qid = qid
@@ -220,8 +220,8 @@ async def timing():
     bot = hoshino.get_bot()
     loop = asyncio.get_event_loop()
 
-    for account in accountmgr.accounts():
-        async with accountmgr.load(account) as mgr:
+    for qid, account in accountmgr.all_accounts():
+        async with accountmgr.load(qid, account) as mgr:
             if not mgr.is_cron_run(hour, minute):
                 continue
 
@@ -418,8 +418,8 @@ async def get_config(bot, ev, tot=False):
     accounts = []
     alian = escape(alian)
 
-    for file in accountmgr.accounts():
-        async with accountmgr.load(file, readonly=True) as account:
+    for file in accountmgr.accounts(user_id):
+        async with accountmgr.load(user_id, file, readonly=True) as account:
             if account.qq == user_id:
                 accounts.append((escape(account.alian), file))
 
