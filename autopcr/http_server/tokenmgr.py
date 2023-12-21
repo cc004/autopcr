@@ -22,6 +22,12 @@ class Tokenmgr:
         self.token_pool[token.token] = token
         return token.token
 
+    def set_qid(self, token: str, qid: str) -> bool:
+        if token in self.token_pool:
+            self.token_pool[token].qid = qid
+            return True
+        return False
+
     def validate_token(self, token: str) -> Tuple[bool, str]:
         ok = False
         qid = ""
