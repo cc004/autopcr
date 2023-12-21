@@ -66,36 +66,75 @@
             });
         })();
     </script>
-    <link rel="stylesheet" href="/daily/assets/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/daily/assets/css/Roboto.css">
-    <link rel="stylesheet" href="/daily/assets/css/Roboto%20Slab.css">
-    <link rel="stylesheet" href="/daily/assets/css/action.css">
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/Roboto.css">
+    <link rel="stylesheet" href="assets/css/Roboto%20Slab.css">
+    <link rel="stylesheet" href="assets/css/action.css">
 </head>
-<body style="max-height: 100vh;">
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-lg-12 w-100 p-0">
-                <div class="hstack flex-wrap sticky-top" style="pointer-events: none;">
-                    <form class="bg-primary-subtle border rounded d-flex flex-wrap gap-1 sticky-top p-1" style="pointer-events: auto;">
-                        <button id="do_task" class="btn btn-primary disabled"  type="button" flag="run_once">
-                            <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true" style="margin-right: 4px;"></span>
-                            <span role="status">执行已启用（暂不可用</span></button>
-                        <button id="do_selected_task" class="btn btn-primary disabled" type="button">
-                            <span class="spinner-border spinner-border-sm visually-hidden" aria-hidden="true" style="margin-right: 4px;"></span>
-                            <span role="status">执行已选中（暂不可用</span></button></form>
-                </div>
-                <div id="card-stack" class="vstack">
-                </div>
-            </div>
-        </div>
+
+
+<body>
+    <div class="container mt-5">
+        <h2 class="text-center">账户信息</h2>
+        <table class="table table-bordered table-striped mx-auto mt-4" style="max-width: 600px;">
+            <thead>
+                <tr id="headerRow" class="text-center"></tr>
+            </thead>
+            <tbody id="dataRows" class="text-center"></tbody>
+        </table>
     </div>
-    <script src="/daily/assets/js/iecheck.js"></script>
-    <script>var jinjaUrl = "{{ url }}";</script>
-    <script>var account = "{{ acc }}";</script>
-    <script src="/daily/assets/js/jquery.min.js"></script>
-    <script src="/daily/assets/bootstrap/js/bootstrap.min.js"></script>
-    <script src="/daily/assets/js/bs-init.js"></script>
-    <script src="/daily/assets/js/card.js"></script>
-    <script src="/daily/assets/js/info.js"></script>
+
+    <!-- 引入Bootstrap 5的JavaScript文件（包含Popper.js）和Bootstrap的Bundle文件 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // 使用Fetch API向指定URL发起GET请求
+        fetch('/daily/api/account')
+            .then(response => response.json()) // 将响应转换为JSON格式
+            .then(data => {
+                // 获取表头
+                const headerRow = document.getElementById('headerRow');
+                const headers = Object.keys(data[0]);
+                headers.forEach(header => {
+                    const th = document.createElement('th');
+                    th.textContent = header;
+                    headerRow.appendChild(th);
+                });
+
+                // 获取数据行
+                const dataRows = document.getElementById('dataRows');
+                data.forEach(item => {
+                    const tr = document.createElement('tr');
+
+                    // 处理每个属性的值
+                    headers.forEach(header => {
+                        const td = document.createElement('td');
+                        const value = item[header];
+
+                        // 对第一个file属性添加超链接
+                        if (header === 'file') {
+                            const link = document.createElement('a');
+                            link.href = `/daily/account/${value}/info`;
+                            link.textContent = value;
+                            td.appendChild(link);
+                        } else {
+                            td.textContent = value;
+                        }
+
+                        tr.appendChild(td);
+                    });
+
+                    dataRows.appendChild(tr);
+                });
+            })
+            .catch(error => console.error('Error fetching data:', error));
+    </script>
+    <script src="assets/js/iecheck.js"></script>
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/bootstrap/js/bootstrap.min.js"></script>
+    <script src="assets/js/bs-init.js"></script>
 </body>
+
+
+
 </html>

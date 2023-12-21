@@ -14,8 +14,8 @@ class HttpServer:
     def __init__(self, host = '0.0.0.0', port = 2, qq_only = False):
 
         self.web = Blueprint('web', __name__, static_folder='assets', static_url_path='/assets')
-        self.web_qid = Blueprint('web_qid', __name__, url_prefix = "/account")
-        self.web_account = Blueprint('web_account', __name__, url_prefix = "/<string:acc>")
+        self.web_qid = Blueprint('web_qid', __name__, static_folder='assets', static_url_path='/assets', url_prefix = "/account")
+        self.web_account = Blueprint('web_account', __name__, static_folder='assets', static_url_path='/assets', url_prefix = "/<string:acc>")
 
         self.api = Blueprint('api', __name__, url_prefix = "/api")
         self.api_token = Blueprint('api_token', __name__, url_prefix = "/token")
@@ -236,17 +236,17 @@ class HttpServer:
         async def account():
             return await render_template('account.html')
 
-        @self.web_account.route('/info.html', methods = ['GET'])
+        @self.web_account.route('/info', methods = ['GET'])
         async def tools(*args, **kwargs):
             acc = kwargs.get('acc')  # 获取路由中的参数
             return await render_template('info.html', acc = acc, url="tools")
         
-        @self.web_account.route('/config.html', methods = ['GET'])
+        @self.web_account.route('/config', methods = ['GET'])
         async def config(*args, **kwargs):
             acc = kwargs.get('acc')  # 获取路由中的参数
             return await render_template('config.html', acc = acc, url="info")
 
-        @self.web_account.route('/action.html', methods = ['GET'])
+        @self.web_account.route('/action', methods = ['GET'])
         async def action(*args, **kwargs):
             acc = kwargs.get('acc')  # 获取路由中的参数
             return await render_template('action.html', acc = acc, url="config")
