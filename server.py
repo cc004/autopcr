@@ -239,13 +239,22 @@ async def timing():
             loop.create_task(consumer(DailyClean(token, DailyTaskCallback(bot, gid, alian, user_id))))
 
 
+@sv.on_prefix(f"{prefix}login")
+async def login(bot: HoshinoBot, ev: CQEvent):
+    token = ev.message.extract_plain_text().strip()
+    from .autopcr.http_server.tokenmgr import instance as tokenmgr
+    ok = tokenmgr.set_qid(token, ev.user_id)
+    if not ok:
+        bot.finish(f"无效的token")
+    else:
+        bot.finish(f"登录成功")
+
 @sv.on_fullmatch(f"{prefix}清日常所有")
 @pre_process_all
 async def clear_daily_all(bot: HoshinoBot, ev: CQEvent, tokens: List[Tuple[str, str]]):
     loop = asyncio.get_event_loop()
     for token in tokens:
         loop.create_task(consumer(DailyClean(token, InvokedTaskCallback(bot, ev))))
-
 
 @sv.on_fullmatch(f"{prefix}卡池")
 async def gacha_current(bot: HoshinoBot, ev: CQEvent):
