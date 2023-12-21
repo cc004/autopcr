@@ -3,7 +3,7 @@ var user_config = {}
 var share_key = {}
 $(document).ready(function () {
     $.ajax({
-        url: `/daily/api/${jinjaUrl}` + window.location.search,
+        url: `/daily/api/account/${account}/${jinjaUrl}` + window.location.search,
         type: "get",
         processData: false,
         success: function (ret) {
@@ -168,7 +168,7 @@ function set_tag(status, element) {
 function update_new() {
     let config = user_config
     $.ajax({
-        url: `/daily/api/${jinjaUrl}` + window.location.search,
+        url: `/daily/api/account/${account}/${jinjaUrl}` + window.location.search,
         type: "put",
         data: JSON.stringify(config),
         contentType: "application/json;charset=utf-8",
@@ -231,7 +231,7 @@ function do_single(e) {
         order: [`${e.getAttribute('key')}`]
     }
     $.ajax({
-        url: '/daily/api/do_single' + window.location.search,
+        url: '/daily/api/account/${account}/do_single' + window.location.search,
         type: 'post',
         contentType: "application/json;charset=utf-8",
         data: JSON.stringify(config),
@@ -255,7 +255,7 @@ function do_all_task(e) {
     toggle_spinner('show', e)
     show_toast('info', `已开始执行任务。`)
     $.ajax({
-        url: '/daily/api/do_task' + window.location.search,
+        url: '/daily/api/account/${account}/do_task' + window.location.search,
         type: 'get',
         processData: false,
         success: function (ret) {
@@ -281,7 +281,7 @@ function query_validate(e){
 		return;
 	}
     $.ajax({
-        url: '/daily/api/query_validate' + window.location.search,
+        url: '/daily/api/account/${account}/query_validate' + window.location.search,
         type: 'get',
         processData: false,
         success: function (ret) {
