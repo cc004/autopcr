@@ -129,7 +129,9 @@ class ArenaQuery:
                 if res.code:
                     raise ValueError(f'服务器报错：返回值{res.code}')
                 return res.data.result if res.data else []
-            except aiorequests.requests.Timeout as e:
+            except aiorequests.requests.ConnectionError as e:
+                return []
+            except aiorequests.requests.ReadTimeout as e:
                 return []
             except Exception as e:
                 raise e
