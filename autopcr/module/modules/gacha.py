@@ -31,6 +31,7 @@ class normal_gacha(Module):
 
 @description('有免费十连时自动抽取')
 @name('免费十连')
+@booltype('today_end_gacha_no_do', "当日切卡池前不抽取", True)
 @default(False)
 class free_gacha(Module):
     async def do_task(self, client: pcrclient):
@@ -55,6 +56,10 @@ class free_gacha(Module):
                 break
         else:
             raise ValueError("target gacha not found")
+
+        switch_no_do = self.get_config("today_end_gacha_no_do")
+        if switch_no_do and db.is_gacha_today_end(target_gacha.id):
+            raise SkipError(f"当前卡池【{db.gacha_data[target_gacha.id].pick_up_chara_text}】于今日结束，不自动抽取\n请自行决定是否抽取")
 
         gacha_reward: GachaReward = GachaReward()
 

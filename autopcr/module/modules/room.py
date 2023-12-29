@@ -33,14 +33,23 @@ class room_upper_all(Module):
             cnt += 1
             for item in layout.floor:
                 floors[item.serial_id] = cnt
+        
+        is_warning = False
 
         for x in room.user_room_item_list:
             if db.is_room_item_level_upable(client.data.team_level, x):
-                await client.room_level_up_item(floors[x.serial_id], x)
-                self._log(f"开始升级{db.get_room_item_name(x.room_item_id)}至{x.room_item_level + 1}级")
+                if x.serial_id not in floors:
+                    self._log(f"{db.get_room_item_name(x.room_item_id)}未放置，无法升级")
+                    is_warning = True
+                else:
+                    await client.room_level_up_item(floors[x.serial_id], x)
+                    self._log(f"开始升级{db.get_room_item_name(x.room_item_id)}至{x.room_item_level + 1}级")
 
         if not self.log:
             raise SkipError('没有可升级的家园物品。')
+
+        if is_warning: # 感觉还是把等级放到日志里更好点
+            raise AbortError()
 
 @description('先回赞，再随机点赞')
 @name('公会小屋点赞')
