@@ -155,7 +155,7 @@ class RoomMultiGiveGiftResponse(responses.RoomMultiGiveGiftResponse):
 
         if self.level_info:
             for info in self.level_info.love:
-                mgr.unit_love_data[info.chara_id].love_level = db.chara_love2lovel_level(info.total)
+                mgr.unit_love_data[info.chara_id].love_level = db.chara_love2love_level(info.total)
                 mgr.unit_love_data[info.chara_id].chara_love = info.total
 
 
