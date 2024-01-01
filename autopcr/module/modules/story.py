@@ -109,11 +109,28 @@ class hatsune_story_reading(Module):
         read_story = set(client.data.read_story_ids)
         read_story.add(0) # no pre story
         unlock_story = set(client.data.unlock_story_ids)
-        for story in db.event_story:
-            if story.story_id not in read_story and story.pre_story_id in read_story and story.story_id in unlock_story:
-                await client.read_story(story.story_id)
-                read_story.add(story.story_id)
-                self._log(f"阅读了{story.title}")
+        open_hatsune_id = set(hatsune.event_id for hatsune in db.get_open_hatsune())
+        for story in db.event_story_detail:
+            if story.story_id not in read_story and story.story_id in unlock_story:
+                if story.visible_type == eStoryVisibleType.PRE_STORYID_AND_LOVE_LEVEL and \
+                        story.pre_story_id in read_story:
+                    await client.read_story(story.story_id)
+                    read_story.add(story.story_id)
+                    self._log(f"阅读了{story.title}")
+
+                elif story.visible_type == eStoryVisibleType.SEASONALY_DUMMY_STORY or story.visible_type == eStoryVisibleType.EVENT_SPECIAL_STORY:
+                    event_id = db.event_story_data[story.story_group_id].value
+                    if event_id not in open_hatsune_id:
+                        continue
+                    event_top = await client.get_hatsune_top(event_id)
+                    additional_stories = {story.story_id: story for story in event_top.additional_stories} if event_top.additional_stories else {}
+                    if story.story_id in additional_stories and \
+                            additional_stories[story.story_id].is_unlocked and \
+                            not additional_stories[story.story_id].is_readed:
+                        await client.read_story(story.story_id)
+                        read_story.add(story.story_id)
+                        self._log(f"阅读了{story.title}")
+                    # Refraction TODO
 
         if not self.log:
             raise SkipError("不存在未阅读的活动剧情")

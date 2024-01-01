@@ -305,10 +305,13 @@ class database():
 
             self.team_max_level: int = max(self.team_info.keys()) - 1
 
-            self.event_story: List[EventStoryDetail] = (
+            self.event_story_data: Dict[int, EventStoryDatum] = (
+                EventStoryDatum.query(db)
+                .to_dict(lambda x: x.story_group_id, lambda x: x)
+            )
+
+            self.event_story_detail: List[EventStoryDetail] = (
                 EventStoryDetail.query(db)
-                .where(lambda x: x.visible_type == 0)
-                #.select(lambda x: (x.story_id, x.pre_story_id, x.title))
                 .to_list()
             )
 
