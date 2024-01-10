@@ -524,4 +524,5 @@ DungeonUnit.__fields__['skill_limit_counter'].type_ = Optional[int]
 DungeonUnit.__fields__['skill_limit_counter'].outer_type_ = Optional[int]
 DungeonUnit.__fields__['skill_limit_counter'].validators = [make_generic_validator(int_validator)] # singleton
 DungeonUnit.__fields__['skill_limit_counter'].annotation = int
+DungeonUnit.__fields__['skill_limit_counter'].sub_fields = None 
 DungeonUnit.__fields__['skill_limit_counter'].shape = 1 # singleton
