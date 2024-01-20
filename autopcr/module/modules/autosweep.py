@@ -1,6 +1,8 @@
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
+from ...model.custom import ItemType
+from ...db.models import QuestDatum
 from typing import List, Dict, Tuple
 from ...model.error import *
 from ...db.database import db
@@ -72,38 +74,23 @@ class smart_normal_sweep(Module):
                 self._log(await client.serlize_reward(tmp))
 
 
-@conditional_execution("hard_sweep_run_time", ["无庆典", "h庆典", "vh庆典"])
-@singlechoice('hard_sweep_consider_unit_order', "刷取顺序", "缺口少优先", ["缺口少优先", "缺口大优先"])
-@booltype('hard_sweep_consider_high_rarity_first', "三星角色优先", False)
-@description('根据记忆碎片缺口刷hard图')
-@name('智能刷hard图')
-@default(False)
-class smart_hard_sweep(Module):
+class simple_demand_sweep_base(Module):
+
+    async def get_need_list(self, client: pcrclient) -> List[Tuple[ItemType, int]]: ...
+    def get_need_quest(self, token: ItemType) -> List[QuestDatum]: ...
+    def get_max_times(self, client: pcrclient, quest_id: int) -> int: ...
+
     async def do_task(self, client: pcrclient):
-        if self.get_config('hard_sweep_run_time') == "h庆典" and not client.data.is_hard_quest_campaign():
-            raise SkipError("今日非hard庆典，不刷取")
-        if self.get_config('hard_sweep_run_time') == "非n庆典" and client.data.is_normal_quest_campaign():
-            raise SkipError("今日normal庆典，不刷取")
 
-        need_list = client.data.get_memory_demand_gap()
-        need_list = [(token, need) for token, need in need_list.items() if need > 0]
-
-        if not need_list:
-            raise SkipError("不存在缺乏的记忆碎片")
-
-        reverse = -1 if self.get_config('hard_sweep_consider_unit_order') == '缺口大优先' else 1
-        high_rarity_first = self.get_config('hard_sweep_consider_high_rarity_first')
-        need_list = sorted(need_list, key=lambda x: (
-            - db.unit_data[db.memory_to_unit[x[0][1]]].rarity * high_rarity_first, 
-            x[1] * reverse))
+        need_list = await self.get_need_list(client)
 
         stop = False
         clean_cnt = Counter()
         tmp = []
         try:
             for token, _ in need_list:
-                for quest in db.memory_quest.get(token, []):
-                    max_times = 5 if db.is_shiori_quest(quest.quest_id) else 3
+                for quest in self.get_need_quest(token):
+                    max_times = self.get_max_times(client, quest.quest_id)
                     try:
                         resp = await client.quest_skip_aware(quest.quest_id, max_times)
                         clean_cnt[quest.quest_id] += max_times
@@ -130,48 +117,61 @@ class smart_hard_sweep(Module):
             if tmp:
                 self._log(await client.serlize_reward(tmp))
             if not self.log:
-                self._log("需刷取的碎片图均无次数")
+                self._log("需刷取的图均无次数")
+
+
+@conditional_execution("hard_sweep_run_time", ["无庆典", "h庆典", "vh庆典"])
+@singlechoice('hard_sweep_consider_unit_order', "刷取顺序", "缺口少优先", ["缺口少优先", "缺口大优先"])
+@booltype('hard_sweep_consider_high_rarity_first', "三星角色优先", False)
+@description('根据记忆碎片缺口刷hard图')
+@name('智能刷hard图')
+@default(False)
+class smart_hard_sweep(simple_demand_sweep_base):
+
+    async def get_need_list(self, client: pcrclient) -> List[Tuple[ItemType, int]]:
+        need_list = client.data.get_memory_demand_gap()
+        need_list = [(token, need) for token, need in need_list.items() if need > 0]
+        if not need_list:
+            raise SkipError("不存在缺乏的记忆碎片")
+        reverse = -1 if self.get_config('hard_sweep_consider_unit_order') == '缺口大优先' else 1
+        high_rarity_first = self.get_config('hard_sweep_consider_high_rarity_first')
+        need_list = sorted(need_list, key=lambda x: (
+            - db.unit_data[db.memory_to_unit[x[0][1]]].rarity * high_rarity_first, 
+            x[1] * reverse))
+
+        return need_list
+
+    def get_need_quest(self, token: ItemType) -> List[QuestDatum]:
+        return db.memory_quest.get(token, [])
+
+    def get_max_times(self, quest_id) -> int:
+        return 5 if db.is_shiori_quest(quest_id) else 3
 
 @singlechoice("vh_sweep_campaign_times", "庆典次数", 3, [0, 3, 6])
 @singlechoice("vh_sweep_times", "非庆典次数", 3, [0, 3, 6])
 @description('根据纯净碎片缺口智能刷vh图')
 @name('智能刷very hard图')
 @default(True)
-class smart_very_hard_sweep(Module):
-    async def do_task(self, client: pcrclient):
-        times = 3
-        if not client.data.is_very_hard_quest_campaign():
-            times = self.get_config('vh_sweep_times')
-        else:
-            times = self.get_config('vh_sweep_campaign_times')
+class smart_very_hard_sweep(simple_demand_sweep_base):
+    times: int = -1
 
-        is_skip = True
-        for quest_id, quest in db.six_area.items():
-            pure_memory = quest.reward_image_1
-            unit_id = db.pure_memory_to_unit[pure_memory]
-            data = client.data.unit.get(unit_id, None) # unlock unit
-            if (not data or data.unit_rarity != 6) and \
-            (not data or 
-             not data.unlock_rarity_6_item or 
-             not data.unlock_rarity_6_item.slot_1) and \
-            client.data.get_inventory((eInventoryType.Item, pure_memory)) < 50:
-                try:
-                    rewards = await client.quest_skip_aware(quest_id, times, True, True)
-                    msg = await client.serlize_reward(rewards, (eInventoryType.Item, pure_memory))
-                    is_skip = False
-                    self._log(f"{db.inventory_name[(eInventoryType.Unit, unit_id)]}六星本: {msg}")
-                except SkipError as e:
-                    self._log(f"{db.inventory_name[(eInventoryType.Unit, unit_id)]}六星本: {str(e)}")
-                except AbortError as e:
-                    raise AbortError(f"{db.inventory_name[(eInventoryType.Unit, unit_id)]}六星本: {str(e)}")
-                except Exception as e:
-                    raise ValueError(f"{db.inventory_name[(eInventoryType.Unit, unit_id)]}六星本: {str(e)}")
+    async def get_need_list(self, client: pcrclient) -> List[Tuple[ItemType, int]]:
+        need_list = client.data.get_pure_memory_demand_gap()
+        print([(db.get_inventory_name_san(item), cnt) for item, cnt in need_list.items()])
+        need_list = [(token, need) for token, need in need_list.items() if need > 0]
+
+        return need_list
+
+    def get_need_quest(self, token: ItemType) -> List[QuestDatum]:
+        return db.pure_memory_quest.get(token, [])
+
+    def get_max_times(self, client: pcrclient, quest_id: int) -> int:
+        if self.times == -1:
+            if not client.data.is_very_hard_quest_campaign():
+                self.times = self.get_config('vh_sweep_times')
             else:
-                pass
-                # result.append(f"{quest_id}: 材料已够，无需刷取")
-        if is_skip: raise SkipError("")
-        if not self.log:
-            raise SkipError("六星碎片均已足够，无需刷取")
+                self.times = self.get_config('vh_sweep_campaign_times')
+        return self.times
 
 @description('''
 首先按次数逐一刷取名字为start的图
