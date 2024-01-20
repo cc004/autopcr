@@ -124,6 +124,15 @@ class database():
                 .to_dict(lambda x: x.id, lambda x: x)
             )
 
+            self.pure_memory_quest: Dict[ItemType, List[QuestDatum]] = (
+                QuestDatum.query(db)
+                .where(lambda x: self.is_very_hard_quest(x.quest_id))
+                .group_by(lambda x: x.reward_image_1)
+                .to_dict(lambda x: (eInventoryType.Item, x.key), lambda x:
+                         x.to_list()[::-1]
+                )
+            )
+
             self.memory_quest: Dict[ItemType, List[QuestDatum]] = (
                 QuestDatum.query(db)
                 .where(lambda x: self.is_hard_quest(x.quest_id))
@@ -161,12 +170,12 @@ class database():
                 .select(lambda x: (
                     x.unit_id,
                     x.rarity,
-                    x.unit_material_id,
+                    (eInventoryType(eInventoryType.Item), x.unit_material_id),
                     x.consume_num
                 ))
                 .concat(
                     UnlockRarity6.query(db)
-                    .group_by(lambda x: (x.unit_id, x.material_id))
+                    .group_by(lambda x: (x.unit_id, (eInventoryType(eInventoryType.Item), x.material_id))) # 感觉有点奇怪，别问，问就是Itemtype != MaterialType
                     .select(lambda x: (
                         x.key[0],
                         6,
@@ -178,7 +187,7 @@ class database():
                 .to_dict(lambda x: x.key, lambda x:
                     x.group_by(lambda y: y[1])
                     .to_dict(lambda y: y.key, lambda y:
-                        Counter(y.group_by(lambda z: (eInventoryType.Item, z[2]))
+                        Counter(y.group_by(lambda z: z[2])
                         .to_dict(lambda z: z.key, lambda z: z.sum(lambda w: w[3]))
                         )
                     )
@@ -376,7 +385,7 @@ class database():
                 DailyMissionDatum.query(db)
                 .to_dict(lambda x: x.daily_mission_id, lambda x: x)
             )
-            
+
             self.memory_to_unit: Dict[int, int] = (
                 UnitRarity.query(db)
                 .group_by(lambda x: x.unit_material_id)
@@ -398,10 +407,10 @@ class database():
                 .to_dict(lambda x: x.unit_id, lambda x: x)
             )
 
-            self.pure_memory_to_unit: Dict[int, int] = (
+            self.pure_memory_to_unit: Dict[ItemType, int] = (
                 UnlockRarity6.query(db)
                 .where(lambda x: x.slot_id == 1)
-                .to_dict(lambda x: x.material_id, lambda x: x.unit_id)
+                .to_dict(lambda x: (eInventoryType.Item, x.material_id), lambda x: x.unit_id)
             )
             
             self.six_area: Dict[int, QuestDatum] = (
