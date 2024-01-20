@@ -77,6 +77,9 @@ class datamgr(Component[apiclient]):
     def is_star_cup_campaign(self) -> bool:
         return any(db.is_star_cup_campaign(campaign_id) for campaign_id in self.campaign_list)
 
+    def is_quest_campaign(self) -> bool:
+        return self.is_normal_quest_campaign() or self.is_hard_quest_campaign() or self.is_very_hard_quest_campaign()
+
     def is_normal_quest_campaign(self) -> bool:
         return any(db.is_normal_quest_campaign(campaign_id) for campaign_id in self.campaign_list)
 

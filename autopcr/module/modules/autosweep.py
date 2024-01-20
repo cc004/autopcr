@@ -8,7 +8,8 @@ from ...model.enums import *
 from collections import Counter
 import datetime
 
-@multichoice("normal_sweep_run_time", "执行条件", ["n庆典"], ["n庆典", "h庆典", "vh庆典", "总是执行"])
+# @multichoice("", "执行条件", ["n庆典"], ["n庆典", "h庆典", "vh庆典", "总是执行"])
+@conditional_execution("normal_sweep_run_time", ["n庆典"])
 @singlechoice("normal_sweep_consider_unit", "需求角色", "favorite", ["all", "max_rank", "max_rank-1", "max_rank-2", 'favorite'])
 @description('根据装备缺口刷n图')
 @name('智能刷n图')
@@ -16,13 +17,6 @@ import datetime
 class smart_normal_sweep(Module):
 
     async def do_task(self, client: pcrclient):
-        run_time = set(self.get_config('normal_sweep_run_time'))
-        if not (
-        "n庆典" in run_time and client.data.is_normal_quest_campaign()
-        or  "h庆典" in run_time and client.data.is_hard_quest_campaign()
-        or  "vh庆典" in run_time and client.data.is_very_hard_quest_campaign()
-        or "总是执行" in run_time):
-            raise SkipError("今日不符合执行条件，不刷取")
 
         if self.get_config('normal_sweep_consider_unit') == 'favorite':
             require_equip = client.data.get_equip_demand(like_unit_only = True)
@@ -78,9 +72,9 @@ class smart_normal_sweep(Module):
                 self._log(await client.serlize_reward(tmp))
 
 
+@conditional_execution("hard_sweep_run_time", ["无庆典", "h庆典", "vh庆典"])
 @singlechoice('hard_sweep_consider_unit_order', "刷取顺序", "缺口少优先", ["缺口少优先", "缺口大优先"])
 @booltype('hard_sweep_consider_high_rarity_first', "三星角色优先", False)
-@singlechoice("hard_sweep_run_time", "执行条件", "h庆典", ["h庆典", "非n庆典", "总是执行"])
 @description('根据记忆碎片缺口刷hard图')
 @name('智能刷hard图')
 @default(False)
