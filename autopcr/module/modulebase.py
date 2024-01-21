@@ -3,9 +3,9 @@ from ..core.pcrclient import pcrclient
 from ..model.error import *
 from ..model.enums import *
 from typing import Dict
-from .config import Config, _wrap_init
 import traceback
 from ..constants import CACHE_DIR
+from .config import Config, _wrap_init
 
 def default(val):
     return lambda cls:_wrap_init(cls, lambda self: setattr(self, 'default', val))

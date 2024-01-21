@@ -218,8 +218,6 @@ class smart_sweep(Module):
         loop: List[Tuple[int, int]] = []
         is_start_run_time, _ = await (self.get_config_instance('start_run_time').do_check(client))
         is_loop_run_time, _ = await (self.get_config_instance('loop_run_time').do_check(client))
-        print(is_start_run_time)
-        print(is_loop_run_time)
         if is_start_run_time: self._log(f"刷取start关卡")
         if is_loop_run_time: self._log(f"刷取loop关卡")
 
