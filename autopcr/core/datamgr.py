@@ -100,7 +100,7 @@ class datamgr(Component[apiclient]):
             "h2": lambda: self.get_hard_quest_campaign_times() == 2,
             "h3及以上": lambda: self.get_hard_quest_campaign_times() >= 3,
             "vh2": lambda: self.get_very_hard_quest_campaign_times() == 2,
-            "vh3": lambda: self.get_very_hard_quest_campaign_times() == 3,
+            "vh3及以上": lambda: self.get_very_hard_quest_campaign_times() >= 3,
         }
         if campaign not in campaign_list:
             raise ValueError(f"不支持的庆典查询：{campaign}")

@@ -20,8 +20,8 @@ import datetime
 @inttype('sweep_recover_stamina_times_n4', "n4及以上被动恢复体力数", 0, [i for i in range(41)])
 @inttype('sweep_recover_stamina_times_h2', "h2被动恢复体力数", 0, [i for i in range(41)])
 @inttype('sweep_recover_stamina_times_h3', "h3及以上被动恢复体力数", 0, [i for i in range(41)])
-@multichoice("force_stop_heart_sweep", "强制不刷心碎庆典", [], ["n2", "n3", "n4及以上", "h2", "h3及以上"])
-@multichoice("force_stop_star_cup_sweep", "强制不刷星球杯庆典", [], ["n2", "n3", "n4及以上", "h2", "h3及以上"])
+@conditional_not_execution("force_stop_heart_sweep", [], desc="强制不刷心碎庆典", check=False)
+@conditional_not_execution("force_stop_star_cup_sweep", [], desc="强制不刷星球杯庆典", check=False)
 @notrunnable
 class global_config(Module):
     async def do_task(self, client: pcrclient):

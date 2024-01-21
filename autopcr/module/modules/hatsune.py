@@ -5,6 +5,7 @@ from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
 
+@conditional_not_execution("hatsune_h_sweep_not_run_time", ["n3", "n4及以上"])
 @multichoice("hatsune_h_sweep_quest", "扫荡关卡", [1,2,3,4,5], [1,2,3,4,5])
 @description('')
 @name('扫荡活动h本')
