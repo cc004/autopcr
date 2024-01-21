@@ -117,7 +117,7 @@ class simple_demand_sweep_base(Module):
             if tmp:
                 self._log(await client.serlize_reward(tmp))
             if not self.log:
-                self._log("需刷取的图均无次数")
+                raise SkipError("需刷取的图均无次数")
 
 
 @conditional_execution("hard_sweep_run_time", ["无庆典", "h庆典"])
@@ -132,7 +132,7 @@ class smart_hard_sweep(simple_demand_sweep_base):
         need_list = client.data.get_memory_demand_gap()
         need_list = [(token, need) for token, need in need_list.items() if need > 0]
         if not need_list:
-            raise SkipError("不存在缺乏的记忆碎片")
+            raise SkipError("所有记忆碎片均已盈余")
         reverse = -1 if self.get_config('hard_sweep_consider_unit_order') == '缺口大优先' else 1
         high_rarity_first = self.get_config('hard_sweep_consider_high_rarity_first')
         need_list = sorted(need_list, key=lambda x: (
@@ -170,6 +170,8 @@ class mirai_very_hard_sweep(simple_demand_sweep_base):
         need_list = client.data.get_pure_memory_demand_gap()
         need_list += Counter({(eInventoryType.Item, pure_memory_id): 150 for pure_memory_id in unique_equip_2_pure_memory_id})
         need_list = [(token, need) for token, need in need_list.items() if need > 0]
+        if not need_list:
+            raise SkipError("所有纯净碎片均已盈余")
         return need_list
 
     def get_need_quest(self, token: ItemType) -> List[QuestDatum]:
@@ -189,6 +191,8 @@ class smart_very_hard_sweep(simple_demand_sweep_base):
     async def get_need_list(self, client: pcrclient) -> List[Tuple[ItemType, int]]:
         need_list = client.data.get_pure_memory_demand_gap()
         need_list = [(token, need) for token, need in need_list.items() if need > 0]
+        if not need_list:
+            raise SkipError("所有纯净碎片均已盈余")
 
         return need_list
 
