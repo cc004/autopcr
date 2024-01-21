@@ -144,7 +144,38 @@ class smart_hard_sweep(simple_demand_sweep_base):
     def get_need_quest(self, token: ItemType) -> List[QuestDatum]:
         return db.memory_quest.get(token, [])
 
-    def get_max_times(self, quest_id) -> int:
+    def get_max_times(self, client: pcrclient, quest_id: int) -> int:
+        return 5 if db.is_shiori_quest(quest_id) else 3
+
+unique_equip_2_pure_memory_id = [
+        32025, # 女仆
+        32046, # 猫剑
+        32048, # 子龙
+        32060, # 猫猫
+        32016, # 爆击弓
+        32031, # 忍
+        32050, # 美咲
+        32007, # 布丁
+        32058, # 吃货
+        32033, # 奶牛
+        32049, # 姐姐
+        32027, # 病娇
+]
+@conditional_execution("very_hard_sweep_run_time", ["vh庆典"])
+@description('储备专二需求的150碎片，包括' + ','.join(db.get_item_name(item_id) for item_id in unique_equip_2_pure_memory_id))
+@name('专二纯净碎片')
+@default(False)
+class mirai_very_hard_sweep(simple_demand_sweep_base):
+    async def get_need_list(self, client: pcrclient) -> List[Tuple[ItemType, int]]:
+        need_list = client.data.get_pure_memory_demand_gap()
+        need_list += Counter({(eInventoryType.Item, pure_memory_id): 150 for pure_memory_id in unique_equip_2_pure_memory_id})
+        need_list = [(token, need) for token, need in need_list.items() if need > 0]
+        return need_list
+
+    def get_need_quest(self, token: ItemType) -> List[QuestDatum]:
+        return db.pure_memory_quest.get(token, [])
+
+    def get_max_times(self, client: pcrclient, quest_id: int) -> int:
         return 5 if db.is_shiori_quest(quest_id) else 3
 
 @singlechoice("vh_sweep_campaign_times", "庆典次数", 3, [0, 3, 6])
@@ -157,7 +188,6 @@ class smart_very_hard_sweep(simple_demand_sweep_base):
 
     async def get_need_list(self, client: pcrclient) -> List[Tuple[ItemType, int]]:
         need_list = client.data.get_pure_memory_demand_gap()
-        print([(db.get_inventory_name_san(item), cnt) for item, cnt in need_list.items()])
         need_list = [(token, need) for token, need in need_list.items() if need > 0]
 
         return need_list
