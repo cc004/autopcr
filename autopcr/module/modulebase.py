@@ -114,6 +114,11 @@ class Module:
             value = ','.join(map(str, value))
         return str(value)
 
+    def get_config_instance(self, key):
+        if key not in self.config:
+            raise ValueError(f"config {key} not found")
+        return self.config[key]
+
     def get_config(self, key):
         if key == self.key:
             default = self.default

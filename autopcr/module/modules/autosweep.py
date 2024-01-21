@@ -120,7 +120,7 @@ class simple_demand_sweep_base(Module):
                 self._log("需刷取的图均无次数")
 
 
-@conditional_execution("hard_sweep_run_time", ["无庆典", "h庆典", "vh庆典"])
+@conditional_execution("hard_sweep_run_time", ["无庆典", "h庆典"])
 @singlechoice('hard_sweep_consider_unit_order', "刷取顺序", "缺口少优先", ["缺口少优先", "缺口大优先"])
 @booltype('hard_sweep_consider_high_rarity_first', "三星角色优先", False)
 @description('根据记忆碎片缺口刷hard图')
@@ -163,7 +163,7 @@ unique_equip_2_pure_memory_id = [
 ]
 @conditional_execution("very_hard_sweep_run_time", ["vh庆典"])
 @description('储备专二需求的150碎片，包括' + ','.join(db.get_item_name(item_id) for item_id in unique_equip_2_pure_memory_id))
-@name('专二纯净碎片')
+@name('专二纯净碎片储备')
 @default(False)
 class mirai_very_hard_sweep(simple_demand_sweep_base):
     async def get_need_list(self, client: pcrclient) -> List[Tuple[ItemType, int]]:
@@ -209,16 +209,25 @@ class smart_very_hard_sweep(simple_demand_sweep_base):
 当被动体力回复完全消耗后，刷图结束
 '''.strip())
 @name("自定义刷图")
+@conditional_execution("start_run_time", ['h庆典'], desc="start刷取庆典", check=False)
+@conditional_execution("loop_run_time", ['n庆典'], desc="loop刷取庆典", check=False)
 @default(False)
 class smart_sweep(Module):
     async def do_task(self, client: pcrclient):
         nloop: List[Tuple[int, int]] = []
         loop: List[Tuple[int, int]] = []
+        is_start_run_time, _ = await (self.get_config_instance('start_run_time').do_check(client))
+        is_loop_run_time, _ = await (self.get_config_instance('loop_run_time').do_check(client))
+        print(is_start_run_time)
+        print(is_loop_run_time)
+        if is_start_run_time: self._log(f"刷取start关卡")
+        if is_loop_run_time: self._log(f"刷取loop关卡")
+
         for tab in client.data.user_my_quest:
             for x in tab.skip_list:
-                if tab.tab_name == 'start':
+                if tab.tab_name == 'start' and is_start_run_time:
                     nloop.append((x, tab.skip_count))
-                elif tab.tab_name == 'loop':
+                elif tab.tab_name == 'loop' and is_loop_run_time:
                     loop.append((x, tab.skip_count))
         have_normal = any(db.is_normal_quest(quest[0]) for quest in loop)
         def _sweep():
@@ -233,7 +242,7 @@ class smart_sweep(Module):
 
         result = []
         if nloop == [] and loop == []:
-            raise AbortError("未找到start和loop")
+            raise SkipError("无刷取关卡")
         clean_cnt = Counter()
         for quest_id, count in _sweep(): 
             try:
@@ -242,8 +251,7 @@ class smart_sweep(Module):
             except SkipError as e:
                 pass
             except AbortError as e:
-                if not self.log and not str(e).endswith("体力不足"):
-                    self._log(str(e))
+                self._log(str(e))
                 break
         
         if clean_cnt:
