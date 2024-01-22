@@ -68,6 +68,7 @@ class datamgr(Component[apiclient]):
         async with datamgr.lock():
             if not assetmgr.ver or assetmgr.ver < ver:
                 await assetmgr.init(ver)
+            if not dbmgr.ver or dbmgr.ver < assetmgr.ver: 
                 await dbmgr.update_db(assetmgr)
                 db.update(dbmgr)
 
