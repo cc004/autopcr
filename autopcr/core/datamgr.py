@@ -49,6 +49,7 @@ class datamgr(Component[apiclient]):
     campaign_list: List[int] = None
     gacha_point: Dict[int, GachaPointInfo] = None
     dispatch_units: List[UnitDataForClanMember] = None
+    event_sub_story: List[EventSubStory] = None
 
     def __init__(self):
         self.finishedQuest = set()

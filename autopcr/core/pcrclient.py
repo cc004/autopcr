@@ -219,13 +219,54 @@ class pcrclient(apiclient):
         req.gacha_id = gacha_id
         return await self.request(req)
 
-    async def read_story(self, story_id: int):
+    async def story_check(self, story_id: int):
         req = StoryMaintenanceCheckRequest()
         req.story_id = story_id
-        await self.request(req)
+        return await self.request(req)
+
+    async def story_view(self, story_id: int):
         req = StoryViewingRequest()
         req.story_id = story_id
         return await self.request(req)
+
+    async def read_story(self, story_id: int):
+        await self.story_check(story_id)
+        return await self.story_view(story_id)
+
+    async def read_ysn_story(self, sub_story_id: int):
+        req = SubStoryYsnReadStoryRequest()
+        req.sub_story_id = sub_story_id
+        await self.request(req)
+
+    async def read_nop_story(self, sub_story_id: int):
+        req = SubStoryNopReadStoryRequest()
+        req.sub_story_id = sub_story_id
+        await self.request(req)
+
+    async def read_mhp_story(self, sub_story_id: int):
+        req = SubStoryMhpReadStoryRequest()
+        req.sub_story_id = sub_story_id
+        await self.request(req)
+
+    async def read_svd_story(self, sub_story_id: int):
+        req = SubStorySvdReadStoryRequest()
+        req.sub_story_id = sub_story_id
+        await self.request(req)
+
+    async def read_ssp_story(self, sub_story_id: int):
+        req = SubStorySspReadSspStoryRequest()
+        req.sub_story_id = sub_story_id
+        await self.request(req)
+
+    async def read_ske_story(self, sub_story_id: int):
+        req = SubStorySkeReadStoryRequest()
+        req.sub_story_id = sub_story_id
+        await self.request(req)
+
+    async def read_lto_story(self, sub_story_id: int):
+        req = SubStoryLtoReadStoryRequest()
+        req.sub_story_id = sub_story_id
+        await self.request(req)
 
     async def read_dear(self, event_id: int, story_id: int):
         req = HatsuneDearFinishRequest()

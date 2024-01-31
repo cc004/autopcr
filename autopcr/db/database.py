@@ -243,6 +243,22 @@ class database():
                 )
             )
 
+            self.dungeon_area_data: Dict[int, DungeonAreaDatum] = (
+                DungeonAreaDatum.query(db)
+                .to_dict(lambda x: x.dungeon_area_id, lambda x: x)
+            )
+
+            self.secret_dungeon_schedule: Dict[int, SecretDungeonSchedule] = (
+                SecretDungeonSchedule.query(db)
+                .to_dict(lambda x: x.dungeon_area_id, lambda x: x)
+            )
+
+            self.training_quest_exp: Dict[int, TrainingQuestDatum] = (
+                TrainingQuestDatum.query(db)
+                .where(lambda x: x.area_id == 21002)
+                .to_dict(lambda x: x.quest_id, lambda x: x)
+            )
+
             self.training_quest_exp: Dict[int, TrainingQuestDatum] = (
                 TrainingQuestDatum.query(db)
                 .where(lambda x: x.area_id == 21002)
@@ -317,6 +333,11 @@ class database():
             self.event_story_data: Dict[int, EventStoryDatum] = (
                 EventStoryDatum.query(db)
                 .to_dict(lambda x: x.story_group_id, lambda x: x)
+            )
+
+            self.event_name: Dict[int, str] = (
+                EventStoryDatum.query(db)
+                .to_dict(lambda x: x.story_group_id + 5000, lambda x: x.title)
             )
 
             self.event_story_detail: List[EventStoryDetail] = (
@@ -484,6 +505,41 @@ class database():
                 .to_dict(lambda x: x.event_id, lambda x: x)
             )
 
+            self.ysn_story_data: Dict[int, YsnStoryDatum] = (
+                YsnStoryDatum.query(db)
+                .to_dict(lambda x: x.sub_story_id, lambda x: x)
+            )
+
+            self.nop_story_data: Dict[int, NopDramaDatum] = (
+                NopDramaDatum.query(db)
+                .to_dict(lambda x: x.sub_story_id, lambda x: x)
+            )
+
+            self.mhp_story_data: Dict[int, MhpStoryDatum] = (
+                MhpStoryDatum.query(db)
+                .to_dict(lambda x: x.sub_story_id, lambda x: x)
+            )
+
+            self.svd_story_data: Dict[int, SvdStoryDatum] = (
+                SvdStoryDatum.query(db)
+                .to_dict(lambda x: x.sub_story_id, lambda x: x)
+            )
+
+            self.ssp_story_data: Dict[int, SspStoryDatum] = (
+                SspStoryDatum.query(db)
+                .to_dict(lambda x: x.sub_story_id, lambda x: x)
+            )
+
+            self.ske_story_data: Dict[int, SkeStoryDatum] = (
+                SkeStoryDatum.query(db)
+                .to_dict(lambda x: x.sub_story_id, lambda x: x)
+            )
+
+            self.lto_story_data: Dict[int, LtoStoryDatum] = (
+                LtoStoryDatum.query(db)
+                .to_dict(lambda x: x.sub_story_id, lambda x: x)
+            )
+
     def get_inventory_name(self, item: InventoryInfo) -> str:
         try:
             return self.inventory_name[(item.type, item.id)]
@@ -642,27 +698,28 @@ class database():
                 love_info = max(love_info, value)
         return love_info
 
-    def is_clan_battle_time(self) -> bool:
+    def is_target_time(self, schedule: List[Tuple[datetime.datetime, datetime.datetime]]) -> bool:
         now = datetime.datetime.now()
-        for key, schedule in list(self.clan_battle_period.items()):
-            start_time = self.parse_time(schedule.start_time)
-            end_time = self.parse_time(schedule.end_time)
-            if now > end_time:
-                self.clan_battle_period.pop(key)
-            elif now >= start_time:
+        for start_time, end_time in schedule:
+            if now >= start_time and now <= end_time:
                 return True
         return False
 
+    def is_clan_battle_time(self) -> bool:
+        schedule = [(db.parse_time(schedule.start_time), db.parse_time(schedule.end_time)) 
+                    for schedule in self.clan_battle_period.values()]
+        return self.is_target_time(schedule)
+
     def is_cf_time(self) -> bool:
-        now = datetime.datetime.now()
-        for key, schedule in list(self.chara_fortune_schedule.items()):
-            start_time = self.parse_time(schedule.start_time)
-            end_time = self.parse_time(schedule.end_time)
-            if now > end_time:
-                self.chara_fortune_schedule.pop(key)
-            elif now >= start_time:
-                return True
-        return False
+        schedule = [(db.parse_time(schedule.start_time), db.parse_time(schedule.end_time)) 
+                    for schedule in self.chara_fortune_schedule.values()]
+        return self.is_target_time(schedule)
+
+    def is_secret_dungeon_time(self) -> bool:
+        # TODO unknown start_time & count_start_time
+        schedule = [(db.parse_time(schedule.start_time), db.parse_time(schedule.end_time)) 
+                    for schedule in self.secret_dungeon_schedule.values()]
+        return self.is_target_time(schedule)
 
     def parse_time(self, time: str) -> datetime.datetime:
         if time.count(':') == 1: # 怎么以前没有秒的
