@@ -287,6 +287,7 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         mgr.campaign_list = self.campaign_list
         mgr.gacha_point = {gacha.exchange_id: gacha for gacha in self.gacha_point_info_list}
         mgr.dispatch_units = self.dispatch_units
+        mgr.event_sub_story = self.event_sub_story
 
 
 @handles
