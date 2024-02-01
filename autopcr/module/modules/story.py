@@ -142,11 +142,14 @@ class hatsune_story_reading(Module):
 @default(True)
 class hatsune_sub_story_reading(Module):
     async def do_task(self, client: pcrclient):
-        for sub_storys in client.data.event_sub_story or []:
+        for sub_storys in client.data.event_sub_story.values() or []:
             reader = GetSubStoryReader(sub_storys, client)
             if not reader:
                 self._log(f"暂不支持的活动{db.event_name[sub_storys.event_id]}")
                 continue
+
+            if any(sub_story.status == eEventSubStoryStatus.ADDED for sub_story in sub_storys.sub_story_info_list):
+                await reader.confirm()
             for sub_story in sub_storys.sub_story_info_list:
                 if sub_story.status != eEventSubStoryStatus.READED and reader.is_readable(sub_story.sub_story_id):
                     await reader.read(sub_story.sub_story_id)
