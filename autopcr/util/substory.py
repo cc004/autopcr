@@ -20,6 +20,7 @@ class SubStoryReader:
 
     def title(self, sub_story_id: int) -> str: ...
     async def read(self, sub_story_id: int): ...
+    async def confirm(self): ...
 
     def __init__(self, client: pcrclient):
         self.client = client
@@ -86,6 +87,9 @@ class ske_dsubstory(SubStoryReader):
 
     async def read(self, sub_story_id: int):
         await self.client.read_ske_story(sub_story_id)
+
+    async def confirm(self):
+        await self.client.confirm_ske_story()
 
 @EventId(10048)
 class lto_dsubstory(SubStoryReader):

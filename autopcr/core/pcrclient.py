@@ -263,6 +263,10 @@ class pcrclient(apiclient):
         req.sub_story_id = sub_story_id
         await self.request(req)
 
+    async def confirm_ske_story(self):
+        req = SubStorySkeConfirmRequest()
+        await self.request(req)
+
     async def read_lto_story(self, sub_story_id: int):
         req = SubStoryLtoReadStoryRequest()
         req.sub_story_id = sub_story_id

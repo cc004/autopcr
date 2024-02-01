@@ -141,9 +141,9 @@ class apiclient(Container["apiclient"]):
         response: Response[TResponse] = Response[cls].parse_obj(response1)
 
         # with open('req.log', 'a') as fp:
-        #    fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
-        #    fp.write(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
-        #    fp.write(json.dumps(json.loads(response.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
+           # fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
+           # fp.write(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
+           # fp.write(json.dumps(json.loads(response.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
 
         if response.data_headers.servertime:
             self.server_time = response.data_headers.servertime
@@ -172,6 +172,12 @@ class apiclient(Container["apiclient"]):
 
         if response.data.server_error and "维护" not in response.data.server_error.message:
             print(f'pcrclient: /{request.url} api failed {response.data.server_error}')
+
+            with open('error.log', 'a') as fp:
+               fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
+               fp.write(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
+               fp.write(json.dumps(json.loads(response.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
+
             raise ApiException(response.data.server_error.message,
                 response.data.server_error.status,
                 response.data_headers.result_code
