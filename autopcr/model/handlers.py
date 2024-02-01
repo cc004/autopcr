@@ -518,9 +518,11 @@ class SeasonPassMissionAcceptResponse(responses.SeasonPassMissionAcceptResponse)
 class SubStorySkeConfirmResponse(responses.SubStorySkeConfirmResponse):
     async def update(self, mgr: datamgr, request):
         for sub_story in mgr.event_sub_story[10058].sub_story_info_list:
-            sub_story.status = eEventSubStoryStatus.UNREAD
+            if sub_story.status == eEventSubStoryStatus.ADDED:
+                sub_story.status = eEventSubStoryStatus.UNREAD
         for sub_story in mgr.event_sub_story[10059].sub_story_info_list:
-            sub_story.status = eEventSubStoryStatus.UNREAD
+            if sub_story.status == eEventSubStoryStatus.ADDED:
+                sub_story.status = eEventSubStoryStatus.UNREAD
 
 # 菜 就别玩
 HatsuneTopResponse.__annotations__['event_status'] = HatsuneEventStatus
