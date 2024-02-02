@@ -66,7 +66,6 @@ class assetmgr:
         return f'{self.res}/pool'
 
     async def init(self, ver):
-        self.ver = ver
         self.registries.clear()
 
         cacheFile = os.path.join(CACHE_DIR, 'manifest', f'{ver}.json')
@@ -84,6 +83,7 @@ class assetmgr:
             with open(cacheFile, 'w') as f:
                 f.write(self.root.json())
 
+        self.ver = ver
         self.root.register_to(self)
 
     async def download(self, url: str) -> bytes:

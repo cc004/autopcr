@@ -49,6 +49,7 @@ class datamgr(Component[apiclient]):
     campaign_list: List[int] = None
     gacha_point: Dict[int, GachaPointInfo] = None
     dispatch_units: List[UnitDataForClanMember] = None
+    event_sub_story: Dict[int, EventSubStory] = None
 
     def __init__(self):
         self.finishedQuest = set()
@@ -68,6 +69,7 @@ class datamgr(Component[apiclient]):
         async with datamgr.lock():
             if not assetmgr.ver or assetmgr.ver < ver:
                 await assetmgr.init(ver)
+            if not dbmgr.ver or dbmgr.ver < assetmgr.ver: 
                 await dbmgr.update_db(assetmgr)
                 db.update(dbmgr)
 
@@ -76,6 +78,9 @@ class datamgr(Component[apiclient]):
 
     def is_star_cup_campaign(self) -> bool:
         return any(db.is_star_cup_campaign(campaign_id) for campaign_id in self.campaign_list)
+
+    def is_quest_campaign(self) -> bool:
+        return self.is_normal_quest_campaign() or self.is_hard_quest_campaign() or self.is_very_hard_quest_campaign()
 
     def is_normal_quest_campaign(self) -> bool:
         return any(db.is_normal_quest_campaign(campaign_id) for campaign_id in self.campaign_list)
@@ -97,7 +102,7 @@ class datamgr(Component[apiclient]):
             "h2": lambda: self.get_hard_quest_campaign_times() == 2,
             "h3及以上": lambda: self.get_hard_quest_campaign_times() >= 3,
             "vh2": lambda: self.get_very_hard_quest_campaign_times() == 2,
-            "vh3": lambda: self.get_very_hard_quest_campaign_times() == 3,
+            "vh3及以上": lambda: self.get_very_hard_quest_campaign_times() >= 3,
         }
         if campaign not in campaign_list:
             raise ValueError(f"不支持的庆典查询：{campaign}")
@@ -163,12 +168,12 @@ class datamgr(Component[apiclient]):
             return 0
         return db.exceed_level_unit_required[unit_id].consume_num_1 # 1 memory 2 ring
 
-    def get_rarity_memory_demand(self, unit_id: int, token: ItemType) -> int:
+    def get_rarity_memory_demand(self, unit_id: int, token: ItemType, rarity_slot_num: int) -> int:
         rarity = -1
         if unit_id in self.unit:
             unit_data = self.unit[unit_id]
             rarity = unit_data.unit_rarity
-            if unit_data.unlock_rarity_6_item and unit_data.unlock_rarity_6_item.slot_2:
+            if unit_data.unlock_rarity_6_item and getattr(unit_data.unlock_rarity_6_item, f"slot_{rarity_slot_num}"):
                 rarity = 6
         return (
             flow(db.rarity_up_required[unit_id].items())
@@ -270,13 +275,29 @@ class datamgr(Component[apiclient]):
             if token not in db.inventory_name: # 未来角色
                 continue
 
-            need = self.get_rarity_memory_demand(unit_id, token) + self.get_unique_equip_memory_demand(unit_id, token) + self.get_exceed_level_unit_demand(unit_id, token)
+            need = self.get_rarity_memory_demand(unit_id, token, 2) + self.get_unique_equip_memory_demand(unit_id, token) + self.get_exceed_level_unit_demand(unit_id, token)
+            result[token] += need
+
+        return result
+
+    def get_pure_memory_demand(self) -> typing.Counter[ItemType]:
+        result: typing.Counter[ItemType] = Counter()
+        for token, unit_id in db.pure_memory_to_unit.items():
+            if token not in db.inventory_name: # 未来角色
+                continue
+
+            need = self.get_rarity_memory_demand(unit_id, token, 1)
             result[token] += need
 
         return result
 
     def get_memory_demand_gap(self) -> typing.Counter[ItemType]: # need -- >0
         demand = self.get_memory_demand()
+        demand = Counter({token: demand[token] - self.get_inventory(token) for token in demand})
+        return demand
+
+    def get_pure_memory_demand_gap(self) -> typing.Counter[ItemType]: # need -- >0
+        demand = self.get_pure_memory_demand()
         demand = Counter({token: demand[token] - self.get_inventory(token) for token in demand})
         return demand
 

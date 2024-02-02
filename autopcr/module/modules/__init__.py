@@ -44,6 +44,7 @@ daily_modules = [
     hatsune_dear_reading,
     present_receive,
     smart_sweep,
+    mirai_very_hard_sweep,
     smart_hard_sweep,
     smart_normal_sweep,
 
@@ -74,6 +75,7 @@ daily_modules = [
     main_story_reading,
     tower_story_reading,
     hatsune_story_reading,
+    hatsune_sub_story_reading,
     guild_story_reading,
     unit_story_reading,
     room_upper_all,
