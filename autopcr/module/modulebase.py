@@ -3,9 +3,9 @@ from ..core.pcrclient import pcrclient
 from ..model.error import *
 from ..model.enums import *
 from typing import Dict
-from .config import Config, _wrap_init
 import traceback
 from ..constants import CACHE_DIR
+from .config import Config, _wrap_init
 
 def default(val):
     return lambda cls:_wrap_init(cls, lambda self: setattr(self, 'default', val))
@@ -114,6 +114,11 @@ class Module:
             value = ','.join(map(str, value))
         return str(value)
 
+    def get_config_instance(self, key):
+        if key not in self.config:
+            raise ValueError(f"config {key} not found")
+        return self.config[key]
+
     def get_config(self, key):
         if key == self.key:
             default = self.default
@@ -121,7 +126,10 @@ class Module:
             default = self.config[key].default
         value = self._parent.get_config(key, default)
         if key != self.key and self.config[key].candidates and (
-            not isinstance(value, list) and value not in self.config[key].candidates or
+            not isinstance(value, list) and (
+                value not in self.config[key].candidates or 
+                self.config[key].config_type == "multi"
+                ) or
             isinstance(value, list) and any(item not in self.config[key].candidates for item in value)
             ):
             value = default

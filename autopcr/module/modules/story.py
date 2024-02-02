@@ -5,6 +5,7 @@ from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
 from ...util.linq import flow
+from ...util.substory import GetSubStoryReader
 import datetime
 
 @name('阅读公会剧情')
@@ -136,6 +137,27 @@ class hatsune_story_reading(Module):
             raise SkipError("不存在未阅读的活动剧情")
         client.data.read_story_ids = list(read_story)
         self._log(f"共{len(self.log)}篇")
+
+@name('阅读活动子剧情')
+@default(True)
+class hatsune_sub_story_reading(Module):
+    async def do_task(self, client: pcrclient):
+        for sub_storys in client.data.event_sub_story.values() or []:
+            reader = GetSubStoryReader(sub_storys, client)
+            if not reader:
+                self._log(f"暂不支持的活动{db.event_name[sub_storys.event_id]}")
+                continue
+
+            if any(sub_story.status == eEventSubStoryStatus.ADDED for sub_story in sub_storys.sub_story_info_list):
+                await reader.confirm()
+            for sub_story in sub_storys.sub_story_info_list:
+                if sub_story.status != eEventSubStoryStatus.READED and reader.is_readable(sub_story.sub_story_id):
+                    await reader.read(sub_story.sub_story_id)
+                    self._log(f"阅读了{reader.title(sub_story.sub_story_id)}")
+        if not self.log:
+            raise SkipError("不存在未阅读的活动子剧情")
+        else:
+            self._log(f"共{len(self.log)}篇")
 
 @description('仅阅读当期活动')
 @name('阅读活动信赖度')

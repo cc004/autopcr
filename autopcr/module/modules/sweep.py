@@ -6,6 +6,8 @@ from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
 from ...model.custom import ItemType
+from ...util.linq import flow
+import datetime
 
 class explore_sweep(Module):
     @abstractmethod
@@ -55,35 +57,52 @@ class explore_mana(explore_sweep):
         return self.get_config("mana_not_max_stop")
 
 @singlechoice("underground_sweep", "扫荡策略", "总是扫荡", ["非庆典留一次数", "总是扫荡"])
+@booltype("underground_not_max_stop", "非最高不扫荡", True)
+@booltype("secret_dungeon_stop", "里地下城期间不扫荡", True)
 @description('会选择最高级地下城扫荡，非mana庆典时会自动保留一个次数，但第一次时需手动打一关以完成每日任务')
 @name('地下城扫荡')
 @default(True)
 class underground_skip(Module):
     async def do_task(self, client: pcrclient):
         infos = await client.get_dungeon_info()
+        not_max_stop = self.get_config("underground_not_max_stop")
+        always_sweep = self.get_config("underground_sweep") == "总是扫荡"
+        secret_dungeon_stop = self.get_config("secret_dungeon_stop")
+
+        def dungeon_name(id: int):
+            return db.dungeon_area_data[id].dungeon_name
+
+        def get_cleared_max_dungeon_id():
+            return max([0] + infos.dungeon_cleared_area_id_list)
+
+        def get_max_dungeon_id():
+            now = datetime.datetime.now()
+            return (flow(db.dungeon_area_data.values())
+                    .where(lambda x: now >= db.parse_time(x.start_time))
+                    .select(lambda x: x.dungeon_area_id)
+                    .max()
+                   )
 
         async def do_enter(now_id = None):
-            id = max([0] + infos.dungeon_cleared_area_id_list) if not now_id else now_id
+            id = get_cleared_max_dungeon_id() if not now_id else now_id
             if id > 0:
                 await client.enter_dungeon(id)
-                dungeon_name = db.dungeon_name[id]
-                self._log(f"已进入【{dungeon_name}】")
+                self._log(f"已进入【{dungeon_name(id)}】")
             else:
                 raise AbortError("不存在已完成讨伐的地下城")
 
         async def do_sweep(now_id = None):
-            id = max([0] + infos.dungeon_cleared_area_id_list) if not now_id else now_id
-            dungeon_name = db.dungeon_name[id]
+            id = get_cleared_max_dungeon_id() if not now_id else now_id
             if id > 0:
                 if id not in infos.dungeon_cleared_area_id_list:
-                    raise AbortError(f"{dungeon_name}未讨伐，无法扫荡")
+                    raise AbortError(f"【{dungeon_name(id)}】未讨伐，无法扫荡")
                 reward_list = await client.skip_dungeon(id)
                 rewards = [reward for reward_item in reward_list.skip_result_list for reward in reward_item.reward_list 
                            if db.is_unit_memory((reward.type, reward.id)) 
                            or db.xinsui == (reward.type, reward.id)
                            or db.xingqiubei == (reward.type, reward.id)]
                 result = await client.serlize_reward(rewards)
-                self._log(f"扫荡了【{dungeon_name}】,获得了:\n{result}")
+                self._log(f"扫荡了【{dungeon_name(id)}】,获得了:\n{result}")
                 return reward_list.rest_challenge_count[0].count
             else:
                 raise AbortError("不存在已完成讨伐的地下城")
@@ -91,8 +110,7 @@ class underground_skip(Module):
         double_mana = client.data.is_dungeon_mana_campaign()
         rest = infos.rest_challenge_count[0].count
         if infos.enter_area_id != 0:
-            dungeon_name = db.dungeon_name[infos.enter_area_id]
-            self._log(f"当前位于【{dungeon_name}】")
+            self._log(f"当前位于【{dungeon_name(infos.enter_area_id)}】")
             if double_mana:
                 self._log(f"今日地下城双倍mana")
                 rest = await do_sweep(infos.enter_area_id)
@@ -102,11 +120,15 @@ class underground_skip(Module):
                     self._log(f"还有{rest}次挑战次数，进行扫荡")
                     rest = await do_sweep(infos.enter_area_id)
                 else:
-                    if self.get_config('underground_sweep') == "总是扫荡":
+                    if always_sweep:
                         rest = await do_sweep(infos.enter_area_id)
                         
         if rest:
-            if double_mana or self.get_config('underground_sweep') == "总是扫荡":
+            if secret_dungeon_stop and db.is_secret_dungeon_time():
+                raise SkipError("今日里地下城活动，不扫荡普通地下城")
+            if not_max_stop and get_max_dungeon_id() != get_cleared_max_dungeon_id():
+                raise AbortError(f"最高级地下城【{dungeon_name(get_max_dungeon_id())}】未通关，不扫荡")
+            if double_mana or always_sweep:
                 await do_sweep()
             else:
                 await do_enter()

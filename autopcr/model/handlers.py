@@ -5,6 +5,7 @@ from .common import *
 from .requests import *
 from ..core.datamgr import datamgr
 from ..db.database import db
+from .enums import eEventSubStoryStatus
 from pydantic.fields import ModelField
 from typing import Optional
 
@@ -287,6 +288,7 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         mgr.campaign_list = self.campaign_list
         mgr.gacha_point = {gacha.exchange_id: gacha for gacha in self.gacha_point_info_list}
         mgr.dispatch_units = self.dispatch_units
+        mgr.event_sub_story = {sub_story.event_id: sub_story for sub_story in self.event_sub_story}
 
 
 @handles
@@ -511,6 +513,16 @@ class SeasonPassMissionAcceptResponse(responses.SeasonPassMissionAcceptResponse)
         if self.rewards:
             for reward in self.rewards:
                 mgr.update_inventory(reward)
+
+@handles
+class SubStorySkeConfirmResponse(responses.SubStorySkeConfirmResponse):
+    async def update(self, mgr: datamgr, request):
+        for sub_story in mgr.event_sub_story[10058].sub_story_info_list:
+            if sub_story.status == eEventSubStoryStatus.ADDED:
+                sub_story.status = eEventSubStoryStatus.UNREAD
+        for sub_story in mgr.event_sub_story[10059].sub_story_info_list:
+            if sub_story.status == eEventSubStoryStatus.ADDED:
+                sub_story.status = eEventSubStoryStatus.UNREAD
 
 # 菜 就别玩
 HatsuneTopResponse.__annotations__['event_status'] = HatsuneEventStatus
