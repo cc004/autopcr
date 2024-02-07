@@ -209,9 +209,9 @@ function isDigit(str) {
 function selectMultiOnChange(e) {
     const key = e.id;
     let value = Array.from(e.selectedOptions).map(option => option.value);
-    const intValue = value.map(option => parseInt(option))
-    if (intValue.length != 0 && !isNaN(intValue[0]))
-        value = intValue;
+	if (value.every((val) => $.isNumeric((val)))){
+		value = value.map(option => parseInt(option))
+	}
     user_config[key] = value;
     update_new();
 };

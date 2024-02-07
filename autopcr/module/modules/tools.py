@@ -94,7 +94,7 @@ class cook_pudding(Module):
 
 @description('来发十连，或者直到出货')
 @name('抽卡')
-@singlechoice("pool_id", "池子", db.get_cur_gacha()[0], db.get_cur_gacha())
+@singlechoice("pool_id", "池子", "", db.get_cur_gacha)
 @booltype("cc_until_get", "抽到出", False)
 @default(True)
 class gacha_start(Module):

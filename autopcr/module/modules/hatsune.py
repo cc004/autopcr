@@ -1,3 +1,4 @@
+from typing import List
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
@@ -7,18 +8,27 @@ from ...model.enums import *
 
 @conditional_not_execution("hatsune_h_sweep_not_run_time", ["n3", "n4及以上"])
 @multichoice("hatsune_h_sweep_quest", "扫荡关卡", [1,2,3,4,5], [1,2,3,4,5])
+@multichoice("hatsune_h_sweep_not_event", "不扫荡活动", [], db.get_active_hatsune_name)
 @description('')
 @name('扫荡活动h本')
 @default(False)
 class hatsune_h_sweep(Module):
     async def do_task(self, client: pcrclient):
         area = self.get_config('hatsune_h_sweep_quest')
+        not_sweep_hatsune: List[str] = self.get_config('hatsune_h_sweep_not_event')
+        not_sweep_hatsune_id = set(int(event.split(':')[0]) for event in not_sweep_hatsune)
         hard = 200
         is_error = False
         is_abort = False
         is_skip = True
         event_active = False
         for event in db.get_active_hatsune():
+            event_name = db.event_name[event.event_id]
+            self._log(f"{event.event_id}:{event_name}：")
+            print(not_sweep_hatsune_id, event.event_id)
+            if event.event_id in not_sweep_hatsune_id:
+                self._log(f"不扫荡h本")
+                continue
             event_active = True
             await client.get_hatsune_top(event.event_id)
             await client.get_hatsune_quest_top(event.event_id)
@@ -56,9 +66,11 @@ class hatsune_hboss_sweep(Module):
         event_active = False
         for event in db.get_active_hatsune():
             event_active = True
+            event_name = db.event_name[event.event_id]
+            self._log(f"{event.event_id}:{event_name}：")
+
             resp = await client.get_hatsune_top(event.event_id)
             ticket = resp.boss_ticket_info.stock
-            event_name = db.event_name[event.event_id]
 
             times = ticket // 30
             hboss_id = event.event_id * 100 + 2
@@ -87,15 +99,15 @@ class hatsune_hboss_sweep(Module):
                     raise SkipError(f"boss券不足")
                 resp = await client.hatsune_boss_skip(event.event_id, hboss_id, times, ticket)
                 is_skip = False
-                self._log(f"{event_name} h boss: 扫荡{times}次")
+                self._log(f"h boss: 扫荡{times}次")
             except SkipError as e:
-                self._log(f"{event_name}: {str(e)}")
+                self._log(f"{str(e)}")
             except AbortError as e:
                 is_abort = True
-                self._log(f"{event_name}: {str(e)}")
+                self._log(f"{str(e)}")
             except Exception as e: 
                 is_error = True
-                self._log(f"{event_name}: {str(e)}")
+                self._log(f"{str(e)}")
         if not event_active: raise SkipError("当前无进行中的活动")
         if is_error: raise ValueError("")
         if is_abort: raise AbortError("")
@@ -113,6 +125,8 @@ class hatsune_gacha_exchange(Module):
         for event in db.get_open_hatsune():
             event_active = True
             event_name = db.event_name[event.event_id]
+            self._log(f"{event.event_id}:{event_name}：")
+
             res = (await client.get_hatsune_top(event.event_id))
             exchange_ticket_id = db.hatsune_item[event.event_id].gacha_ticket_id
             res = (await client.get_hatsune_gacha_index(event.event_id, event.event_id))
@@ -120,28 +134,28 @@ class hatsune_gacha_exchange(Module):
             ticket = client.data.get_inventory((eInventoryType.Item, exchange_ticket_id))
             while(True):
                 if ticket == 0:
-                    self._log(f"{event_name}: 无讨伐证，停止交换")
+                    self._log(f"无讨伐证，停止交换")
                     break
                 if res.event_gacha_info.gacha_step >= 6:
                     exchange_times = min(client.data.settings.loop_box_multi_gacha_count, ticket)
-                    self._log(f"{event_name}: 当前处于第六轮及以上，一键交换{exchange_times}次")
+                    self._log(f"当前处于第六轮及以上，一键交换{exchange_times}次")
                     await client.exec_hatsune_gacha(event.event_id, event.event_id, exchange_times, ticket, 1)
                     ticket -= exchange_times
                 else:
                     target_done = len([item.reward_id for item in box_item.values() if item.reset_target and item.remain_inbox_count]) == 0
                     remain_cnt = sum(item.remain_inbox_count for item in box_item.values())
                     if remain_cnt == 0 or (target_done and res.event_gacha_info.gacha_step <= 2 and early_stop):
-                        self._log(f"{event_name}: 已达成重置条件，重置交换轮数")
+                        self._log(f"已达成重置条件，重置交换轮数")
                         res = await client.reset_hatsune_gacha(event.event_id, event.event_id)
                         box_item = {item.box_set_id: item for item in res.event_gacha_info.box_set_list}
                         continue
                     exchange_times = min(100, ticket, remain_cnt)
-                    self._log(f"{event_name}: 当前处于第{res.event_gacha_info.gacha_step}轮，交换{exchange_times}次")
+                    self._log(f"当前处于第{res.event_gacha_info.gacha_step}轮，交换{exchange_times}次")
                     resp = await client.exec_hatsune_gacha(event.event_id, event.event_id, exchange_times, ticket, 0)
                     ticket -= exchange_times
                     for item in resp.draw_result:
                         box_item[item.box_set_id].remain_inbox_count -= item.hit_reward_count
-            self._log(f"{event_name}: 已交换至" + (f"第{res.event_gacha_info.gacha_step}轮" if res.event_gacha_info.gacha_step < 6 else "第六轮及以上"))
+            self._log(f"已交换至" + (f"第{res.event_gacha_info.gacha_step}轮" if res.event_gacha_info.gacha_step < 6 else "第六轮及以上"))
             
         if not event_active:
             raise SkipError("当前无可进入的活动")
@@ -155,6 +169,8 @@ class hatsune_mission_accept_base(Module):
         for event in db.get_active_hatsune():
             event_active = True
             event_name = db.event_name[event.event_id]
+            self._log(f"{event.event_id}:{event_name}：")
+
             await client.get_hatsune_top(event.event_id)
             resp = await client.hatsune_mission_index(event.event_id)
             types = set(x.mission_id // 10000000 - 5 for x in resp.missions if x.mission_status == eMissionStatusType.EnableReceive)
@@ -166,15 +182,15 @@ class hatsune_mission_accept_base(Module):
                     for type in types:
                         res = await client.hatsune_mission_receive(event.event_id, type)
                         reward = await client.serlize_reward(res.rewards)
-                        self._log(f"{event_name}: 领取了任务奖励，获得了:\n" + reward)
+                        self._log(f"领取了任务奖励，获得了:\n" + reward)
             except SkipError as e:
-                self._log(f"{event_name}: {str(e)}")
+                self._log(f"{str(e)}")
             except AbortError as e:
                 is_abort = True
-                self._log(f"{event_name}: {str(e)}")
+                self._log(f"{str(e)}")
             except Exception as e:
                 is_error = True
-                self._log(f"{event_name}: {str(e)}")
+                self._log(f"{str(e)}")
 
         if not event_active: raise SkipError("当前无进行中的活动")
         if is_error: raise ValueError("")
@@ -201,6 +217,9 @@ class all_in_hatsune(Module):
     async def do_task(self, client: pcrclient):
         quest = 0
         for event in db.get_active_hatsune(): # 复刻和正常一起开的话会刷先开的那个
+            event_name = db.event_name[event.event_id]
+            self._log(f"{event.event_id}:{event_name}：")
+
             quest = 1000 * event.event_id + 100 + self.get_config('hatsune_normal_sweep_quest')
             
             await client.get_hatsune_top(event.event_id)
