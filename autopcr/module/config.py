@@ -8,17 +8,37 @@ from ..model.error import SkipError
 class Config():
     key: str
     desc: str
-    default: Union[int, str, list]
-    candidates: list
+    _default: Union[int, str, list]
+    _candidates: Union[list, Callable]
     config_type: str
     _parent: "Module"
 
     async def do_check(self, client: pcrclient) -> Tuple[bool, str]: ...
 
+    @property
+    def candidates(self):
+        if isinstance(self._candidates, list):
+            return self._candidates
+        else:
+            return self._candidates()
+
+    @property
+    def default(self):
+        if isinstance(self._candidates, list):
+            return self._default
+        else:
+            candidates = self._candidates()
+            ret = candidates[0] if candidates else ""
+            return ret if self.config_type != "multi" else []
+
     def dict(self) -> dict:
-        ret = vars(self)
-        ret.pop('do_check')
-        ret.pop('_parent')
+        ret = {
+                "key": self.key,
+                "desc": self.desc,
+                "default": self.default,
+                "candidates": self.candidates,
+                "config_type": self.config_type,
+        }
         return ret
 
     def get_value(self):
@@ -36,11 +56,12 @@ def _wrap_init(cls, setter):
 async def _do_check(self, client: pcrclient) -> Tuple[bool, str]:
     return False, ""
 
-def config_option(key:str, desc: str, default, candidates: list = [], config_type='str', do_check = _do_check, check: bool = False):
+def config_option(key:str, desc: str, default, candidates: Union[list, Callable] = [], config_type='str', do_check = _do_check, check: bool = False):
     from .modulebase import Module
-    assert(not candidates or default in candidates or all(item in candidates for item in default))
+    if isinstance(candidates, list):
+        assert(not candidates or default in candidates or all(item in candidates for item in default))
     def wrapper(cls: Module):
-        config = Config(key=key, desc=desc, default=default, candidates=candidates, config_type=config_type, _parent = cls)
+        config = Config(key=key, desc=desc, _default=default, _candidates=candidates, config_type=config_type, _parent = cls)
         config.do_check = MethodType(do_check, config)
         cls.config[key] = config
 
@@ -62,17 +83,17 @@ def booltype(key: str, desc: str, default: bool):
         return config_option(key=key, desc=desc, default=default, candidates=[True, False], config_type='bool')(cls)
     return decorator
 
-def inttype(key: str, desc: str, default: int, candidates: list):
+def inttype(key: str, desc: str, default: int, candidates: Union[list, Callable]):
     def decorator(cls):
         return config_option(key=key, desc=desc, default=default, candidates=candidates, config_type='int')(cls)
     return decorator
 
-def singlechoice(key: str, desc: str, default, candidates: list):
+def singlechoice(key: str, desc: str, default, candidates: Union[list, Callable]):
     def decorator(cls):
         return config_option(key=key, desc=desc, default=default, candidates=candidates, config_type='single')(cls)
     return decorator
 
-def multichoice(key:str, desc: str, default, candidates: list, do_check = _do_check, check: bool = False):
+def multichoice(key:str, desc: str, default, candidates: Union[list, Callable], do_check = _do_check, check: bool = False):
     def decorator(cls):
         return config_option(key=key, desc=desc, default=default, candidates=candidates, config_type='multi', do_check = do_check, check = check)(cls)
     return decorator

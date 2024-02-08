@@ -659,6 +659,10 @@ class database():
                 .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.end_time)) \
                 .to_list()
 
+    def get_active_hatsune_name(self) -> List[str]:
+        active_hatsune = self.get_active_hatsune()
+        return [f"{event.event_id}:{db.event_name[event.event_id]}" for event in active_hatsune]
+
     def get_open_hatsune(self) -> List[HatsuneSchedule]:
         now = datetime.datetime.now()
         return flow(self.hatsune_schedule.values()) \
