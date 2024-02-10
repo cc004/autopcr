@@ -337,7 +337,11 @@ class database():
 
             self.event_name: Dict[int, str] = (
                 EventStoryDatum.query(db)
-                .to_dict(lambda x: x.story_group_id + 5000, lambda x: x.title)
+                .select(lambda x: (x.story_group_id + 5000, x.title))
+                .concat(
+                    EventStoryDatum.query(db)
+                    .select(lambda x: (x.value, x.title))
+                ).to_dict(lambda x: x[0], lambda x: x[1])
             )
 
             self.event_story_detail: List[EventStoryDetail] = (

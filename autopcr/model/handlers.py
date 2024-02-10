@@ -276,7 +276,14 @@ class LoadIndexResponse(responses.LoadIndexResponse):
             mgr.unit = {unit.id: unit for unit in self.unit_list}
         if self.user_chara_info:
             mgr.unit_love_data = {unit.chara_id: unit for unit in self.user_chara_info}
-        mgr.growth_unit = {unit.unit_id: unit for unit in self.growth_unit_list}
+        if self.growth_unit_list:
+            mgr.growth_unit = {unit.unit_id: unit for unit in self.growth_unit_list}
+        if self.deck_list:
+            mgr.deck_list = {deck.deck_number:deck for deck in self.deck_list}
+        if self.gacha_point_info_list:
+            mgr.gacha_point = {gacha.exchange_id: gacha for gacha in self.gacha_point_info_list}
+        if self.event_sub_story:
+            mgr.event_sub_story = {sub_story.event_id: sub_story for sub_story in self.event_sub_story}
         mgr.stamina = self.user_info.user_stamina
         mgr.settings = self.ini_setting
         mgr.recover_stamina_exec_count = self.shop.recover_stamina.exec_count
@@ -284,11 +291,8 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         mgr.unlock_story_ids = self.unlock_story_ids
         mgr.event_statuses = self.event_statuses
         mgr.tower_status = self.tower_status
-        mgr.deck_list = {deck.deck_number:deck for deck in self.deck_list}
         mgr.campaign_list = self.campaign_list
-        mgr.gacha_point = {gacha.exchange_id: gacha for gacha in self.gacha_point_info_list}
         mgr.dispatch_units = self.dispatch_units
-        mgr.event_sub_story = {sub_story.event_id: sub_story for sub_story in self.event_sub_story}
 
 
 @handles
