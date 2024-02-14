@@ -164,8 +164,11 @@ class pcrclient(apiclient):
 
     async def exec_gacha_aware(self, target_gacha: GachaParameter, gacha_times: int, draw_type: eGachaDrawType, current_cost_num: int, campaign_id: int) -> GachaReward:
 
-        if draw_type == 2 and current_cost_num < 1500:
+        if draw_type == eGachaDrawType.Payment and current_cost_num < 1500:
             raise AbortError(f"宝石{current_cost_num}不足1500")
+
+        if draw_type == eGachaDrawType.Ticket and current_cost_num < 1:
+            raise AbortError(f"单抽券{current_cost_num}不足")
 
         if target_gacha.selected_item_id == 0:
             prizegacha_id = db.gacha_data[target_gacha.id].prizegacha_id
@@ -179,7 +182,7 @@ class pcrclient(apiclient):
             raise AbortError(f"已达到天井{self.data.gacha_point[target_gacha.exchange_id].current_point}pt，请上号兑换角色") 
             # auto exchange TODO
 
-        if draw_type == 2: # 怎么回传没有宝石数
+        if draw_type == eGachaDrawType.Payment: # 怎么回传没有宝石数
             tot = 1500
             mine = min(tot, self.data.jewel.free_jewel)
 

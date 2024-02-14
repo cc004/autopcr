@@ -1,6 +1,7 @@
 autopcr/http_server/config/*.json
 __pycache__/
 *.log
+result/
 cache/
 clan_scanner.py
 .DS_Store

@@ -11,17 +11,18 @@ from ...util.questutils import *
 import asyncio
 import datetime
 
-@description('全局生效，优先级n4>n3>h3>n2>h2')
+@description('全局生效，氪体数优先级n4>n3>h3>n2>h2，禅模式指不执行体力相关的功能，仅在清日常生效，单项执行将忽略。庆典包括其倍数')
 @name("全局配置")
 @default(True)
-@inttype('sweep_recover_stamina_times', "平时被动恢复体力数", 0, [i for i in range(41)])
-@inttype('sweep_recover_stamina_times_n2', "n2被动恢复体力数", 0, [i for i in range(41)])
-@inttype('sweep_recover_stamina_times_n3', "n3被动恢复体力数", 0, [i for i in range(41)])
-@inttype('sweep_recover_stamina_times_n4', "n4及以上被动恢复体力数", 0, [i for i in range(41)])
-@inttype('sweep_recover_stamina_times_h2', "h2被动恢复体力数", 0, [i for i in range(41)])
-@inttype('sweep_recover_stamina_times_h3', "h3及以上被动恢复体力数", 0, [i for i in range(41)])
-@conditional_not_execution("force_stop_heart_sweep", [], desc="强制不刷心碎庆典", check=False)
-@conditional_not_execution("force_stop_star_cup_sweep", [], desc="强制不刷星球杯庆典", check=False)
+@inttype('sweep_recover_stamina_times', "平时氪体数", 0, [i for i in range(41)])
+@inttype('sweep_recover_stamina_times_n2', "n2氪体数", 0, [i for i in range(41)])
+@inttype('sweep_recover_stamina_times_n3', "n3氪体数", 0, [i for i in range(41)])
+@inttype('sweep_recover_stamina_times_n4', "n4以上氪体数", 0, [i for i in range(41)])
+@inttype('sweep_recover_stamina_times_h2', "h2氪体数", 0, [i for i in range(41)])
+@inttype('sweep_recover_stamina_times_h3', "h3以上氪体数", 0, [i for i in range(41)])
+@conditional_not_execution("force_stop_heart_sweep", [], desc="不刷心碎庆典", check=False)
+@conditional_not_execution("force_stop_star_cup_sweep", [], desc="不刷星球杯庆典", check=False)
+@multichoice('stamina_relative_not_run_campaign_before_one_day', "禅模式", [], ['n3以上前夕','h3以上前夕','会战前夕'])
 @notrunnable
 class global_config(Module):
     async def do_task(self, client: pcrclient):
@@ -42,6 +43,7 @@ class chara_fortune(Module):
 @description('开始时领取任务奖励')
 @name("领取每日任务奖励1")
 @default(True)
+@stamina_relative
 class mission_receive_first(Module):
     async def do_task(self, client: pcrclient):
         resp = await client.mission_index()
@@ -56,6 +58,7 @@ class mission_receive_first(Module):
 @description('结束时领取任务奖励')
 @name("领取每日任务奖励2")
 @default(True)
+@stamina_relative
 class mission_receive_last(Module):
     async def do_task(self, client: pcrclient):
         resp = await client.mission_index()
@@ -90,6 +93,7 @@ class seasonpass_accept(Module):
 @booltype('seasonpass_reward_stamina_exclude', "不领取体力", True)
 @name("领取女神祭奖励")
 @default(True)
+@stamina_relative
 class seasonpass_reward(Module):
 
     class Reward:
@@ -155,6 +159,7 @@ class seasonpass_reward(Module):
 @description('领取符合条件的所有礼物箱奖励')
 @name('领取礼物箱')
 @default(True)
+@stamina_relative
 class present_receive(Module):
     async def do_task(self, client: pcrclient):
         if self.get_config('present_receive_strategy') == "非体力":
@@ -266,5 +271,4 @@ class user_info(Module):
         self._log(f"{client.data.name} 体力{client.data.stamina}({db.team_info[client.data.team_level].max_stamina}) 等级{client.data.team_level} 钻石{client.data.jewel.free_jewel} mana{client.data.gold.gold_id_free} 扫荡券{client.data.get_inventory((eInventoryType.Item, 23001))} 母猪石{client.data.get_inventory((eInventoryType.Item, 90005))}")
         self._log(f"已购买体力数：{client.data.recover_stamina_exec_count}")
         self._log(f"清日常时间:{now}")
-
 

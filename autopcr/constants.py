@@ -2,8 +2,10 @@ import os
 
 ROOT_DIR = os.path.join(os.path.dirname(__file__), '..')
 CACHE_DIR = os.path.join(ROOT_DIR, './cache/')
+RESULT_DIR = os.path.join(ROOT_DIR, './result/')
 DATA_DIR = os.path.join(ROOT_DIR, './data/')
 CONFIG_PATH = os.path.join(CACHE_DIR, './http_server/') 
+OLD_CONFIG_PATH = os.path.join(ROOT_DIR, 'autopcr/http_server/config')
 AUTH_KEY = ""
 
 # Headers

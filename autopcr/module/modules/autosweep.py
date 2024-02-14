@@ -15,6 +15,7 @@ import datetime
 @description('根据装备缺口刷n图')
 @name('智能刷n图')
 @default(False)
+@stamina_relative
 class smart_normal_sweep(Module):
 
     async def do_task(self, client: pcrclient):
@@ -127,6 +128,7 @@ class simple_demand_sweep_base(Module):
 @description('根据记忆碎片缺口刷hard图')
 @name('智能刷hard图')
 @default(False)
+@stamina_relative
 class smart_hard_sweep(simple_demand_sweep_base):
 
     async def get_need_list(self, client: pcrclient) -> List[Tuple[ItemType, int]]:
@@ -170,6 +172,7 @@ unique_equip_2_pure_memory_id = [
 @description('储备专二需求的150碎片，包括' + ','.join(db.get_item_name(item_id) for item_id, _ in unique_equip_2_pure_memory_id))
 @name('专二纯净碎片储备')
 @default(False)
+@stamina_relative
 class mirai_very_hard_sweep(simple_demand_sweep_base):
     async def get_need_list(self, client: pcrclient) -> List[Tuple[ItemType, int]]:
         need_list = client.data.get_pure_memory_demand_gap()
@@ -190,6 +193,7 @@ class mirai_very_hard_sweep(simple_demand_sweep_base):
 @description('根据纯净碎片缺口智能刷vh图')
 @name('智能刷very hard图')
 @default(True)
+@stamina_relative
 class smart_very_hard_sweep(simple_demand_sweep_base):
     times: int = -1
 
@@ -221,6 +225,7 @@ class smart_very_hard_sweep(simple_demand_sweep_base):
 @conditional_execution("start_run_time", ['h庆典'], desc="start刷取庆典", check=False)
 @conditional_execution("loop_run_time", ['n庆典'], desc="loop刷取庆典", check=False)
 @default(False)
+@stamina_relative
 class smart_sweep(Module):
     async def do_task(self, client: pcrclient):
         nloop: List[Tuple[int, int]] = []
