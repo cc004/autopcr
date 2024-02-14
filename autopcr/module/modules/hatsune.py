@@ -12,6 +12,7 @@ from ...model.enums import *
 @description('')
 @name('扫荡活动h本')
 @default(False)
+@stamina_relative
 class hatsune_h_sweep(Module):
     async def do_task(self, client: pcrclient):
         area = self.get_config('hatsune_h_sweep_quest')
@@ -215,6 +216,7 @@ class hatsune_mission_accept2(hatsune_mission_accept_base):
 @description('剩余体力全部刷活动图')
 @name('全刷活动普图')
 @default(False)
+@stamina_relative
 class all_in_hatsune(Module):
     async def do_task(self, client: pcrclient):
         quest = 0

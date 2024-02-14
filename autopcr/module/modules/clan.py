@@ -10,6 +10,7 @@ from ...db.database import db
 @description('在公会中自动随机选择一位成员点赞。')
 @name("公会点赞")
 @default(True)
+@stamina_relative
 class clan_like(Module):
     async def do_task(self, client: pcrclient):
         if client.data.clan_like_count:

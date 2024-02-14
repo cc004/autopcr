@@ -92,8 +92,9 @@ class cook_pudding(Module):
         if is_skip: raise SkipError("")
 
 
-@description('来发十连，或者直到出货')
+@description('来进行赛博抽卡')
 @name('抽卡')
+@booltype("single_ticket", "用单抽券", False)
 @singlechoice("pool_id", "池子", "", db.get_cur_gacha)
 @booltype("cc_until_get", "抽到出", False)
 @default(True)
@@ -106,6 +107,7 @@ class gacha_start(Module):
         if ':' not in self.get_config('pool_id'):
             raise ValueError("配置格式不正确")
         gacha_id = int(self.get_config('pool_id').split(':')[0])
+        single_ticket = self.get_config('single_ticket')
         resp = await client.get_gacha_index()
         for gacha in resp.gacha_info:
             if gacha.id == gacha_id:
@@ -121,14 +123,17 @@ class gacha_start(Module):
         cnt = 0
         try:
             while True:
-                reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Payment, client.data.jewel.free_jewel + client.data.jewel.jewel, 0)
+                if single_ticket:
+                    reward += await client.exec_gacha_aware(target_gacha, 1, eGachaDrawType.Ticket, client.data.get_inventory(db.gacha_single_ticket), 0)
+                else:
+                    reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Payment, client.data.jewel.free_jewel + client.data.jewel.jewel, 0)
                 cnt += 1
                 if not always or self.can_stop(reward.new_unit, db.gacha_exchange_chara[target_gacha.exchange_id]) :
                     break
         except:
             raise 
         finally:
-            self._log(f"抽取了{cnt}次十连")
+            self._log(f"抽取了{cnt}次{'十连' if not single_ticket else '单抽'}")
             self._log(await client.serlize_gacha_reward(reward))
             self._log(f"当前pt为{client.data.gacha_point[target_gacha.exchange_id].current_point}")
 
@@ -432,6 +437,7 @@ class pjjc_back(Arena):
 @description('获得可导入到兰德索尔图书馆的账号数据')
 @name('兰德索尔图书馆导入数据')
 @default(True)
+@text_result
 class get_library_import_data(Module):
     async def do_task(self, client: pcrclient):
         msg = client.data.get_library_import_data()
