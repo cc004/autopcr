@@ -156,6 +156,7 @@ class hatsune_gacha_exchange(Module):
                     for item in resp.draw_result:
                         box_item[item.box_set_id].remain_inbox_count -= item.hit_reward_count
             self._log(f"已交换至" + (f"第{res.event_gacha_info.gacha_step}轮" if res.event_gacha_info.gacha_step < 6 else "第六轮及以上"))
+            client.data.set_inventory((eInventoryType.Item, exchange_ticket_id), ticket)
             
         if not event_active:
             raise SkipError("当前无可进入的活动")
