@@ -137,6 +137,11 @@ class database():
                 QuestDatum.query(db)
                 .where(lambda x: self.is_hard_quest(x.quest_id))
                 .group_by(lambda x: x.reward_image_1)
+                .concat(
+                    ShioriQuest.query(db)
+                    .where(lambda x: self.is_shiori_hard_quest(x.quest_id))
+                    .group_by(lambda x: x.drop_reward_id)
+                )
                 .to_dict(lambda x: (eInventoryType.Item, x.key), lambda x:
                          x.to_list()[::-1]
                 )
@@ -621,6 +626,9 @@ class database():
 
     def is_shiori_quest(self, quest_id: int) -> bool:
         return quest_id // 1000000 == 20
+
+    def is_shiori_hard_quest(self, quest_id: int) -> bool:
+        return self.is_shiori_quest(quest_id) and (quest_id // 100) % 10 == 2
 
     def is_heart_piece_campaign(self, campaign_id: int) -> bool:
         return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.ITEM_DROP_AMOUNT_UNIQUE_EQUIP
