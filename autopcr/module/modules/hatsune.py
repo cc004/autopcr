@@ -211,15 +211,17 @@ class hatsune_mission_accept2(hatsune_mission_accept_base):
     pass
 
 @singlechoice("hatsune_normal_sweep_quest", "刷取图", 15, [5, 10, 15])
+@singlechoice("hatsune_normal_sweep_event", "刷取活动", "", db.get_active_hatsune_name)
 @description('剩余体力全部刷活动图')
 @name('全刷活动普图')
 @default(False)
 class all_in_hatsune(Module):
     async def do_task(self, client: pcrclient):
         quest = 0
-        for event in db.get_active_hatsune(): # 复刻和正常一起开的话会刷先开的那个
-            event_name = db.event_name[event.event_id]
-            self._log(f"{event.event_id}:{event_name}：")
+        sweep_hatsune_id: int = int(self.get_config('hatsune_normal_sweep_event').split(':')[0])
+        for event in db.get_active_hatsune(): 
+            if event.event_id != sweep_hatsune_id:
+                continue
 
             quest = 1000 * event.event_id + 100 + self.get_config('hatsune_normal_sweep_quest')
             
@@ -230,6 +232,8 @@ class all_in_hatsune(Module):
         
         if not quest: raise SkipError("当前无进行中的活动")
         
+        event_name = db.event_name[sweep_hatsune_id]
+        self._log(f"刷取{event_name}活动")
 
         count = client.data.stamina // db.quest_info[quest].stamina
 
