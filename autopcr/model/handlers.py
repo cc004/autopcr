@@ -272,18 +272,12 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         if self.user_equip:
             for inv in self.user_equip:
                 mgr.update_inventory(inv)
-        if self.unit_list:
-            mgr.unit = {unit.id: unit for unit in self.unit_list}
-        if self.user_chara_info:
-            mgr.unit_love_data = {unit.chara_id: unit for unit in self.user_chara_info}
-        if self.growth_unit_list:
-            mgr.growth_unit = {unit.unit_id: unit for unit in self.growth_unit_list}
-        if self.deck_list:
-            mgr.deck_list = {deck.deck_number:deck for deck in self.deck_list}
-        if self.gacha_point_info_list:
-            mgr.gacha_point = {gacha.exchange_id: gacha for gacha in self.gacha_point_info_list}
-        if self.event_sub_story:
-            mgr.event_sub_story = {sub_story.event_id: sub_story for sub_story in self.event_sub_story}
+        mgr.unit = {unit.id: unit for unit in self.unit_list} if self.unit_list else {}
+        mgr.unit_love_data = {unit.chara_id: unit for unit in self.user_chara_info} if self.user_chara_info else {}
+        mgr.growth_unit = {unit.unit_id: unit for unit in self.growth_unit_list} if self.growth_unit_list else {}
+        mgr.deck_list = {deck.deck_number:deck for deck in self.deck_list} if self.deck_list else {}
+        mgr.gacha_point = {gacha.exchange_id: gacha for gacha in self.gacha_point_info_list} if self.gacha_point_info_list else {}
+        mgr.event_sub_story = {sub_story.event_id: sub_story for sub_story in self.event_sub_story} if self.event_sub_story else {}
         mgr.stamina = self.user_info.user_stamina
         mgr.settings = self.ini_setting
         mgr.recover_stamina_exec_count = self.shop.recover_stamina.exec_count
