@@ -147,27 +147,31 @@ class smart_hard_sweep(simple_demand_sweep_base):
         return 5 if db.is_shiori_quest(quest_id) else 3
 
 unique_equip_2_pure_memory_id = [
-        32025, # 女仆
-        32046, # 猫剑
-        32048, # 子龙
-        32060, # 猫猫
-        32016, # 爆击弓
-        32031, # 忍
-        32050, # 美咲
-        32007, # 布丁
-        32058, # 吃货
-        32033, # 奶牛
-        32049, # 姐姐
-        32027, # 病娇
+        (32025, 1), # 水女仆
+        (32046, 1), # 水猫剑
+        (32048, 1), # 水子龙
+        (32060, 1), # 黑猫
+        (32016, 1), # 暴击弓
+        (32031, 1), # 万圣忍
+        (32050, 1), # 万圣大眼
+        (32007, 1), # 万圣布丁
+        (32058, 1), # 吃货
+        (32033, 1), # 奶牛
+        (32023, 1), # 圣锤
+        (32042, 1), # 圣千
+        (32021, 1), # 圣铃铛
+        (32049, 2), # 情姐，姐姐
+        (32027, 1), # 情病
+        (32011, 1), # 妹弓
 ]
 @conditional_execution("very_hard_sweep_run_time", ["vh庆典"])
-@description('储备专二需求的150碎片，包括' + ','.join(db.get_item_name(item_id) for item_id in unique_equip_2_pure_memory_id))
+@description('储备专二需求的150碎片，包括' + ','.join(db.get_item_name(item_id) for item_id, _ in unique_equip_2_pure_memory_id))
 @name('专二纯净碎片储备')
 @default(False)
 class mirai_very_hard_sweep(simple_demand_sweep_base):
     async def get_need_list(self, client: pcrclient) -> List[Tuple[ItemType, int]]:
         need_list = client.data.get_pure_memory_demand_gap()
-        need_list += Counter({(eInventoryType.Item, pure_memory_id): 150 for pure_memory_id in unique_equip_2_pure_memory_id})
+        need_list += Counter({(eInventoryType.Item, pure_memory_id): 150 * cnt for pure_memory_id, cnt in unique_equip_2_pure_memory_id})
         need_list = [(token, need) for token, need in need_list.items() if need > 0]
         if not need_list:
             raise SkipError("所有纯净碎片均已盈余")
