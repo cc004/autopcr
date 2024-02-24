@@ -139,15 +139,15 @@ class limit_shop(shop_buyer):
 @singlechoice('underground_shop_buy_equip_count_limit', "装备盈余停止阈值", 0, [0, 20, 50, 100, 200, 500, 9900])
 @singlechoice('underground_shop_buy_coin_limit', "货币停止阈值", 10000, [0, 10000, 50000, 100000, 200000])
 @singlechoice("underground_shop_buy_equip_consider_unit", "按角色需求购买装备", "all", ["all", "max_rank", "max_rank-1", "max_rank-2", 'favorite'])
-@inttype('underground_shop_reset_count', "重置次数(<=20)", 0, [i for i in range(21)])
+@inttype('underground_shop_reset_count', "重置次数(<=200)", 0, [i for i in range(201)])
 @multichoice("underground_shop_buy_kind", "购买种类", ['记忆碎片', '装备'], ['记忆碎片', '装备'])
 @name('地下城商店购买')
 @default(False)
 class underground_shop(shop_buyer):
-    def _equip_upper_count(self, client: pcrclient):
-        return self._get_count(client, '装备', 'underground_shop_buy_memory_count_limit')
+    def _equip_count(self, client: pcrclient):
+        return self._get_count(client, '装备', 'underground_shop_buy_equip_count_limit')
     def _unit_memory_count(self, client: pcrclient):
-        return self._get_count(client, '记忆碎片', 'underground_shop_buy_equip_count_limit')
+        return self._get_count(client, '记忆碎片', 'underground_shop_buy_memory_count_limit')
     def coin_limit(self) -> int: return self.get_config('underground_shop_buy_coin_limit')
     def system_id(self) -> eSystemId: return eSystemId.EXPEDITION_SHOP
     def reset_count(self) -> int: return self.get_config('underground_shop_reset_count')
@@ -163,10 +163,10 @@ class underground_shop(shop_buyer):
 @name('jjc商店购买')
 @default(False)
 class jjc_shop(shop_buyer):
-    def _equip_upper_count(self, client: pcrclient):
-        return self._get_count(client, '装备', 'jjc_shop_buy_memory_count_limit')
+    def _equip_count(self, client: pcrclient):
+        return self._get_count(client, '装备', 'jjc_shop_buy_equip_count_limit')
     def _unit_memory_count(self, client: pcrclient):
-        return self._get_count(client, '记忆碎片', 'jjc_shop_buy_equip_count_limit')
+        return self._get_count(client, '记忆碎片', 'jjc_shop_buy_memory_count_limit')
     def coin_limit(self) -> int: return self.get_config('jjc_shop_buy_coin_limit')
     def system_id(self) -> eSystemId: return eSystemId.ARENA_SHOP
     def reset_count(self) -> int: return self.get_config('jjc_shop_reset_count')
@@ -182,10 +182,10 @@ class jjc_shop(shop_buyer):
 @name('pjjc商店购买')
 @default(False)
 class pjjc_shop(shop_buyer):
-    def _equip_upper_count(self, client: pcrclient):
-        return self._get_count(client, '装备', 'pjjc_shop_buy_memory_count_limit')
+    def _equip_count(self, client: pcrclient):
+        return self._get_count(client, '装备', 'pjjc_shop_buy_equip_count_limit')
     def _unit_memory_count(self, client: pcrclient):
-        return self._get_count(client, '记忆碎片', 'pjjc_shop_buy_equip_count_limit')
+        return self._get_count(client, '记忆碎片', 'pjjc_shop_buy_memory_count_limit')
     def coin_limit(self) -> int: return self.get_config('pjjc_shop_buy_coin_limit')
     def system_id(self) -> eSystemId: return eSystemId.GRAND_ARENA_SHOP
     def reset_count(self) -> int: return self.get_config('pjjc_shop_reset_count')
