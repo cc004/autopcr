@@ -29,8 +29,9 @@ class shop_buyer(Module):
     def reset_count(self) -> int: ...
     @abstractmethod
     def buy_kind(self) -> List[str]: ...
-    @abstractmethod
-    def require_equip_units(self) -> str: ...
+
+    def require_equip_units(self) -> str:
+        return 'all'
 
     async def _get_shop(self, client: pcrclient):
         res = await client.get_shop_item_list()
