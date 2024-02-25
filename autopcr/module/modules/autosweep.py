@@ -97,9 +97,11 @@ class simple_demand_sweep_base(Module):
                     except SkipError as e:
                         pass
                     except AbortError as e:
-                        stop = True
                         if str(e).endswith("体力不足"):
+                            stop = True
                             if not tmp and not self.log: self._log(str(e))
+                        elif str(e).endswith("未通关或不存在"):
+                            self._log(f"{db.get_inventory_name_san(token)}: {str(e)}")
                         else:
                             raise e
                         break
