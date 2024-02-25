@@ -30,8 +30,7 @@ class shop_buyer(Module):
     @abstractmethod
     def buy_kind(self) -> List[str]: ...
     @abstractmethod
-    def require_equip_units(self) -> str:
-        return 'none'
+    def require_equip_units(self) -> str: ...
 
     async def _get_shop(self, client: pcrclient):
         res = await client.get_shop_item_list()
@@ -51,18 +50,16 @@ class shop_buyer(Module):
         result = []
 
         while True:
-            if self.require_equip_units() != 'all':
-                if self.require_equip_units() == 'favorite':
-                    equip_demand_gap = client.data.get_equip_demand_gap(like_unit_only=True)
-                else:
-                    opt: Dict[Union[int, str], int] = {
-                        'max_rank': db.equip_max_rank,
-                        'max_rank-1': db.equip_max_rank - 1,
-                        'max_rank-2': db.equip_max_rank - 2,
-                    }
-                    equip_demand_gap = client.data.get_equip_demand_gap(start_rank=opt[self.require_equip_units()])
+            if self.require_equip_units() == 'favorite':
+                equip_demand_gap = client.data.get_equip_demand_gap(like_unit_only=True)
             else:
-                equip_demand_gap = client.data.get_equip_demand_gap()
+                opt: Dict[Union[int, str], int] = {
+                    'all': 1,
+                    'max_rank': db.equip_max_rank,
+                    'max_rank-1': db.equip_max_rank - 1,
+                    'max_rank-2': db.equip_max_rank - 2,
+                }
+                equip_demand_gap = client.data.get_equip_demand_gap(start_rank=opt[self.require_equip_units()])
 
             memory_demand_gap = client.data.get_memory_demand_gap()
 
