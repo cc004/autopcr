@@ -91,7 +91,7 @@ class simple_demand_sweep_base(Module):
                 for quest in self.get_need_quest(token):
                     max_times = self.get_max_times(client, quest.quest_id)
                     try:
-                        resp = await client.quest_skip_aware(quest.quest_id, max_times)
+                        resp = await client.quest_skip_aware(quest.quest_id, max_times, True, True)
                         clean_cnt[quest.quest_id] += max_times
                         tmp.extend([item for item in resp if (item.type, item.id) == token]) 
                     except SkipError as e:
