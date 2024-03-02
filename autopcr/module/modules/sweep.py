@@ -70,15 +70,13 @@ class underground_skip(Module):
         secret_dungeon_stop = self.get_config("secret_dungeon_stop")
 
         def dungeon_name(id: int):
-            return db.dungeon_area_data[id].dungeon_name
+            return db.dungeon_area[id].dungeon_name
 
         def get_cleared_max_dungeon_id():
             return max([0] + infos.dungeon_cleared_area_id_list)
 
         def get_max_dungeon_id():
-            now = datetime.datetime.now()
-            return (flow(db.dungeon_area_data.values())
-                    .where(lambda x: now >= db.parse_time(x.start_time))
+            return (flow(db.dungeon_area.values())
                     .select(lambda x: x.dungeon_area_id)
                     .max()
                    )
