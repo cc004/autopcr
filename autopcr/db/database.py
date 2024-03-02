@@ -248,8 +248,8 @@ class database():
                 )
             )
 
-            self.dungeon_area_data: Dict[int, DungeonAreaDatum] = (
-                DungeonAreaDatum.query(db)
+            self.dungeon_area: Dict[int, DungeonArea] = (
+                DungeonArea.query(db)
                 .to_dict(lambda x: x.dungeon_area_id, lambda x: x)
             )
 
