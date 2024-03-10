@@ -8,18 +8,18 @@ from ...db.database import db
 from ...model.enums import *
 
 class shop_buyer(Module):
-    def _get_count(self, client: pcrclient, name: str, key: str):
+    def _get_count(self, name: str, key: str) -> int:
         if name not in self.buy_kind():
             return -999999
-        return int(client.keys.get(key, -999999))
-    def _exp_count(self, client: pcrclient):
-        return self._get_count(client, '经验药水', 'shop_buy_exp_count_limit')
-    def _equip_count(self, client: pcrclient):
-        return self._get_count(client, '装备', 'shop_buy_equip_count_limit')
-    def _equip_upper_count(self, client: pcrclient):
-        return self._get_count(client, '强化石', 'shop_buy_equip_upper_count_limit')
-    def _unit_memory_count(self, client: pcrclient):
-        return self._get_count(client, '记忆碎片', 'shop_buy_memory_count_limit')
+        return self.get_config(key)
+    def _exp_count(self):
+        return self._get_count('经验药水', 'shop_buy_exp_count_limit')
+    def _equip_count(self):
+        return self._get_count('装备', 'shop_buy_equip_count_limit')
+    def _equip_upper_count(self):
+        return self._get_count('强化石', 'shop_buy_equip_upper_count_limit')
+    def _unit_memory_count(self):
+        return self._get_count('记忆碎片', 'shop_buy_memory_count_limit')
 
     @abstractmethod
     def coin_limit(self) -> int: ...
@@ -71,10 +71,10 @@ class shop_buyer(Module):
             target = [
                 (item.slot_id, item.price.currency_num) for item in shop_content.item_list if not item.sold and
                     (
-                        (db.is_exp_upper((item.type, item.item_id)) and client.data.get_inventory((item.type, item.item_id)) < self._exp_count(client)) or
-                        (db.is_equip_upper((item.type, item.item_id)) and client.data.get_inventory((item.type, item.item_id)) < self._equip_upper_count(client)) or
-                        (db.is_equip((item.type, item.item_id)) and -equip_demand_gap[(item.type, item.item_id)] < self._equip_count(client)) or
-                        (db.is_unit_memory((item.type, item.item_id)) and -memory_demand_gap[(item.type, item.item_id)] < self._unit_memory_count(client))
+                        (db.is_exp_upper((item.type, item.item_id)) and client.data.get_inventory((item.type, item.item_id)) < self._exp_count()) or
+                        (db.is_equip_upper((item.type, item.item_id)) and client.data.get_inventory((item.type, item.item_id)) < self._equip_upper_count()) or
+                        (db.is_equip((item.type, item.item_id)) and -equip_demand_gap[(item.type, item.item_id)] < self._equip_count()) or
+                        (db.is_unit_memory((item.type, item.item_id)) and -memory_demand_gap[(item.type, item.item_id)] < self._unit_memory_count())
                     )
             ]
 
@@ -126,8 +126,8 @@ class normal_shop(shop_buyer):
 @name('限定商店购买')
 @default(False)
 class limit_shop(shop_buyer):
-    def _exp_count(self, client: pcrclient): return 99000 if "经验药水" in self.get_config('limit_shop_buy_kind') else 0
-    def _equip_count(self, client: pcrclient): return 9900 if "装备" in self.get_config('limit_shop_buy_kind') else 0
+    def _exp_count(self): return 99000 if "经验药水" in self.get_config('limit_shop_buy_kind') else 0
+    def _equip_count(self): return 9900 if "装备" in self.get_config('limit_shop_buy_kind') else 0
     def coin_limit(self) -> int: return self.get_config('limit_shop_buy_coin_limit')
     def system_id(self) -> eSystemId: return eSystemId.LIMITED_SHOP
     def reset_count(self) -> int: return 0
@@ -142,10 +142,10 @@ class limit_shop(shop_buyer):
 @name('地下城商店购买')
 @default(False)
 class underground_shop(shop_buyer):
-    def _equip_count(self, client: pcrclient):
-        return self._get_count(client, '装备', 'underground_shop_buy_equip_count_limit')
-    def _unit_memory_count(self, client: pcrclient):
-        return self._get_count(client, '记忆碎片', 'underground_shop_buy_memory_count_limit')
+    def _equip_count(self):
+        return self._get_count('装备', 'underground_shop_buy_equip_count_limit')
+    def _unit_memory_count(self):
+        return self._get_count('记忆碎片', 'underground_shop_buy_memory_count_limit')
     def coin_limit(self) -> int: return self.get_config('underground_shop_buy_coin_limit')
     def system_id(self) -> eSystemId: return eSystemId.EXPEDITION_SHOP
     def reset_count(self) -> int: return self.get_config('underground_shop_reset_count')
@@ -161,10 +161,10 @@ class underground_shop(shop_buyer):
 @name('jjc商店购买')
 @default(False)
 class jjc_shop(shop_buyer):
-    def _equip_count(self, client: pcrclient):
-        return self._get_count(client, '装备', 'jjc_shop_buy_equip_count_limit')
-    def _unit_memory_count(self, client: pcrclient):
-        return self._get_count(client, '记忆碎片', 'jjc_shop_buy_memory_count_limit')
+    def _equip_count(self):
+        return self._get_count('装备', 'jjc_shop_buy_equip_count_limit')
+    def _unit_memory_count(self):
+        return self._get_count('记忆碎片', 'jjc_shop_buy_memory_count_limit')
     def coin_limit(self) -> int: return self.get_config('jjc_shop_buy_coin_limit')
     def system_id(self) -> eSystemId: return eSystemId.ARENA_SHOP
     def reset_count(self) -> int: return self.get_config('jjc_shop_reset_count')
@@ -180,12 +180,33 @@ class jjc_shop(shop_buyer):
 @name('pjjc商店购买')
 @default(False)
 class pjjc_shop(shop_buyer):
-    def _equip_count(self, client: pcrclient):
-        return self._get_count(client, '装备', 'pjjc_shop_buy_equip_count_limit')
-    def _unit_memory_count(self, client: pcrclient):
-        return self._get_count(client, '记忆碎片', 'pjjc_shop_buy_memory_count_limit')
+    def _equip_count(self):
+        return self._get_count('装备', 'pjjc_shop_buy_equip_count_limit')
+    def _unit_memory_count(self):
+        return self._get_count('记忆碎片', 'pjjc_shop_buy_memory_count_limit')
     def coin_limit(self) -> int: return self.get_config('pjjc_shop_buy_coin_limit')
     def system_id(self) -> eSystemId: return eSystemId.GRAND_ARENA_SHOP
     def reset_count(self) -> int: return self.get_config('pjjc_shop_reset_count')
     def buy_kind(self) -> List[str]: return self.get_config('pjjc_shop_buy_kind')
     def require_equip_units(self) -> str: return self.get_config('pjjc_shop_buy_equip_consider_unit')
+
+
+@singlechoice('clanbattle_shop_buy_memory_count_limit', "记忆碎片盈余停止阈值", 0, [0, 10, 20, 120, 270, 9900])
+@singlechoice('clanbattle_shop_buy_equip_count_limit', "装备盈余停止阈值", 0, [0, 20, 50, 100, 200, 500, 9900])
+@singlechoice('clanbattle_shop_buy_coin_limit', "货币停止阈值", 10000, [0, 10000, 50000, 100000, 200000])
+@singlechoice("clanbattle_shop_buy_equip_consider_unit", "按角色需求购买装备", "all", ["all", "max_rank", "max_rank-1", "max_rank-2", 'favorite'])
+@inttype('clanbattle_shop_reset_count', "重置次数(<=20)", 0, [i for i in range(21)])
+@multichoice("clanbattle_shop_buy_kind", "购买种类", ['记忆碎片'], ['记忆碎片', '装备'])
+@name('会战商店购买')
+@default(False)
+class clanbattle_shop(shop_buyer):
+    def _equip_count(self):
+        return self._get_count('装备', 'clanbattle_shop_buy_equip_count_limit')
+    def _unit_memory_count(self):
+        return self._get_count('记忆碎片', 'clanbattle_shop_buy_memory_count_limit')
+    def coin_limit(self) -> int: return self.get_config('clanbattle_shop_buy_coin_limit')
+    def system_id(self) -> eSystemId: return eSystemId.CLAN_BATTLE_SHOP
+    def reset_count(self) -> int: return self.get_config('clanbattle_shop_reset_count')
+    def buy_kind(self) -> List[str]: return self.get_config('clanbattle_shop_buy_kind')
+    def require_equip_units(self) -> str: return self.get_config('clanbattle_shop_buy_equip_consider_unit')
+

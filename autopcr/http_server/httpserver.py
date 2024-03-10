@@ -248,7 +248,6 @@ class HttpServer:
                 if not file_path:
                     return "无结果", 404
 
-            
                 if file_path.endswith("jpg"):
                     return await send_file(file_path, mimetype='image/jpg')
                 else:

@@ -24,9 +24,12 @@ class UserException(Exception):
 @dataclass
 class DailyResult:
     path: str = ""
-    time: str = ""
-    time_safe: str = ""
+    time: str = "无"
+    time_safe: str = "无"
     status: str = "skip"
+
+    def safe_info(self) -> "DailyResult":
+        return DailyResult(path = "", time = self.time, time_safe = self.time_safe, status = self.status)
 
 @dataclass_json
 @dataclass
@@ -128,17 +131,11 @@ class Account(ModuleManager):
         else:
             return ""
 
-    def get_last_daily_clean_time(self) -> str:
+    def get_last_daily_clean(self) -> DailyResult:
         if self.data.daily_result:
-            return self.data.daily_result[0].time
+            return self.data.daily_result[0].safe_info()
         else:
-            return "无"
-
-    def get_last_daily_clean_status(self) -> str:
-        if self.data.daily_result:
-            return self.data.daily_result[0].status
-        else:
-            return "skip"
+            return DailyResult()
 
     def get_client(self) -> pcrclient:
         return self.get_android_client()
@@ -275,8 +272,8 @@ class AccountManager:
             async with self.load(account, readonly = True) as acc:
                 accounts.append({
                     'name': account,
-                    'daily_clean_time': acc.get_last_daily_clean_time(),
-                    'daily_clean_time_list': [daily_result.time_safe for daily_result in acc.data.daily_result],
+                    'daily_clean_time': acc.get_last_daily_clean().to_dict(),
+                    'daily_clean_time_list': [daily_result.safe_info().to_dict() for daily_result in acc.data.daily_result],
                     })
         return {
             'qq': self.qid,
