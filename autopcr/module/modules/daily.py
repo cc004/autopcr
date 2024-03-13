@@ -22,7 +22,7 @@ import datetime
 @inttype('sweep_recover_stamina_times_h3', "h3以上氪体数", 0, [i for i in range(41)])
 @conditional_not_execution("force_stop_heart_sweep", [], desc="不刷心碎庆典", check=False)
 @conditional_not_execution("force_stop_star_cup_sweep", [], desc="不刷星球杯庆典", check=False)
-@multichoice('stamina_relative_not_run_campaign_before_one_day', "禅模式", [], ['n3以上前夕','h3以上前夕','会战前夕'])
+@multichoice('stamina_relative_not_run_campaign_before_one_day', "禅模式", [], ['n3以上前夕','n3以上首日午前','h3以上前夕','会战前夕'])
 @notrunnable
 class global_config(Module):
     async def do_task(self, client: pcrclient):

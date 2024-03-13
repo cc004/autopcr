@@ -726,6 +726,7 @@ class database():
     def is_campaign(self, campaign: str, now: Union[None, datetime.datetime] = None) -> bool:
         now = datetime.datetime.now() if now is None else now
         tomorrow = now + datetime.timedelta(days = 1)
+        half_day = datetime.timedelta(hours = 7)
         campaign_list = {
             "n3以上前夕": lambda: self.is_target_time(
                 flow(self.campaign_schedule.values())
@@ -733,6 +734,12 @@ class database():
                 .select(lambda x: (db.parse_time(x.start_time), db.parse_time(x.end_time)))
                 .to_list(),
                 tomorrow),
+            "n3以上首日午前": lambda: self.is_target_time(
+                flow(self.campaign_schedule.values())
+                .where(lambda x: self.is_normal_quest_campaign(x.id) and x.value >= 3000)
+                .select(lambda x: (db.parse_time(x.start_time) + half_day, db.parse_time(x.end_time)))
+                .to_list(),
+                now),
             "h3以上前夕": lambda: self.is_target_time(
                 flow(self.campaign_schedule.values())
                 .where(lambda x: self.is_hard_quest_campaign(x.id) and x.value >= 3000)
