@@ -57,7 +57,7 @@ class hatsune_h_sweep(Module):
 
 @singlechoice("hatsune_hboss_strategy", "扫荡策略", "保留当日vh份", ["保留当日vh份", "保留当日及未来vh份"])
 @description('未打今日vh保留30+未打sp保留90')
-@name('自动扫荡活动h本boss')
+@name('扫荡活动h本boss')
 @default("none")
 class hatsune_hboss_sweep(Module):
     async def do_task(self, client: pcrclient):
@@ -97,10 +97,10 @@ class hatsune_hboss_sweep(Module):
                     times -= left_day
 
                 if times <= 0:
-                    raise SkipError(f"boss券不足")
+                    raise SkipError(f"当前{ticket}张，boss券不足")
                 resp = await client.hatsune_boss_skip(event.event_id, hboss_id, times, ticket)
                 is_skip = False
-                self._log(f"h boss: 扫荡{times}次")
+                self._log(f"当前{ticket}张，h本boss扫荡{times}次")
             except SkipError as e:
                 self._log(f"{str(e)}")
             except AbortError as e:
