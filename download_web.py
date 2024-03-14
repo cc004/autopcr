@@ -18,8 +18,25 @@ async def get_latest_release_info(owner, repo):
         print(response.json())
         return None, None
 
+path = os.path.dirname(os.path.abspath(__file__))
+
+async def check_version(version):
+    now_version = None
+    web_version = os.path.join(path, "autopcr", "http_server", "client_version")
+    if os.path.exists(web_version):
+        with open(web_version, "r") as f:
+            now_version = f.read().strip()
+    version = version.strip()
+    if not now_version or now_version != version:
+        return True
+    return False
+
+async def save_version(version):
+    web_version = os.path.join(path, "autopcr", "http_server", "client_version")
+    with open(web_version, "w") as f:
+        f.write(version)
+
 async def download_assets(asset_download_urls):
-    path = os.path.dirname(os.path.abspath(__file__))
     web_path = os.path.join(path, "autopcr", "http_server", "ClientApp")
     async with aiohttp.ClientSession() as session:
         for url in asset_download_urls:
@@ -55,7 +72,11 @@ async def do_download():
     latest_release_tag, asset_download_urls = await get_latest_release_info(owner, repo)
     if latest_release_tag and asset_download_urls:
         print(f"Latest release tag: {latest_release_tag}")
-        await download_assets(asset_download_urls)
+        if await check_version(latest_release_tag):
+            await download_assets(asset_download_urls)
+            await save_version(latest_release_tag)
+        else:
+            print("Already up to date")
     else:
         print("Failed to fetch latest release info")
 
