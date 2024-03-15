@@ -727,26 +727,21 @@ class database():
         now = datetime.datetime.now() if now is None else now
         tomorrow = now + datetime.timedelta(days = 1)
         half_day = datetime.timedelta(hours = 7)
-        campaign_list = {
-            "n3以上前夕": lambda: self.is_target_time(
-                flow(self.campaign_schedule.values())
+        n3 = (flow(self.campaign_schedule.values())
                 .where(lambda x: self.is_normal_quest_campaign(x.id) and x.value >= 3000)
                 .select(lambda x: (db.parse_time(x.start_time), db.parse_time(x.end_time)))
-                .to_list(),
-                tomorrow),
-            "n3以上首日午前": lambda: self.is_target_time(
-                flow(self.campaign_schedule.values())
-                .where(lambda x: self.is_normal_quest_campaign(x.id) and x.value >= 3000)
-                .select(lambda x: (db.parse_time(x.start_time) + half_day, db.parse_time(x.end_time)))
-                .to_list(),
-                now),
-            "h3以上前夕": lambda: self.is_target_time(
-                flow(self.campaign_schedule.values())
+                .to_list()
+              )
+        h3 = (flow(self.campaign_schedule.values())
                 .where(lambda x: self.is_hard_quest_campaign(x.id) and x.value >= 3000)
                 .select(lambda x: (db.parse_time(x.start_time), db.parse_time(x.end_time)))
-                .to_list(),
-                tomorrow),
-            "会战前夕": lambda: self.is_clan_battle_time(tomorrow),
+                .to_list()
+             )
+        campaign_list = {
+            "n3以上前夕": lambda: not self.is_target_time(n3, now) and self.is_target_time(n3, tomorrow),
+            "n3以上首日午前": lambda: self.is_target_time(n3, now) and not self.is_target_time(n3, now - half_day),
+            "h3以上前夕": lambda: not self.is_target_time(h3, now) and self.is_target_time(h3, tomorrow),
+            "会战前夕": lambda: not self.is_clan_battle_time(now) and self.is_clan_battle_time(tomorrow),
         }
         if campaign not in campaign_list:
             raise ValueError(f"不支持的庆典查询：{campaign}")
