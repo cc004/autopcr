@@ -1,3 +1,4 @@
+aiohttp~=3.8.4
 msgpack~=1.0.2
 pycryptodome~=3.14.1
 requests~=2.27.1
