@@ -126,6 +126,8 @@ class gacha_start(Module):
                 if single_ticket:
                     reward += await client.exec_gacha_aware(target_gacha, 1, eGachaDrawType.Ticket, client.data.get_inventory(db.gacha_single_ticket), 0)
                 else:
+                    if resp.campaign_info.fg10_exec_cnt:
+                        raise AbortError("当前可免费十连，请先自行抽取")
                     reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Payment, client.data.jewel.free_jewel + client.data.jewel.jewel, 0)
                 cnt += 1
                 if not always or self.can_stop(reward.new_unit, db.gacha_exchange_chara[target_gacha.exchange_id]) :
