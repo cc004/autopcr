@@ -1,12 +1,22 @@
-from ..core.pcrclient import pcrclient
-from typing import List, Dict, Union
+from dataclasses import dataclass
+import datetime
+
+from dataclasses_json import dataclass_json
+from typing import List, Dict, Tuple
 from ..model.error import *
 from ..model.enums import *
 from ..db.database import db
-from .modulebase import Module
+from .modulebase import Module, ModuleResult
+from ..util.draw import instance as drawer
 
-import json
 import traceback
+
+@dataclass_json
+@dataclass
+class TaskResult:
+    order: List[str]
+    result: Dict[str, ModuleResult]
+
 class ModuleManager:
     _modules: List[type] = []
 
@@ -56,7 +66,7 @@ class ModuleManager:
         return {
             'config': {**{key: m.get_config(key) for m in modules for key in m.config}, **{m.key: m.get_config(m.key) for m in modules}},
             'order': [m.key for m in modules],
-            'data': {m.key: m.generate_info() for m in modules},
+            'info': {m.key: m.generate_info() for m in modules},
         }
 
     def generate_daily_config(self):
@@ -65,33 +75,51 @@ class ModuleManager:
     def generate_tools_config(self):
         return self.generate_config(self.tool_modules)
     
-    async def do_cron(self, hour, minute):
-        if self.is_cron_run(hour, minute):
-            await self.do_daily()
-
-    async def do_daily(self):
-        return await self.do_task(self.client.keys, self.daily_modules)
-
-    async def do_from_key(self, config: dict, keys: List[str]):
-        config.update({key: True for key in keys})
-        modules = [self.name_to_modules[m] for m in keys]
-        return await self.do_task(config, modules)
-
-    async def do_task(self, config: dict, modules: List[Module]):
-        self.client.keys = config
-
-        resp: Dict[str, Union[List[str], Dict[str, Dict[str, str]]]] = {}
-        resp['order'] = [m.key for m in modules]
-        resp['result'] = {}
+    async def do_daily(self) -> Tuple[str, str]:
+        status = "success"
         try:
-            client = self.client
+            resp = await self.do_task(self.client.keys, self.daily_modules)
+            img = await drawer.draw_tasks_result(resp)
+        except Exception as e:
+            traceback.print_exc()
+            img = await drawer.draw_msgs([self.parent.qq, self.parent.alias, str(e)])
+            status = "error"
+        file_path = await self.parent.save_daily_result(img, status)
+        return file_path, status
+
+    async def do_from_key(self, config: dict, key: str) -> str:
+        config.update({
+            key: True,
+            "stamina_relative_not_run": False
+        })
+        modules = [self.name_to_modules[key]]
+        raw_resp = await self.do_task(config, modules)
+        resp = raw_resp.result[key] 
+
+        if modules[0].text_result:
+            file_path = await self.parent.save_single_result_text(key, resp.log)
+        else:
+            img = await drawer.draw_task_result(resp)
+            file_path = await self.parent.save_single_result(key, img)
+        return file_path
+
+    async def do_task(self, config: dict, modules: List[Module]) -> TaskResult:
+        client = self.client
+        client.keys["stamina_relative_not_run"] = any(db.is_campaign(campaign) for campaign in client.keys.get("stamina_relative_not_run_campaign_before_one_day", []))
+
+        client.keys.update(config)
+
+        resp: TaskResult = TaskResult(
+                order = [m.key for m in modules],
+                result = {}
+        )
+        try:
+            
             await client.login()
             for module in modules:
-                resp['result'][module.__class__.__name__] = await module.do_from(client)
+                resp.result[module.__class__.__name__] = await module.do_from(client)
         except Exception as e:
             traceback.print_exc()
             raise(e)
-        finally:
-            await self.parent.set_result(resp['result'])
         return resp
 

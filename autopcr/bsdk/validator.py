@@ -1,22 +1,43 @@
+from typing import Dict
 from ..util import aiorequests, questutils
 from json import loads
 import asyncio
+from dataclasses import dataclass
+from dataclasses_json import dataclass_json
 
-validate_dict = {}
-validate_ok_dict = {}
+@dataclass_json
+@dataclass
+class ValidateInfo:
+    id: str = ""
+    challenge: str = ""
+    gt: str = ""
+    userid: str = ""
+    url: str = ""
+    status: str = ""
+    validate: str = ""
+
+validate_dict: Dict[str, ValidateInfo] = {}
+validate_ok_dict: Dict[str, ValidateInfo] = {}
 
 async def manualValidator(account, gt, challenge, userid):
     id = questutils.create_quest_token()
     url = f"/daily/geetest.html?id={id}&captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
-    validate_dict[account] = url
+    validate_dict[account] = ValidateInfo(
+            id=id,
+            challenge=challenge,
+            gt=gt,
+            userid=userid,
+            url=url,
+            status="need validate"
+    )
     for _ in range(120):
         if id not in validate_ok_dict:
             await asyncio.sleep(1)
         else:
             info = {
-                "challenge": validate_ok_dict[id]['challenge'], 
-                "gt_user_id": validate_ok_dict[id]['userid'], 
-                "validate" : validate_ok_dict[id]['validate'], 
+                "challenge": validate_ok_dict[id].challenge,
+                "gt_user_id": validate_ok_dict[id].userid,
+                "validate" : validate_ok_dict[id].validate
             }
             del validate_ok_dict[id]
             break
@@ -32,6 +53,7 @@ async def autoValidator(account, gt, challenge, userid):
     print(f"farm: Auto verifying")
     ret = None
     try:
+        # raise Exception()
         res = await aiorequests.get(url=url, headers=header)
         res.raise_for_status()
         res = await res.content

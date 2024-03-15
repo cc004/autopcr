@@ -1,5 +1,5 @@
 import time
-from typing import Set, Dict, Tuple
+from typing import Set, Dict, Tuple, Union
 import typing
 from ..model.enums import eCampaignCategory
 from ..model.common import eInventoryType, RoomUserItem, InventoryInfo
@@ -18,6 +18,7 @@ class database():
     xingqiubei: ItemType = (eInventoryType.Item, 25001)
     mana: ItemType = (eInventoryType.Gold, 94002)
     jewel: ItemType = (eInventoryType.Jewel, 91002)
+    gacha_single_ticket: ItemType = (eInventoryType.Item, 24001)
 
     def update(self, dbmgr: dbmgr):
         
@@ -714,22 +715,47 @@ class database():
                 love_info = max(love_info, value)
         return love_info
 
-    def is_target_time(self, schedule: List[Tuple[datetime.datetime, datetime.datetime]]) -> bool:
-        now = datetime.datetime.now()
+    def is_target_time(self, schedule: List[Tuple[datetime.datetime, datetime.datetime]], now: Union[None, datetime.datetime] = None) -> bool:
+        if now is None:
+            now = datetime.datetime.now()
         for start_time, end_time in schedule:
             if now >= start_time and now <= end_time:
                 return True
         return False
 
-    def is_clan_battle_time(self) -> bool:
+    def is_campaign(self, campaign: str, now: Union[None, datetime.datetime] = None) -> bool:
+        now = datetime.datetime.now() if now is None else now
+        tomorrow = now + datetime.timedelta(days = 1)
+        half_day = datetime.timedelta(hours = 7)
+        n3 = (flow(self.campaign_schedule.values())
+                .where(lambda x: self.is_normal_quest_campaign(x.id) and x.value >= 3000)
+                .select(lambda x: (db.parse_time(x.start_time), db.parse_time(x.end_time)))
+                .to_list()
+              )
+        h3 = (flow(self.campaign_schedule.values())
+                .where(lambda x: self.is_hard_quest_campaign(x.id) and x.value >= 3000)
+                .select(lambda x: (db.parse_time(x.start_time), db.parse_time(x.end_time)))
+                .to_list()
+             )
+        campaign_list = {
+            "n3以上前夕": lambda: not self.is_target_time(n3, now) and self.is_target_time(n3, tomorrow),
+            "n3以上首日午前": lambda: self.is_target_time(n3, now) and not self.is_target_time(n3, now - half_day),
+            "h3以上前夕": lambda: not self.is_target_time(h3, now) and self.is_target_time(h3, tomorrow),
+            "会战前夕": lambda: not self.is_clan_battle_time(now) and self.is_clan_battle_time(tomorrow),
+        }
+        if campaign not in campaign_list:
+            raise ValueError(f"不支持的庆典查询：{campaign}")
+        return campaign_list[campaign]()
+
+    def is_clan_battle_time(self, now: Union[None, datetime.datetime] = None) -> bool:
         schedule = [(db.parse_time(schedule.start_time), db.parse_time(schedule.end_time)) 
                     for schedule in self.clan_battle_period.values()]
-        return self.is_target_time(schedule)
+        return self.is_target_time(schedule, now)
 
-    def is_cf_time(self) -> bool:
+    def is_cf_time(self, now: Union[None, datetime.datetime] = None) -> bool:
         schedule = [(db.parse_time(schedule.start_time), db.parse_time(schedule.end_time)) 
                     for schedule in self.chara_fortune_schedule.values()]
-        return self.is_target_time(schedule)
+        return self.is_target_time(schedule, now)
 
     def is_secret_dungeon_time(self) -> bool:
         # TODO unknown start_time & count_start_time
@@ -742,8 +768,14 @@ class database():
             time += ":00"
         return datetime.datetime.strptime(time, '%Y/%m/%d %H:%M:%S')
 
+    def parse_time_safe(self, time: str) -> datetime.datetime:
+        return datetime.datetime.strptime(time, '%Y%m%d%H%M%S')
+
     def format_time(self, time: datetime.datetime) -> str:
         return time.strftime("%Y/%m/%d %H:%M:%S")
+
+    def format_time_safe(self, time: datetime.datetime) -> str:
+        return time.strftime("%Y%m%d%H%M%S")
 
     def get_start_time(self, time: datetime.datetime) -> datetime.datetime:
         shift_time = datetime.timedelta(hours = 5);
