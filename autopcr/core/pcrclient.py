@@ -190,6 +190,8 @@ class pcrclient(apiclient):
             self.data.jewel.free_jewel -= mine
             if tot:
                 self.data.jewel.jewel -= tot
+        elif draw_type == eGachaDrawType.Ticket:
+            self.data.set_inventory(db.gacha_single_ticket, current_cost_num - 1)
 
         resp = await self.exec_gacha(target_gacha.id, gacha_times, target_gacha.exchange_id, draw_type, current_cost_num, campaign_id)
 
