@@ -38,6 +38,8 @@ async def save_version(version):
 
 async def download_assets(asset_download_urls):
     web_path = os.path.join(path, "autopcr", "http_server", "ClientApp")
+    if not os.path.exists(web_path):
+        os.makedirs(web_path)
     async with aiohttp.ClientSession() as session:
         for url in asset_download_urls:
             async with session.get(url) as response:
