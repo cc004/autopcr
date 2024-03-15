@@ -59,7 +59,7 @@ class explore_mana(explore_sweep):
 @singlechoice("underground_sweep", "扫荡策略", "总是扫荡", ["非庆典留一次数", "总是扫荡"])
 @booltype("underground_not_max_stop", "非最高不扫荡", True)
 @booltype("secret_dungeon_stop", "里地下城期间不扫荡", True)
-@description('会选择最高级地下城扫荡，非mana庆典时会自动保留一个次数，但第一次时需手动打一关以完成每日任务')
+@description('会选择最高级地下城扫荡，非庆典留一次数指非mana庆典时会位于地下城内不扫荡，以期庆典当天能扫荡两次，获得更多的mana，但第一次时需手动打一关以完成每日任务')
 @name('地下城扫荡')
 @default(True)
 class underground_skip(Module):
@@ -134,6 +134,7 @@ class underground_skip(Module):
             raise SkipError("今日已扫荡地下城")
 
 
+@stamina_relative
 class investigate_sweep(Module):
     @abstractmethod
     def quest_id(self) -> int: ...

@@ -1,6 +1,7 @@
 autopcr/http_server/config/*.json
 __pycache__/
 *.log
+result/
 cache/
 clan_scanner.py
 .DS_Store
@@ -12,3 +13,7 @@ farm_config.json
 table.csv
 .vscode/
 .idea/
+autopcr/http_server/ClientApp/assets
+autopcr/http_server/ClientApp/index.html
+autopcr/http_server/client_version
+autopcr/http_server/ClientApp/.gitkeep

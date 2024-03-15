@@ -23,7 +23,7 @@ def position_tuple(*args):
         return Position(args[0], args[1], args[2], args[3])
 
 
-def draw_table(table, header=[], font=ImageFont.load_default(), cell_pad=(20, 10), margin=(10, 10), align=None, colors={}, stock=False):
+def draw_table(table, header=[], font=ImageFont.load_default(), cell_pad=(20, 10), margin=(10, 10), align=None, colors={}, stock=False) -> Image.Image:
     """
     Draw a table using only Pillow
     table:    an 2d list, must be str
@@ -147,7 +147,7 @@ def grid2imgb64(grid, titles, font=ImageFont.load_default(), cell_pad=(20, 10), 
 
     return outp_b64(draw_table(grid, titles, font, cell_pad, margin, align, colors, stock))
 
-def grid2img(grid, titles, font=ImageFont.load_default(), cell_pad=(20, 10), margin=(10, 10), align=None, colors={}, stock=False):
+def grid2img(grid, titles, font=ImageFont.load_default(), cell_pad=(20, 10), margin=(10, 10), align=None, colors={}, stock=False) -> Image.Image:
     '''
     :param grid: 格式: [list,list,...,list]。E:[[1, 2],[3, 4]]
     :param titles: progress中每条记录中的每一项的title。E:["key", "value"]

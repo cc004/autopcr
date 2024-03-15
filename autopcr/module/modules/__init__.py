@@ -69,6 +69,7 @@ daily_modules = [
     underground_shop,
     jjc_shop,
     pjjc_shop,
+    clanbattle_shop,
     
     clan_equip_request,
     love_up,
@@ -83,13 +84,13 @@ daily_modules = [
 ]
 
 hidden_modules = [
-    gacha_start
 ]
 
 tool_modules = [
-    cook_pudding,
+    # cook_pudding,
     jjc_back,
     pjjc_back,
+    gacha_start,
     get_clan_support_unit,
     get_library_import_data,
     get_need_equip,

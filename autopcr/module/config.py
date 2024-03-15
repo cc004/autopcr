@@ -1,4 +1,4 @@
-from typing import Any, Callable, Coroutine, Tuple, Union
+from typing import Callable, Tuple, Union
 from types import MethodType
 from dataclasses import dataclass
 from ..core import pcrclient

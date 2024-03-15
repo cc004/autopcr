@@ -10,6 +10,7 @@ from ...model.requests import SendGiftData
 @description('包括mana体力等等哦')
 @name('收取家园产物')
 @default(True)
+@stamina_relative
 class room_accept_all(Module):
     async def do_task(self, client: pcrclient):
         room = await client.room_start()
@@ -24,6 +25,7 @@ class room_accept_all(Module):
 @description('等级提升时可自动升级')
 @name('升级家园家具')
 @default(True)
+@stamina_relative
 class room_upper_all(Module):
     async def do_task(self, client: pcrclient):
         room = await client.room_start()

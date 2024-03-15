@@ -37,46 +37,51 @@ class sessionmgr(Component[apiclient]):
             json.dump(self._sdkaccount, fp)
     
     async def _ensure_token(self, next: RequestHandler):
-        while True:
-            if self._sdkaccount and self._sdkaccount['access_key']:
-                try:
-                    req = ToolSdkLoginRequest(
-                        uid=self._sdkaccount['uid'],
-                        access_key=self._sdkaccount['access_key'],
-                        platform=str(self._platform),
-                        channel_id=str(self._channel)
-                    )
-                    if not (await next.request(req)).is_risk:
-                        break
-                    else:
-                        for _ in range(5):
-                            from ..bsdk.bsgamesdk import captch
-                            cap=await captch()
-                            captch_done=await self.bsdk.captchaVerifier(self.bsdk.account, cap['gt'], cap['challenge'], cap['gt_user_id'])
-                            req = ToolSdkLoginRequest(
-                                uid=self._sdkaccount['uid'],
-                                access_key=self._sdkaccount['access_key'],
-                                platform=str(self._platform),
-                                channel_id=str(self._channel),
-                                challenge=captch_done['challenge'],
-                                validate_=captch_done['validate'],
-                                seccode=captch_done['validate']+"|jordan",
-                                captcha_type='1',
-                                image_token='',
-                                captcha_code='',
-                            )
-                            if not (await next.request(req)).is_risk:
-                                break
+        try:
+            for _ in range(5):
+                if self._sdkaccount and self._sdkaccount['access_key']:
+                    try:
+                        req = ToolSdkLoginRequest(
+                            uid=self._sdkaccount['uid'],
+                            access_key=self._sdkaccount['access_key'],
+                            platform=str(self._platform),
+                            channel_id=str(self._channel)
+                        )
+                        if not (await next.request(req)).is_risk:
+                            break
                         else:
-                            raise ValueError("登录失败，帐号存在风险")
-                except ApiException:
-                    pass
-            
-            self._sdkaccount = None
-            await self._bililogin()
-
-        from ..bsdk.validator import validate_dict
-        validate_dict[self._account['account']] = "ok"
+                            for _ in range(5):
+                                from ..bsdk.bsgamesdk import captch
+                                cap=await captch()
+                                captch_done=await self.bsdk.captchaVerifier(self.bsdk.account, cap['gt'], cap['challenge'], cap['gt_user_id'])
+                                req = ToolSdkLoginRequest(
+                                    uid=self._sdkaccount['uid'],
+                                    access_key=self._sdkaccount['access_key'],
+                                    platform=str(self._platform),
+                                    channel_id=str(self._channel),
+                                    challenge=captch_done['challenge'],
+                                    validate_=captch_done['validate'],
+                                    seccode=captch_done['validate']+"|jordan",
+                                    captcha_type='1',
+                                    image_token='',
+                                    captcha_code='',
+                                )
+                                if not (await next.request(req)).is_risk:
+                                    break
+                            else:
+                                raise ValueError("登录失败，帐号存在风险")
+                    except ApiException:
+                        pass
+                
+                self._sdkaccount = None
+                await self._bililogin()
+            else:
+                raise ValueError("登录失败")
+        except Exception:
+            raise
+        finally:
+            from ..bsdk.validator import validate_dict, ValidateInfo
+            validate_dict[self._account['account']] = ValidateInfo(status="ok")
 
     async def _login(self, next: RequestHandler):
         if os.path.exists(self.cacheFile):

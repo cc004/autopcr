@@ -1,25 +1,47 @@
 import asyncio
 import datetime
-from ..module.accountmgr import instance as accountmgr
+from ..module.accountmgr import instance as usermgr
+from ..db.database import db
+from ..constants import CACHE_DIR
+import os
+
+cron_log_buffer = asyncio.Queue()
+CRONLOG_PATH = os.path.join(CACHE_DIR, "http_server", "cron_log.txt")
 
 async def _cron(task):
-    hour = datetime.datetime.now().hour
     while True:
         await asyncio.sleep(60)
-        hour = datetime.datetime.now().hour
-        minute = datetime.datetime.now().minute
-        await task(hour, minute)
+        cur = datetime.datetime.now()
+        asyncio.get_event_loop().create_task(task(cur))
 
-async def _run_crons(hour, minute):
-    for account in accountmgr.accounts():
-        async def task(account):
-            async with accountmgr.load(account) as mgr:
-                print(f'Doing cron#{hour}:{minute} for {account}, crons = {mgr._crons}')
-                await mgr.do_cron(hour, minute)
-        asyncio.get_event_loop().create_task(task(account))
+async def task(qid, account):
+    async with usermgr.load(qid, readonly=True) as accountmgr:
+        async with accountmgr.load(account) as mgr:
+            _, status = await mgr.do_daily()
+            cur = datetime.datetime.now()
+            await cron_log_buffer.put(f"{db.format_time(cur)}: done cron for {qid} {account}, {status}")
 
+async def _run_crons(cur):
+    print(f"doing cron check in {cur.hour} {cur.minute}")
+    for qid in usermgr.qids():
+        async with usermgr.load(qid, readonly=True) as accountmgr:
+            for account in accountmgr.accounts():
+                async with accountmgr.load(account, readonly=True) as acc:
+                    if acc.is_cron_run(cur.hour, cur.minute):
+                        asyncio.get_event_loop().create_task(task(qid, account))
+                        await cron_log_buffer.put(f"{db.format_time(cur)}: doing cron for {qid} {account}")
+
+async def cron_log():
+    if not os.path.exists(CRONLOG_PATH):
+        os.mkdir(os.path.dirname(CRONLOG_PATH))
+    fp = open(CRONLOG_PATH, "a")
+    while True:
+        log = await cron_log_buffer.get()
+        fp.write(log + "\n")
+        fp.flush()
 
 def queue_crons():
-    async def task(hour, minute):
-        await _run_crons(hour, minute)
+    async def task(cur):
+        await _run_crons(cur)
     asyncio.get_event_loop().create_task(_cron(task))
+    asyncio.get_event_loop().create_task(cron_log())
