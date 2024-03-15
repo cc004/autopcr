@@ -315,10 +315,13 @@ class UserManager:
     def shift_old_accounts(self, qid: str):
         import glob
         for config in glob.glob(os.path.join(OLD_CONFIG_PATH, "*.json")):
+            ok = False
             with open(config, 'r') as f:
                 data = json.load(f)
                 if str(data.get('qq', '')) == qid:
-                    os.rename(config, os.path.join(self.qid_path(qid), data['alian'] + '.json'))
+                    ok = True
+            if ok:
+                os.rename(config, os.path.join(self.qid_path(qid), data['alian'] + '.json'))
 
     def load(self, qid: str, readonly: bool = False) -> AccountManager:
         if not UserManager.pathsyntax.fullmatch(qid):
