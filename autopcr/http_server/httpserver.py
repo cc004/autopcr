@@ -332,7 +332,7 @@ class HttpServer:
         @self.web.route("/<path:path>")
         async def index(path):
             if os.path.exists(os.path.join(str(self.web.static_folder), path)):
-                return await send_from_directory(str(self.web.static_folder), path)
+                return await send_from_directory(str(self.web.static_folder), path, mimetype=("text/javascript" if path.endswith(".js") else None))
             else:
                 return await send_from_directory(str(self.web.static_folder), 'index.html')
 
