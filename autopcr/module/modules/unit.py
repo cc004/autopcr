@@ -66,6 +66,8 @@ class UnitController(Module):
         if limit:
             if target_level > limit.unit_level:
                 raise AbortError(f"角色{db.get_unit_name(unit.id)}的目标等级{target_level}超过了免费可提升等级{limit.unit_level}")
+        if target_level > client.data.team_level:
+            raise AbortError(f"角色{db.get_unit_name(unit.id)}的目标等级{target_level}超过了骑士君等级{client.data.team_level}")
         await self.unit_level_up(unit.id, target_level, limit is not None, client)
 
     async def unit_equip_slot(self, unit_id: int, equip_id: int, slot_num: int, free: bool, client: pcrclient):

@@ -67,6 +67,7 @@ async def download_assets(asset_download_urls):
                     print(f"Delete {filename}")
                 else:
                     print(f"Failed to download {url}")
+                    raise Exception(f"Failed to download {url}")
 
 async def do_download():
     owner = 'Lanly109'
@@ -81,6 +82,7 @@ async def do_download():
             print("Already up to date")
     else:
         print("Failed to fetch latest release info")
+        raise Exception("Failed to fetch latest release info")
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
