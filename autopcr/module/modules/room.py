@@ -99,25 +99,12 @@ class love_up(Module):
             love_level, total_love = db.max_total_love(client.data.unit[unit_id].unit_rarity)
             if unit.chara_love < total_love:
                 dis = total_love - unit.chara_love
-                cakes: List[SendGiftData] = []
-                for cake in db.love_cake:
-                    current_num = client.data.get_inventory((eInventoryType.Item, cake.item_id))
-                    if not current_num:
-                        continue
-                    item_num = min(current_num, (dis + cake.value - 1) // cake.value)
-                    dis -= item_num * cake.value
-                    use_cake = SendGiftData()
-                    use_cake.item_id = cake.item_id
-                    use_cake.item_num = item_num
-                    use_cake.current_item_num = current_num
-                    cakes.append(use_cake)
-                    if dis <= 0: 
-                        break
-                if dis > 0:
+                cakes = client.data.get_love_up_cake_demand(dis)
+                if not cakes:
                     self._log(f"{unit_name}: 蛋糕数量不足")
                     break
-                await client.multi_give_gift(unit_id, cakes)
                 self._log(f"{unit_name}: 亲密度升至{love_level}级")
+                await client.multi_give_gift(unit_id, cakes)
 
         if not self.log:
             raise SkipError("所有角色均已亲密度满级")

@@ -11,7 +11,7 @@ import json, base64, gzip
 from ..db.assetmgr import instance as assetmgr
 from ..db.dbmgr import instance as dbmgr
 from ..db.database import db
-from ..db.models import TrainingQuestDatum
+from ..db.models import ItemDatum, TrainingQuestDatum
 from ..util.linq import flow
 from asyncio import Lock
 
@@ -50,6 +50,7 @@ class datamgr(Component[apiclient]):
     gacha_point: Dict[int, GachaPointInfo] = None
     dispatch_units: List[UnitDataForClanMember] = None
     event_sub_story: Dict[int, EventSubStory] = None
+    user_gold_bank_info: UserBankGoldInfo = None
 
     def __init__(self):
         self.finishedQuest = set()
@@ -158,8 +159,8 @@ class datamgr(Component[apiclient]):
             .where(lambda x: x[0] >= rank)
             .select(lambda x: x[1])
             .sum(seed=Counter()) - 
-            Counter((eInventoryType.Equip, equip.id) for equip in unit.equip_slot if equip.is_slot)
-        )
+            Counter((eInventoryType(eInventoryType.Equip), equip.id) for equip in unit.equip_slot if equip.is_slot)
+        )[0]
 
     def get_exceed_level_unit_demand(self, unit_id: int, token: ItemType) -> int:
         if unit_id in self.unit and self.unit[unit_id].exceed_stage:
@@ -330,6 +331,43 @@ class datamgr(Component[apiclient]):
 
     def get_max_quest_mana(self, sweep_available = False) -> int:
         return self.get_max_quest(db.training_quest_mana, sweep_available)
+
+    def get_demand(self, need_point: int, items: List[ItemDatum], need_point_limit: int) -> typing.Counter[ItemType]: # not enough return empty counter
+        from ..util.ilp_solver import ilp_solver
+        ub = [self.get_inventory((eInventoryType.Item, item.item_id)) for item in items]
+        effect = [item.value for item in items]
+        ok, ret = ilp_solver(ub, need_point, need_point_limit, effect)
+        if not ok:
+            return Counter()
+        return Counter({(eInventoryType.Item, items[i].item_id): ret[i] for i in range(len(items)) if ret[i]})
+
+        result: Counter[ItemType] = Counter()
+        for item in items:
+            token = (eInventoryType.Item, item.item_id)
+            current_num = self.get_inventory(token)
+            if not current_num:
+                continue
+            item_num = min(current_num, (need_point + item.value - 1) // item.value)
+            need_point -= item_num * item.value
+            result[token] += item_num
+            if need_point <= 0: 
+                break
+        if need_point > 0:
+            return Counter()
+        return result
+
+    def get_level_up_exp_potion_demand(self, exp_demand: int, exp_demand_limit: int = -1) -> typing.Counter[ItemType]: 
+        return self.get_demand(exp_demand, db.exp_potion, exp_demand_limit)
+
+    def get_love_up_cake_demand(self, love_demand: int, love_demand_limit :int = -1) -> typing.Counter[ItemType]:
+        return self.get_demand(love_demand, db.love_cake, love_demand_limit)
+
+    def get_equip_enhance_stone_demand(self, enhance_pt: int, enhance_pt_limit: int = -1) -> typing.Counter[ItemType]:
+        return self.get_demand(enhance_pt, db.equip_enhance_stone, enhance_pt_limit)
+
+    def get_mana(self, include_bank: bool = False) -> int:
+        mana = self.gold.gold_id_free + self.gold.gold_id_pay + (self.user_gold_bank_info.bank_gold if include_bank and self.user_gold_bank_info else 0)
+        return mana
 
     def update_inventory(self, item: InventoryInfo):
         token = (item.type, item.id)
