@@ -12,7 +12,7 @@ import datetime
 
 @conditional_execution("normal_sweep_run_time", ["n庆典"])
 @singlechoice("normal_sweep_consider_unit", "需求角色", "favorite", ["all", "max_rank", "max_rank-1", "max_rank-2", 'favorite'])
-@description('根据装备缺口刷n图')
+@description('根据【刷图推荐】结果刷n图')
 @name('智能刷n图')
 @default(False)
 @stamina_relative
