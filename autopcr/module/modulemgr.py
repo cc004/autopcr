@@ -80,6 +80,7 @@ class ModuleManager:
         try:
             resp = await self.do_task(self.client.keys, self.daily_modules)
             img = await drawer.draw_tasks_result(resp)
+            status = "error" if any(r.status == "error" for r in resp.result.values()) else status
         except Exception as e:
             traceback.print_exc()
             img = await drawer.draw_msgs([self.parent.qq, self.parent.alias, str(e)])
