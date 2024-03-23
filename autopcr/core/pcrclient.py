@@ -5,6 +5,7 @@ from .misc import errorhandler
 from .datamgr import datamgr
 from ..db.database import db
 from typing import Tuple, Union
+import typing
 
 class pcrclient(apiclient):
     def __init__(self, platform, *args, **kwargs):
@@ -75,6 +76,16 @@ class pcrclient(apiclient):
         req.after_level = after_level
         return await self.request(req)
 
+    async def multi_promotion(self, unit_id: int, target_promotion_level: int, equip_recipe_list: List[typing.Counter[ItemType]]):
+        req = UnitMultiPromotionRequest()
+        req.unit_id = unit_id
+        req.item_list = []
+        req.target_promotion_level = target_promotion_level
+        req.equip_recipe_list = [RequiredMaterialList(
+                equip_list=[UserEquipParameterIdCount(id=item[1], count=count) for item, count in equips.items()]
+            ) for equips in equip_recipe_list]
+        return await self.request(req)
+
     async def unit_free_promotion(self, unit_id: int, target_promotion_level: int):
         req = UnitFreePromotionRequest()
         req.unit_id = unit_id
@@ -85,6 +96,28 @@ class pcrclient(apiclient):
         req = UnitFreeEquipRequest()
         req.unit_id = unit_id
         req.equip_slot_num_list = equip_slot_num_list
+        return await self.request(req)
+
+    async def unit_craft_equip(self, unit_id: int, equip_slot_num: int, equip_recipe_dict: typing.Counter[ItemType]):
+        req = UnitCraftEquipRequest()
+        req.unit_id = unit_id
+        req.equip_slot_num = equip_slot_num
+        req.equip_recipe_list = [UserEquipParameterIdCount(id=item[1], count=count) for item, count in equip_recipe_dict.items()]
+        req.item_list = []
+        return await self.request(req)
+
+    async def unit_level_up(self, unit_id: int, item: typing.Counter[ItemType]):
+        req = UseExpItemRequest()
+        req.unit_id = unit_id
+        req.item_list = [ItemInfo(item_id=item[1], item_num=count, current_num=self.data.get_inventory(item)) for item, count in item.items()]
+        return await self.request(req)
+
+    async def equipment_enhance(self, unit_id: int, equip_slot_num: int, current_enhancement_pt: int, items: typing.Counter[ItemType]):
+        req = EquipEnhanceRequest()
+        req.unit_id = unit_id
+        req.equip_slot_num = equip_slot_num
+        req.current_enhancement_pt = current_enhancement_pt
+        req.item_list = [InventoryInfoPost(id=item[1], type=eInventoryType.Item, count=count) for item, count in items.items()]
         return await self.request(req)
 
     async def equipment_free_enhance(self, unit_id: int, equip_slot_num: int, after_equip_level: int):
@@ -146,10 +179,10 @@ class pcrclient(apiclient):
         req.disable_skin = disable_skin
         return await self.request(req)
 
-    async def multi_give_gift(self, unit_id: int, cakes: List[SendGiftData]):
+    async def multi_give_gift(self, unit_id: int, cakes: typing.Counter[ItemType]):
         req = RoomMultiGiveGiftRequest()
         req.unit_id = unit_id
-        req.item_info = cakes
+        req.item_info = [SendGiftData(item_id=item[1], item_num=cnt, current_item_num=self.data.get_inventory(item)) for item, cnt in cakes.items()]
         return await self.request(req)
 
     async def get_gacha_index(self):
@@ -161,6 +194,21 @@ class pcrclient(apiclient):
         req.prizegacha_id = prizegacha_id
         req.item_id = item_id
         return await self.request(req)
+
+    async def draw_from_bank(self, current_bank_gold: int, draw_gold: int):
+        req = ShopWithdrawGoldFromBankRequest()
+        req.current_bank_gold = current_bank_gold
+        req.draw_gold = draw_gold
+        return await self.request(req)
+
+    async def prepare_mana(self, mana: int):
+        if self.data.get_mana() >= mana:
+            return True
+        elif self.data.get_mana(include_bank = True) >= mana:
+            await self.draw_from_bank(mana, mana - self.data.get_mana())
+            return True
+        else:
+            return False
 
     async def exec_gacha_aware(self, target_gacha: GachaParameter, gacha_times: int, draw_type: eGachaDrawType, current_cost_num: int, campaign_id: int) -> GachaReward:
 
