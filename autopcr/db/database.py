@@ -774,6 +774,7 @@ class database():
             "n3以上首日午前": lambda: self.is_target_time(n3, now) and not self.is_target_time(n3, now - half_day),
             "h3以上前夕": lambda: not self.is_target_time(h3, now) and self.is_target_time(h3, tomorrow),
             "会战前夕": lambda: not self.is_clan_battle_time(now) and self.is_clan_battle_time(tomorrow),
+            "会战期间": lambda: self.is_clan_battle_time(now),
         }
         if campaign not in campaign_list:
             raise ValueError(f"不支持的庆典查询：{campaign}")
