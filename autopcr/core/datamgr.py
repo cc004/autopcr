@@ -266,11 +266,15 @@ class datamgr(Component[apiclient]):
                 cnt += need
         return cnt 
 
+    def get_demand_gap(self, required: typing.Counter[ItemType], filter: Callable[[ItemType], bool] = lambda x: True) -> typing.Counter[ItemType]:
+        all = set(self._inventory) | set(required)
+        demand = Counter({token: required[token] - self.get_inventory(token) for token in all if filter(token)})
+        return demand
+
     def get_equip_demand_gap(self, start_rank: Union[None, int] = None, like_unit_only: bool = False) -> typing.Counter[ItemType]:
         demand = self.get_equip_demand(start_rank, like_unit_only)
-        all = set(self._inventory) | set(demand)
-        demand = Counter({token: demand[token] - self.get_inventory(token) for token in all if db.is_equip(token)})
-        return demand
+        gap = self.get_demand_gap(demand, lambda x: db.is_equip(x))
+        return gap
 
     def get_memory_demand(self) -> typing.Counter[ItemType]:
         result: typing.Counter[ItemType] = Counter()
@@ -297,13 +301,13 @@ class datamgr(Component[apiclient]):
 
     def get_memory_demand_gap(self) -> typing.Counter[ItemType]: # need -- >0
         demand = self.get_memory_demand()
-        demand = Counter({token: demand[token] - self.get_inventory(token) for token in demand})
-        return demand
+        gap = self.get_demand_gap(demand, lambda x: db.is_unit_memory(x))
+        return gap
 
     def get_pure_memory_demand_gap(self) -> typing.Counter[ItemType]: # need -- >0
         demand = self.get_pure_memory_demand()
-        demand = Counter({token: demand[token] - self.get_inventory(token) for token in demand})
-        return demand
+        gap = self.get_demand_gap(demand, lambda x: db.is_unit_pure_memory(x))
+        return gap
 
     def get_suixin_demand(self) -> Tuple[List[Tuple[ItemType, int]], int]:
         cnt = 0
