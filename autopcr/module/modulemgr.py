@@ -115,7 +115,6 @@ class ModuleManager:
                 result = {}
         )
         try:
-            
             await client.login()
             for module in modules:
                 resp.result[module.__class__.__name__] = await module.do_from(client)

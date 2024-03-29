@@ -169,7 +169,7 @@ class UnitController(Module):
     async def unit_equip_enhance(self, equip_id: int, slot_num: int, enhancement_level: int, free: bool):
 
         if free:
-            self._log(f"【{db.get_unit_name(self.unit.id)}】{slot_num}位上装备{db.get_equip_name(equip_id)}强化至{enhancement_level}星级")
+            self._log(f"{db.get_unit_name(self.unit.id)}{slot_num}位装备{db.get_equip_name(equip_id)}强化至{enhancement_level}星级")
             await self.client.equipment_free_enhance(self.unit.id, slot_num, enhancement_level)
         else:
             current_enhancement_pt = self.unit.equip_slot[slot_num - 1].enhancement_pt
