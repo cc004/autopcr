@@ -348,21 +348,6 @@ class datamgr(Component[apiclient]):
             return Counter()
         return Counter({(eInventoryType.Item, items[i].item_id): ret[i] for i in range(len(items)) if ret[i]})
 
-        result: Counter[ItemType] = Counter()
-        for item in items:
-            token = (eInventoryType.Item, item.item_id)
-            current_num = self.get_inventory(token)
-            if not current_num:
-                continue
-            item_num = min(current_num, (need_point + item.value - 1) // item.value)
-            need_point -= item_num * item.value
-            result[token] += item_num
-            if need_point <= 0: 
-                break
-        if need_point > 0:
-            return Counter()
-        return result
-
     def get_level_up_exp_potion_demand(self, exp_demand: int, exp_demand_limit: int = -1) -> typing.Counter[ItemType]: 
         return self.get_demand(exp_demand, db.exp_potion, exp_demand_limit)
 
