@@ -259,6 +259,8 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         mgr.team_level = self.user_info.team_level
         mgr.jewel = self.user_jewel
         mgr.gold = self.user_gold
+        if self.bank_bought:
+            mgr.user_gold_bank_info = self.user_gold_bank_info
         mgr.clan_like_count = self.clan_like_count
         mgr.user_my_quest = self.user_my_quest
         mgr.clear_inventory()
@@ -521,6 +523,61 @@ class SubStorySkeConfirmResponse(responses.SubStorySkeConfirmResponse):
         for sub_story in mgr.event_sub_story[10059].sub_story_info_list:
             if sub_story.status == eEventSubStoryStatus.ADDED:
                 sub_story.status = eEventSubStoryStatus.UNREAD
+
+@handles
+class UnitCraftEquipResponse(responses.UnitCraftEquipResponse):
+    async def update(self, mgr: datamgr, request):
+        mgr.unit[self.unit_data.id] = self.unit_data
+        mgr.gold = self.user_gold
+        if self.item_data:
+            for item in self.item_data:
+                mgr.update_inventory(item)
+        if self.equip_list:
+            for equip in self.equip_list:
+                mgr.update_inventory(equip)
+
+
+@handles
+class UnitMultiPromotionResponse(responses.UnitMultiPromotionResponse):
+    async def update(self, mgr: datamgr, request):
+        mgr.unit[self.unit_data.id] = self.unit_data
+        mgr.gold = self.user_gold
+        if self.item_data:
+            for item in self.item_data:
+                mgr.update_inventory(item)
+        if self.equip_list:
+            for equip in self.equip_list:
+                mgr.update_inventory(equip)
+        if self.refund_items:
+            for item in self.refund_items:
+                mgr.update_inventory(item)
+
+@handles
+class ShopWithdrawGoldFromBankResponse(responses.ShopWithdrawGoldFromBankResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        if self.user_bank_gold_info:
+            mgr.user_gold_bank_info = self.user_bank_gold_info
+
+@handles
+class UseExpItemResponse(responses.UseExpItemResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.item_data:
+            for item in self.item_data:
+                mgr.update_inventory(item)
+        mgr.unit[self.unit_data.id] = self.unit_data
+
+@handles
+class EquipEnhanceResponse(responses.EquipEnhanceResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        mgr.unit[self.unit_data.id] = self.unit_data
+        if self.user_gold:
+            mgr.gold = self.user_gold
+
 
 # 菜 就别玩
 HatsuneTopResponse.__annotations__['event_status'] = HatsuneEventStatus

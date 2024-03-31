@@ -12,7 +12,7 @@ import datetime
 
 @conditional_execution("normal_sweep_run_time", ["n庆典"])
 @singlechoice("normal_sweep_consider_unit", "需求角色", "favorite", ["all", "max_rank", "max_rank-1", "max_rank-2", 'favorite'])
-@description('根据装备缺口刷n图')
+@description('根据【刷图推荐】结果刷n图')
 @name('智能刷n图')
 @default(False)
 @stamina_relative
@@ -21,7 +21,7 @@ class smart_normal_sweep(Module):
     async def do_task(self, client: pcrclient):
 
         if self.get_config('normal_sweep_consider_unit') == 'favorite':
-            require_equip = client.data.get_equip_demand(like_unit_only = True)
+            demand = client.data.get_equip_demand(like_unit_only = True)
         else:
             opt: Dict[Union[int, str], int] = {
                 'all': 1,
@@ -29,7 +29,7 @@ class smart_normal_sweep(Module):
                 'max_rank-1': db.equip_max_rank - 1,
                 'max_rank-2': db.equip_max_rank - 2,
             }
-            require_equip = client.data.get_equip_demand(start_rank = opt[self.get_config('normal_sweep_consider_unit')])
+            demand = client.data.get_equip_demand(start_rank = opt[self.get_config('normal_sweep_consider_unit')])
 
         clean_cnt = Counter()
         quest_id = []
@@ -42,8 +42,8 @@ class smart_normal_sweep(Module):
 
                 if i % 3 == 0:
 
-                    demand = Counter({token: require_equip[token] - client.data.get_inventory(token) for token in client.data._inventory if db.is_equip(token)})
-                    quest_weight = client.data.get_quest_weght(demand)
+                    gap = client.data.get_demand_gap(demand, lambda x: db.is_equip(x))
+                    quest_weight = client.data.get_quest_weght(gap)
                     quest_id = sorted(quest_list, key = lambda x: quest_weight[x], reverse = True)
 
                 target_id = quest_id[0]

@@ -85,6 +85,12 @@ class database():
                 )
             )
 
+            self.equip_craft_mana: Dict[ItemType, int] = (
+                EquipmentCraft.query(db)
+                .to_dict(lambda x: (eInventoryType.Equip, x.equipment_id), lambda x: x.crafted_cost
+                )
+            )
+
             self.unit_promotion: Dict[int, Dict[int, UnitPromotion]] = (
                 UnitPromotion.query(db)
                 .group_by(lambda x: x.unit_id)
@@ -100,9 +106,9 @@ class database():
                 .to_dict(lambda x: x.key, lambda x:
                     x.to_dict(lambda y: y.promotion_level, lambda y:
                         Counter(flow(range(1, 7))
-                        .select(lambda z: getattr(y, f'equip_slot_{z}'))
-                        .where(lambda z: z != 999999)
-                        .to_dict(lambda z: (eInventoryType.Equip, z), lambda _: 1)
+                        .select(lambda z: (eInventoryType.Equip, getattr(y, f'equip_slot_{z}')))
+                        .where(lambda z: z[1] != 999999)
+                        .to_list()
                     ))
                 )
             )
@@ -367,6 +373,16 @@ class database():
                 .to_dict(lambda x: x.equipment_id, lambda x: x)
             )
 
+            self.skill_cost: Dict[int, int] = (
+                SkillCost.query(db)
+                .to_dict(lambda x: x.target_level, lambda x: x.cost)
+            )
+
+            self.experience_unit: Dict[int, int] = (
+                ExperienceUnit.query(db)
+                .to_dict(lambda x: x.unit_level, lambda x: x.total_exp)
+            )
+
             self.equipment_enhance_data: Dict[int, Dict[int, EquipmentEnhanceDatum]] = (
                 EquipmentEnhanceDatum.query(db)
                 .group_by(lambda x: x.promotion_level)
@@ -503,6 +519,22 @@ class database():
             )
 
             self.love_cake = self.love_cake[::-1]
+
+            self.exp_potion: List[ItemDatum] = (
+                ItemDatum.query(db)
+                .where(lambda x: x.item_id >= 20001 and x.item_id < 21000)
+                .to_list()
+            )
+
+            # self.exp_potion = self.exp_potion[::-1]
+
+            self.equip_enhance_stone: List[ItemDatum] = (
+                ItemDatum.query(db)
+                .where(lambda x: x.item_id >= 22001 and x.item_id < 23000)
+                .to_list()
+            )
+
+            # self.equip_enhance_stone = self.equip_enhance_stone[::-1]
 
             self.quest_to_event: Dict[int, HatsuneQuest] = (
                 HatsuneQuest.query(db)
@@ -742,6 +774,7 @@ class database():
             "n3以上首日午前": lambda: self.is_target_time(n3, now) and not self.is_target_time(n3, now - half_day),
             "h3以上前夕": lambda: not self.is_target_time(h3, now) and self.is_target_time(h3, tomorrow),
             "会战前夕": lambda: not self.is_clan_battle_time(now) and self.is_clan_battle_time(tomorrow),
+            "会战期间": lambda: self.is_clan_battle_time(now),
         }
         if campaign not in campaign_list:
             raise ValueError(f"不支持的庆典查询：{campaign}")
@@ -789,22 +822,45 @@ class database():
     def get_today_start_time(self) -> datetime.datetime:
         return self.get_start_time(datetime.datetime.now())
 
-    def craft_equip(self, source: typing.Counter[ItemType]) -> typing.Counter[ItemType]: # 依赖关系不深，没必要写成拓扑图求解
+    def get_rank_promote_equip_demand(self, unit_id: int, start_rank: int, start_rank_equip_slot: List[bool], target_rank, target_rank_equip_slot: List[bool]) -> typing.Counter[ItemType]: # 都是整装
+        ret = (
+            (flow(self.unit_promotion_equip_count[unit_id].items())
+            .where(lambda x: x[0] >= start_rank and x[0] < target_rank)
+            .select(lambda x: x[1])
+            .sum(seed=Counter())) - 
+            Counter((eInventoryType(eInventoryType.Equip), int(getattr(self.unit_promotion[unit_id][start_rank], f"equip_slot_{i}"))) for i in range(1, 7) if start_rank_equip_slot[i - 1]) +
+            Counter((eInventoryType(eInventoryType.Equip), int(getattr(self.unit_promotion[unit_id][target_rank], f"equip_slot_{i}"))) for i in range(1, 7) if target_rank_equip_slot[i - 1])
+            )
+        return ret
+
+    def craft_equip(self, source: typing.Counter[ItemType]) -> Tuple[typing.Counter[ItemType], int]: # 返回剩余的材料和消耗的mana
         result: typing.Counter[ItemType] = Counter()
+        mana = 0
 
         queue = SimpleQueue()
         for key, value in source.items():
-            queue.put((key, value))
+            queue.put((key, value)) # ItemType, count
         
         while not queue.empty():
             key, value = queue.get()
             if key in self.equip_craft:
                 for token in self.equip_craft[key]:
                     queue.put((token[0], token[1] * value))
+                mana += self.equip_craft_mana[key] * value
             else:
                 result[key] += value
 
-        return result
+        return result, mana
+
+    def get_promotion_demand_level(self, unit_id: int, traget_rank: int) -> int:
+        equips = self.get_rank_promote_equip_demand(unit_id, 1, [False] * 6, traget_rank, [False] * 6)
+        return max(self.equip_data[id].require_level for (_, id) in equips.keys())
+
+    def get_skill_up_cost(self, start_level: int, target_level: int) -> int:
+        return sum(self.skill_cost[i] for i in range(start_level + 1, target_level + 1))
+
+    def get_level_up_total_exp(self, target_level: int) -> int:
+        return self.experience_unit[target_level]
 
     def get_cur_gacha(self):
         now = datetime.datetime.now()
@@ -812,6 +868,13 @@ class database():
         .where(lambda x: self.parse_time(x.start_time) <= now and now <= self.parse_time(x.end_time)) \
         .select(lambda x: f"{x.gacha_id}: {x.gacha_name}-{x.pick_up_chara_text}") \
         .to_list()
+
+    def get_equip_max_star(self, equip_id: int):
+        return max(self.equipment_enhance_data[self.equip_data[equip_id].promotion_level].keys())
+
+    def get_equip_star_pt(self, equip_id: int, star: int):
+        equip = self.equip_data[equip_id]
+        return self.equipment_enhance_data[equip.promotion_level][star].total_point
 
     def get_equip_star_from_pt(self, equip_id: int, enhancement_pt: int):
         equip = self.equip_data[equip_id]
@@ -838,5 +901,11 @@ class database():
         end_time = self.parse_time(gacha_data.end_time)
         now = datetime.datetime.now()
         return now > self.get_start_time(end_time)
+
+    def unit_rank_candidate(self):
+        return list(range(1, self.equip_max_rank + 1))
+
+    def unit_level_candidate(self):
+        return list(range(1, self.team_max_level + 1 + 10))
 
 db = database()
