@@ -126,7 +126,7 @@ class hatsune_story_reading(Module):
                         continue
                     event_top = await client.get_hatsune_top(event_id)
                     additional_stories = {story.story_id: story for story in event_top.additional_stories} if event_top.additional_stories else {}
-                    if story.story_id in additional_stories or \
+                    if story.story_id in additional_stories and \
                             additional_stories[story.story_id].is_unlocked and \
                             not additional_stories[story.story_id].is_readed:
                         await client.read_story(story.story_id)
