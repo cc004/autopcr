@@ -19,7 +19,7 @@ PATH = os.path.dirname(os.path.abspath(__file__))
 static_path = os.path.join(PATH, 'ClientApp')
 
 class HttpServer:
-    def __init__(self, host = '0.0.0.0', port = 2, qq_only = False):
+    def __init__(self, host = '0.0.0.0', port = 2, qq_mod = False):
 
         self.web = Blueprint('web', __name__, static_folder=static_path)
 
@@ -39,7 +39,7 @@ class HttpServer:
         self.host = host
         self.port = port
         self.configure_routes()
-        self.qq_only = qq_only
+        self.qq_mod = qq_mod
 
     @staticmethod
     def wrapaccount(readonly = False):
@@ -309,6 +309,10 @@ class HttpServer:
             password = data.get('password', "")
             if not qq or not password:
                 return "请输入QQ和密码", 400
+            if self.qq_mod:
+                from ...server import is_valid_qq
+                if not await is_valid_qq(qq):
+                    return "无效的QQ", 400
             try:
                 usermgr.create(str(qq), str(password))
                 login_user(AuthUser(qq))
