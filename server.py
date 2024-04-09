@@ -27,7 +27,7 @@ import secrets
 address = None  # 填你的公网IP或域名，不填则会自动尝试获取
 useHttps = False
 
-server = HttpServer(qq_only=True)
+server = HttpServer(qq_mod=True)
 app = nonebot.get_bot().server_app
 QuartAuth(app, cookie_secure=False)
 RateLimiter(app)
@@ -130,6 +130,20 @@ async def check_validate(bot: HoshinoBot, ev: CQEvent, acc: Account):
         else:
             await asyncio.sleep(1)
 
+async def is_valid_qq(qq: str):
+    qq = str(qq)
+    groups = (await sv.get_enable_groups()).keys()
+    bot = nonebot.get_bot()
+    for group in groups:
+        try:
+            async for member in await bot.get_group_member_list(group_id=group):
+                if qq == str(member['user_id']):
+                    return True
+        except:
+            for member in await bot.get_group_member_list(group_id=group):
+                if qq == str(member['user_id']):
+                    return True
+    return False
 
 def register_tool(name: str, key: str):
     def wrapper(func):
@@ -254,6 +268,30 @@ async def clean_daily_all(bot: HoshinoBot, ev: CQEvent, accmgr: AccountManager):
         msg = f"[CQ:reply,id={ev.message_id}]"
         msg += "\n".join([f"{a}: {m}" for a, m in err])
         await bot.send(ev, msg)
+
+@sv.on_fullmatch(f"{prefix}查内鬼")
+async def find_ghost(bot: HoshinoBot, ev: CQEvent):
+    msg = []
+    for qq in usermgr.qids():
+        if not await is_valid_qq(qq):
+            msg.append(qq)
+    if not msg:
+        msg.append("未找到内鬼")
+    await bot.finish(ev, " ".join(msg))
+
+@sv.on_fullmatch(f"{prefix}清内鬼")
+async def clean_ghost(bot: HoshinoBot, ev: CQEvent):
+    msg = []
+    for qq in usermgr.qids():
+        if not await is_valid_qq(qq):
+            msg.append(qq)
+    if not msg:
+        msg.append("未找到内鬼")
+    else:
+        for qq in msg:
+            usermgr.delete(qq)
+        msg = [f"已清除{len(msg)}个内鬼:"] + msg
+    await bot.finish(ev, " ".join(msg))
 
 @sv.on_prefix(f"{prefix}清日常")
 @wrap_accountmgr

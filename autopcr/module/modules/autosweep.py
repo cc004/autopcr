@@ -167,6 +167,8 @@ unique_equip_2_pure_memory_id = [
         (32049, 2), # 情姐，姐姐
         (32027, 1), # 情病
         (32011, 1), # 妹弓
+        (32045, 1), # 江花
+        (32030, 1), # 忍扇
 ]
 @conditional_execution("very_hard_sweep_run_time", ["vh庆典"])
 @description('储备专二需求的150碎片，包括' + ','.join(db.get_item_name(item_id) for item_id, _ in unique_equip_2_pure_memory_id))
