@@ -255,6 +255,7 @@ class MissionAcceptResponse(responses.MissionAcceptResponse):
 @handles
 class LoadIndexResponse(responses.LoadIndexResponse):
     async def update(self, mgr: datamgr, request):
+        mgr.uid = self.user_info.viewer_id
         mgr.name = self.user_info.user_name
         mgr.team_level = self.user_info.team_level
         mgr.jewel = self.user_jewel
