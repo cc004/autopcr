@@ -22,6 +22,7 @@ class datamgr(Component[apiclient]):
     finishedQuest: Set[int] = None
     jewel: UserJewel = None
     gold: UserGold = None
+    uid: int = 0
     clan: int = 0
     cf: RaceLoginBonusInfo = None
     dungeon_area_id: int = 0
