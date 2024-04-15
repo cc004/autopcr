@@ -249,7 +249,7 @@ class datamgr(Component[apiclient]):
                 flow(x[1].items())
                 .select(lambda y: datamgr._weight_mapper(require_equip.get(y[0], 0)) * y[1])
                 .sum() + 
-                (1000000 if flow(x[1].items())
+                (1000000 if x[1] and flow(x[1].items())
                 .select(lambda y: require_equip.get(y[0], 0))
                 .max() > 0 else 0)
             )
