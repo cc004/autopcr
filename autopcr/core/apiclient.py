@@ -55,9 +55,10 @@ class apiclient(Container["apiclient"]):
     active_server: int = 0
     _requestid: str = ''
     _sessionid: str=  ''
-    def __init__(self, platform):
+    def __init__(self, account):
         super().__init__()
         self._headers = {}
+        platform = account['platform']
         if platform == 2:
             for key in DEFAULT_HEADERS.keys():
                 self._headers[key] = DEFAULT_HEADERS[key]
@@ -160,7 +161,7 @@ class apiclient(Container["apiclient"]):
             self.viewer_id = int(response.data_headers.viewer_id)
 
         if "check/game_start" == request.url and "store_url" in response0['data_headers']:
-            version = search(r'v?([4-9]\.\d\.\d)(\.\d)*', response0['data_headers']["store_url"]).group(0)
+            version = search(r'_v?([4-9]\.\d\.\d).*?_', response0['data_headers']["store_url"]).group(1)
             self._headers['APP-VER'] = version
             refresh_headers(version)
             print(f"版本已更新至{version}")
@@ -175,6 +176,7 @@ class apiclient(Container["apiclient"]):
 
             with open('error.log', 'a') as fp:
                fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
+               fp.write(json.dumps(self._headers, indent=4, ensure_ascii=False) + '\n')
                fp.write(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
                fp.write(json.dumps(json.loads(response.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
 
