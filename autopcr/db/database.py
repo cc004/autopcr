@@ -819,6 +819,12 @@ class database():
 
         return time
 
+    def is_today(self, time: datetime.datetime) -> bool:
+        now = datetime.datetime.now()
+        today = self.get_start_time(time)
+        tomorrow = today + datetime.timedelta(days = 1)
+        return today <= now and now < tomorrow
+
     def get_today_start_time(self) -> datetime.datetime:
         return self.get_start_time(datetime.datetime.now())
 
@@ -899,8 +905,12 @@ class database():
     def is_gacha_today_end(self, gacha_id: int) -> bool:
         gacha_data = self.gacha_data[gacha_id]
         end_time = self.parse_time(gacha_data.end_time)
-        now = datetime.datetime.now()
-        return now > self.get_start_time(end_time)
+        return self.is_today(end_time)
+
+    def is_gacha_today_start(self, gacha_id: int) -> bool:
+        gacha_data = self.gacha_data[gacha_id]
+        start_time = self.parse_time(gacha_data.start_time)
+        return self.is_today(start_time)
 
     def unit_rank_candidate(self):
         return list(range(1, self.equip_max_rank + 1))
