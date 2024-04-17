@@ -49,17 +49,29 @@ class free_gacha(Module):
         if res.campaign_info.fg10_exec_cnt == 0:
             raise SkipError("今日份免费十连已使用")
         cnt = res.campaign_info.fg10_exec_cnt
-        gacha_list = set(gacha.gacha_id for gacha in gacha_list)
+        free_gacha_ids = set(gacha.gacha_id for gacha in gacha_list)
+        open_gacha_ids = set(gacha.id for gacha in res.gacha_info)
+        open_free_gacha_ids = free_gacha_ids & open_gacha_ids
+        close_free_gacha_ids = free_gacha_ids - open_gacha_ids
+
+        switch_no_do = self.get_config("today_end_gacha_no_do")
+        today_end_gacha = [id for id in open_free_gacha_ids if db.is_gacha_today_end(id)]
+        today_open_gacha = [id for id in close_free_gacha_ids if db.is_gacha_today_start(id)]
+        if switch_no_do and (today_end_gacha or today_open_gacha):
+            msg = ""
+            if today_end_gacha: msg += "卡池【" + "、".join(db.gacha_data[id].pick_up_chara_text for id in today_end_gacha) + "】于今日结束，"
+            if today_open_gacha: msg += "卡池【" + "、".join(db.gacha_data[id].pick_up_chara_text for id in today_open_gacha) + "】于今日开始，"
+            msg += "不自动抽取\n请自行决定是否抽取"
+            raise SkipError(msg)
+
+        target_gacha_id = max(open_free_gacha_ids)
+        
         for gacha_info in res.gacha_info:
-            if gacha_info.id in gacha_list:
+            if gacha_info.id == target_gacha_id:
                 target_gacha = gacha_info
                 break
         else:
             raise ValueError("target gacha not found")
-
-        switch_no_do = self.get_config("today_end_gacha_no_do")
-        if switch_no_do and db.is_gacha_today_end(target_gacha.id):
-            raise SkipError(f"当前卡池【{db.gacha_data[target_gacha.id].pick_up_chara_text}】于今日结束，不自动抽取\n请自行决定是否抽取")
 
         gacha_reward: GachaReward = GachaReward()
 
