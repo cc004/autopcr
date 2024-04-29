@@ -2,7 +2,7 @@ from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
 from ...model.custom import ItemType
-from ...db.models import QuestDatum
+from ...db.models import QuestDatum, ShioriQuest
 from typing import List, Dict, Tuple
 from ...model.error import *
 from ...db.database import db
@@ -122,10 +122,10 @@ class simple_demand_sweep_base(Module):
                 raise SkipError("需刷取的图均无次数")
 
 
-@conditional_execution("hard_sweep_run_time", ["无庆典", "h庆典"])
+@conditional_execution("hard_sweep_run_time", ["h庆典"])
 @singlechoice('hard_sweep_consider_unit_order', "刷取顺序", "缺口少优先", ["缺口少优先", "缺口大优先"])
 @booltype('hard_sweep_consider_high_rarity_first', "三星角色优先", False)
-@description('根据记忆碎片缺口刷hard图')
+@description('根据记忆碎片缺口刷hard图，不包括外传')
 @name('智能刷hard图')
 @default(False)
 @stamina_relative
@@ -145,10 +145,36 @@ class smart_hard_sweep(simple_demand_sweep_base):
         return need_list
 
     def get_need_quest(self, token: ItemType) -> List[QuestDatum]:
-        return db.memory_quest.get(token, [])
+        return db.memory_hard_quest.get(token, [])
 
     def get_max_times(self, client: pcrclient, quest_id: int) -> int:
-        return 5 if db.is_shiori_quest(quest_id) else 3
+        return 3
+
+@conditional_execution("shiori_sweep_run_time", ["无庆典"])
+@singlechoice('shiori_sweep_consider_unit_order', "刷取顺序", "缺口少优先", ["缺口少优先", "缺口大优先"])
+@description('根据记忆碎片缺口刷外传图')
+@name('智能刷外传图')
+@default(False)
+@stamina_relative
+class smart_shiori_sweep(simple_demand_sweep_base):
+
+    async def get_need_list(self, client: pcrclient) -> List[Tuple[ItemType, int]]:
+        need_list = client.data.get_memory_demand_gap()
+        need_list = [(token, need) for token, need in need_list.items() if need > 0]
+        if not need_list:
+            raise SkipError("所有记忆碎片均已盈余")
+        reverse = -1 if self.get_config('shiori_sweep_consider_unit_order') == '缺口大优先' else 1
+        need_list = sorted(need_list, key=lambda x: (
+            - db.unit_data[db.memory_to_unit[x[0][1]]].rarity, 
+            x[1] * reverse))
+
+        return need_list
+
+    def get_need_quest(self, token: ItemType) -> List[ShioriQuest]:
+        return db.memory_shiori_quest.get(token, [])
+
+    def get_max_times(self, client: pcrclient, quest_id: int) -> int:
+        return 5
 
 unique_equip_2_pure_memory_id = [
         (32025, 1), # 水女仆
@@ -169,6 +195,8 @@ unique_equip_2_pure_memory_id = [
         (32011, 1), # 妹弓
         (32045, 1), # 江花
         (32030, 1), # 忍扇
+        (32040, 1), # 生菜
+        (32013, 1), # 七七香
 ]
 @conditional_execution("very_hard_sweep_run_time", ["vh庆典"])
 @description('储备专二需求的150碎片，包括' + ','.join(db.get_item_name(item_id) for item_id, _ in unique_equip_2_pure_memory_id))
