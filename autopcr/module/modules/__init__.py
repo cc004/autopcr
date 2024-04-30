@@ -46,6 +46,7 @@ daily_modules = [
     smart_sweep,
     mirai_very_hard_sweep,
     smart_hard_sweep,
+    smart_shiori_sweep,
     smart_normal_sweep,
 
     all_in_hatsune,

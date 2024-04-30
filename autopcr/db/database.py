@@ -140,15 +140,19 @@ class database():
                 )
             )
 
-            self.memory_quest: Dict[ItemType, List[QuestDatum]] = (
+            self.memory_hard_quest: Dict[ItemType, List[QuestDatum]] = (
                 QuestDatum.query(db)
                 .where(lambda x: self.is_hard_quest(x.quest_id))
                 .group_by(lambda x: x.reward_image_1)
-                .concat(
-                    ShioriQuest.query(db)
-                    .where(lambda x: self.is_shiori_hard_quest(x.quest_id))
-                    .group_by(lambda x: x.drop_reward_id)
+                .to_dict(lambda x: (eInventoryType.Item, x.key), lambda x:
+                         x.to_list()[::-1]
                 )
+            )
+
+            self.memory_shiori_quest: Dict[ItemType, List[ShioriQuest]] = (
+                ShioriQuest.query(db)
+                .where(lambda x: self.is_shiori_hard_quest(x.quest_id))
+                .group_by(lambda x: x.drop_reward_id)
                 .to_dict(lambda x: (eInventoryType.Item, x.key), lambda x:
                          x.to_list()[::-1]
                 )

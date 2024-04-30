@@ -223,6 +223,11 @@ class Arena(Module):
 
         self._log(f"{self_rank} -> {target_rank}({target_info.user_name})")
 
+        if isinstance(defend[0], list):
+            defend = [d[-5:] for d in defend]
+        else:
+            defend = defend[-5:]
+
         return defend
 
 
@@ -454,7 +459,7 @@ class get_need_memory(Module):
         demand = list(client.data.get_memory_demand_gap().items())
         demand = sorted(demand, key=lambda x: x[1], reverse=True)
         if self.get_config("sweep_get_able_unit_memory"):
-            demand = [i for i in demand if i[0] in db.memory_quest]
+            demand = [i for i in demand if i[0] in db.memory_hard_quest or i[0] in db.memory_shiori_quest]
 
         msg = '\n'.join([f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片' for item in demand])
         self._log(msg)
