@@ -126,7 +126,7 @@ class gacha_start(Module):
                 if single_ticket:
                     reward += await client.exec_gacha_aware(target_gacha, 1, eGachaDrawType.Ticket, client.data.get_inventory(db.gacha_single_ticket), 0)
                 else:
-                    if resp.campaign_info.fg10_exec_cnt:
+                    if resp.campaign_info and resp.campaign_info.fg10_exec_cnt:
                         raise AbortError("当前可免费十连，请先自行抽取")
                     reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Payment, client.data.jewel.free_jewel + client.data.jewel.jewel, 0)
                 cnt += 1
@@ -137,7 +137,8 @@ class gacha_start(Module):
         finally:
             self._log(f"抽取了{cnt}次{'十连' if not single_ticket else '单抽'}")
             self._log(await client.serlize_gacha_reward(reward))
-            self._log(f"当前pt为{client.data.gacha_point[target_gacha.exchange_id].current_point}")
+            point = client.data.gacha_point[target_gacha.exchange_id].current_point if target_gacha.exchange_id in client.data.gacha_point else 0
+            self._log(f"当前pt为{point}")
 
 @description('查看会战支援角色的详细数据，拒绝内鬼！')
 @name('会战支援数据')
@@ -199,9 +200,10 @@ class Arena(Module):
 
         if target_rank:
             target = await self.get_rank_info(client, target_rank)
-            self._log(f"{target.user_name}({target_rank})")
-            defend = await self.get_defend_from_info(target)
             target_info = (await client.get_profile(target.viewer_id)).user_info
+            self._log(f"{target_info.user_name}({target.viewer_id})")
+            self._log(f"{self_rank} -> {target_rank}({target_info.user_name})")
+            defend = await self.get_defend_from_info(target)
         else:
             history = await self.get_arena_history(client)
             if not history:
@@ -210,10 +212,11 @@ class Arena(Module):
             history_detail = await self.get_history_detail(history.log_id, client)
             target = history.opponent_user
 
-            self._log(f"{target.user_name}: {datetime.datetime.fromtimestamp(history.versus_time)} {'刺' if history_detail.is_challenge else '被刺'}")
-
             target_info = (await client.get_profile(target.viewer_id)).user_info
             target_rank = self.get_rank_from_user_info(target_info)
+
+            self._log(f"{target.user_name}({target.viewer_id})\n{datetime.datetime.fromtimestamp(history.versus_time)} {'刺' if history_detail.is_challenge else '被刺'}")
+            self._log(f"{self_rank} -> {target_rank}({target_info.user_name})")
 
             if history_detail.is_challenge:
                 defend = await self.get_defend_from_histroy_detail(history_detail)
@@ -221,7 +224,6 @@ class Arena(Module):
                 target = await self.get_opponent_info(client, target.viewer_id)
                 defend = await self.get_defend_from_info(target)
 
-        self._log(f"{self_rank} -> {target_rank}({target_info.user_name})")
 
         if isinstance(defend[0], list):
             defend = [d[-5:] for d in defend]
@@ -253,15 +255,6 @@ class Arena(Module):
         attack_str = self.present_attack(attack[:max(8, best_team_id + 1)])
         msg = [defend_str, "-------", attack_str]
         self._log('\n'.join(msg))
-
-        # from io import BytesIO
-        # import base64
-        # img_byte_array = BytesIO()
-        # teams = teams.convert("RGB")
-        # teams.save(img_byte_array, format="JPEG")
-        # teams = base64.b64encode(img_byte_array.getvalue()).decode()
-        # pic = f'<img src="data:image/jpeg;base64,{teams}" alt="Image">'
-
 
 @description('查询jjc回刺阵容，并自动设置进攻队伍，对手排名0则查找对战纪录第一条')
 @name('jjc回刺查询')
@@ -439,6 +432,54 @@ class pjjc_back(Arena):
 
     async def get_attack_team(self, defen: List[List[int]]) -> List[List[ArenaQueryResult]]:
         return await ArenaQuery.get_multi_attack(self.available_unit, defen)
+
+class ArenaInfo(Module):
+
+    @property
+    def use_cache(self) -> bool: ...
+    
+    async def get_rank_info(self, client: pcrclient, num: int, page: int) -> List[Union[GrandArenaSearchOpponent, RankingSearchOpponent]]: ...
+    
+    async def get_user_info(self, client: pcrclient, viewer_id: int) -> str: 
+        user_name = self.find_cache(str(viewer_id))
+        if user_name is None or not self.use_cache:
+            user_name = (await client.get_profile(viewer_id)).user_info.user_name
+            self.save_cache(str(viewer_id), user_name)
+        return user_name
+
+    async def do_task(self, client: pcrclient):
+        time = db.format_time(datetime.datetime.now())
+        self._log(f"时间：{time}")
+        for page in range(1, 4):
+            ranking = await self.get_rank_info(client, 20, page)
+            for info in ranking:
+                if info.rank > 51:
+                    break
+                user_name = await self.get_user_info(client, info.viewer_id)
+                you = " <--- 你" if info.viewer_id == client.data.uid else ""
+                self._log(f"{info.rank:02}: ({info.viewer_id}){user_name}{you}")
+
+@booltype("jjc_info_cache", "使用缓存信息", True)
+@description('jjc透视前51名玩家的名字')
+@name('jjc透视')
+@default(True)
+class jjc_info(ArenaInfo):
+    @property
+    def use_cache(self) -> bool: return self.get_config("jjc_info_cache")
+
+    async def get_rank_info(self, client: pcrclient, num: int, page: int) -> List[RankingSearchOpponent]:
+        return (await client.arena_rank(num, page)).ranking
+
+@booltype("pjjc_info_cache", "使用缓存信息", True)
+@description('pjjc透视前51名玩家的名字')
+@name('pjjc透视')
+@default(True)
+class pjjc_info(ArenaInfo):
+    @property
+    def use_cache(self) -> bool: return self.get_config("pjjc_info_cache")
+
+    async def get_rank_info(self, client: pcrclient, num: int, page: int) -> List[GrandArenaSearchOpponent]:
+        return (await client.grand_arena_rank(num, page)).ranking
 
 
 @description('获得可导入到兰德索尔图书馆的账号数据')
