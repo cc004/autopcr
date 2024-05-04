@@ -529,3 +529,65 @@ class get_normal_quest_recommand(Module):
 
         msg = '\n--------\n'.join(tot)
         self._log(msg)
+
+@description('查询jjc前排，默认页数2为第1-20名')
+@name('查JJC前排')
+@default(True)
+@inttype("opponent_jjc_list", "查询页数", 2, [i for i in range(0, 6)])
+class jjc_rank_list(Module):
+    async def do_task(self, client: pcrclient):
+        target_list: int = self.get_config("opponent_jjc_list")
+        for page in range(1, target_list):
+            res = {info.rank: info for info in (await client.arena_rank(20, page)).ranking}
+            ranking_name = []
+
+            for key, value in res.items():
+                profile = await client.get_profile(value.viewer_id)
+                user_name = profile.user_info.user_name
+                ranking_name.append(str(f"排名: {key}" + '-' + user_name +f"-ID:{value.viewer_id}"))
+                #print(profile)
+
+        rank_str = '\n'.join(ranking_name)
+        msg =  rank_str
+        self._log(msg)
+    
+    '''
+    async def get_user_info(self, client, key, value):
+        profile = await client.get_profile(value.viewer_id)
+        user_name = profile.user_info.user_name
+        return str(f"排名: {key}" + '-' + user_name +f"-ID:{value.viewer_id}")
+
+    async def do_task(self, client: pcrclient):
+        target_list: int = self.get_config("opponent_jjc_list")
+        for page in range(1, target_list):
+            res = {info.rank: info for info in (await client.arena_rank(20, page)).ranking}
+            tasks = [self.get_user_info(client, key, value) for key, value in list(res.items())]
+            ranking_name = await asyncio.gather(*tasks)
+
+        rank_str = '\n'.join(ranking_name)
+        msg =  rank_str
+        self._log(msg)
+        异步查询优化提升查询速度todo
+    '''
+
+@description('查询pjjc前排，默认页数2为第1-20名')
+@name('查PJJC前排')
+@default(True)
+@inttype("opponent_pjjc_list", "查询页数", 2, [i for i in range(0, 6)])
+class pjjc_rank_list(Module):
+
+    async def do_task(self, client: pcrclient):
+        target_list: int = self.get_config("opponent_pjjc_list")
+        for page in range(1, target_list):
+            res = {info.rank: info for info in (await client.grand_arena_rank(20, page)).ranking}
+            ranking_name = []
+
+            for key, value in res.items():
+                profile = await client.get_profile(value.viewer_id)
+                user_name = profile.user_info.user_name
+                ranking_name.append(str(f"排名: {key}" + '-' + user_name +f"-ID:{value.viewer_id}"))
+                #print(profile)
+
+        rank_str = '\n'.join(ranking_name)
+        msg =  rank_str
+        self._log(msg) 
