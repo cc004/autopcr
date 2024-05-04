@@ -89,6 +89,10 @@ hidden_modules = [
 
 tool_modules = [
     # cook_pudding,
+    jjc_back,
+    pjjc_back,
+    jjc_rank_list,
+    pjjc_rank_list,
     unit_promote,
     get_need_equip,
     get_normal_quest_recommand,
@@ -96,7 +100,5 @@ tool_modules = [
     get_need_xinsui,
     get_clan_support_unit,
     get_library_import_data,
-    jjc_back,
-    pjjc_back,
     gacha_start,
 ]
