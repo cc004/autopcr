@@ -444,6 +444,30 @@ async def pjjc_back(bot: HoshinoBot, ev: CQEvent):
     }
     return config
 
+@register_tool("jjc透视", "jjc_info")
+async def jjc_info(bot: HoshinoBot, ev: CQEvent):
+    use_cache = True
+    try:
+        use_cache = False if ev.message.extract_plain_text().split(' ')[-1].strip() == 'flush' else True
+    except:
+        pass
+    config = {
+        "jjc_info_cache": use_cache,
+    }
+    return config
+
+@register_tool("pjjc透视", "pjjc_info")
+async def pjjc_info(bot: HoshinoBot, ev: CQEvent):
+    use_cache = True
+    try:
+        use_cache = False if ev.message.extract_plain_text().split(' ')[-1].strip() == 'flush' else True
+    except:
+        pass
+    config = {
+        "pjjc_info_cache": use_cache,
+    }
+    return config
+
 @register_tool("查记忆碎片", "get_need_memory")
 async def find_memory(bot: HoshinoBot, ev: CQEvent):
     sweep_get_able_unit_memory = False
