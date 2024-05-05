@@ -98,5 +98,7 @@ tool_modules = [
     get_library_import_data,
     jjc_back,
     pjjc_back,
+    jjc_info,
+    pjjc_info,
     gacha_start,
 ]
