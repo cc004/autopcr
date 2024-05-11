@@ -12,8 +12,8 @@ AUTH_KEY = ""
 DEFAULT_HEADERS = {
     'Accept-Encoding': 'gzip',
     'User-Agent': 'Dalvik/2.1.0 (Linux, U, Android 5.1.1, PCRT00 Build/LMY48Z)',
-    'X-Unity-Version': '2018.4.30f1',
-    'APP-VER': "6.2.0",
+    'X-Unity-Version': '2021.3.20f1c1',
+    'APP-VER': "7.7.1",
     'BATTLE-LOGIC-VERSION': '4',
     'BUNDLE-VER': '',
     'DEVICE': '2',
@@ -33,9 +33,9 @@ DEFAULT_HEADERS = {
 
 IOS_HEADERS = {
     'Accept-Encoding': 'gzip',
-    'User-Agent': 'priconne/4 CFNetwork/1399.4 Darwin/22.1.0',
-    'X-Unity-Version': '2018.4.30f1',
-    'APP-VER': "6.2.0",
+    'User-Agent': 'priconne/24 CFNetwork/1492.0.1 Darwin/23.3.0',
+    'X-Unity-Version': '2021.3.20f1c1',
+    'APP-VER': "7.7.1",
     'BATTLE-LOGIC-VERSION': '4',
     'BUNDLE-VER': '',
     'DEVICE': '1',
@@ -46,7 +46,7 @@ IOS_HEADERS = {
     'IP-ADDRESS': '172.26.62.98',
     'KEYCHAIN': '',
     'LOCALE': 'CN',
-    'PLATFORM-OS-VERSION': 'iOS 16.1',
+    'PLATFORM-OS-VERSION': 'iOS 17.3',
     'REGION-CODE': '',
     'RES-KEY': 'ab00a0a6dd915a052a2ef7fd649083e5',
     'RES-VER': '10002200',
