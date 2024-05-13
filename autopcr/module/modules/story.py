@@ -93,7 +93,8 @@ class tower_story_reading(Module):
                 continue
             if story.story_id not in read_story and story.pre_story_id in read_story:
                 if not await client.unlock_quest_id(story.unlock_quest_id):
-                    raise AbortError(f"层数{db.tower_quest[story.unlock_quest_id].floor_num}未通关，无法观看{story.title}\n")
+                    floor_num = db.tower_quest[story.unlock_quest_id].floor_num if story.unlock_quest_id in db.tower_quest else 0
+                    raise AbortError(f"层数{floor_num}未通关，无法观看{story.title}\n")
                 await client.read_story(story.story_id)
                 read_story.add(story.story_id)
                 self._log(f"阅读了{story.title}")
