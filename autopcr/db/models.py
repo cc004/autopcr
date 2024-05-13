@@ -1,8289 +1,11070 @@
 # coding: utf-8
 # type: ignore
+# Data( => Datum(
 
-from sqlalchemy import Column, Float, Index, Integer, Table, Text, UniqueConstraint
-from sqlalchemy.sql.sqltypes import NullType
-from sqlalchemy.orm import Session, declarative_base
-from typing import Generic, TypeVar, List, Iterator, Tuple
-from ..model.common import eInventoryType
-from ..model.custom import ItemType
+from typing import Optional
+
+from sqlalchemy import Float, Index, Integer, Text, UniqueConstraint
+from sqlalchemy.orm import Session, DeclarativeBase, Mapped, mapped_column
+from typing import Generic, TypeVar
 from ..util.linq import flow
 
 T = TypeVar('T')
 
-DeclarativeBase = declarative_base()
-
-class Base(Generic[T]):
+class Base(DeclarativeBase, Generic[T]):
     @classmethod
     def query(cls, session: Session) -> flow[T]:
         return flow(session.query(cls).all())
 
-class ActualUnitBackground(DeclarativeBase, Base["ActualUnitBackground"]):
+
+class ActualUnitBackground(Base):
     __tablename__ = 'actual_unit_background'
 
-    unit_id: int = Column(Integer, primary_key=True)
-    unit_name: str = Column(Text, nullable=False)
-    bg_id: int = Column(Integer, nullable=False)
-    face_type: int = Column(Integer, nullable=False)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_name: Mapped[str] = mapped_column(Text)
+    bg_id: Mapped[int] = mapped_column(Integer)
+    face_type: Mapped[int] = mapped_column(Integer)
 
 
-class AilmentDatum(DeclarativeBase, Base["AilmentDatum"]):
+class AilmentDatum(Base):
     __tablename__ = 'ailment_data'
 
-    ailment_id: int = Column(Integer, primary_key=True)
-    ailment_action: int = Column(Integer, nullable=False)
-    ailment_detail_1: int = Column(Integer, nullable=False)
-    ailment_name: str = Column(Text, nullable=False)
+    ailment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    ailment_action: Mapped[int] = mapped_column(Integer)
+    ailment_detail_1: Mapped[int] = mapped_column(Integer)
+    ailment_name: Mapped[str] = mapped_column(Text)
 
 
-class AlbumProductionList(DeclarativeBase, Base["AlbumProductionList"]):
+class AlbumProductionList(Base):
     __tablename__ = 'album_production_list'
-
-    id: int = Column(Integer, primary_key=True)
-    unit_id: int = Column(Integer, nullable=False, index=True)
-    type: int = Column(Integer, nullable=False)
-    title: str = Column(Text, nullable=False)
-    description: str = Column(Text, nullable=False)
-
-
-class AlbumVoiceList(DeclarativeBase, Base["AlbumVoiceList"]):
-    __tablename__ = 'album_voice_list'
-
-    id: int = Column(Integer, primary_key=True)
-    unit_id: int = Column(Integer, nullable=False, index=True)
-    sheet_id: str = Column(Text, nullable=False)
-    voice_id: str = Column(Text, nullable=False)
-    title: str = Column(Text, nullable=False)
-    description: str = Column(Text, nullable=False)
-
-
-class ApaSchedule(DeclarativeBase, Base["ApaSchedule"]):
-    __tablename__ = 'apa_schedule'
-
-    apa_id: int = Column(Integer, primary_key=True)
-    start_time: str = Column(Text, nullable=False)
-    count_start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    close_time: str = Column(Text, nullable=False)
-    op_story_id: int = Column(Integer, nullable=False)
-    ed_story_id: int = Column(Integer, nullable=False)
-    url_1: str = Column(Text, nullable=False)
-    url_2: str = Column(Text, nullable=False)
-    url_3: str = Column(Text, nullable=False)
-
-
-class ArcadeDescription(DeclarativeBase, Base["ArcadeDescription"]):
-    __tablename__ = 'arcade_description'
     __table_args__ = (
-        Index('arcade_description_0_arcade_id_1_type', 'arcade_id', 'type'),
+        Index('album_production_list_0_unit_id', 'unit_id'),
     )
 
-    id: int = Column(Integer, primary_key=True)
-    arcade_id: int = Column(Integer, nullable=False, index=True)
-    type: int = Column(Integer, nullable=False)
-    image_id: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    type: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
 
 
-class ArcadeList(DeclarativeBase, Base["ArcadeList"]):
+class AlbumVoiceList(Base):
+    __tablename__ = 'album_voice_list'
+    __table_args__ = (
+        Index('album_voice_list_0_unit_id', 'unit_id'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    sheet_id: Mapped[str] = mapped_column(Text)
+    voice_id: Mapped[str] = mapped_column(Text)
+    title: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
+
+
+class ApaSchedule(Base):
+    __tablename__ = 'apa_schedule'
+
+    apa_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    start_time: Mapped[str] = mapped_column(Text)
+    count_start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    close_time: Mapped[str] = mapped_column(Text)
+    op_story_id: Mapped[int] = mapped_column(Integer)
+    ed_story_id: Mapped[int] = mapped_column(Integer)
+    url_1: Mapped[str] = mapped_column(Text)
+    url_2: Mapped[str] = mapped_column(Text)
+    url_3: Mapped[str] = mapped_column(Text)
+
+
+class AppIcon(Base):
+    __tablename__ = 'app_icon'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+
+class ArcadeDescription(Base):
+    __tablename__ = 'arcade_description'
+    __table_args__ = (
+        Index('arcade_description_0_arcade_id', 'arcade_id'),
+        Index('arcade_description_0_arcade_id_1_type', 'arcade_id', 'type')
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    arcade_id: Mapped[int] = mapped_column(Integer)
+    type: Mapped[int] = mapped_column(Integer)
+    image_id: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+
+
+class ArcadeList(Base):
     __tablename__ = 'arcade_list'
 
-    arcade_id: int = Column(Integer, primary_key=True)
-    title: str = Column(Text, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    price: int = Column(Integer, nullable=False)
-    sheet_id: str = Column(Text, nullable=False)
-    cue_id: str = Column(Text, nullable=False)
-    where_type: int = Column(Integer, nullable=False)
-    banner_start_time: str = Column(Text, nullable=False)
-    banner_end_time: str = Column(Text, nullable=False)
-    description: str = Column(Text, nullable=False)
+    arcade_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    title: Mapped[str] = mapped_column(Text)
+    start_time: Mapped[str] = mapped_column(Text)
+    price: Mapped[int] = mapped_column(Integer)
+    sheet_id: Mapped[str] = mapped_column(Text)
+    cue_id: Mapped[str] = mapped_column(Text)
+    where_type: Mapped[int] = mapped_column(Integer)
+    banner_start_time: Mapped[str] = mapped_column(Text)
+    banner_end_time: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
+    clan_chat_title: Mapped[str] = mapped_column(Text)
 
 
-class ArcadeStoryList(DeclarativeBase, Base["ArcadeStoryList"]):
+class ArcadeStoryList(Base):
     __tablename__ = 'arcade_story_list'
+    __table_args__ = (
+        Index('arcade_story_list_0_arcade_id', 'arcade_id'),
+    )
 
-    story_id: int = Column(Integer, primary_key=True)
-    arcade_id: int = Column(Integer, nullable=False, index=True)
-    sub_title: str = Column(Text, nullable=False)
+    story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    arcade_id: Mapped[int] = mapped_column(Integer)
+    sub_title: Mapped[str] = mapped_column(Text)
 
 
-class ArenaDailyRankReward(DeclarativeBase, Base["ArenaDailyRankReward"]):
+class ArenaDailyRankReward(Base):
     __tablename__ = 'arena_daily_rank_reward'
 
-    id: int = Column(Integer, primary_key=True)
-    rank_from: int = Column(Integer, nullable=False)
-    rank_to: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    rank_from: Mapped[int] = mapped_column(Integer)
+    rank_to: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
 
 
-class ArenaDefenceReward(DeclarativeBase, Base["ArenaDefenceReward"]):
+class ArenaDefenceReward(Base):
     __tablename__ = 'arena_defence_reward'
 
-    id: int = Column(Integer, primary_key=True)
-    limit_count: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    limit_count: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
 
 
-class ArenaMaxRankReward(DeclarativeBase, Base["ArenaMaxRankReward"]):
+class ArenaMaxRankReward(Base):
     __tablename__ = 'arena_max_rank_reward'
 
-    id: int = Column(Integer, primary_key=True)
-    rank_from: int = Column(Integer, nullable=False)
-    rank_to: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    rank_from: Mapped[int] = mapped_column(Integer)
+    rank_to: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
 
 
-class ArenaMaxSeasonRankReward(DeclarativeBase, Base["ArenaMaxSeasonRankReward"]):
+class ArenaMaxSeasonRankReward(Base):
     __tablename__ = 'arena_max_season_rank_reward'
 
-    id: int = Column(Integer, primary_key=True)
-    rank_from: int = Column(Integer, nullable=False)
-    rank_to: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    rank_from: Mapped[int] = mapped_column(Integer)
+    rank_to: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
 
 
-class Banner(DeclarativeBase, Base["Banner"]):
+class Asm4ChoiceDatum(Base):
+    __tablename__ = 'asm_4_choice_data'
+
+    asm_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    choice_1: Mapped[str] = mapped_column(Text)
+    image_id_1: Mapped[int] = mapped_column(Integer)
+    choice_2: Mapped[str] = mapped_column(Text)
+    image_id_2: Mapped[int] = mapped_column(Integer)
+    choice_3: Mapped[str] = mapped_column(Text)
+    image_id_3: Mapped[int] = mapped_column(Integer)
+    choice_4: Mapped[str] = mapped_column(Text)
+    image_id_4: Mapped[int] = mapped_column(Integer)
+    correct_answer: Mapped[int] = mapped_column(Integer)
+
+
+class AsmArchiveCompletionReward(Base):
+    __tablename__ = 'asm_archive_completion_reward'
+    __table_args__ = (
+        Index('asm_archive_completion_reward_0_emblem_id', 'emblem_id'),
+    )
+
+    archive_num: Mapped[int] = mapped_column(Integer, primary_key=True)
+    completion_detail: Mapped[str] = mapped_column(Text)
+    emblem_id: Mapped[int] = mapped_column(Integer)
+
+
+class AsmDatum(Base):
+    __tablename__ = 'asm_data'
+    __table_args__ = (
+        Index('asm_data_0_difficulty', 'difficulty'),
+        Index('asm_data_0_genre_id', 'genre_id'),
+        Index('asm_data_0_genre_id_1_difficulty', 'genre_id', 'difficulty')
+    )
+
+    asm_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    genre_id: Mapped[int] = mapped_column(Integer)
+    difficulty: Mapped[int] = mapped_column(Integer)
+    asm_type: Mapped[int] = mapped_column(Integer)
+    image_id: Mapped[int] = mapped_column(Integer)
+    detail: Mapped[str] = mapped_column(Text)
+    category: Mapped[int] = mapped_column(Integer)
+
+
+class AsmGameSetting(Base):
+    __tablename__ = 'asm_game_setting'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    lottery_rate: Mapped[float] = mapped_column(Float)
+    normal_limit_time: Mapped[int] = mapped_column(Integer)
+    normal_quiz_num: Mapped[int] = mapped_column(Integer)
+    concentration_limit_time: Mapped[int] = mapped_column(Integer)
+    concentration_quiz_limit_num: Mapped[int] = mapped_column(Integer)
+    incorrect_answer_penalty_time: Mapped[int] = mapped_column(Integer)
+    help_use_count_normal: Mapped[int] = mapped_column(Integer)
+    help_use_count_hard: Mapped[int] = mapped_column(Integer)
+    help_use_count_veryhard: Mapped[int] = mapped_column(Integer)
+    limit_score: Mapped[int] = mapped_column(Integer)
+    unlock_concentration_mode_score_1: Mapped[int] = mapped_column(Integer)
+    unlock_concentration_mode_score_2: Mapped[int] = mapped_column(Integer)
+
+
+class AsmManyAnswersDatum(Base):
+    __tablename__ = 'asm_many_answers_data'
+
+    asm_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    choice_1: Mapped[str] = mapped_column(Text)
+    image_id_1: Mapped[int] = mapped_column(Integer)
+    choice_2: Mapped[str] = mapped_column(Text)
+    image_id_2: Mapped[int] = mapped_column(Integer)
+    choice_3: Mapped[str] = mapped_column(Text)
+    image_id_3: Mapped[int] = mapped_column(Integer)
+    choice_4: Mapped[str] = mapped_column(Text)
+    image_id_4: Mapped[int] = mapped_column(Integer)
+    is_correct_1: Mapped[int] = mapped_column(Integer)
+    is_correct_2: Mapped[int] = mapped_column(Integer)
+    is_correct_3: Mapped[int] = mapped_column(Integer)
+    is_correct_4: Mapped[int] = mapped_column(Integer)
+
+
+class AsmMemoryGauge(Base):
+    __tablename__ = 'asm_memory_gauge'
+    __table_args__ = (
+        Index('asm_memory_gauge_0_gauge_id', 'gauge_id'),
+        Index('asm_memory_gauge_0_unlock_story_id', 'unlock_story_id')
+    )
+
+    gauge_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    trigger_score: Mapped[int] = mapped_column(Integer, primary_key=True)
+    completion_detail: Mapped[str] = mapped_column(Text)
+    unlock_story_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_count: Mapped[int] = mapped_column(Integer)
+
+
+class AsmReactionDatum(Base):
+    __tablename__ = 'asm_reaction_data'
+    __table_args__ = (
+        Index('asm_reaction_data_0_unit_id_1_reaction_type', 'unit_id', 'reaction_type'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    mode: Mapped[int] = mapped_column(Integer)
+    reaction_type: Mapped[int] = mapped_column(Integer)
+    condition_param_1: Mapped[int] = mapped_column(Integer)
+    condition_param_2: Mapped[int] = mapped_column(Integer)
+    condition_param_3: Mapped[int] = mapped_column(Integer)
+    face_id: Mapped[int] = mapped_column(Integer)
+    face_change_time: Mapped[float] = mapped_column(Float)
+    change_face_id: Mapped[int] = mapped_column(Integer)
+    face_change_effect_id: Mapped[int] = mapped_column(Integer)
+    cue_name: Mapped[str] = mapped_column(Text)
+    message: Mapped[str] = mapped_column(Text)
+
+
+class AsmTrueOrFalseDatum(Base):
+    __tablename__ = 'asm_true_or_false_data'
+
+    asm_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    correct_answer: Mapped[int] = mapped_column(Integer)
+
+
+class Banner(Base):
     __tablename__ = 'banner'
 
-    banner_id: int = Column(Integer, primary_key=True)
-    type: int = Column(Integer, nullable=False)
-    system_id: int = Column(Integer, nullable=False)
-    gacha_id: int = Column(Integer, nullable=False)
-    condition_id: int = Column(Integer, nullable=False)
-    priority: int = Column(Integer, nullable=False)
-    start_date: str = Column(Text, nullable=False)
-    end_date: str = Column(Text, nullable=False)
-    sub_banner_id_1: int = Column(Integer, nullable=False)
-    is_show_room: int = Column(Integer, nullable=False)
-    url: str = Column(Text, nullable=False)
-    show_type: int = Column(Integer, nullable=False)
-    thumbnail_id: int = Column(Integer, nullable=False)
-    poster_id: int = Column(Integer, nullable=False)
+    banner_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    type: Mapped[int] = mapped_column(Integer)
+    system_id: Mapped[int] = mapped_column(Integer)
+    gacha_id: Mapped[int] = mapped_column(Integer)
+    condition_id: Mapped[int] = mapped_column(Integer)
+    priority: Mapped[int] = mapped_column(Integer)
+    start_date: Mapped[str] = mapped_column(Text)
+    end_date: Mapped[str] = mapped_column(Text)
+    sub_banner_id_1: Mapped[int] = mapped_column(Integer)
+    is_show_room: Mapped[int] = mapped_column(Integer)
+    url: Mapped[str] = mapped_column(Text)
+    show_type: Mapped[int] = mapped_column(Integer)
+    thumbnail_id: Mapped[int] = mapped_column(Integer)
+    poster_id: Mapped[int] = mapped_column(Integer)
 
 
-class BgDatum(DeclarativeBase, Base["BgDatum"]):
+class BeginnerCharaETicketDatum(Base):
+    __tablename__ = 'beginner_chara_e_ticket_data'
+
+    beginner_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    ticket_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    beginner_type: Mapped[int] = mapped_column(Integer)
+    jewel_store_id: Mapped[int] = mapped_column(Integer)
+    chara_e_ticket_id: Mapped[int] = mapped_column(Integer)
+    beginner_limit_hour: Mapped[int] = mapped_column(Integer)
+    forced_exchange_hour: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    icon_id: Mapped[int] = mapped_column(Integer)
+
+
+class BgDatum(Base):
     __tablename__ = 'bg_data'
 
-    view_name: str = Column(Text, primary_key=True)
-    bg_id: int = Column(Integer, nullable=False)
-    event_id: int = Column(Integer, nullable=False)
+    view_name: Mapped[str] = mapped_column(Text, primary_key=True)
+    bg_id: Mapped[int] = mapped_column(Integer)
+    event_id: Mapped[int] = mapped_column(Integer)
 
 
-class BirthdayLoginBonusDatum(DeclarativeBase, Base["BirthdayLoginBonusDatum"]):
+class BirthdayLoginBonusDatum(Base):
     __tablename__ = 'birthday_login_bonus_data'
 
-    login_bonus_id: int = Column(Integer, primary_key=True)
-    name: str = Column(Text, nullable=False)
-    login_bonus_type: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    adv_id: int = Column(Integer, nullable=False)
+    login_bonus_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    login_bonus_type: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    adv_id: Mapped[int] = mapped_column(Integer)
 
 
-class BirthdayLoginBonusDetail(DeclarativeBase, Base["BirthdayLoginBonusDetail"]):
+class BirthdayLoginBonusDetail(Base):
     __tablename__ = 'birthday_login_bonus_detail'
+    __table_args__ = (
+        Index('birthday_login_bonus_detail_0_login_bonus_id', 'login_bonus_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    login_bonus_id: int = Column(Integer, nullable=False, index=True)
-    reward_type: int = Column(Integer, nullable=False)
-    reward_id: int = Column(Integer, nullable=False)
-    reward_num: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    login_bonus_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_num: Mapped[int] = mapped_column(Integer)
 
 
-class BirthdayLoginBonusDramaScript(DeclarativeBase, Base["BirthdayLoginBonusDramaScript"]):
+class BirthdayLoginBonusDramaScript(Base):
     __tablename__ = 'birthday_login_bonus_drama_script'
+    __table_args__ = (
+        Index('birthday_login_bonus_drama_script_0_drama_id', 'drama_id'),
+    )
 
-    command_id: int = Column(Integer, primary_key=True)
-    drama_id: int = Column(Integer, nullable=False, index=True)
-    command_type: int = Column(Integer, nullable=False)
-    param_01: str = Column(Text, nullable=False)
-    param_02: str = Column(Text, nullable=False)
-    param_03: str = Column(Text, nullable=False)
-    param_04: str = Column(Text, nullable=False)
-    param_05: str = Column(Text, nullable=False)
-    param_06: str = Column(Text, nullable=False)
-    param_07: str = Column(Text, nullable=False)
-    param_08: str = Column(Text, nullable=False)
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
 
 
-class CampaignBeginnerDatum(DeclarativeBase, Base["CampaignBeginnerDatum"]):
+class BmyNaviComment(Base):
+    __tablename__ = 'bmy_navi_comment'
+    __table_args__ = (
+        Index('bmy_navi_comment_0_where_type', 'where_type'),
+    )
+
+    comment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    where_type: Mapped[int] = mapped_column(Integer)
+    character_id: Mapped[int] = mapped_column(Integer)
+    face_type: Mapped[int] = mapped_column(Integer)
+    voice_id: Mapped[int] = mapped_column(Integer)
+    pos_x: Mapped[float] = mapped_column(Float)
+    pos_y: Mapped[float] = mapped_column(Float)
+    change_face_time: Mapped[float] = mapped_column(Float)
+    change_face_type: Mapped[int] = mapped_column(Integer)
+    original_event_id: Mapped[int] = mapped_column(Integer)
+
+
+class BmyStoryDatum(Base):
+    __tablename__ = 'bmy_story_data'
+    __table_args__ = (
+        Index('bmy_story_data_0_original_event_id', 'original_event_id'),
+    )
+
+    sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    original_event_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    condition_boss_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_count: Mapped[int] = mapped_column(Integer)
+
+
+class BroadcastSchedule(Base):
+    __tablename__ = 'broadcast_schedule'
+
+    broadcast_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    url: Mapped[str] = mapped_column(Text)
+    teaser_time: Mapped[str] = mapped_column(Text)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+
+
+class BywayBattleQuestDatum(Base):
+    __tablename__ = 'byway_battle_quest_data'
+
+    quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    auto_restrict_type: Mapped[int] = mapped_column(Integer)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    background_1: Mapped[int] = mapped_column(Integer)
+    wave_group_id_1: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_1: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_1: Mapped[str] = mapped_column(Text)
+    story_id_wavestart_1: Mapped[int] = mapped_column(Integer)
+    story_id_waveend_1: Mapped[int] = mapped_column(Integer)
+    background_2: Mapped[int] = mapped_column(Integer)
+    wave_group_id_2: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_2: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_2: Mapped[str] = mapped_column(Text)
+    story_id_wavestart_2: Mapped[int] = mapped_column(Integer)
+    story_id_waveend_2: Mapped[int] = mapped_column(Integer)
+    background_3: Mapped[int] = mapped_column(Integer)
+    wave_group_id_3: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_3: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_3: Mapped[str] = mapped_column(Text)
+    story_id_wavestart_3: Mapped[int] = mapped_column(Integer)
+    story_id_waveend_3: Mapped[int] = mapped_column(Integer)
+    enemy_image_1: Mapped[int] = mapped_column(Integer)
+    enemy_image_2: Mapped[int] = mapped_column(Integer)
+    enemy_image_3: Mapped[int] = mapped_column(Integer)
+    enemy_image_4: Mapped[int] = mapped_column(Integer)
+    enemy_image_5: Mapped[int] = mapped_column(Integer)
+
+
+class BywayDeliveryQuestDatum(Base):
+    __tablename__ = 'byway_delivery_quest_data'
+    __table_args__ = (
+        Index('byway_delivery_quest_data_0_quest_id', 'quest_id'),
+    )
+
+    quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slot_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    condition_category: Mapped[int] = mapped_column(Integer)
+    condition_id: Mapped[int] = mapped_column(Integer)
+    consume_num: Mapped[int] = mapped_column(Integer)
+
+
+class BywayQuestDatum(Base):
+    __tablename__ = 'byway_quest_data'
+    __table_args__ = (
+        Index('byway_quest_data_0_area_id', 'area_id'),
+    )
+
+    quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    byway_quest_type: Mapped[int] = mapped_column(Integer)
+    area_id: Mapped[int] = mapped_column(Integer)
+    quest_name: Mapped[str] = mapped_column(Text)
+    position_x: Mapped[int] = mapped_column(Integer)
+    position_y: Mapped[int] = mapped_column(Integer)
+    icon_id: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    detail: Mapped[str] = mapped_column(Text)
+
+
+class BywayStoryDetail(Base):
+    __tablename__ = 'byway_story_detail'
+    __table_args__ = (
+        Index('byway_story_detail_0_pre_story_id', 'pre_story_id'),
+        Index('byway_story_detail_0_unlock_quest_id', 'unlock_quest_id')
+    )
+
+    story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_type: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    sub_title: Mapped[str] = mapped_column(Text)
+    visible_type: Mapped[int] = mapped_column(Integer)
+    pre_story_id: Mapped[int] = mapped_column(Integer)
+    unlock_quest_id: Mapped[int] = mapped_column(Integer)
+    lock_all_text: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_value_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_value_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_value_3: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+
+
+class CampaignBeginnerDatum(Base):
     __tablename__ = 'campaign_beginner_data'
 
-    beginner_id: int = Column(Integer, primary_key=True)
-    id_from: int = Column(Integer, nullable=False)
-    id_to: int = Column(Integer, nullable=False)
+    beginner_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    id_from: Mapped[int] = mapped_column(Integer)
+    id_to: Mapped[int] = mapped_column(Integer)
 
 
-class CampaignFreegacha(DeclarativeBase, Base["CampaignFreegacha"]):
+class CampaignFreegacha(Base):
     __tablename__ = 'campaign_freegacha'
 
-    id: int = Column(Integer, primary_key=True)
-    campaign_id: int = Column(Integer, nullable=False)
-    freegacha_1: int = Column(Integer, nullable=False)
-    freegacha_10: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    stock_10_flag: int = Column(Integer, nullable=False)
-    relation_id: int = Column(Integer, nullable=False)
-    relation_count: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    campaign_id: Mapped[int] = mapped_column(Integer)
+    freegacha_1: Mapped[int] = mapped_column(Integer)
+    freegacha_10: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    stock_10_flag: Mapped[int] = mapped_column(Integer)
+    relation_id: Mapped[int] = mapped_column(Integer)
+    relation_count: Mapped[int] = mapped_column(Integer)
 
 
-class CampaignFreegachaDatum(DeclarativeBase, Base["CampaignFreegachaDatum"]):
+class CampaignFreegachaDatum(Base):
     __tablename__ = 'campaign_freegacha_data'
 
-    id: int = Column(Integer, primary_key=True)
-    campaign_id: int = Column(Integer, nullable=False)
-    gacha_id: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    campaign_id: Mapped[int] = mapped_column(Integer)
+    gacha_id: Mapped[int] = mapped_column(Integer)
 
 
-class CampaignFreegachaSp(DeclarativeBase, Base["CampaignFreegachaSp"]):
+class CampaignFreegachaSp(Base):
     __tablename__ = 'campaign_freegacha_sp'
 
-    campaign_id: int = Column(Integer, primary_key=True)
-    max_exec_count: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    campaign_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    max_exec_count: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class CampaignLevelDatum(DeclarativeBase, Base["CampaignLevelDatum"]):
+class CampaignLevelDatum(Base):
     __tablename__ = 'campaign_level_data'
 
-    id: int = Column(Integer, primary_key=True)
-    level_id: int = Column(Integer, nullable=False)
-    lv_from: int = Column(Integer, nullable=False)
-    lv_to: int = Column(Integer, nullable=False)
-    value: int = Column(Integer, nullable=False)
-    label_color: str = Column(Text, nullable=False)
-    frame_color: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    level_id: Mapped[int] = mapped_column(Integer)
+    lv_from: Mapped[int] = mapped_column(Integer)
+    lv_to: Mapped[int] = mapped_column(Integer)
+    value: Mapped[int] = mapped_column(Integer)
+    label_color: Mapped[str] = mapped_column(Text)
+    frame_color: Mapped[str] = mapped_column(Text)
 
 
-class CampaignMissionCategory(DeclarativeBase, Base["CampaignMissionCategory"]):
+class CampaignMissionCategory(Base):
     __tablename__ = 'campaign_mission_category'
     __table_args__ = (
         Index('campaign_mission_category_0_campaign_id_1_type', 'campaign_id', 'type'),
     )
 
-    id: int = Column(Integer, primary_key=True)
-    campaign_id: int = Column(Integer, nullable=False)
-    type: int = Column(Integer, nullable=False)
-    lv_from: int = Column(Integer, nullable=False)
-    lv_to: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    campaign_id: Mapped[int] = mapped_column(Integer)
+    type: Mapped[int] = mapped_column(Integer)
+    lv_from: Mapped[int] = mapped_column(Integer)
+    lv_to: Mapped[int] = mapped_column(Integer)
 
 
-class CampaignMissionDatum(DeclarativeBase, Base["CampaignMissionDatum"]):
+class CampaignMissionDatum(Base):
     __tablename__ = 'campaign_mission_data'
     __table_args__ = (
-        Index('campaign_mission_data_0_campaign_id_1_type', 'campaign_id', 'type'),
+        Index('campaign_mission_data_0_campaign_id', 'campaign_id'),
+        Index('campaign_mission_data_0_campaign_id_1_type', 'campaign_id', 'type')
     )
 
-    mission_id: int = Column(Integer, primary_key=True)
-    campaign_id: int = Column(Integer, nullable=False, index=True)
-    type: int = Column(Integer, nullable=False)
-    disp_group: int = Column(Integer, nullable=False)
-    category_icon: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    mission_condition: int = Column(Integer, nullable=False)
-    condition_value_1: int = Column(Integer)
-    condition_value_2: int = Column(Integer)
-    condition_value_3: int = Column(Integer)
-    condition_value_4: int = Column(Integer)
-    condition_value_5: int = Column(Integer)
-    condition_value_6: int = Column(Integer)
-    condition_value_7: int = Column(Integer)
-    condition_value_8: int = Column(Integer)
-    condition_value_9: int = Column(Integer)
-    condition_value_10: int = Column(Integer)
-    condition_num: int = Column(Integer, nullable=False)
-    campaign_mission_reward_id: int = Column(Integer, nullable=False)
-    system_id: int = Column(Integer)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    min_level: int = Column(Integer, nullable=False)
-    max_level: int = Column(Integer, nullable=False)
-    title_color_id: int = Column(Integer, nullable=False)
-    visible_flag: int = Column(Integer, nullable=False)
-    mark_flag: int = Column(Integer, nullable=False)
+    mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    campaign_id: Mapped[int] = mapped_column(Integer)
+    type: Mapped[int] = mapped_column(Integer)
+    disp_group: Mapped[int] = mapped_column(Integer)
+    category_icon: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    mission_condition: Mapped[int] = mapped_column(Integer)
+    condition_num: Mapped[int] = mapped_column(Integer)
+    campaign_mission_reward_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    min_level: Mapped[int] = mapped_column(Integer)
+    max_level: Mapped[int] = mapped_column(Integer)
+    title_color_id: Mapped[int] = mapped_column(Integer)
+    visible_flag: Mapped[int] = mapped_column(Integer)
+    mark_flag: Mapped[int] = mapped_column(Integer)
+    condition_value_1: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_2: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_3: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_4: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_5: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_6: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_7: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_8: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_9: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_10: Mapped[Optional[int]] = mapped_column(Integer)
+    system_id: Mapped[Optional[int]] = mapped_column(Integer)
 
 
-class CampaignMissionRewardDatum(DeclarativeBase, Base["CampaignMissionRewardDatum"]):
+class CampaignMissionRewardDatum(Base):
     __tablename__ = 'campaign_mission_reward_data'
+    __table_args__ = (
+        Index('campaign_mission_reward_data_0_campaign_mission_reward_id', 'campaign_mission_reward_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    campaign_mission_reward_id: int = Column(Integer, nullable=False, index=True)
-    reward_type: int = Column(Integer, nullable=False)
-    reward_id: int = Column(Integer)
-    reward_num: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    campaign_mission_reward_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_num: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[Optional[int]] = mapped_column(Integer)
 
 
-class CampaignMissionSchedule(DeclarativeBase, Base["CampaignMissionSchedule"]):
+class CampaignMissionSchedule(Base):
     __tablename__ = 'campaign_mission_schedule'
 
-    campaign_id: int = Column(Integer, primary_key=True)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    close_time: str = Column(Text, nullable=False)
+    campaign_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    close_time: Mapped[str] = mapped_column(Text)
 
 
-class CampaignSchedule(DeclarativeBase, Base["CampaignSchedule"]):
+class CampaignSchedule(Base):
     __tablename__ = 'campaign_schedule'
 
-    id: int = Column(Integer, primary_key=True)
-    campaign_category: int = Column(Integer, nullable=False)
-    value: float = Column(Float, nullable=False)
-    system_id: int = Column(Integer, nullable=False)
-    icon_image: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    level_id: int = Column(Integer, nullable=False)
-    shiori_group_id: int = Column(Integer, nullable=False)
-    duplication_order: int = Column(Integer, nullable=False)
-    beginner_id: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    campaign_category: Mapped[int] = mapped_column(Integer)
+    value: Mapped[float] = mapped_column(Float)
+    system_id: Mapped[int] = mapped_column(Integer)
+    icon_image: Mapped[int] = mapped_column(Integer)
+    lv_from: Mapped[int] = mapped_column(Integer)
+    lv_to: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    level_id: Mapped[int] = mapped_column(Integer)
+    shiori_group_id: Mapped[int] = mapped_column(Integer)
+    duplication_order: Mapped[int] = mapped_column(Integer)
+    beginner_id: Mapped[int] = mapped_column(Integer)
+    campaign_type: Mapped[int] = mapped_column(Integer)
 
 
-class CampaignShioriGroup(DeclarativeBase, Base["CampaignShioriGroup"]):
+class CampaignShioriGroup(Base):
     __tablename__ = 'campaign_shiori_group'
+    __table_args__ = (
+        Index('campaign_shiori_group_0_shiori_group_id', 'shiori_group_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    shiori_group_id: int = Column(Integer, nullable=False, index=True)
-    event_id: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    shiori_group_id: Mapped[int] = mapped_column(Integer)
+    event_id: Mapped[int] = mapped_column(Integer)
 
 
-class CggCompletionDatum(DeclarativeBase, Base["CggCompletionDatum"]):
+class CaravanBuffDisp(Base):
+    __tablename__ = 'caravan_buff_disp'
+    __table_args__ = (
+        Index('caravan_buff_disp_0_type_1_effect_id', 'type', 'effect_id'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    type: Mapped[int] = mapped_column(Integer)
+    effect_id: Mapped[int] = mapped_column(Integer)
+    category: Mapped[int] = mapped_column(Integer)
+    icon_id: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    count_from: Mapped[int] = mapped_column(Integer)
+    count_to: Mapped[int] = mapped_column(Integer)
+
+
+class CaravanCoinShopLineup(Base):
+    __tablename__ = 'caravan_coin_shop_lineup'
+    __table_args__ = (
+        Index('caravan_coin_shop_lineup_0_season_id', 'season_id'),
+    )
+
+    season_id: Mapped[int] = mapped_column(Integer)
+    slot_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_count: Mapped[int] = mapped_column(Integer)
+    currency_id: Mapped[int] = mapped_column(Integer)
+    price: Mapped[int] = mapped_column(Integer)
+    stock: Mapped[int] = mapped_column(Integer)
+
+
+class CaravanDiceRewardPeriod(Base):
+    __tablename__ = 'caravan_dice_reward_period'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    cost: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+
+
+class CaravanDish(Base):
+    __tablename__ = 'caravan_dish'
+
+    dish_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    recipe_id: Mapped[int] = mapped_column(Integer)
+    name: Mapped[str] = mapped_column(Text)
+    new_line_name: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
+    effect_description: Mapped[str] = mapped_column(Text)
+    sub_effect_description: Mapped[str] = mapped_column(Text)
+    sold_price: Mapped[int] = mapped_column(Integer)
+    category: Mapped[int] = mapped_column(Integer)
+    effect_type: Mapped[int] = mapped_column(Integer)
+    effect_value: Mapped[int] = mapped_column(Integer)
+    effect_turn: Mapped[int] = mapped_column(Integer)
+    effect_times: Mapped[int] = mapped_column(Integer)
+    prefab_id: Mapped[int] = mapped_column(Integer)
+    disable_category: Mapped[int] = mapped_column(Integer)
+    sub_effect_type: Mapped[int] = mapped_column(Integer)
+    sub_effect_value: Mapped[int] = mapped_column(Integer)
+
+
+class CaravanDishReward(Base):
+    __tablename__ = 'caravan_dish_reward'
+
+    reward_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_count: Mapped[int] = mapped_column(Integer)
+
+
+class CaravanDishTurnEffect(Base):
+    __tablename__ = 'caravan_dish_turn_effect'
+
+    dish_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    turn_from: Mapped[int] = mapped_column(Integer, primary_key=True)
+    turn_to: Mapped[int] = mapped_column(Integer)
+    effect_value: Mapped[int] = mapped_column(Integer)
+
+
+class CaravanDrama(Base):
+    __tablename__ = 'caravan_drama'
+    __table_args__ = (
+        Index('caravan_drama_0_drama_id', 'drama_id'),
+    )
+
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
+
+
+class CaravanEffectSetting(Base):
+    __tablename__ = 'caravan_effect_setting'
+    __table_args__ = (
+        Index('caravan_effect_setting_0_scene_type', 'scene_type'),
+        Index('caravan_effect_setting_0_scene_type_1_effect_type', 'scene_type', 'effect_type')
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    scene_type: Mapped[int] = mapped_column(Integer)
+    effect_type: Mapped[int] = mapped_column(Integer)
+    rank: Mapped[int] = mapped_column(Integer)
+    value: Mapped[int] = mapped_column(Integer)
+
+
+class CaravanEventEffect(Base):
+    __tablename__ = 'caravan_event_effect'
+
+    event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    description: Mapped[str] = mapped_column(Text)
+    effect_type: Mapped[int] = mapped_column(Integer)
+    effect_value: Mapped[int] = mapped_column(Integer)
+    effect_turn: Mapped[int] = mapped_column(Integer)
+    effect_times: Mapped[int] = mapped_column(Integer)
+    category: Mapped[int] = mapped_column(Integer)
+
+
+class CaravanExcludeCountBlock(Base):
+    __tablename__ = 'caravan_exclude_count_block'
+
+    exclude_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    block_type_1: Mapped[int] = mapped_column(Integer)
+    block_type_2: Mapped[int] = mapped_column(Integer)
+    block_type_3: Mapped[int] = mapped_column(Integer)
+
+
+class CaravanGachaBlockLineup(Base):
+    __tablename__ = 'caravan_gacha_block_lineup'
+
+    group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    normal_gacha_odds: Mapped[int] = mapped_column(Integer)
+    normal_gacha_cost: Mapped[int] = mapped_column(Integer)
+    rare_gacha_odds: Mapped[int] = mapped_column(Integer)
+    rare_gacha_cost: Mapped[int] = mapped_column(Integer)
+    premium_gacha_odds: Mapped[int] = mapped_column(Integer)
+    premium_gacha_cost: Mapped[int] = mapped_column(Integer)
+
+
+class CaravanGoalBonus(Base):
+    __tablename__ = 'caravan_goal_bonus'
+    __table_args__ = (
+        Index('caravan_goal_bonus_0_season_id', 'season_id'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    season_id: Mapped[int] = mapped_column(Integer)
+    early_level: Mapped[int] = mapped_column(Integer)
+    bonus_label: Mapped[int] = mapped_column(Integer)
+    early_from: Mapped[int] = mapped_column(Integer)
+    early_to: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_count: Mapped[int] = mapped_column(Integer)
+
+
+class CaravanMap(Base):
+    __tablename__ = 'caravan_map'
+    __table_args__ = (
+        Index('caravan_map_0_season_id', 'season_id'),
+    )
+
+    block_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    season_id: Mapped[int] = mapped_column(Integer)
+    next_1: Mapped[int] = mapped_column(Integer)
+    next_2: Mapped[int] = mapped_column(Integer)
+    next_3: Mapped[int] = mapped_column(Integer)
+    next_4: Mapped[int] = mapped_column(Integer)
+    type: Mapped[int] = mapped_column(Integer)
+    reference_id: Mapped[int] = mapped_column(Integer)
+
+
+class CaravanMapLayout(Base):
+    __tablename__ = 'caravan_map_layout'
+
+    block_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    position_x: Mapped[int] = mapped_column(Integer)
+    position_y: Mapped[int] = mapped_column(Integer)
+
+
+class CaravanMapObject(Base):
+    __tablename__ = 'caravan_map_object'
+    __table_args__ = (
+        Index('caravan_map_object_0_season_id', 'season_id'),
+    )
+
+    object_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    season_id: Mapped[int] = mapped_column(Integer)
+    object_type: Mapped[int] = mapped_column(Integer)
+    position_x: Mapped[float] = mapped_column(Float)
+    position_y: Mapped[float] = mapped_column(Float)
+
+
+class CaravanMileBlockReward(Base):
+    __tablename__ = 'caravan_mile_block_reward'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    count: Mapped[int] = mapped_column(Integer)
+    upgrade_id: Mapped[int] = mapped_column(Integer)
+
+
+class CaravanNaviComment(Base):
+    __tablename__ = 'caravan_navi_comment'
+    __table_args__ = (
+        Index('caravan_navi_comment_0_season_id', 'season_id'),
+    )
+
+    comment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    where_type: Mapped[int] = mapped_column(Integer)
+    character_id: Mapped[int] = mapped_column(Integer)
+    face_type: Mapped[int] = mapped_column(Integer)
+    character_name: Mapped[str] = mapped_column(Text)
+    voice_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    pos_x: Mapped[float] = mapped_column(Float)
+    pos_y: Mapped[float] = mapped_column(Float)
+    change_face_time: Mapped[float] = mapped_column(Float)
+    change_face_type: Mapped[int] = mapped_column(Integer)
+    season_id: Mapped[int] = mapped_column(Integer)
+    description: Mapped[Optional[str]] = mapped_column(Text)
+
+
+class CaravanSchedule(Base):
+    __tablename__ = 'caravan_schedule'
+    __table_args__ = (
+        Index('caravan_schedule_0_coin_id', 'coin_id'),
+    )
+
+    season_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    start_block_id: Mapped[int] = mapped_column(Integer)
+    target_turn: Mapped[int] = mapped_column(Integer)
+    coin_id: Mapped[int] = mapped_column(Integer)
+    bg_id: Mapped[int] = mapped_column(Integer)
+    bgm_sheet_id: Mapped[str] = mapped_column(Text)
+    bgm_que_id: Mapped[str] = mapped_column(Text)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    shop_close_time: Mapped[str] = mapped_column(Text)
+
+
+class CaravanShopBlockRank(Base):
+    __tablename__ = 'caravan_shop_block_rank'
+
+    group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    upgrade_id: Mapped[int] = mapped_column(Integer)
+
+
+class CaravanSoundSetting(Base):
+    __tablename__ = 'caravan_sound_setting'
+    __table_args__ = (
+        Index('caravan_sound_setting_0_scene_type', 'scene_type'),
+        Index('caravan_sound_setting_0_scene_type_1_effect_type', 'scene_type', 'effect_type')
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    scene_type: Mapped[int] = mapped_column(Integer)
+    effect_type: Mapped[int] = mapped_column(Integer)
+    sound_type: Mapped[int] = mapped_column(Integer)
+    sheet_id: Mapped[str] = mapped_column(Text)
+    que_id: Mapped[str] = mapped_column(Text)
+
+
+class CaravanTreasure(Base):
+    __tablename__ = 'caravan_treasure'
+    __table_args__ = (
+        Index('caravan_treasure_0_rarity_1_appraise_flag', 'rarity', 'appraise_flag'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    new_line_name: Mapped[str] = mapped_column(Text)
+    rarity: Mapped[int] = mapped_column(Integer)
+    value: Mapped[int] = mapped_column(Integer)
+    reset_value: Mapped[int] = mapped_column(Integer)
+    appraise_flag: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+
+
+class CaravanTreasureBlockRank(Base):
+    __tablename__ = 'caravan_treasure_block_rank'
+
+    odds_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    upgrade_id: Mapped[int] = mapped_column(Integer)
+
+
+class CaravanTreasureBlockReal(Base):
+    __tablename__ = 'caravan_treasure_block_real'
+    __table_args__ = (
+        Index('caravan_treasure_block_real_0_odds_id', 'odds_id'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    odds_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_count: Mapped[int] = mapped_column(Integer)
+
+
+class CccChara(Base):
+    __tablename__ = 'ccc_chara'
+
+    ccc_chara_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[float] = mapped_column(Float)
+    end_time: Mapped[float] = mapped_column(Float)
+
+
+class CccObject(Base):
+    __tablename__ = 'ccc_object'
+
+    ccc_object_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    is_report: Mapped[int] = mapped_column(Integer)
+    ccc_object_type: Mapped[int] = mapped_column(Integer)
+    fall_speed: Mapped[int] = mapped_column(Integer)
+    absorb_frame: Mapped[int] = mapped_column(Integer)
+    value_1: Mapped[int] = mapped_column(Integer)
+
+
+class CccScenario(Base):
+    __tablename__ = 'ccc_scenario'
+    __table_args__ = (
+        Index('ccc_scenario_0_ccc_scenario_id', 'ccc_scenario_id'),
+    )
+
+    idx: Mapped[int] = mapped_column(Integer, primary_key=True)
+    ccc_scenario_id: Mapped[int] = mapped_column(Integer)
+    ccc_object_id: Mapped[int] = mapped_column(Integer)
+    position: Mapped[int] = mapped_column(Integer)
+    frame: Mapped[int] = mapped_column(Integer)
+
+
+class CggCompletionDatum(Base):
     __tablename__ = 'cgg_completion_data'
 
-    completion_id: int = Column(Integer, primary_key=True)
-    completion_emblem_id: int = Column(Integer, nullable=False)
-    gacha_type: int = Column(Integer, nullable=False)
-    completion_num: int = Column(Integer, nullable=False)
-    secret_goods_id_1: int = Column(Integer, nullable=False)
-    secret_goods_id_2: int = Column(Integer, nullable=False)
-    secret_goods_id_3: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    receive_description: str = Column(Text, nullable=False)
+    completion_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    completion_emblem_id: Mapped[int] = mapped_column(Integer)
+    gacha_type: Mapped[int] = mapped_column(Integer)
+    completion_num: Mapped[int] = mapped_column(Integer)
+    secret_goods_id_1: Mapped[int] = mapped_column(Integer)
+    secret_goods_id_2: Mapped[int] = mapped_column(Integer)
+    secret_goods_id_3: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    receive_description: Mapped[str] = mapped_column(Text)
 
 
-class CggCompletionRewardDatum(DeclarativeBase, Base["CggCompletionRewardDatum"]):
+class CggCompletionRewardDatum(Base):
     __tablename__ = 'cgg_completion_reward_data'
+    __table_args__ = (
+        Index('cgg_completion_reward_data_0_completion_id', 'completion_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    completion_id: int = Column(Integer, nullable=False, index=True)
-    reward_type: int = Column(Integer, nullable=False)
-    reward_id: int = Column(Integer, nullable=False)
-    reward_num: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    completion_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_num: Mapped[int] = mapped_column(Integer)
 
 
-class CggDrama(DeclarativeBase, Base["CggDrama"]):
+class CggDrama(Base):
     __tablename__ = 'cgg_drama'
+    __table_args__ = (
+        Index('cgg_drama_0_drama_id', 'drama_id'),
+    )
 
-    command_id: int = Column(Integer, primary_key=True)
-    drama_id: int = Column(Integer, nullable=False, index=True)
-    command_type: int = Column(Integer, nullable=False)
-    param_01: str = Column(Text, nullable=False)
-    param_02: str = Column(Text, nullable=False)
-    param_03: str = Column(Text, nullable=False)
-    param_04: str = Column(Text, nullable=False)
-    param_05: str = Column(Text, nullable=False)
-    param_06: str = Column(Text, nullable=False)
-    param_07: str = Column(Text, nullable=False)
-    param_08: str = Column(Text, nullable=False)
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
 
 
-class CggGachaInfo(DeclarativeBase, Base["CggGachaInfo"]):
+class CggGachaInfo(Base):
     __tablename__ = 'cgg_gacha_info'
+    __table_args__ = (
+        Index('cgg_gacha_info_0_cgg_id', 'cgg_id'),
+    )
 
-    gacha_type: int = Column(Integer, primary_key=True)
-    cgg_id: int = Column(Integer, nullable=False, index=True)
-    gacha_name: str = Column(Text, nullable=False)
-    gacha_description: str = Column(Text, nullable=False)
-    cost_currency_num: int = Column(Integer, nullable=False)
-    gacha_intro: str = Column(Text, nullable=False)
+    gacha_type: Mapped[int] = mapped_column(Integer, primary_key=True)
+    cgg_id: Mapped[int] = mapped_column(Integer)
+    gacha_name: Mapped[str] = mapped_column(Text)
+    gacha_description: Mapped[str] = mapped_column(Text)
+    cost_currency_num: Mapped[int] = mapped_column(Integer)
+    gacha_intro: Mapped[str] = mapped_column(Text)
 
 
-class CggGachaLineup(DeclarativeBase, Base["CggGachaLineup"]):
+class CggGachaLineup(Base):
     __tablename__ = 'cgg_gacha_lineup'
+    __table_args__ = (
+        Index('cgg_gacha_lineup_0_gacha_type', 'gacha_type'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    gacha_type: int = Column(Integer, nullable=False, index=True)
-    lineup_id: int = Column(Integer, nullable=False)
-    goods_id: int = Column(Integer, nullable=False)
-    goods_num: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    gacha_type: Mapped[int] = mapped_column(Integer)
+    lineup_id: Mapped[int] = mapped_column(Integer)
+    goods_id: Mapped[int] = mapped_column(Integer)
+    goods_num: Mapped[int] = mapped_column(Integer)
 
 
-class CggGameSetting(DeclarativeBase, Base["CggGameSetting"]):
+class CggGameSettings(Base):
     __tablename__ = 'cgg_game_settings'
 
-    cgg_id: int = Column(Integer, primary_key=True)
-    goods_shelf_id: int = Column(Integer, nullable=False)
-    first_goods_shelf_reward_num: int = Column(Integer, nullable=False)
-    cgg_gacha_currency_id: int = Column(Integer, nullable=False)
-    first_currency_reward_num: int = Column(Integer, nullable=False)
-    exchange_luppi_rate: int = Column(Integer, nullable=False)
-    max_gacha_exchange_count: int = Column(Integer, nullable=False)
-    max_goods_count: int = Column(Integer, nullable=False)
+    cgg_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    goods_shelf_id: Mapped[int] = mapped_column(Integer)
+    first_goods_shelf_reward_num: Mapped[int] = mapped_column(Integer)
+    cgg_gacha_currency_id: Mapped[int] = mapped_column(Integer)
+    first_currency_reward_num: Mapped[int] = mapped_column(Integer)
+    exchange_luppi_rate: Mapped[int] = mapped_column(Integer)
+    max_gacha_exchange_count: Mapped[int] = mapped_column(Integer)
+    max_goods_count: Mapped[int] = mapped_column(Integer)
 
 
-class CggGoodsDatum(DeclarativeBase, Base["CggGoodsDatum"]):
+class CggGoodsDatum(Base):
     __tablename__ = 'cgg_goods_data'
 
-    goods_id: int = Column(Integer, primary_key=True)
-    name: str = Column(Text, nullable=False)
-    rarity: int = Column(Integer, nullable=False)
-    shelf_position_id: int = Column(Integer, nullable=False)
-    detail_scale_x: float = Column(Float, nullable=False)
-    detail_scale_y: float = Column(Float, nullable=False)
-    description: str = Column(Text, nullable=False)
+    goods_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    rarity: Mapped[int] = mapped_column(Integer)
+    shelf_position_id: Mapped[int] = mapped_column(Integer)
+    detail_scale_x: Mapped[float] = mapped_column(Float)
+    detail_scale_y: Mapped[float] = mapped_column(Float)
+    description: Mapped[str] = mapped_column(Text)
 
 
-class CharaETicketDatum(DeclarativeBase, Base["CharaETicketDatum"]):
+class CharaETicketDatum(Base):
     __tablename__ = 'chara_e_ticket_data'
+    __table_args__ = (
+        Index('chara_e_ticket_data_0_jewel_store_id', 'jewel_store_id', unique=True),
+    )
 
-    ticket_id: int = Column(Integer, primary_key=True)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    jewel_store_id: int = Column(Integer, nullable=False, unique=True)
-    icon_id: int = Column(Integer, nullable=False)
+    ticket_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    jewel_store_id: Mapped[int] = mapped_column(Integer)
+    icon_id: Mapped[int] = mapped_column(Integer)
 
 
-class CharaFortuneRail(DeclarativeBase, Base["CharaFortuneRail"]):
+class CharaFortuneRail(Base):
     __tablename__ = 'chara_fortune_rail'
 
-    rail_id: int = Column(Integer, primary_key=True)
-    gimmick_1_id: str = Column(Text, nullable=False)
-    gimmick_1_x: int = Column(Integer, nullable=False)
-    gimmick_2_id: str = Column(Text, nullable=False)
-    gimmick_2_x: int = Column(Integer, nullable=False)
-    gimmick_3_id: str = Column(Text, nullable=False)
-    gimmick_3_x: int = Column(Integer, nullable=False)
-    gimmick_4_id: str = Column(Text, nullable=False)
-    gimmick_4_x: int = Column(Integer, nullable=False)
-    gimmick_5_id: str = Column(Text, nullable=False)
-    gimmick_5_x: int = Column(Integer, nullable=False)
-    gimmick_6_id: str = Column(Text, nullable=False)
-    gimmick_6_x: int = Column(Integer, nullable=False)
-    gimmick_7_id: str = Column(Text, nullable=False)
-    gimmick_7_x: int = Column(Integer, nullable=False)
-    gimmick_8_id: str = Column(Text, nullable=False)
-    gimmick_8_x: int = Column(Integer, nullable=False)
-    gimmick_9_id: str = Column(Text, nullable=False)
-    gimmick_9_x: int = Column(Integer, nullable=False)
-    gimmick_10_id: str = Column(Text, nullable=False)
-    gimmick_10_x: int = Column(Integer, nullable=False)
+    rail_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    gimmick_1_id: Mapped[str] = mapped_column(Text)
+    gimmick_1_x: Mapped[int] = mapped_column(Integer)
+    gimmick_2_id: Mapped[str] = mapped_column(Text)
+    gimmick_2_x: Mapped[int] = mapped_column(Integer)
+    gimmick_3_id: Mapped[str] = mapped_column(Text)
+    gimmick_3_x: Mapped[int] = mapped_column(Integer)
+    gimmick_4_id: Mapped[str] = mapped_column(Text)
+    gimmick_4_x: Mapped[int] = mapped_column(Integer)
+    gimmick_5_id: Mapped[str] = mapped_column(Text)
+    gimmick_5_x: Mapped[int] = mapped_column(Integer)
+    gimmick_6_id: Mapped[str] = mapped_column(Text)
+    gimmick_6_x: Mapped[int] = mapped_column(Integer)
+    gimmick_7_id: Mapped[str] = mapped_column(Text)
+    gimmick_7_x: Mapped[int] = mapped_column(Integer)
+    gimmick_8_id: Mapped[str] = mapped_column(Text)
+    gimmick_8_x: Mapped[int] = mapped_column(Integer)
+    gimmick_9_id: Mapped[str] = mapped_column(Text)
+    gimmick_9_x: Mapped[int] = mapped_column(Integer)
+    gimmick_10_id: Mapped[str] = mapped_column(Text)
+    gimmick_10_x: Mapped[int] = mapped_column(Integer)
 
 
-class CharaFortuneReward(DeclarativeBase, Base["CharaFortuneReward"]):
+class CharaFortuneReward(Base):
     __tablename__ = 'chara_fortune_reward'
 
-    id: int = Column(Integer, primary_key=True)
-    fortune_id: int = Column(Integer, nullable=False)
-    rank: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    count_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    count_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    count_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    count_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    count_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    fortune_id: Mapped[int] = mapped_column(Integer)
+    rank: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    count_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    count_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    count_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    count_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    count_5: Mapped[int] = mapped_column(Integer)
 
 
-class CharaFortuneScenario(DeclarativeBase, Base["CharaFortuneScenario"]):
+class CharaFortuneScenario(Base):
     __tablename__ = 'chara_fortune_scenario'
 
-    scenario_id: int = Column(Integer, primary_key=True)
-    rail_1: int = Column(Integer, nullable=False)
-    rail_2: int = Column(Integer, nullable=False)
-    rail_3: int = Column(Integer, nullable=False)
-    rail_4: int = Column(Integer, nullable=False)
+    scenario_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    rail_1: Mapped[int] = mapped_column(Integer)
+    rail_2: Mapped[int] = mapped_column(Integer)
+    rail_3: Mapped[int] = mapped_column(Integer)
+    rail_4: Mapped[int] = mapped_column(Integer)
 
 
-class CharaFortuneSchedule(DeclarativeBase, Base["CharaFortuneSchedule"]):
+class CharaFortuneSchedule(Base):
     __tablename__ = 'chara_fortune_schedule'
 
-    fortune_id: int = Column(Integer, primary_key=True)
-    name: str = Column(Text, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    fortune_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class CharaIdentity(DeclarativeBase, Base["CharaIdentity"]):
+class CharaIdentity(Base):
     __tablename__ = 'chara_identity'
 
-    unit_id: int = Column(Integer, primary_key=True)
-    chara_type: int = Column(Integer, nullable=False)
-    chara_type_2: int = Column(Integer, nullable=False)
-    chara_type_3: int = Column(Integer, nullable=False)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    chara_type: Mapped[int] = mapped_column(Integer)
+    chara_type_2: Mapped[int] = mapped_column(Integer)
+    chara_type_3: Mapped[int] = mapped_column(Integer)
 
 
-class CharaStoryStatu(DeclarativeBase, Base["CharaStoryStatu"]):
+class CharaStoryStatus(Base):
     __tablename__ = 'chara_story_status'
 
-    story_id: int = Column(Integer, primary_key=True)
-    unlock_story_name: str = Column(Text, nullable=False)
-    status_type_1: int = Column(Integer, nullable=False)
-    status_rate_1: int = Column(Integer, nullable=False)
-    status_type_2: int = Column(Integer, nullable=False)
-    status_rate_2: int = Column(Integer, nullable=False)
-    status_type_3: int = Column(Integer, nullable=False)
-    status_rate_3: int = Column(Integer, nullable=False)
-    status_type_4: int = Column(Integer, nullable=False)
-    status_rate_4: int = Column(Integer, nullable=False)
-    status_type_5: int = Column(Integer, nullable=False)
-    status_rate_5: int = Column(Integer, nullable=False)
-    chara_id_1: int = Column(Integer, nullable=False)
-    chara_id_2: int = Column(Integer, nullable=False)
-    chara_id_3: int = Column(Integer, nullable=False)
-    chara_id_4: int = Column(Integer, nullable=False)
-    chara_id_5: int = Column(Integer, nullable=False)
-    chara_id_6: int = Column(Integer, nullable=False)
-    chara_id_7: int = Column(Integer, nullable=False)
-    chara_id_8: int = Column(Integer, nullable=False)
-    chara_id_9: int = Column(Integer, nullable=False)
-    chara_id_10: int = Column(Integer, nullable=False)
+    story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unlock_story_name: Mapped[str] = mapped_column(Text)
+    status_type_1: Mapped[int] = mapped_column(Integer)
+    status_rate_1: Mapped[int] = mapped_column(Integer)
+    status_type_2: Mapped[int] = mapped_column(Integer)
+    status_rate_2: Mapped[int] = mapped_column(Integer)
+    status_type_3: Mapped[int] = mapped_column(Integer)
+    status_rate_3: Mapped[int] = mapped_column(Integer)
+    status_type_4: Mapped[int] = mapped_column(Integer)
+    status_rate_4: Mapped[int] = mapped_column(Integer)
+    status_type_5: Mapped[int] = mapped_column(Integer)
+    status_rate_5: Mapped[int] = mapped_column(Integer)
+    chara_id_1: Mapped[int] = mapped_column(Integer)
+    chara_id_2: Mapped[int] = mapped_column(Integer)
+    chara_id_3: Mapped[int] = mapped_column(Integer)
+    chara_id_4: Mapped[int] = mapped_column(Integer)
+    chara_id_5: Mapped[int] = mapped_column(Integer)
+    chara_id_6: Mapped[int] = mapped_column(Integer)
+    chara_id_7: Mapped[int] = mapped_column(Integer)
+    chara_id_8: Mapped[int] = mapped_column(Integer)
+    chara_id_9: Mapped[int] = mapped_column(Integer)
+    chara_id_10: Mapped[int] = mapped_column(Integer)
+    chara_id_11: Mapped[int] = mapped_column(Integer)
+    chara_id_12: Mapped[int] = mapped_column(Integer)
+    chara_id_13: Mapped[int] = mapped_column(Integer)
+    chara_id_14: Mapped[int] = mapped_column(Integer)
+    chara_id_15: Mapped[int] = mapped_column(Integer)
+    chara_id_16: Mapped[int] = mapped_column(Integer)
+    chara_id_17: Mapped[int] = mapped_column(Integer)
+    chara_id_18: Mapped[int] = mapped_column(Integer)
+    chara_id_19: Mapped[int] = mapped_column(Integer)
+    chara_id_20: Mapped[int] = mapped_column(Integer)
 
 
-class CharacterLoveRankupText(DeclarativeBase, Base["CharacterLoveRankupText"]):
+class CharacterLoveRankupText(Base):
     __tablename__ = 'character_love_rankup_text'
 
-    chara_id: int = Column(Integer, primary_key=True)
-    name: str = Column(Text, nullable=False)
-    love_level: int = Column(Integer, nullable=False)
-    scale: float = Column(Float, nullable=False)
-    position_x: int = Column(Integer, nullable=False)
-    position_y: int = Column(Integer, nullable=False)
-    voice_id_1: int = Column(Integer, nullable=False)
-    face_1: int = Column(Integer, nullable=False)
-    serif_1: str = Column(Text, nullable=False)
-    voice_id_2: int = Column(Integer, nullable=False)
-    face_2: int = Column(Integer, nullable=False)
-    serif_2: str = Column(Text, nullable=False)
-    voice_id_3: int = Column(Integer, nullable=False)
-    face_3: int = Column(Integer, nullable=False)
-    serif_3: str = Column(Text, nullable=False)
+    chara_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    love_level: Mapped[int] = mapped_column(Integer)
+    scale: Mapped[float] = mapped_column(Float)
+    position_x: Mapped[int] = mapped_column(Integer)
+    position_y: Mapped[int] = mapped_column(Integer)
+    voice_id_1: Mapped[int] = mapped_column(Integer)
+    face_1: Mapped[int] = mapped_column(Integer)
+    serif_1: Mapped[str] = mapped_column(Text)
+    voice_id_2: Mapped[int] = mapped_column(Integer)
+    face_2: Mapped[int] = mapped_column(Integer)
+    serif_2: Mapped[str] = mapped_column(Text)
+    voice_id_3: Mapped[int] = mapped_column(Integer)
+    face_3: Mapped[int] = mapped_column(Integer)
+    serif_3: Mapped[str] = mapped_column(Text)
 
 
-class ClanBattle2BossDatum(DeclarativeBase, Base["ClanBattle2BossDatum"]):
+class ClanBattle2BossDatum(Base):
     __tablename__ = 'clan_battle_2_boss_data'
 
-    boss_id: int = Column(Integer, primary_key=True)
-    clan_battle_id: int = Column(Integer, nullable=False)
-    difficulty: int = Column(Integer, nullable=False)
-    order_num: int = Column(Integer, nullable=False)
-    boss_thumb_id: int = Column(Integer, nullable=False)
-    position_x: int = Column(Integer, nullable=False)
-    position_y: int = Column(Integer, nullable=False)
-    scale_ratio: float = Column(Float, nullable=False)
-    tap_width_ratio: float = Column(Float, nullable=False)
-    tap_height_ratio: float = Column(Float, nullable=False)
-    map_position_x: int = Column(Integer, nullable=False)
-    map_position_y: int = Column(Integer, nullable=False)
-    cursor_position: int = Column(Integer, nullable=False)
-    result_boss_position_y: int = Column(Integer, nullable=False)
-    quest_detail_bg_id: int = Column(Integer, nullable=False)
-    quest_detail_bg_position: int = Column(Integer, nullable=False)
-    quest_detail_monster_size: float = Column(Float, nullable=False)
-    quest_detail_monster_height: int = Column(Integer, nullable=False)
-    battle_report_monster_size: float = Column(Float, nullable=False)
-    battle_report_monster_height: int = Column(Integer, nullable=False)
-    background: int = Column(Integer, nullable=False)
-    wave_bgm: str = Column(Text, nullable=False)
+    boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    clan_battle_id: Mapped[int] = mapped_column(Integer)
+    difficulty: Mapped[int] = mapped_column(Integer)
+    order_num: Mapped[int] = mapped_column(Integer)
+    boss_thumb_id: Mapped[int] = mapped_column(Integer)
+    position_x: Mapped[int] = mapped_column(Integer)
+    position_y: Mapped[int] = mapped_column(Integer)
+    scale_ratio: Mapped[float] = mapped_column(Float)
+    tap_width_ratio: Mapped[float] = mapped_column(Float)
+    tap_height_ratio: Mapped[float] = mapped_column(Float)
+    map_position_x: Mapped[int] = mapped_column(Integer)
+    map_position_y: Mapped[int] = mapped_column(Integer)
+    cursor_position: Mapped[int] = mapped_column(Integer)
+    result_boss_position_y: Mapped[int] = mapped_column(Integer)
+    quest_detail_bg_id: Mapped[int] = mapped_column(Integer)
+    quest_detail_bg_position: Mapped[int] = mapped_column(Integer)
+    quest_detail_monster_size: Mapped[float] = mapped_column(Float)
+    quest_detail_monster_height: Mapped[int] = mapped_column(Integer)
+    battle_report_monster_size: Mapped[float] = mapped_column(Float)
+    battle_report_monster_height: Mapped[int] = mapped_column(Integer)
+    background: Mapped[int] = mapped_column(Integer)
+    wave_bgm: Mapped[str] = mapped_column(Text)
 
 
-class ClanBattle2MapDatum(DeclarativeBase, Base["ClanBattle2MapDatum"]):
+class ClanBattle2MapDatum(Base):
     __tablename__ = 'clan_battle_2_map_data'
+    __table_args__ = (
+        Index('clan_battle_2_map_data_0_clan_battle_id', 'clan_battle_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    clan_battle_id: int = Column(Integer, nullable=False, index=True)
-    map_bg: int = Column(Integer, nullable=False)
-    difficulty: int = Column(Integer, nullable=False)
-    lap_num_from: int = Column(Integer, nullable=False)
-    lap_num_to: int = Column(Integer, nullable=False)
-    boss_id_1: int = Column(Integer, nullable=False)
-    boss_id_2: int = Column(Integer, nullable=False)
-    boss_id_3: int = Column(Integer, nullable=False)
-    boss_id_4: int = Column(Integer, nullable=False)
-    boss_id_5: int = Column(Integer, nullable=False)
-    aura_effect: int = Column(Integer, nullable=False)
-    rsl_unlock_lap: int = Column(Integer, nullable=False)
-    phase: int = Column(Integer, nullable=False)
-    wave_group_id_1: int = Column(Integer, nullable=False)
-    wave_group_id_2: int = Column(Integer, nullable=False)
-    wave_group_id_3: int = Column(Integer, nullable=False)
-    wave_group_id_4: int = Column(Integer, nullable=False)
-    wave_group_id_5: int = Column(Integer, nullable=False)
-    fix_reward_id_1: int = Column(Integer, nullable=False)
-    fix_reward_id_2: int = Column(Integer, nullable=False)
-    fix_reward_id_3: int = Column(Integer, nullable=False)
-    fix_reward_id_4: int = Column(Integer, nullable=False)
-    fix_reward_id_5: int = Column(Integer, nullable=False)
-    damage_rank_id_1: int = Column(Integer, nullable=False)
-    damage_rank_id_2: int = Column(Integer, nullable=False)
-    damage_rank_id_3: int = Column(Integer, nullable=False)
-    damage_rank_id_4: int = Column(Integer, nullable=False)
-    damage_rank_id_5: int = Column(Integer, nullable=False)
-    reward_gold_coefficient: float = Column(Float, nullable=False)
-    limited_mana: int = Column(Integer, nullable=False)
-    last_attack_reward_id: int = Column(Integer, nullable=False)
-    score_coefficient_1: float = Column(Float, nullable=False)
-    score_coefficient_2: float = Column(Float, nullable=False)
-    score_coefficient_3: float = Column(Float, nullable=False)
-    score_coefficient_4: float = Column(Float, nullable=False)
-    score_coefficient_5: float = Column(Float, nullable=False)
-    param_adjust_id: int = Column(Integer, nullable=False)
-    param_adjust_interval: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    clan_battle_id: Mapped[int] = mapped_column(Integer)
+    map_bg: Mapped[int] = mapped_column(Integer)
+    difficulty: Mapped[int] = mapped_column(Integer)
+    lap_num_from: Mapped[int] = mapped_column(Integer)
+    lap_num_to: Mapped[int] = mapped_column(Integer)
+    boss_id_1: Mapped[int] = mapped_column(Integer)
+    boss_id_2: Mapped[int] = mapped_column(Integer)
+    boss_id_3: Mapped[int] = mapped_column(Integer)
+    boss_id_4: Mapped[int] = mapped_column(Integer)
+    boss_id_5: Mapped[int] = mapped_column(Integer)
+    aura_effect: Mapped[int] = mapped_column(Integer)
+    rsl_unlock_lap: Mapped[int] = mapped_column(Integer)
+    phase: Mapped[int] = mapped_column(Integer)
+    wave_group_id_1: Mapped[int] = mapped_column(Integer)
+    wave_group_id_2: Mapped[int] = mapped_column(Integer)
+    wave_group_id_3: Mapped[int] = mapped_column(Integer)
+    wave_group_id_4: Mapped[int] = mapped_column(Integer)
+    wave_group_id_5: Mapped[int] = mapped_column(Integer)
+    fix_reward_id_1: Mapped[int] = mapped_column(Integer)
+    fix_reward_id_2: Mapped[int] = mapped_column(Integer)
+    fix_reward_id_3: Mapped[int] = mapped_column(Integer)
+    fix_reward_id_4: Mapped[int] = mapped_column(Integer)
+    fix_reward_id_5: Mapped[int] = mapped_column(Integer)
+    damage_rank_id_1: Mapped[int] = mapped_column(Integer)
+    damage_rank_id_2: Mapped[int] = mapped_column(Integer)
+    damage_rank_id_3: Mapped[int] = mapped_column(Integer)
+    damage_rank_id_4: Mapped[int] = mapped_column(Integer)
+    damage_rank_id_5: Mapped[int] = mapped_column(Integer)
+    reward_gold_coefficient: Mapped[float] = mapped_column(Float)
+    limited_mana: Mapped[int] = mapped_column(Integer)
+    last_attack_reward_id: Mapped[int] = mapped_column(Integer)
+    score_coefficient_1: Mapped[float] = mapped_column(Float)
+    score_coefficient_2: Mapped[float] = mapped_column(Float)
+    score_coefficient_3: Mapped[float] = mapped_column(Float)
+    score_coefficient_4: Mapped[float] = mapped_column(Float)
+    score_coefficient_5: Mapped[float] = mapped_column(Float)
+    param_adjust_id: Mapped[int] = mapped_column(Integer)
+    param_adjust_interval: Mapped[int] = mapped_column(Integer)
 
 
-class ClanBattleArchiveClanRank(DeclarativeBase, Base["ClanBattleArchiveClanRank"]):
+class ClanBattleArchiveClanRank(Base):
     __tablename__ = 'clan_battle_archive_clan_rank'
 
-    id: int = Column(Integer, primary_key=True)
-    rank_from: int = Column(Integer, nullable=False)
-    rank_to: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    rank_from: Mapped[int] = mapped_column(Integer)
+    rank_to: Mapped[int] = mapped_column(Integer)
 
 
-class ClanBattleArchivePersonRank(DeclarativeBase, Base["ClanBattleArchivePersonRank"]):
+class ClanBattleArchivePersonRank(Base):
     __tablename__ = 'clan_battle_archive_person_rank'
 
-    id: int = Column(Integer, primary_key=True)
-    rank_from: int = Column(Integer, nullable=False)
-    rank_to: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    rank_from: Mapped[int] = mapped_column(Integer)
+    rank_to: Mapped[int] = mapped_column(Integer)
 
 
-class ClanBattleBattleMissionDatum(DeclarativeBase, Base["ClanBattleBattleMissionDatum"]):
+class ClanBattleBattleMissionDatum(Base):
     __tablename__ = 'clan_battle_battle_mission_data'
 
-    mission_id: int = Column(Integer, primary_key=True)
-    disp_group: int = Column(Integer, nullable=False)
-    category_icon: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    mission_condition: int = Column(Integer, nullable=False)
-    condition_value_1: int = Column(Integer)
-    condition_value_2: int = Column(Integer)
-    condition_value_3: int = Column(Integer)
-    condition_value_4: int = Column(Integer)
-    condition_value_5: int = Column(Integer)
-    condition_value_6: int = Column(Integer)
-    condition_value_7: int = Column(Integer)
-    condition_value_8: int = Column(Integer)
-    condition_value_9: int = Column(Integer)
-    condition_value_10: int = Column(Integer)
-    condition_num: int = Column(Integer, nullable=False)
-    mission_reward_id: int = Column(Integer, nullable=False)
-    system_id: int = Column(Integer)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    disp_group: Mapped[int] = mapped_column(Integer)
+    category_icon: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    mission_condition: Mapped[int] = mapped_column(Integer)
+    condition_num: Mapped[int] = mapped_column(Integer)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    condition_value_1: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_2: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_3: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_4: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_5: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_6: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_7: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_8: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_9: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_10: Mapped[Optional[int]] = mapped_column(Integer)
+    system_id: Mapped[Optional[int]] = mapped_column(Integer)
 
 
-class ClanBattleBossDamageRank(DeclarativeBase, Base["ClanBattleBossDamageRank"]):
+class ClanBattleBossDamageRank(Base):
     __tablename__ = 'clan_battle_boss_damage_rank'
+    __table_args__ = (
+        Index('clan_battle_boss_damage_rank_0_damage_rank_id', 'damage_rank_id'),
+    )
 
-    id: int = Column(Integer, nullable=False)
-    damage_rank_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    ranking_from: int = Column(Integer, primary_key=True, nullable=False)
-    ranking_to: int = Column(Integer, primary_key=True, nullable=False)
-    odds_group_id: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer)
+    damage_rank_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    ranking_from: Mapped[int] = mapped_column(Integer, primary_key=True)
+    ranking_to: Mapped[int] = mapped_column(Integer, primary_key=True)
+    odds_group_id: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
 
 
-class ClanBattleBossFixReward(DeclarativeBase, Base["ClanBattleBossFixReward"]):
+class ClanBattleBossFixReward(Base):
     __tablename__ = 'clan_battle_boss_fix_reward'
 
-    fix_reward_id: int = Column(Integer, primary_key=True)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
+    fix_reward_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
 
 
-class ClanBattleLastAttackReward(DeclarativeBase, Base["ClanBattleLastAttackReward"]):
+class ClanBattleLastAttackReward(Base):
     __tablename__ = 'clan_battle_last_attack_reward'
 
-    last_attack_reward_id: int = Column(Integer, primary_key=True)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
+    last_attack_reward_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
 
 
-class ClanBattleOddsDatum(DeclarativeBase, Base["ClanBattleOddsDatum"]):
+class ClanBattleOddsDatum(Base):
     __tablename__ = 'clan_battle_odds_data'
+    __table_args__ = (
+        Index('clan_battle_odds_data_0_odds_group_id', 'odds_group_id'),
+    )
 
-    odds_group_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    team_level_from: int = Column(Integer, primary_key=True, nullable=False)
-    team_level_to: int = Column(Integer, primary_key=True, nullable=False)
-    odds_csv_1: str = Column(Text, nullable=False)
-    odds_csv_2: str = Column(Text, nullable=False)
-    odds_csv_3: str = Column(Text, nullable=False)
-    odds_csv_4: str = Column(Text, nullable=False)
-    odds_csv_5: str = Column(Text, nullable=False)
-    odds_csv_6: str = Column(Text, nullable=False)
-    odds_csv_7: str = Column(Text, nullable=False)
-    odds_csv_8: str = Column(Text, nullable=False)
-    odds_csv_9: str = Column(Text, nullable=False)
-    odds_csv_10: str = Column(Text, nullable=False)
+    odds_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    team_level_from: Mapped[int] = mapped_column(Integer, primary_key=True)
+    team_level_to: Mapped[int] = mapped_column(Integer, primary_key=True)
+    odds_csv_1: Mapped[str] = mapped_column(Text)
+    odds_csv_2: Mapped[str] = mapped_column(Text)
+    odds_csv_3: Mapped[str] = mapped_column(Text)
+    odds_csv_4: Mapped[str] = mapped_column(Text)
+    odds_csv_5: Mapped[str] = mapped_column(Text)
+    odds_csv_6: Mapped[str] = mapped_column(Text)
+    odds_csv_7: Mapped[str] = mapped_column(Text)
+    odds_csv_8: Mapped[str] = mapped_column(Text)
+    odds_csv_9: Mapped[str] = mapped_column(Text)
+    odds_csv_10: Mapped[str] = mapped_column(Text)
 
 
-class ClanBattleParamAdjust(DeclarativeBase, Base["ClanBattleParamAdjust"]):
+class ClanBattleParamAdjust(Base):
     __tablename__ = 'clan_battle_param_adjust'
 
-    param_adjust_id: int = Column(Integer, primary_key=True)
-    level: int = Column(Integer, nullable=False)
-    hp: int = Column(Integer, nullable=False)
-    atk: int = Column(Integer, nullable=False)
-    magic_str: int = Column(Integer, nullable=False)
-    _def: int = Column('def', Integer, nullable=False)
-    magic_def: int = Column(Integer, nullable=False)
-    physical_critical: int = Column(Integer, nullable=False)
-    magic_critical: int = Column(Integer, nullable=False)
-    energy_recovery_rate: int = Column(Integer, nullable=False)
-    union_burst_level: int = Column(Integer, nullable=False)
-    main_skill_lv_1: int = Column(Integer, nullable=False)
-    main_skill_lv_2: int = Column(Integer, nullable=False)
-    main_skill_lv_3: int = Column(Integer, nullable=False)
-    main_skill_lv_4: int = Column(Integer, nullable=False)
-    main_skill_lv_5: int = Column(Integer, nullable=False)
-    main_skill_lv_6: int = Column(Integer, nullable=False)
-    main_skill_lv_7: int = Column(Integer, nullable=False)
-    main_skill_lv_8: int = Column(Integer, nullable=False)
-    main_skill_lv_9: int = Column(Integer, nullable=False)
-    main_skill_lv_10: int = Column(Integer, nullable=False)
-    accuracy: int = Column(Integer, nullable=False)
-    normal_atk_cast_time: int = Column(Integer, nullable=False)
-    score_coefficient: int = Column(Integer, nullable=False)
+    param_adjust_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    level: Mapped[int] = mapped_column(Integer)
+    hp: Mapped[int] = mapped_column(Integer)
+    atk: Mapped[int] = mapped_column(Integer)
+    magic_str: Mapped[int] = mapped_column(Integer)
+    def_: Mapped[int] = mapped_column('def', Integer)
+    magic_def: Mapped[int] = mapped_column(Integer)
+    physical_critical: Mapped[int] = mapped_column(Integer)
+    magic_critical: Mapped[int] = mapped_column(Integer)
+    energy_recovery_rate: Mapped[int] = mapped_column(Integer)
+    union_burst_level: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_1: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_2: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_3: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_4: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_5: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_6: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_7: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_8: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_9: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_10: Mapped[int] = mapped_column(Integer)
+    accuracy: Mapped[int] = mapped_column(Integer)
+    normal_atk_cast_time: Mapped[int] = mapped_column(Integer)
+    score_coefficient: Mapped[int] = mapped_column(Integer)
 
 
-class ClanBattlePeriod(DeclarativeBase, Base["ClanBattlePeriod"]):
+class ClanBattlePeriod(Base):
     __tablename__ = 'clan_battle_period'
+    __table_args__ = (
+        Index('clan_battle_period_0_clan_battle_id', 'clan_battle_id'),
+    )
 
-    clan_battle_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    period: int = Column(Integer, primary_key=True, nullable=False)
-    period_detail: str = Column(Text, nullable=False)
-    period_detail_bg: int = Column(Integer, nullable=False)
-    period_detail_s: str = Column(Text, nullable=False)
-    period_detail_bg_s: int = Column(Integer, nullable=False)
-    period_detail_bg_position: int = Column(Integer, nullable=False)
-    period_detail_boss_position_x: int = Column(Integer, nullable=False)
-    period_detail_boss_position_y: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    interval_start: str = Column(Text, nullable=False)
-    interval_end: str = Column(Text, nullable=False)
-    calc_start: str = Column(Text, nullable=False)
-    result_start: str = Column(Text, nullable=False)
-    result_end: str = Column(Text, nullable=False)
-    limit_time: int = Column(Integer, nullable=False)
-    chest_id: int = Column(Integer, nullable=False)
-    quest_detail_rehearsal_label_height: int = Column(Integer, nullable=False)
-    min_carry_over_time: int = Column(Integer, nullable=False)
+    clan_battle_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    period: Mapped[int] = mapped_column(Integer, primary_key=True)
+    period_detail: Mapped[str] = mapped_column(Text)
+    period_detail_bg: Mapped[int] = mapped_column(Integer)
+    period_detail_s: Mapped[str] = mapped_column(Text)
+    period_detail_bg_s: Mapped[int] = mapped_column(Integer)
+    period_detail_bg_position: Mapped[int] = mapped_column(Integer)
+    period_detail_boss_position_x: Mapped[int] = mapped_column(Integer)
+    period_detail_boss_position_y: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    interval_start: Mapped[str] = mapped_column(Text)
+    interval_end: Mapped[str] = mapped_column(Text)
+    calc_start: Mapped[str] = mapped_column(Text)
+    result_start: Mapped[str] = mapped_column(Text)
+    result_end: Mapped[str] = mapped_column(Text)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    chest_id: Mapped[int] = mapped_column(Integer)
+    quest_detail_rehearsal_label_height: Mapped[int] = mapped_column(Integer)
+    min_carry_over_time: Mapped[int] = mapped_column(Integer)
 
 
-class ClanBattlePeriodLapReward(DeclarativeBase, Base["ClanBattlePeriodLapReward"]):
+class ClanBattlePeriodLapReward(Base):
     __tablename__ = 'clan_battle_period_lap_reward'
 
-    id: int = Column(Integer, primary_key=True)
-    clan_battle_id: int = Column(Integer, nullable=False)
-    period: int = Column(Integer, nullable=False)
-    lap_num_from: int = Column(Integer, nullable=False)
-    lap_num_to: int = Column(Integer, nullable=False)
-    ranking_bonus_group: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    clan_battle_id: Mapped[int] = mapped_column(Integer)
+    period: Mapped[int] = mapped_column(Integer)
+    lap_num_from: Mapped[int] = mapped_column(Integer)
+    lap_num_to: Mapped[int] = mapped_column(Integer)
+    ranking_bonus_group: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
 
 
-class ClanBattlePeriodRankReward(DeclarativeBase, Base["ClanBattlePeriodRankReward"]):
+class ClanBattlePeriodRankReward(Base):
     __tablename__ = 'clan_battle_period_rank_reward'
 
-    id: int = Column(Integer, primary_key=True)
-    clan_battle_id: int = Column(Integer, nullable=False)
-    period: int = Column(Integer, nullable=False)
-    rank_from: int = Column(Integer, nullable=False)
-    rank_to: int = Column(Integer, nullable=False)
-    ranking_bonus_group: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    clan_battle_id: Mapped[int] = mapped_column(Integer)
+    period: Mapped[int] = mapped_column(Integer)
+    rank_from: Mapped[int] = mapped_column(Integer)
+    rank_to: Mapped[int] = mapped_column(Integer)
+    ranking_bonus_group: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
 
 
-class ClanBattleRecommendDatum(DeclarativeBase, Base["ClanBattleRecommendDatum"]):
+class ClanBattleRecommendDatum(Base):
     __tablename__ = 'clan_battle_recommend_data'
+    __table_args__ = (
+        Index('clan_battle_recommend_data_0_recommend_group', 'recommend_group'),
+    )
 
-    level_id: int = Column(Integer, primary_key=True)
-    recommend_group: int = Column(Integer, nullable=False, index=True)
-    level_from: int = Column(Integer, nullable=False)
-    level_to: int = Column(Integer, nullable=False)
-    atack_party_count: int = Column(Integer, nullable=False)
-    magic_party_count: int = Column(Integer, nullable=False)
+    level_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    recommend_group: Mapped[int] = mapped_column(Integer)
+    level_from: Mapped[int] = mapped_column(Integer)
+    level_to: Mapped[int] = mapped_column(Integer)
+    atack_party_count: Mapped[int] = mapped_column(Integer)
+    magic_party_count: Mapped[int] = mapped_column(Integer)
 
 
-class ClanBattleSBossDatum(DeclarativeBase, Base["ClanBattleSBossDatum"]):
+class ClanBattleSBossDatum(Base):
     __tablename__ = 'clan_battle_s_boss_data'
 
-    boss_id: int = Column(Integer, primary_key=True)
-    clan_battle_id: int = Column(Integer, nullable=False)
-    difficulty: int = Column(Integer, nullable=False)
-    order_num: int = Column(Integer, nullable=False)
-    boss_thumb_id: int = Column(Integer, nullable=False)
-    position_x: int = Column(Integer, nullable=False)
-    position_y: int = Column(Integer, nullable=False)
-    scale_ratio: float = Column(Float, nullable=False)
-    tap_width_ratio: float = Column(Float, nullable=False)
-    tap_height_ratio: float = Column(Float, nullable=False)
-    map_position_x: int = Column(Integer, nullable=False)
-    map_position_y: int = Column(Integer, nullable=False)
-    cursor_position: int = Column(Integer, nullable=False)
-    result_boss_position_y: int = Column(Integer, nullable=False)
-    quest_detail_bg_id: int = Column(Integer, nullable=False)
-    quest_detail_bg_position: int = Column(Integer, nullable=False)
-    quest_detail_monster_size: float = Column(Float, nullable=False)
-    quest_detail_monster_height: int = Column(Integer, nullable=False)
-    battle_report_monster_size: float = Column(Float, nullable=False)
-    battle_report_monster_height: int = Column(Integer, nullable=False)
-    background: int = Column(Integer, nullable=False)
-    wave_bgm: str = Column(Text, nullable=False)
+    boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    clan_battle_id: Mapped[int] = mapped_column(Integer)
+    difficulty: Mapped[int] = mapped_column(Integer)
+    order_num: Mapped[int] = mapped_column(Integer)
+    boss_thumb_id: Mapped[int] = mapped_column(Integer)
+    position_x: Mapped[int] = mapped_column(Integer)
+    position_y: Mapped[int] = mapped_column(Integer)
+    scale_ratio: Mapped[float] = mapped_column(Float)
+    tap_width_ratio: Mapped[float] = mapped_column(Float)
+    tap_height_ratio: Mapped[float] = mapped_column(Float)
+    map_position_x: Mapped[int] = mapped_column(Integer)
+    map_position_y: Mapped[int] = mapped_column(Integer)
+    cursor_position: Mapped[int] = mapped_column(Integer)
+    result_boss_position_y: Mapped[int] = mapped_column(Integer)
+    quest_detail_bg_id: Mapped[int] = mapped_column(Integer)
+    quest_detail_bg_position: Mapped[int] = mapped_column(Integer)
+    quest_detail_monster_size: Mapped[float] = mapped_column(Float)
+    quest_detail_monster_height: Mapped[int] = mapped_column(Integer)
+    battle_report_monster_size: Mapped[float] = mapped_column(Float)
+    battle_report_monster_height: Mapped[int] = mapped_column(Integer)
+    background: Mapped[int] = mapped_column(Integer)
+    wave_bgm: Mapped[str] = mapped_column(Text)
 
 
-class ClanBattleSBossFixReward(DeclarativeBase, Base["ClanBattleSBossFixReward"]):
+class ClanBattleSBossFixReward(Base):
     __tablename__ = 'clan_battle_s_boss_fix_reward'
 
-    fix_reward_id: int = Column(Integer, primary_key=True)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
+    fix_reward_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
 
 
-class ClanBattleSMapDatum(DeclarativeBase, Base["ClanBattleSMapDatum"]):
+class ClanBattleSMapDatum(Base):
     __tablename__ = 'clan_battle_s_map_data'
+    __table_args__ = (
+        Index('clan_battle_s_map_data_0_clan_battle_id', 'clan_battle_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    clan_battle_id: int = Column(Integer, nullable=False, index=True)
-    map_bg: int = Column(Integer, nullable=False)
-    difficulty: int = Column(Integer, nullable=False)
-    lap_num_from: int = Column(Integer, nullable=False)
-    lap_num_to: int = Column(Integer, nullable=False)
-    boss_id_1: int = Column(Integer, nullable=False)
-    boss_id_2: int = Column(Integer, nullable=False)
-    boss_id_3: int = Column(Integer, nullable=False)
-    boss_id_4: int = Column(Integer, nullable=False)
-    boss_id_5: int = Column(Integer, nullable=False)
-    extra_battle_flag1: int = Column(Integer, nullable=False)
-    extra_battle_flag2: int = Column(Integer, nullable=False)
-    extra_battle_flag3: int = Column(Integer, nullable=False)
-    extra_battle_flag4: int = Column(Integer, nullable=False)
-    extra_battle_flag5: int = Column(Integer, nullable=False)
-    aura_effect: int = Column(Integer, nullable=False)
-    rsl_unlock_lap: int = Column(Integer, nullable=False)
-    phase: int = Column(Integer, nullable=False)
-    wave_group_id_1: int = Column(Integer, nullable=False)
-    wave_group_id_2: int = Column(Integer, nullable=False)
-    wave_group_id_3: int = Column(Integer, nullable=False)
-    wave_group_id_4: int = Column(Integer, nullable=False)
-    wave_group_id_5: int = Column(Integer, nullable=False)
-    fix_reward_id_1: int = Column(Integer, nullable=False)
-    fix_reward_id_2: int = Column(Integer, nullable=False)
-    fix_reward_id_3: int = Column(Integer, nullable=False)
-    fix_reward_id_4: int = Column(Integer, nullable=False)
-    fix_reward_id_5: int = Column(Integer, nullable=False)
-    damage_rank_id_1: int = Column(Integer, nullable=False)
-    damage_rank_id_2: int = Column(Integer, nullable=False)
-    damage_rank_id_3: int = Column(Integer, nullable=False)
-    damage_rank_id_4: int = Column(Integer, nullable=False)
-    damage_rank_id_5: int = Column(Integer, nullable=False)
-    reward_gold_coefficient: float = Column(Float, nullable=False)
-    limited_mana: int = Column(Integer, nullable=False)
-    last_attack_reward_id: int = Column(Integer, nullable=False)
-    score_coefficient_1: float = Column(Float, nullable=False)
-    score_coefficient_2: float = Column(Float, nullable=False)
-    score_coefficient_3: float = Column(Float, nullable=False)
-    score_coefficient_4: float = Column(Float, nullable=False)
-    score_coefficient_5: float = Column(Float, nullable=False)
-    param_adjust_id: int = Column(Integer, nullable=False)
-    param_adjust_interval: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    clan_battle_id: Mapped[int] = mapped_column(Integer)
+    map_bg: Mapped[int] = mapped_column(Integer)
+    difficulty: Mapped[int] = mapped_column(Integer)
+    lap_num_from: Mapped[int] = mapped_column(Integer)
+    lap_num_to: Mapped[int] = mapped_column(Integer)
+    boss_id_1: Mapped[int] = mapped_column(Integer)
+    boss_id_2: Mapped[int] = mapped_column(Integer)
+    boss_id_3: Mapped[int] = mapped_column(Integer)
+    boss_id_4: Mapped[int] = mapped_column(Integer)
+    boss_id_5: Mapped[int] = mapped_column(Integer)
+    extra_battle_flag1: Mapped[int] = mapped_column(Integer)
+    extra_battle_flag2: Mapped[int] = mapped_column(Integer)
+    extra_battle_flag3: Mapped[int] = mapped_column(Integer)
+    extra_battle_flag4: Mapped[int] = mapped_column(Integer)
+    extra_battle_flag5: Mapped[int] = mapped_column(Integer)
+    aura_effect: Mapped[int] = mapped_column(Integer)
+    rsl_unlock_lap: Mapped[int] = mapped_column(Integer)
+    phase: Mapped[int] = mapped_column(Integer)
+    wave_group_id_1: Mapped[int] = mapped_column(Integer)
+    wave_group_id_2: Mapped[int] = mapped_column(Integer)
+    wave_group_id_3: Mapped[int] = mapped_column(Integer)
+    wave_group_id_4: Mapped[int] = mapped_column(Integer)
+    wave_group_id_5: Mapped[int] = mapped_column(Integer)
+    fix_reward_id_1: Mapped[int] = mapped_column(Integer)
+    fix_reward_id_2: Mapped[int] = mapped_column(Integer)
+    fix_reward_id_3: Mapped[int] = mapped_column(Integer)
+    fix_reward_id_4: Mapped[int] = mapped_column(Integer)
+    fix_reward_id_5: Mapped[int] = mapped_column(Integer)
+    damage_rank_id_1: Mapped[int] = mapped_column(Integer)
+    damage_rank_id_2: Mapped[int] = mapped_column(Integer)
+    damage_rank_id_3: Mapped[int] = mapped_column(Integer)
+    damage_rank_id_4: Mapped[int] = mapped_column(Integer)
+    damage_rank_id_5: Mapped[int] = mapped_column(Integer)
+    reward_gold_coefficient: Mapped[float] = mapped_column(Float)
+    limited_mana: Mapped[int] = mapped_column(Integer)
+    last_attack_reward_id: Mapped[int] = mapped_column(Integer)
+    score_coefficient_1: Mapped[float] = mapped_column(Float)
+    score_coefficient_2: Mapped[float] = mapped_column(Float)
+    score_coefficient_3: Mapped[float] = mapped_column(Float)
+    score_coefficient_4: Mapped[float] = mapped_column(Float)
+    score_coefficient_5: Mapped[float] = mapped_column(Float)
+    param_adjust_id: Mapped[int] = mapped_column(Integer)
+    param_adjust_interval: Mapped[int] = mapped_column(Integer)
 
 
-class ClanBattleSParamAdjust(DeclarativeBase, Base["ClanBattleSParamAdjust"]):
+class ClanBattleSParamAdjust(Base):
     __tablename__ = 'clan_battle_s_param_adjust'
 
-    param_adjust_id: int = Column(Integer, primary_key=True)
-    level: int = Column(Integer, nullable=False)
-    hp: int = Column(Integer, nullable=False)
-    atk: int = Column(Integer, nullable=False)
-    magic_str: int = Column(Integer, nullable=False)
-    _def: int = Column('def', Integer, nullable=False)
-    magic_def: int = Column(Integer, nullable=False)
-    physical_critical: int = Column(Integer, nullable=False)
-    magic_critical: int = Column(Integer, nullable=False)
-    energy_recovery_rate: int = Column(Integer, nullable=False)
-    union_burst_level: int = Column(Integer, nullable=False)
-    main_skill_lv_1: int = Column(Integer, nullable=False)
-    main_skill_lv_2: int = Column(Integer, nullable=False)
-    main_skill_lv_3: int = Column(Integer, nullable=False)
-    main_skill_lv_4: int = Column(Integer, nullable=False)
-    main_skill_lv_5: int = Column(Integer, nullable=False)
-    main_skill_lv_6: int = Column(Integer, nullable=False)
-    main_skill_lv_7: int = Column(Integer, nullable=False)
-    main_skill_lv_8: int = Column(Integer, nullable=False)
-    main_skill_lv_9: int = Column(Integer, nullable=False)
-    main_skill_lv_10: int = Column(Integer, nullable=False)
-    accuracy: int = Column(Integer, nullable=False)
-    normal_atk_cast_time: int = Column(Integer, nullable=False)
-    score_coefficient: int = Column(Integer, nullable=False)
+    param_adjust_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    level: Mapped[int] = mapped_column(Integer)
+    hp: Mapped[int] = mapped_column(Integer)
+    atk: Mapped[int] = mapped_column(Integer)
+    magic_str: Mapped[int] = mapped_column(Integer)
+    def_: Mapped[int] = mapped_column('def', Integer)
+    magic_def: Mapped[int] = mapped_column(Integer)
+    physical_critical: Mapped[int] = mapped_column(Integer)
+    magic_critical: Mapped[int] = mapped_column(Integer)
+    energy_recovery_rate: Mapped[int] = mapped_column(Integer)
+    union_burst_level: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_1: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_2: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_3: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_4: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_5: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_6: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_7: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_8: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_9: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_10: Mapped[int] = mapped_column(Integer)
+    accuracy: Mapped[int] = mapped_column(Integer)
+    normal_atk_cast_time: Mapped[int] = mapped_column(Integer)
+    score_coefficient: Mapped[int] = mapped_column(Integer)
 
 
-class ClanBattleSchedule(DeclarativeBase, Base["ClanBattleSchedule"]):
+class ClanBattleSchedule(Base):
     __tablename__ = 'clan_battle_schedule'
 
-    clan_battle_id: int = Column(Integer, primary_key=True)
-    release_month: int = Column(Integer, nullable=False)
-    last_clan_battle_id: int = Column(Integer, nullable=False)
-    point_per_stamina: int = Column(Integer, nullable=False)
-    cost_group_id: int = Column(Integer, nullable=False)
-    cost_group_id_s: int = Column(Integer, nullable=False)
-    map_bgm: str = Column(Text, nullable=False)
-    resource_id: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    clan_battle_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    release_month: Mapped[int] = mapped_column(Integer)
+    last_clan_battle_id: Mapped[int] = mapped_column(Integer)
+    point_per_stamina: Mapped[int] = mapped_column(Integer)
+    cost_group_id: Mapped[int] = mapped_column(Integer)
+    cost_group_id_s: Mapped[int] = mapped_column(Integer)
+    map_bgm: Mapped[str] = mapped_column(Text)
+    resource_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    mode_change_start_time: Mapped[str] = mapped_column(Text)
+    mode_change_end_time: Mapped[str] = mapped_column(Text)
+    mode_change_remind_time: Mapped[str] = mapped_column(Text)
 
 
-class ClanBattleTrainingDatum(DeclarativeBase, Base["ClanBattleTrainingDatum"]):
+class ClanBattleTrainingDatum(Base):
     __tablename__ = 'clan_battle_training_data'
+    __table_args__ = (
+        Index('clan_battle_training_data_0_training_id', 'training_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    training_id: int = Column(Integer, nullable=False, index=True)
-    mode: int = Column(Integer, nullable=False)
-    phase: int = Column(Integer, nullable=False)
-    map_data_id: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    training_id: Mapped[int] = mapped_column(Integer)
+    mode: Mapped[int] = mapped_column(Integer)
+    phase: Mapped[int] = mapped_column(Integer)
+    map_data_id: Mapped[int] = mapped_column(Integer)
 
 
-class ClanBattleTrainingSchedule(DeclarativeBase, Base["ClanBattleTrainingSchedule"]):
+class ClanBattleTrainingSchedule(Base):
     __tablename__ = 'clan_battle_training_schedule'
+    __table_args__ = (
+        Index('clan_battle_training_schedule_0_clan_battle_id', 'clan_battle_id'),
+    )
 
-    training_id: int = Column(Integer, primary_key=True)
-    clan_battle_id: int = Column(Integer, nullable=False, index=True)
-    battle_start_time: str = Column(Text, nullable=False)
-    battle_end_time: str = Column(Text, nullable=False)
-    interval_start_time: str = Column(Text, nullable=False)
-    interval_end_time: str = Column(Text, nullable=False)
+    training_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    clan_battle_id: Mapped[int] = mapped_column(Integer)
+    battle_start_time: Mapped[str] = mapped_column(Text)
+    battle_end_time: Mapped[str] = mapped_column(Text)
+    interval_start_time: Mapped[str] = mapped_column(Text)
+    interval_end_time: Mapped[str] = mapped_column(Text)
 
 
-class ClanCostGroup(DeclarativeBase, Base["ClanCostGroup"]):
+class ClanCostGroup(Base):
     __tablename__ = 'clan_cost_group'
 
-    id: int = Column(Integer, primary_key=True)
-    cost_group_id: int = Column(Integer, nullable=False)
-    difficulty: int = Column(Integer, nullable=False)
-    count: int = Column(Integer, nullable=False)
-    cost: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    cost_group_id: Mapped[int] = mapped_column(Integer)
+    difficulty: Mapped[int] = mapped_column(Integer)
+    count: Mapped[int] = mapped_column(Integer)
+    cost: Mapped[int] = mapped_column(Integer)
 
 
-class ClanGrade(DeclarativeBase, Base["ClanGrade"]):
+class ClanGrade(Base):
     __tablename__ = 'clan_grade'
 
-    clan_grade_id: int = Column(Integer, primary_key=True)
-    rank_from: int = Column(Integer, nullable=False)
-    rank_to: int = Column(Integer, nullable=False)
+    clan_grade_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    rank_from: Mapped[int] = mapped_column(Integer)
+    rank_to: Mapped[int] = mapped_column(Integer)
 
 
-class ClanInviteLevelGroup(DeclarativeBase, Base["ClanInviteLevelGroup"]):
+class ClanInviteLevelGroup(Base):
     __tablename__ = 'clan_invite_level_group'
 
-    level_group_id: int = Column(Integer, primary_key=True)
-    team_level_from: int = Column(Integer, nullable=False)
-    team_level_to: int = Column(Integer, nullable=False)
+    level_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    team_level_from: Mapped[int] = mapped_column(Integer)
+    team_level_to: Mapped[int] = mapped_column(Integer)
 
 
-class ClanprofileContent(DeclarativeBase, Base["ClanprofileContent"]):
+class ClanprofileContent(Base):
     __tablename__ = 'clanprofile_content'
 
-    id: int = Column(Integer, primary_key=True)
-    name: str = Column(Text, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    disp_order: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    disp_order: Mapped[int] = mapped_column(Integer)
 
 
-class CombinedResultMotion(DeclarativeBase, Base["CombinedResultMotion"]):
+class ColosseumEnhanceDatum(Base):
+    __tablename__ = 'colosseum_enhance_data'
+    __table_args__ = (
+        Index('colosseum_enhance_data_0_enhance_id', 'enhance_id'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    enhance_id: Mapped[int] = mapped_column(Integer)
+    min_level: Mapped[int] = mapped_column(Integer)
+    max_level: Mapped[int] = mapped_column(Integer)
+    rarity: Mapped[int] = mapped_column(Integer)
+    promotion_level: Mapped[int] = mapped_column(Integer)
+    equipment_slot_1: Mapped[int] = mapped_column(Integer)
+    equipment_slot_2: Mapped[int] = mapped_column(Integer)
+    equipment_slot_3: Mapped[int] = mapped_column(Integer)
+    equipment_slot_4: Mapped[int] = mapped_column(Integer)
+    equipment_slot_5: Mapped[int] = mapped_column(Integer)
+    equipment_slot_6: Mapped[int] = mapped_column(Integer)
+    unique_equipment_level_1: Mapped[int] = mapped_column(Integer)
+    unique_equipment_level_2: Mapped[int] = mapped_column(Integer)
+
+
+class ColosseumMissionDatum(Base):
+    __tablename__ = 'colosseum_mission_data'
+    __table_args__ = (
+        Index('colosseum_mission_data_0_schedule_id_1_difficulty', 'schedule_id', 'difficulty'),
+    )
+
+    schedule_id: Mapped[int] = mapped_column(Integer)
+    mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    difficulty: Mapped[int] = mapped_column(Integer)
+    disp_group: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    mission_condition: Mapped[int] = mapped_column(Integer)
+    condition_value_1: Mapped[int] = mapped_column(Integer)
+    condition_num: Mapped[int] = mapped_column(Integer)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+
+
+class ColosseumMissionRewardDatum(Base):
+    __tablename__ = 'colosseum_mission_reward_data'
+    __table_args__ = (
+        Index('colosseum_mission_reward_data_0_mission_reward_id', 'mission_reward_id'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_num: Mapped[int] = mapped_column(Integer)
+
+
+class ColosseumQuestDatum(Base):
+    __tablename__ = 'colosseum_quest_data'
+
+    quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    schedule_id: Mapped[int] = mapped_column(Integer)
+    difficulty: Mapped[int] = mapped_column(Integer)
+    slot_id: Mapped[int] = mapped_column(Integer)
+    display_unit_id: Mapped[int] = mapped_column(Integer)
+    unit_id_1: Mapped[int] = mapped_column(Integer)
+    unit_id_2: Mapped[int] = mapped_column(Integer)
+    unit_id_3: Mapped[int] = mapped_column(Integer)
+    unit_id_4: Mapped[int] = mapped_column(Integer)
+    unit_id_5: Mapped[int] = mapped_column(Integer)
+    enhance_id_1: Mapped[int] = mapped_column(Integer)
+    enhance_id_2: Mapped[int] = mapped_column(Integer)
+    enhance_id_3: Mapped[int] = mapped_column(Integer)
+    enhance_id_4: Mapped[int] = mapped_column(Integer)
+    enhance_id_5: Mapped[int] = mapped_column(Integer)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    background: Mapped[int] = mapped_column(Integer)
+    bg_position: Mapped[int] = mapped_column(Integer)
+
+
+class ColosseumScheduleDatum(Base):
+    __tablename__ = 'colosseum_schedule_data'
+
+    schedule_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    start_time: Mapped[str] = mapped_column(Text)
+    count_start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    close_time: Mapped[str] = mapped_column(Text)
+    calc_start: Mapped[str] = mapped_column(Text)
+    result_start: Mapped[str] = mapped_column(Text)
+
+
+class ColosseumScore(Base):
+    __tablename__ = 'colosseum_score'
+
+    quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    win_pt: Mapped[int] = mapped_column(Integer)
+    time_pt_rate: Mapped[int] = mapped_column(Integer)
+    bonus_pos_1: Mapped[int] = mapped_column(Integer)
+    bonus_param_1: Mapped[int] = mapped_column(Integer)
+    bonus_pos_2: Mapped[int] = mapped_column(Integer)
+    bonus_param_2: Mapped[int] = mapped_column(Integer)
+    threshold_pt_1: Mapped[int] = mapped_column(Integer)
+    threshold_pt_2: Mapped[int] = mapped_column(Integer)
+
+
+class CombinedResultMotion(Base):
     __tablename__ = 'combined_result_motion'
 
-    result_id: int = Column(Integer, primary_key=True)
-    unit_id_1: int = Column(Integer, nullable=False)
-    disp_order_1: int = Column(Integer, nullable=False)
-    unit_id_2: int = Column(Integer, nullable=False)
-    disp_order_2: int = Column(Integer, nullable=False)
-    unit_id_3: int = Column(Integer, nullable=False)
-    disp_order_3: int = Column(Integer, nullable=False)
-    unit_id_4: int = Column(Integer, nullable=False)
-    disp_order_4: int = Column(Integer, nullable=False)
-    unit_id_5: int = Column(Integer, nullable=False)
-    disp_order_5: int = Column(Integer, nullable=False)
+    result_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id_1: Mapped[int] = mapped_column(Integer)
+    disp_order_1: Mapped[int] = mapped_column(Integer)
+    unit_id_2: Mapped[int] = mapped_column(Integer)
+    disp_order_2: Mapped[int] = mapped_column(Integer)
+    unit_id_3: Mapped[int] = mapped_column(Integer)
+    disp_order_3: Mapped[int] = mapped_column(Integer)
+    unit_id_4: Mapped[int] = mapped_column(Integer)
+    disp_order_4: Mapped[int] = mapped_column(Integer)
+    unit_id_5: Mapped[int] = mapped_column(Integer)
+    disp_order_5: Mapped[int] = mapped_column(Integer)
 
 
-class ContentMapDatum(DeclarativeBase, Base["ContentMapDatum"]):
+class ContentMapDatum(Base):
     __tablename__ = 'content_map_data'
 
-    content_map_id: int = Column(Integer, primary_key=True)
-    name: str = Column(Text, nullable=False)
-    map_type: int = Column(Integer, nullable=False)
-    area_id: int = Column(Integer, nullable=False)
-    condition_quest_id: int = Column(Integer, nullable=False)
-    quest_position_x: int = Column(Integer, nullable=False)
-    quest_position_y: int = Column(Integer, nullable=False)
-    icon_id: int = Column(Integer, nullable=False)
-    system_id: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    content_map_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    map_type: Mapped[int] = mapped_column(Integer)
+    area_id: Mapped[int] = mapped_column(Integer)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    quest_position_x: Mapped[int] = mapped_column(Integer)
+    quest_position_y: Mapped[int] = mapped_column(Integer)
+    icon_id: Mapped[int] = mapped_column(Integer)
+    system_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class ContentReleaseDatum(DeclarativeBase, Base["ContentReleaseDatum"]):
+class ContentReleaseDatum(Base):
     __tablename__ = 'content_release_data'
 
-    system_id: int = Column(Integer, primary_key=True)
-    team_level: int = Column(Integer, nullable=False)
-    story_id: int = Column(Integer, nullable=False)
-    quest_id: int = Column(Integer, nullable=False)
-    dialog: str = Column(Text, nullable=False)
+    system_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    team_level: Mapped[int] = mapped_column(Integer)
+    story_id: Mapped[int] = mapped_column(Integer)
+    quest_id: Mapped[int] = mapped_column(Integer)
+    dialog: Mapped[str] = mapped_column(Text)
 
 
-class CooperationQuestDatum(DeclarativeBase, Base["CooperationQuestDatum"]):
+class CooperationQuestDatum(Base):
     __tablename__ = 'cooperation_quest_data'
 
-    quest_id: int = Column(Integer, primary_key=True)
-    quest_name: str = Column(Text, nullable=False)
-    difficulty_level: int = Column(Integer, nullable=False)
-    limit_team_level: int = Column(Integer, nullable=False)
-    team_exp: int = Column(Integer, nullable=False)
-    exp: int = Column(Integer, nullable=False)
-    limit_time: int = Column(Integer, nullable=False)
-    clear_reward_group_id: int = Column(Integer, nullable=False)
-    odds_group_id: int = Column(Integer, nullable=False)
-    lobby_background: int = Column(Integer, nullable=False)
-    background_1: int = Column(Integer, nullable=False)
-    wave_group_id_1: int = Column(Integer, nullable=False)
-    wave_bgm_sheet_id_1: str = Column(Text, nullable=False)
-    wave_bgm_que_id_1: str = Column(Text, nullable=False)
-    background_2: int = Column(Integer, nullable=False)
-    wave_group_id_2: int = Column(Integer, nullable=False)
-    wave_bgm_sheet_id_2: str = Column(Text, nullable=False)
-    wave_bgm_que_id_2: str = Column(Text, nullable=False)
-    background_3: int = Column(Integer, nullable=False)
-    wave_group_id_3: int = Column(Integer, nullable=False)
-    wave_bgm_sheet_id_3: str = Column(Text, nullable=False)
-    wave_bgm_que_id_3: str = Column(Text, nullable=False)
-    enemy_image_1: int = Column(Integer, nullable=False)
-    enemy_image_2: int = Column(Integer, nullable=False)
-    enemy_image_3: int = Column(Integer, nullable=False)
-    enemy_image_4: int = Column(Integer, nullable=False)
-    enemy_image_5: int = Column(Integer, nullable=False)
-    first_reward_image_1: int = Column(Integer, nullable=False)
-    first_reward_image_2: int = Column(Integer, nullable=False)
-    first_reward_image_3: int = Column(Integer, nullable=False)
-    first_reward_image_4: int = Column(Integer, nullable=False)
-    first_reward_image_5: int = Column(Integer, nullable=False)
-    repeat_reward_image_1: int = Column(Integer, nullable=False)
-    repeat_reward_image_2: int = Column(Integer, nullable=False)
-    repeat_reward_image_3: int = Column(Integer, nullable=False)
-    cooperation_quest_detail_bg_id: int = Column(Integer, nullable=False)
-    cooperation_quest_detail_bg_position: int = Column(Integer, nullable=False)
-    main_enemy_image_wave_1: int = Column(Integer, nullable=False)
-    sub_enemy_image_wave_1_1: int = Column(Integer, nullable=False)
-    sub_enemy_image_wave_1_2: int = Column(Integer, nullable=False)
-    sub_enemy_image_wave_1_3: int = Column(Integer, nullable=False)
-    sub_enemy_image_wave_1_4: int = Column(Integer, nullable=False)
-    main_enemy_image_wave_2: int = Column(Integer, nullable=False)
-    sub_enemy_image_wave_2_1: int = Column(Integer, nullable=False)
-    sub_enemy_image_wave_2_2: int = Column(Integer, nullable=False)
-    sub_enemy_image_wave_2_3: int = Column(Integer, nullable=False)
-    sub_enemy_image_wave_2_4: int = Column(Integer, nullable=False)
-    main_enemy_image_wave_3: int = Column(Integer, nullable=False)
-    sub_enemy_image_wave_3_1: int = Column(Integer, nullable=False)
-    sub_enemy_image_wave_3_2: int = Column(Integer, nullable=False)
-    sub_enemy_image_wave_3_3: int = Column(Integer, nullable=False)
-    sub_enemy_image_wave_3_4: int = Column(Integer, nullable=False)
-    quest_comment: str = Column(Text, nullable=False)
-    unlock_quest_id_1: int = Column(Integer, nullable=False)
-    unlock_quest_id_2: int = Column(Integer, nullable=False)
+    quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    quest_name: Mapped[str] = mapped_column(Text)
+    difficulty_level: Mapped[int] = mapped_column(Integer)
+    limit_team_level: Mapped[int] = mapped_column(Integer)
+    team_exp: Mapped[int] = mapped_column(Integer)
+    exp: Mapped[int] = mapped_column(Integer)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    clear_reward_group_id: Mapped[int] = mapped_column(Integer)
+    odds_group_id: Mapped[int] = mapped_column(Integer)
+    lobby_background: Mapped[int] = mapped_column(Integer)
+    background_1: Mapped[int] = mapped_column(Integer)
+    wave_group_id_1: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_1: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_1: Mapped[str] = mapped_column(Text)
+    background_2: Mapped[int] = mapped_column(Integer)
+    wave_group_id_2: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_2: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_2: Mapped[str] = mapped_column(Text)
+    background_3: Mapped[int] = mapped_column(Integer)
+    wave_group_id_3: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_3: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_3: Mapped[str] = mapped_column(Text)
+    enemy_image_1: Mapped[int] = mapped_column(Integer)
+    enemy_image_2: Mapped[int] = mapped_column(Integer)
+    enemy_image_3: Mapped[int] = mapped_column(Integer)
+    enemy_image_4: Mapped[int] = mapped_column(Integer)
+    enemy_image_5: Mapped[int] = mapped_column(Integer)
+    first_reward_image_1: Mapped[int] = mapped_column(Integer)
+    first_reward_image_2: Mapped[int] = mapped_column(Integer)
+    first_reward_image_3: Mapped[int] = mapped_column(Integer)
+    first_reward_image_4: Mapped[int] = mapped_column(Integer)
+    first_reward_image_5: Mapped[int] = mapped_column(Integer)
+    repeat_reward_image_1: Mapped[int] = mapped_column(Integer)
+    repeat_reward_image_2: Mapped[int] = mapped_column(Integer)
+    repeat_reward_image_3: Mapped[int] = mapped_column(Integer)
+    cooperation_quest_detail_bg_id: Mapped[int] = mapped_column(Integer)
+    cooperation_quest_detail_bg_position: Mapped[int] = mapped_column(Integer)
+    main_enemy_image_wave_1: Mapped[int] = mapped_column(Integer)
+    sub_enemy_image_wave_1_1: Mapped[int] = mapped_column(Integer)
+    sub_enemy_image_wave_1_2: Mapped[int] = mapped_column(Integer)
+    sub_enemy_image_wave_1_3: Mapped[int] = mapped_column(Integer)
+    sub_enemy_image_wave_1_4: Mapped[int] = mapped_column(Integer)
+    main_enemy_image_wave_2: Mapped[int] = mapped_column(Integer)
+    sub_enemy_image_wave_2_1: Mapped[int] = mapped_column(Integer)
+    sub_enemy_image_wave_2_2: Mapped[int] = mapped_column(Integer)
+    sub_enemy_image_wave_2_3: Mapped[int] = mapped_column(Integer)
+    sub_enemy_image_wave_2_4: Mapped[int] = mapped_column(Integer)
+    main_enemy_image_wave_3: Mapped[int] = mapped_column(Integer)
+    sub_enemy_image_wave_3_1: Mapped[int] = mapped_column(Integer)
+    sub_enemy_image_wave_3_2: Mapped[int] = mapped_column(Integer)
+    sub_enemy_image_wave_3_3: Mapped[int] = mapped_column(Integer)
+    sub_enemy_image_wave_3_4: Mapped[int] = mapped_column(Integer)
+    quest_comment: Mapped[str] = mapped_column(Text)
+    unlock_quest_id_1: Mapped[int] = mapped_column(Integer)
+    unlock_quest_id_2: Mapped[int] = mapped_column(Integer)
 
 
-class CustomMypage(DeclarativeBase, Base["CustomMypage"]):
+class CustomMypage(Base):
     __tablename__ = 'custom_mypage'
+    __table_args__ = (
+        Index('custom_mypage_0_still_group_id', 'still_group_id'),
+    )
 
-    still_id: int = Column(Integer, primary_key=True)
-    group_id: int = Column(Integer, nullable=False)
-    still_group_id: int = Column(Integer, nullable=False, index=True)
-    still_name: str = Column(Text, nullable=False)
-    vertical_still_flg: int = Column(Integer, nullable=False)
-    scroll_direction: int = Column(Integer, nullable=False)
-    mypage_type: int = Column(Integer, nullable=False)
+    still_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    group_id: Mapped[int] = mapped_column(Integer)
+    still_group_id: Mapped[int] = mapped_column(Integer)
+    still_name: Mapped[str] = mapped_column(Text)
+    vertical_still_flg: Mapped[int] = mapped_column(Integer)
+    scroll_direction: Mapped[int] = mapped_column(Integer)
+    mypage_type: Mapped[int] = mapped_column(Integer)
 
 
-class CustomMypageGroup(DeclarativeBase, Base["CustomMypageGroup"]):
+class CustomMypageGroup(Base):
     __tablename__ = 'custom_mypage_group'
 
-    group_id: int = Column(Integer, primary_key=True)
-    group_name: str = Column(Text, nullable=False)
+    group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    group_name: Mapped[str] = mapped_column(Text)
 
 
-class DailyMissionDatum(DeclarativeBase, Base["DailyMissionDatum"]):
+class DailyMissionDatum(Base):
     __tablename__ = 'daily_mission_data'
 
-    daily_mission_id: int = Column(Integer, primary_key=True)
-    disp_group: int = Column(Integer, nullable=False)
-    category_icon: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    mission_condition: int = Column(Integer, nullable=False)
-    condition_value_1: int = Column(Integer)
-    condition_value_2: int = Column(Integer)
-    condition_value_3: int = Column(Integer)
-    condition_num: int = Column(Integer, nullable=False)
-    mission_reward_id: int = Column(Integer, nullable=False)
-    system_id: int = Column(Integer)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    min_level: int = Column(Integer, nullable=False)
-    max_level: int = Column(Integer, nullable=False)
-    title_color_id: int = Column(Integer, nullable=False)
-    visible_flag: int = Column(Integer, nullable=False)
+    daily_mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    disp_group: Mapped[int] = mapped_column(Integer)
+    category_icon: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    mission_condition: Mapped[int] = mapped_column(Integer)
+    condition_num: Mapped[int] = mapped_column(Integer)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    min_level: Mapped[int] = mapped_column(Integer)
+    max_level: Mapped[int] = mapped_column(Integer)
+    title_color_id: Mapped[int] = mapped_column(Integer)
+    visible_flag: Mapped[int] = mapped_column(Integer)
+    condition_value_1: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_2: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_3: Mapped[Optional[int]] = mapped_column(Integer)
+    system_id: Mapped[Optional[int]] = mapped_column(Integer)
 
 
-class DearChara(DeclarativeBase, Base["DearChara"]):
+class DearChara(Base):
     __tablename__ = 'dear_chara'
+    __table_args__ = (
+        Index('dear_chara_0_event_id', 'event_id'),
+    )
 
-    event_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    chara_index: int = Column(Integer, primary_key=True, nullable=False)
-    chara_name: str = Column(Text, nullable=False)
-    max_dear_point: int = Column(Integer, nullable=False)
-    reference_type: int = Column(Integer, nullable=False)
-    reference_id: int = Column(Integer, nullable=False)
-    episode_unlock_offset_x: int = Column(Integer, nullable=False)
-    episode_unlock_offset_y: int = Column(Integer, nullable=False)
-    dear_point_up_offset_x: int = Column(Integer, nullable=False)
-    dear_point_up_offset_y: int = Column(Integer, nullable=False)
-    condition_story_id: int = Column(Integer, nullable=False)
+    event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    chara_index: Mapped[int] = mapped_column(Integer, primary_key=True)
+    chara_name: Mapped[str] = mapped_column(Text)
+    max_dear_point: Mapped[int] = mapped_column(Integer)
+    reference_type: Mapped[int] = mapped_column(Integer)
+    reference_id: Mapped[int] = mapped_column(Integer)
+    episode_unlock_offset_x: Mapped[int] = mapped_column(Integer)
+    episode_unlock_offset_y: Mapped[int] = mapped_column(Integer)
+    dear_point_up_offset_x: Mapped[int] = mapped_column(Integer)
+    dear_point_up_offset_y: Mapped[int] = mapped_column(Integer)
+    condition_story_id: Mapped[int] = mapped_column(Integer)
 
 
-class DearReward(DeclarativeBase, Base["DearReward"]):
+class DearReward(Base):
     __tablename__ = 'dear_reward'
     __table_args__ = (
         Index('dear_reward_0_event_id_1_chara_index', 'event_id', 'chara_index'),
     )
 
-    id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False)
-    chara_index: int = Column(Integer, nullable=False)
-    dear_point: int = Column(Integer, nullable=False)
-    mission_detail: str = Column(Text, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_count_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_count_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_count_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_count_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_count_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    chara_index: Mapped[int] = mapped_column(Integer)
+    dear_point: Mapped[int] = mapped_column(Integer)
+    mission_detail: Mapped[str] = mapped_column(Text)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_count_5: Mapped[int] = mapped_column(Integer)
 
 
-class DearSetting(DeclarativeBase, Base["DearSetting"]):
+class DearSetting(Base):
     __tablename__ = 'dear_setting'
 
-    event_id: int = Column(Integer, primary_key=True)
-    system_name: str = Column(Text, nullable=False)
-    tutorial_quest_id: int = Column(Integer, nullable=False)
-    tutorial_chara_index: int = Column(Integer, nullable=False)
-    tutorial_story_id: int = Column(Integer, nullable=False)
+    event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    system_name: Mapped[str] = mapped_column(Text)
+    tutorial_quest_id: Mapped[int] = mapped_column(Integer)
+    tutorial_chara_index: Mapped[int] = mapped_column(Integer)
+    tutorial_story_id: Mapped[int] = mapped_column(Integer)
 
 
-class DearStoryDatum(DeclarativeBase, Base["DearStoryDatum"]):
+class DearStoryDatum(Base):
     __tablename__ = 'dear_story_data'
+    __table_args__ = (
+        Index('dear_story_data_0_value', 'value'),
+    )
 
-    story_group_id: int = Column(Integer, primary_key=True)
-    story_type: int = Column(Integer, nullable=False)
-    value: int = Column(Integer, nullable=False, index=True)
-    title: str = Column(Text, nullable=False)
-    thumbnail_id: int = Column(Integer, nullable=False)
-    disp_order: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    story_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_type: Mapped[int] = mapped_column(Integer)
+    value: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    thumbnail_id: Mapped[int] = mapped_column(Integer)
+    disp_order: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class DearStoryDetail(DeclarativeBase, Base["DearStoryDetail"]):
+class DearStoryDetail(Base):
     __tablename__ = 'dear_story_detail'
     __table_args__ = (
-        Index('dear_story_detail_0_story_group_id_1_chara_index', 'story_group_id', 'chara_index'),
+        Index('dear_story_detail_0_story_group_id', 'story_group_id'),
+        Index('dear_story_detail_0_story_group_id_1_chara_index', 'story_group_id', 'chara_index')
     )
 
-    story_id: int = Column(Integer, primary_key=True)
-    story_group_id: int = Column(Integer, nullable=False, index=True)
-    title: str = Column(Text, nullable=False)
-    sub_title: str = Column(Text, nullable=False)
-    visible_type: int = Column(Integer, nullable=False)
-    story_end: int = Column(Integer, nullable=False)
-    pre_story_id: int = Column(Integer, nullable=False)
-    love_level: int = Column(Integer, nullable=False)
-    requirement_id: int = Column(Integer, nullable=False)
-    unlock_quest_id: int = Column(Integer, nullable=False)
-    story_quest_id: int = Column(Integer, nullable=False)
-    chara_index: int = Column(Integer, nullable=False)
-    condition_event_quest_id: int = Column(Integer, nullable=False)
-    condition_event_boss_id: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_value_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_value_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_value_3: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_group_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    sub_title: Mapped[str] = mapped_column(Text)
+    visible_type: Mapped[int] = mapped_column(Integer)
+    story_end: Mapped[int] = mapped_column(Integer)
+    pre_story_id: Mapped[int] = mapped_column(Integer)
+    love_level: Mapped[int] = mapped_column(Integer)
+    requirement_id: Mapped[int] = mapped_column(Integer)
+    unlock_quest_id: Mapped[int] = mapped_column(Integer)
+    story_quest_id: Mapped[int] = mapped_column(Integer)
+    chara_index: Mapped[int] = mapped_column(Integer)
+    condition_event_quest_id: Mapped[int] = mapped_column(Integer)
+    condition_event_boss_id: Mapped[int] = mapped_column(Integer)
+    lock_all_text: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_value_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_value_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_value_3: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class DefineSpskill(DeclarativeBase, Base["DefineSpskill"]):
+class DefineSpskill(Base):
     __tablename__ = 'define_spskill'
+    __table_args__ = (
+        Index('define_spskill_0_sp_skill_id', 'sp_skill_id'),
+    )
 
-    link_skill_slot: int = Column(Integer, primary_key=True)
-    sp_skill_id: int = Column(Integer, nullable=False, index=True)
-    base_skill_id: int = Column(Integer, nullable=False)
-    skill_category: int = Column(Integer, nullable=False)
+    link_skill_slot: Mapped[int] = mapped_column(Integer, primary_key=True)
+    sp_skill_id: Mapped[int] = mapped_column(Integer)
+    base_skill_id: Mapped[int] = mapped_column(Integer)
+    skill_category: Mapped[int] = mapped_column(Integer)
 
 
-class DodgeTpRecovery(DeclarativeBase, Base["DodgeTpRecovery"]):
+class DodgeTpRecovery(Base):
     __tablename__ = 'dodge_tp_recovery'
 
-    system_id: int = Column(Integer, primary_key=True)
-    recovery_ratio: float = Column(Float, nullable=False)
+    system_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    recovery_ratio: Mapped[float] = mapped_column(Float)
 
 
-class DungeonArea(DeclarativeBase, Base["DungeonArea"]):
+class DsbDramaScript(Base):
+    __tablename__ = 'dsb_drama_script'
+    __table_args__ = (
+        Index('dsb_drama_script_0_drama_id', 'drama_id'),
+    )
+
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
+
+
+class DsbStoryDatum(Base):
+    __tablename__ = 'dsb_story_data'
+    __table_args__ = (
+        Index('dsb_story_data_0_original_event_id', 'original_event_id'),
+    )
+
+    sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    original_event_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    condition_time: Mapped[str] = mapped_column(Text)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_count: Mapped[int] = mapped_column(Integer)
+    owner_unit_id: Mapped[int] = mapped_column(Integer)
+    guest_unit_id: Mapped[int] = mapped_column(Integer)
+    day_num: Mapped[int] = mapped_column(Integer)
+    material_text: Mapped[str] = mapped_column(Text)
+    effect_text: Mapped[str] = mapped_column(Text)
+    article_text: Mapped[str] = mapped_column(Text)
+
+
+class DungeonArea(Base):
     __tablename__ = 'dungeon_area'
 
-    dungeon_area_id: int = Column(Integer, primary_key=True)
-    dungeon_type: int = Column(Integer, nullable=False)
-    dungeon_name: str = Column(Text, nullable=False)
-    description: str = Column(Text, nullable=False)
-    open_area_id: int = Column(Integer, nullable=False)
-    open_quest_id: int = Column(Integer, nullable=False)
-    content_release_story: int = Column(Integer, nullable=False)
-    initial_clear_story: int = Column(Integer, nullable=False)
-    reward_group_id: int = Column(Integer, nullable=False)
-    recommend_level: int = Column(Integer, nullable=False)
-    quest_position_x: int = Column(Integer, nullable=False)
-    quest_position_y: int = Column(Integer, nullable=False)
-    icon_id: int = Column(Integer, nullable=False)
-    recovery_hp_rate: int = Column(Integer, nullable=False)
-    recovery_tp_rate: int = Column(Integer, nullable=False)
+    dungeon_area_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    dungeon_type: Mapped[int] = mapped_column(Integer)
+    dungeon_name: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
+    open_area_id: Mapped[int] = mapped_column(Integer)
+    open_quest_id: Mapped[int] = mapped_column(Integer)
+    content_release_story: Mapped[int] = mapped_column(Integer)
+    initial_clear_story: Mapped[int] = mapped_column(Integer)
+    reward_group_id: Mapped[int] = mapped_column(Integer)
+    recommend_level: Mapped[int] = mapped_column(Integer)
+    quest_position_x: Mapped[int] = mapped_column(Integer)
+    quest_position_y: Mapped[int] = mapped_column(Integer)
+    icon_id: Mapped[int] = mapped_column(Integer)
+    recovery_hp_rate: Mapped[int] = mapped_column(Integer)
+    recovery_tp_rate: Mapped[int] = mapped_column(Integer)
 
 
-class DungeonAreaDatum(DeclarativeBase, Base["DungeonAreaDatum"]):
+class DungeonAreaDatum(Base):
     __tablename__ = 'dungeon_area_data'
 
-    dungeon_area_id: int = Column(Integer, primary_key=True)
-    dungeon_type: int = Column(Integer, nullable=False)
-    dungeon_name: str = Column(Text, nullable=False)
-    description: str = Column(Text, nullable=False)
-    open_quest_id: int = Column(Integer, nullable=False)
-    content_release_story: int = Column(Integer, nullable=False)
-    initial_clear_story: int = Column(Integer, nullable=False)
-    wave_group_id: int = Column(Integer, nullable=False)
-    reward_group_id: int = Column(Integer, nullable=False)
-    recommend_level: int = Column(Integer, nullable=False)
-    quest_position_x: int = Column(Integer, nullable=False)
-    quest_position_y: int = Column(Integer, nullable=False)
-    icon_id: int = Column(Integer, nullable=False)
-    coin_item_id: int = Column(Integer, nullable=False)
-    enemy_image_1: int = Column(Integer, nullable=False)
-    enemy_image_2: int = Column(Integer, nullable=False)
-    enemy_image_3: int = Column(Integer, nullable=False)
-    enemy_image_4: int = Column(Integer, nullable=False)
-    enemy_image_5: int = Column(Integer, nullable=False)
-    view_reward_id_1: int = Column(Integer, nullable=False)
-    view_reward_id_2: int = Column(Integer, nullable=False)
-    view_reward_id_3: int = Column(Integer, nullable=False)
-    view_reward_id_4: int = Column(Integer, nullable=False)
-    view_reward_id_5: int = Column(Integer, nullable=False)
-    recovery_hp_rate: int = Column(Integer, nullable=False)
-    recovery_tp_rate: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    dungeon_area_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    dungeon_type: Mapped[int] = mapped_column(Integer)
+    dungeon_name: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
+    open_quest_id: Mapped[int] = mapped_column(Integer)
+    content_release_story: Mapped[int] = mapped_column(Integer)
+    initial_clear_story: Mapped[int] = mapped_column(Integer)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    reward_group_id: Mapped[int] = mapped_column(Integer)
+    recommend_level: Mapped[int] = mapped_column(Integer)
+    quest_position_x: Mapped[int] = mapped_column(Integer)
+    quest_position_y: Mapped[int] = mapped_column(Integer)
+    icon_id: Mapped[int] = mapped_column(Integer)
+    coin_item_id: Mapped[int] = mapped_column(Integer)
+    enemy_image_1: Mapped[int] = mapped_column(Integer)
+    enemy_image_2: Mapped[int] = mapped_column(Integer)
+    enemy_image_3: Mapped[int] = mapped_column(Integer)
+    enemy_image_4: Mapped[int] = mapped_column(Integer)
+    enemy_image_5: Mapped[int] = mapped_column(Integer)
+    view_reward_id_1: Mapped[int] = mapped_column(Integer)
+    view_reward_id_2: Mapped[int] = mapped_column(Integer)
+    view_reward_id_3: Mapped[int] = mapped_column(Integer)
+    view_reward_id_4: Mapped[int] = mapped_column(Integer)
+    view_reward_id_5: Mapped[int] = mapped_column(Integer)
+    recovery_hp_rate: Mapped[int] = mapped_column(Integer)
+    recovery_tp_rate: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class DungeonQuestDatum(DeclarativeBase, Base["DungeonQuestDatum"]):
+class DungeonPatternBattle(Base):
+    __tablename__ = 'dungeon_pattern_battle'
+    __table_args__ = (
+        Index('dungeon_pattern_battle_0_quest_id', 'quest_id'),
+        Index('dungeon_pattern_battle_0_quest_id_1_pattern', 'quest_id', 'pattern', unique=True)
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    quest_id: Mapped[int] = mapped_column(Integer)
+    pattern: Mapped[int] = mapped_column(Integer)
+    trigger_type_1: Mapped[int] = mapped_column(Integer)
+    trigger_value_1: Mapped[int] = mapped_column(Integer)
+    next_pattern_1: Mapped[int] = mapped_column(Integer)
+    trigger_type_2: Mapped[int] = mapped_column(Integer)
+    trigger_value_2: Mapped[int] = mapped_column(Integer)
+    next_pattern_2: Mapped[int] = mapped_column(Integer)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    detail_unit_id: Mapped[int] = mapped_column(Integer)
+    detail_monster_position_x_1: Mapped[float] = mapped_column(Float)
+    detail_monster_position_y_1: Mapped[float] = mapped_column(Float)
+    detail_monster_scale_1: Mapped[float] = mapped_column(Float)
+    floor_unit_id: Mapped[int] = mapped_column(Integer)
+    floor_monster_position_x_1: Mapped[float] = mapped_column(Float)
+    floor_monster_position_y_1: Mapped[float] = mapped_column(Float)
+    floor_monster_scale_1: Mapped[float] = mapped_column(Float)
+
+
+class DungeonQuestDatum(Base):
     __tablename__ = 'dungeon_quest_data'
     __table_args__ = (
-        Index('dungeon_quest_data_0_dungeon_area_id_1_floor_num', 'dungeon_area_id', 'floor_num', unique=True),
+        Index('dungeon_quest_data_0_dungeon_area_id', 'dungeon_area_id'),
+        Index('dungeon_quest_data_0_dungeon_area_id_1_floor_num', 'dungeon_area_id', 'floor_num', unique=True)
     )
 
-    quest_id: int = Column(Integer, primary_key=True)
-    dungeon_area_id: int = Column(Integer, nullable=False, index=True)
-    floor_num: int = Column(Integer, nullable=False)
-    quest_type: int = Column(Integer, nullable=False)
-    wave_group_id: int = Column(Integer, nullable=False)
-    limit_time: int = Column(Integer, nullable=False)
-    matching_coefficient: float = Column(Float, nullable=False)
-    parts_hp_save_flag: int = Column(Integer, nullable=False)
-    energy_reset_flag: int = Column(Integer, nullable=False)
-    emax: int = Column(Integer, nullable=False)
-    reward_image_1: int = Column(Integer, nullable=False)
-    reward_image_2: int = Column(Integer, nullable=False)
-    reward_image_3: int = Column(Integer, nullable=False)
-    reward_image_4: int = Column(Integer, nullable=False)
-    reward_image_5: int = Column(Integer, nullable=False)
-    reward_image_6: int = Column(Integer, nullable=False)
-    reward_coin: int = Column(Integer, nullable=False)
-    chest_id: int = Column(Integer, nullable=False)
-    odds_group_id: int = Column(Integer, nullable=False)
-    background: int = Column(Integer, nullable=False)
-    dungeon_quest_detail_bg_id: int = Column(Integer, nullable=False)
-    dungeon_quest_detail_bg_position: int = Column(Integer, nullable=False)
-    dungeon_quest_detail_monster_size: float = Column(Float, nullable=False)
-    dungeon_quest_detail_monster_position_x_1: float = Column(Float, nullable=False)
-    dungeon_quest_detail_monster_position_x_2: float = Column(Float, nullable=False)
-    dungeon_quest_detail_monster_height: float = Column(Float, nullable=False)
-    multi_target_effect_time: float = Column(Float, nullable=False)
-    wave_bgm_sheet_id_1: str = Column(Text, nullable=False)
-    wave_bgm_que_id_1: str = Column(Text, nullable=False)
+    quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    dungeon_area_id: Mapped[int] = mapped_column(Integer)
+    floor_num: Mapped[int] = mapped_column(Integer)
+    quest_type: Mapped[int] = mapped_column(Integer)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    matching_coefficient: Mapped[float] = mapped_column(Float)
+    parts_hp_save_flag: Mapped[int] = mapped_column(Integer)
+    energy_reset_flag: Mapped[int] = mapped_column(Integer)
+    emax: Mapped[int] = mapped_column(Integer)
+    reward_image_1: Mapped[int] = mapped_column(Integer)
+    reward_image_2: Mapped[int] = mapped_column(Integer)
+    reward_image_3: Mapped[int] = mapped_column(Integer)
+    reward_image_4: Mapped[int] = mapped_column(Integer)
+    reward_image_5: Mapped[int] = mapped_column(Integer)
+    reward_image_6: Mapped[int] = mapped_column(Integer)
+    reward_coin: Mapped[int] = mapped_column(Integer)
+    chest_id: Mapped[int] = mapped_column(Integer)
+    odds_group_id: Mapped[int] = mapped_column(Integer)
+    background: Mapped[int] = mapped_column(Integer)
+    dungeon_quest_detail_bg_id: Mapped[int] = mapped_column(Integer)
+    dungeon_quest_detail_bg_position: Mapped[int] = mapped_column(Integer)
+    dungeon_quest_detail_monster_size: Mapped[float] = mapped_column(Float)
+    dungeon_quest_detail_monster_position_x_1: Mapped[float] = mapped_column(Float)
+    dungeon_quest_detail_monster_position_x_2: Mapped[float] = mapped_column(Float)
+    dungeon_quest_detail_monster_height: Mapped[float] = mapped_column(Float)
+    multi_target_effect_time: Mapped[float] = mapped_column(Float)
+    wave_bgm_sheet_id_1: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_1: Mapped[str] = mapped_column(Text)
 
 
-class DungeonSkipDatum(DeclarativeBase, Base["DungeonSkipDatum"]):
+class DungeonSkipDatum(Base):
     __tablename__ = 'dungeon_skip_data'
 
-    area_id: int = Column(Integer, primary_key=True)
-    skip_motion_id: int = Column(Integer, nullable=False)
-    skip_bg_id: int = Column(Integer, nullable=False)
-    skip_position_x: int = Column(Integer, nullable=False)
-    skip_position_y: int = Column(Integer, nullable=False)
-    skip_scale_x: float = Column(Float, nullable=False)
-    skip_scale_y: float = Column(Float, nullable=False)
+    area_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    skip_motion_id: Mapped[int] = mapped_column(Integer)
+    skip_bg_id: Mapped[int] = mapped_column(Integer)
+    skip_position_x: Mapped[int] = mapped_column(Integer)
+    skip_position_y: Mapped[int] = mapped_column(Integer)
+    skip_scale_x: Mapped[float] = mapped_column(Float)
+    skip_scale_y: Mapped[float] = mapped_column(Float)
 
 
-class DungeonSpecialBattle(DeclarativeBase, Base["DungeonSpecialBattle"]):
+class DungeonSpecialBattle(Base):
     __tablename__ = 'dungeon_special_battle'
     __table_args__ = (
-        Index('dungeon_special_battle_0_quest_id_1_mode', 'quest_id', 'mode', unique=True),
+        Index('dungeon_special_battle_0_quest_id', 'quest_id'),
+        Index('dungeon_special_battle_0_quest_id_1_mode', 'quest_id', 'mode', unique=True)
     )
 
-    special_battle_id: int = Column(Integer, primary_key=True)
-    quest_id: int = Column(Integer, nullable=False, index=True)
-    mode: int = Column(Integer, nullable=False)
-    purpose_type: int = Column(Integer, nullable=False)
-    parts_hp_save_flag: int = Column(Integer, nullable=False)
-    trigger_hp: int = Column(Integer, nullable=False)
-    wave_group_id: int = Column(Integer, nullable=False)
-    action_start_second: float = Column(Float, nullable=False)
-    hp_gauge_color_flag: int = Column(Integer, nullable=False)
-    start_idle_trigger: int = Column(Integer, nullable=False)
-    appear_time: float = Column(Float, nullable=False)
-    detail_boss_bg_size: float = Column(Float, nullable=False)
-    detail_boss_bg_height: float = Column(Float, nullable=False)
-    detail_boss_motion: str = Column(Text, nullable=False)
+    special_battle_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    quest_id: Mapped[int] = mapped_column(Integer)
+    mode: Mapped[int] = mapped_column(Integer)
+    purpose_type: Mapped[int] = mapped_column(Integer)
+    parts_hp_save_flag: Mapped[int] = mapped_column(Integer)
+    trigger_hp: Mapped[int] = mapped_column(Integer)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    action_start_second: Mapped[float] = mapped_column(Float)
+    hp_gauge_color_flag: Mapped[int] = mapped_column(Integer)
+    start_idle_trigger: Mapped[int] = mapped_column(Integer)
+    appear_time: Mapped[float] = mapped_column(Float)
+    detail_boss_bg_size: Mapped[float] = mapped_column(Float)
+    detail_boss_bg_height: Mapped[float] = mapped_column(Float)
+    detail_boss_motion: Mapped[str] = mapped_column(Text)
 
 
-class DungeonSpecialEnemySetting(DeclarativeBase, Base["DungeonSpecialEnemySetting"]):
+class DungeonSpecialEnemySetting(Base):
     __tablename__ = 'dungeon_special_enemy_setting'
     __table_args__ = (
         UniqueConstraint('special_battle_id', 'disp_order'),
+        Index('dungeon_special_enemy_setting_0_special_battle_id', 'special_battle_id'),
         Index('dungeon_special_enemy_setting_0_special_battle_id_1_enemy_identify', 'special_battle_id', 'enemy_identify', unique=True)
     )
 
-    id: int = Column(Integer, primary_key=True)
-    special_battle_id: int = Column(Integer, nullable=False, index=True)
-    enemy_identify: int = Column(Integer, nullable=False)
-    disp_order: int = Column(Integer, nullable=False)
-    must_kill_flag: int = Column(Integer, nullable=False)
-    detail_offset_x: float = Column(Float, nullable=False)
-    detail_offset_y: float = Column(Float, nullable=False)
-    detail_scale: float = Column(Float, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    special_battle_id: Mapped[int] = mapped_column(Integer)
+    enemy_identify: Mapped[int] = mapped_column(Integer)
+    disp_order: Mapped[int] = mapped_column(Integer)
+    must_kill_flag: Mapped[int] = mapped_column(Integer)
+    detail_offset_x: Mapped[float] = mapped_column(Float)
+    detail_offset_y: Mapped[float] = mapped_column(Float)
+    detail_scale: Mapped[float] = mapped_column(Float)
 
 
-class EReduction(DeclarativeBase, Base["EReduction"]):
+class DvsStoryDatum(Base):
+    __tablename__ = 'dvs_story_data'
+    __table_args__ = (
+        Index('dvs_story_data_0_dvs_story_type', 'dvs_story_type'),
+        Index('dvs_story_data_0_original_event_id', 'original_event_id')
+    )
+
+    sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    original_event_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    sub_title: Mapped[str] = mapped_column(Text)
+    detail_title: Mapped[str] = mapped_column(Text)
+    detail_description: Mapped[str] = mapped_column(Text)
+    dvs_story_type: Mapped[int] = mapped_column(Integer)
+    is_last: Mapped[int] = mapped_column(Integer)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+
+
+class EReduction(Base):
     __tablename__ = 'e_reduction'
 
-    id: int = Column(Integer, primary_key=True)
-    border: int = Column(Integer, nullable=False)
-    threshold_1: int = Column(Integer, nullable=False)
-    value_1: float = Column(Float, nullable=False)
-    threshold_2: int = Column(Integer, nullable=False)
-    value_2: float = Column(Float, nullable=False)
-    threshold_3: int = Column(Integer, nullable=False)
-    value_3: float = Column(Float, nullable=False)
-    threshold_4: int = Column(Integer, nullable=False)
-    value_4: float = Column(Float, nullable=False)
-    threshold_5: int = Column(Integer, nullable=False)
-    value_5: float = Column(Float, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    border: Mapped[int] = mapped_column(Integer)
+    threshold_1: Mapped[int] = mapped_column(Integer)
+    value_1: Mapped[float] = mapped_column(Float)
+    threshold_2: Mapped[int] = mapped_column(Integer)
+    value_2: Mapped[float] = mapped_column(Float)
+    threshold_3: Mapped[int] = mapped_column(Integer)
+    value_3: Mapped[float] = mapped_column(Float)
+    threshold_4: Mapped[int] = mapped_column(Integer)
+    value_4: Mapped[float] = mapped_column(Float)
+    threshold_5: Mapped[int] = mapped_column(Integer)
+    value_5: Mapped[float] = mapped_column(Float)
 
 
-class EmblemDatum(DeclarativeBase, Base["EmblemDatum"]):
+class EmblemDatum(Base):
     __tablename__ = 'emblem_data'
 
-    emblem_id: int = Column(Integer, primary_key=True)
-    disp_oder: int = Column(Integer, nullable=False)
-    type: int = Column(Integer, nullable=False)
-    emblem_name: str = Column(Text, nullable=False)
-    description_mission_id: int = Column(Integer, nullable=False)
-    event_emblem: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    emblem_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    disp_oder: Mapped[int] = mapped_column(Integer)
+    type: Mapped[int] = mapped_column(Integer)
+    emblem_name: Mapped[str] = mapped_column(Text)
+    description_mission_id: Mapped[int] = mapped_column(Integer)
+    event_emblem: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class EmblemMissionDatum(DeclarativeBase, Base["EmblemMissionDatum"]):
+class EmblemMissionDatum(Base):
     __tablename__ = 'emblem_mission_data'
 
-    mission_id: int = Column(Integer, primary_key=True)
-    disp_group: int = Column(Integer, nullable=False)
-    category_icon: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    mission_condition: int = Column(Integer, nullable=False)
-    condition_value_1: int = Column(Integer, nullable=False)
-    condition_value_2: int = Column(Integer, nullable=False)
-    condition_value_3: int = Column(Integer, nullable=False)
-    condition_num: int = Column(Integer, nullable=False)
-    mission_reward_id: int = Column(Integer, nullable=False)
-    system_id: int = Column(Integer, nullable=False)
-    visible_flag: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    disp_group: Mapped[int] = mapped_column(Integer)
+    category_icon: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    mission_condition: Mapped[int] = mapped_column(Integer)
+    condition_value_1: Mapped[int] = mapped_column(Integer)
+    condition_value_2: Mapped[int] = mapped_column(Integer)
+    condition_value_3: Mapped[int] = mapped_column(Integer)
+    condition_num: Mapped[int] = mapped_column(Integer)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    system_id: Mapped[int] = mapped_column(Integer)
+    visible_flag: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class EmblemMissionRewardDatum(DeclarativeBase, Base["EmblemMissionRewardDatum"]):
+class EmblemMissionRewardDatum(Base):
     __tablename__ = 'emblem_mission_reward_data'
+    __table_args__ = (
+        Index('emblem_mission_reward_data_0_mission_reward_id', 'mission_reward_id'),
+        Index('emblem_mission_reward_data_0_reward_id', 'reward_id')
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    mission_reward_id: int = Column(Integer, nullable=False, index=True)
-    reward_type: int = Column(Integer, nullable=False)
-    reward_id: int = Column(Integer, nullable=False, index=True)
-    reward_num: int = Column(Integer, nullable=False)
-    icon_type: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_num: Mapped[int] = mapped_column(Integer)
+    icon_type: Mapped[int] = mapped_column(Integer)
 
 
-class EnemyEnableVoice(DeclarativeBase, Base["EnemyEnableVoice"]):
+class EnemyEnableVoice(Base):
     __tablename__ = 'enemy_enable_voice'
 
-    unit_id: int = Column(Integer, primary_key=True)
-    voice_id: int = Column(Integer, nullable=False)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    voice_id: Mapped[int] = mapped_column(Integer)
 
 
-class EnemyIgnoreSkillRf(DeclarativeBase, Base["EnemyIgnoreSkillRf"]):
+class EnemyIgnoreSkillRf(Base):
     __tablename__ = 'enemy_ignore_skill_rf'
 
-    enemy_id: int = Column(Integer, primary_key=True)
+    enemy_id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
 
-class EnemyMPart(DeclarativeBase, Base["EnemyMPart"]):
+class EnemyMParts(Base):
     __tablename__ = 'enemy_m_parts'
 
-    enemy_id: int = Column(Integer, primary_key=True)
-    name: str = Column(Text, nullable=False)
-    child_enemy_parameter_1: int = Column(Integer, nullable=False)
-    child_enemy_parameter_2: int = Column(Integer, nullable=False)
-    child_enemy_parameter_3: int = Column(Integer, nullable=False)
-    child_enemy_parameter_4: int = Column(Integer, nullable=False)
-    child_enemy_parameter_5: int = Column(Integer, nullable=False)
+    enemy_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    child_enemy_parameter_1: Mapped[int] = mapped_column(Integer)
+    child_enemy_parameter_2: Mapped[int] = mapped_column(Integer)
+    child_enemy_parameter_3: Mapped[int] = mapped_column(Integer)
+    child_enemy_parameter_4: Mapped[int] = mapped_column(Integer)
+    child_enemy_parameter_5: Mapped[int] = mapped_column(Integer)
 
 
-class EnemyParameter(DeclarativeBase, Base["EnemyParameter"]):
+class EnemyParameter(Base):
     __tablename__ = 'enemy_parameter'
 
-    enemy_id: int = Column(Integer, primary_key=True)
-    unit_id: int = Column(Integer, nullable=False)
-    name: str = Column(Text, nullable=False)
-    level: int = Column(Integer, nullable=False)
-    rarity: int = Column(Integer, nullable=False)
-    promotion_level: int = Column(Integer, nullable=False)
-    hp: int = Column(Integer, nullable=False)
-    atk: int = Column(Integer, nullable=False)
-    magic_str: int = Column(Integer, nullable=False)
-    _def: int = Column('def', Integer, nullable=False)
-    magic_def: int = Column(Integer, nullable=False)
-    physical_critical: int = Column(Integer, nullable=False)
-    magic_critical: int = Column(Integer, nullable=False)
-    wave_hp_recovery: int = Column(Integer, nullable=False)
-    wave_energy_recovery: int = Column(Integer, nullable=False)
-    dodge: int = Column(Integer, nullable=False)
-    physical_penetrate: int = Column(Integer, nullable=False)
-    magic_penetrate: int = Column(Integer, nullable=False)
-    life_steal: int = Column(Integer, nullable=False)
-    hp_recovery_rate: int = Column(Integer, nullable=False)
-    energy_recovery_rate: int = Column(Integer, nullable=False)
-    energy_reduce_rate: int = Column(Integer, nullable=False)
-    union_burst_level: int = Column(Integer, nullable=False)
-    main_skill_lv_1: int = Column(Integer, nullable=False)
-    main_skill_lv_2: int = Column(Integer, nullable=False)
-    main_skill_lv_3: int = Column(Integer, nullable=False)
-    main_skill_lv_4: int = Column(Integer, nullable=False)
-    main_skill_lv_5: int = Column(Integer, nullable=False)
-    main_skill_lv_6: int = Column(Integer, nullable=False)
-    main_skill_lv_7: int = Column(Integer, nullable=False)
-    main_skill_lv_8: int = Column(Integer, nullable=False)
-    main_skill_lv_9: int = Column(Integer, nullable=False)
-    main_skill_lv_10: int = Column(Integer, nullable=False)
-    ex_skill_lv_1: int = Column(Integer, nullable=False)
-    ex_skill_lv_2: int = Column(Integer, nullable=False)
-    ex_skill_lv_3: int = Column(Integer, nullable=False)
-    ex_skill_lv_4: int = Column(Integer, nullable=False)
-    ex_skill_lv_5: int = Column(Integer, nullable=False)
-    resist_status_id: int = Column(Integer, nullable=False)
-    resist_variation_id: int = Column(Integer, nullable=False)
-    accuracy: int = Column(Integer, nullable=False)
-    unique_equipment_flag_1: int = Column(Integer, nullable=False)
-    break_durability: int = Column(Integer, nullable=False)
-    virtual_hp: int = Column(Integer, nullable=False)
+    enemy_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    name: Mapped[str] = mapped_column(Text)
+    level: Mapped[int] = mapped_column(Integer)
+    rarity: Mapped[int] = mapped_column(Integer)
+    promotion_level: Mapped[int] = mapped_column(Integer)
+    hp: Mapped[int] = mapped_column(Integer)
+    atk: Mapped[int] = mapped_column(Integer)
+    magic_str: Mapped[int] = mapped_column(Integer)
+    def_: Mapped[int] = mapped_column('def', Integer)
+    magic_def: Mapped[int] = mapped_column(Integer)
+    physical_critical: Mapped[int] = mapped_column(Integer)
+    magic_critical: Mapped[int] = mapped_column(Integer)
+    wave_hp_recovery: Mapped[int] = mapped_column(Integer)
+    wave_energy_recovery: Mapped[int] = mapped_column(Integer)
+    dodge: Mapped[int] = mapped_column(Integer)
+    physical_penetrate: Mapped[int] = mapped_column(Integer)
+    magic_penetrate: Mapped[int] = mapped_column(Integer)
+    life_steal: Mapped[int] = mapped_column(Integer)
+    hp_recovery_rate: Mapped[int] = mapped_column(Integer)
+    energy_recovery_rate: Mapped[int] = mapped_column(Integer)
+    energy_reduce_rate: Mapped[int] = mapped_column(Integer)
+    union_burst_level: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_1: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_2: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_3: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_4: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_5: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_6: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_7: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_8: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_9: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_10: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_1: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_2: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_3: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_4: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_5: Mapped[int] = mapped_column(Integer)
+    resist_status_id: Mapped[int] = mapped_column(Integer)
+    resist_variation_id: Mapped[int] = mapped_column(Integer)
+    accuracy: Mapped[int] = mapped_column(Integer)
+    unique_equipment_flag_1: Mapped[int] = mapped_column(Integer)
+    break_durability: Mapped[int] = mapped_column(Integer)
+    virtual_hp: Mapped[int] = mapped_column(Integer)
 
-class Reward:
-    def __init__(self, reward_type: int, reward_id: int, reward_num: int, odds: int):
-        self.reward_item: ItemType = (eInventoryType(reward_type), reward_id)
-        self.reward_num = reward_num
-        self.odds = odds
 
-class EnemyRewardDatum(DeclarativeBase, Base["EnemyRewardDatum"]):
+class EnemyRewardDatum(Base):
     __tablename__ = 'enemy_reward_data'
 
-    drop_reward_id: int = Column(Integer, primary_key=True)
-    drop_count: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    odds_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    odds_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    odds_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    odds_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
-    odds_5: int = Column(Integer, nullable=False)
-
-    def get_rewards(self) -> Iterator[Reward]:
-        yield Reward(self.reward_type_1, self.reward_id_1, self.reward_num_1, self.odds_1)
-        yield Reward(self.reward_type_2, self.reward_id_2, self.reward_num_2, self.odds_2)
-        yield Reward(self.reward_type_3, self.reward_id_3, self.reward_num_3, self.odds_3)
-        yield Reward(self.reward_type_4, self.reward_id_4, self.reward_num_4, self.odds_4)
-        yield Reward(self.reward_type_5, self.reward_id_5, self.reward_num_5, self.odds_5)
+    drop_reward_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drop_count: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    odds_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    odds_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    odds_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    odds_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
+    odds_5: Mapped[int] = mapped_column(Integer)
 
 
-class EquipmentCraft(DeclarativeBase, Base["EquipmentCraft"]):
+class EnvironmentSkillDetail(Base):
+    __tablename__ = 'environment_skill_detail'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
+    icon_type: Mapped[int] = mapped_column(Integer)
+
+
+class EquipmentCraft(Base):
     __tablename__ = 'equipment_craft'
 
-    equipment_id: int = Column(Integer, primary_key=True)
-    crafted_cost: int = Column(Integer, nullable=False)
-    condition_equipment_id_1: int = Column(Integer, nullable=False)
-    consume_num_1: int = Column(Integer, nullable=False)
-    condition_equipment_id_2: int = Column(Integer, nullable=False)
-    consume_num_2: int = Column(Integer, nullable=False)
-    condition_equipment_id_3: int = Column(Integer, nullable=False)
-    consume_num_3: int = Column(Integer, nullable=False)
-    condition_equipment_id_4: int = Column(Integer, nullable=False)
-    consume_num_4: int = Column(Integer, nullable=False)
-    condition_equipment_id_5: int = Column(Integer, nullable=False)
-    consume_num_5: int = Column(Integer, nullable=False)
-    condition_equipment_id_6: int = Column(Integer, nullable=False)
-    consume_num_6: int = Column(Integer, nullable=False)
-    condition_equipment_id_7: int = Column(Integer, nullable=False)
-    consume_num_7: int = Column(Integer, nullable=False)
-    condition_equipment_id_8: int = Column(Integer, nullable=False)
-    consume_num_8: int = Column(Integer, nullable=False)
-    condition_equipment_id_9: int = Column(Integer, nullable=False)
-    consume_num_9: int = Column(Integer, nullable=False)
-    condition_equipment_id_10: int = Column(Integer, nullable=False)
-    consume_num_10: int = Column(Integer, nullable=False)
-
-    def get_materials(self) -> Iterator[Tuple[ItemType, int]]:
-        yield ((eInventoryType.Equip, self.condition_equipment_id_1), self.consume_num_1)
-        yield ((eInventoryType.Equip, self.condition_equipment_id_2), self.consume_num_2)
-        yield ((eInventoryType.Equip, self.condition_equipment_id_3), self.consume_num_3)
-        yield ((eInventoryType.Equip, self.condition_equipment_id_4), self.consume_num_4)
-        yield ((eInventoryType.Equip, self.condition_equipment_id_5), self.consume_num_5)
-        yield ((eInventoryType.Equip, self.condition_equipment_id_6), self.consume_num_6)
-        yield ((eInventoryType.Equip, self.condition_equipment_id_7), self.consume_num_7)
-        yield ((eInventoryType.Equip, self.condition_equipment_id_8), self.consume_num_8)
-        yield ((eInventoryType.Equip, self.condition_equipment_id_9), self.consume_num_9)
-        yield ((eInventoryType.Equip, self.condition_equipment_id_10), self.consume_num_10)
+    equipment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    crafted_cost: Mapped[int] = mapped_column(Integer)
+    condition_equipment_id_1: Mapped[int] = mapped_column(Integer)
+    consume_num_1: Mapped[int] = mapped_column(Integer)
+    condition_equipment_id_2: Mapped[int] = mapped_column(Integer)
+    consume_num_2: Mapped[int] = mapped_column(Integer)
+    condition_equipment_id_3: Mapped[int] = mapped_column(Integer)
+    consume_num_3: Mapped[int] = mapped_column(Integer)
+    condition_equipment_id_4: Mapped[int] = mapped_column(Integer)
+    consume_num_4: Mapped[int] = mapped_column(Integer)
+    condition_equipment_id_5: Mapped[int] = mapped_column(Integer)
+    consume_num_5: Mapped[int] = mapped_column(Integer)
+    condition_equipment_id_6: Mapped[int] = mapped_column(Integer)
+    consume_num_6: Mapped[int] = mapped_column(Integer)
+    condition_equipment_id_7: Mapped[int] = mapped_column(Integer)
+    consume_num_7: Mapped[int] = mapped_column(Integer)
+    condition_equipment_id_8: Mapped[int] = mapped_column(Integer)
+    consume_num_8: Mapped[int] = mapped_column(Integer)
+    condition_equipment_id_9: Mapped[int] = mapped_column(Integer)
+    consume_num_9: Mapped[int] = mapped_column(Integer)
+    condition_equipment_id_10: Mapped[int] = mapped_column(Integer)
+    consume_num_10: Mapped[int] = mapped_column(Integer)
 
 
-class EquipmentDatum(DeclarativeBase, Base["EquipmentDatum"]):
+class EquipmentDatum(Base):
     __tablename__ = 'equipment_data'
+    __table_args__ = (
+        Index('equipment_data_0_original_equipment_id', 'original_equipment_id'),
+    )
 
-    equipment_id: int = Column(Integer, primary_key=True)
-    equipment_name: str = Column(Text, nullable=False)
-    description: str = Column(Text, nullable=False)
-    promotion_level: int = Column(Integer, nullable=False)
-    craft_flg: int = Column(Integer, nullable=False)
-    equipment_enhance_point: int = Column(Integer, nullable=False)
-    sale_price: int = Column(Integer, nullable=False)
-    require_level: int = Column(Integer, nullable=False)
-    hp: float = Column(Float, nullable=False)
-    atk: float = Column(Float, nullable=False)
-    magic_str: float = Column(Float, nullable=False)
-    _def: float = Column('def', Float, nullable=False)
-    magic_def: float = Column(Float, nullable=False)
-    physical_critical: float = Column(Float, nullable=False)
-    magic_critical: float = Column(Float, nullable=False)
-    wave_hp_recovery: float = Column(Float, nullable=False)
-    wave_energy_recovery: float = Column(Float, nullable=False)
-    dodge: float = Column(Float, nullable=False)
-    physical_penetrate: float = Column(Float, nullable=False)
-    magic_penetrate: float = Column(Float, nullable=False)
-    life_steal: float = Column(Float, nullable=False)
-    hp_recovery_rate: float = Column(Float, nullable=False)
-    energy_recovery_rate: float = Column(Float, nullable=False)
-    energy_reduce_rate: float = Column(Float, nullable=False)
-    enable_donation: int = Column(Integer, nullable=False)
-    accuracy: float = Column(Float, nullable=False)
-    display_item: int = Column(Integer, nullable=False)
-    item_type: int = Column(Integer, nullable=False)
+    equipment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    equipment_name: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
+    original_equipment_id: Mapped[int] = mapped_column(Integer)
+    promotion_level: Mapped[int] = mapped_column(Integer)
+    equipment_type: Mapped[int] = mapped_column(Integer)
+    equipment_category: Mapped[int] = mapped_column(Integer)
+    craft_flg: Mapped[int] = mapped_column(Integer)
+    equipment_enhance_point: Mapped[int] = mapped_column(Integer)
+    sale_price: Mapped[int] = mapped_column(Integer)
+    require_level: Mapped[int] = mapped_column(Integer)
+    hp: Mapped[float] = mapped_column(Float)
+    atk: Mapped[float] = mapped_column(Float)
+    magic_str: Mapped[float] = mapped_column(Float)
+    def_: Mapped[float] = mapped_column('def', Float)
+    magic_def: Mapped[float] = mapped_column(Float)
+    physical_critical: Mapped[float] = mapped_column(Float)
+    magic_critical: Mapped[float] = mapped_column(Float)
+    wave_hp_recovery: Mapped[float] = mapped_column(Float)
+    wave_energy_recovery: Mapped[float] = mapped_column(Float)
+    dodge: Mapped[float] = mapped_column(Float)
+    physical_penetrate: Mapped[float] = mapped_column(Float)
+    magic_penetrate: Mapped[float] = mapped_column(Float)
+    life_steal: Mapped[float] = mapped_column(Float)
+    hp_recovery_rate: Mapped[float] = mapped_column(Float)
+    energy_recovery_rate: Mapped[float] = mapped_column(Float)
+    energy_reduce_rate: Mapped[float] = mapped_column(Float)
+    enable_donation: Mapped[int] = mapped_column(Integer)
+    accuracy: Mapped[float] = mapped_column(Float)
+    display_item: Mapped[int] = mapped_column(Integer)
+    item_type: Mapped[int] = mapped_column(Integer)
 
 
-class EquipmentDonation(DeclarativeBase, Base["EquipmentDonation"]):
+class EquipmentDonation(Base):
     __tablename__ = 'equipment_donation'
 
-    team_level: int = Column(Integer, primary_key=True)
-    donation_num_once: int = Column(Integer, nullable=False)
-    donation_num_daily: int = Column(Integer, nullable=False)
-    request_num_once: int = Column(Integer, nullable=False)
+    team_level: Mapped[int] = mapped_column(Integer, primary_key=True)
+    donation_num_once: Mapped[int] = mapped_column(Integer)
+    donation_num_daily: Mapped[int] = mapped_column(Integer)
+    request_num_once: Mapped[int] = mapped_column(Integer)
 
 
-class EquipmentEnhanceDatum(DeclarativeBase, Base["EquipmentEnhanceDatum"]):
+class EquipmentEnhanceDatum(Base):
     __tablename__ = 'equipment_enhance_data'
 
-    promotion_level: int = Column(Integer, primary_key=True, nullable=False)
-    equipment_enhance_level: int = Column(Integer, primary_key=True, nullable=False)
-    needed_point: int = Column(Integer, nullable=False)
-    total_point: int = Column(Integer, nullable=False)
+    promotion_level: Mapped[int] = mapped_column(Integer, primary_key=True)
+    equipment_enhance_level: Mapped[int] = mapped_column(Integer, primary_key=True)
+    needed_point: Mapped[int] = mapped_column(Integer)
+    total_point: Mapped[int] = mapped_column(Integer)
 
 
-class EquipmentEnhanceRate(DeclarativeBase, Base["EquipmentEnhanceRate"]):
+class EquipmentEnhanceRate(Base):
     __tablename__ = 'equipment_enhance_rate'
 
-    equipment_id: int = Column(Integer, primary_key=True)
-    equipment_name: str = Column(Text, nullable=False)
-    description: str = Column(Text, nullable=False)
-    promotion_level: int = Column(Integer, nullable=False)
-    hp: float = Column(Float, nullable=False)
-    atk: float = Column(Float, nullable=False)
-    magic_str: float = Column(Float, nullable=False)
-    _def: float = Column('def', Float, nullable=False)
-    magic_def: float = Column(Float, nullable=False)
-    physical_critical: float = Column(Float, nullable=False)
-    magic_critical: float = Column(Float, nullable=False)
-    wave_hp_recovery: float = Column(Float, nullable=False)
-    wave_energy_recovery: float = Column(Float, nullable=False)
-    dodge: float = Column(Float, nullable=False)
-    physical_penetrate: float = Column(Float, nullable=False)
-    magic_penetrate: float = Column(Float, nullable=False)
-    life_steal: float = Column(Float, nullable=False)
-    hp_recovery_rate: float = Column(Float, nullable=False)
-    energy_recovery_rate: float = Column(Float, nullable=False)
-    energy_reduce_rate: float = Column(Float, nullable=False)
-    accuracy: float = Column(Float, nullable=False)
+    equipment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    equipment_name: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
+    promotion_level: Mapped[int] = mapped_column(Integer)
+    hp: Mapped[float] = mapped_column(Float)
+    atk: Mapped[float] = mapped_column(Float)
+    magic_str: Mapped[float] = mapped_column(Float)
+    def_: Mapped[float] = mapped_column('def', Float)
+    magic_def: Mapped[float] = mapped_column(Float)
+    physical_critical: Mapped[float] = mapped_column(Float)
+    magic_critical: Mapped[float] = mapped_column(Float)
+    wave_hp_recovery: Mapped[float] = mapped_column(Float)
+    wave_energy_recovery: Mapped[float] = mapped_column(Float)
+    dodge: Mapped[float] = mapped_column(Float)
+    physical_penetrate: Mapped[float] = mapped_column(Float)
+    magic_penetrate: Mapped[float] = mapped_column(Float)
+    life_steal: Mapped[float] = mapped_column(Float)
+    hp_recovery_rate: Mapped[float] = mapped_column(Float)
+    energy_recovery_rate: Mapped[float] = mapped_column(Float)
+    energy_reduce_rate: Mapped[float] = mapped_column(Float)
+    accuracy: Mapped[float] = mapped_column(Float)
 
 
-class EventBgDatum(DeclarativeBase, Base["EventBgDatum"]):
+class EventBgDatum(Base):
     __tablename__ = 'event_bg_data'
 
-    event_id: int = Column(Integer, primary_key=True)
-    bg_id: int = Column(Integer, nullable=False)
-    start_date: str = Column(Text, nullable=False)
-    end_date: str = Column(Text, nullable=False)
+    event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    bg_id: Mapped[int] = mapped_column(Integer)
+    start_date: Mapped[str] = mapped_column(Text)
+    end_date: Mapped[str] = mapped_column(Text)
 
 
-class EventBossTreasureBox(DeclarativeBase, Base["EventBossTreasureBox"]):
+class EventBossTreasureBox(Base):
     __tablename__ = 'event_boss_treasure_box'
 
-    event_boss_treasure_box_id: int = Column(Integer, primary_key=True)
-    treasure_type_1: int = Column(Integer, nullable=False)
-    event_boss_treasure_content_id_1: int = Column(Integer, nullable=False)
-    each_odds_1: int = Column(Integer, nullable=False)
-    treasure_type_2: int = Column(Integer, nullable=False)
-    event_boss_treasure_content_id_2: int = Column(Integer, nullable=False)
-    each_odds_2: int = Column(Integer, nullable=False)
-    treasure_type_3: int = Column(Integer, nullable=False)
-    event_boss_treasure_content_id_3: int = Column(Integer, nullable=False)
-    each_odds_3: int = Column(Integer, nullable=False)
-    treasure_type_4: int = Column(Integer, nullable=False)
-    event_boss_treasure_content_id_4: int = Column(Integer, nullable=False)
-    each_odds_4: int = Column(Integer, nullable=False)
-    treasure_type_5: int = Column(Integer, nullable=False)
-    event_boss_treasure_content_id_5: int = Column(Integer, nullable=False)
-    each_odds_5: int = Column(Integer, nullable=False)
-    treasure_type_6: int = Column(Integer, nullable=False)
-    event_boss_treasure_content_id_6: int = Column(Integer, nullable=False)
-    each_odds_6: int = Column(Integer, nullable=False)
-    treasure_type_7: int = Column(Integer, nullable=False)
-    event_boss_treasure_content_id_7: int = Column(Integer, nullable=False)
-    each_odds_7: int = Column(Integer, nullable=False)
-    treasure_type_8: int = Column(Integer, nullable=False)
-    event_boss_treasure_content_id_8: int = Column(Integer, nullable=False)
-    each_odds_8: int = Column(Integer, nullable=False)
-    treasure_type_9: int = Column(Integer, nullable=False)
-    event_boss_treasure_content_id_9: int = Column(Integer, nullable=False)
-    each_odds_9: int = Column(Integer, nullable=False)
-    treasure_type_10: int = Column(Integer, nullable=False)
-    event_boss_treasure_content_id_10: int = Column(Integer, nullable=False)
-    each_odds_10: int = Column(Integer, nullable=False)
+    event_boss_treasure_box_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    treasure_type_1: Mapped[int] = mapped_column(Integer)
+    event_boss_treasure_content_id_1: Mapped[int] = mapped_column(Integer)
+    each_odds_1: Mapped[int] = mapped_column(Integer)
+    treasure_type_2: Mapped[int] = mapped_column(Integer)
+    event_boss_treasure_content_id_2: Mapped[int] = mapped_column(Integer)
+    each_odds_2: Mapped[int] = mapped_column(Integer)
+    treasure_type_3: Mapped[int] = mapped_column(Integer)
+    event_boss_treasure_content_id_3: Mapped[int] = mapped_column(Integer)
+    each_odds_3: Mapped[int] = mapped_column(Integer)
+    treasure_type_4: Mapped[int] = mapped_column(Integer)
+    event_boss_treasure_content_id_4: Mapped[int] = mapped_column(Integer)
+    each_odds_4: Mapped[int] = mapped_column(Integer)
+    treasure_type_5: Mapped[int] = mapped_column(Integer)
+    event_boss_treasure_content_id_5: Mapped[int] = mapped_column(Integer)
+    each_odds_5: Mapped[int] = mapped_column(Integer)
+    treasure_type_6: Mapped[int] = mapped_column(Integer)
+    event_boss_treasure_content_id_6: Mapped[int] = mapped_column(Integer)
+    each_odds_6: Mapped[int] = mapped_column(Integer)
+    treasure_type_7: Mapped[int] = mapped_column(Integer)
+    event_boss_treasure_content_id_7: Mapped[int] = mapped_column(Integer)
+    each_odds_7: Mapped[int] = mapped_column(Integer)
+    treasure_type_8: Mapped[int] = mapped_column(Integer)
+    event_boss_treasure_content_id_8: Mapped[int] = mapped_column(Integer)
+    each_odds_8: Mapped[int] = mapped_column(Integer)
+    treasure_type_9: Mapped[int] = mapped_column(Integer)
+    event_boss_treasure_content_id_9: Mapped[int] = mapped_column(Integer)
+    each_odds_9: Mapped[int] = mapped_column(Integer)
+    treasure_type_10: Mapped[int] = mapped_column(Integer)
+    event_boss_treasure_content_id_10: Mapped[int] = mapped_column(Integer)
+    each_odds_10: Mapped[int] = mapped_column(Integer)
 
 
-class EventBossTreasureContent(DeclarativeBase, Base["EventBossTreasureContent"]):
+class EventBossTreasureContent(Base):
     __tablename__ = 'event_boss_treasure_content'
 
-    event_boss_treasure_content_id: int = Column(Integer, primary_key=True)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    odds_file_1: str = Column(Text, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    odds_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    odds_file_2: str = Column(Text, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    odds_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    odds_file_3: str = Column(Text, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    odds_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    odds_file_4: str = Column(Text, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    odds_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    odds_file_5: str = Column(Text, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
-    odds_5: int = Column(Integer, nullable=False)
+    event_boss_treasure_content_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    odds_file_1: Mapped[str] = mapped_column(Text)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    odds_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    odds_file_2: Mapped[str] = mapped_column(Text)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    odds_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    odds_file_3: Mapped[str] = mapped_column(Text)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    odds_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    odds_file_4: Mapped[str] = mapped_column(Text)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    odds_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    odds_file_5: Mapped[str] = mapped_column(Text)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
+    odds_5: Mapped[int] = mapped_column(Integer)
 
 
-class EventEffectSetting(DeclarativeBase, Base["EventEffectSetting"]):
+class EventEffectSetting(Base):
     __tablename__ = 'event_effect_setting'
 
-    event_id: int = Column(Integer, primary_key=True, nullable=False)
-    type: int = Column(Integer, primary_key=True, nullable=False)
-    value: int = Column(Integer, nullable=False)
+    event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    type: Mapped[int] = mapped_column(Integer, primary_key=True)
+    value: Mapped[int] = mapped_column(Integer)
 
 
-class EventEnemyParameter(DeclarativeBase, Base["EventEnemyParameter"]):
+class EventEnemyParameter(Base):
     __tablename__ = 'event_enemy_parameter'
 
-    enemy_id: int = Column(Integer, primary_key=True)
-    unit_id: int = Column(Integer, nullable=False)
-    level: int = Column(Integer, nullable=False)
-    rarity: int = Column(Integer, nullable=False)
-    promotion_level: int = Column(Integer, nullable=False)
-    hp: int = Column(Integer, nullable=False)
-    atk: int = Column(Integer, nullable=False)
-    magic_str: int = Column(Integer, nullable=False)
-    _def: int = Column('def', Integer, nullable=False)
-    magic_def: int = Column(Integer, nullable=False)
-    physical_critical: int = Column(Integer, nullable=False)
-    magic_critical: int = Column(Integer, nullable=False)
-    wave_hp_recovery: int = Column(Integer, nullable=False)
-    wave_energy_recovery: int = Column(Integer, nullable=False)
-    dodge: int = Column(Integer, nullable=False)
-    physical_penetrate: int = Column(Integer, nullable=False)
-    magic_penetrate: int = Column(Integer, nullable=False)
-    life_steal: int = Column(Integer, nullable=False)
-    hp_recovery_rate: int = Column(Integer, nullable=False)
-    energy_recovery_rate: int = Column(Integer, nullable=False)
-    energy_reduce_rate: int = Column(Integer, nullable=False)
-    union_burst_level: int = Column(Integer, nullable=False)
-    main_skill_lv_1: int = Column(Integer, nullable=False)
-    main_skill_lv_2: int = Column(Integer, nullable=False)
-    main_skill_lv_3: int = Column(Integer, nullable=False)
-    main_skill_lv_4: int = Column(Integer, nullable=False)
-    main_skill_lv_5: int = Column(Integer, nullable=False)
-    main_skill_lv_6: int = Column(Integer, nullable=False)
-    main_skill_lv_7: int = Column(Integer, nullable=False)
-    main_skill_lv_8: int = Column(Integer, nullable=False)
-    main_skill_lv_9: int = Column(Integer, nullable=False)
-    main_skill_lv_10: int = Column(Integer, nullable=False)
-    ex_skill_lv_1: int = Column(Integer, nullable=False)
-    ex_skill_lv_2: int = Column(Integer, nullable=False)
-    ex_skill_lv_3: int = Column(Integer, nullable=False)
-    ex_skill_lv_4: int = Column(Integer, nullable=False)
-    ex_skill_lv_5: int = Column(Integer, nullable=False)
-    resist_status_id: int = Column(Integer, nullable=False)
-    resist_variation_id: int = Column(Integer, nullable=False)
-    accuracy: int = Column(Integer, nullable=False)
+    enemy_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    level: Mapped[int] = mapped_column(Integer)
+    rarity: Mapped[int] = mapped_column(Integer)
+    promotion_level: Mapped[int] = mapped_column(Integer)
+    hp: Mapped[int] = mapped_column(Integer)
+    atk: Mapped[int] = mapped_column(Integer)
+    magic_str: Mapped[int] = mapped_column(Integer)
+    def_: Mapped[int] = mapped_column('def', Integer)
+    magic_def: Mapped[int] = mapped_column(Integer)
+    physical_critical: Mapped[int] = mapped_column(Integer)
+    magic_critical: Mapped[int] = mapped_column(Integer)
+    wave_hp_recovery: Mapped[int] = mapped_column(Integer)
+    wave_energy_recovery: Mapped[int] = mapped_column(Integer)
+    dodge: Mapped[int] = mapped_column(Integer)
+    physical_penetrate: Mapped[int] = mapped_column(Integer)
+    magic_penetrate: Mapped[int] = mapped_column(Integer)
+    life_steal: Mapped[int] = mapped_column(Integer)
+    hp_recovery_rate: Mapped[int] = mapped_column(Integer)
+    energy_recovery_rate: Mapped[int] = mapped_column(Integer)
+    energy_reduce_rate: Mapped[int] = mapped_column(Integer)
+    union_burst_level: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_1: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_2: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_3: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_4: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_5: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_6: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_7: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_8: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_9: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_10: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_1: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_2: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_3: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_4: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_5: Mapped[int] = mapped_column(Integer)
+    resist_status_id: Mapped[int] = mapped_column(Integer)
+    resist_variation_id: Mapped[int] = mapped_column(Integer)
+    accuracy: Mapped[int] = mapped_column(Integer)
 
 
-class EventEnemyRewardGroup(DeclarativeBase, Base["EventEnemyRewardGroup"]):
+class EventEnemyRewardGroup(Base):
     __tablename__ = 'event_enemy_reward_group'
 
-    id: int = Column(Integer, primary_key=True)
-    reward_group_id: int = Column(Integer, nullable=False)
-    reward_type: int = Column(Integer, nullable=False)
-    reward_id: int = Column(Integer, nullable=False)
-    reward_num: int = Column(Integer, nullable=False)
-    odds: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reward_group_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_num: Mapped[int] = mapped_column(Integer)
+    odds: Mapped[int] = mapped_column(Integer)
 
 
-class EventGachaDatum(DeclarativeBase, Base["EventGachaDatum"]):
+class EventGachaDatum(Base):
     __tablename__ = 'event_gacha_data'
+    __table_args__ = (
+        Index('event_gacha_data_0_event_id', 'event_id'),
+    )
 
-    gacha_id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False, index=True)
-    gacha_name: str = Column(Text, nullable=False)
-    item_type: int = Column(Integer, nullable=False)
-    item_id: int = Column(Integer, nullable=False)
-    cost: int = Column(Integer, nullable=False)
-    repeat_step: int = Column(Integer, nullable=False)
+    gacha_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    gacha_name: Mapped[str] = mapped_column(Text)
+    item_type: Mapped[int] = mapped_column(Integer)
+    item_id: Mapped[int] = mapped_column(Integer)
+    cost: Mapped[int] = mapped_column(Integer)
+    repeat_step: Mapped[int] = mapped_column(Integer)
 
 
-class EventIntroduction(DeclarativeBase, Base["EventIntroduction"]):
+class EventIntroduction(Base):
     __tablename__ = 'event_introduction'
+    __table_args__ = (
+        Index('event_introduction_0_event_id', 'event_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False, index=True)
-    introduction_number: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    maximum_chunk_size_1: int = Column(Integer, nullable=False)
-    maximum_chunk_size_loop_1: int = Column(Integer, nullable=False)
-    maximum_chunk_size_2: int = Column(Integer, nullable=False)
-    maximum_chunk_size_loop_2: int = Column(Integer, nullable=False)
-    maximum_chunk_size_3: int = Column(Integer, nullable=False)
-    maximum_chunk_size_loop_3: int = Column(Integer, nullable=False)
-    sheet_id: str = Column(Text, nullable=False)
-    que_id: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    introduction_number: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    maximum_chunk_size_1: Mapped[int] = mapped_column(Integer)
+    maximum_chunk_size_loop_1: Mapped[int] = mapped_column(Integer)
+    maximum_chunk_size_2: Mapped[int] = mapped_column(Integer)
+    maximum_chunk_size_loop_2: Mapped[int] = mapped_column(Integer)
+    maximum_chunk_size_3: Mapped[int] = mapped_column(Integer)
+    maximum_chunk_size_loop_3: Mapped[int] = mapped_column(Integer)
+    sheet_id: Mapped[str] = mapped_column(Text)
+    que_id: Mapped[str] = mapped_column(Text)
 
 
-class EventNaviComment(DeclarativeBase, Base["EventNaviComment"]):
+class EventNaviComment(Base):
     __tablename__ = 'event_navi_comment'
 
-    comment_id: int = Column(Integer, primary_key=True)
-    where_type: int = Column(Integer, nullable=False)
-    character_id: int = Column(Integer, nullable=False)
-    face_type: int = Column(Integer, nullable=False)
-    character_name: str = Column(Text, nullable=False)
-    description: str = Column(Text)
-    voice_id: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    pos_x: float = Column(Float, nullable=False)
-    pos_y: float = Column(Float, nullable=False)
-    change_face_time: float = Column(Float, nullable=False)
-    change_face_type: int = Column(Integer, nullable=False)
-    event_id: int = Column(Integer, nullable=False)
+    comment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    where_type: Mapped[int] = mapped_column(Integer)
+    character_id: Mapped[int] = mapped_column(Integer)
+    face_type: Mapped[int] = mapped_column(Integer)
+    character_name: Mapped[str] = mapped_column(Text)
+    voice_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    pos_x: Mapped[float] = mapped_column(Float)
+    pos_y: Mapped[float] = mapped_column(Float)
+    change_face_time: Mapped[float] = mapped_column(Float)
+    change_face_type: Mapped[int] = mapped_column(Integer)
+    event_id: Mapped[int] = mapped_column(Integer)
+    description: Mapped[Optional[str]] = mapped_column(Text)
 
 
-class EventNaviCommentCondition(DeclarativeBase, Base["EventNaviCommentCondition"]):
+class EventNaviCommentCondition(Base):
     __tablename__ = 'event_navi_comment_condition'
 
-    comment_id: int = Column(Integer, primary_key=True)
-    condition_type_1: int = Column(Integer, nullable=False)
-    condition_value_1: int = Column(Integer, nullable=False)
-    condition_type_2: int = Column(Integer, nullable=False)
-    condition_value_2: int = Column(Integer, nullable=False)
-    condition_type_3: int = Column(Integer, nullable=False)
-    condition_value_3: int = Column(Integer, nullable=False)
+    comment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    condition_type_1: Mapped[int] = mapped_column(Integer)
+    condition_value_1: Mapped[int] = mapped_column(Integer)
+    condition_type_2: Mapped[int] = mapped_column(Integer)
+    condition_value_2: Mapped[int] = mapped_column(Integer)
+    condition_type_3: Mapped[int] = mapped_column(Integer)
+    condition_value_3: Mapped[int] = mapped_column(Integer)
 
 
-class EventReminder(DeclarativeBase, Base["EventReminder"]):
+class EventReminder(Base):
     __tablename__ = 'event_reminder'
+    __table_args__ = (
+        Index('event_reminder_0_event_id', 'event_id'),
+    )
 
-    reminder_id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False, index=True)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    title_text: str = Column(Text, nullable=False)
-    description_text: str = Column(Text, nullable=False)
-    notice_text: str = Column(Text, nullable=False)
-    thumbnail_id: int = Column(Integer, nullable=False)
-    btn_text: str = Column(Text, nullable=False)
-    target_type: int = Column(Integer, nullable=False)
-    target_id: int = Column(Integer, nullable=False)
+    reminder_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    title_text: Mapped[str] = mapped_column(Text)
+    description_text: Mapped[str] = mapped_column(Text)
+    notice_text: Mapped[str] = mapped_column(Text)
+    thumbnail_id: Mapped[int] = mapped_column(Integer)
+    btn_text: Mapped[str] = mapped_column(Text)
+    target_type: Mapped[int] = mapped_column(Integer)
+    target_id: Mapped[int] = mapped_column(Integer)
 
 
-class EventReminderCondition(DeclarativeBase, Base["EventReminderCondition"]):
+class EventReminderCondition(Base):
     __tablename__ = 'event_reminder_condition'
+    __table_args__ = (
+        Index('event_reminder_condition_0_reminder_id', 'reminder_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    reminder_id: int = Column(Integer, nullable=False, index=True)
-    condition_type: int = Column(Integer, nullable=False)
-    condition_id: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reminder_id: Mapped[int] = mapped_column(Integer)
+    condition_type: Mapped[int] = mapped_column(Integer)
+    condition_id: Mapped[int] = mapped_column(Integer)
 
 
-class EventRevivalSeriesWaveGroupDatum(DeclarativeBase, Base["EventRevivalSeriesWaveGroupDatum"]):
+class EventRevivalSeriesWaveGroupDatum(Base):
     __tablename__ = 'event_revival_series_wave_group_data'
 
-    id: int = Column(Integer, primary_key=True)
-    wave_group_id: int = Column(Integer, nullable=False)
-    difficulty: int = Column(Integer, nullable=False)
-    wave: int = Column(Integer, nullable=False)
-    match_lv_min: int = Column(Integer, nullable=False)
-    match_lv_max: int = Column(Integer, nullable=False)
-    enemy_id_1: int = Column(Integer, nullable=False)
-    enemy_id_2: int = Column(Integer, nullable=False)
-    enemy_id_3: int = Column(Integer, nullable=False)
-    enemy_id_4: int = Column(Integer, nullable=False)
-    enemy_id_5: int = Column(Integer, nullable=False)
-    drop_gold_1: int = Column(Integer, nullable=False)
-    reward_group_id_1: int = Column(Integer, nullable=False)
-    disp_reward_type_1: int = Column(Integer, nullable=False)
-    disp_reward_id_1: int = Column(Integer, nullable=False)
-    reward_lot_count_1: int = Column(Integer, nullable=False)
-    reward_odds_1: int = Column(Integer, nullable=False)
-    drop_gold_2: int = Column(Integer, nullable=False)
-    reward_group_id_2: int = Column(Integer, nullable=False)
-    disp_reward_type_2: int = Column(Integer, nullable=False)
-    disp_reward_id_2: int = Column(Integer, nullable=False)
-    reward_lot_count_2: int = Column(Integer, nullable=False)
-    reward_odds_2: int = Column(Integer, nullable=False)
-    drop_gold_3: int = Column(Integer, nullable=False)
-    reward_group_id_3: int = Column(Integer, nullable=False)
-    disp_reward_type_3: int = Column(Integer, nullable=False)
-    disp_reward_id_3: int = Column(Integer, nullable=False)
-    reward_lot_count_3: int = Column(Integer, nullable=False)
-    reward_odds_3: int = Column(Integer, nullable=False)
-    drop_gold_4: int = Column(Integer, nullable=False)
-    reward_group_id_4: int = Column(Integer, nullable=False)
-    disp_reward_type_4: int = Column(Integer, nullable=False)
-    disp_reward_id_4: int = Column(Integer, nullable=False)
-    reward_lot_count_4: int = Column(Integer, nullable=False)
-    reward_odds_4: int = Column(Integer, nullable=False)
-    drop_gold_5: int = Column(Integer, nullable=False)
-    reward_group_id_5: int = Column(Integer, nullable=False)
-    disp_reward_type_5: int = Column(Integer, nullable=False)
-    disp_reward_id_5: int = Column(Integer, nullable=False)
-    reward_lot_count_5: int = Column(Integer, nullable=False)
-    reward_odds_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    difficulty: Mapped[int] = mapped_column(Integer)
+    wave: Mapped[int] = mapped_column(Integer)
+    match_lv_min: Mapped[int] = mapped_column(Integer)
+    match_lv_max: Mapped[int] = mapped_column(Integer)
+    enemy_id_1: Mapped[int] = mapped_column(Integer)
+    enemy_id_2: Mapped[int] = mapped_column(Integer)
+    enemy_id_3: Mapped[int] = mapped_column(Integer)
+    enemy_id_4: Mapped[int] = mapped_column(Integer)
+    enemy_id_5: Mapped[int] = mapped_column(Integer)
+    drop_gold_1: Mapped[int] = mapped_column(Integer)
+    reward_group_id_1: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_1: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_1: Mapped[int] = mapped_column(Integer)
+    reward_odds_1: Mapped[int] = mapped_column(Integer)
+    drop_gold_2: Mapped[int] = mapped_column(Integer)
+    reward_group_id_2: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_2: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_2: Mapped[int] = mapped_column(Integer)
+    reward_odds_2: Mapped[int] = mapped_column(Integer)
+    drop_gold_3: Mapped[int] = mapped_column(Integer)
+    reward_group_id_3: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_3: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_3: Mapped[int] = mapped_column(Integer)
+    reward_odds_3: Mapped[int] = mapped_column(Integer)
+    drop_gold_4: Mapped[int] = mapped_column(Integer)
+    reward_group_id_4: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_4: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_4: Mapped[int] = mapped_column(Integer)
+    reward_odds_4: Mapped[int] = mapped_column(Integer)
+    drop_gold_5: Mapped[int] = mapped_column(Integer)
+    reward_group_id_5: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_5: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_5: Mapped[int] = mapped_column(Integer)
+    reward_odds_5: Mapped[int] = mapped_column(Integer)
 
 
-class EventRevivalWaveGroupDatum(DeclarativeBase, Base["EventRevivalWaveGroupDatum"]):
+class EventRevivalWaveGroupDatum(Base):
     __tablename__ = 'event_revival_wave_group_data'
 
-    id: int = Column(Integer, primary_key=True)
-    wave_group_id: int = Column(Integer, nullable=False)
-    difficulty: int = Column(Integer, nullable=False)
-    wave: int = Column(Integer, nullable=False)
-    match_lv_min: int = Column(Integer, nullable=False)
-    match_lv_max: int = Column(Integer, nullable=False)
-    enemy_id_1: int = Column(Integer, nullable=False)
-    enemy_id_2: int = Column(Integer, nullable=False)
-    enemy_id_3: int = Column(Integer, nullable=False)
-    enemy_id_4: int = Column(Integer, nullable=False)
-    enemy_id_5: int = Column(Integer, nullable=False)
-    drop_gold_1: int = Column(Integer, nullable=False)
-    reward_group_id_1: int = Column(Integer, nullable=False)
-    disp_reward_type_1: int = Column(Integer, nullable=False)
-    disp_reward_id_1: int = Column(Integer, nullable=False)
-    reward_lot_count_1: int = Column(Integer, nullable=False)
-    reward_odds_1: int = Column(Integer, nullable=False)
-    drop_gold_2: int = Column(Integer, nullable=False)
-    reward_group_id_2: int = Column(Integer, nullable=False)
-    disp_reward_type_2: int = Column(Integer, nullable=False)
-    disp_reward_id_2: int = Column(Integer, nullable=False)
-    reward_lot_count_2: int = Column(Integer, nullable=False)
-    reward_odds_2: int = Column(Integer, nullable=False)
-    drop_gold_3: int = Column(Integer, nullable=False)
-    reward_group_id_3: int = Column(Integer, nullable=False)
-    disp_reward_type_3: int = Column(Integer, nullable=False)
-    disp_reward_id_3: int = Column(Integer, nullable=False)
-    reward_lot_count_3: int = Column(Integer, nullable=False)
-    reward_odds_3: int = Column(Integer, nullable=False)
-    drop_gold_4: int = Column(Integer, nullable=False)
-    reward_group_id_4: int = Column(Integer, nullable=False)
-    disp_reward_type_4: int = Column(Integer, nullable=False)
-    disp_reward_id_4: int = Column(Integer, nullable=False)
-    reward_lot_count_4: int = Column(Integer, nullable=False)
-    reward_odds_4: int = Column(Integer, nullable=False)
-    drop_gold_5: int = Column(Integer, nullable=False)
-    reward_group_id_5: int = Column(Integer, nullable=False)
-    disp_reward_type_5: int = Column(Integer, nullable=False)
-    disp_reward_id_5: int = Column(Integer, nullable=False)
-    reward_lot_count_5: int = Column(Integer, nullable=False)
-    reward_odds_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    difficulty: Mapped[int] = mapped_column(Integer)
+    wave: Mapped[int] = mapped_column(Integer)
+    match_lv_min: Mapped[int] = mapped_column(Integer)
+    match_lv_max: Mapped[int] = mapped_column(Integer)
+    enemy_id_1: Mapped[int] = mapped_column(Integer)
+    enemy_id_2: Mapped[int] = mapped_column(Integer)
+    enemy_id_3: Mapped[int] = mapped_column(Integer)
+    enemy_id_4: Mapped[int] = mapped_column(Integer)
+    enemy_id_5: Mapped[int] = mapped_column(Integer)
+    drop_gold_1: Mapped[int] = mapped_column(Integer)
+    reward_group_id_1: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_1: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_1: Mapped[int] = mapped_column(Integer)
+    reward_odds_1: Mapped[int] = mapped_column(Integer)
+    drop_gold_2: Mapped[int] = mapped_column(Integer)
+    reward_group_id_2: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_2: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_2: Mapped[int] = mapped_column(Integer)
+    reward_odds_2: Mapped[int] = mapped_column(Integer)
+    drop_gold_3: Mapped[int] = mapped_column(Integer)
+    reward_group_id_3: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_3: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_3: Mapped[int] = mapped_column(Integer)
+    reward_odds_3: Mapped[int] = mapped_column(Integer)
+    drop_gold_4: Mapped[int] = mapped_column(Integer)
+    reward_group_id_4: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_4: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_4: Mapped[int] = mapped_column(Integer)
+    reward_odds_4: Mapped[int] = mapped_column(Integer)
+    drop_gold_5: Mapped[int] = mapped_column(Integer)
+    reward_group_id_5: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_5: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_5: Mapped[int] = mapped_column(Integer)
+    reward_odds_5: Mapped[int] = mapped_column(Integer)
 
 
-class EventSeriesWaveGroupDatum(DeclarativeBase, Base["EventSeriesWaveGroupDatum"]):
+class EventSeriesWaveGroupDatum(Base):
     __tablename__ = 'event_series_wave_group_data'
 
-    id: int = Column(Integer, primary_key=True)
-    wave_group_id: int = Column(Integer, nullable=False)
-    difficulty: int = Column(Integer, nullable=False)
-    wave: int = Column(Integer, nullable=False)
-    match_lv_min: int = Column(Integer, nullable=False)
-    match_lv_max: int = Column(Integer, nullable=False)
-    enemy_id_1: int = Column(Integer, nullable=False)
-    enemy_id_2: int = Column(Integer, nullable=False)
-    enemy_id_3: int = Column(Integer, nullable=False)
-    enemy_id_4: int = Column(Integer, nullable=False)
-    enemy_id_5: int = Column(Integer, nullable=False)
-    drop_gold_1: int = Column(Integer, nullable=False)
-    reward_group_id_1: int = Column(Integer, nullable=False)
-    disp_reward_type_1: int = Column(Integer, nullable=False)
-    disp_reward_id_1: int = Column(Integer, nullable=False)
-    reward_lot_count_1: int = Column(Integer, nullable=False)
-    reward_odds_1: int = Column(Integer, nullable=False)
-    drop_gold_2: int = Column(Integer, nullable=False)
-    reward_group_id_2: int = Column(Integer, nullable=False)
-    disp_reward_type_2: int = Column(Integer, nullable=False)
-    disp_reward_id_2: int = Column(Integer, nullable=False)
-    reward_lot_count_2: int = Column(Integer, nullable=False)
-    reward_odds_2: int = Column(Integer, nullable=False)
-    drop_gold_3: int = Column(Integer, nullable=False)
-    reward_group_id_3: int = Column(Integer, nullable=False)
-    disp_reward_type_3: int = Column(Integer, nullable=False)
-    disp_reward_id_3: int = Column(Integer, nullable=False)
-    reward_lot_count_3: int = Column(Integer, nullable=False)
-    reward_odds_3: int = Column(Integer, nullable=False)
-    drop_gold_4: int = Column(Integer, nullable=False)
-    reward_group_id_4: int = Column(Integer, nullable=False)
-    disp_reward_type_4: int = Column(Integer, nullable=False)
-    disp_reward_id_4: int = Column(Integer, nullable=False)
-    reward_lot_count_4: int = Column(Integer, nullable=False)
-    reward_odds_4: int = Column(Integer, nullable=False)
-    drop_gold_5: int = Column(Integer, nullable=False)
-    reward_group_id_5: int = Column(Integer, nullable=False)
-    disp_reward_type_5: int = Column(Integer, nullable=False)
-    disp_reward_id_5: int = Column(Integer, nullable=False)
-    reward_lot_count_5: int = Column(Integer, nullable=False)
-    reward_odds_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    difficulty: Mapped[int] = mapped_column(Integer)
+    wave: Mapped[int] = mapped_column(Integer)
+    match_lv_min: Mapped[int] = mapped_column(Integer)
+    match_lv_max: Mapped[int] = mapped_column(Integer)
+    enemy_id_1: Mapped[int] = mapped_column(Integer)
+    enemy_id_2: Mapped[int] = mapped_column(Integer)
+    enemy_id_3: Mapped[int] = mapped_column(Integer)
+    enemy_id_4: Mapped[int] = mapped_column(Integer)
+    enemy_id_5: Mapped[int] = mapped_column(Integer)
+    drop_gold_1: Mapped[int] = mapped_column(Integer)
+    reward_group_id_1: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_1: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_1: Mapped[int] = mapped_column(Integer)
+    reward_odds_1: Mapped[int] = mapped_column(Integer)
+    drop_gold_2: Mapped[int] = mapped_column(Integer)
+    reward_group_id_2: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_2: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_2: Mapped[int] = mapped_column(Integer)
+    reward_odds_2: Mapped[int] = mapped_column(Integer)
+    drop_gold_3: Mapped[int] = mapped_column(Integer)
+    reward_group_id_3: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_3: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_3: Mapped[int] = mapped_column(Integer)
+    reward_odds_3: Mapped[int] = mapped_column(Integer)
+    drop_gold_4: Mapped[int] = mapped_column(Integer)
+    reward_group_id_4: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_4: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_4: Mapped[int] = mapped_column(Integer)
+    reward_odds_4: Mapped[int] = mapped_column(Integer)
+    drop_gold_5: Mapped[int] = mapped_column(Integer)
+    reward_group_id_5: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_5: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_5: Mapped[int] = mapped_column(Integer)
+    reward_odds_5: Mapped[int] = mapped_column(Integer)
 
 
-class EventStoryDatum(DeclarativeBase, Base["EventStoryDatum"]):
+class EventStoryDatum(Base):
     __tablename__ = 'event_story_data'
+    __table_args__ = (
+        Index('event_story_data_0_value', 'value'),
+    )
 
-    story_group_id: int = Column(Integer, primary_key=True)
-    story_type: int = Column(Integer, nullable=False)
-    value: int = Column(Integer, nullable=False, index=True)
-    title: str = Column(Text, nullable=False)
-    thumbnail_id: int = Column(Integer, nullable=False)
-    disp_order: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    story_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_type: Mapped[int] = mapped_column(Integer)
+    value: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    thumbnail_id: Mapped[int] = mapped_column(Integer)
+    disp_order: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class EventStoryDetail(DeclarativeBase, Base["EventStoryDetail"]):
+class EventStoryDetail(Base):
     __tablename__ = 'event_story_detail'
+    __table_args__ = (
+        Index('event_story_detail_0_story_group_id', 'story_group_id'),
+    )
 
-    story_id: int = Column(Integer, primary_key=True)
-    story_group_id: int = Column(Integer, nullable=False, index=True)
-    title: str = Column(Text, nullable=False)
-    sub_title: str = Column(Text, nullable=False)
-    visible_type: int = Column(Integer, nullable=False)
-    story_end: int = Column(Integer, nullable=False)
-    pre_story_id: int = Column(Integer, nullable=False)
-    love_level: int = Column(Integer, nullable=False)
-    requirement_id: int = Column(Integer, nullable=False)
-    unlock_quest_id: int = Column(Integer, nullable=False)
-    story_quest_id: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_value_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_value_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_value_3: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_group_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    sub_title: Mapped[str] = mapped_column(Text)
+    visible_type: Mapped[int] = mapped_column(Integer)
+    story_end: Mapped[int] = mapped_column(Integer)
+    pre_story_id: Mapped[int] = mapped_column(Integer)
+    pre_story_id_2: Mapped[int] = mapped_column(Integer)
+    love_level: Mapped[int] = mapped_column(Integer)
+    requirement_id: Mapped[int] = mapped_column(Integer)
+    unlock_quest_id: Mapped[int] = mapped_column(Integer)
+    story_quest_id: Mapped[int] = mapped_column(Integer)
+    lock_all_text: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_value_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_value_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_value_3: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class EventTopAdv(DeclarativeBase, Base["EventTopAdv"]):
+class EventTopAdv(Base):
     __tablename__ = 'event_top_adv'
     __table_args__ = (
         Index('event_top_adv_0_event_id_1_type', 'event_id', 'type'),
     )
 
-    event_top_adv_id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False)
-    type: int = Column(Integer, nullable=False)
-    value_1: int = Column(Integer, nullable=False)
-    value_2: int = Column(Integer, nullable=False)
-    value_3: int = Column(Integer, nullable=False)
-    story_id: int = Column(Integer, nullable=False)
-    character_id: int = Column(Integer, nullable=False)
-    condition_type: int = Column(Integer, nullable=False)
-    condition_story_id: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    event_top_adv_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    type: Mapped[int] = mapped_column(Integer)
+    value_1: Mapped[int] = mapped_column(Integer)
+    value_2: Mapped[int] = mapped_column(Integer)
+    value_3: Mapped[int] = mapped_column(Integer)
+    story_id: Mapped[int] = mapped_column(Integer)
+    character_id: Mapped[int] = mapped_column(Integer)
+    condition_type: Mapped[int] = mapped_column(Integer)
+    condition_story_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class EventWaveGroupDatum(DeclarativeBase, Base["EventWaveGroupDatum"]):
+class EventWaveGroupDatum(Base):
     __tablename__ = 'event_wave_group_data'
 
-    id: int = Column(Integer, primary_key=True)
-    wave_group_id: int = Column(Integer, nullable=False)
-    difficulty: int = Column(Integer, nullable=False)
-    wave: int = Column(Integer, nullable=False)
-    match_lv_min: int = Column(Integer, nullable=False)
-    match_lv_max: int = Column(Integer, nullable=False)
-    enemy_id_1: int = Column(Integer, nullable=False)
-    enemy_id_2: int = Column(Integer, nullable=False)
-    enemy_id_3: int = Column(Integer, nullable=False)
-    enemy_id_4: int = Column(Integer, nullable=False)
-    enemy_id_5: int = Column(Integer, nullable=False)
-    drop_gold_1: int = Column(Integer, nullable=False)
-    reward_group_id_1: int = Column(Integer, nullable=False)
-    disp_reward_type_1: int = Column(Integer, nullable=False)
-    disp_reward_id_1: int = Column(Integer, nullable=False)
-    reward_lot_count_1: int = Column(Integer, nullable=False)
-    reward_odds_1: int = Column(Integer, nullable=False)
-    drop_gold_2: int = Column(Integer, nullable=False)
-    reward_group_id_2: int = Column(Integer, nullable=False)
-    disp_reward_type_2: int = Column(Integer, nullable=False)
-    disp_reward_id_2: int = Column(Integer, nullable=False)
-    reward_lot_count_2: int = Column(Integer, nullable=False)
-    reward_odds_2: int = Column(Integer, nullable=False)
-    drop_gold_3: int = Column(Integer, nullable=False)
-    reward_group_id_3: int = Column(Integer, nullable=False)
-    disp_reward_type_3: int = Column(Integer, nullable=False)
-    disp_reward_id_3: int = Column(Integer, nullable=False)
-    reward_lot_count_3: int = Column(Integer, nullable=False)
-    reward_odds_3: int = Column(Integer, nullable=False)
-    drop_gold_4: int = Column(Integer, nullable=False)
-    reward_group_id_4: int = Column(Integer, nullable=False)
-    disp_reward_type_4: int = Column(Integer, nullable=False)
-    disp_reward_id_4: int = Column(Integer, nullable=False)
-    reward_lot_count_4: int = Column(Integer, nullable=False)
-    reward_odds_4: int = Column(Integer, nullable=False)
-    drop_gold_5: int = Column(Integer, nullable=False)
-    reward_group_id_5: int = Column(Integer, nullable=False)
-    disp_reward_type_5: int = Column(Integer, nullable=False)
-    disp_reward_id_5: int = Column(Integer, nullable=False)
-    reward_lot_count_5: int = Column(Integer, nullable=False)
-    reward_odds_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    difficulty: Mapped[int] = mapped_column(Integer)
+    wave: Mapped[int] = mapped_column(Integer)
+    match_lv_min: Mapped[int] = mapped_column(Integer)
+    match_lv_max: Mapped[int] = mapped_column(Integer)
+    enemy_id_1: Mapped[int] = mapped_column(Integer)
+    enemy_id_2: Mapped[int] = mapped_column(Integer)
+    enemy_id_3: Mapped[int] = mapped_column(Integer)
+    enemy_id_4: Mapped[int] = mapped_column(Integer)
+    enemy_id_5: Mapped[int] = mapped_column(Integer)
+    drop_gold_1: Mapped[int] = mapped_column(Integer)
+    reward_group_id_1: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_1: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_1: Mapped[int] = mapped_column(Integer)
+    reward_odds_1: Mapped[int] = mapped_column(Integer)
+    drop_gold_2: Mapped[int] = mapped_column(Integer)
+    reward_group_id_2: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_2: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_2: Mapped[int] = mapped_column(Integer)
+    reward_odds_2: Mapped[int] = mapped_column(Integer)
+    drop_gold_3: Mapped[int] = mapped_column(Integer)
+    reward_group_id_3: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_3: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_3: Mapped[int] = mapped_column(Integer)
+    reward_odds_3: Mapped[int] = mapped_column(Integer)
+    drop_gold_4: Mapped[int] = mapped_column(Integer)
+    reward_group_id_4: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_4: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_4: Mapped[int] = mapped_column(Integer)
+    reward_odds_4: Mapped[int] = mapped_column(Integer)
+    drop_gold_5: Mapped[int] = mapped_column(Integer)
+    reward_group_id_5: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_5: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_5: Mapped[int] = mapped_column(Integer)
+    reward_odds_5: Mapped[int] = mapped_column(Integer)
 
 
-class ExceedLevelStage(DeclarativeBase, Base["ExceedLevelStage"]):
+class ExEquipmentCategory(Base):
+    __tablename__ = 'ex_equipment_category'
+
+    category: Mapped[int] = mapped_column(Integer, primary_key=True)
+    category_name: Mapped[str] = mapped_column(Text)
+    category_base: Mapped[str] = mapped_column(Text)
+    outline: Mapped[str] = mapped_column(Text)
+    recycle_item_id: Mapped[int] = mapped_column(Integer)
+
+
+class ExEquipmentDatum(Base):
+    __tablename__ = 'ex_equipment_data'
+
+    ex_equipment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
+    rarity: Mapped[int] = mapped_column(Integer)
+    category: Mapped[int] = mapped_column(Integer)
+    restriction_id: Mapped[int] = mapped_column(Integer)
+    clan_battle_equip_flag: Mapped[int] = mapped_column(Integer)
+    is_force_protected: Mapped[int] = mapped_column(Integer)
+    max_rank_flag: Mapped[int] = mapped_column(Integer)
+    default_hp: Mapped[int] = mapped_column(Integer)
+    max_hp: Mapped[int] = mapped_column(Integer)
+    default_atk: Mapped[int] = mapped_column(Integer)
+    max_atk: Mapped[int] = mapped_column(Integer)
+    default_magic_str: Mapped[int] = mapped_column(Integer)
+    max_magic_str: Mapped[int] = mapped_column(Integer)
+    default_def: Mapped[int] = mapped_column(Integer)
+    max_def: Mapped[int] = mapped_column(Integer)
+    default_magic_def: Mapped[int] = mapped_column(Integer)
+    max_magic_def: Mapped[int] = mapped_column(Integer)
+    default_physical_critical: Mapped[int] = mapped_column(Integer)
+    max_physical_critical: Mapped[int] = mapped_column(Integer)
+    default_magic_critical: Mapped[int] = mapped_column(Integer)
+    max_magic_critical: Mapped[int] = mapped_column(Integer)
+    default_wave_hp_recovery: Mapped[int] = mapped_column(Integer)
+    max_wave_hp_recovery: Mapped[int] = mapped_column(Integer)
+    default_wave_energy_recovery: Mapped[int] = mapped_column(Integer)
+    max_wave_energy_recovery: Mapped[int] = mapped_column(Integer)
+    default_dodge: Mapped[int] = mapped_column(Integer)
+    max_dodge: Mapped[int] = mapped_column(Integer)
+    default_physical_penetrate: Mapped[int] = mapped_column(Integer)
+    max_physical_penetrate: Mapped[int] = mapped_column(Integer)
+    default_magic_penetrate: Mapped[int] = mapped_column(Integer)
+    max_magic_penetrate: Mapped[int] = mapped_column(Integer)
+    default_life_steal: Mapped[int] = mapped_column(Integer)
+    max_life_steal: Mapped[int] = mapped_column(Integer)
+    default_hp_recovery_rate: Mapped[int] = mapped_column(Integer)
+    max_hp_recovery_rate: Mapped[int] = mapped_column(Integer)
+    default_energy_recovery_rate: Mapped[int] = mapped_column(Integer)
+    max_energy_recovery_rate: Mapped[int] = mapped_column(Integer)
+    default_energy_reduce_rate: Mapped[int] = mapped_column(Integer)
+    max_energy_reduce_rate: Mapped[int] = mapped_column(Integer)
+    default_accuracy: Mapped[int] = mapped_column(Integer)
+    max_accuracy: Mapped[int] = mapped_column(Integer)
+    passive_skill_id_1: Mapped[int] = mapped_column(Integer)
+    passive_skill_id_2: Mapped[int] = mapped_column(Integer)
+    passive_skill_power: Mapped[int] = mapped_column(Integer)
+
+
+class ExEquipmentEnhanceDatum(Base):
+    __tablename__ = 'ex_equipment_enhance_data'
+    __table_args__ = (
+        Index('ex_equipment_enhance_data_0_rarity', 'rarity'),
+    )
+
+    rarity: Mapped[int] = mapped_column(Integer, primary_key=True)
+    enhance_level: Mapped[int] = mapped_column(Integer, primary_key=True)
+    needed_mana: Mapped[int] = mapped_column(Integer)
+    needed_point: Mapped[int] = mapped_column(Integer)
+    total_point: Mapped[int] = mapped_column(Integer)
+    rankup_level: Mapped[int] = mapped_column(Integer)
+
+
+class ExEquipmentRankupDatum(Base):
+    __tablename__ = 'ex_equipment_rankup_data'
+
+    rarity: Mapped[int] = mapped_column(Integer, primary_key=True)
+    rankup_level: Mapped[int] = mapped_column(Integer, primary_key=True)
+    consume_gold: Mapped[int] = mapped_column(Integer)
+    item_id: Mapped[int] = mapped_column(Integer)
+
+
+class ExEquipmentRecycleReward(Base):
+    __tablename__ = 'ex_equipment_recycle_reward'
+
+    rarity: Mapped[int] = mapped_column(Integer, primary_key=True)
+    enhance_pt_coefficient: Mapped[int] = mapped_column(Integer)
+    coin_coefficient: Mapped[int] = mapped_column(Integer)
+
+
+class ExEquipmentRestrictionUnit(Base):
+    __tablename__ = 'ex_equipment_restriction_unit'
+    __table_args__ = (
+        Index('ex_equipment_restriction_unit_0_restriction_id', 'restriction_id'),
+    )
+
+    restriction_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+
+class ExceedLevelStage(Base):
     __tablename__ = 'exceed_level_stage'
 
-    exceed_stage: int = Column(Integer, primary_key=True)
-    increase_level_limit: int = Column(Integer, nullable=False)
-    unlock_quest_id: int = Column(Integer, nullable=False)
-    unlock_team_level: int = Column(Integer, nullable=False)
-    general_exceed_item_id: int = Column(Integer, nullable=False)
+    exceed_stage: Mapped[int] = mapped_column(Integer, primary_key=True)
+    increase_level_limit: Mapped[int] = mapped_column(Integer)
+    unlock_quest_id: Mapped[int] = mapped_column(Integer)
+    unlock_team_level: Mapped[int] = mapped_column(Integer)
+    general_exceed_item_id: Mapped[int] = mapped_column(Integer)
 
 
-class ExceedLevelUnit(DeclarativeBase, Base["ExceedLevelUnit"]):
+class ExceedLevelUnit(Base):
     __tablename__ = 'exceed_level_unit'
+    __table_args__ = (
+        Index('exceed_level_unit_0_unit_id', 'unit_id'),
+    )
 
-    id: int = Column(Integer, nullable=False)
-    unit_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    exceed_stage: int = Column(Integer, primary_key=True, nullable=False)
-    exceed_item_id: int = Column(Integer, nullable=False)
-    item_id_1: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    consume_num_1: int = Column(Integer, nullable=False)
-    item_id_2: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    consume_num_2: int = Column(Integer, nullable=False)
-    item_id_3: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    consume_num_3: int = Column(Integer, nullable=False)
-    item_id_4: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    consume_num_4: int = Column(Integer, nullable=False)
-    item_id_5: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    consume_num_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    exceed_stage: Mapped[int] = mapped_column(Integer, primary_key=True)
+    exceed_item_id: Mapped[int] = mapped_column(Integer)
+    item_id_1: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    consume_num_1: Mapped[int] = mapped_column(Integer)
+    item_id_2: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    consume_num_2: Mapped[int] = mapped_column(Integer)
+    item_id_3: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    consume_num_3: Mapped[int] = mapped_column(Integer)
+    item_id_4: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    consume_num_4: Mapped[int] = mapped_column(Integer)
+    item_id_5: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    consume_num_5: Mapped[int] = mapped_column(Integer)
 
 
-class ExceptEr(DeclarativeBase, Base["ExceptEr"]):
+class ExceptEr(Base):
     __tablename__ = 'except_er'
 
-    category_id: int = Column(Integer, primary_key=True)
+    category_id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
 
-class ExperienceTeam(DeclarativeBase, Base["ExperienceTeam"]):
+class ExperienceTeam(Base):
     __tablename__ = 'experience_team'
 
-    team_level: int = Column(Integer, primary_key=True)
-    total_exp: int = Column(Integer, nullable=False)
-    max_stamina: int = Column(Integer, nullable=False)
-    over_limit_stamina: int = Column(Integer, nullable=False)
-    recover_stamina_count: int = Column(Integer, nullable=False)
+    team_level: Mapped[int] = mapped_column(Integer, primary_key=True)
+    total_exp: Mapped[int] = mapped_column(Integer)
+    max_stamina: Mapped[int] = mapped_column(Integer)
+    over_limit_stamina: Mapped[int] = mapped_column(Integer)
+    recover_stamina_count: Mapped[int] = mapped_column(Integer)
 
 
-class ExperienceUnit(DeclarativeBase, Base["ExperienceUnit"]):
+class ExperienceUnit(Base):
     __tablename__ = 'experience_unit'
 
-    unit_level: int = Column(Integer, primary_key=True)
-    total_exp: int = Column(Integer, nullable=False)
+    unit_level: Mapped[int] = mapped_column(Integer, primary_key=True)
+    total_exp: Mapped[int] = mapped_column(Integer)
 
 
-class FixLineupGroupSet(DeclarativeBase, Base["FixLineupGroupSet"]):
+class FbsSchedule(Base):
+    __tablename__ = 'fbs_schedule'
+
+    fbs_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+
+
+class FixLineupGroupSet(Base):
     __tablename__ = 'fix_lineup_group_set'
     __table_args__ = (
         Index('fix_lineup_group_set_0_team_level_from_1_team_level_to', 'team_level_from', 'team_level_to'),
     )
 
-    lineup_group_set_id: int = Column(Integer, primary_key=True, nullable=False)
-    team_level_from: int = Column(Integer, primary_key=True, nullable=False)
-    team_level_to: int = Column(Integer, primary_key=True, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_count_1: int = Column(Integer, nullable=False)
-    price_type_1: int = Column(Integer, nullable=False)
-    currency_id_1: int = Column(Integer, nullable=False)
-    price_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_count_2: int = Column(Integer, nullable=False)
-    price_type_2: int = Column(Integer, nullable=False)
-    currency_id_2: int = Column(Integer, nullable=False)
-    price_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_count_3: int = Column(Integer, nullable=False)
-    price_type_3: int = Column(Integer, nullable=False)
-    currency_id_3: int = Column(Integer, nullable=False)
-    price_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_count_4: int = Column(Integer, nullable=False)
-    price_type_4: int = Column(Integer, nullable=False)
-    currency_id_4: int = Column(Integer, nullable=False)
-    price_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_count_5: int = Column(Integer, nullable=False)
-    price_type_5: int = Column(Integer, nullable=False)
-    currency_id_5: int = Column(Integer, nullable=False)
-    price_5: int = Column(Integer, nullable=False)
-    reward_type_6: int = Column(Integer, nullable=False)
-    reward_id_6: int = Column(Integer, nullable=False)
-    reward_count_6: int = Column(Integer, nullable=False)
-    price_type_6: int = Column(Integer, nullable=False)
-    currency_id_6: int = Column(Integer, nullable=False)
-    price_6: int = Column(Integer, nullable=False)
-    reward_type_7: int = Column(Integer, nullable=False)
-    reward_id_7: int = Column(Integer, nullable=False)
-    reward_count_7: int = Column(Integer, nullable=False)
-    price_type_7: int = Column(Integer, nullable=False)
-    currency_id_7: int = Column(Integer, nullable=False)
-    price_7: int = Column(Integer, nullable=False)
-    reward_type_8: int = Column(Integer, nullable=False)
-    reward_id_8: int = Column(Integer, nullable=False)
-    reward_count_8: int = Column(Integer, nullable=False)
-    price_type_8: int = Column(Integer, nullable=False)
-    currency_id_8: int = Column(Integer, nullable=False)
-    price_8: int = Column(Integer, nullable=False)
-    reward_type_9: int = Column(Integer, nullable=False)
-    reward_id_9: int = Column(Integer, nullable=False)
-    reward_count_9: int = Column(Integer, nullable=False)
-    price_type_9: int = Column(Integer, nullable=False)
-    currency_id_9: int = Column(Integer, nullable=False)
-    price_9: int = Column(Integer, nullable=False)
-    reward_type_10: int = Column(Integer, nullable=False)
-    reward_id_10: int = Column(Integer, nullable=False)
-    reward_count_10: int = Column(Integer, nullable=False)
-    price_type_10: int = Column(Integer, nullable=False)
-    currency_id_10: int = Column(Integer, nullable=False)
-    price_10: int = Column(Integer, nullable=False)
-    reward_type_11: int = Column(Integer, nullable=False)
-    reward_id_11: int = Column(Integer, nullable=False)
-    reward_count_11: int = Column(Integer, nullable=False)
-    price_type_11: int = Column(Integer, nullable=False)
-    currency_id_11: int = Column(Integer, nullable=False)
-    price_11: int = Column(Integer, nullable=False)
-    reward_type_12: int = Column(Integer, nullable=False)
-    reward_id_12: int = Column(Integer, nullable=False)
-    reward_count_12: int = Column(Integer, nullable=False)
-    price_type_12: int = Column(Integer, nullable=False)
-    currency_id_12: int = Column(Integer, nullable=False)
-    price_12: int = Column(Integer, nullable=False)
-    reward_type_13: int = Column(Integer, nullable=False)
-    reward_id_13: int = Column(Integer, nullable=False)
-    reward_count_13: int = Column(Integer, nullable=False)
-    price_type_13: int = Column(Integer, nullable=False)
-    currency_id_13: int = Column(Integer, nullable=False)
-    price_13: int = Column(Integer, nullable=False)
-    reward_type_14: int = Column(Integer, nullable=False)
-    reward_id_14: int = Column(Integer, nullable=False)
-    reward_count_14: int = Column(Integer, nullable=False)
-    price_type_14: int = Column(Integer, nullable=False)
-    currency_id_14: int = Column(Integer, nullable=False)
-    price_14: int = Column(Integer, nullable=False)
-    reward_type_15: int = Column(Integer, nullable=False)
-    reward_id_15: int = Column(Integer, nullable=False)
-    reward_count_15: int = Column(Integer, nullable=False)
-    price_type_15: int = Column(Integer, nullable=False)
-    currency_id_15: int = Column(Integer, nullable=False)
-    price_15: int = Column(Integer, nullable=False)
-    reward_type_16: int = Column(Integer, nullable=False)
-    reward_id_16: int = Column(Integer, nullable=False)
-    reward_count_16: int = Column(Integer, nullable=False)
-    price_type_16: int = Column(Integer, nullable=False)
-    currency_id_16: int = Column(Integer, nullable=False)
-    price_16: int = Column(Integer, nullable=False)
-    reward_type_17: int = Column(Integer, nullable=False)
-    reward_id_17: int = Column(Integer, nullable=False)
-    reward_count_17: int = Column(Integer, nullable=False)
-    price_type_17: int = Column(Integer, nullable=False)
-    currency_id_17: int = Column(Integer, nullable=False)
-    price_17: int = Column(Integer, nullable=False)
-    reward_type_18: int = Column(Integer, nullable=False)
-    reward_id_18: int = Column(Integer, nullable=False)
-    reward_count_18: int = Column(Integer, nullable=False)
-    price_type_18: int = Column(Integer, nullable=False)
-    currency_id_18: int = Column(Integer, nullable=False)
-    price_18: int = Column(Integer, nullable=False)
-    reward_type_19: int = Column(Integer, nullable=False)
-    reward_id_19: int = Column(Integer, nullable=False)
-    reward_count_19: int = Column(Integer, nullable=False)
-    price_type_19: int = Column(Integer, nullable=False)
-    currency_id_19: int = Column(Integer, nullable=False)
-    price_19: int = Column(Integer, nullable=False)
-    reward_type_20: int = Column(Integer, nullable=False)
-    reward_id_20: int = Column(Integer, nullable=False)
-    reward_count_20: int = Column(Integer, nullable=False)
-    price_type_20: int = Column(Integer, nullable=False)
-    currency_id_20: int = Column(Integer, nullable=False)
-    price_20: int = Column(Integer, nullable=False)
+    lineup_group_set_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    team_level_from: Mapped[int] = mapped_column(Integer, primary_key=True)
+    team_level_to: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    price_type_1: Mapped[int] = mapped_column(Integer)
+    currency_id_1: Mapped[int] = mapped_column(Integer)
+    price_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    price_type_2: Mapped[int] = mapped_column(Integer)
+    currency_id_2: Mapped[int] = mapped_column(Integer)
+    price_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    price_type_3: Mapped[int] = mapped_column(Integer)
+    currency_id_3: Mapped[int] = mapped_column(Integer)
+    price_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    price_type_4: Mapped[int] = mapped_column(Integer)
+    currency_id_4: Mapped[int] = mapped_column(Integer)
+    price_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_count_5: Mapped[int] = mapped_column(Integer)
+    price_type_5: Mapped[int] = mapped_column(Integer)
+    currency_id_5: Mapped[int] = mapped_column(Integer)
+    price_5: Mapped[int] = mapped_column(Integer)
+    reward_type_6: Mapped[int] = mapped_column(Integer)
+    reward_id_6: Mapped[int] = mapped_column(Integer)
+    reward_count_6: Mapped[int] = mapped_column(Integer)
+    price_type_6: Mapped[int] = mapped_column(Integer)
+    currency_id_6: Mapped[int] = mapped_column(Integer)
+    price_6: Mapped[int] = mapped_column(Integer)
+    reward_type_7: Mapped[int] = mapped_column(Integer)
+    reward_id_7: Mapped[int] = mapped_column(Integer)
+    reward_count_7: Mapped[int] = mapped_column(Integer)
+    price_type_7: Mapped[int] = mapped_column(Integer)
+    currency_id_7: Mapped[int] = mapped_column(Integer)
+    price_7: Mapped[int] = mapped_column(Integer)
+    reward_type_8: Mapped[int] = mapped_column(Integer)
+    reward_id_8: Mapped[int] = mapped_column(Integer)
+    reward_count_8: Mapped[int] = mapped_column(Integer)
+    price_type_8: Mapped[int] = mapped_column(Integer)
+    currency_id_8: Mapped[int] = mapped_column(Integer)
+    price_8: Mapped[int] = mapped_column(Integer)
+    reward_type_9: Mapped[int] = mapped_column(Integer)
+    reward_id_9: Mapped[int] = mapped_column(Integer)
+    reward_count_9: Mapped[int] = mapped_column(Integer)
+    price_type_9: Mapped[int] = mapped_column(Integer)
+    currency_id_9: Mapped[int] = mapped_column(Integer)
+    price_9: Mapped[int] = mapped_column(Integer)
+    reward_type_10: Mapped[int] = mapped_column(Integer)
+    reward_id_10: Mapped[int] = mapped_column(Integer)
+    reward_count_10: Mapped[int] = mapped_column(Integer)
+    price_type_10: Mapped[int] = mapped_column(Integer)
+    currency_id_10: Mapped[int] = mapped_column(Integer)
+    price_10: Mapped[int] = mapped_column(Integer)
+    reward_type_11: Mapped[int] = mapped_column(Integer)
+    reward_id_11: Mapped[int] = mapped_column(Integer)
+    reward_count_11: Mapped[int] = mapped_column(Integer)
+    price_type_11: Mapped[int] = mapped_column(Integer)
+    currency_id_11: Mapped[int] = mapped_column(Integer)
+    price_11: Mapped[int] = mapped_column(Integer)
+    reward_type_12: Mapped[int] = mapped_column(Integer)
+    reward_id_12: Mapped[int] = mapped_column(Integer)
+    reward_count_12: Mapped[int] = mapped_column(Integer)
+    price_type_12: Mapped[int] = mapped_column(Integer)
+    currency_id_12: Mapped[int] = mapped_column(Integer)
+    price_12: Mapped[int] = mapped_column(Integer)
+    reward_type_13: Mapped[int] = mapped_column(Integer)
+    reward_id_13: Mapped[int] = mapped_column(Integer)
+    reward_count_13: Mapped[int] = mapped_column(Integer)
+    price_type_13: Mapped[int] = mapped_column(Integer)
+    currency_id_13: Mapped[int] = mapped_column(Integer)
+    price_13: Mapped[int] = mapped_column(Integer)
+    reward_type_14: Mapped[int] = mapped_column(Integer)
+    reward_id_14: Mapped[int] = mapped_column(Integer)
+    reward_count_14: Mapped[int] = mapped_column(Integer)
+    price_type_14: Mapped[int] = mapped_column(Integer)
+    currency_id_14: Mapped[int] = mapped_column(Integer)
+    price_14: Mapped[int] = mapped_column(Integer)
+    reward_type_15: Mapped[int] = mapped_column(Integer)
+    reward_id_15: Mapped[int] = mapped_column(Integer)
+    reward_count_15: Mapped[int] = mapped_column(Integer)
+    price_type_15: Mapped[int] = mapped_column(Integer)
+    currency_id_15: Mapped[int] = mapped_column(Integer)
+    price_15: Mapped[int] = mapped_column(Integer)
+    reward_type_16: Mapped[int] = mapped_column(Integer)
+    reward_id_16: Mapped[int] = mapped_column(Integer)
+    reward_count_16: Mapped[int] = mapped_column(Integer)
+    price_type_16: Mapped[int] = mapped_column(Integer)
+    currency_id_16: Mapped[int] = mapped_column(Integer)
+    price_16: Mapped[int] = mapped_column(Integer)
+    reward_type_17: Mapped[int] = mapped_column(Integer)
+    reward_id_17: Mapped[int] = mapped_column(Integer)
+    reward_count_17: Mapped[int] = mapped_column(Integer)
+    price_type_17: Mapped[int] = mapped_column(Integer)
+    currency_id_17: Mapped[int] = mapped_column(Integer)
+    price_17: Mapped[int] = mapped_column(Integer)
+    reward_type_18: Mapped[int] = mapped_column(Integer)
+    reward_id_18: Mapped[int] = mapped_column(Integer)
+    reward_count_18: Mapped[int] = mapped_column(Integer)
+    price_type_18: Mapped[int] = mapped_column(Integer)
+    currency_id_18: Mapped[int] = mapped_column(Integer)
+    price_18: Mapped[int] = mapped_column(Integer)
+    reward_type_19: Mapped[int] = mapped_column(Integer)
+    reward_id_19: Mapped[int] = mapped_column(Integer)
+    reward_count_19: Mapped[int] = mapped_column(Integer)
+    price_type_19: Mapped[int] = mapped_column(Integer)
+    currency_id_19: Mapped[int] = mapped_column(Integer)
+    price_19: Mapped[int] = mapped_column(Integer)
+    reward_type_20: Mapped[int] = mapped_column(Integer)
+    reward_id_20: Mapped[int] = mapped_column(Integer)
+    reward_count_20: Mapped[int] = mapped_column(Integer)
+    price_type_20: Mapped[int] = mapped_column(Integer)
+    currency_id_20: Mapped[int] = mapped_column(Integer)
+    price_20: Mapped[int] = mapped_column(Integer)
 
 
-class FkeHappeningList(DeclarativeBase, Base["FkeHappeningList"]):
+class FixLineupGroupSetDatum(Base):
+    __tablename__ = 'fix_lineup_group_set_data'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    lineup_group_set_id: Mapped[int] = mapped_column(Integer)
+    team_level_from: Mapped[int] = mapped_column(Integer)
+    team_level_to: Mapped[int] = mapped_column(Integer)
+    box_count_from: Mapped[int] = mapped_column(Integer)
+    box_count_to: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    price_type_1: Mapped[int] = mapped_column(Integer)
+    currency_id_1: Mapped[int] = mapped_column(Integer)
+    price_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    price_type_2: Mapped[int] = mapped_column(Integer)
+    currency_id_2: Mapped[int] = mapped_column(Integer)
+    price_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    price_type_3: Mapped[int] = mapped_column(Integer)
+    currency_id_3: Mapped[int] = mapped_column(Integer)
+    price_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    price_type_4: Mapped[int] = mapped_column(Integer)
+    currency_id_4: Mapped[int] = mapped_column(Integer)
+    price_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_count_5: Mapped[int] = mapped_column(Integer)
+    price_type_5: Mapped[int] = mapped_column(Integer)
+    currency_id_5: Mapped[int] = mapped_column(Integer)
+    price_5: Mapped[int] = mapped_column(Integer)
+    reward_type_6: Mapped[int] = mapped_column(Integer)
+    reward_id_6: Mapped[int] = mapped_column(Integer)
+    reward_count_6: Mapped[int] = mapped_column(Integer)
+    price_type_6: Mapped[int] = mapped_column(Integer)
+    currency_id_6: Mapped[int] = mapped_column(Integer)
+    price_6: Mapped[int] = mapped_column(Integer)
+    reward_type_7: Mapped[int] = mapped_column(Integer)
+    reward_id_7: Mapped[int] = mapped_column(Integer)
+    reward_count_7: Mapped[int] = mapped_column(Integer)
+    price_type_7: Mapped[int] = mapped_column(Integer)
+    currency_id_7: Mapped[int] = mapped_column(Integer)
+    price_7: Mapped[int] = mapped_column(Integer)
+    reward_type_8: Mapped[int] = mapped_column(Integer)
+    reward_id_8: Mapped[int] = mapped_column(Integer)
+    reward_count_8: Mapped[int] = mapped_column(Integer)
+    price_type_8: Mapped[int] = mapped_column(Integer)
+    currency_id_8: Mapped[int] = mapped_column(Integer)
+    price_8: Mapped[int] = mapped_column(Integer)
+    reward_type_9: Mapped[int] = mapped_column(Integer)
+    reward_id_9: Mapped[int] = mapped_column(Integer)
+    reward_count_9: Mapped[int] = mapped_column(Integer)
+    price_type_9: Mapped[int] = mapped_column(Integer)
+    currency_id_9: Mapped[int] = mapped_column(Integer)
+    price_9: Mapped[int] = mapped_column(Integer)
+    reward_type_10: Mapped[int] = mapped_column(Integer)
+    reward_id_10: Mapped[int] = mapped_column(Integer)
+    reward_count_10: Mapped[int] = mapped_column(Integer)
+    price_type_10: Mapped[int] = mapped_column(Integer)
+    currency_id_10: Mapped[int] = mapped_column(Integer)
+    price_10: Mapped[int] = mapped_column(Integer)
+    reward_type_11: Mapped[int] = mapped_column(Integer)
+    reward_id_11: Mapped[int] = mapped_column(Integer)
+    reward_count_11: Mapped[int] = mapped_column(Integer)
+    price_type_11: Mapped[int] = mapped_column(Integer)
+    currency_id_11: Mapped[int] = mapped_column(Integer)
+    price_11: Mapped[int] = mapped_column(Integer)
+    reward_type_12: Mapped[int] = mapped_column(Integer)
+    reward_id_12: Mapped[int] = mapped_column(Integer)
+    reward_count_12: Mapped[int] = mapped_column(Integer)
+    price_type_12: Mapped[int] = mapped_column(Integer)
+    currency_id_12: Mapped[int] = mapped_column(Integer)
+    price_12: Mapped[int] = mapped_column(Integer)
+    reward_type_13: Mapped[int] = mapped_column(Integer)
+    reward_id_13: Mapped[int] = mapped_column(Integer)
+    reward_count_13: Mapped[int] = mapped_column(Integer)
+    price_type_13: Mapped[int] = mapped_column(Integer)
+    currency_id_13: Mapped[int] = mapped_column(Integer)
+    price_13: Mapped[int] = mapped_column(Integer)
+    reward_type_14: Mapped[int] = mapped_column(Integer)
+    reward_id_14: Mapped[int] = mapped_column(Integer)
+    reward_count_14: Mapped[int] = mapped_column(Integer)
+    price_type_14: Mapped[int] = mapped_column(Integer)
+    currency_id_14: Mapped[int] = mapped_column(Integer)
+    price_14: Mapped[int] = mapped_column(Integer)
+    reward_type_15: Mapped[int] = mapped_column(Integer)
+    reward_id_15: Mapped[int] = mapped_column(Integer)
+    reward_count_15: Mapped[int] = mapped_column(Integer)
+    price_type_15: Mapped[int] = mapped_column(Integer)
+    currency_id_15: Mapped[int] = mapped_column(Integer)
+    price_15: Mapped[int] = mapped_column(Integer)
+    reward_type_16: Mapped[int] = mapped_column(Integer)
+    reward_id_16: Mapped[int] = mapped_column(Integer)
+    reward_count_16: Mapped[int] = mapped_column(Integer)
+    price_type_16: Mapped[int] = mapped_column(Integer)
+    currency_id_16: Mapped[int] = mapped_column(Integer)
+    price_16: Mapped[int] = mapped_column(Integer)
+    reward_type_17: Mapped[int] = mapped_column(Integer)
+    reward_id_17: Mapped[int] = mapped_column(Integer)
+    reward_count_17: Mapped[int] = mapped_column(Integer)
+    price_type_17: Mapped[int] = mapped_column(Integer)
+    currency_id_17: Mapped[int] = mapped_column(Integer)
+    price_17: Mapped[int] = mapped_column(Integer)
+    reward_type_18: Mapped[int] = mapped_column(Integer)
+    reward_id_18: Mapped[int] = mapped_column(Integer)
+    reward_count_18: Mapped[int] = mapped_column(Integer)
+    price_type_18: Mapped[int] = mapped_column(Integer)
+    currency_id_18: Mapped[int] = mapped_column(Integer)
+    price_18: Mapped[int] = mapped_column(Integer)
+    reward_type_19: Mapped[int] = mapped_column(Integer)
+    reward_id_19: Mapped[int] = mapped_column(Integer)
+    reward_count_19: Mapped[int] = mapped_column(Integer)
+    price_type_19: Mapped[int] = mapped_column(Integer)
+    currency_id_19: Mapped[int] = mapped_column(Integer)
+    price_19: Mapped[int] = mapped_column(Integer)
+    reward_type_20: Mapped[int] = mapped_column(Integer)
+    reward_id_20: Mapped[int] = mapped_column(Integer)
+    reward_count_20: Mapped[int] = mapped_column(Integer)
+    price_type_20: Mapped[int] = mapped_column(Integer)
+    currency_id_20: Mapped[int] = mapped_column(Integer)
+    price_20: Mapped[int] = mapped_column(Integer)
+
+
+class FkeHappeningList(Base):
     __tablename__ = 'fke_happening_list'
 
-    happening_id: int = Column(Integer, primary_key=True)
-    happening_name: str = Column(Text, nullable=False)
+    happening_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    happening_name: Mapped[str] = mapped_column(Text)
 
 
-class FkeReward(DeclarativeBase, Base["FkeReward"]):
+class FkeReward(Base):
     __tablename__ = 'fke_reward'
 
-    id: int = Column(Integer, primary_key=True)
-    fke_point: int = Column(Integer, nullable=False)
-    mission_detail: str = Column(Text, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_count_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_count_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_count_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_count_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_count_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    fke_point: Mapped[int] = mapped_column(Integer)
+    mission_detail: Mapped[str] = mapped_column(Text)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_count_5: Mapped[int] = mapped_column(Integer)
 
 
-class GachaDatum(DeclarativeBase, Base["GachaDatum"]):
+class GachaDatum(Base):
     __tablename__ = 'gacha_data'
+    __table_args__ = (
+        Index('gacha_data_0_exchange_id', 'exchange_id'),
+    )
 
-    gacha_id: int = Column(Integer, primary_key=True)
-    gacha_name: str = Column(Text, nullable=False)
-    pick_up_chara_text: str = Column(Text, nullable=False)
-    description: str = Column(Text, nullable=False)
-    description_2: str = Column(Text, nullable=False)
-    description_sp: str = Column(Text, nullable=False)
-    parallel_id: int = Column(Integer, nullable=False)
-    pickup_badge: int = Column(Integer, nullable=False)
-    gacha_detail: int = Column(Integer, nullable=False)
-    gacha_cost_type: int = Column(Integer, nullable=False)
-    price: int = Column(Integer, nullable=False)
-    free_gacha_type: int = Column(Integer, nullable=False)
-    free_gacha_interval_time: int = Column(Integer, nullable=False)
-    free_gacha_count: int = Column(Integer, nullable=False)
-    discount_price: int = Column(Integer, nullable=False)
-    gacha_odds: str = Column(Text, nullable=False)
-    gacha_odds_star2: str = Column(Text, nullable=False)
-    gacha_type: int = Column(Integer, nullable=False)
-    movie_id: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    ticket_id: int = Column(Integer, nullable=False)
-    special_id: int = Column(Integer, nullable=False)
-    exchange_id: int = Column(Integer, nullable=False, index=True)
-    ticket_id_10: int = Column(Integer, nullable=False)
-    rarity_odds: str = Column(Text, nullable=False)
-    chara_odds_star1: str = Column(Text, nullable=False)
-    chara_odds_star2: str = Column(Text, nullable=False)
-    chara_odds_star3: str = Column(Text, nullable=False)
-    gacha10_special_odds_star1: str = Column(Text, nullable=False)
-    gacha10_special_odds_star2: str = Column(Text, nullable=False)
-    gacha10_special_odds_star3: str = Column(Text, nullable=False)
-    prizegacha_id: int = Column(Integer, nullable=False)
-    gacha_bonus_id: int = Column(Integer, nullable=False)
-    gacha_times_limit10: int = Column(Integer, nullable=False)
+    gacha_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    gacha_name: Mapped[str] = mapped_column(Text)
+    pick_up_chara_text: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
+    description_2: Mapped[str] = mapped_column(Text)
+    description_sp: Mapped[str] = mapped_column(Text)
+    parallel_id: Mapped[int] = mapped_column(Integer)
+    pickup_badge: Mapped[int] = mapped_column(Integer)
+    gacha_detail: Mapped[int] = mapped_column(Integer)
+    gacha_cost_type: Mapped[int] = mapped_column(Integer)
+    price: Mapped[int] = mapped_column(Integer)
+    free_gacha_type: Mapped[int] = mapped_column(Integer)
+    free_gacha_interval_time: Mapped[int] = mapped_column(Integer)
+    free_gacha_count: Mapped[int] = mapped_column(Integer)
+    discount_price: Mapped[int] = mapped_column(Integer)
+    gacha_odds: Mapped[str] = mapped_column(Text)
+    gacha_odds_star2: Mapped[str] = mapped_column(Text)
+    gacha_type: Mapped[int] = mapped_column(Integer)
+    movie_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    ticket_id: Mapped[int] = mapped_column(Integer)
+    special_id: Mapped[int] = mapped_column(Integer)
+    exchange_id: Mapped[int] = mapped_column(Integer)
+    ticket_id_10: Mapped[int] = mapped_column(Integer)
+    rarity_odds: Mapped[str] = mapped_column(Text)
+    chara_odds_star1: Mapped[str] = mapped_column(Text)
+    chara_odds_star2: Mapped[str] = mapped_column(Text)
+    chara_odds_star3: Mapped[str] = mapped_column(Text)
+    gacha10_special_odds_star1: Mapped[str] = mapped_column(Text)
+    gacha10_special_odds_star2: Mapped[str] = mapped_column(Text)
+    gacha10_special_odds_star3: Mapped[str] = mapped_column(Text)
+    prizegacha_id: Mapped[int] = mapped_column(Integer)
+    gacha_bonus_id: Mapped[int] = mapped_column(Integer)
+    gacha_times_limit10: Mapped[int] = mapped_column(Integer)
+    pickup_id: Mapped[int] = mapped_column(Integer)
 
 
-class GachaExchangeLineup(DeclarativeBase, Base["GachaExchangeLineup"]):
+class GachaExchangeLineup(Base):
     __tablename__ = 'gacha_exchange_lineup'
+    __table_args__ = (
+        Index('gacha_exchange_lineup_0_exchange_id', 'exchange_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    exchange_id: int = Column(Integer, nullable=False, index=True)
-    unit_id: int = Column(Integer, nullable=False)
-    rarity: int = Column(Integer, nullable=False)
-    gacha_bonus_id: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    exchange_id: Mapped[int] = mapped_column(Integer)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    rarity: Mapped[int] = mapped_column(Integer)
+    gacha_bonus_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class GiftMessage(DeclarativeBase, Base["GiftMessage"]):
+class GachaPickup(Base):
+    __tablename__ = 'gacha_pickup'
+    __table_args__ = (
+        Index('gacha_pickup_0_id', 'id'),
+        Index('gacha_pickup_0_id_1_reward_id', 'id', 'reward_id')
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    priority: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    name: Mapped[str] = mapped_column(Text)
+
+
+class GiftMessage(Base):
     __tablename__ = 'gift_message'
 
-    id: int = Column(Integer, primary_key=True)
-    discription: str = Column(Text, nullable=False)
-    type_1: int = Column(Integer, nullable=False)
-    type_2: int = Column(Integer, nullable=False)
-    type_3: int = Column(Integer, nullable=False)
-    type_4: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    discription: Mapped[str] = mapped_column(Text)
+    type_1: Mapped[int] = mapped_column(Integer)
+    type_2: Mapped[int] = mapped_column(Integer)
+    type_3: Mapped[int] = mapped_column(Integer)
+    type_4: Mapped[int] = mapped_column(Integer)
 
 
-class GlobalDatum(DeclarativeBase, Base["GlobalDatum"]):
+class GlobalDatum(Base):
     __tablename__ = 'global_data'
 
-    key_name: str = Column(Text, primary_key=True)
-    value: int = Column(Integer, nullable=False)
-    desc: str = Column(Text, nullable=False)
+    key_name: Mapped[str] = mapped_column(Text, primary_key=True)
+    value: Mapped[int] = mapped_column(Integer)
+    desc: Mapped[str] = mapped_column(Text)
 
 
-class GlossaryDetail(DeclarativeBase, Base["GlossaryDetail"]):
+class GlossaryDetail(Base):
     __tablename__ = 'glossary_detail'
 
-    glossary_id: int = Column(Integer, primary_key=True)
-    glossary_category_id: int = Column(Integer, nullable=False)
-    title: str = Column(Text, nullable=False)
-    description: str = Column(Text, nullable=False)
-    unlock_story_id: int = Column(Integer, nullable=False)
-    category_type: int = Column(Integer, nullable=False)
-    disp_order: int = Column(Integer, nullable=False)
+    glossary_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    glossary_category_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
+    unlock_story_id: Mapped[int] = mapped_column(Integer)
+    category_type: Mapped[int] = mapped_column(Integer)
+    disp_order: Mapped[int] = mapped_column(Integer)
 
 
-class GoldsetDatum(DeclarativeBase, Base["GoldsetDatum"]):
+class GoldsetDatum(Base):
     __tablename__ = 'goldset_data'
 
-    id: int = Column(Integer, nullable=False)
-    buy_count: int = Column(Integer, primary_key=True)
-    use_jewel_count: int = Column(Integer, nullable=False)
-    get_gold_count: int = Column(Integer, nullable=False)
-    goldset_odds_1: int = Column(Integer, nullable=False)
-    goldset_odds_2: int = Column(Integer, nullable=False)
-    goldset_odds_3: int = Column(Integer, nullable=False)
-    additional_gold_min_rate: int = Column(Integer, nullable=False)
-    additional_gold_max_rate: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer)
+    buy_count: Mapped[int] = mapped_column(Integer, primary_key=True)
+    use_jewel_count: Mapped[int] = mapped_column(Integer)
+    get_gold_count: Mapped[int] = mapped_column(Integer)
+    goldset_odds_1: Mapped[int] = mapped_column(Integer)
+    goldset_odds_2: Mapped[int] = mapped_column(Integer)
+    goldset_odds_3: Mapped[int] = mapped_column(Integer)
+    additional_gold_min_rate: Mapped[int] = mapped_column(Integer)
+    additional_gold_max_rate: Mapped[int] = mapped_column(Integer)
 
 
-class GoldsetData2(DeclarativeBase, Base["GoldsetData2"]):
+class GoldsetData2(Base):
     __tablename__ = 'goldset_data_2'
 
-    id: int = Column(Integer, nullable=False)
-    buy_count: int = Column(Integer, primary_key=True)
-    use_jewel_count: int = Column(Integer, nullable=False)
-    get_gold_count: int = Column(Integer, nullable=False)
-    goldset_odds_1: int = Column(Integer, nullable=False)
-    goldset_odds_2: int = Column(Integer, nullable=False)
-    goldset_odds_3: int = Column(Integer, nullable=False)
-    additional_gold_min_rate: int = Column(Integer, nullable=False)
-    additional_gold_max_rate: int = Column(Integer, nullable=False)
-    training_quest_count: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer)
+    buy_count: Mapped[int] = mapped_column(Integer, primary_key=True)
+    use_jewel_count: Mapped[int] = mapped_column(Integer)
+    get_gold_count: Mapped[int] = mapped_column(Integer)
+    goldset_odds_1: Mapped[int] = mapped_column(Integer)
+    goldset_odds_2: Mapped[int] = mapped_column(Integer)
+    goldset_odds_3: Mapped[int] = mapped_column(Integer)
+    additional_gold_min_rate: Mapped[int] = mapped_column(Integer)
+    additional_gold_max_rate: Mapped[int] = mapped_column(Integer)
+    training_quest_count: Mapped[int] = mapped_column(Integer)
 
 
-class GoldsetDataTeamlevel(DeclarativeBase, Base["GoldsetDataTeamlevel"]):
+class GoldsetDataTeamlevel(Base):
     __tablename__ = 'goldset_data_teamlevel'
 
-    id: int = Column(Integer, nullable=False)
-    team_level: int = Column(Integer, primary_key=True)
-    initial_get_gold_count: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer)
+    team_level: Mapped[int] = mapped_column(Integer, primary_key=True)
+    initial_get_gold_count: Mapped[int] = mapped_column(Integer)
 
 
-class GrandArenaDailyRankReward(DeclarativeBase, Base["GrandArenaDailyRankReward"]):
+class GrandArenaDailyRankReward(Base):
     __tablename__ = 'grand_arena_daily_rank_reward'
 
-    id: int = Column(Integer, primary_key=True)
-    rank_from: int = Column(Integer, nullable=False)
-    rank_to: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    rank_from: Mapped[int] = mapped_column(Integer)
+    rank_to: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
 
 
-class GrandArenaDefenceReward(DeclarativeBase, Base["GrandArenaDefenceReward"]):
+class GrandArenaDefenceReward(Base):
     __tablename__ = 'grand_arena_defence_reward'
 
-    id: int = Column(Integer, primary_key=True)
-    limit_count: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    limit_count: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
 
 
-class GrandArenaMaxRankReward(DeclarativeBase, Base["GrandArenaMaxRankReward"]):
+class GrandArenaMaxRankReward(Base):
     __tablename__ = 'grand_arena_max_rank_reward'
 
-    id: int = Column(Integer, primary_key=True)
-    rank_from: int = Column(Integer, nullable=False)
-    rank_to: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    rank_from: Mapped[int] = mapped_column(Integer)
+    rank_to: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
 
 
-class GrandArenaMaxSeasonRankReward(DeclarativeBase, Base["GrandArenaMaxSeasonRankReward"]):
+class GrandArenaMaxSeasonRankReward(Base):
     __tablename__ = 'grand_arena_max_season_rank_reward'
 
-    id: int = Column(Integer, primary_key=True)
-    rank_from: int = Column(Integer, nullable=False)
-    rank_to: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    rank_from: Mapped[int] = mapped_column(Integer)
+    rank_to: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
 
 
-class GrowthParameter(DeclarativeBase, Base["GrowthParameter"]):
+class GrowthParameter(Base):
     __tablename__ = 'growth_parameter'
 
-    growth_id: int = Column(Integer, primary_key=True)
-    growth_type: int = Column(Integer, nullable=False)
-    is_restriction: int = Column(Integer, nullable=False)
-    unit_rarity: int = Column(Integer, nullable=False)
-    unit_level: int = Column(Integer, nullable=False)
-    skill_level: int = Column(Integer, nullable=False)
-    promotion_level: int = Column(Integer, nullable=False)
-    equipment_1: int = Column(Integer, nullable=False)
-    equipment_2: int = Column(Integer, nullable=False)
-    equipment_3: int = Column(Integer, nullable=False)
-    equipment_4: int = Column(Integer, nullable=False)
-    equipment_5: int = Column(Integer, nullable=False)
-    equipment_6: int = Column(Integer, nullable=False)
-    love_level: int = Column(Integer, nullable=False)
+    growth_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    growth_type: Mapped[int] = mapped_column(Integer)
+    is_restriction: Mapped[int] = mapped_column(Integer)
+    unit_rarity: Mapped[int] = mapped_column(Integer)
+    unit_level: Mapped[int] = mapped_column(Integer)
+    skill_level: Mapped[int] = mapped_column(Integer)
+    promotion_level: Mapped[int] = mapped_column(Integer)
+    equipment_1: Mapped[int] = mapped_column(Integer)
+    equipment_2: Mapped[int] = mapped_column(Integer)
+    equipment_3: Mapped[int] = mapped_column(Integer)
+    equipment_4: Mapped[int] = mapped_column(Integer)
+    equipment_5: Mapped[int] = mapped_column(Integer)
+    equipment_6: Mapped[int] = mapped_column(Integer)
+    love_level: Mapped[int] = mapped_column(Integer)
 
 
-class GrowthParameterUnique(DeclarativeBase, Base["GrowthParameterUnique"]):
+class GrowthParameterUnique(Base):
     __tablename__ = 'growth_parameter_unique'
 
-    growth_id: int = Column(Integer, primary_key=True)
-    unique_equip_strength_point_1: int = Column(Integer, nullable=False)
-    unique_equip_strength_point_2: int = Column(Integer, nullable=False)
-    unique_equip_rank_1: int = Column(Integer, nullable=False)
-    unique_equip_rank_2: int = Column(Integer, nullable=False)
+    growth_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unique_equip_strength_point_1: Mapped[int] = mapped_column(Integer)
+    unique_equip_strength_point_2: Mapped[int] = mapped_column(Integer)
+    unique_equip_rank_1: Mapped[int] = mapped_column(Integer)
+    unique_equip_rank_2: Mapped[int] = mapped_column(Integer)
 
 
-class GrowthRestrictionUnit(DeclarativeBase, Base["GrowthRestrictionUnit"]):
+class GrowthRestrictionUnit(Base):
     __tablename__ = 'growth_restriction_unit'
+    __table_args__ = (
+        Index('growth_restriction_unit_0_growth_id', 'growth_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    growth_id: int = Column(Integer, nullable=False, index=True)
-    unit_id: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    growth_id: Mapped[int] = mapped_column(Integer)
+    unit_id: Mapped[int] = mapped_column(Integer)
 
 
-class Guild(DeclarativeBase, Base["Guild"]):
+class Guild(Base):
     __tablename__ = 'guild'
 
-    guild_id: int = Column(Integer, primary_key=True)
-    guild_name: str = Column(Text, nullable=False)
-    description: str = Column(Text, nullable=False)
-    guild_master: int = Column(Integer, nullable=False)
-    member1: int = Column(Integer, nullable=False)
-    member2: int = Column(Integer, nullable=False)
-    member3: int = Column(Integer, nullable=False)
-    member4: int = Column(Integer, nullable=False)
-    member5: int = Column(Integer, nullable=False)
-    member6: int = Column(Integer, nullable=False)
-    member7: int = Column(Integer, nullable=False)
-    member8: int = Column(Integer, nullable=False)
-    member9: int = Column(Integer, nullable=False)
-    member10: int = Column(Integer, nullable=False)
-    member11: int = Column(Integer, nullable=False)
-    member12: int = Column(Integer, nullable=False)
-    member13: int = Column(Integer, nullable=False)
-    member14: int = Column(Integer, nullable=False)
-    member15: int = Column(Integer, nullable=False)
-    member16: int = Column(Integer, nullable=False)
-    member17: int = Column(Integer, nullable=False)
-    member18: int = Column(Integer, nullable=False)
-    member19: int = Column(Integer, nullable=False)
-    member20: int = Column(Integer, nullable=False)
-    member21: int = Column(Integer, nullable=False)
-    member22: int = Column(Integer, nullable=False)
-    member23: int = Column(Integer, nullable=False)
-    member24: int = Column(Integer, nullable=False)
-    member25: int = Column(Integer, nullable=False)
-    member26: int = Column(Integer, nullable=False)
-    member27: int = Column(Integer, nullable=False)
-    member28: int = Column(Integer, nullable=False)
-    member29: int = Column(Integer, nullable=False)
-    member30: int = Column(Integer, nullable=False)
+    guild_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    guild_name: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
+    guild_master: Mapped[int] = mapped_column(Integer)
+    member1: Mapped[int] = mapped_column(Integer)
+    member2: Mapped[int] = mapped_column(Integer)
+    member3: Mapped[int] = mapped_column(Integer)
+    member4: Mapped[int] = mapped_column(Integer)
+    member5: Mapped[int] = mapped_column(Integer)
+    member6: Mapped[int] = mapped_column(Integer)
+    member7: Mapped[int] = mapped_column(Integer)
+    member8: Mapped[int] = mapped_column(Integer)
+    member9: Mapped[int] = mapped_column(Integer)
+    member10: Mapped[int] = mapped_column(Integer)
+    member11: Mapped[int] = mapped_column(Integer)
+    member12: Mapped[int] = mapped_column(Integer)
+    member13: Mapped[int] = mapped_column(Integer)
+    member14: Mapped[int] = mapped_column(Integer)
+    member15: Mapped[int] = mapped_column(Integer)
+    member16: Mapped[int] = mapped_column(Integer)
+    member17: Mapped[int] = mapped_column(Integer)
+    member18: Mapped[int] = mapped_column(Integer)
+    member19: Mapped[int] = mapped_column(Integer)
+    member20: Mapped[int] = mapped_column(Integer)
+    member21: Mapped[int] = mapped_column(Integer)
+    member22: Mapped[int] = mapped_column(Integer)
+    member23: Mapped[int] = mapped_column(Integer)
+    member24: Mapped[int] = mapped_column(Integer)
+    member25: Mapped[int] = mapped_column(Integer)
+    member26: Mapped[int] = mapped_column(Integer)
+    member27: Mapped[int] = mapped_column(Integer)
+    member28: Mapped[int] = mapped_column(Integer)
+    member29: Mapped[int] = mapped_column(Integer)
+    member30: Mapped[int] = mapped_column(Integer)
 
 
-class GuildAdditionalMember(DeclarativeBase, Base["GuildAdditionalMember"]):
+class GuildAdditionalMember(Base):
     __tablename__ = 'guild_additional_member'
 
-    guild_id: int = Column(Integer, primary_key=True)
-    unlock_story_id: int = Column(Integer, nullable=False)
-    thumb_id: int = Column(Integer, nullable=False)
-    member1: int = Column(Integer, nullable=False)
-    member2: int = Column(Integer, nullable=False)
-    member3: int = Column(Integer, nullable=False)
-    member4: int = Column(Integer, nullable=False)
-    member5: int = Column(Integer, nullable=False)
-    member6: int = Column(Integer, nullable=False)
-    member7: int = Column(Integer, nullable=False)
-    member8: int = Column(Integer, nullable=False)
-    member9: int = Column(Integer, nullable=False)
-    member10: int = Column(Integer, nullable=False)
+    guild_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unlock_story_id: Mapped[int] = mapped_column(Integer)
+    thumb_id: Mapped[int] = mapped_column(Integer)
+    member1: Mapped[int] = mapped_column(Integer)
+    member2: Mapped[int] = mapped_column(Integer)
+    member3: Mapped[int] = mapped_column(Integer)
+    member4: Mapped[int] = mapped_column(Integer)
+    member5: Mapped[int] = mapped_column(Integer)
+    member6: Mapped[int] = mapped_column(Integer)
+    member7: Mapped[int] = mapped_column(Integer)
+    member8: Mapped[int] = mapped_column(Integer)
+    member9: Mapped[int] = mapped_column(Integer)
+    member10: Mapped[int] = mapped_column(Integer)
 
 
-class HatsuneBattleMissionDatum(DeclarativeBase, Base["HatsuneBattleMissionDatum"]):
+class HatsuneBattleMissionDatum(Base):
     __tablename__ = 'hatsune_battle_mission_data'
 
-    mission_id: int = Column(Integer, primary_key=True)
-    disp_group: int = Column(Integer, nullable=False)
-    category_icon: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    mission_condition: int = Column(Integer, nullable=False)
-    condition_value_1: int = Column(Integer)
-    condition_value_2: int = Column(Integer)
-    condition_value_3: int = Column(Integer)
-    condition_value_4: int = Column(Integer)
-    condition_value_5: int = Column(Integer)
-    condition_value_6: int = Column(Integer)
-    condition_value_7: int = Column(Integer)
-    condition_value_8: int = Column(Integer)
-    condition_value_9: int = Column(Integer)
-    condition_value_10: int = Column(Integer)
-    condition_num: int = Column(Integer, nullable=False)
-    mission_reward_id: int = Column(Integer, nullable=False)
-    system_id: int = Column(Integer)
-    event_id: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    disp_group: Mapped[int] = mapped_column(Integer)
+    category_icon: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    mission_condition: Mapped[int] = mapped_column(Integer)
+    condition_num: Mapped[int] = mapped_column(Integer)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    event_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    condition_value_1: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_2: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_3: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_4: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_5: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_6: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_7: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_8: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_9: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_10: Mapped[Optional[int]] = mapped_column(Integer)
+    system_id: Mapped[Optional[int]] = mapped_column(Integer)
 
 
-class HatsuneBgChange(DeclarativeBase, Base["HatsuneBgChange"]):
+class HatsuneBgChange(Base):
     __tablename__ = 'hatsune_bg_change'
 
-    area_id: int = Column(Integer, primary_key=True)
-    quest_id_1: int = Column(Integer, nullable=False)
-    quest_id_2: int = Column(Integer, nullable=False)
-    quest_id_3: int = Column(Integer, nullable=False)
-    quest_id_4: int = Column(Integer, nullable=False)
-    quest_id_5: int = Column(Integer, nullable=False)
+    area_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    quest_id_1: Mapped[int] = mapped_column(Integer)
+    quest_id_2: Mapped[int] = mapped_column(Integer)
+    quest_id_3: Mapped[int] = mapped_column(Integer)
+    quest_id_4: Mapped[int] = mapped_column(Integer)
+    quest_id_5: Mapped[int] = mapped_column(Integer)
 
 
-class HatsuneBgChangeDatum(DeclarativeBase, Base["HatsuneBgChangeDatum"]):
+class HatsuneBgChangeDatum(Base):
     __tablename__ = 'hatsune_bg_change_data'
     __table_args__ = (
         Index('hatsune_bg_change_data_0_target_type_1_area_id', 'target_type', 'area_id'),
     )
 
-    id: int = Column(Integer, primary_key=True)
-    area_id: int = Column(Integer, nullable=False)
-    condition_type: int = Column(Integer, nullable=False)
-    condition_id: int = Column(Integer, nullable=False)
-    target_type: int = Column(Integer, nullable=False)
-    bg_after_change_id: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    area_id: Mapped[int] = mapped_column(Integer)
+    condition_type: Mapped[int] = mapped_column(Integer)
+    condition_id: Mapped[int] = mapped_column(Integer)
+    target_type: Mapped[int] = mapped_column(Integer)
+    bg_after_change_id: Mapped[int] = mapped_column(Integer)
 
 
-class HatsuneBos(DeclarativeBase, Base["HatsuneBos"]):
+class HatsuneBoss(Base):
     __tablename__ = 'hatsune_boss'
     __table_args__ = (
+        Index('hatsune_boss_0_event_id', 'event_id'),
         Index('hatsune_boss_0_event_id_1_difficulty', 'event_id', 'difficulty'),
+        Index('hatsune_boss_0_wave_group_id_1', 'wave_group_id_1')
     )
 
-    boss_id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False, index=True)
-    area_id: int = Column(Integer, nullable=False)
-    difficulty: int = Column(Integer, nullable=False)
-    quest_name: str = Column(Text, nullable=False)
-    position_x: int = Column(Integer, nullable=False)
-    position_y: int = Column(Integer, nullable=False)
-    boss_position_x: int = Column(Integer, nullable=False)
-    boss_position_y: int = Column(Integer, nullable=False)
-    result_boss_position_y: int = Column(Integer, nullable=False)
-    icon_id: int = Column(Integer, nullable=False)
-    icon_display_scale: float = Column(Float, nullable=False)
-    icon_collider_scale: float = Column(Float, nullable=False)
-    use_ticket_num: int = Column(Integer, nullable=False)
-    team_exp: int = Column(Integer, nullable=False)
-    unit_exp: int = Column(Integer, nullable=False)
-    love: int = Column(Integer, nullable=False)
-    limit_time: int = Column(Integer, nullable=False)
-    daily_limit: int = Column(Integer, nullable=False)
-    clear_reward_group: int = Column(Integer, nullable=False)
-    event_boss_treasure_box_id_1: int = Column(Integer, nullable=False)
-    background_1: int = Column(Integer, nullable=False)
-    wave_group_id_1: int = Column(Integer, nullable=False, index=True)
-    wave_bgm_sheet_id_1: str = Column(Text, nullable=False)
-    wave_bgm_que_id_1: str = Column(Text, nullable=False)
-    story_id_wavestart_1: int = Column(Integer, nullable=False)
-    story_id_waveend_1: int = Column(Integer, nullable=False)
-    detail_bg_id: int = Column(Integer, nullable=False)
-    detail_bg_position: int = Column(Integer, nullable=False)
-    detail_boss_bg_size: float = Column(Float, nullable=False)
-    detail_boss_bg_height: float = Column(Float, nullable=False)
-    reward_gold_coefficient: str = Column(Text, nullable=False)
-    reward_gold_limit: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    map_position_x: float = Column(Float, nullable=False)
-    map_position_y: float = Column(Float, nullable=False)
-    map_size: float = Column(Float, nullable=False)
-    deatail_aura_size: float = Column(Float, nullable=False)
-    map_aura_size: float = Column(Float, nullable=False)
-    oneblow_count_of_skip_condition: int = Column(Integer, nullable=False)
-    required_skip_ticket_count: int = Column(Integer, nullable=False)
-    retire_flag: int = Column(Integer, nullable=False)
-    disp_on_bg: int = Column(Integer, nullable=False)
-    qd_mode: int = Column(Integer, nullable=False)
-    td_mode: int = Column(Integer, nullable=False)
+    boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    area_id: Mapped[int] = mapped_column(Integer)
+    difficulty: Mapped[int] = mapped_column(Integer)
+    quest_name: Mapped[str] = mapped_column(Text)
+    position_x: Mapped[int] = mapped_column(Integer)
+    position_y: Mapped[int] = mapped_column(Integer)
+    boss_position_x: Mapped[int] = mapped_column(Integer)
+    boss_position_y: Mapped[int] = mapped_column(Integer)
+    result_boss_position_y: Mapped[int] = mapped_column(Integer)
+    icon_id: Mapped[int] = mapped_column(Integer)
+    icon_display_scale: Mapped[float] = mapped_column(Float)
+    icon_collider_scale: Mapped[float] = mapped_column(Float)
+    use_ticket_num: Mapped[int] = mapped_column(Integer)
+    team_exp: Mapped[int] = mapped_column(Integer)
+    unit_exp: Mapped[int] = mapped_column(Integer)
+    love: Mapped[int] = mapped_column(Integer)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    daily_limit: Mapped[int] = mapped_column(Integer)
+    clear_reward_group: Mapped[int] = mapped_column(Integer)
+    event_boss_treasure_box_id_1: Mapped[int] = mapped_column(Integer)
+    background_1: Mapped[int] = mapped_column(Integer)
+    wave_group_id_1: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_1: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_1: Mapped[str] = mapped_column(Text)
+    story_id_wavestart_1: Mapped[int] = mapped_column(Integer)
+    story_id_waveend_1: Mapped[int] = mapped_column(Integer)
+    detail_bg_id: Mapped[int] = mapped_column(Integer)
+    detail_bg_position: Mapped[int] = mapped_column(Integer)
+    detail_boss_bg_size: Mapped[float] = mapped_column(Float)
+    detail_boss_bg_height: Mapped[float] = mapped_column(Float)
+    reward_gold_coefficient: Mapped[str] = mapped_column(Text)
+    reward_gold_limit: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    map_position_x: Mapped[float] = mapped_column(Float)
+    map_position_y: Mapped[float] = mapped_column(Float)
+    map_size: Mapped[float] = mapped_column(Float)
+    map_arrow_offset: Mapped[float] = mapped_column(Float)
+    deatail_aura_size: Mapped[float] = mapped_column(Float)
+    map_aura_size: Mapped[float] = mapped_column(Float)
+    oneblow_count_of_skip_condition: Mapped[int] = mapped_column(Integer)
+    required_skip_ticket_count: Mapped[int] = mapped_column(Integer)
+    retire_flag: Mapped[int] = mapped_column(Integer)
+    disp_on_bg: Mapped[int] = mapped_column(Integer)
+    qd_mode: Mapped[int] = mapped_column(Integer)
+    td_mode: Mapped[int] = mapped_column(Integer)
 
 
-class HatsuneBossCondition(DeclarativeBase, Base["HatsuneBossCondition"]):
+class HatsuneBossCondition(Base):
     __tablename__ = 'hatsune_boss_condition'
 
-    boss_id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False)
-    condition_quest_id_1: int = Column(Integer, nullable=False)
-    condition_quest_id_2: int = Column(Integer, nullable=False)
-    condition_boss_id_1: int = Column(Integer, nullable=False)
-    condition_boss_id_2: int = Column(Integer, nullable=False)
-    condition_gacha_step: int = Column(Integer, nullable=False)
-    force_unlock_time: str = Column(Text, nullable=False)
-    release_quest_id_1: int = Column(Integer, nullable=False)
-    release_quest_id_2: int = Column(Integer, nullable=False)
-    release_boss_id_1: int = Column(Integer, nullable=False)
-    release_boss_id_2: int = Column(Integer, nullable=False)
+    boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    condition_quest_id_1: Mapped[int] = mapped_column(Integer)
+    condition_quest_id_2: Mapped[int] = mapped_column(Integer)
+    condition_boss_id_1: Mapped[int] = mapped_column(Integer)
+    condition_boss_id_2: Mapped[int] = mapped_column(Integer)
+    condition_gacha_step: Mapped[int] = mapped_column(Integer)
+    force_unlock_time: Mapped[str] = mapped_column(Text)
+    release_quest_id_1: Mapped[int] = mapped_column(Integer)
+    release_quest_id_2: Mapped[int] = mapped_column(Integer)
+    release_boss_id_1: Mapped[int] = mapped_column(Integer)
+    release_boss_id_2: Mapped[int] = mapped_column(Integer)
 
 
-class HatsuneBossEnemySetting(DeclarativeBase, Base["HatsuneBossEnemySetting"]):
+class HatsuneBossEnemySetting(Base):
     __tablename__ = 'hatsune_boss_enemy_setting'
     __table_args__ = (
         Index('hatsune_boss_enemy_setting_0_boss_id_1_event_id', 'boss_id', 'event_id'),
     )
 
-    boss_id: int = Column(Integer, primary_key=True, nullable=False)
-    enemy_identify: int = Column(Integer, primary_key=True, nullable=False)
-    event_id: int = Column(Integer, nullable=False)
-    must_kill_flag: int = Column(Integer, nullable=False)
-    event_boss_treasure_box_id: int = Column(Integer, nullable=False)
-    reward_gold_coefficient: float = Column(Float, nullable=False)
-    reward_gold_limit: int = Column(Integer, nullable=False)
-    detail_offset_x: int = Column(Integer, nullable=False)
-    detail_offset_y: int = Column(Integer, nullable=False)
-    detail_scale: float = Column(Float, nullable=False)
-    map_offset_x: int = Column(Integer, nullable=False)
-    map_offset_y: int = Column(Integer, nullable=False)
-    map_scale: float = Column(Float, nullable=False)
-    map_depth: int = Column(Integer, nullable=False)
+    boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    enemy_identify: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    must_kill_flag: Mapped[int] = mapped_column(Integer)
+    event_boss_treasure_box_id: Mapped[int] = mapped_column(Integer)
+    reward_gold_coefficient: Mapped[float] = mapped_column(Float)
+    reward_gold_limit: Mapped[int] = mapped_column(Integer)
+    detail_offset_x: Mapped[int] = mapped_column(Integer)
+    detail_offset_y: Mapped[int] = mapped_column(Integer)
+    detail_scale: Mapped[float] = mapped_column(Float)
+    map_offset_x: Mapped[int] = mapped_column(Integer)
+    map_offset_y: Mapped[int] = mapped_column(Integer)
+    map_scale: Mapped[float] = mapped_column(Float)
+    map_depth: Mapped[int] = mapped_column(Integer)
 
 
-class HatsuneDailyMissionDatum(DeclarativeBase, Base["HatsuneDailyMissionDatum"]):
+class HatsuneDailyMissionDatum(Base):
     __tablename__ = 'hatsune_daily_mission_data'
 
-    daily_mission_id: int = Column(Integer, primary_key=True)
-    disp_group: int = Column(Integer, nullable=False)
-    category_icon: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    mission_condition: int = Column(Integer, nullable=False)
-    condition_value_1: int = Column(Integer)
-    condition_value_2: int = Column(Integer)
-    condition_value_3: int = Column(Integer)
-    condition_num: int = Column(Integer, nullable=False)
-    mission_reward_id: int = Column(Integer, nullable=False)
-    system_id: int = Column(Integer)
-    event_id: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    daily_mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    disp_group: Mapped[int] = mapped_column(Integer)
+    category_icon: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    mission_condition: Mapped[int] = mapped_column(Integer)
+    condition_num: Mapped[int] = mapped_column(Integer)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    event_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    condition_value_1: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_2: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_3: Mapped[Optional[int]] = mapped_column(Integer)
+    system_id: Mapped[Optional[int]] = mapped_column(Integer)
 
 
-class HatsuneDescription(DeclarativeBase, Base["HatsuneDescription"]):
+class HatsuneDescription(Base):
     __tablename__ = 'hatsune_description'
     __table_args__ = (
         Index('hatsune_description_0_event_id_1_type', 'event_id', 'type'),
     )
 
-    id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False)
-    type: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    type: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
 
 
-class HatsuneDiaryDatum(DeclarativeBase, Base["HatsuneDiaryDatum"]):
+class HatsuneDiaryDatum(Base):
     __tablename__ = 'hatsune_diary_data'
-
-    diary_id: int = Column(Integer, primary_key=True)
-    contents_type: int = Column(Integer, nullable=False, index=True)
-    diary_date: int = Column(Integer, nullable=False)
-    sub_title: str = Column(Text, nullable=False)
-    forced_release_time: str = Column(Text, nullable=False)
-    condition_time: str = Column(Text, nullable=False)
-    condition_story_id: int = Column(Integer, nullable=False)
-    condition_boss_count: int = Column(Integer, nullable=False)
-
-
-class HatsuneDiaryLetterScript(DeclarativeBase, Base["HatsuneDiaryLetterScript"]):
-    __tablename__ = 'hatsune_diary_letter_script'
-
-    id: int = Column(Integer, primary_key=True)
-    diary_id: int = Column(Integer, nullable=False, index=True)
-    seq_num: int = Column(Integer, nullable=False)
-    type: int = Column(Integer, nullable=False)
-    line_num: int = Column(Integer, nullable=False)
-    start_pos: int = Column(Integer, nullable=False)
-    end_pos: int = Column(Integer, nullable=False)
-    seek_time: float = Column(Float, nullable=False)
-    sheet_name: str = Column(Text, nullable=False)
-    cue_name: str = Column(Text, nullable=False)
-    command: int = Column(Integer, nullable=False)
-    command_param: float = Column(Float, nullable=False)
-
-
-class HatsuneDiaryScript(DeclarativeBase, Base["HatsuneDiaryScript"]):
-    __tablename__ = 'hatsune_diary_script'
-
-    id: int = Column(Integer, primary_key=True)
-    diary_id: int = Column(Integer, nullable=False, index=True)
-    seq_num: int = Column(Integer, nullable=False)
-    type: int = Column(Integer, nullable=False)
-    diary_text: str = Column(Text, nullable=False)
-    text_animation_speed: int = Column(Integer, nullable=False)
-    sheet_name: str = Column(Text, nullable=False)
-    cue_name: str = Column(Text, nullable=False)
-    command: int = Column(Integer, nullable=False)
-    command_param: float = Column(Float, nullable=False)
-
-
-class HatsuneDiarySetting(DeclarativeBase, Base["HatsuneDiarySetting"]):
-    __tablename__ = 'hatsune_diary_setting'
-
-    event_id: int = Column(Integer, primary_key=True)
-    bgm_sheet_name: str = Column(Text, nullable=False)
-    bgm_cue_name: str = Column(Text, nullable=False)
-
-
-class HatsuneEmblemMission(DeclarativeBase, Base["HatsuneEmblemMission"]):
-    __tablename__ = 'hatsune_emblem_mission'
-
-    mission_id: int = Column(Integer, primary_key=True)
-    disp_group: int = Column(Integer, nullable=False)
-    category_icon: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    mission_condition: int = Column(Integer, nullable=False)
-    condition_value_1: int = Column(Integer, nullable=False)
-    condition_value_2: int = Column(Integer, nullable=False)
-    condition_value_3: int = Column(Integer, nullable=False)
-    condition_num: int = Column(Integer, nullable=False)
-    mission_reward_id: int = Column(Integer, nullable=False)
-    system_id: int = Column(Integer, nullable=False)
-    event_id: int = Column(Integer, nullable=False, index=True)
-    visible_flag: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-
-
-class HatsuneEmblemMissionReward(DeclarativeBase, Base["HatsuneEmblemMissionReward"]):
-    __tablename__ = 'hatsune_emblem_mission_reward'
-
-    id: int = Column(Integer, primary_key=True)
-    mission_reward_id: int = Column(Integer, nullable=False, index=True)
-    reward_type: int = Column(Integer, nullable=False)
-    reward_id: int = Column(Integer, nullable=False, index=True)
-    reward_num: int = Column(Integer, nullable=False)
-    icon_type: int = Column(Integer, nullable=False)
-
-
-class HatsuneItem(DeclarativeBase, Base["HatsuneItem"]):
-    __tablename__ = 'hatsune_item'
-
-    event_id: int = Column(Integer, primary_key=True)
-    boss_ticket_id: int = Column(Integer, nullable=False)
-    gacha_ticket_id: int = Column(Integer, nullable=False)
-    unit_material_id_1: int = Column(Integer, nullable=False)
-    unit_material_id_2: int = Column(Integer, nullable=False)
-    unit_material_id_3: int = Column(Integer, nullable=False)
-    unit_material_id_4: int = Column(Integer, nullable=False)
-    unit_material_id_5: int = Column(Integer, nullable=False)
-    unit_material_id_6: int = Column(Integer, nullable=False)
-    unit_material_id_7: int = Column(Integer, nullable=False)
-    unit_material_id_8: int = Column(Integer, nullable=False)
-    unit_material_id_9: int = Column(Integer, nullable=False)
-    unit_material_id_10: int = Column(Integer, nullable=False)
-
-
-class HatsuneLimitChara(DeclarativeBase, Base["HatsuneLimitChara"]):
-    __tablename__ = 'hatsune_limit_chara'
-
-    event_boss_id: int = Column(Integer, primary_key=True)
-    limit_chara_type_1: int = Column(Integer, nullable=False)
-
-
-class HatsuneMap(DeclarativeBase, Base["HatsuneMap"]):
-    __tablename__ = 'hatsune_map'
-
-    course_id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False)
-    name: str = Column(Text, nullable=False)
-    map_id: int = Column(Integer, nullable=False)
-    sheet_id: str = Column(Text, nullable=False)
-    que_id: str = Column(Text, nullable=False)
-    start_area_id: int = Column(Integer, nullable=False)
-    end_area_id: int = Column(Integer, nullable=False)
-
-
-class HatsuneMapEvent(DeclarativeBase, Base["HatsuneMapEvent"]):
-    __tablename__ = 'hatsune_map_event'
-
-    id: int = Column(Integer, primary_key=True)
-    target_event_id: int = Column(Integer, nullable=False, index=True)
-    event_type: int = Column(Integer, nullable=False)
-    condition_id: int = Column(Integer, nullable=False)
-    param1: int = Column(Integer, nullable=False)
-    param2: int = Column(Integer, nullable=False)
-
-
-class HatsuneMissionRewardDatum(DeclarativeBase, Base["HatsuneMissionRewardDatum"]):
-    __tablename__ = 'hatsune_mission_reward_data'
-
-    id: int = Column(Integer, primary_key=True)
-    mission_reward_id: int = Column(Integer, nullable=False, index=True)
-    reward_type: int = Column(Integer, nullable=False)
-    reward_id: int = Column(Integer)
-    reward_num: int = Column(Integer, nullable=False)
-
-
-class HatsuneMultiRouteParameter(DeclarativeBase, Base["HatsuneMultiRouteParameter"]):
-    __tablename__ = 'hatsune_multi_route_parameter'
-
-    id: int = Column(Integer, primary_key=True)
-    quest_id: int = Column(Integer, nullable=False, index=True)
-    type: int = Column(Integer, nullable=False, index=True)
-    param_1: int = Column(Integer, nullable=False)
-    param_2: int = Column(Integer, nullable=False)
-    param_3: int = Column(Integer, nullable=False)
-    text_1: str = Column(Text, nullable=False)
-
-
-class HatsunePresent(DeclarativeBase, Base["HatsunePresent"]):
-    __tablename__ = 'hatsune_present'
-
-    id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False, index=True)
-    dialog_title: str = Column(Text, nullable=False)
-    dialog_text: str = Column(Text, nullable=False)
-    condition_quest_id: int = Column(Integer, nullable=False)
-    condition_boss_id: int = Column(Integer, nullable=False)
-    condition_mission_id: int = Column(Integer, nullable=False)
-    adv_id: int = Column(Integer, nullable=False)
-    item_type_1: int = Column(Integer, nullable=False)
-    item_id_1: int = Column(Integer, nullable=False)
-    item_num_1: int = Column(Integer, nullable=False)
-    item_type_2: int = Column(Integer, nullable=False)
-    item_id_2: int = Column(Integer, nullable=False)
-    item_num_2: int = Column(Integer, nullable=False)
-    item_type_3: int = Column(Integer, nullable=False)
-    item_id_3: int = Column(Integer, nullable=False)
-    item_num_3: int = Column(Integer, nullable=False)
-    item_type_4: int = Column(Integer, nullable=False)
-    item_id_4: int = Column(Integer, nullable=False)
-    item_num_4: int = Column(Integer, nullable=False)
-    item_type_5: int = Column(Integer, nullable=False)
-    item_id_5: int = Column(Integer, nullable=False)
-    item_num_5: int = Column(Integer, nullable=False)
-
-
-class HatsuneQuest(DeclarativeBase, Base["HatsuneQuest"]):
-    __tablename__ = 'hatsune_quest'
-
-    quest_id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False, index=True)
-    area_id: int = Column(Integer, nullable=False)
-    quest_seq: int = Column(Integer, nullable=False)
-    quest_name: str = Column(Text, nullable=False)
-    position_x: int = Column(Integer, nullable=False)
-    position_y: int = Column(Integer, nullable=False)
-    icon_id: int = Column(Integer, nullable=False)
-    icon_offset_x: float = Column(Float, nullable=False)
-    icon_offset_y: float = Column(Float, nullable=False)
-    icon_scale: float = Column(Float, nullable=False)
-    stamina: int = Column(Integer, nullable=False)
-    stamina_start: int = Column(Integer, nullable=False)
-    team_exp: int = Column(Integer, nullable=False)
-    unit_exp: int = Column(Integer, nullable=False)
-    love: int = Column(Integer, nullable=False)
-    limit_time: int = Column(Integer, nullable=False)
-    daily_limit: int = Column(Integer, nullable=False)
-    clear_reward_group: int = Column(Integer, nullable=False)
-    rank_reward_group: int = Column(Integer, nullable=False)
-    drop_reward_type: int = Column(Integer, nullable=False)
-    drop_reward_id: int = Column(Integer, nullable=False)
-    drop_reward_num: int = Column(Integer, nullable=False)
-    drop_reward_odds: int = Column(Integer, nullable=False)
-    background_1: int = Column(Integer, nullable=False)
-    wave_bgm_sheet_id_1: str = Column(Text, nullable=False)
-    wave_bgm_que_id_1: str = Column(Text, nullable=False)
-    story_id_wavestart_1: int = Column(Integer, nullable=False)
-    story_id_waveend_1: int = Column(Integer, nullable=False)
-    background_2: int = Column(Integer, nullable=False)
-    wave_bgm_sheet_id_2: str = Column(Text, nullable=False)
-    wave_bgm_que_id_2: str = Column(Text, nullable=False)
-    story_id_wavestart_2: int = Column(Integer, nullable=False)
-    story_id_waveend_2: int = Column(Integer, nullable=False)
-    background_3: int = Column(Integer, nullable=False)
-    wave_bgm_sheet_id_3: str = Column(Text, nullable=False)
-    wave_bgm_que_id_3: str = Column(Text, nullable=False)
-    story_id_wavestart_3: int = Column(Integer, nullable=False)
-    story_id_waveend_3: int = Column(Integer, nullable=False)
-    quest_detail_bg_id: int = Column(Integer, nullable=False)
-    quest_detail_bg_position: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-
-
-class HatsuneQuestArea(DeclarativeBase, Base["HatsuneQuestArea"]):
-    __tablename__ = 'hatsune_quest_area'
-
-    area_id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False, index=True)
-    area_name: str = Column(Text, nullable=False)
-    map_type: int = Column(Integer, nullable=False)
-    sheet_id: str = Column(Text, nullable=False)
-    que_id: str = Column(Text, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    area_disp: int = Column(Integer, nullable=False)
-    map_id: int = Column(Integer, nullable=False)
-    scroll_width: int = Column(Integer, nullable=False)
-    scroll_height: int = Column(Integer, nullable=False)
-    open_tutorial_id: int = Column(Integer, nullable=False)
-    tutorial_param_1: str = Column(Text, nullable=False)
-    tutorial_param_2: str = Column(Text, nullable=False)
-    additional_effect: int = Column(Integer, nullable=False)
-
-
-class HatsuneQuestCondition(DeclarativeBase, Base["HatsuneQuestCondition"]):
-    __tablename__ = 'hatsune_quest_condition'
-
-    quest_id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False, index=True)
-    condition_quest_id_1: int = Column(Integer, nullable=False)
-    condition_quest_id_2: int = Column(Integer, nullable=False)
-    condition_boss_id_1: int = Column(Integer, nullable=False)
-    condition_boss_id_2: int = Column(Integer, nullable=False)
-    release_quest_id_1: int = Column(Integer, nullable=False)
-    release_quest_id_2: int = Column(Integer, nullable=False)
-    release_boss_id_1: int = Column(Integer, nullable=False)
-    release_boss_id_2: int = Column(Integer, nullable=False)
-    condition_main_quest_id: int = Column(Integer, nullable=False)
-
-
-class HatsuneQuiz(DeclarativeBase, Base["HatsuneQuiz"]):
-    __tablename__ = 'hatsune_quiz'
     __table_args__ = (
-        Index('hatsune_quiz_0_event_id_1_release_quest_id', 'event_id', 'release_quest_id'),
+        Index('hatsune_diary_data_0_contents_type', 'contents_type'),
     )
 
-    event_id: int = Column(Integer, nullable=False, index=True)
-    quiz_id: int = Column(Integer, primary_key=True)
-    question_title: str = Column(Text, nullable=False)
-    question: str = Column(Text, nullable=False)
-    choice_1: str = Column(Text, nullable=False)
-    choice_2: str = Column(Text, nullable=False)
-    choice_3: str = Column(Text, nullable=False)
-    choice_4: str = Column(Text, nullable=False)
-    choice_5: str = Column(Text, nullable=False)
-    choice_6: str = Column(Text, nullable=False)
-    answer: int = Column(Integer, nullable=False)
-    hint: str = Column(Text, nullable=False)
-    resource_id: int = Column(Integer, nullable=False)
-    release_quest_id: int = Column(Integer, nullable=False)
-    quiz_position_x: int = Column(Integer, nullable=False)
-    quiz_position_y: int = Column(Integer, nullable=False)
-    quiz_icon_id: int = Column(Integer, nullable=False)
-    quiz_point_name: str = Column(Text, nullable=False)
-    adv_id_quiz_start: int = Column(Integer, nullable=False)
-    adv_id_quiz_end: int = Column(Integer, nullable=False)
+    diary_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    contents_type: Mapped[int] = mapped_column(Integer)
+    diary_date: Mapped[int] = mapped_column(Integer)
+    sub_title: Mapped[str] = mapped_column(Text)
+    forced_release_time: Mapped[str] = mapped_column(Text)
+    condition_time: Mapped[str] = mapped_column(Text)
+    condition_story_id: Mapped[int] = mapped_column(Integer)
+    condition_boss_count: Mapped[int] = mapped_column(Integer)
 
 
-class HatsuneQuizCondition(DeclarativeBase, Base["HatsuneQuizCondition"]):
+class HatsuneDiaryLetterScript(Base):
+    __tablename__ = 'hatsune_diary_letter_script'
+    __table_args__ = (
+        Index('hatsune_diary_letter_script_0_diary_id', 'diary_id'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    diary_id: Mapped[int] = mapped_column(Integer)
+    seq_num: Mapped[int] = mapped_column(Integer)
+    type: Mapped[int] = mapped_column(Integer)
+    line_num: Mapped[int] = mapped_column(Integer)
+    start_pos: Mapped[int] = mapped_column(Integer)
+    end_pos: Mapped[int] = mapped_column(Integer)
+    seek_time: Mapped[float] = mapped_column(Float)
+    sheet_name: Mapped[str] = mapped_column(Text)
+    cue_name: Mapped[str] = mapped_column(Text)
+    command: Mapped[int] = mapped_column(Integer)
+    command_param: Mapped[float] = mapped_column(Float)
+
+
+class HatsuneDiaryScript(Base):
+    __tablename__ = 'hatsune_diary_script'
+    __table_args__ = (
+        Index('hatsune_diary_script_0_diary_id', 'diary_id'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    diary_id: Mapped[int] = mapped_column(Integer)
+    seq_num: Mapped[int] = mapped_column(Integer)
+    type: Mapped[int] = mapped_column(Integer)
+    diary_text: Mapped[str] = mapped_column(Text)
+    text_animation_speed: Mapped[int] = mapped_column(Integer)
+    sheet_name: Mapped[str] = mapped_column(Text)
+    cue_name: Mapped[str] = mapped_column(Text)
+    command: Mapped[int] = mapped_column(Integer)
+    command_param: Mapped[float] = mapped_column(Float)
+
+
+class HatsuneDiarySetting(Base):
+    __tablename__ = 'hatsune_diary_setting'
+
+    event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    bgm_sheet_name: Mapped[str] = mapped_column(Text)
+    bgm_cue_name: Mapped[str] = mapped_column(Text)
+
+
+class HatsuneEmblemMission(Base):
+    __tablename__ = 'hatsune_emblem_mission'
+    __table_args__ = (
+        Index('hatsune_emblem_mission_0_event_id', 'event_id'),
+    )
+
+    mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    disp_group: Mapped[int] = mapped_column(Integer)
+    category_icon: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    mission_condition: Mapped[int] = mapped_column(Integer)
+    condition_value_1: Mapped[int] = mapped_column(Integer)
+    condition_value_2: Mapped[int] = mapped_column(Integer)
+    condition_value_3: Mapped[int] = mapped_column(Integer)
+    condition_num: Mapped[int] = mapped_column(Integer)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    system_id: Mapped[int] = mapped_column(Integer)
+    event_id: Mapped[int] = mapped_column(Integer)
+    visible_flag: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+
+
+class HatsuneEmblemMissionReward(Base):
+    __tablename__ = 'hatsune_emblem_mission_reward'
+    __table_args__ = (
+        Index('hatsune_emblem_mission_reward_0_mission_reward_id', 'mission_reward_id'),
+        Index('hatsune_emblem_mission_reward_0_reward_id', 'reward_id')
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_num: Mapped[int] = mapped_column(Integer)
+    icon_type: Mapped[int] = mapped_column(Integer)
+
+
+class HatsuneItem(Base):
+    __tablename__ = 'hatsune_item'
+
+    event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    boss_ticket_id: Mapped[int] = mapped_column(Integer)
+    gacha_ticket_id: Mapped[int] = mapped_column(Integer)
+    unit_material_id_1: Mapped[int] = mapped_column(Integer)
+    unit_material_id_2: Mapped[int] = mapped_column(Integer)
+    unit_material_id_3: Mapped[int] = mapped_column(Integer)
+    unit_material_id_4: Mapped[int] = mapped_column(Integer)
+    unit_material_id_5: Mapped[int] = mapped_column(Integer)
+    unit_material_id_6: Mapped[int] = mapped_column(Integer)
+    unit_material_id_7: Mapped[int] = mapped_column(Integer)
+    unit_material_id_8: Mapped[int] = mapped_column(Integer)
+    unit_material_id_9: Mapped[int] = mapped_column(Integer)
+    unit_material_id_10: Mapped[int] = mapped_column(Integer)
+
+
+class HatsuneLimitChara(Base):
+    __tablename__ = 'hatsune_limit_chara'
+
+    event_boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    limit_chara_type_1: Mapped[int] = mapped_column(Integer)
+
+
+class HatsuneMap(Base):
+    __tablename__ = 'hatsune_map'
+
+    course_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    name: Mapped[str] = mapped_column(Text)
+    map_id: Mapped[int] = mapped_column(Integer)
+    sheet_id: Mapped[str] = mapped_column(Text)
+    que_id: Mapped[str] = mapped_column(Text)
+    start_area_id: Mapped[int] = mapped_column(Integer)
+    end_area_id: Mapped[int] = mapped_column(Integer)
+
+
+class HatsuneMapEvent(Base):
+    __tablename__ = 'hatsune_map_event'
+    __table_args__ = (
+        Index('hatsune_map_event_0_target_event_id', 'target_event_id'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    target_event_id: Mapped[int] = mapped_column(Integer)
+    event_type: Mapped[int] = mapped_column(Integer)
+    condition_id: Mapped[int] = mapped_column(Integer)
+    param1: Mapped[int] = mapped_column(Integer)
+    param2: Mapped[int] = mapped_column(Integer)
+
+
+class HatsuneMissionRewardDatum(Base):
+    __tablename__ = 'hatsune_mission_reward_data'
+    __table_args__ = (
+        Index('hatsune_mission_reward_data_0_mission_reward_id', 'mission_reward_id'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_num: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[Optional[int]] = mapped_column(Integer)
+
+
+class HatsuneMultiRouteParameter(Base):
+    __tablename__ = 'hatsune_multi_route_parameter'
+    __table_args__ = (
+        Index('hatsune_multi_route_parameter_0_quest_id', 'quest_id'),
+        Index('hatsune_multi_route_parameter_0_type', 'type')
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    quest_id: Mapped[int] = mapped_column(Integer)
+    type: Mapped[int] = mapped_column(Integer)
+    param_1: Mapped[int] = mapped_column(Integer)
+    param_2: Mapped[int] = mapped_column(Integer)
+    param_3: Mapped[int] = mapped_column(Integer)
+    text_1: Mapped[str] = mapped_column(Text)
+
+
+class HatsunePresent(Base):
+    __tablename__ = 'hatsune_present'
+    __table_args__ = (
+        Index('hatsune_present_0_event_id', 'event_id'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    dialog_title: Mapped[str] = mapped_column(Text)
+    dialog_text: Mapped[str] = mapped_column(Text)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    condition_boss_id: Mapped[int] = mapped_column(Integer)
+    condition_mission_id: Mapped[int] = mapped_column(Integer)
+    adv_id: Mapped[int] = mapped_column(Integer)
+    item_type_1: Mapped[int] = mapped_column(Integer)
+    item_id_1: Mapped[int] = mapped_column(Integer)
+    item_num_1: Mapped[int] = mapped_column(Integer)
+    item_type_2: Mapped[int] = mapped_column(Integer)
+    item_id_2: Mapped[int] = mapped_column(Integer)
+    item_num_2: Mapped[int] = mapped_column(Integer)
+    item_type_3: Mapped[int] = mapped_column(Integer)
+    item_id_3: Mapped[int] = mapped_column(Integer)
+    item_num_3: Mapped[int] = mapped_column(Integer)
+    item_type_4: Mapped[int] = mapped_column(Integer)
+    item_id_4: Mapped[int] = mapped_column(Integer)
+    item_num_4: Mapped[int] = mapped_column(Integer)
+    item_type_5: Mapped[int] = mapped_column(Integer)
+    item_id_5: Mapped[int] = mapped_column(Integer)
+    item_num_5: Mapped[int] = mapped_column(Integer)
+
+
+class HatsuneQuest(Base):
+    __tablename__ = 'hatsune_quest'
+    __table_args__ = (
+        Index('hatsune_quest_0_event_id', 'event_id'),
+    )
+
+    quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    area_id: Mapped[int] = mapped_column(Integer)
+    quest_seq: Mapped[int] = mapped_column(Integer)
+    quest_name: Mapped[str] = mapped_column(Text)
+    position_x: Mapped[int] = mapped_column(Integer)
+    position_y: Mapped[int] = mapped_column(Integer)
+    icon_id: Mapped[int] = mapped_column(Integer)
+    icon_offset_x: Mapped[float] = mapped_column(Float)
+    icon_offset_y: Mapped[float] = mapped_column(Float)
+    icon_scale: Mapped[float] = mapped_column(Float)
+    stamina: Mapped[int] = mapped_column(Integer)
+    stamina_start: Mapped[int] = mapped_column(Integer)
+    team_exp: Mapped[int] = mapped_column(Integer)
+    unit_exp: Mapped[int] = mapped_column(Integer)
+    love: Mapped[int] = mapped_column(Integer)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    daily_limit: Mapped[int] = mapped_column(Integer)
+    clear_reward_group: Mapped[int] = mapped_column(Integer)
+    rank_reward_group: Mapped[int] = mapped_column(Integer)
+    drop_reward_type: Mapped[int] = mapped_column(Integer)
+    drop_reward_id: Mapped[int] = mapped_column(Integer)
+    drop_reward_num: Mapped[int] = mapped_column(Integer)
+    drop_reward_odds: Mapped[int] = mapped_column(Integer)
+    background_1: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_1: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_1: Mapped[str] = mapped_column(Text)
+    story_id_wavestart_1: Mapped[int] = mapped_column(Integer)
+    story_id_waveend_1: Mapped[int] = mapped_column(Integer)
+    background_2: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_2: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_2: Mapped[str] = mapped_column(Text)
+    story_id_wavestart_2: Mapped[int] = mapped_column(Integer)
+    story_id_waveend_2: Mapped[int] = mapped_column(Integer)
+    background_3: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_3: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_3: Mapped[str] = mapped_column(Text)
+    story_id_wavestart_3: Mapped[int] = mapped_column(Integer)
+    story_id_waveend_3: Mapped[int] = mapped_column(Integer)
+    quest_detail_bg_id: Mapped[int] = mapped_column(Integer)
+    quest_detail_bg_position: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+
+
+class HatsuneQuestArea(Base):
+    __tablename__ = 'hatsune_quest_area'
+    __table_args__ = (
+        Index('hatsune_quest_area_0_event_id', 'event_id'),
+    )
+
+    area_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    area_name: Mapped[str] = mapped_column(Text)
+    map_type: Mapped[int] = mapped_column(Integer)
+    sheet_id: Mapped[str] = mapped_column(Text)
+    que_id: Mapped[str] = mapped_column(Text)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    area_disp: Mapped[int] = mapped_column(Integer)
+    map_id: Mapped[int] = mapped_column(Integer)
+    scroll_width: Mapped[int] = mapped_column(Integer)
+    scroll_height: Mapped[int] = mapped_column(Integer)
+    open_tutorial_id: Mapped[int] = mapped_column(Integer)
+    tutorial_param_1: Mapped[str] = mapped_column(Text)
+    tutorial_param_2: Mapped[str] = mapped_column(Text)
+    additional_effect: Mapped[int] = mapped_column(Integer)
+
+
+class HatsuneQuestCondition(Base):
+    __tablename__ = 'hatsune_quest_condition'
+    __table_args__ = (
+        Index('hatsune_quest_condition_0_event_id', 'event_id'),
+    )
+
+    quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    condition_quest_id_1: Mapped[int] = mapped_column(Integer)
+    condition_quest_id_2: Mapped[int] = mapped_column(Integer)
+    condition_boss_id_1: Mapped[int] = mapped_column(Integer)
+    condition_boss_id_2: Mapped[int] = mapped_column(Integer)
+    release_quest_id_1: Mapped[int] = mapped_column(Integer)
+    release_quest_id_2: Mapped[int] = mapped_column(Integer)
+    release_boss_id_1: Mapped[int] = mapped_column(Integer)
+    release_boss_id_2: Mapped[int] = mapped_column(Integer)
+    condition_main_quest_id: Mapped[int] = mapped_column(Integer)
+
+
+class HatsuneQuiz(Base):
+    __tablename__ = 'hatsune_quiz'
+    __table_args__ = (
+        Index('hatsune_quiz_0_event_id', 'event_id'),
+        Index('hatsune_quiz_0_event_id_1_release_quest_id', 'event_id', 'release_quest_id')
+    )
+
+    event_id: Mapped[int] = mapped_column(Integer)
+    quiz_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    question_title: Mapped[str] = mapped_column(Text)
+    question: Mapped[str] = mapped_column(Text)
+    choice_1: Mapped[str] = mapped_column(Text)
+    choice_2: Mapped[str] = mapped_column(Text)
+    choice_3: Mapped[str] = mapped_column(Text)
+    choice_4: Mapped[str] = mapped_column(Text)
+    choice_5: Mapped[str] = mapped_column(Text)
+    choice_6: Mapped[str] = mapped_column(Text)
+    answer: Mapped[int] = mapped_column(Integer)
+    hint: Mapped[str] = mapped_column(Text)
+    resource_id: Mapped[int] = mapped_column(Integer)
+    release_quest_id: Mapped[int] = mapped_column(Integer)
+    quiz_position_x: Mapped[int] = mapped_column(Integer)
+    quiz_position_y: Mapped[int] = mapped_column(Integer)
+    quiz_icon_id: Mapped[int] = mapped_column(Integer)
+    quiz_point_name: Mapped[str] = mapped_column(Text)
+    adv_id_quiz_start: Mapped[int] = mapped_column(Integer)
+    adv_id_quiz_end: Mapped[int] = mapped_column(Integer)
+
+
+class HatsuneQuizCondition(Base):
     __tablename__ = 'hatsune_quiz_condition'
     __table_args__ = (
         Index('hatsune_quiz_condition_0_event_id_1_quiz_id', 'event_id', 'quiz_id'),
     )
 
-    id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False)
-    quiz_id: int = Column(Integer, nullable=False)
-    condition_quest_id: int = Column(Integer, nullable=False)
-    condition_quiz_id: int = Column(Integer, nullable=False)
-    condition_unit_id: int = Column(Integer, nullable=False)
-    condition_mission_id: int = Column(Integer, nullable=False)
-    condition_time_from: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    quiz_id: Mapped[int] = mapped_column(Integer)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    condition_quiz_id: Mapped[int] = mapped_column(Integer)
+    condition_unit_id: Mapped[int] = mapped_column(Integer)
+    condition_mission_id: Mapped[int] = mapped_column(Integer)
+    condition_time_from: Mapped[int] = mapped_column(Integer)
 
 
-class HatsuneQuizReward(DeclarativeBase, Base["HatsuneQuizReward"]):
+class HatsuneQuizReward(Base):
     __tablename__ = 'hatsune_quiz_reward'
 
-    quiz_id: int = Column(Integer, primary_key=True)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
+    quiz_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
 
 
-class HatsuneRelayDatum(DeclarativeBase, Base["HatsuneRelayDatum"]):
+class HatsuneRelayDatum(Base):
     __tablename__ = 'hatsune_relay_data'
 
-    relay_story_id: int = Column(Integer, primary_key=True)
-    is_enable_read: int = Column(Integer, nullable=False)
-    condition_quest_id: int = Column(Integer, nullable=False)
-    story_seq: int = Column(Integer, nullable=False)
-    sub_title: str = Column(Text, nullable=False)
+    relay_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    is_enable_read: Mapped[int] = mapped_column(Integer)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    story_seq: Mapped[int] = mapped_column(Integer)
+    sub_title: Mapped[str] = mapped_column(Text)
 
 
-class HatsuneSchedule(DeclarativeBase, Base["HatsuneSchedule"]):
+class HatsuneSchedule(Base):
     __tablename__ = 'hatsune_schedule'
+    __table_args__ = (
+        Index('hatsune_schedule_0_original_event_id', 'original_event_id'),
+        Index('hatsune_schedule_0_series_event_id', 'series_event_id')
+    )
 
-    event_id: int = Column(Integer, primary_key=True)
-    teaser_time: str = Column(Text, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    close_time: str = Column(Text, nullable=False)
-    background: int = Column(Integer, nullable=False)
-    sheet_id: str = Column(Text, nullable=False)
-    que_id: str = Column(Text, nullable=False)
-    banner_unit_id: int = Column(Integer, nullable=False)
-    count_start_time: str = Column(Text, nullable=False)
-    backgroud_size_x: int = Column(Integer, nullable=False)
-    backgroud_size_y: int = Column(Integer, nullable=False)
-    backgroud_pos_x: int = Column(Integer, nullable=False)
-    backgroud_pos_y: int = Column(Integer, nullable=False)
-    original_event_id: int = Column(Integer, nullable=False, index=True)
-    series_event_id: int = Column(Integer, nullable=False, index=True)
-    teaser_dialog_type: int = Column(Integer, nullable=False)
+    event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    teaser_time: Mapped[str] = mapped_column(Text)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    close_time: Mapped[str] = mapped_column(Text)
+    background: Mapped[int] = mapped_column(Integer)
+    sheet_id: Mapped[str] = mapped_column(Text)
+    que_id: Mapped[str] = mapped_column(Text)
+    banner_unit_id: Mapped[int] = mapped_column(Integer)
+    count_start_time: Mapped[str] = mapped_column(Text)
+    backgroud_size_x: Mapped[int] = mapped_column(Integer)
+    backgroud_size_y: Mapped[int] = mapped_column(Integer)
+    backgroud_pos_x: Mapped[int] = mapped_column(Integer)
+    backgroud_pos_y: Mapped[int] = mapped_column(Integer)
+    original_event_id: Mapped[int] = mapped_column(Integer)
+    series_event_id: Mapped[int] = mapped_column(Integer)
+    teaser_dialog_type: Mapped[int] = mapped_column(Integer)
 
 
-class HatsuneSeriesGachaReference(DeclarativeBase, Base["HatsuneSeriesGachaReference"]):
+class HatsuneSeriesGachaReference(Base):
     __tablename__ = 'hatsune_series_gacha_reference'
 
-    event_id: int = Column(Integer, primary_key=True)
-    reference_key_event_id_flag: int = Column(Integer, nullable=False)
+    event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reference_key_event_id_flag: Mapped[int] = mapped_column(Integer)
 
 
-class HatsuneSpecialBattle(DeclarativeBase, Base["HatsuneSpecialBattle"]):
+class HatsuneSpecialBattle(Base):
     __tablename__ = 'hatsune_special_battle'
+    __table_args__ = (
+        Index('hatsune_special_battle_0_event_id', 'event_id'),
+        Index('hatsune_special_battle_0_wave_group_id', 'wave_group_id')
+    )
 
-    event_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    mode: int = Column(Integer, primary_key=True, nullable=False)
-    recommended_level: int = Column(Integer, nullable=False)
-    purpose_type: int = Column(Integer, nullable=False)
-    purpose_count: int = Column(Integer, nullable=False)
-    trigger_hp: int = Column(Integer, nullable=False)
-    story_id_mode_start: int = Column(Integer, nullable=False)
-    story_id_mode_end: int = Column(Integer, nullable=False)
-    wave_group_id: int = Column(Integer, nullable=False, index=True)
-    unnecessary_defeat_chara: int = Column(Integer, nullable=False)
-    story_start_second: float = Column(Float, nullable=False)
-    action_start_second: float = Column(Float, nullable=False)
-    hp_gauge_color_flag: int = Column(Integer, nullable=False)
-    start_idle_trigger: int = Column(Integer, nullable=False)
-    appear_time: float = Column(Float, nullable=False)
-    detail_boss_bg_size: float = Column(Float, nullable=False)
-    detail_boss_bg_height: float = Column(Float, nullable=False)
-    detail_boss_motion: str = Column(Text, nullable=False)
-    is_hide_boss: int = Column(Integer, nullable=False)
+    event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    mode: Mapped[int] = mapped_column(Integer, primary_key=True)
+    recommended_level: Mapped[int] = mapped_column(Integer)
+    purpose_type: Mapped[int] = mapped_column(Integer)
+    purpose_count: Mapped[int] = mapped_column(Integer)
+    trigger_hp: Mapped[int] = mapped_column(Integer)
+    story_id_mode_start: Mapped[int] = mapped_column(Integer)
+    story_id_mode_end: Mapped[int] = mapped_column(Integer)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    unnecessary_defeat_chara: Mapped[int] = mapped_column(Integer)
+    story_start_second: Mapped[float] = mapped_column(Float)
+    action_start_second: Mapped[float] = mapped_column(Float)
+    hp_gauge_color_flag: Mapped[int] = mapped_column(Integer)
+    start_idle_trigger: Mapped[int] = mapped_column(Integer)
+    appear_time: Mapped[float] = mapped_column(Float)
+    detail_boss_bg_size: Mapped[float] = mapped_column(Float)
+    detail_boss_bg_height: Mapped[float] = mapped_column(Float)
+    detail_boss_motion: Mapped[str] = mapped_column(Text)
+    is_hide_boss: Mapped[int] = mapped_column(Integer)
 
 
-class HatsuneSpecialBossTicketCount(DeclarativeBase, Base["HatsuneSpecialBossTicketCount"]):
+class HatsuneSpecialBossTicketCount(Base):
     __tablename__ = 'hatsune_special_boss_ticket_count'
 
-    id: int = Column(Integer, primary_key=True)
-    challenge_count_from: int = Column(Integer, nullable=False)
-    challenge_count_to: int = Column(Integer, nullable=False)
-    use_ticket_num: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    challenge_count_from: Mapped[int] = mapped_column(Integer)
+    challenge_count_to: Mapped[int] = mapped_column(Integer)
+    use_ticket_num: Mapped[int] = mapped_column(Integer)
 
 
-class HatsuneSpecialEnemy(DeclarativeBase, Base["HatsuneSpecialEnemy"]):
+class HatsuneSpecialEnemy(Base):
     __tablename__ = 'hatsune_special_enemy'
 
-    enemy_id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False)
-    mode: int = Column(Integer, nullable=False)
-    enemy_point: int = Column(Integer, nullable=False)
-    initial_position: int = Column(Integer, nullable=False)
-    order: int = Column(Integer, nullable=False)
+    enemy_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    mode: Mapped[int] = mapped_column(Integer)
+    enemy_point: Mapped[int] = mapped_column(Integer)
+    initial_position: Mapped[int] = mapped_column(Integer)
+    order: Mapped[int] = mapped_column(Integer)
 
 
-class HatsuneSpecialMissionDatum(DeclarativeBase, Base["HatsuneSpecialMissionDatum"]):
+class HatsuneSpecialMissionDatum(Base):
     __tablename__ = 'hatsune_special_mission_data'
 
-    special_mission_id: int = Column(Integer, primary_key=True)
-    disp_group: int = Column(Integer, nullable=False)
-    category_icon: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    purpose_type: int = Column(Integer, nullable=False)
-    mission_condition: int = Column(Integer, nullable=False)
-    condition_value_1: int = Column(Integer)
-    condition_value_2: int = Column(Integer)
-    condition_value_3: int = Column(Integer)
-    condition_num: int = Column(Integer, nullable=False)
-    mission_reward_id: int = Column(Integer, nullable=False)
-    system_id: int = Column(Integer)
-    event_id: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    special_mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    disp_group: Mapped[int] = mapped_column(Integer)
+    category_icon: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    purpose_type: Mapped[int] = mapped_column(Integer)
+    mission_condition: Mapped[int] = mapped_column(Integer)
+    condition_num: Mapped[int] = mapped_column(Integer)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    event_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    condition_value_1: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_2: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_3: Mapped[Optional[int]] = mapped_column(Integer)
+    system_id: Mapped[Optional[int]] = mapped_column(Integer)
 
 
-class HatsuneStationaryMissionDatum(DeclarativeBase, Base["HatsuneStationaryMissionDatum"]):
+class HatsuneStationaryMissionDatum(Base):
     __tablename__ = 'hatsune_stationary_mission_data'
+    __table_args__ = (
+        Index('hatsune_stationary_mission_data_0_event_id', 'event_id'),
+    )
 
-    stationary_mission_id: int = Column(Integer, primary_key=True)
-    disp_group: int = Column(Integer, nullable=False)
-    category_icon: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    mission_condition: int = Column(Integer, nullable=False)
-    condition_value_1: int = Column(Integer)
-    condition_value_2: int = Column(Integer)
-    condition_value_3: int = Column(Integer)
-    condition_num: int = Column(Integer, nullable=False)
-    mission_reward_id: int = Column(Integer, nullable=False)
-    system_id: int = Column(Integer)
-    event_id: int = Column(Integer, nullable=False, index=True)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    stationary_mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    disp_group: Mapped[int] = mapped_column(Integer)
+    category_icon: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    mission_condition: Mapped[int] = mapped_column(Integer)
+    condition_num: Mapped[int] = mapped_column(Integer)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    event_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    condition_value_1: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_2: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_3: Mapped[Optional[int]] = mapped_column(Integer)
+    system_id: Mapped[Optional[int]] = mapped_column(Integer)
 
 
-class HatsuneUnlockStoryCondition(DeclarativeBase, Base["HatsuneUnlockStoryCondition"]):
+class HatsuneUnlockStoryCondition(Base):
     __tablename__ = 'hatsune_unlock_story_condition'
+    __table_args__ = (
+        Index('hatsune_unlock_story_condition_0_event_id', 'event_id'),
+    )
 
-    story_id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False, index=True)
-    condition_entry: int = Column(Integer, nullable=False)
-    condition_quest_id: int = Column(Integer, nullable=False)
-    condition_boss_id: int = Column(Integer, nullable=False)
-    condition_mission_id: int = Column(Integer, nullable=False)
-    condition_time: str = Column(Text, nullable=False)
-    condition_story_id: int = Column(Integer, nullable=False)
+    story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    condition_entry: Mapped[int] = mapped_column(Integer)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    condition_boss_id: Mapped[int] = mapped_column(Integer)
+    condition_mission_id: Mapped[int] = mapped_column(Integer)
+    condition_time: Mapped[str] = mapped_column(Text)
+    condition_story_id: Mapped[int] = mapped_column(Integer)
 
 
-class HatsuneUnlockUnitCondition(DeclarativeBase, Base["HatsuneUnlockUnitCondition"]):
+class HatsuneUnlockUnitCondition(Base):
     __tablename__ = 'hatsune_unlock_unit_condition'
     __table_args__ = (
-        Index('hatsune_unlock_unit_condition_0_unit_id_1_event_id', 'unit_id', 'event_id'),
+        Index('hatsune_unlock_unit_condition_0_condition_mission_id', 'condition_mission_id'),
+        Index('hatsune_unlock_unit_condition_0_unit_id_1_event_id', 'unit_id', 'event_id')
     )
 
-    id: int = Column(Integer, primary_key=True)
-    unit_id: int = Column(Integer, nullable=False)
-    event_id: int = Column(Integer, nullable=False)
-    condition_mission_id: int = Column(Integer, nullable=False, index=True)
-    top_description: str = Column(Text, nullable=False)
-    description_1: str = Column(Text, nullable=False)
-    description_2: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    event_id: Mapped[int] = mapped_column(Integer)
+    condition_mission_id: Mapped[int] = mapped_column(Integer)
+    top_description: Mapped[str] = mapped_column(Text)
+    description_1: Mapped[str] = mapped_column(Text)
+    description_2: Mapped[str] = mapped_column(Text)
 
 
-class ItemDatum(DeclarativeBase, Base["ItemDatum"]):
+class HpDrainAt(Base):
+    __tablename__ = 'hp_drain_at'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    limit_value: Mapped[int] = mapped_column(Integer)
+    correction_value: Mapped[float] = mapped_column(Float)
+
+
+class ItemDatum(Base):
     __tablename__ = 'item_data'
 
-    item_id: int = Column(Integer, primary_key=True)
-    item_name: str = Column(Text, nullable=False)
-    description: str = Column(Text, nullable=False)
-    promotion_level: int = Column(Integer, nullable=False)
-    item_type: int = Column(Integer, nullable=False)
-    value: int = Column(Integer, nullable=False)
-    price: int = Column(Integer, nullable=False)
-    limit_num: int = Column(Integer, nullable=False)
-    gojuon_order: int = Column(Integer, nullable=False)
-    sell_check_disp: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    item_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    item_name: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
+    promotion_level: Mapped[int] = mapped_column(Integer)
+    item_type: Mapped[int] = mapped_column(Integer)
+    value: Mapped[int] = mapped_column(Integer)
+    price: Mapped[int] = mapped_column(Integer)
+    limit_num: Mapped[int] = mapped_column(Integer)
+    gojuon_order: Mapped[int] = mapped_column(Integer)
+    sell_check_disp: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class ItemETicketDatum(DeclarativeBase, Base["ItemETicketDatum"]):
+class ItemETicketDatum(Base):
     __tablename__ = 'item_e_ticket_data'
-
-    ticket_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    exchange_number: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    unit_id: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_count_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_count_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_count_3: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-
-
-class KaiserAddTimesDatum(DeclarativeBase, Base["KaiserAddTimesDatum"]):
-    __tablename__ = 'kaiser_add_times_data'
-
-    id: int = Column(Integer, primary_key=True)
-    add_times: int = Column(Integer, nullable=False)
-    add_times_time: str = Column(Text, nullable=False)
-    duration: int = Column(Integer, nullable=False)
-
-
-class KaiserExterminationReward(DeclarativeBase, Base["KaiserExterminationReward"]):
-    __tablename__ = 'kaiser_extermination_reward'
-
-    extermination_reward_group: int = Column(Integer, primary_key=True)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_count_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_count_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_count_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_count_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_count_5: int = Column(Integer, nullable=False)
-
-
-class KaiserQuestDatum(DeclarativeBase, Base["KaiserQuestDatum"]):
-    __tablename__ = 'kaiser_quest_data'
-
-    kaiser_boss_id: int = Column(Integer, primary_key=True)
-    name: str = Column(Text, nullable=False)
-    map_type: int = Column(Integer, nullable=False)
-    battle_start_story_id: int = Column(Integer, nullable=False)
-    battle_finish_story_id: int = Column(Integer, nullable=False)
-    disappearance_story_id: int = Column(Integer, nullable=False)
-    limit_time: int = Column(Integer, nullable=False)
-    restriction_group_id: int = Column(Integer, nullable=False)
-    reward_image_1: int = Column(Integer, nullable=False)
-    reward_count_1: int = Column(Integer, nullable=False)
-    reward_image_2: int = Column(Integer, nullable=False)
-    reward_count_2: int = Column(Integer, nullable=False)
-    reward_image_3: int = Column(Integer, nullable=False)
-    reward_count_3: int = Column(Integer, nullable=False)
-    reward_image_4: int = Column(Integer, nullable=False)
-    reward_count_4: int = Column(Integer, nullable=False)
-    reward_image_5: int = Column(Integer, nullable=False)
-    reward_count_5: int = Column(Integer, nullable=False)
-    fix_reward_group_id: int = Column(Integer, nullable=False)
-    odds_group_id: str = Column(Text, nullable=False)
-    chest_id: int = Column(Integer, nullable=False)
-    extermination_reward_group: int = Column(Integer, nullable=False)
-    background: int = Column(Integer, nullable=False)
-    bg_position: int = Column(Integer, nullable=False)
-    wave_group_id: int = Column(Integer, nullable=False)
-    enemy_position_x: int = Column(Integer, nullable=False)
-    enemy_local_position_y: int = Column(Integer, nullable=False)
-    enemy_size_1: float = Column(Float, nullable=False)
-    result_boss_position_y: float = Column(Float, nullable=False)
-    wave_bgm: str = Column(Text, nullable=False)
-    reward_gold_coefficient: float = Column(Float, nullable=False)
-    limited_mana: int = Column(Integer, nullable=False)
-    clear_story_id_1: int = Column(Integer, nullable=False)
-    clear_story_id_2: int = Column(Integer, nullable=False)
-
-
-class KaiserRestrictionGroup(DeclarativeBase, Base["KaiserRestrictionGroup"]):
-    __tablename__ = 'kaiser_restriction_group'
-
-    restriction_group_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    unit_id: int = Column(Integer, primary_key=True, nullable=False)
-
-
-class KaiserSchedule(DeclarativeBase, Base["KaiserSchedule"]):
-    __tablename__ = 'kaiser_schedule'
-
-    id: int = Column(Integer, primary_key=True)
-    teaser_time: str = Column(Text, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    count_start_time: str = Column(Text, nullable=False)
-    close_time: str = Column(Text, nullable=False)
-    story_id: int = Column(Integer, nullable=False)
-    close_story_condition_id: int = Column(Integer, nullable=False)
-    close_story_id: int = Column(Integer, nullable=False)
-    top_bgm: str = Column(Text, nullable=False)
-    top_bg: str = Column(Text, nullable=False)
-    after_bgm: str = Column(Text, nullable=False)
-    after_bg: str = Column(Text, nullable=False)
-
-
-class KaiserSpecialBattle(DeclarativeBase, Base["KaiserSpecialBattle"]):
-    __tablename__ = 'kaiser_special_battle'
-
-    mode: int = Column(Integer, primary_key=True)
-    recommended_level: int = Column(Integer, nullable=False)
-    purpose_type: int = Column(Integer, nullable=False)
-    purpose_count: int = Column(Integer, nullable=False)
-    trigger_hp: int = Column(Integer, nullable=False)
-    story_id_mode_start: int = Column(Integer, nullable=False)
-    story_id_mode_end: int = Column(Integer, nullable=False)
-    wave_group_id: int = Column(Integer, nullable=False)
-    unnecessary_defeat_chara: int = Column(Integer, nullable=False)
-    story_start_second: float = Column(Float, nullable=False)
-    action_start_second: float = Column(Float, nullable=False)
-    hp_gauge_color_flag: int = Column(Integer, nullable=False)
-    start_idle_trigger: int = Column(Integer, nullable=False)
-    appear_time: float = Column(Float, nullable=False)
-
-
-class KmkNaviComment(DeclarativeBase, Base["KmkNaviComment"]):
-    __tablename__ = 'kmk_navi_comment'
-
-    comment_id: int = Column(Integer, primary_key=True)
-    where_type: int = Column(Integer, nullable=False)
-    character_id: int = Column(Integer, nullable=False)
-    face_type: int = Column(Integer, nullable=False)
-    character_name: str = Column(Text, nullable=False)
-    description: str = Column(Text)
-    voice_id: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    pos_x: float = Column(Float, nullable=False)
-    pos_y: float = Column(Float, nullable=False)
-    change_face_time: float = Column(Float, nullable=False)
-    change_face_type: int = Column(Integer, nullable=False)
-    event_id: int = Column(Integer, nullable=False)
-
-
-class KmkReward(DeclarativeBase, Base["KmkReward"]):
-    __tablename__ = 'kmk_reward'
-
-    id: int = Column(Integer, primary_key=True)
-    kmk_score: int = Column(Integer, nullable=False)
-    mission_detail: str = Column(Text, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_count_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_count_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_count_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_count_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_count_5: int = Column(Integer, nullable=False)
-
-
-class LegionAddTimesDatum(DeclarativeBase, Base["LegionAddTimesDatum"]):
-    __tablename__ = 'legion_add_times_data'
-
-    id: int = Column(Integer, primary_key=True)
-    add_times: int = Column(Integer, nullable=False)
-    add_times_time: str = Column(Text, nullable=False)
-
-
-class LegionBattleBonu(DeclarativeBase, Base["LegionBattleBonu"]):
-    __tablename__ = 'legion_battle_bonus'
     __table_args__ = (
-        Index('legion_battle_bonus_0_type_1_legion_boss_id', 'type', 'legion_boss_id'),
+        Index('item_e_ticket_data_0_exchange_number', 'exchange_number'),
+        Index('item_e_ticket_data_0_ticket_id', 'ticket_id')
     )
 
-    legion_battle_bonus_id: int = Column(Integer, primary_key=True)
-    type: int = Column(Integer, nullable=False, index=True)
-    legion_boss_id: int = Column(Integer, nullable=False)
-    condition_hp: str = Column(Text, nullable=False)
-    legion_battle_effect_id: int = Column(Integer, nullable=False)
-    duration: int = Column(Integer, nullable=False)
-    title: str = Column(Text, nullable=False)
-    description: str = Column(Text, nullable=False)
+    ticket_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    exchange_number: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class LegionBattleBonusEffect(DeclarativeBase, Base["LegionBattleBonusEffect"]):
+class KaiserAddTimesDatum(Base):
+    __tablename__ = 'kaiser_add_times_data'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    add_times: Mapped[int] = mapped_column(Integer)
+    add_times_time: Mapped[str] = mapped_column(Text)
+    duration: Mapped[int] = mapped_column(Integer)
+
+
+class KaiserExterminationReward(Base):
+    __tablename__ = 'kaiser_extermination_reward'
+
+    extermination_reward_group: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_count_5: Mapped[int] = mapped_column(Integer)
+
+
+class KaiserQuestDatum(Base):
+    __tablename__ = 'kaiser_quest_data'
+
+    kaiser_boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    map_type: Mapped[int] = mapped_column(Integer)
+    battle_start_story_id: Mapped[int] = mapped_column(Integer)
+    battle_finish_story_id: Mapped[int] = mapped_column(Integer)
+    disappearance_story_id: Mapped[int] = mapped_column(Integer)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    restriction_group_id: Mapped[int] = mapped_column(Integer)
+    reward_image_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_image_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_image_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    reward_image_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    reward_image_5: Mapped[int] = mapped_column(Integer)
+    reward_count_5: Mapped[int] = mapped_column(Integer)
+    fix_reward_group_id: Mapped[int] = mapped_column(Integer)
+    odds_group_id: Mapped[str] = mapped_column(Text)
+    chest_id: Mapped[int] = mapped_column(Integer)
+    extermination_reward_group: Mapped[int] = mapped_column(Integer)
+    background: Mapped[int] = mapped_column(Integer)
+    bg_position: Mapped[int] = mapped_column(Integer)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    enemy_position_x: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y: Mapped[int] = mapped_column(Integer)
+    enemy_size_1: Mapped[float] = mapped_column(Float)
+    result_boss_position_y: Mapped[float] = mapped_column(Float)
+    wave_bgm: Mapped[str] = mapped_column(Text)
+    reward_gold_coefficient: Mapped[float] = mapped_column(Float)
+    limited_mana: Mapped[int] = mapped_column(Integer)
+    clear_story_id_1: Mapped[int] = mapped_column(Integer)
+    clear_story_id_2: Mapped[int] = mapped_column(Integer)
+
+
+class KaiserRestrictionGroup(Base):
+    __tablename__ = 'kaiser_restriction_group'
+    __table_args__ = (
+        Index('kaiser_restriction_group_0_restriction_group_id', 'restriction_group_id'),
+    )
+
+    restriction_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+
+class KaiserSchedule(Base):
+    __tablename__ = 'kaiser_schedule'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    teaser_time: Mapped[str] = mapped_column(Text)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    count_start_time: Mapped[str] = mapped_column(Text)
+    close_time: Mapped[str] = mapped_column(Text)
+    story_id: Mapped[int] = mapped_column(Integer)
+    close_story_condition_id: Mapped[int] = mapped_column(Integer)
+    close_story_id: Mapped[int] = mapped_column(Integer)
+    top_bgm: Mapped[str] = mapped_column(Text)
+    top_bg: Mapped[str] = mapped_column(Text)
+    after_bgm: Mapped[str] = mapped_column(Text)
+    after_bg: Mapped[str] = mapped_column(Text)
+
+
+class KaiserSpecialBattle(Base):
+    __tablename__ = 'kaiser_special_battle'
+
+    mode: Mapped[int] = mapped_column(Integer, primary_key=True)
+    recommended_level: Mapped[int] = mapped_column(Integer)
+    purpose_type: Mapped[int] = mapped_column(Integer)
+    purpose_count: Mapped[int] = mapped_column(Integer)
+    trigger_hp: Mapped[int] = mapped_column(Integer)
+    story_id_mode_start: Mapped[int] = mapped_column(Integer)
+    story_id_mode_end: Mapped[int] = mapped_column(Integer)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    unnecessary_defeat_chara: Mapped[int] = mapped_column(Integer)
+    story_start_second: Mapped[float] = mapped_column(Float)
+    action_start_second: Mapped[float] = mapped_column(Float)
+    hp_gauge_color_flag: Mapped[int] = mapped_column(Integer)
+    start_idle_trigger: Mapped[int] = mapped_column(Integer)
+    appear_time: Mapped[float] = mapped_column(Float)
+
+
+class KmkNaviComment(Base):
+    __tablename__ = 'kmk_navi_comment'
+
+    comment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    where_type: Mapped[int] = mapped_column(Integer)
+    character_id: Mapped[int] = mapped_column(Integer)
+    face_type: Mapped[int] = mapped_column(Integer)
+    character_name: Mapped[str] = mapped_column(Text)
+    voice_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    pos_x: Mapped[float] = mapped_column(Float)
+    pos_y: Mapped[float] = mapped_column(Float)
+    change_face_time: Mapped[float] = mapped_column(Float)
+    change_face_type: Mapped[int] = mapped_column(Integer)
+    event_id: Mapped[int] = mapped_column(Integer)
+    description: Mapped[Optional[str]] = mapped_column(Text)
+
+
+class KmkReward(Base):
+    __tablename__ = 'kmk_reward'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    kmk_score: Mapped[int] = mapped_column(Integer)
+    mission_detail: Mapped[str] = mapped_column(Text)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_count_5: Mapped[int] = mapped_column(Integer)
+
+
+class LegionAddTimesDatum(Base):
+    __tablename__ = 'legion_add_times_data'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    add_times: Mapped[int] = mapped_column(Integer)
+    add_times_time: Mapped[str] = mapped_column(Text)
+
+
+class LegionBattleBonus(Base):
+    __tablename__ = 'legion_battle_bonus'
+    __table_args__ = (
+        Index('legion_battle_bonus_0_type', 'type'),
+        Index('legion_battle_bonus_0_type_1_legion_boss_id', 'type', 'legion_boss_id')
+    )
+
+    legion_battle_bonus_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    type: Mapped[int] = mapped_column(Integer)
+    legion_boss_id: Mapped[int] = mapped_column(Integer)
+    condition_hp: Mapped[str] = mapped_column(Text)
+    legion_battle_effect_id: Mapped[int] = mapped_column(Integer)
+    duration: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
+
+
+class LegionBattleBonusEffect(Base):
     __tablename__ = 'legion_battle_bonus_effect'
 
-    legion_battle_effect_id: int = Column(Integer, primary_key=True)
-    enemy_id: int = Column(Integer, nullable=False)
-    icon_id: int = Column(Integer, nullable=False)
-    text_id: int = Column(Integer, nullable=False)
-    skill_id: int = Column(Integer, nullable=False)
-    target_type: int = Column(Integer, nullable=False)
+    legion_battle_effect_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    enemy_id: Mapped[int] = mapped_column(Integer)
+    icon_id: Mapped[int] = mapped_column(Integer)
+    text_id: Mapped[int] = mapped_column(Integer)
+    skill_id: Mapped[int] = mapped_column(Integer)
+    target_type: Mapped[int] = mapped_column(Integer)
 
 
-class LegionBossEnemySetting(DeclarativeBase, Base["LegionBossEnemySetting"]):
+class LegionBossEnemySetting(Base):
     __tablename__ = 'legion_boss_enemy_setting'
 
-    boss_id: int = Column(Integer, primary_key=True)
-    detail_offset_x: int = Column(Integer, nullable=False)
-    detail_offset_y: int = Column(Integer, nullable=False)
-    detail_offset_scale: float = Column(Float, nullable=False)
+    boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    detail_offset_x: Mapped[int] = mapped_column(Integer)
+    detail_offset_y: Mapped[int] = mapped_column(Integer)
+    detail_offset_scale: Mapped[float] = mapped_column(Float)
 
 
-class LegionEffect(DeclarativeBase, Base["LegionEffect"]):
+class LegionEffect(Base):
     __tablename__ = 'legion_effect'
 
-    effect_id: int = Column(Integer, primary_key=True)
-    bonus_1: int = Column(Integer, nullable=False)
-    bonus_2: int = Column(Integer, nullable=False)
-    bonus_3: int = Column(Integer, nullable=False)
-    bonus_4: int = Column(Integer, nullable=False)
-    bonus_5: int = Column(Integer, nullable=False)
+    effect_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    bonus_1: Mapped[int] = mapped_column(Integer)
+    bonus_2: Mapped[int] = mapped_column(Integer)
+    bonus_3: Mapped[int] = mapped_column(Integer)
+    bonus_4: Mapped[int] = mapped_column(Integer)
+    bonus_5: Mapped[int] = mapped_column(Integer)
 
 
-class LegionEffectiveUnit(DeclarativeBase, Base["LegionEffectiveUnit"]):
+class LegionEffectiveUnit(Base):
     __tablename__ = 'legion_effective_unit'
+    __table_args__ = (
+        Index('legion_effective_unit_0_legion_boss_id', 'legion_boss_id'),
+    )
 
-    legion_boss_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    unit_id: int = Column(Integer, primary_key=True, nullable=False)
-    effect_id: int = Column(Integer, nullable=False)
-    support_effect_id: int = Column(Integer, nullable=False)
+    legion_boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    effect_id: Mapped[int] = mapped_column(Integer)
+    support_effect_id: Mapped[int] = mapped_column(Integer)
 
 
-class LegionExterminationReward(DeclarativeBase, Base["LegionExterminationReward"]):
+class LegionExterminationReward(Base):
     __tablename__ = 'legion_extermination_reward'
 
-    extermination_reward_group_id: int = Column(Integer, primary_key=True)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_count_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_count_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_count_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_count_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_count_5: int = Column(Integer, nullable=False)
+    extermination_reward_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_count_5: Mapped[int] = mapped_column(Integer)
 
 
-class LegionMissionCategoryDatum(DeclarativeBase, Base["LegionMissionCategoryDatum"]):
+class LegionMissionCategoryDatum(Base):
     __tablename__ = 'legion_mission_category_data'
 
-    category_id: int = Column(Integer, primary_key=True)
-    name: str = Column(Text, nullable=False)
+    category_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
 
 
-class LegionMissionDatum(DeclarativeBase, Base["LegionMissionDatum"]):
+class LegionMissionDatum(Base):
     __tablename__ = 'legion_mission_data'
+    __table_args__ = (
+        Index('legion_mission_data_0_category_id', 'category_id'),
+    )
 
-    legion_mission_id: int = Column(Integer, primary_key=True)
-    category_id: int = Column(Integer, nullable=False, index=True)
-    disp_group: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    mission_condition: int = Column(Integer, nullable=False)
-    legion_boss_id: int = Column(Integer, nullable=False)
-    condition_value: int = Column(Integer, nullable=False)
-    condition_num: str = Column(Text, nullable=False)
-    mission_reward_id: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    legion_mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    category_id: Mapped[int] = mapped_column(Integer)
+    disp_group: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    mission_condition: Mapped[int] = mapped_column(Integer)
+    legion_boss_id: Mapped[int] = mapped_column(Integer)
+    condition_value: Mapped[int] = mapped_column(Integer)
+    condition_num: Mapped[str] = mapped_column(Text)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class LegionMissionRewardDatum(DeclarativeBase, Base["LegionMissionRewardDatum"]):
+class LegionMissionRewardDatum(Base):
     __tablename__ = 'legion_mission_reward_data'
+    __table_args__ = (
+        Index('legion_mission_reward_data_0_mission_reward_id', 'mission_reward_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    mission_reward_id: int = Column(Integer, nullable=False, index=True)
-    reward_type: int = Column(Integer, nullable=False)
-    reward_id: int = Column(Integer, nullable=False)
-    reward_num: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_num: Mapped[int] = mapped_column(Integer)
 
 
-class LegionQuestDatum(DeclarativeBase, Base["LegionQuestDatum"]):
+class LegionQuestDatum(Base):
     __tablename__ = 'legion_quest_data'
+    __table_args__ = (
+        Index('legion_quest_data_0_map_type', 'map_type'),
+    )
 
-    legion_boss_id: int = Column(Integer, primary_key=True)
-    name: str = Column(Text, nullable=False)
-    map_type: int = Column(Integer, nullable=False, index=True)
-    battle_start_story_id: int = Column(Integer, nullable=False)
-    battle_finish_story_id: int = Column(Integer, nullable=False)
-    disappearance_story_id: int = Column(Integer, nullable=False)
-    all_disappearance_story_id: int = Column(Integer, nullable=False)
-    limit_time: int = Column(Integer, nullable=False)
-    max_raid_hp: str = Column(Text, nullable=False)
-    reward_image_1: int = Column(Integer, nullable=False)
-    reward_count_1: int = Column(Integer, nullable=False)
-    reward_image_2: int = Column(Integer, nullable=False)
-    reward_count_2: int = Column(Integer, nullable=False)
-    reward_image_3: int = Column(Integer, nullable=False)
-    reward_count_3: int = Column(Integer, nullable=False)
-    reward_image_4: int = Column(Integer, nullable=False)
-    reward_count_4: int = Column(Integer, nullable=False)
-    reward_image_5: int = Column(Integer, nullable=False)
-    reward_count_5: int = Column(Integer, nullable=False)
-    challenge_reward_group_id: int = Column(Integer, nullable=False)
-    expel_reward_group_id: int = Column(Integer, nullable=False)
-    extermination_reward_group_id: int = Column(Integer, nullable=False)
-    background: int = Column(Integer, nullable=False)
-    bg_position: int = Column(Integer, nullable=False)
-    wave_group_id: int = Column(Integer, nullable=False)
-    enemy_position_x: int = Column(Integer, nullable=False)
-    enemy_local_position_y: int = Column(Integer, nullable=False)
-    enemy_size_1: float = Column(Float, nullable=False)
-    result_boss_position_y: float = Column(Float, nullable=False)
-    wave_bgm: str = Column(Text, nullable=False)
-    clear_story_id_1: int = Column(Integer, nullable=False)
-    clear_story_id_2: int = Column(Integer, nullable=False)
-    bonus_max: int = Column(Integer, nullable=False)
+    legion_boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    map_type: Mapped[int] = mapped_column(Integer)
+    battle_start_story_id: Mapped[int] = mapped_column(Integer)
+    battle_finish_story_id: Mapped[int] = mapped_column(Integer)
+    disappearance_story_id: Mapped[int] = mapped_column(Integer)
+    all_disappearance_story_id: Mapped[int] = mapped_column(Integer)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    max_raid_hp: Mapped[str] = mapped_column(Text)
+    reward_image_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_image_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_image_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    reward_image_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    reward_image_5: Mapped[int] = mapped_column(Integer)
+    reward_count_5: Mapped[int] = mapped_column(Integer)
+    challenge_reward_group_id: Mapped[int] = mapped_column(Integer)
+    expel_reward_group_id: Mapped[int] = mapped_column(Integer)
+    extermination_reward_group_id: Mapped[int] = mapped_column(Integer)
+    background: Mapped[int] = mapped_column(Integer)
+    bg_position: Mapped[int] = mapped_column(Integer)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    enemy_position_x: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y: Mapped[int] = mapped_column(Integer)
+    enemy_size_1: Mapped[float] = mapped_column(Float)
+    result_boss_position_y: Mapped[float] = mapped_column(Float)
+    wave_bgm: Mapped[str] = mapped_column(Text)
+    clear_story_id_1: Mapped[int] = mapped_column(Integer)
+    clear_story_id_2: Mapped[int] = mapped_column(Integer)
+    bonus_max: Mapped[int] = mapped_column(Integer)
 
 
-class LegionSchedule(DeclarativeBase, Base["LegionSchedule"]):
+class LegionSchedule(Base):
     __tablename__ = 'legion_schedule'
 
-    id: int = Column(Integer, primary_key=True)
-    teaser_time: str = Column(Text, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    count_start_time: str = Column(Text, nullable=False)
-    close_time: str = Column(Text, nullable=False)
-    story_id: int = Column(Integer, nullable=False)
-    close_story_condition_id: int = Column(Integer, nullable=False)
-    close_story_id: int = Column(Integer, nullable=False)
-    top_bgm: str = Column(Text, nullable=False)
-    top_bg: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    teaser_time: Mapped[str] = mapped_column(Text)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    count_start_time: Mapped[str] = mapped_column(Text)
+    close_time: Mapped[str] = mapped_column(Text)
+    story_id: Mapped[int] = mapped_column(Integer)
+    close_story_condition_id: Mapped[int] = mapped_column(Integer)
+    close_story_id: Mapped[int] = mapped_column(Integer)
+    top_bgm: Mapped[str] = mapped_column(Text)
+    top_bg: Mapped[str] = mapped_column(Text)
 
 
-class LegionSpecialBattle(DeclarativeBase, Base["LegionSpecialBattle"]):
+class LegionSpecialBattle(Base):
     __tablename__ = 'legion_special_battle'
 
-    mode: int = Column(Integer, primary_key=True)
-    purpose_type: int = Column(Integer, nullable=False)
-    purpose_count: int = Column(Integer, nullable=False)
-    trigger_hp: int = Column(Integer, nullable=False)
-    story_id_mode_start: int = Column(Integer, nullable=False)
-    story_id_mode_end: int = Column(Integer, nullable=False)
-    wave_group_id: int = Column(Integer, nullable=False)
-    unnecessary_defeat_chara: int = Column(Integer, nullable=False)
-    story_start_second: float = Column(Float, nullable=False)
-    action_start_second: float = Column(Float, nullable=False)
-    hp_gauge_color_flag: int = Column(Integer, nullable=False)
+    mode: Mapped[int] = mapped_column(Integer, primary_key=True)
+    purpose_type: Mapped[int] = mapped_column(Integer)
+    purpose_count: Mapped[int] = mapped_column(Integer)
+    trigger_hp: Mapped[int] = mapped_column(Integer)
+    story_id_mode_start: Mapped[int] = mapped_column(Integer)
+    story_id_mode_end: Mapped[int] = mapped_column(Integer)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    unnecessary_defeat_chara: Mapped[int] = mapped_column(Integer)
+    story_start_second: Mapped[float] = mapped_column(Float)
+    action_start_second: Mapped[float] = mapped_column(Float)
+    hp_gauge_color_flag: Mapped[int] = mapped_column(Integer)
 
 
-class LoginBonusAdv(DeclarativeBase, Base["LoginBonusAdv"]):
+class LoginBonusAdv(Base):
     __tablename__ = 'login_bonus_adv'
+    __table_args__ = (
+        Index('login_bonus_adv_0_login_bonus_id', 'login_bonus_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    login_bonus_id: int = Column(Integer, nullable=False, index=True)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    count_key: int = Column(Integer, nullable=False)
-    adv_id: int = Column(Integer, nullable=False)
-    read_process_flag: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    login_bonus_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    count_key: Mapped[int] = mapped_column(Integer)
+    adv_id: Mapped[int] = mapped_column(Integer)
+    read_process_flag: Mapped[int] = mapped_column(Integer)
 
 
-class LoginBonusDatum(DeclarativeBase, Base["LoginBonusDatum"]):
+class LoginBonusDatum(Base):
     __tablename__ = 'login_bonus_data'
 
-    login_bonus_id: int = Column(Integer, primary_key=True)
-    name: str = Column(Text, nullable=False)
-    login_bonus_type: int = Column(Integer, nullable=False)
-    count_num: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    bg_id: int = Column(Integer, nullable=False)
-    stamp_id: int = Column(Integer, nullable=False)
-    odds_group_id: int = Column(Integer, nullable=False)
-    adv_play_type: int = Column(Integer, nullable=False)
-    count_type: int = Column(Integer, nullable=False)
+    login_bonus_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    login_bonus_type: Mapped[int] = mapped_column(Integer)
+    count_num: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    bg_id: Mapped[int] = mapped_column(Integer)
+    stamp_id: Mapped[int] = mapped_column(Integer)
+    odds_group_id: Mapped[int] = mapped_column(Integer)
+    adv_play_type: Mapped[int] = mapped_column(Integer)
+    count_type: Mapped[int] = mapped_column(Integer)
 
 
-class LoginBonusDetail(DeclarativeBase, Base["LoginBonusDetail"]):
+class LoginBonusDetail(Base):
     __tablename__ = 'login_bonus_detail'
     __table_args__ = (
         Index('login_bonus_detail_0_login_bonus_id_1_count', 'login_bonus_id', 'count'),
     )
 
-    id: int = Column(Integer, primary_key=True)
-    login_bonus_id: int = Column(Integer, nullable=False)
-    count: int = Column(Integer, nullable=False)
-    reward_type: int = Column(Integer, nullable=False)
-    reward_id: int = Column(Integer, nullable=False)
-    reward_num: int = Column(Integer, nullable=False)
-    character_id: int = Column(Integer, nullable=False)
-    character_name: str = Column(Text, nullable=False)
-    description: str = Column(Text, nullable=False)
-    voice_id: int = Column(Integer, nullable=False)
-    bg_id: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    login_bonus_id: Mapped[int] = mapped_column(Integer)
+    count: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_num: Mapped[int] = mapped_column(Integer)
+    character_id: Mapped[int] = mapped_column(Integer)
+    character_name: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
+    voice_id: Mapped[int] = mapped_column(Integer)
+    bg_id: Mapped[int] = mapped_column(Integer)
 
 
-class LoginBonusMessageDatum(DeclarativeBase, Base["LoginBonusMessageDatum"]):
+class LoginBonusMessageDatum(Base):
     __tablename__ = 'login_bonus_message_data'
+    __table_args__ = (
+        Index('login_bonus_message_data_0_login_bonus_id', 'login_bonus_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    login_bonus_id: int = Column(Integer, nullable=False, index=True)
-    type: int = Column(Integer, nullable=False)
-    day_count: int = Column(Integer, nullable=False)
-    luck_pattern: int = Column(Integer, nullable=False)
-    rate: int = Column(Integer, nullable=False)
-    character_id: int = Column(Integer, nullable=False)
-    character_name: str = Column(Text, nullable=False)
-    message: str = Column(Text, nullable=False)
-    voice_id: int = Column(Integer, nullable=False)
-    additional_type: int = Column(Integer, nullable=False)
-    additional_param: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    login_bonus_id: Mapped[int] = mapped_column(Integer)
+    type: Mapped[int] = mapped_column(Integer)
+    day_count: Mapped[int] = mapped_column(Integer)
+    luck_pattern: Mapped[int] = mapped_column(Integer)
+    rate: Mapped[int] = mapped_column(Integer)
+    character_id: Mapped[int] = mapped_column(Integer)
+    character_name: Mapped[str] = mapped_column(Text)
+    message: Mapped[str] = mapped_column(Text)
+    voice_id: Mapped[int] = mapped_column(Integer)
+    additional_type: Mapped[int] = mapped_column(Integer)
+    additional_param: Mapped[str] = mapped_column(Text)
 
 
-class LoveChara(DeclarativeBase, Base["LoveChara"]):
+class LoveChara(Base):
     __tablename__ = 'love_chara'
 
-    love_level: int = Column(Integer, primary_key=True)
-    total_love: int = Column(Integer, nullable=False)
-    unlocked_class: int = Column(Integer, nullable=False)
-    rarity: int = Column(Integer, nullable=False)
+    love_level: Mapped[int] = mapped_column(Integer, primary_key=True)
+    total_love: Mapped[int] = mapped_column(Integer)
+    unlocked_class: Mapped[int] = mapped_column(Integer)
+    rarity: Mapped[int] = mapped_column(Integer)
 
 
-class LoveRankup(DeclarativeBase, Base["LoveRankup"]):
+class LoveRankup(Base):
     __tablename__ = 'love_rankup'
+    __table_args__ = (
+        Index('love_rankup_0_unit_id', 'unit_id'),
+    )
 
-    unit_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    love_rank: int = Column(Integer, primary_key=True, nullable=False)
-    effect_unit_id: int = Column(Integer, nullable=False)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    love_rank: Mapped[int] = mapped_column(Integer, primary_key=True)
+    effect_unit_id: Mapped[int] = mapped_column(Integer)
 
 
-class LtoLetterScript(DeclarativeBase, Base["LtoLetterScript"]):
+class LsvDramaScript(Base):
+    __tablename__ = 'lsv_drama_script'
+    __table_args__ = (
+        Index('lsv_drama_script_0_drama_id', 'drama_id'),
+    )
+
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
+
+
+class LsvStoryDatum(Base):
+    __tablename__ = 'lsv_story_data'
+    __table_args__ = (
+        Index('lsv_story_data_0_original_event_id', 'original_event_id'),
+    )
+
+    sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    original_event_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    time_condition: Mapped[str] = mapped_column(Text)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    read_event_story_id: Mapped[int] = mapped_column(Integer)
+    read_condition: Mapped[int] = mapped_column(Integer)
+
+
+class LsvStoryScript(Base):
+    __tablename__ = 'lsv_story_script'
+    __table_args__ = (
+        Index('lsv_story_script_0_story_id', 'story_id'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_id: Mapped[int] = mapped_column(Integer)
+    seq_num: Mapped[int] = mapped_column(Integer)
+    type: Mapped[int] = mapped_column(Integer)
+    line_num: Mapped[int] = mapped_column(Integer)
+    start_pos: Mapped[int] = mapped_column(Integer)
+    end_pos: Mapped[int] = mapped_column(Integer)
+    seek_time: Mapped[float] = mapped_column(Float)
+    sheet_name: Mapped[str] = mapped_column(Text)
+    cue_name: Mapped[str] = mapped_column(Text)
+    command: Mapped[int] = mapped_column(Integer)
+    command_param: Mapped[float] = mapped_column(Float)
+
+
+class LtoLetterScript(Base):
     __tablename__ = 'lto_letter_script'
+    __table_args__ = (
+        Index('lto_letter_script_0_letter_id', 'letter_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    letter_id: int = Column(Integer, nullable=False, index=True)
-    seq_num: int = Column(Integer, nullable=False)
-    type: int = Column(Integer, nullable=False)
-    line_num: int = Column(Integer, nullable=False)
-    start_pos: int = Column(Integer, nullable=False)
-    end_pos: int = Column(Integer, nullable=False)
-    seek_time: float = Column(Float, nullable=False)
-    sheet_name: str = Column(Text, nullable=False)
-    cue_name: str = Column(Text, nullable=False)
-    command: int = Column(Integer, nullable=False)
-    command_param: float = Column(Float, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    letter_id: Mapped[int] = mapped_column(Integer)
+    seq_num: Mapped[int] = mapped_column(Integer)
+    type: Mapped[int] = mapped_column(Integer)
+    line_num: Mapped[int] = mapped_column(Integer)
+    start_pos: Mapped[int] = mapped_column(Integer)
+    end_pos: Mapped[int] = mapped_column(Integer)
+    seek_time: Mapped[float] = mapped_column(Float)
+    sheet_name: Mapped[str] = mapped_column(Text)
+    cue_name: Mapped[str] = mapped_column(Text)
+    command: Mapped[int] = mapped_column(Integer)
+    command_param: Mapped[float] = mapped_column(Float)
 
 
-class LtoStoryDatum(DeclarativeBase, Base["LtoStoryDatum"]):
+class LtoStoryDatum(Base):
     __tablename__ = 'lto_story_data'
+    __table_args__ = (
+        Index('lto_story_data_0_event_id', 'event_id'),
+    )
 
-    sub_story_id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False, index=True)
-    title: str = Column(Text, nullable=False)
-    condition_story_id: int = Column(Integer, nullable=False)
-    reward_type: int = Column(Integer, nullable=False)
-    reward_id: int = Column(Integer, nullable=False)
-    reward_count: int = Column(Integer, nullable=False)
+    sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    condition_story_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_count: Mapped[int] = mapped_column(Integer)
 
 
-class Metamorphose(DeclarativeBase, Base["Metamorphose"]):
+class Metamorphose(Base):
     __tablename__ = 'metamorphose'
+    __table_args__ = (
+        Index('metamorphose_0_type_id', 'type_id'),
+    )
 
-    type_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    condition_value: int = Column(Integer, primary_key=True, nullable=False)
-    prefab_id: int = Column(Integer, nullable=False)
+    type_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    condition_value: Mapped[int] = mapped_column(Integer, primary_key=True)
+    prefab_id: Mapped[int] = mapped_column(Integer)
 
 
-class MhpDramaScript(DeclarativeBase, Base["MhpDramaScript"]):
+class MhpDramaScript(Base):
     __tablename__ = 'mhp_drama_script'
+    __table_args__ = (
+        Index('mhp_drama_script_0_drama_id', 'drama_id'),
+    )
 
-    command_id: int = Column(Integer, primary_key=True)
-    drama_id: int = Column(Integer, nullable=False, index=True)
-    command_type: int = Column(Integer, nullable=False)
-    param_01: str = Column(Text, nullable=False)
-    param_02: str = Column(Text, nullable=False)
-    param_03: str = Column(Text, nullable=False)
-    param_04: str = Column(Text, nullable=False)
-    param_05: str = Column(Text, nullable=False)
-    param_06: str = Column(Text, nullable=False)
-    param_07: str = Column(Text, nullable=False)
-    param_08: str = Column(Text, nullable=False)
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
 
 
-class MhpStoryDatum(DeclarativeBase, Base["MhpStoryDatum"]):
+class MhpStoryDatum(Base):
     __tablename__ = 'mhp_story_data'
+    __table_args__ = (
+        Index('mhp_story_data_0_original_event_id', 'original_event_id'),
+        Index('mhp_story_data_0_unit_id', 'unit_id')
+    )
 
-    sub_story_id: int = Column(Integer, primary_key=True)
-    original_event_id: int = Column(Integer, nullable=False, index=True)
-    title: str = Column(Text, nullable=False)
-    sub_title: str = Column(Text, nullable=False)
-    unit_id: int = Column(Integer, nullable=False, index=True)
-    read_condition_time: str = Column(Text, nullable=False)
-    condition_quest_id: int = Column(Integer, nullable=False)
-    condition_boss_id: int = Column(Integer, nullable=False)
-    read_condition: int = Column(Integer, nullable=False)
-    reward_type: int = Column(Integer, nullable=False)
-    reward_id: int = Column(Integer, nullable=False)
-    reward_count: int = Column(Integer, nullable=False)
+    sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    original_event_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    sub_title: Mapped[str] = mapped_column(Text)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    read_condition_time: Mapped[str] = mapped_column(Text)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    condition_boss_id: Mapped[int] = mapped_column(Integer)
+    read_condition: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_count: Mapped[int] = mapped_column(Integer)
 
 
-class Minigame(DeclarativeBase, Base["Minigame"]):
+class Minigame(Base):
     __tablename__ = 'minigame'
+    __table_args__ = (
+        Index('minigame_0_event_id', 'event_id'),
+    )
 
-    id: int = Column(Integer, nullable=False)
-    minigame_scheme_id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False, index=True)
-    release_conditions_1: int = Column(Integer, nullable=False)
-    conditions_id_1: int = Column(Integer, nullable=False)
-    first_time_story_id: int = Column(Integer, nullable=False)
-    display_condition_type: int = Column(Integer, nullable=False)
-    display_condition_id: int = Column(Integer, nullable=False)
-    result_chat_condition_id: int = Column(Integer, nullable=False)
-    score_unit: str = Column(Text, nullable=False)
-    is_enabled_zero_score: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer)
+    minigame_scheme_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    release_conditions_1: Mapped[int] = mapped_column(Integer)
+    conditions_id_1: Mapped[int] = mapped_column(Integer)
+    first_time_story_id: Mapped[int] = mapped_column(Integer)
+    display_condition_type: Mapped[int] = mapped_column(Integer)
+    display_condition_id: Mapped[int] = mapped_column(Integer)
+    result_chat_condition_id: Mapped[int] = mapped_column(Integer)
+    score_unit: Mapped[str] = mapped_column(Text)
+    is_enabled_zero_score: Mapped[int] = mapped_column(Integer)
 
 
-class MissionRewardDatum(DeclarativeBase, Base["MissionRewardDatum"]):
+class MirokuBossDatum(Base):
+    __tablename__ = 'miroku_boss_data'
+
+    sre_boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    reward_image_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_image_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_image_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    reward_image_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    reward_image_5: Mapped[int] = mapped_column(Integer)
+    reward_count_5: Mapped[int] = mapped_column(Integer)
+    extermination_reward_group_id: Mapped[int] = mapped_column(Integer)
+    background: Mapped[int] = mapped_column(Integer)
+    bg_position: Mapped[int] = mapped_column(Integer)
+    enemy_position_x: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y: Mapped[int] = mapped_column(Integer)
+    enemy_size: Mapped[float] = mapped_column(Float)
+    result_boss_position_y: Mapped[float] = mapped_column(Float)
+    wave_bgm_sheet: Mapped[str] = mapped_column(Text)
+    clear_story_id_1: Mapped[int] = mapped_column(Integer)
+    clear_story_id_2: Mapped[int] = mapped_column(Integer)
+    disappearance_story_id: Mapped[int] = mapped_column(Integer)
+
+
+class MirokuSpecialBattle(Base):
+    __tablename__ = 'miroku_special_battle'
+
+    sre_boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    mode: Mapped[int] = mapped_column(Integer, primary_key=True)
+    purpose_type: Mapped[int] = mapped_column(Integer)
+    purpose_count: Mapped[int] = mapped_column(Integer)
+    trigger_hp: Mapped[int] = mapped_column(Integer)
+    story_id_mode_start: Mapped[int] = mapped_column(Integer)
+    story_id_mode_end: Mapped[int] = mapped_column(Integer)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    unnecessary_defeat_chara: Mapped[int] = mapped_column(Integer)
+    wave_bgm_que: Mapped[str] = mapped_column(Text)
+    wave_bgm_block_id: Mapped[int] = mapped_column(Integer)
+    story_start_block_id: Mapped[int] = mapped_column(Integer)
+    story_start_after_block_id: Mapped[int] = mapped_column(Integer)
+    story_end_block_id: Mapped[int] = mapped_column(Integer)
+    story_end_after_block_id: Mapped[int] = mapped_column(Integer)
+    story_start_second: Mapped[float] = mapped_column(Float)
+    action_start_second: Mapped[float] = mapped_column(Float)
+    hp_gauge_color_flag: Mapped[int] = mapped_column(Integer)
+
+
+class MissionCategoryIcon(Base):
+    __tablename__ = 'mission_category_icon'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    icon_name: Mapped[str] = mapped_column(Text)
+    color: Mapped[str] = mapped_column(Text)
+
+
+class MissionRewardDatum(Base):
     __tablename__ = 'mission_reward_data'
+    __table_args__ = (
+        Index('mission_reward_data_0_mission_reward_id', 'mission_reward_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    mission_reward_id: int = Column(Integer, nullable=False, index=True)
-    reward_type: int = Column(Integer, nullable=False)
-    reward_id: int = Column(Integer)
-    reward_num: int = Column(Integer, nullable=False)
-    lv_from: int = Column(Integer, nullable=False)
-    lv_to: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_num: Mapped[int] = mapped_column(Integer)
+    lv_from: Mapped[int] = mapped_column(Integer)
+    lv_to: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    reward_id: Mapped[Optional[int]] = mapped_column(Integer)
 
 
-class Movie(DeclarativeBase, Base["Movie"]):
+class MmeStoryDatum(Base):
+    __tablename__ = 'mme_story_data'
+    __table_args__ = (
+        Index('mme_story_data_0_original_event_id', 'original_event_id'),
+    )
+
+    sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    original_event_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    sub_title: Mapped[str] = mapped_column(Text)
+    is_puzzle_piece: Mapped[int] = mapped_column(Integer)
+    is_last: Mapped[int] = mapped_column(Integer)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_count: Mapped[int] = mapped_column(Integer)
+
+
+class Movie(Base):
     __tablename__ = 'movie'
+    __table_args__ = (
+        Index('movie_0_story_id', 'story_id'),
+    )
 
-    movie_id: int = Column(Integer, primary_key=True)
-    story_group_id: int = Column(Integer, nullable=False)
-    story_id: int = Column(Integer, nullable=False, index=True)
-    bgm_id: str = Column(Text, nullable=False)
-    se_id: str = Column(Text, nullable=False)
-    my_page_flag: int = Column(Integer, nullable=False)
-    fade_loop_flag: int = Column(Integer, nullable=False)
-    bgm_volume_rate: float = Column(Float, nullable=False)
+    movie_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_group_id: Mapped[int] = mapped_column(Integer)
+    story_id: Mapped[int] = mapped_column(Integer)
+    bgm_id: Mapped[str] = mapped_column(Text)
+    se_id: Mapped[str] = mapped_column(Text)
+    my_page_flag: Mapped[int] = mapped_column(Integer)
+    fade_loop_flag: Mapped[int] = mapped_column(Integer)
+    bgm_volume_rate: Mapped[float] = mapped_column(Float)
 
 
-class MusicContent(DeclarativeBase, Base["MusicContent"]):
+class MusicContent(Base):
     __tablename__ = 'music_content'
 
-    music_id: int = Column(Integer, primary_key=True)
-    name: str = Column(Text, nullable=False)
-    total_playing_time: str = Column(Text, nullable=False)
-    listen_start_time: str = Column(Text, nullable=False)
-    detail: str = Column(Text, nullable=False)
-    sheet_id: str = Column(Text, nullable=False)
-    cue_id: str = Column(Text, nullable=False)
+    music_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    total_playing_time: Mapped[str] = mapped_column(Text)
+    listen_start_time: Mapped[str] = mapped_column(Text)
+    detail: Mapped[str] = mapped_column(Text)
+    sheet_id: Mapped[str] = mapped_column(Text)
+    cue_id: Mapped[str] = mapped_column(Text)
 
 
-class MusicList(DeclarativeBase, Base["MusicList"]):
+class MusicList(Base):
     __tablename__ = 'music_list'
 
-    music_id: int = Column(Integer, primary_key=True)
-    list_name: str = Column(Text, nullable=False)
-    font_size: float = Column(Float, nullable=False)
-    pre_shop_start: str = Column(Text, nullable=False)
-    shop_start: str = Column(Text, nullable=False)
-    shop_end: str = Column(Text, nullable=False)
-    story_id: int = Column(Integer, nullable=False)
-    cost_item_num: int = Column(Integer, nullable=False)
-    sort: int = Column(Integer, nullable=False)
-    kana: str = Column(Text, nullable=False)
-    ios_url: str = Column(Text, nullable=False)
-    android_url: str = Column(Text, nullable=False)
-    dmm_url: str = Column(Text, nullable=False)
+    music_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    list_name: Mapped[str] = mapped_column(Text)
+    font_size: Mapped[float] = mapped_column(Float)
+    pre_shop_start: Mapped[str] = mapped_column(Text)
+    shop_start: Mapped[str] = mapped_column(Text)
+    shop_end: Mapped[str] = mapped_column(Text)
+    story_id: Mapped[int] = mapped_column(Integer)
+    cost_item_num: Mapped[int] = mapped_column(Integer)
+    sort: Mapped[int] = mapped_column(Integer)
+    kana: Mapped[str] = mapped_column(Text)
+    ios_url: Mapped[str] = mapped_column(Text)
+    android_url: Mapped[str] = mapped_column(Text)
+    dmm_url: Mapped[str] = mapped_column(Text)
 
 
-class MypageFrame(DeclarativeBase, Base["MypageFrame"]):
+class MypageFrame(Base):
     __tablename__ = 'mypage_frame'
+    __table_args__ = (
+        Index('mypage_frame_0_group_id', 'group_id'),
+    )
 
-    frame_id: int = Column(Integer, primary_key=True)
-    group_id: int = Column(Integer, nullable=False, index=True)
-    frame_name: str = Column(Text, nullable=False)
-    description: str = Column(Text, nullable=False)
-    start_time: str = Column(Text, nullable=False)
+    frame_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    group_id: Mapped[int] = mapped_column(Integer)
+    frame_name: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
+    start_time: Mapped[str] = mapped_column(Text)
 
 
-class MyprofileContent(DeclarativeBase, Base["MyprofileContent"]):
+class MyprofileContent(Base):
     __tablename__ = 'myprofile_content'
 
-    id: int = Column(Integer, primary_key=True)
-    name: str = Column(Text, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    disp_order: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    disp_order: Mapped[int] = mapped_column(Integer)
 
 
-class NaviComment(DeclarativeBase, Base["NaviComment"]):
+class NaviComment(Base):
     __tablename__ = 'navi_comment'
 
-    comment_id: int = Column(Integer, primary_key=True)
-    where_type: int = Column(Integer, nullable=False)
-    character_id: int = Column(Integer, nullable=False)
-    face_type: int = Column(Integer, nullable=False)
-    character_name: str = Column(Text, nullable=False)
-    description: str = Column(Text)
-    voice_id: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    pos_x: float = Column(Float, nullable=False)
-    pos_y: float = Column(Float, nullable=False)
-    change_face_time: float = Column(Float, nullable=False)
-    change_face_type: int = Column(Integer, nullable=False)
-    event_id: int = Column(Integer, nullable=False)
+    comment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    where_type: Mapped[int] = mapped_column(Integer)
+    character_id: Mapped[int] = mapped_column(Integer)
+    face_type: Mapped[int] = mapped_column(Integer)
+    character_name: Mapped[str] = mapped_column(Text)
+    voice_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    pos_x: Mapped[float] = mapped_column(Float)
+    pos_y: Mapped[float] = mapped_column(Float)
+    change_face_time: Mapped[float] = mapped_column(Float)
+    change_face_type: Mapped[int] = mapped_column(Integer)
+    event_id: Mapped[int] = mapped_column(Integer)
+    unlock_story_id: Mapped[int] = mapped_column(Integer)
+    description: Mapped[Optional[str]] = mapped_column(Text)
 
 
-class NopDramaDatum(DeclarativeBase, Base["NopDramaDatum"]):
+class NopDramaDatum(Base):
     __tablename__ = 'nop_drama_data'
+    __table_args__ = (
+        Index('nop_drama_data_0_stage_id', 'stage_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    stage_id: int = Column(Integer, nullable=False, index=True)
-    position_id_1: int = Column(Integer, nullable=False)
-    position_id_2: int = Column(Integer, nullable=False)
-    position_id_3: int = Column(Integer, nullable=False)
-    col_size_x: int = Column(Integer, nullable=False)
-    col_size_y: int = Column(Integer, nullable=False)
-    col_pos_y: float = Column(Float, nullable=False)
-    talk_pos_x: float = Column(Float, nullable=False)
-    talk_pos_y: float = Column(Float, nullable=False)
-    idle_drama_id: int = Column(Integer, nullable=False)
-    talk_drama_id: int = Column(Integer, nullable=False)
-    event_drama_id: int = Column(Integer, nullable=False)
-    create_back_drama_id: int = Column(Integer, nullable=False)
-    create_front_drama_id: int = Column(Integer, nullable=False)
-    sub_story_id: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    stage_id: Mapped[int] = mapped_column(Integer)
+    position_id_1: Mapped[int] = mapped_column(Integer)
+    position_id_2: Mapped[int] = mapped_column(Integer)
+    position_id_3: Mapped[int] = mapped_column(Integer)
+    col_size_x: Mapped[int] = mapped_column(Integer)
+    col_size_y: Mapped[int] = mapped_column(Integer)
+    col_pos_y: Mapped[float] = mapped_column(Float)
+    talk_pos_x: Mapped[float] = mapped_column(Float)
+    talk_pos_y: Mapped[float] = mapped_column(Float)
+    idle_drama_id: Mapped[int] = mapped_column(Integer)
+    talk_drama_id: Mapped[int] = mapped_column(Integer)
+    event_drama_id: Mapped[int] = mapped_column(Integer)
+    create_back_drama_id: Mapped[int] = mapped_column(Integer)
+    create_front_drama_id: Mapped[int] = mapped_column(Integer)
+    sub_story_id: Mapped[int] = mapped_column(Integer)
 
 
-class NopDramaScript(DeclarativeBase, Base["NopDramaScript"]):
+class NopDramaScript(Base):
     __tablename__ = 'nop_drama_script'
+    __table_args__ = (
+        Index('nop_drama_script_0_drama_id', 'drama_id'),
+    )
 
-    command_id: int = Column(Integer, primary_key=True)
-    drama_id: int = Column(Integer, nullable=False, index=True)
-    command_type: int = Column(Integer, nullable=False)
-    param_01: str = Column(Text, nullable=False)
-    param_02: str = Column(Text, nullable=False)
-    param_03: str = Column(Text, nullable=False)
-    param_04: str = Column(Text, nullable=False)
-    param_05: str = Column(Text, nullable=False)
-    param_06: str = Column(Text, nullable=False)
-    param_07: str = Column(Text, nullable=False)
-    param_08: str = Column(Text, nullable=False)
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
 
 
-class NotifDatum(DeclarativeBase, Base["NotifDatum"]):
+class NotifDatum(Base):
     __tablename__ = 'notif_data'
+    __table_args__ = (
+        Index('notif_data_0_unit_id', 'unit_id'),
+    )
 
-    unit_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    notif_type: int = Column(Integer, primary_key=True, nullable=False)
-    comment: str = Column(Text, nullable=False)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    notif_type: Mapped[int] = mapped_column(Integer, primary_key=True)
+    comment: Mapped[str] = mapped_column(Text)
 
 
-class NyxDramaDatum(DeclarativeBase, Base["NyxDramaDatum"]):
+class NyxDramaDatum(Base):
     __tablename__ = 'nyx_drama_data'
 
-    drama_id: int = Column(Integer, primary_key=True)
-    story_phase: int = Column(Integer, nullable=False)
-    title: str = Column(Text, nullable=False)
-    sub_title: str = Column(Text, nullable=False)
-    condition_unlocked_story_id: int = Column(Integer, nullable=False)
-    condition_locked_story_id: int = Column(Integer, nullable=False)
+    drama_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_phase: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    sub_title: Mapped[str] = mapped_column(Text)
+    condition_unlocked_story_id: Mapped[int] = mapped_column(Integer)
+    condition_locked_story_id: Mapped[int] = mapped_column(Integer)
 
 
-class NyxDramaScript(DeclarativeBase, Base["NyxDramaScript"]):
+class NyxDramaScript(Base):
     __tablename__ = 'nyx_drama_script'
+    __table_args__ = (
+        Index('nyx_drama_script_0_drama_id', 'drama_id'),
+    )
 
-    command_id: int = Column(Integer, primary_key=True)
-    drama_id: int = Column(Integer, nullable=False, index=True)
-    command_type: int = Column(Integer, nullable=False)
-    param_01: str = Column(Text, nullable=False)
-    param_02: str = Column(Text, nullable=False)
-    param_03: str = Column(Text, nullable=False)
-    param_04: str = Column(Text, nullable=False)
-    param_05: str = Column(Text, nullable=False)
-    param_06: str = Column(Text, nullable=False)
-    param_07: str = Column(Text, nullable=False)
-    param_08: str = Column(Text, nullable=False)
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
 
 
-class NyxPhaseDatum(DeclarativeBase, Base["NyxPhaseDatum"]):
+class NyxPhaseDatum(Base):
     __tablename__ = 'nyx_phase_data'
 
-    story_phase: int = Column(Integer, primary_key=True)
-    phase_title: str = Column(Text, nullable=False)
-    condition_quest_id: int = Column(Integer, nullable=False)
-    condition_quest_boss: int = Column(Integer, nullable=False)
+    story_phase: Mapped[int] = mapped_column(Integer, primary_key=True)
+    phase_title: Mapped[str] = mapped_column(Text)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    condition_quest_boss: Mapped[int] = mapped_column(Integer)
 
 
-class NyxStoryDatum(DeclarativeBase, Base["NyxStoryDatum"]):
+class NyxStoryDatum(Base):
     __tablename__ = 'nyx_story_data'
+    __table_args__ = (
+        Index('nyx_story_data_0_story_phase', 'story_phase'),
+        Index('nyx_story_data_0_story_seq', 'story_seq')
+    )
 
-    story_id: int = Column(Integer, primary_key=True)
-    story_seq: int = Column(Integer, nullable=False, index=True)
-    story_phase: int = Column(Integer, nullable=False, index=True)
-    title: str = Column(Text, nullable=False)
-    sub_title: str = Column(Text, nullable=False)
-    read_condition_time: str = Column(Text, nullable=False)
-    condition_quest_id: int = Column(Integer, nullable=False)
-    condition_boss_count: int = Column(Integer, nullable=False)
-    adv_flg: int = Column(Integer, nullable=False)
-    adv_id: int = Column(Integer, nullable=False)
+    story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_seq: Mapped[int] = mapped_column(Integer)
+    story_phase: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    sub_title: Mapped[str] = mapped_column(Text)
+    read_condition_time: Mapped[str] = mapped_column(Text)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    condition_boss_count: Mapped[int] = mapped_column(Integer)
+    adv_flg: Mapped[int] = mapped_column(Integer)
+    adv_id: Mapped[int] = mapped_column(Integer)
 
 
-class NyxStoryScript(DeclarativeBase, Base["NyxStoryScript"]):
+class NyxStoryScript(Base):
     __tablename__ = 'nyx_story_script'
+    __table_args__ = (
+        Index('nyx_story_script_0_story_id', 'story_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    story_id: int = Column(Integer, nullable=False, index=True)
-    seq_num: int = Column(Integer, nullable=False)
-    type: int = Column(Integer, nullable=False)
-    line_num: int = Column(Integer, nullable=False)
-    start_pos: int = Column(Integer, nullable=False)
-    end_pos: int = Column(Integer, nullable=False)
-    seek_time: float = Column(Float, nullable=False)
-    sheet_name: str = Column(Text, nullable=False)
-    cue_name: str = Column(Text, nullable=False)
-    command: int = Column(Integer, nullable=False)
-    command_param: float = Column(Float, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_id: Mapped[int] = mapped_column(Integer)
+    seq_num: Mapped[int] = mapped_column(Integer)
+    type: Mapped[int] = mapped_column(Integer)
+    line_num: Mapped[int] = mapped_column(Integer)
+    start_pos: Mapped[int] = mapped_column(Integer)
+    end_pos: Mapped[int] = mapped_column(Integer)
+    seek_time: Mapped[float] = mapped_column(Float)
+    sheet_name: Mapped[str] = mapped_column(Text)
+    cue_name: Mapped[str] = mapped_column(Text)
+    command: Mapped[int] = mapped_column(Integer)
+    command_param: Mapped[float] = mapped_column(Float)
 
 
-class OddsNameDatum(DeclarativeBase, Base["OddsNameDatum"]):
+class OddsNameDatum(Base):
     __tablename__ = 'odds_name_data'
 
-    id: int = Column(Integer, primary_key=True)
-    odds_file: str = Column(Text, nullable=False)
-    name: str = Column(Text, nullable=False)
-    icon_type: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    odds_file: Mapped[str] = mapped_column(Text)
+    name: Mapped[str] = mapped_column(Text)
+    icon_type: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
 
 
-class OmpDrama(DeclarativeBase, Base["OmpDrama"]):
+class OmpDrama(Base):
     __tablename__ = 'omp_drama'
+    __table_args__ = (
+        Index('omp_drama_0_drama_id', 'drama_id'),
+    )
 
-    command_id: int = Column(Integer, primary_key=True)
-    drama_id: int = Column(Integer, nullable=False, index=True)
-    command_type: int = Column(Integer, nullable=False)
-    param_01: str = Column(Text, nullable=False)
-    param_02: str = Column(Text, nullable=False)
-    param_03: str = Column(Text, nullable=False)
-    param_04: str = Column(Text, nullable=False)
-    param_05: str = Column(Text, nullable=False)
-    param_06: str = Column(Text, nullable=False)
-    param_07: str = Column(Text, nullable=False)
-    param_08: str = Column(Text, nullable=False)
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
 
 
-class OmpStoryDatum(DeclarativeBase, Base["OmpStoryDatum"]):
+class OmpStoryDatum(Base):
     __tablename__ = 'omp_story_data'
+    __table_args__ = (
+        Index('omp_story_data_0_event_id', 'event_id'),
+        Index('omp_story_data_0_story_seq', 'story_seq')
+    )
 
-    omp_story_id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False, index=True)
-    condition_quest_id: int = Column(Integer, nullable=False)
-    condition_boss_id: int = Column(Integer, nullable=False)
-    story_seq: int = Column(Integer, nullable=False, index=True)
-    is_readable_on_result: int = Column(Integer, nullable=False)
-    reward_type: int = Column(Integer, nullable=False)
-    reward_id: int = Column(Integer, nullable=False)
-    reward_count: int = Column(Integer, nullable=False)
-    sub_title: str = Column(Text, nullable=False)
+    omp_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    condition_boss_id: Mapped[int] = mapped_column(Integer)
+    story_seq: Mapped[int] = mapped_column(Integer)
+    is_readable_on_result: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_count: Mapped[int] = mapped_column(Integer)
+    sub_title: Mapped[str] = mapped_column(Text)
 
 
-class PctComboCoefficient(DeclarativeBase, Base["PctComboCoefficient"]):
+class PctComboCoefficient(Base):
     __tablename__ = 'pct_combo_coefficient'
 
-    id: int = Column(Integer, primary_key=True)
-    combo_min: int = Column(Integer, nullable=False)
-    combo_max: int = Column(Integer, nullable=False)
-    combo_coefficient: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    combo_min: Mapped[int] = mapped_column(Integer)
+    combo_max: Mapped[int] = mapped_column(Integer)
+    combo_coefficient: Mapped[int] = mapped_column(Integer)
 
 
-class PctEvaluation(DeclarativeBase, Base["PctEvaluation"]):
+class PctEvaluation(Base):
     __tablename__ = 'pct_evaluation'
 
-    evaluation_id: int = Column(Integer, primary_key=True)
-    evaluation_point: int = Column(Integer, nullable=False)
-    fever_point: int = Column(Integer, nullable=False)
-    meet_width: int = Column(Integer, nullable=False)
+    evaluation_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    evaluation_point: Mapped[int] = mapped_column(Integer)
+    fever_point: Mapped[int] = mapped_column(Integer)
+    meet_width: Mapped[int] = mapped_column(Integer)
 
 
-class PctGamingMotion(DeclarativeBase, Base["PctGamingMotion"]):
+class PctGamingMotion(Base):
     __tablename__ = 'pct_gaming_motion'
 
-    motion_id: int = Column(Integer, primary_key=True)
-    perfect_count: int = Column(Integer, nullable=False)
-    good_count: int = Column(Integer, nullable=False)
-    nice_count: int = Column(Integer, nullable=False)
-    point: int = Column(Integer, nullable=False)
+    motion_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    perfect_count: Mapped[int] = mapped_column(Integer)
+    good_count: Mapped[int] = mapped_column(Integer)
+    nice_count: Mapped[int] = mapped_column(Integer)
+    point: Mapped[int] = mapped_column(Integer)
 
 
-class PctItempoint(DeclarativeBase, Base["PctItempoint"]):
+class PctItempoint(Base):
     __tablename__ = 'pct_itempoint'
+    __table_args__ = (
+        Index('pct_itempoint_0_item_id', 'item_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    item_id: int = Column(Integer, nullable=False, index=True)
-    pct_point_coefficient: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    item_id: Mapped[int] = mapped_column(Integer)
+    pct_point_coefficient: Mapped[int] = mapped_column(Integer)
 
 
-class PctResult(DeclarativeBase, Base["PctResult"]):
+class PctResult(Base):
     __tablename__ = 'pct_result'
+    __table_args__ = (
+        Index('pct_result_0_character_id', 'character_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    character_id: int = Column(Integer, nullable=False, index=True)
-    score_from: int = Column(Integer, nullable=False)
-    score_to: int = Column(Integer, nullable=False)
-    comment_id_1: int = Column(Integer, nullable=False)
-    comment_id_2: int = Column(Integer, nullable=False)
-    comment_id_3: int = Column(Integer, nullable=False)
-    comment_id_4: int = Column(Integer, nullable=False)
-    comment_id_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    character_id: Mapped[int] = mapped_column(Integer)
+    score_from: Mapped[int] = mapped_column(Integer)
+    score_to: Mapped[int] = mapped_column(Integer)
+    comment_id_1: Mapped[int] = mapped_column(Integer)
+    comment_id_2: Mapped[int] = mapped_column(Integer)
+    comment_id_3: Mapped[int] = mapped_column(Integer)
+    comment_id_4: Mapped[int] = mapped_column(Integer)
+    comment_id_5: Mapped[int] = mapped_column(Integer)
 
 
-class PctReward(DeclarativeBase, Base["PctReward"]):
+class PctReward(Base):
     __tablename__ = 'pct_reward'
+    __table_args__ = (
+        Index('pct_reward_0_pct_point_type', 'pct_point_type'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    pct_point_type: int = Column(Integer, nullable=False, index=True)
-    pct_point: int = Column(Integer, nullable=False)
-    mission_detail: str = Column(Text, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_count_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_count_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_count_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_count_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_count_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    pct_point_type: Mapped[int] = mapped_column(Integer)
+    pct_point: Mapped[int] = mapped_column(Integer)
+    mission_detail: Mapped[str] = mapped_column(Text)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_count_5: Mapped[int] = mapped_column(Integer)
 
 
-class PctSystem(DeclarativeBase, Base["PctSystem"]):
+class PctSystem(Base):
     __tablename__ = 'pct_system'
 
-    id: int = Column(Integer, primary_key=True)
-    pct_base_speed: int = Column(Integer, nullable=False)
-    fever_point_max: int = Column(Integer, nullable=False)
-    fever_time: int = Column(Integer, nullable=False)
-    fever_revention_time: int = Column(Integer, nullable=False)
-    pct_time: int = Column(Integer, nullable=False)
-    chara1: int = Column(Integer, nullable=False)
-    chara2: int = Column(Integer, nullable=False)
-    chara1_gauge_choice: int = Column(Integer, nullable=False)
-    chara2_gauge_choice: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    pct_base_speed: Mapped[int] = mapped_column(Integer)
+    fever_point_max: Mapped[int] = mapped_column(Integer)
+    fever_time: Mapped[int] = mapped_column(Integer)
+    fever_revention_time: Mapped[int] = mapped_column(Integer)
+    pct_time: Mapped[int] = mapped_column(Integer)
+    chara1: Mapped[int] = mapped_column(Integer)
+    chara2: Mapped[int] = mapped_column(Integer)
+    chara1_gauge_choice: Mapped[int] = mapped_column(Integer)
+    chara2_gauge_choice: Mapped[int] = mapped_column(Integer)
 
 
-class PctSystemFruit(DeclarativeBase, Base["PctSystemFruit"]):
+class PctSystemFruits(Base):
     __tablename__ = 'pct_system_fruits'
 
-    id: int = Column(Integer, primary_key=True)
-    last_time: int = Column(Integer, nullable=False)
-    appearance: int = Column(Integer, nullable=False)
-    bar_split: int = Column(Integer, nullable=False)
-    appearance_chara_odds: int = Column(Integer, nullable=False)
-    appearance_pattern: str = Column(Text, nullable=False)
-    wait_time: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    last_time: Mapped[int] = mapped_column(Integer)
+    appearance: Mapped[int] = mapped_column(Integer)
+    bar_split: Mapped[int] = mapped_column(Integer)
+    appearance_chara_odds: Mapped[int] = mapped_column(Integer)
+    appearance_pattern: Mapped[str] = mapped_column(Text)
+    wait_time: Mapped[int] = mapped_column(Integer)
 
 
-class PctTapSpeed(DeclarativeBase, Base["PctTapSpeed"]):
+class PctTapSpeed(Base):
     __tablename__ = 'pct_tap_speed'
 
-    id: int = Column(Integer, primary_key=True)
-    combo_count: int = Column(Integer, nullable=False)
-    speed_magnification: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    combo_count: Mapped[int] = mapped_column(Integer)
+    speed_magnification: Mapped[int] = mapped_column(Integer)
 
 
-class PkbBatterCondition(DeclarativeBase, Base["PkbBatterCondition"]):
+class PkbBatterCondition(Base):
     __tablename__ = 'pkb_batter_condition'
 
-    batter_id: int = Column(Integer, primary_key=True)
-    pkb_score: int = Column(Integer, nullable=False)
-    name: str = Column(Text, nullable=False)
-    detail: str = Column(Text, nullable=False)
-    meet: int = Column(Integer, nullable=False)
-    critical: int = Column(Integer, nullable=False)
-    power: int = Column(Integer, nullable=False)
-    ability_name: str = Column(Text, nullable=False)
-    ability_detail: str = Column(Text, nullable=False)
-    is_playable: int = Column(Integer, nullable=False)
+    batter_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    pkb_score: Mapped[int] = mapped_column(Integer)
+    name: Mapped[str] = mapped_column(Text)
+    detail: Mapped[str] = mapped_column(Text)
+    meet: Mapped[int] = mapped_column(Integer)
+    critical: Mapped[int] = mapped_column(Integer)
+    power: Mapped[int] = mapped_column(Integer)
+    ability_name: Mapped[str] = mapped_column(Text)
+    ability_detail: Mapped[str] = mapped_column(Text)
+    is_playable: Mapped[int] = mapped_column(Integer)
 
 
-class PkbDrama(DeclarativeBase, Base["PkbDrama"]):
+class PkbDrama(Base):
     __tablename__ = 'pkb_drama'
+    __table_args__ = (
+        Index('pkb_drama_0_drama_id', 'drama_id'),
+    )
 
-    command_id: int = Column(Integer, primary_key=True)
-    drama_id: int = Column(Integer, nullable=False, index=True)
-    command_type: int = Column(Integer, nullable=False)
-    param_01: str = Column(Text, nullable=False)
-    param_02: str = Column(Text, nullable=False)
-    param_03: str = Column(Text, nullable=False)
-    param_04: str = Column(Text, nullable=False)
-    param_05: str = Column(Text, nullable=False)
-    param_06: str = Column(Text, nullable=False)
-    param_07: str = Column(Text, nullable=False)
-    param_08: str = Column(Text, nullable=False)
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
 
 
-class PkbDramaDatum(DeclarativeBase, Base["PkbDramaDatum"]):
+class PkbDramaDatum(Base):
     __tablename__ = 'pkb_drama_data'
 
-    drama_id: int = Column(Integer, primary_key=True)
-    condition_pitcher_id_1: int = Column(Integer, nullable=False)
-    condition_pitcher_id_2: int = Column(Integer, nullable=False)
-    condition_batter_id_1: int = Column(Integer, nullable=False)
-    condition_batter_id_2: int = Column(Integer, nullable=False)
+    drama_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    condition_pitcher_id_1: Mapped[int] = mapped_column(Integer)
+    condition_pitcher_id_2: Mapped[int] = mapped_column(Integer)
+    condition_batter_id_1: Mapped[int] = mapped_column(Integer)
+    condition_batter_id_2: Mapped[int] = mapped_column(Integer)
 
 
-class PkbNaviComment(DeclarativeBase, Base["PkbNaviComment"]):
+class PkbNaviComment(Base):
     __tablename__ = 'pkb_navi_comment'
 
-    comment_id: int = Column(Integer, primary_key=True)
-    where_type: int = Column(Integer, nullable=False)
-    character_id: int = Column(Integer, nullable=False)
-    face_type: int = Column(Integer, nullable=False)
-    character_name: str = Column(Text, nullable=False)
-    description: str = Column(Text)
-    voice_id: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    pos_x: float = Column(Float, nullable=False)
-    pos_y: float = Column(Float, nullable=False)
-    change_face_time: float = Column(Float, nullable=False)
-    change_face_type: int = Column(Integer, nullable=False)
-    event_id: int = Column(Integer, nullable=False)
+    comment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    where_type: Mapped[int] = mapped_column(Integer)
+    character_id: Mapped[int] = mapped_column(Integer)
+    face_type: Mapped[int] = mapped_column(Integer)
+    character_name: Mapped[str] = mapped_column(Text)
+    voice_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    pos_x: Mapped[float] = mapped_column(Float)
+    pos_y: Mapped[float] = mapped_column(Float)
+    change_face_time: Mapped[float] = mapped_column(Float)
+    change_face_type: Mapped[int] = mapped_column(Integer)
+    event_id: Mapped[int] = mapped_column(Integer)
+    description: Mapped[Optional[str]] = mapped_column(Text)
 
 
-class PkbPitcherBallType(DeclarativeBase, Base["PkbPitcherBallType"]):
+class PkbPitcherBallType(Base):
     __tablename__ = 'pkb_pitcher_ball_type'
+    __table_args__ = (
+        Index('pkb_pitcher_ball_type_0_pitcher_id', 'pitcher_id'),
+    )
 
-    pitcher_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    ball_type: int = Column(Integer, primary_key=True, nullable=False)
-    ball_type_name: str = Column(Text, nullable=False)
+    pitcher_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    ball_type: Mapped[int] = mapped_column(Integer, primary_key=True)
+    ball_type_name: Mapped[str] = mapped_column(Text)
 
 
-class PkbReward(DeclarativeBase, Base["PkbReward"]):
+class PkbReward(Base):
     __tablename__ = 'pkb_reward'
 
-    id: int = Column(Integer, primary_key=True)
-    pkb_score: int = Column(Integer, nullable=False)
-    mission_detail: str = Column(Text, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_count_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_count_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_count_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_count_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_count_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    pkb_score: Mapped[int] = mapped_column(Integer)
+    mission_detail: Mapped[str] = mapped_column(Text)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_count_5: Mapped[int] = mapped_column(Integer)
 
 
-class PositionSetting(DeclarativeBase, Base["PositionSetting"]):
+class PositionSetting(Base):
     __tablename__ = 'position_setting'
 
-    position_setting_id: int = Column(Integer, primary_key=True)
-    front: int = Column(Integer, nullable=False)
-    middle: int = Column(Integer, nullable=False)
+    position_setting_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    front: Mapped[int] = mapped_column(Integer)
+    middle: Mapped[int] = mapped_column(Integer)
 
 
-class PrizegachaDatum(DeclarativeBase, Base["PrizegachaDatum"]):
+class PrizegachaDatum(Base):
     __tablename__ = 'prizegacha_data'
 
-    prizegacha_id: int = Column(Integer, primary_key=True)
-    prize_memory_id_1: int = Column(Integer, nullable=False)
-    prize_memory_id_2: int = Column(Integer, nullable=False)
-    prize_memory_id_3: int = Column(Integer, nullable=False)
-    prize_memory_id_4: int = Column(Integer, nullable=False)
-    prize_memory_id_5: int = Column(Integer, nullable=False)
-    prize_memory_id_6: int = Column(Integer, nullable=False)
-    prize_memory_id_7: int = Column(Integer, nullable=False)
-    prize_memory_id_8: int = Column(Integer, nullable=False)
-    prize_memory_id_9: int = Column(Integer, nullable=False)
-    prize_memory_id_10: int = Column(Integer, nullable=False)
-    prize_memory_id_11: int = Column(Integer, nullable=False)
-    prize_memory_id_12: int = Column(Integer, nullable=False)
-    prize_memory_id_13: int = Column(Integer, nullable=False)
-    prize_memory_id_14: int = Column(Integer, nullable=False)
-    prize_memory_id_15: int = Column(Integer, nullable=False)
-    prize_memory_id_16: int = Column(Integer, nullable=False)
-    prize_memory_id_17: int = Column(Integer, nullable=False)
-    prize_memory_id_18: int = Column(Integer, nullable=False)
-    prize_memory_id_19: int = Column(Integer, nullable=False)
-    prize_memory_id_20: int = Column(Integer, nullable=False)
-    gacha_prize1: int = Column(Integer, nullable=False)
-    gacha_prize10: int = Column(Integer, nullable=False)
-    prize_fixed_compensation: int = Column(Integer, nullable=False)
-    prize_fixed_compensation_quantity: int = Column(Integer, nullable=False)
-    rarity_odds: int = Column(Integer, nullable=False)
-    disp_prize_fixed_compensation: int = Column(Integer, nullable=False)
+    prizegacha_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    prize_memory_id_1: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_2: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_3: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_4: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_5: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_6: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_7: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_8: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_9: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_10: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_11: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_12: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_13: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_14: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_15: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_16: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_17: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_18: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_19: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_20: Mapped[int] = mapped_column(Integer)
+    gacha_prize1: Mapped[int] = mapped_column(Integer)
+    gacha_prize10: Mapped[int] = mapped_column(Integer)
+    prize_fixed_compensation: Mapped[int] = mapped_column(Integer)
+    prize_fixed_compensation_quantity: Mapped[int] = mapped_column(Integer)
+    rarity_odds: Mapped[int] = mapped_column(Integer)
+    disp_prize_fixed_compensation: Mapped[int] = mapped_column(Integer)
 
 
-class PrizegachaSpDatum(DeclarativeBase, Base["PrizegachaSpDatum"]):
+class PrizegachaSpDatum(Base):
     __tablename__ = 'prizegacha_sp_data'
+    __table_args__ = (
+        Index('prizegacha_sp_data_0_gacha_id', 'gacha_id'),
+    )
 
-    gacha_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    rarity: int = Column(Integer, primary_key=True, nullable=False)
-    disp_rarity: int = Column(Integer, nullable=False)
+    gacha_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    rarity: Mapped[int] = mapped_column(Integer, primary_key=True)
+    disp_rarity: Mapped[int] = mapped_column(Integer)
 
 
-class PrizegachaSpDetail(DeclarativeBase, Base["PrizegachaSpDetail"]):
+class PrizegachaSpDetail(Base):
     __tablename__ = 'prizegacha_sp_detail'
 
-    disp_rarity: int = Column(Integer, primary_key=True)
-    effect_id: int = Column(Integer, nullable=False)
-    name: str = Column(Text, nullable=False)
+    disp_rarity: Mapped[int] = mapped_column(Integer, primary_key=True)
+    effect_id: Mapped[int] = mapped_column(Integer)
+    name: Mapped[str] = mapped_column(Text)
 
 
-class ProfileFrame(DeclarativeBase, Base["ProfileFrame"]):
+class ProfileFrame(Base):
     __tablename__ = 'profile_frame'
 
-    id: int = Column(Integer, primary_key=True)
-    name: str = Column(Text, nullable=False)
-    type: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    disp_order: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    type: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    disp_order: Mapped[int] = mapped_column(Integer)
 
 
-class PromotionBonu(DeclarativeBase, Base["PromotionBonu"]):
+class PromotionBonus(Base):
     __tablename__ = 'promotion_bonus'
+    __table_args__ = (
+        Index('promotion_bonus_0_unit_id', 'unit_id'),
+    )
 
-    unit_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    promotion_level: int = Column(Integer, primary_key=True, nullable=False)
-    hp: float = Column(Float, nullable=False)
-    atk: float = Column(Float, nullable=False)
-    magic_str: float = Column(Float, nullable=False)
-    _def: float = Column('def', Float, nullable=False)
-    magic_def: float = Column(Float, nullable=False)
-    physical_critical: float = Column(Float, nullable=False)
-    magic_critical: float = Column(Float, nullable=False)
-    wave_hp_recovery: float = Column(Float, nullable=False)
-    wave_energy_recovery: float = Column(Float, nullable=False)
-    dodge: float = Column(Float, nullable=False)
-    physical_penetrate: float = Column(Float, nullable=False)
-    magic_penetrate: float = Column(Float, nullable=False)
-    life_steal: float = Column(Float, nullable=False)
-    hp_recovery_rate: float = Column(Float, nullable=False)
-    energy_recovery_rate: float = Column(Float, nullable=False)
-    energy_reduce_rate: float = Column(Float, nullable=False)
-    accuracy: float = Column(Float, nullable=False)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    promotion_level: Mapped[int] = mapped_column(Integer, primary_key=True)
+    hp: Mapped[float] = mapped_column(Float)
+    atk: Mapped[float] = mapped_column(Float)
+    magic_str: Mapped[float] = mapped_column(Float)
+    def_: Mapped[float] = mapped_column('def', Float)
+    magic_def: Mapped[float] = mapped_column(Float)
+    physical_critical: Mapped[float] = mapped_column(Float)
+    magic_critical: Mapped[float] = mapped_column(Float)
+    wave_hp_recovery: Mapped[float] = mapped_column(Float)
+    wave_energy_recovery: Mapped[float] = mapped_column(Float)
+    dodge: Mapped[float] = mapped_column(Float)
+    physical_penetrate: Mapped[float] = mapped_column(Float)
+    magic_penetrate: Mapped[float] = mapped_column(Float)
+    life_steal: Mapped[float] = mapped_column(Float)
+    hp_recovery_rate: Mapped[float] = mapped_column(Float)
+    energy_recovery_rate: Mapped[float] = mapped_column(Float)
+    energy_reduce_rate: Mapped[float] = mapped_column(Float)
+    accuracy: Mapped[float] = mapped_column(Float)
 
 
-class PsyDrama(DeclarativeBase, Base["PsyDrama"]):
+class PsyDrama(Base):
     __tablename__ = 'psy_drama'
 
-    drama_id: int = Column(Integer, primary_key=True)
-    condition_total_eat: int = Column(Integer, nullable=False)
-    condition_chara_type: int = Column(Integer, nullable=False)
-    condition_time: str = Column(Text, nullable=False)
-    condition_psy_product_1: int = Column(Integer, nullable=False)
-    condition_psy_product_2: int = Column(Integer, nullable=False)
-    condition_psy_product_3: int = Column(Integer, nullable=False)
-    condition_psy_product_4: int = Column(Integer, nullable=False)
-    condition_psy_product_5: int = Column(Integer, nullable=False)
-    release_psy_product_id_1: int = Column(Integer, nullable=False)
-    release_psy_product_id_2: int = Column(Integer, nullable=False)
-    release_psy_product_id_3: int = Column(Integer, nullable=False)
-    release_psy_product_id_4: int = Column(Integer, nullable=False)
-    release_psy_product_id_5: int = Column(Integer, nullable=False)
-    title: str = Column(Text, nullable=False)
+    drama_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    condition_total_eat: Mapped[int] = mapped_column(Integer)
+    condition_chara_type: Mapped[int] = mapped_column(Integer)
+    condition_time: Mapped[str] = mapped_column(Text)
+    condition_psy_product_1: Mapped[int] = mapped_column(Integer)
+    condition_psy_product_2: Mapped[int] = mapped_column(Integer)
+    condition_psy_product_3: Mapped[int] = mapped_column(Integer)
+    condition_psy_product_4: Mapped[int] = mapped_column(Integer)
+    condition_psy_product_5: Mapped[int] = mapped_column(Integer)
+    release_psy_product_id_1: Mapped[int] = mapped_column(Integer)
+    release_psy_product_id_2: Mapped[int] = mapped_column(Integer)
+    release_psy_product_id_3: Mapped[int] = mapped_column(Integer)
+    release_psy_product_id_4: Mapped[int] = mapped_column(Integer)
+    release_psy_product_id_5: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
 
 
-class PsyDramaScript(DeclarativeBase, Base["PsyDramaScript"]):
+class PsyDramaScript(Base):
     __tablename__ = 'psy_drama_script'
+    __table_args__ = (
+        Index('psy_drama_script_0_drama_id', 'drama_id'),
+    )
 
-    command_id: int = Column(Integer, primary_key=True)
-    drama_id: int = Column(Integer, nullable=False, index=True)
-    command_type: int = Column(Integer, nullable=False)
-    param_01: str = Column(Text, nullable=False)
-    param_02: str = Column(Text, nullable=False)
-    param_03: str = Column(Text, nullable=False)
-    param_04: str = Column(Text, nullable=False)
-    param_05: str = Column(Text, nullable=False)
-    param_06: str = Column(Text, nullable=False)
-    param_07: str = Column(Text, nullable=False)
-    param_08: str = Column(Text, nullable=False)
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
 
 
-class PsyNote(DeclarativeBase, Base["PsyNote"]):
+class PsyNote(Base):
     __tablename__ = 'psy_note'
 
-    psy_product_id: int = Column(Integer, primary_key=True)
-    condition_flavor_1: int = Column(Integer, nullable=False)
-    condition_flavor_2: int = Column(Integer, nullable=False)
-    psy_product_name: str = Column(Text, nullable=False)
-    flavor_1: str = Column(Text, nullable=False)
-    flavor_2: str = Column(Text, nullable=False)
-    flavor_3: str = Column(Text, nullable=False)
-    disp_order: int = Column(Integer, nullable=False)
-    init_flg: int = Column(Integer, nullable=False)
+    psy_product_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    condition_flavor_1: Mapped[int] = mapped_column(Integer)
+    condition_flavor_2: Mapped[int] = mapped_column(Integer)
+    psy_product_name: Mapped[str] = mapped_column(Text)
+    flavor_1: Mapped[str] = mapped_column(Text)
+    flavor_2: Mapped[str] = mapped_column(Text)
+    flavor_3: Mapped[str] = mapped_column(Text)
+    disp_order: Mapped[int] = mapped_column(Integer)
+    init_flg: Mapped[int] = mapped_column(Integer)
 
 
-class PsyReward(DeclarativeBase, Base["PsyReward"]):
+class PsyReward(Base):
     __tablename__ = 'psy_reward'
 
-    id: int = Column(Integer, primary_key=True)
-    condition_type: int = Column(Integer, nullable=False)
-    condition_num: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_count_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_count_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_count_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_count_4: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    condition_type: Mapped[int] = mapped_column(Integer)
+    condition_num: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
 
 
-class QuestAnnihilation(DeclarativeBase, Base["QuestAnnihilation"]):
+class QuestAnnihilation(Base):
     __tablename__ = 'quest_annihilation'
 
-    system_id: int = Column(Integer, primary_key=True, nullable=False)
-    quest_id: int = Column(Integer, primary_key=True, nullable=False)
-    effect_type: int = Column(Integer, nullable=False)
-    quest_effect_position: int = Column(Integer, nullable=False)
-    se_cue_name: str = Column(Text, nullable=False)
+    system_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    effect_type: Mapped[int] = mapped_column(Integer)
+    quest_effect_position: Mapped[int] = mapped_column(Integer)
+    se_cue_name: Mapped[str] = mapped_column(Text)
 
 
-class QuestAreaDatum(DeclarativeBase, Base["QuestAreaDatum"]):
+class QuestAreaDatum(Base):
     __tablename__ = 'quest_area_data'
+    __table_args__ = (
+        Index('quest_area_data_0_map_type', 'map_type'),
+    )
 
-    area_id: int = Column(Integer, primary_key=True)
-    area_name: str = Column(Text, nullable=False)
-    area_display_name: str = Column(Text, nullable=False)
-    map_type: int = Column(Integer, nullable=False)
-    sheet_id: str = Column(Text, nullable=False)
-    que_id: str = Column(Text, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    area_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    area_name: Mapped[str] = mapped_column(Text)
+    area_display_name: Mapped[str] = mapped_column(Text)
+    map_type: Mapped[int] = mapped_column(Integer)
+    sheet_id: Mapped[str] = mapped_column(Text)
+    que_id: Mapped[str] = mapped_column(Text)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class QuestConditionDatum(DeclarativeBase, Base["QuestConditionDatum"]):
+class QuestConditionDatum(Base):
     __tablename__ = 'quest_condition_data'
 
-    quest_id: int = Column(Integer, primary_key=True)
-    condition_quest_id_1: int = Column(Integer, nullable=False)
-    condition_quest_id_2: int = Column(Integer, nullable=False)
-    condition_quest_id_3: int = Column(Integer, nullable=False)
-    condition_quest_id_4: int = Column(Integer, nullable=False)
-    condition_quest_id_5: int = Column(Integer, nullable=False)
-    release_quest_id_1: int = Column(Integer, nullable=False)
-    release_quest_id_2: int = Column(Integer, nullable=False)
-    release_quest_id_3: int = Column(Integer, nullable=False)
-    release_quest_id_4: int = Column(Integer, nullable=False)
-    release_quest_id_5: int = Column(Integer, nullable=False)
+    quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    condition_quest_id_1: Mapped[int] = mapped_column(Integer)
+    condition_quest_id_2: Mapped[int] = mapped_column(Integer)
+    condition_quest_id_3: Mapped[int] = mapped_column(Integer)
+    condition_quest_id_4: Mapped[int] = mapped_column(Integer)
+    condition_quest_id_5: Mapped[int] = mapped_column(Integer)
+    release_quest_id_1: Mapped[int] = mapped_column(Integer)
+    release_quest_id_2: Mapped[int] = mapped_column(Integer)
+    release_quest_id_3: Mapped[int] = mapped_column(Integer)
+    release_quest_id_4: Mapped[int] = mapped_column(Integer)
+    release_quest_id_5: Mapped[int] = mapped_column(Integer)
 
 
-class QuestDatum(DeclarativeBase, Base["QuestDatum"]):
+class QuestDatum(Base):
     __tablename__ = 'quest_data'
+    __table_args__ = (
+        Index('quest_data_0_area_id', 'area_id'),
+    )
 
-    quest_id: int = Column(Integer, primary_key=True)
-    area_id: int = Column(Integer, nullable=False)
-    quest_name: str = Column(Text, nullable=False)
-    limit_team_level: int = Column(Integer, nullable=False)
-    position_x: int = Column(Integer, nullable=False)
-    position_y: int = Column(Integer, nullable=False)
-    icon_id: int = Column(Integer, nullable=False)
-    stamina: int = Column(Integer, nullable=False)
-    stamina_start: int = Column(Integer, nullable=False)
-    team_exp: int = Column(Integer, nullable=False)
-    unit_exp: int = Column(Integer, nullable=False)
-    love: int = Column(Integer, nullable=False)
-    limit_time: int = Column(Integer, nullable=False)
-    daily_limit: int = Column(Integer, nullable=False)
-    clear_reward_group: int = Column(Integer, nullable=False)
-    rank_reward_group: int = Column(Integer, nullable=False)
-    background_1: int = Column(Integer, nullable=False)
-    wave_group_id_1: int = Column(Integer, nullable=False)
-    wave_bgm_sheet_id_1: str = Column(Text, nullable=False)
-    wave_bgm_que_id_1: str = Column(Text, nullable=False)
-    story_id_wavestart_1: int = Column(Integer, nullable=False)
-    story_id_waveend_1: int = Column(Integer, nullable=False)
-    background_2: int = Column(Integer, nullable=False)
-    wave_group_id_2: int = Column(Integer, nullable=False)
-    wave_bgm_sheet_id_2: str = Column(Text, nullable=False)
-    wave_bgm_que_id_2: str = Column(Text, nullable=False)
-    story_id_wavestart_2: int = Column(Integer, nullable=False)
-    story_id_waveend_2: int = Column(Integer, nullable=False)
-    background_3: int = Column(Integer, nullable=False)
-    wave_group_id_3: int = Column(Integer, nullable=False)
-    wave_bgm_sheet_id_3: str = Column(Text, nullable=False)
-    wave_bgm_que_id_3: str = Column(Text, nullable=False)
-    story_id_wavestart_3: int = Column(Integer, nullable=False)
-    story_id_waveend_3: int = Column(Integer, nullable=False)
-    enemy_image_1: int = Column(Integer, nullable=False)
-    enemy_image_2: int = Column(Integer, nullable=False)
-    enemy_image_3: int = Column(Integer, nullable=False)
-    enemy_image_4: int = Column(Integer, nullable=False)
-    enemy_image_5: int = Column(Integer, nullable=False)
-    reward_image_1: int = Column(Integer, nullable=False)
-    reward_image_2: int = Column(Integer, nullable=False)
-    reward_image_3: int = Column(Integer, nullable=False)
-    reward_image_4: int = Column(Integer, nullable=False)
-    reward_image_5: int = Column(Integer, nullable=False)
-    quest_detail_bg_id: int = Column(Integer, nullable=False)
-    quest_detail_bg_position: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    lv_reward_flag: int = Column(Integer, nullable=False)
-    add_treasure_num: int = Column(Integer, nullable=False)
+    quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    area_id: Mapped[int] = mapped_column(Integer)
+    quest_name: Mapped[str] = mapped_column(Text)
+    limit_team_level: Mapped[int] = mapped_column(Integer)
+    position_x: Mapped[int] = mapped_column(Integer)
+    position_y: Mapped[int] = mapped_column(Integer)
+    icon_id: Mapped[int] = mapped_column(Integer)
+    stamina: Mapped[int] = mapped_column(Integer)
+    stamina_start: Mapped[int] = mapped_column(Integer)
+    team_exp: Mapped[int] = mapped_column(Integer)
+    unit_exp: Mapped[int] = mapped_column(Integer)
+    love: Mapped[int] = mapped_column(Integer)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    daily_limit: Mapped[int] = mapped_column(Integer)
+    clear_reward_group: Mapped[int] = mapped_column(Integer)
+    rank_reward_group: Mapped[int] = mapped_column(Integer)
+    background_1: Mapped[int] = mapped_column(Integer)
+    wave_group_id_1: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_1: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_1: Mapped[str] = mapped_column(Text)
+    story_id_wavestart_1: Mapped[int] = mapped_column(Integer)
+    story_id_waveend_1: Mapped[int] = mapped_column(Integer)
+    background_2: Mapped[int] = mapped_column(Integer)
+    wave_group_id_2: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_2: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_2: Mapped[str] = mapped_column(Text)
+    story_id_wavestart_2: Mapped[int] = mapped_column(Integer)
+    story_id_waveend_2: Mapped[int] = mapped_column(Integer)
+    background_3: Mapped[int] = mapped_column(Integer)
+    wave_group_id_3: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_3: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_3: Mapped[str] = mapped_column(Text)
+    story_id_wavestart_3: Mapped[int] = mapped_column(Integer)
+    story_id_waveend_3: Mapped[int] = mapped_column(Integer)
+    enemy_image_1: Mapped[int] = mapped_column(Integer)
+    enemy_image_2: Mapped[int] = mapped_column(Integer)
+    enemy_image_3: Mapped[int] = mapped_column(Integer)
+    enemy_image_4: Mapped[int] = mapped_column(Integer)
+    enemy_image_5: Mapped[int] = mapped_column(Integer)
+    reward_image_1: Mapped[int] = mapped_column(Integer)
+    reward_image_2: Mapped[int] = mapped_column(Integer)
+    reward_image_3: Mapped[int] = mapped_column(Integer)
+    reward_image_4: Mapped[int] = mapped_column(Integer)
+    reward_image_5: Mapped[int] = mapped_column(Integer)
+    quest_detail_bg_id: Mapped[int] = mapped_column(Integer)
+    quest_detail_bg_position: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    lv_reward_flag: Mapped[int] = mapped_column(Integer)
+    add_treasure_num: Mapped[int] = mapped_column(Integer)
 
-    def get_wave_group_ids(self) -> Iterator[int]:
-        yield self.wave_group_id_1
-        yield self.wave_group_id_2
-        yield self.wave_group_id_3
 
-class QuestDefeatNotice(DeclarativeBase, Base["QuestDefeatNotice"]):
+class QuestDefeatNotice(Base):
     __tablename__ = 'quest_defeat_notice'
 
-    id: int = Column(Integer, primary_key=True)
-    image_id: int = Column(Integer, nullable=False)
-    required_team_level: int = Column(Integer, nullable=False)
-    required_quest_id: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    image_id: Mapped[int] = mapped_column(Integer)
+    required_team_level: Mapped[int] = mapped_column(Integer)
+    required_quest_id: Mapped[int] = mapped_column(Integer)
 
 
-class QuestRewardDatum(DeclarativeBase, Base["QuestRewardDatum"]):
+class QuestRewardDatum(Base):
     __tablename__ = 'quest_reward_data'
 
-    reward_group_id: int = Column(Integer, primary_key=True)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
+    reward_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
 
 
-class Rarity6QuestDatum(DeclarativeBase, Base["Rarity6QuestDatum"]):
+class Rarity6QuestDatum(Base):
     __tablename__ = 'rarity_6_quest_data'
+    __table_args__ = (
+        Index('rarity_6_quest_data_0_rarity_6_quest_id', 'rarity_6_quest_id'),
+    )
 
-    rarity_6_quest_id: int = Column(Integer, nullable=False, index=True)
-    unit_id: int = Column(Integer, primary_key=True)
-    quest_name: str = Column(Text, nullable=False)
-    limit_time: int = Column(Integer, nullable=False)
-    recommended_level: int = Column(Integer, nullable=False)
-    reward_group_id: int = Column(Integer, nullable=False)
-    treasure_type: int = Column(Integer, nullable=False)
-    reward_image_1: int = Column(Integer, nullable=False)
-    reward_count_1: int = Column(Integer, nullable=False)
-    reward_image_2: int = Column(Integer, nullable=False)
-    reward_count_2: int = Column(Integer, nullable=False)
-    reward_image_3: int = Column(Integer, nullable=False)
-    reward_count_3: int = Column(Integer, nullable=False)
-    reward_image_4: int = Column(Integer, nullable=False)
-    reward_count_4: int = Column(Integer, nullable=False)
-    reward_image_5: int = Column(Integer, nullable=False)
-    reward_count_5: int = Column(Integer, nullable=False)
-    background: int = Column(Integer, nullable=False)
-    bg_position: int = Column(Integer, nullable=False)
-    wave_group_id: int = Column(Integer, nullable=False)
-    enemy_position_x_1: int = Column(Integer, nullable=False)
-    enemy_local_position_y_1: int = Column(Integer, nullable=False)
-    enemy_size_1: float = Column(Float, nullable=False)
-    enemy_position_x_2: int = Column(Integer, nullable=False)
-    enemy_local_position_y_2: int = Column(Integer, nullable=False)
-    enemy_size_2: float = Column(Float, nullable=False)
-    enemy_position_x_3: int = Column(Integer, nullable=False)
-    enemy_local_position_y_3: int = Column(Integer, nullable=False)
-    enemy_size_3: float = Column(Float, nullable=False)
-    enemy_position_x_4: int = Column(Integer, nullable=False)
-    enemy_local_position_y_4: int = Column(Integer, nullable=False)
-    enemy_size_4: float = Column(Float, nullable=False)
-    enemy_position_x_5: int = Column(Integer, nullable=False)
-    enemy_local_position_y_5: int = Column(Integer, nullable=False)
-    enemy_size_5: float = Column(Float, nullable=False)
-    wave_bgm: str = Column(Text, nullable=False)
+    rarity_6_quest_id: Mapped[int] = mapped_column(Integer)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    quest_name: Mapped[str] = mapped_column(Text)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    recommended_level: Mapped[int] = mapped_column(Integer)
+    reward_group_id: Mapped[int] = mapped_column(Integer)
+    treasure_type: Mapped[int] = mapped_column(Integer)
+    reward_image_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_image_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_image_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    reward_image_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    reward_image_5: Mapped[int] = mapped_column(Integer)
+    reward_count_5: Mapped[int] = mapped_column(Integer)
+    background: Mapped[int] = mapped_column(Integer)
+    bg_position: Mapped[int] = mapped_column(Integer)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    enemy_position_x_1: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_1: Mapped[int] = mapped_column(Integer)
+    enemy_size_1: Mapped[float] = mapped_column(Float)
+    enemy_position_x_2: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_2: Mapped[int] = mapped_column(Integer)
+    enemy_size_2: Mapped[float] = mapped_column(Float)
+    enemy_position_x_3: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_3: Mapped[int] = mapped_column(Integer)
+    enemy_size_3: Mapped[float] = mapped_column(Float)
+    enemy_position_x_4: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_4: Mapped[int] = mapped_column(Integer)
+    enemy_size_4: Mapped[float] = mapped_column(Float)
+    enemy_position_x_5: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_5: Mapped[int] = mapped_column(Integer)
+    enemy_size_5: Mapped[float] = mapped_column(Float)
+    wave_bgm: Mapped[str] = mapped_column(Text)
 
 
-class RedeemStaticPriceGroup(DeclarativeBase, Base["RedeemStaticPriceGroup"]):
+class RecoverStamina(Base):
+    __tablename__ = 'recover_stamina'
+
+    count: Mapped[int] = mapped_column(Integer, primary_key=True)
+    cost: Mapped[int] = mapped_column(Integer)
+
+
+class RedeemStaticPriceGroup(Base):
     __tablename__ = 'redeem_static_price_group'
 
-    condition_category: int = Column(Integer, primary_key=True)
-    count: int = Column(Integer, nullable=False)
+    condition_category: Mapped[int] = mapped_column(Integer, primary_key=True)
+    count: Mapped[int] = mapped_column(Integer)
 
 
-class RedeemUnit(DeclarativeBase, Base["RedeemUnit"]):
+class RedeemUnit(Base):
     __tablename__ = 'redeem_unit'
+    __table_args__ = (
+        Index('redeem_unit_0_unit_id', 'unit_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    unit_id: int = Column(Integer, nullable=False, index=True)
-    slot_id: int = Column(Integer, nullable=False)
-    condition_category: int = Column(Integer, nullable=False)
-    condition_id: int = Column(Integer, nullable=False)
-    consume_num: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    slot_id: Mapped[int] = mapped_column(Integer)
+    condition_category: Mapped[int] = mapped_column(Integer)
+    condition_id: Mapped[int] = mapped_column(Integer)
+    consume_num: Mapped[str] = mapped_column(Text)
 
 
-class RedeemUnitBg(DeclarativeBase, Base["RedeemUnitBg"]):
+class RedeemUnitBg(Base):
     __tablename__ = 'redeem_unit_bg'
 
-    unit_id: int = Column(Integer, primary_key=True)
-    bg_id: int = Column(Integer, nullable=False)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    bg_id: Mapped[int] = mapped_column(Integer)
 
 
-class ResistDatum(DeclarativeBase, Base["ResistDatum"]):
+class ResistDatum(Base):
     __tablename__ = 'resist_data'
 
-    resist_status_id: int = Column(Integer, primary_key=True)
-    ailment_1: int = Column(Integer, nullable=False)
-    ailment_2: int = Column(Integer, nullable=False)
-    ailment_3: int = Column(Integer, nullable=False)
-    ailment_4: int = Column(Integer, nullable=False)
-    ailment_5: int = Column(Integer, nullable=False)
-    ailment_6: int = Column(Integer, nullable=False)
-    ailment_7: int = Column(Integer, nullable=False)
-    ailment_8: int = Column(Integer, nullable=False)
-    ailment_9: int = Column(Integer, nullable=False)
-    ailment_10: int = Column(Integer, nullable=False)
-    ailment_11: int = Column(Integer, nullable=False)
-    ailment_12: int = Column(Integer, nullable=False)
-    ailment_13: int = Column(Integer, nullable=False)
-    ailment_14: int = Column(Integer, nullable=False)
-    ailment_15: int = Column(Integer, nullable=False)
-    ailment_16: int = Column(Integer, nullable=False)
-    ailment_17: int = Column(Integer, nullable=False)
-    ailment_18: int = Column(Integer, nullable=False)
-    ailment_19: int = Column(Integer, nullable=False)
-    ailment_20: int = Column(Integer, nullable=False)
-    ailment_21: int = Column(Integer, nullable=False)
-    ailment_22: int = Column(Integer, nullable=False)
-    ailment_23: int = Column(Integer, nullable=False)
-    ailment_24: int = Column(Integer, nullable=False)
-    ailment_25: int = Column(Integer, nullable=False)
-    ailment_26: int = Column(Integer, nullable=False)
-    ailment_27: int = Column(Integer, nullable=False)
-    ailment_28: int = Column(Integer, nullable=False)
-    ailment_29: int = Column(Integer, nullable=False)
-    ailment_30: int = Column(Integer, nullable=False)
-    ailment_31: int = Column(Integer, nullable=False)
-    ailment_32: int = Column(Integer, nullable=False)
-    ailment_33: int = Column(Integer, nullable=False)
-    ailment_34: int = Column(Integer, nullable=False)
-    ailment_35: int = Column(Integer, nullable=False)
-    ailment_36: int = Column(Integer, nullable=False)
-    ailment_37: int = Column(Integer, nullable=False)
-    ailment_38: int = Column(Integer, nullable=False)
-    ailment_39: int = Column(Integer, nullable=False)
-    ailment_40: int = Column(Integer, nullable=False)
-    ailment_41: int = Column(Integer, nullable=False)
-    ailment_42: int = Column(Integer, nullable=False)
-    ailment_43: int = Column(Integer, nullable=False)
-    ailment_44: int = Column(Integer, nullable=False)
-    ailment_45: int = Column(Integer, nullable=False)
-    ailment_46: int = Column(Integer, nullable=False)
-    ailment_47: int = Column(Integer, nullable=False)
-    ailment_48: int = Column(Integer, nullable=False)
-    ailment_49: int = Column(Integer, nullable=False)
-    ailment_50: int = Column(Integer, nullable=False)
+    resist_status_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    ailment_1: Mapped[int] = mapped_column(Integer)
+    ailment_2: Mapped[int] = mapped_column(Integer)
+    ailment_3: Mapped[int] = mapped_column(Integer)
+    ailment_4: Mapped[int] = mapped_column(Integer)
+    ailment_5: Mapped[int] = mapped_column(Integer)
+    ailment_6: Mapped[int] = mapped_column(Integer)
+    ailment_7: Mapped[int] = mapped_column(Integer)
+    ailment_8: Mapped[int] = mapped_column(Integer)
+    ailment_9: Mapped[int] = mapped_column(Integer)
+    ailment_10: Mapped[int] = mapped_column(Integer)
+    ailment_11: Mapped[int] = mapped_column(Integer)
+    ailment_12: Mapped[int] = mapped_column(Integer)
+    ailment_13: Mapped[int] = mapped_column(Integer)
+    ailment_14: Mapped[int] = mapped_column(Integer)
+    ailment_15: Mapped[int] = mapped_column(Integer)
+    ailment_16: Mapped[int] = mapped_column(Integer)
+    ailment_17: Mapped[int] = mapped_column(Integer)
+    ailment_18: Mapped[int] = mapped_column(Integer)
+    ailment_19: Mapped[int] = mapped_column(Integer)
+    ailment_20: Mapped[int] = mapped_column(Integer)
+    ailment_21: Mapped[int] = mapped_column(Integer)
+    ailment_22: Mapped[int] = mapped_column(Integer)
+    ailment_23: Mapped[int] = mapped_column(Integer)
+    ailment_24: Mapped[int] = mapped_column(Integer)
+    ailment_25: Mapped[int] = mapped_column(Integer)
+    ailment_26: Mapped[int] = mapped_column(Integer)
+    ailment_27: Mapped[int] = mapped_column(Integer)
+    ailment_28: Mapped[int] = mapped_column(Integer)
+    ailment_29: Mapped[int] = mapped_column(Integer)
+    ailment_30: Mapped[int] = mapped_column(Integer)
+    ailment_31: Mapped[int] = mapped_column(Integer)
+    ailment_32: Mapped[int] = mapped_column(Integer)
+    ailment_33: Mapped[int] = mapped_column(Integer)
+    ailment_34: Mapped[int] = mapped_column(Integer)
+    ailment_35: Mapped[int] = mapped_column(Integer)
+    ailment_36: Mapped[int] = mapped_column(Integer)
+    ailment_37: Mapped[int] = mapped_column(Integer)
+    ailment_38: Mapped[int] = mapped_column(Integer)
+    ailment_39: Mapped[int] = mapped_column(Integer)
+    ailment_40: Mapped[int] = mapped_column(Integer)
+    ailment_41: Mapped[int] = mapped_column(Integer)
+    ailment_42: Mapped[int] = mapped_column(Integer)
+    ailment_43: Mapped[int] = mapped_column(Integer)
+    ailment_44: Mapped[int] = mapped_column(Integer)
+    ailment_45: Mapped[int] = mapped_column(Integer)
+    ailment_46: Mapped[int] = mapped_column(Integer)
+    ailment_47: Mapped[int] = mapped_column(Integer)
+    ailment_48: Mapped[int] = mapped_column(Integer)
+    ailment_49: Mapped[int] = mapped_column(Integer)
+    ailment_50: Mapped[int] = mapped_column(Integer)
 
 
-class ResistVariationDatum(DeclarativeBase, Base["ResistVariationDatum"]):
+class ResistVariationDatum(Base):
     __tablename__ = 'resist_variation_data'
 
-    resist_variation_id: int = Column(Integer, primary_key=True)
-    value_1: int = Column(Integer, nullable=False)
-    value_2: int = Column(Integer, nullable=False)
-    value_3: int = Column(Integer, nullable=False)
-    value_4: int = Column(Integer, nullable=False)
+    resist_variation_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    value_1: Mapped[int] = mapped_column(Integer)
+    value_2: Mapped[int] = mapped_column(Integer)
+    value_3: Mapped[int] = mapped_column(Integer)
+    value_4: Mapped[int] = mapped_column(Integer)
 
 
-class ReturnSpecialfesBanner(DeclarativeBase, Base["ReturnSpecialfesBanner"]):
+class ReturnSpecialfesBanner(Base):
     __tablename__ = 'return_specialfes_banner'
 
-    gacha_id: int = Column(Integer, primary_key=True)
-    banner_id_1: int = Column(Integer, nullable=False)
-    banner_id_2: int = Column(Integer, nullable=False)
-    banner_id_3: int = Column(Integer, nullable=False)
-    banner_id_4: int = Column(Integer, nullable=False)
-    banner_id_5: int = Column(Integer, nullable=False)
-    banner_id_6: int = Column(Integer, nullable=False)
-    banner_id_7: int = Column(Integer, nullable=False)
-    banner_id_8: int = Column(Integer, nullable=False)
-    banner_id_9: int = Column(Integer, nullable=False)
-    banner_id_10: int = Column(Integer, nullable=False)
+    gacha_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    banner_id_1: Mapped[int] = mapped_column(Integer)
+    banner_id_2: Mapped[int] = mapped_column(Integer)
+    banner_id_3: Mapped[int] = mapped_column(Integer)
+    banner_id_4: Mapped[int] = mapped_column(Integer)
+    banner_id_5: Mapped[int] = mapped_column(Integer)
+    banner_id_6: Mapped[int] = mapped_column(Integer)
+    banner_id_7: Mapped[int] = mapped_column(Integer)
+    banner_id_8: Mapped[int] = mapped_column(Integer)
+    banner_id_9: Mapped[int] = mapped_column(Integer)
+    banner_id_10: Mapped[int] = mapped_column(Integer)
 
 
-class RewardCollectGuide(DeclarativeBase, Base["RewardCollectGuide"]):
+class RewardCollectGuide(Base):
     __tablename__ = 'reward_collect_guide'
 
-    object_id: int = Column(Integer, primary_key=True)
-    quest_id_1: int = Column(Integer, nullable=False)
-    quest_id_2: int = Column(Integer, nullable=False)
-    quest_id_3: int = Column(Integer, nullable=False)
-    quest_id_4: int = Column(Integer, nullable=False)
-    quest_id_5: int = Column(Integer, nullable=False)
-    quest_id_6: int = Column(Integer, nullable=False)
-    quest_id_7: int = Column(Integer, nullable=False)
-    quest_id_8: int = Column(Integer, nullable=False)
-    quest_id_9: int = Column(Integer, nullable=False)
-    quest_id_10: int = Column(Integer, nullable=False)
-    system_id_1: int = Column(Integer, nullable=False)
-    system_id_2: int = Column(Integer, nullable=False)
-    system_id_3: int = Column(Integer, nullable=False)
-    system_id_4: int = Column(Integer, nullable=False)
-    system_id_5: int = Column(Integer, nullable=False)
+    object_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    quest_id_1: Mapped[int] = mapped_column(Integer)
+    quest_id_2: Mapped[int] = mapped_column(Integer)
+    quest_id_3: Mapped[int] = mapped_column(Integer)
+    quest_id_4: Mapped[int] = mapped_column(Integer)
+    quest_id_5: Mapped[int] = mapped_column(Integer)
+    quest_id_6: Mapped[int] = mapped_column(Integer)
+    quest_id_7: Mapped[int] = mapped_column(Integer)
+    quest_id_8: Mapped[int] = mapped_column(Integer)
+    quest_id_9: Mapped[int] = mapped_column(Integer)
+    quest_id_10: Mapped[int] = mapped_column(Integer)
+    system_id_1: Mapped[int] = mapped_column(Integer)
+    system_id_2: Mapped[int] = mapped_column(Integer)
+    system_id_3: Mapped[int] = mapped_column(Integer)
+    system_id_4: Mapped[int] = mapped_column(Integer)
+    system_id_5: Mapped[int] = mapped_column(Integer)
 
 
-class RoomChange(DeclarativeBase, Base["RoomChange"]):
+class RoomChange(Base):
     __tablename__ = 'room_change'
 
-    room_item_id: int = Column(Integer, primary_key=True)
-    change_id: int = Column(Integer, nullable=False)
-    change_start: str = Column(Text, nullable=False)
-    change_end: str = Column(Text, nullable=False)
+    room_item_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    change_id: Mapped[int] = mapped_column(Integer)
+    change_start: Mapped[str] = mapped_column(Text)
+    change_end: Mapped[str] = mapped_column(Text)
 
 
-class RoomCharacterPersonality(DeclarativeBase, Base["RoomCharacterPersonality"]):
+class RoomCharacterPersonality(Base):
     __tablename__ = 'room_character_personality'
 
-    character_id: int = Column(Integer, primary_key=True)
-    personality_id: int = Column(Integer, nullable=False)
+    character_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    personality_id: Mapped[int] = mapped_column(Integer)
 
 
-class RoomCharacterSkinColor(DeclarativeBase, Base["RoomCharacterSkinColor"]):
+class RoomCharacterSkinColor(Base):
     __tablename__ = 'room_character_skin_color'
 
-    character_id: int = Column(Integer, primary_key=True)
-    skin_color_id: int = Column(Integer, nullable=False)
+    character_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    skin_color_id: Mapped[int] = mapped_column(Integer)
 
 
-class RoomChatFormation(DeclarativeBase, Base["RoomChatFormation"]):
+class RoomChatFormation(Base):
     __tablename__ = 'room_chat_formation'
 
-    id: int = Column(Integer, primary_key=True)
-    unit_1_x: int = Column(Integer, nullable=False)
-    unit_1_y: int = Column(Integer, nullable=False)
-    unit_1_dir: int = Column(Integer, nullable=False)
-    unit_2_x: int = Column(Integer, nullable=False)
-    unit_2_y: int = Column(Integer, nullable=False)
-    unit_2_dir: int = Column(Integer, nullable=False)
-    unit_3_x: int = Column(Integer)
-    unit_3_y: int = Column(Integer)
-    unit_3_dir: int = Column(Integer)
-    unit_4_x: int = Column(Integer)
-    unit_4_y: int = Column(Integer)
-    unit_4_dir: int = Column(Integer)
-    unit_5_x: int = Column(Integer)
-    unit_5_y: int = Column(Integer)
-    unit_5_dir: int = Column(Integer)
-    unit_num: int = Column(Integer, nullable=False)
-    unit_id1: int = Column(Integer)
-    unit_id2: int = Column(Integer)
-    unit_id3: int = Column(Integer)
-    unit_id4: int = Column(Integer)
-    unit_id5: int = Column(Integer)
-    ignore_unit_id1: int = Column(Integer)
-    ignore_unit_id2: int = Column(Integer)
-    ignore_unit_id3: int = Column(Integer)
-    ignore_unit_id4: int = Column(Integer)
-    ignore_unit_id5: int = Column(Integer)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_1_x: Mapped[int] = mapped_column(Integer)
+    unit_1_y: Mapped[int] = mapped_column(Integer)
+    unit_1_dir: Mapped[int] = mapped_column(Integer)
+    unit_2_x: Mapped[int] = mapped_column(Integer)
+    unit_2_y: Mapped[int] = mapped_column(Integer)
+    unit_2_dir: Mapped[int] = mapped_column(Integer)
+    unit_num: Mapped[int] = mapped_column(Integer)
+    unit_3_x: Mapped[Optional[int]] = mapped_column(Integer)
+    unit_3_y: Mapped[Optional[int]] = mapped_column(Integer)
+    unit_3_dir: Mapped[Optional[int]] = mapped_column(Integer)
+    unit_4_x: Mapped[Optional[int]] = mapped_column(Integer)
+    unit_4_y: Mapped[Optional[int]] = mapped_column(Integer)
+    unit_4_dir: Mapped[Optional[int]] = mapped_column(Integer)
+    unit_5_x: Mapped[Optional[int]] = mapped_column(Integer)
+    unit_5_y: Mapped[Optional[int]] = mapped_column(Integer)
+    unit_5_dir: Mapped[Optional[int]] = mapped_column(Integer)
+    unit_id1: Mapped[Optional[int]] = mapped_column(Integer)
+    unit_id2: Mapped[Optional[int]] = mapped_column(Integer)
+    unit_id3: Mapped[Optional[int]] = mapped_column(Integer)
+    unit_id4: Mapped[Optional[int]] = mapped_column(Integer)
+    unit_id5: Mapped[Optional[int]] = mapped_column(Integer)
+    ignore_unit_id1: Mapped[Optional[int]] = mapped_column(Integer)
+    ignore_unit_id2: Mapped[Optional[int]] = mapped_column(Integer)
+    ignore_unit_id3: Mapped[Optional[int]] = mapped_column(Integer)
+    ignore_unit_id4: Mapped[Optional[int]] = mapped_column(Integer)
+    ignore_unit_id5: Mapped[Optional[int]] = mapped_column(Integer)
 
 
-class RoomChatInfo(DeclarativeBase, Base["RoomChatInfo"]):
+class RoomChatInfo(Base):
     __tablename__ = 'room_chat_info'
 
-    id: int = Column(Integer, primary_key=True)
-    formation_id: int = Column(Integer, nullable=False)
-    scenario_id: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    formation_id: Mapped[int] = mapped_column(Integer)
+    scenario_id: Mapped[int] = mapped_column(Integer)
 
 
-class RoomChatScenario(DeclarativeBase, Base["RoomChatScenario"]):
+class RoomChatScenario(Base):
     __tablename__ = 'room_chat_scenario'
+    __table_args__ = (
+        Index('room_chat_scenario_0_id', 'id'),
+    )
 
-    id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    scenario_idx: int = Column(Integer, primary_key=True, nullable=False)
-    unit_pos_no: int = Column(Integer, nullable=False)
-    delay: int = Column(Integer, nullable=False)
-    affect_type: int = Column(Integer, nullable=False)
-    anime_id: int = Column(Integer, nullable=False)
-    icon_id: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    scenario_idx: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_pos_no: Mapped[int] = mapped_column(Integer)
+    delay: Mapped[int] = mapped_column(Integer)
+    affect_type: Mapped[int] = mapped_column(Integer)
+    anime_id: Mapped[int] = mapped_column(Integer)
+    icon_id: Mapped[int] = mapped_column(Integer)
 
 
-class RoomEffect(DeclarativeBase, Base["RoomEffect"]):
+class RoomEffect(Base):
     __tablename__ = 'room_effect'
 
-    id: int = Column(Integer, primary_key=True)
-    reward_get: int = Column(Integer, nullable=False)
-    jukebox: int = Column(Integer, nullable=False)
-    nebbia: int = Column(Integer, nullable=False)
-    arcade: int = Column(Integer, nullable=False)
-    vegetable: int = Column(Integer, nullable=False)
-    poster: int = Column(Integer, nullable=False)
-    stock: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reward_get: Mapped[int] = mapped_column(Integer)
+    jukebox: Mapped[int] = mapped_column(Integer)
+    nebbia: Mapped[int] = mapped_column(Integer)
+    arcade: Mapped[int] = mapped_column(Integer)
+    vegetable: Mapped[int] = mapped_column(Integer)
+    poster: Mapped[int] = mapped_column(Integer)
+    stock: Mapped[int] = mapped_column(Integer)
 
 
-class RoomEffectRewardGet(DeclarativeBase, Base["RoomEffectRewardGet"]):
+class RoomEffectRewardGet(Base):
     __tablename__ = 'room_effect_reward_get'
 
-    id: int = Column(Integer, primary_key=True, nullable=False)
-    level: int = Column(Integer, primary_key=True, nullable=False)
-    reward_type: int = Column(Integer, nullable=False)
-    reward_id: int = Column(Integer, nullable=False)
-    max_count: int = Column(Integer, nullable=False)
-    inc_step: int = Column(Integer, nullable=False)
-    interval_second: int = Column(Integer, nullable=False)
-    stock_min_step: str = Column(Text, nullable=False)
-    stock_mid_step: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    level: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    max_count: Mapped[int] = mapped_column(Integer)
+    inc_step: Mapped[int] = mapped_column(Integer)
+    interval_second: Mapped[int] = mapped_column(Integer)
+    stock_min_step: Mapped[str] = mapped_column(Text)
+    stock_mid_step: Mapped[str] = mapped_column(Text)
 
 
-class RoomEmotionIcon(DeclarativeBase, Base["RoomEmotionIcon"]):
+class RoomEmotionIcon(Base):
     __tablename__ = 'room_emotion_icon'
 
-    id: int = Column(Integer, primary_key=True)
-    enable_auto: int = Column(Integer, nullable=False)
-    enable_tap: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    enable_auto: Mapped[int] = mapped_column(Integer)
+    enable_tap: Mapped[int] = mapped_column(Integer)
 
 
-class RoomExclusiveCondition(DeclarativeBase, Base["RoomExclusiveCondition"]):
+class RoomExclusiveCondition(Base):
     __tablename__ = 'room_exclusive_condition'
+    __table_args__ = (
+        Index('room_exclusive_condition_0_room_item_id', 'room_item_id'),
+        Index('room_exclusive_condition_0_unit_id', 'unit_id')
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    unit_id: int = Column(Integer, nullable=False, index=True)
-    room_item_id: int = Column(Integer, nullable=False, index=True)
-    notification: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    room_item_id: Mapped[int] = mapped_column(Integer)
+    notification: Mapped[str] = mapped_column(Text)
 
 
-class RoomItem(DeclarativeBase, Base["RoomItem"]):
+class RoomItem(Base):
     __tablename__ = 'room_item'
 
-    id: int = Column(Integer, primary_key=True)
-    item_type: int = Column(Integer, nullable=False)
-    category: int = Column(Integer, nullable=False)
-    name: str = Column(Text, nullable=False)
-    max_level: int = Column(Integer, nullable=False)
-    enable_remove: int = Column(Integer, nullable=False)
-    max_possession_num: int = Column(Integer, nullable=False)
-    effect_id_1: int = Column(Integer, nullable=False)
-    shop_start: str = Column(Text, nullable=False)
-    shop_end: str = Column(Text, nullable=False)
-    shop_new_disp_end: str = Column(Text, nullable=False)
-    cost_item_num: int = Column(Integer, nullable=False)
-    shop_open_type: int = Column(Integer, nullable=False)
-    shop_open_id: int = Column(Integer, nullable=False)
-    shop_open_value: int = Column(Integer, nullable=False)
-    sold_price: int = Column(Integer, nullable=False)
-    sort: int = Column(Integer, nullable=False)
-    condition_quest_id: int = Column(Integer, nullable=False)
-    category_action_type: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    item_type: Mapped[int] = mapped_column(Integer)
+    category: Mapped[int] = mapped_column(Integer)
+    name: Mapped[str] = mapped_column(Text)
+    max_level: Mapped[int] = mapped_column(Integer)
+    enable_remove: Mapped[int] = mapped_column(Integer)
+    max_possession_num: Mapped[int] = mapped_column(Integer)
+    effect_id_1: Mapped[int] = mapped_column(Integer)
+    shop_start: Mapped[str] = mapped_column(Text)
+    shop_end: Mapped[str] = mapped_column(Text)
+    shop_new_disp_end: Mapped[str] = mapped_column(Text)
+    cost_item_num: Mapped[int] = mapped_column(Integer)
+    shop_open_type: Mapped[int] = mapped_column(Integer)
+    shop_open_id: Mapped[int] = mapped_column(Integer)
+    shop_open_value: Mapped[int] = mapped_column(Integer)
+    sold_price: Mapped[int] = mapped_column(Integer)
+    sort: Mapped[int] = mapped_column(Integer)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    category_action_type: Mapped[int] = mapped_column(Integer)
 
 
-class RoomItemAnnouncement(DeclarativeBase, Base["RoomItemAnnouncement"]):
+class RoomItemAnnouncement(Base):
     __tablename__ = 'room_item_announcement'
 
-    id: int = Column(Integer, primary_key=True)
-    announcement_start: str = Column(Text, nullable=False)
-    announcement_end: str = Column(Text, nullable=False)
-    announcement_text: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    announcement_start: Mapped[str] = mapped_column(Text)
+    announcement_end: Mapped[str] = mapped_column(Text)
+    announcement_text: Mapped[str] = mapped_column(Text)
 
 
-class RoomItemDetail(DeclarativeBase, Base["RoomItemDetail"]):
+class RoomItemDetail(Base):
     __tablename__ = 'room_item_detail'
     __table_args__ = (
         Index('room_item_detail_0_lvup_trigger_type_1_lvup_trigger_id', 'lvup_trigger_type', 'lvup_trigger_id'),
         Index('room_item_detail_0_lvup_trigger_type_2_1_lvup_trigger_id_2', 'lvup_trigger_type_2', 'lvup_trigger_id_2')
     )
 
-    room_item_id: int = Column(Integer, primary_key=True, nullable=False)
-    level: int = Column(Integer, primary_key=True, nullable=False)
-    item_detail: str = Column(Text, nullable=False)
-    lvup_trigger_type: int = Column(Integer, nullable=False)
-    lvup_trigger_id: int = Column(Integer, nullable=False)
-    lvup_trigger_value: int = Column(Integer, nullable=False)
-    lvup_trigger_type_2: int = Column(Integer, nullable=False)
-    lvup_trigger_id_2: int = Column(Integer, nullable=False)
-    lvup_trigger_value_2: int = Column(Integer, nullable=False)
-    lvup_item1_type: int = Column(Integer, nullable=False)
-    lvup_item1_id: int = Column(Integer, nullable=False)
-    lvup_item1_num: int = Column(Integer, nullable=False)
-    lvup_time: int = Column(Integer, nullable=False)
+    room_item_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    level: Mapped[int] = mapped_column(Integer, primary_key=True)
+    item_detail: Mapped[str] = mapped_column(Text)
+    lvup_trigger_type: Mapped[int] = mapped_column(Integer)
+    lvup_trigger_id: Mapped[int] = mapped_column(Integer)
+    lvup_trigger_value: Mapped[int] = mapped_column(Integer)
+    lvup_trigger_type_2: Mapped[int] = mapped_column(Integer)
+    lvup_trigger_id_2: Mapped[int] = mapped_column(Integer)
+    lvup_trigger_value_2: Mapped[int] = mapped_column(Integer)
+    lvup_item1_type: Mapped[int] = mapped_column(Integer)
+    lvup_item1_id: Mapped[int] = mapped_column(Integer)
+    lvup_item1_num: Mapped[int] = mapped_column(Integer)
+    lvup_time: Mapped[int] = mapped_column(Integer)
 
 
-class RoomItemGetAnnouncement(DeclarativeBase, Base["RoomItemGetAnnouncement"]):
+class RoomItemGetAnnouncement(Base):
     __tablename__ = 'room_item_get_announcement'
 
-    id: int = Column(Integer, primary_key=True)
-    room_item_id: int = Column(Integer, nullable=False)
-    start_date: str = Column(Text, nullable=False)
-    end_date: str = Column(Text, nullable=False)
-    get_date: str = Column(Text, nullable=False)
-    room_announcement_name: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    room_item_id: Mapped[int] = mapped_column(Integer)
+    start_date: Mapped[str] = mapped_column(Text)
+    end_date: Mapped[str] = mapped_column(Text)
+    get_date: Mapped[str] = mapped_column(Text)
+    room_announcement_name: Mapped[str] = mapped_column(Text)
 
 
-class RoomReleaseDatum(DeclarativeBase, Base["RoomReleaseDatum"]):
+class RoomReleaseDatum(Base):
     __tablename__ = 'room_release_data'
 
-    system_id: int = Column(Integer, primary_key=True)
-    story_id: int = Column(Integer, nullable=False)
-    pre_story_id: int = Column(Integer, nullable=False)
+    system_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_id: Mapped[int] = mapped_column(Integer)
+    pre_story_id: Mapped[int] = mapped_column(Integer)
 
 
-class RoomSetup(DeclarativeBase, Base["RoomSetup"]):
+class RoomSetup(Base):
     __tablename__ = 'room_setup'
 
-    room_item_id: int = Column(Integer, primary_key=True)
-    grid_height: int = Column(Integer, nullable=False)
-    grid_width: int = Column(Integer, nullable=False)
-    unit_id: int = Column(Integer, nullable=False)
+    room_item_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    grid_height: Mapped[int] = mapped_column(Integer)
+    grid_width: Mapped[int] = mapped_column(Integer)
+    unit_id: Mapped[int] = mapped_column(Integer)
 
 
-class RoomSkinColor(DeclarativeBase, Base["RoomSkinColor"]):
+class RoomSkinColor(Base):
     __tablename__ = 'room_skin_color'
 
-    skin_color_id: int = Column(Integer, primary_key=True)
-    color_red: int = Column(Integer, nullable=False)
-    color_green: int = Column(Integer, nullable=False)
-    color_blue: int = Column(Integer, nullable=False)
+    skin_color_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    color_red: Mapped[int] = mapped_column(Integer)
+    color_green: Mapped[int] = mapped_column(Integer)
+    color_blue: Mapped[int] = mapped_column(Integer)
 
 
-class RoomUnitComment(DeclarativeBase, Base["RoomUnitComment"]):
+class RoomUnitComments(Base):
     __tablename__ = 'room_unit_comments'
+    __table_args__ = (
+        Index('room_unit_comments_0_unit_id', 'unit_id'),
+    )
 
-    id: int = Column(Integer, nullable=False)
-    unit_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    trigger: int = Column(Integer, primary_key=True, nullable=False)
-    voice_id: int = Column(Integer, primary_key=True, nullable=False)
-    beloved_step: int = Column(Integer, nullable=False)
-    time: int = Column(Integer, primary_key=True, nullable=False)
-    face_id: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    insert_word_type: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    trigger: Mapped[int] = mapped_column(Integer, primary_key=True)
+    voice_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    beloved_step: Mapped[int] = mapped_column(Integer)
+    time: Mapped[int] = mapped_column(Integer, primary_key=True)
+    face_id: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    insert_word_type: Mapped[int] = mapped_column(Integer)
 
 
-class SdNaviComment(DeclarativeBase, Base["SdNaviComment"]):
+class SdNaviComment(Base):
     __tablename__ = 'sd_navi_comment'
 
-    comment_id: int = Column(Integer, primary_key=True)
-    where_type: int = Column(Integer, nullable=False)
-    character_id: int = Column(Integer, nullable=False)
-    motion_type: int = Column(Integer, nullable=False)
-    description: str = Column(Text)
-    voice_id: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    comment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    where_type: Mapped[int] = mapped_column(Integer)
+    character_id: Mapped[int] = mapped_column(Integer)
+    motion_type: Mapped[int] = mapped_column(Integer)
+    voice_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    description: Mapped[Optional[str]] = mapped_column(Text)
 
 
-class SeasonPack(DeclarativeBase, Base["SeasonPack"]):
+class SeasonPack(Base):
     __tablename__ = 'season_pack'
+    __table_args__ = (
+        Index('season_pack_0_mission_id', 'mission_id'),
+        Index('season_pack_0_pack_type', 'pack_type')
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    mission_id: int = Column(Integer, nullable=False, index=True)
-    disp_order: int = Column(Integer, nullable=False)
-    category_icon: int = Column(Integer, nullable=False)
-    receive_text: str = Column(Text, nullable=False)
-    after_text: str = Column(Text, nullable=False)
-    gift_message_id: int = Column(Integer, nullable=False)
-    term: int = Column(Integer, nullable=False)
-    repurchase_day: int = Column(Integer, nullable=False)
-    group_id: int = Column(Integer, nullable=False)
-    system_id_1: int = Column(Integer, nullable=False)
-    add_num_1: int = Column(Integer, nullable=False)
-    item_record_id: int = Column(Integer, nullable=False)
-    condition_flg: int = Column(Integer, nullable=False)
-    reward_rate_1: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    mission_id: Mapped[int] = mapped_column(Integer)
+    disp_order: Mapped[int] = mapped_column(Integer)
+    category_icon: Mapped[int] = mapped_column(Integer)
+    receive_text: Mapped[str] = mapped_column(Text)
+    after_text: Mapped[str] = mapped_column(Text)
+    gift_message_id: Mapped[int] = mapped_column(Integer)
+    term: Mapped[int] = mapped_column(Integer)
+    repurchase_day: Mapped[int] = mapped_column(Integer)
+    group_id: Mapped[int] = mapped_column(Integer)
+    system_id_1: Mapped[int] = mapped_column(Integer)
+    add_num_1: Mapped[int] = mapped_column(Integer)
+    item_record_id: Mapped[int] = mapped_column(Integer)
+    condition_flg: Mapped[int] = mapped_column(Integer)
+    reward_rate_1: Mapped[int] = mapped_column(Integer)
+    pack_type: Mapped[int] = mapped_column(Integer)
 
 
-class SeasonpassFoundation(DeclarativeBase, Base["SeasonpassFoundation"]):
+class SeasonpassFoundation(Base):
     __tablename__ = 'seasonpass_foundation'
 
-    season_id: int = Column(Integer, primary_key=True)
-    name: str = Column(Text, nullable=False)
-    key_jewel_id: int = Column(Integer, nullable=False)
-    advance_jewel_id: int = Column(Integer, nullable=False)
-    final_jewel_id: int = Column(Integer, nullable=False)
-    extra_level: int = Column(Integer, nullable=False)
-    per_level_point: int = Column(Integer, nullable=False)
-    level_max: int = Column(Integer, nullable=False)
-    weekly_point: int = Column(Integer, nullable=False)
-    level_price: int = Column(Integer, nullable=False)
-    point_change_type: int = Column(Integer, nullable=False)
-    reward_id: int = Column(Integer, nullable=False)
-    proportion: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    limit_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    season_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    key_jewel_id: Mapped[int] = mapped_column(Integer)
+    advance_jewel_id: Mapped[int] = mapped_column(Integer)
+    final_jewel_id: Mapped[int] = mapped_column(Integer)
+    extra_level: Mapped[int] = mapped_column(Integer)
+    per_level_point: Mapped[int] = mapped_column(Integer)
+    level_max: Mapped[int] = mapped_column(Integer)
+    weekly_point: Mapped[int] = mapped_column(Integer)
+    level_price: Mapped[int] = mapped_column(Integer)
+    point_change_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    proportion: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    limit_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class SeasonpassLevelReward(DeclarativeBase, Base["SeasonpassLevelReward"]):
+class SeasonpassLevelReward(Base):
     __tablename__ = 'seasonpass_level_reward'
 
-    level_id: int = Column(Integer, primary_key=True)
-    degree: int = Column(Integer, nullable=False)
-    free_reward_type: int = Column(Integer, nullable=False)
-    free_reward_id: int = Column(Integer, nullable=False)
-    free_reward_num: int = Column(Integer, nullable=False)
-    charge_reward_type_1: int = Column(Integer, nullable=False)
-    charge_reward_id_1: int = Column(Integer, nullable=False)
-    charge_reward_num_1: int = Column(Integer, nullable=False)
-    charge_reward_type_2: int = Column(Integer, nullable=False)
-    charge_reward_id_2: int = Column(Integer, nullable=False)
-    charge_reward_num_2: int = Column(Integer, nullable=False)
-    event_id: int = Column(Integer, nullable=False)
+    level_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    degree: Mapped[int] = mapped_column(Integer)
+    free_reward_type: Mapped[int] = mapped_column(Integer)
+    free_reward_id: Mapped[int] = mapped_column(Integer)
+    free_reward_num: Mapped[int] = mapped_column(Integer)
+    charge_reward_type_1: Mapped[int] = mapped_column(Integer)
+    charge_reward_id_1: Mapped[int] = mapped_column(Integer)
+    charge_reward_num_1: Mapped[int] = mapped_column(Integer)
+    charge_reward_type_2: Mapped[int] = mapped_column(Integer)
+    charge_reward_id_2: Mapped[int] = mapped_column(Integer)
+    charge_reward_num_2: Mapped[int] = mapped_column(Integer)
+    event_id: Mapped[int] = mapped_column(Integer)
 
 
-class SeasonpassMissionDatum(DeclarativeBase, Base["SeasonpassMissionDatum"]):
+class SeasonpassMissionDatum(Base):
     __tablename__ = 'seasonpass_mission_data'
 
-    seasonpass_mission_id: int = Column(Integer, primary_key=True)
-    mission_type: int = Column(Integer, nullable=False)
-    disp_group: int = Column(Integer, nullable=False)
-    category_icon: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    mission_condition: int = Column(Integer, nullable=False)
-    condition_value_1: int = Column(Integer)
-    condition_value_2: int = Column(Integer)
-    condition_value_3: int = Column(Integer)
-    condition_value_4: int = Column(Integer)
-    condition_value_5: int = Column(Integer)
-    condition_num: int = Column(Integer, nullable=False)
-    mission_reward_id: int = Column(Integer, nullable=False)
-    system_id: int = Column(Integer)
-    event_id: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    seasonpass_mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    mission_type: Mapped[int] = mapped_column(Integer)
+    disp_group: Mapped[int] = mapped_column(Integer)
+    category_icon: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    mission_condition: Mapped[int] = mapped_column(Integer)
+    condition_num: Mapped[int] = mapped_column(Integer)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    event_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    condition_value_1: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_2: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_3: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_4: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_5: Mapped[Optional[int]] = mapped_column(Integer)
+    system_id: Mapped[Optional[int]] = mapped_column(Integer)
 
 
-class SeasonpassMissionRewardDatum(DeclarativeBase, Base["SeasonpassMissionRewardDatum"]):
+class SeasonpassMissionRewardDatum(Base):
     __tablename__ = 'seasonpass_mission_reward_data'
+    __table_args__ = (
+        Index('seasonpass_mission_reward_data_0_mission_reward_id', 'mission_reward_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    mission_reward_id: int = Column(Integer, nullable=False, index=True)
-    reward_type: int = Column(Integer, nullable=False)
-    reward_id: int = Column(Integer)
-    reward_num: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_num: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[Optional[int]] = mapped_column(Integer)
 
 
-class SecretDungeonEmblemMission(DeclarativeBase, Base["SecretDungeonEmblemMission"]):
+class SecretDungeonEmblemMission(Base):
     __tablename__ = 'secret_dungeon_emblem_mission'
 
-    mission_id: int = Column(Integer, primary_key=True)
-    disp_group: int = Column(Integer, nullable=False)
-    category_icon: int = Column(Integer, nullable=False)
-    mission_description: str = Column(Text, nullable=False)
-    emblem_description: str = Column(Text, nullable=False)
-    mission_condition: int = Column(Integer, nullable=False)
-    condition_value_1: int = Column(Integer, nullable=False)
-    condition_value_2: int = Column(Integer, nullable=False)
-    condition_value_3: int = Column(Integer, nullable=False)
-    condition_num: str = Column(Text, nullable=False)
-    mission_reward_id: int = Column(Integer, nullable=False)
-    dungeon_area_id: int = Column(Integer, nullable=False)
-    visible_flag: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    disp_group: Mapped[int] = mapped_column(Integer)
+    category_icon: Mapped[int] = mapped_column(Integer)
+    mission_description: Mapped[str] = mapped_column(Text)
+    emblem_description: Mapped[str] = mapped_column(Text)
+    mission_condition: Mapped[int] = mapped_column(Integer)
+    condition_value_1: Mapped[int] = mapped_column(Integer)
+    condition_value_2: Mapped[int] = mapped_column(Integer)
+    condition_value_3: Mapped[int] = mapped_column(Integer)
+    condition_num: Mapped[str] = mapped_column(Text)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    dungeon_area_id: Mapped[int] = mapped_column(Integer)
+    visible_flag: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class SecretDungeonEmblemReward(DeclarativeBase, Base["SecretDungeonEmblemReward"]):
+class SecretDungeonEmblemReward(Base):
     __tablename__ = 'secret_dungeon_emblem_reward'
+    __table_args__ = (
+        Index('secret_dungeon_emblem_reward_0_mission_reward_id', 'mission_reward_id'),
+        Index('secret_dungeon_emblem_reward_0_reward_id', 'reward_id')
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    mission_reward_id: int = Column(Integer, nullable=False, index=True)
-    reward_type: int = Column(Integer, nullable=False)
-    reward_id: int = Column(Integer, nullable=False, index=True)
-    reward_num: int = Column(Integer, nullable=False)
-    icon_type: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_num: Mapped[int] = mapped_column(Integer)
+    icon_type: Mapped[int] = mapped_column(Integer)
 
 
-class SecretDungeonFloorReward(DeclarativeBase, Base["SecretDungeonFloorReward"]):
+class SecretDungeonEnemyInfo(Base):
+    __tablename__ = 'secret_dungeon_enemy_info'
+
+    dungeon_area_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    floor_num: Mapped[int] = mapped_column(Integer, primary_key=True)
+    enemy_name: Mapped[str] = mapped_column(Text)
+
+
+class SecretDungeonFloorReward(Base):
     __tablename__ = 'secret_dungeon_floor_reward'
+    __table_args__ = (
+        Index('secret_dungeon_floor_reward_0_dungeon_area_id', 'dungeon_area_id'),
+    )
 
-    dungeon_area_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    clear_count: int = Column(Integer, primary_key=True, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
-    clear_effect_flag: int = Column(Integer, nullable=False)
-    icon_type: int = Column(Integer, nullable=False)
+    dungeon_area_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    clear_count: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
+    clear_effect_flag: Mapped[int] = mapped_column(Integer)
+    icon_type: Mapped[int] = mapped_column(Integer)
 
 
-class SecretDungeonFloorSetting(DeclarativeBase, Base["SecretDungeonFloorSetting"]):
+class SecretDungeonFloorSetting(Base):
     __tablename__ = 'secret_dungeon_floor_setting'
     __table_args__ = (
-        Index('secret_dungeon_floor_setting_0_quest_id_1_mode', 'quest_id', 'mode'),
+        Index('secret_dungeon_floor_setting_0_quest_id', 'quest_id'),
+        Index('secret_dungeon_floor_setting_0_quest_id_1_mode', 'quest_id', 'mode')
     )
 
-    id: int = Column(Integer, primary_key=True)
-    quest_id: int = Column(Integer, nullable=False, index=True)
-    enemy_identify: int = Column(Integer, nullable=False)
-    mode: int = Column(Integer, nullable=False)
-    enemy_id: int = Column(Integer, nullable=False)
-    floor_position_x: float = Column(Float, nullable=False)
-    floor_position_y: float = Column(Float, nullable=False)
-    floor_scale: float = Column(Float, nullable=False)
-    disp_order: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    quest_id: Mapped[int] = mapped_column(Integer)
+    enemy_identify: Mapped[int] = mapped_column(Integer)
+    mode: Mapped[int] = mapped_column(Integer)
+    enemy_id: Mapped[int] = mapped_column(Integer)
+    floor_position_x: Mapped[float] = mapped_column(Float)
+    floor_position_y: Mapped[float] = mapped_column(Float)
+    floor_scale: Mapped[float] = mapped_column(Float)
+    disp_order: Mapped[int] = mapped_column(Integer)
 
 
-class SecretDungeonQuestDatum(DeclarativeBase, Base["SecretDungeonQuestDatum"]):
+class SecretDungeonQuestDatum(Base):
     __tablename__ = 'secret_dungeon_quest_data'
     __table_args__ = (
-        Index('secret_dungeon_quest_data_0_dungeon_area_id_1_floor_num', 'dungeon_area_id', 'floor_num'),
-        Index('secret_dungeon_quest_data_0_dungeon_area_id_1_difficulty', 'dungeon_area_id', 'difficulty')
+        Index('secret_dungeon_quest_data_0_dungeon_area_id_1_difficulty', 'dungeon_area_id', 'difficulty'),
+        Index('secret_dungeon_quest_data_0_dungeon_area_id_1_floor_num', 'dungeon_area_id', 'floor_num')
     )
 
-    quest_id: int = Column(Integer, primary_key=True)
-    dungeon_area_id: int = Column(Integer, nullable=False)
-    difficulty: int = Column(Integer, nullable=False)
-    floor_num: int = Column(Integer, nullable=False)
-    quest_type: int = Column(Integer, nullable=False)
-    wave_group_id: int = Column(Integer, nullable=False)
-    limit_time: int = Column(Integer, nullable=False)
-    parts_hp_save_flag: int = Column(Integer, nullable=False)
-    energy_reset_flag: int = Column(Integer, nullable=False)
-    fixed_start_tp_rate: int = Column(Integer, nullable=False)
-    emax: int = Column(Integer, nullable=False)
-    reward_image_1: int = Column(Integer, nullable=False)
-    reward_image_2: int = Column(Integer, nullable=False)
-    reward_image_3: int = Column(Integer, nullable=False)
-    reward_image_4: int = Column(Integer, nullable=False)
-    reward_image_5: int = Column(Integer, nullable=False)
-    reward_image_6: int = Column(Integer, nullable=False)
-    reward_coin: int = Column(Integer, nullable=False)
-    reward_csc: int = Column(Integer, nullable=False)
-    chest_id: int = Column(Integer, nullable=False)
-    odds_group_id: int = Column(Integer, nullable=False)
-    background: int = Column(Integer, nullable=False)
-    dungeon_quest_detail_bg_id: int = Column(Integer, nullable=False)
-    dungeon_quest_detail_bg_position: int = Column(Integer, nullable=False)
-    dungeon_quest_detail_monster_size: float = Column(Float, nullable=False)
-    dungeon_quest_detail_monster_position_x_1: float = Column(Float, nullable=False)
-    dungeon_quest_detail_monster_position_x_2: float = Column(Float, nullable=False)
-    dungeon_quest_detail_monster_position_x_3: float = Column(Float, nullable=False)
-    dungeon_quest_detail_monster_position_x_4: float = Column(Float, nullable=False)
-    dungeon_quest_detail_monster_position_x_5: float = Column(Float, nullable=False)
-    dungeon_quest_detail_monster_height: float = Column(Float, nullable=False)
-    multi_target_effect_time: float = Column(Float, nullable=False)
-    wave_bgm_sheet_id_1: str = Column(Text, nullable=False)
-    wave_bgm_que_id_1: str = Column(Text, nullable=False)
+    quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    dungeon_area_id: Mapped[int] = mapped_column(Integer)
+    difficulty: Mapped[int] = mapped_column(Integer)
+    floor_num: Mapped[int] = mapped_column(Integer)
+    quest_type: Mapped[int] = mapped_column(Integer)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    parts_hp_save_flag: Mapped[int] = mapped_column(Integer)
+    energy_reset_flag: Mapped[int] = mapped_column(Integer)
+    fixed_start_tp_rate: Mapped[int] = mapped_column(Integer)
+    emax: Mapped[int] = mapped_column(Integer)
+    reward_image_1: Mapped[int] = mapped_column(Integer)
+    reward_image_2: Mapped[int] = mapped_column(Integer)
+    reward_image_3: Mapped[int] = mapped_column(Integer)
+    reward_image_4: Mapped[int] = mapped_column(Integer)
+    reward_image_5: Mapped[int] = mapped_column(Integer)
+    reward_image_6: Mapped[int] = mapped_column(Integer)
+    clear_reward_group: Mapped[int] = mapped_column(Integer)
+    reward_coin: Mapped[int] = mapped_column(Integer)
+    reward_csc: Mapped[int] = mapped_column(Integer)
+    chest_id: Mapped[int] = mapped_column(Integer)
+    odds_group_id: Mapped[int] = mapped_column(Integer)
+    background: Mapped[int] = mapped_column(Integer)
+    dungeon_quest_detail_bg_id: Mapped[int] = mapped_column(Integer)
+    dungeon_quest_detail_bg_position: Mapped[int] = mapped_column(Integer)
+    dungeon_quest_detail_monster_size: Mapped[float] = mapped_column(Float)
+    quest_detail_monster_scale_1: Mapped[float] = mapped_column(Float)
+    quest_detail_monster_scale_2: Mapped[float] = mapped_column(Float)
+    quest_detail_monster_scale_3: Mapped[float] = mapped_column(Float)
+    quest_detail_monster_scale_4: Mapped[float] = mapped_column(Float)
+    quest_detail_monster_scale_5: Mapped[float] = mapped_column(Float)
+    dungeon_quest_detail_monster_position_x_1: Mapped[float] = mapped_column(Float)
+    dungeon_quest_detail_monster_position_x_2: Mapped[float] = mapped_column(Float)
+    dungeon_quest_detail_monster_position_x_3: Mapped[float] = mapped_column(Float)
+    dungeon_quest_detail_monster_position_x_4: Mapped[float] = mapped_column(Float)
+    dungeon_quest_detail_monster_position_x_5: Mapped[float] = mapped_column(Float)
+    dungeon_quest_detail_monster_height: Mapped[float] = mapped_column(Float)
+    multi_target_effect_time: Mapped[float] = mapped_column(Float)
+    wave_bgm_sheet_id_1: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_1: Mapped[str] = mapped_column(Text)
 
 
-class SecretDungeonSchedule(DeclarativeBase, Base["SecretDungeonSchedule"]):
+class SecretDungeonSchedule(Base):
     __tablename__ = 'secret_dungeon_schedule'
 
-    dungeon_area_id: int = Column(Integer, primary_key=True)
-    teaser_time: str = Column(Text, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    count_start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    close_time: str = Column(Text, nullable=False)
+    dungeon_area_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    teaser_time: Mapped[str] = mapped_column(Text)
+    start_time: Mapped[str] = mapped_column(Text)
+    count_start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    close_time: Mapped[str] = mapped_column(Text)
 
 
-class SekaiAddTimesDatum(DeclarativeBase, Base["SekaiAddTimesDatum"]):
+class SekaiAddTimesDatum(Base):
     __tablename__ = 'sekai_add_times_data'
 
-    id: int = Column(Integer, primary_key=True)
-    sekai_id: int = Column(Integer, nullable=False)
-    add_times: int = Column(Integer, nullable=False)
-    add_times_limit: int = Column(Integer, nullable=False)
-    add_times_time: str = Column(Text, nullable=False)
-    duration: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    sekai_id: Mapped[int] = mapped_column(Integer)
+    add_times: Mapped[int] = mapped_column(Integer)
+    add_times_limit: Mapped[int] = mapped_column(Integer)
+    add_times_time: Mapped[str] = mapped_column(Text)
+    duration: Mapped[int] = mapped_column(Integer)
 
 
-class SekaiBossDamageRankReward(DeclarativeBase, Base["SekaiBossDamageRankReward"]):
+class SekaiBossDamageRankReward(Base):
     __tablename__ = 'sekai_boss_damage_rank_reward'
 
-    id: int = Column(Integer, primary_key=True)
-    damage_rank_id: int = Column(Integer, nullable=False)
-    ranking_from: int = Column(Integer, nullable=False)
-    ranking_to: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    damage_rank_id: Mapped[int] = mapped_column(Integer)
+    ranking_from: Mapped[int] = mapped_column(Integer)
+    ranking_to: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
 
 
-class SekaiBossFixReward(DeclarativeBase, Base["SekaiBossFixReward"]):
+class SekaiBossFixReward(Base):
     __tablename__ = 'sekai_boss_fix_reward'
 
-    sekai_id: int = Column(Integer, nullable=False)
-    fix_reward_group_id: int = Column(Integer, nullable=False)
-    fix_reward_id: int = Column(Integer, primary_key=True)
-    boss_total_damage: str = Column(Text, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
-    reward_type_6: int = Column(Integer, nullable=False)
-    reward_id_6: int = Column(Integer, nullable=False)
-    reward_num_6: int = Column(Integer, nullable=False)
-    reward_type_7: int = Column(Integer, nullable=False)
-    reward_id_7: int = Column(Integer, nullable=False)
-    reward_num_7: int = Column(Integer, nullable=False)
-    reward_type_8: int = Column(Integer, nullable=False)
-    reward_id_8: int = Column(Integer, nullable=False)
-    reward_num_8: int = Column(Integer, nullable=False)
-    reward_type_9: int = Column(Integer, nullable=False)
-    reward_id_9: int = Column(Integer, nullable=False)
-    reward_num_9: int = Column(Integer, nullable=False)
-    reward_type_10: int = Column(Integer, nullable=False)
-    reward_id_10: int = Column(Integer, nullable=False)
-    reward_num_10: int = Column(Integer, nullable=False)
+    sekai_id: Mapped[int] = mapped_column(Integer)
+    fix_reward_group_id: Mapped[int] = mapped_column(Integer)
+    fix_reward_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    boss_total_damage: Mapped[str] = mapped_column(Text)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
+    reward_type_6: Mapped[int] = mapped_column(Integer)
+    reward_id_6: Mapped[int] = mapped_column(Integer)
+    reward_num_6: Mapped[int] = mapped_column(Integer)
+    reward_type_7: Mapped[int] = mapped_column(Integer)
+    reward_id_7: Mapped[int] = mapped_column(Integer)
+    reward_num_7: Mapped[int] = mapped_column(Integer)
+    reward_type_8: Mapped[int] = mapped_column(Integer)
+    reward_id_8: Mapped[int] = mapped_column(Integer)
+    reward_num_8: Mapped[int] = mapped_column(Integer)
+    reward_type_9: Mapped[int] = mapped_column(Integer)
+    reward_id_9: Mapped[int] = mapped_column(Integer)
+    reward_num_9: Mapped[int] = mapped_column(Integer)
+    reward_type_10: Mapped[int] = mapped_column(Integer)
+    reward_id_10: Mapped[int] = mapped_column(Integer)
+    reward_num_10: Mapped[int] = mapped_column(Integer)
 
 
-class SekaiBossMode(DeclarativeBase, Base["SekaiBossMode"]):
+class SekaiBossMode(Base):
     __tablename__ = 'sekai_boss_mode'
 
-    sekai_boss_mode_id: int = Column(Integer, primary_key=True)
-    sekai_enemy_id: int = Column(Integer, nullable=False)
-    sekai_enemy_level: str = Column(Text, nullable=False)
-    quest_detail_bg_id: int = Column(Integer, nullable=False)
-    quest_detail_bg_position: int = Column(Integer, nullable=False)
-    quest_detail_monster_size: float = Column(Float, nullable=False)
-    quest_detail_monster_height: int = Column(Integer, nullable=False)
-    limit_time: int = Column(Integer, nullable=False)
-    background: int = Column(Integer, nullable=False)
-    sheet_id: str = Column(Text, nullable=False)
-    que_id: str = Column(Text, nullable=False)
-    result_boss_position_y: int = Column(Integer, nullable=False)
-    reward_gold_coefficient: int = Column(Integer, nullable=False)
-    limited_mana: int = Column(Integer, nullable=False)
-    score_coefficient: int = Column(Integer, nullable=False)
+    sekai_boss_mode_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    sekai_enemy_id: Mapped[int] = mapped_column(Integer)
+    sekai_enemy_level: Mapped[str] = mapped_column(Text)
+    quest_detail_bg_id: Mapped[int] = mapped_column(Integer)
+    quest_detail_bg_position: Mapped[int] = mapped_column(Integer)
+    quest_detail_monster_size: Mapped[float] = mapped_column(Float)
+    quest_detail_monster_height: Mapped[int] = mapped_column(Integer)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    background: Mapped[int] = mapped_column(Integer)
+    sheet_id: Mapped[str] = mapped_column(Text)
+    que_id: Mapped[str] = mapped_column(Text)
+    result_boss_position_y: Mapped[int] = mapped_column(Integer)
+    reward_gold_coefficient: Mapped[int] = mapped_column(Integer)
+    limited_mana: Mapped[int] = mapped_column(Integer)
+    score_coefficient: Mapped[int] = mapped_column(Integer)
 
 
-class SekaiEnemyParameter(DeclarativeBase, Base["SekaiEnemyParameter"]):
+class SekaiEnemyParameter(Base):
     __tablename__ = 'sekai_enemy_parameter'
 
-    sekai_enemy_id: int = Column(Integer, primary_key=True)
-    unit_id: int = Column(Integer, nullable=False)
-    name: str = Column(Text, nullable=False)
-    level: int = Column(Integer, nullable=False)
-    rarity: int = Column(Integer, nullable=False)
-    promotion_level: int = Column(Integer, nullable=False)
-    hp: str = Column(Text, nullable=False)
-    atk: int = Column(Integer, nullable=False)
-    magic_str: int = Column(Integer, nullable=False)
-    _def: int = Column('def', Integer, nullable=False)
-    magic_def: int = Column(Integer, nullable=False)
-    physical_critical: int = Column(Integer, nullable=False)
-    magic_critical: int = Column(Integer, nullable=False)
-    wave_hp_recovery: int = Column(Integer, nullable=False)
-    wave_energy_recovery: int = Column(Integer, nullable=False)
-    dodge: int = Column(Integer, nullable=False)
-    physical_penetrate: int = Column(Integer, nullable=False)
-    magic_penetrate: int = Column(Integer, nullable=False)
-    life_steal: int = Column(Integer, nullable=False)
-    hp_recovery_rate: int = Column(Integer, nullable=False)
-    energy_recovery_rate: int = Column(Integer, nullable=False)
-    energy_reduce_rate: int = Column(Integer, nullable=False)
-    union_burst_level: int = Column(Integer, nullable=False)
-    main_skill_lv_1: int = Column(Integer, nullable=False)
-    main_skill_lv_2: int = Column(Integer, nullable=False)
-    main_skill_lv_3: int = Column(Integer, nullable=False)
-    main_skill_lv_4: int = Column(Integer, nullable=False)
-    main_skill_lv_5: int = Column(Integer, nullable=False)
-    main_skill_lv_6: int = Column(Integer, nullable=False)
-    main_skill_lv_7: int = Column(Integer, nullable=False)
-    main_skill_lv_8: int = Column(Integer, nullable=False)
-    main_skill_lv_9: int = Column(Integer, nullable=False)
-    main_skill_lv_10: int = Column(Integer, nullable=False)
-    ex_skill_lv_1: int = Column(Integer, nullable=False)
-    ex_skill_lv_2: int = Column(Integer, nullable=False)
-    ex_skill_lv_3: int = Column(Integer, nullable=False)
-    ex_skill_lv_4: int = Column(Integer, nullable=False)
-    ex_skill_lv_5: int = Column(Integer, nullable=False)
-    resist_status_id: int = Column(Integer, nullable=False)
-    accuracy: int = Column(Integer, nullable=False)
+    sekai_enemy_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    name: Mapped[str] = mapped_column(Text)
+    level: Mapped[int] = mapped_column(Integer)
+    rarity: Mapped[int] = mapped_column(Integer)
+    promotion_level: Mapped[int] = mapped_column(Integer)
+    hp: Mapped[str] = mapped_column(Text)
+    atk: Mapped[int] = mapped_column(Integer)
+    magic_str: Mapped[int] = mapped_column(Integer)
+    def_: Mapped[int] = mapped_column('def', Integer)
+    magic_def: Mapped[int] = mapped_column(Integer)
+    physical_critical: Mapped[int] = mapped_column(Integer)
+    magic_critical: Mapped[int] = mapped_column(Integer)
+    wave_hp_recovery: Mapped[int] = mapped_column(Integer)
+    wave_energy_recovery: Mapped[int] = mapped_column(Integer)
+    dodge: Mapped[int] = mapped_column(Integer)
+    physical_penetrate: Mapped[int] = mapped_column(Integer)
+    magic_penetrate: Mapped[int] = mapped_column(Integer)
+    life_steal: Mapped[int] = mapped_column(Integer)
+    hp_recovery_rate: Mapped[int] = mapped_column(Integer)
+    energy_recovery_rate: Mapped[int] = mapped_column(Integer)
+    energy_reduce_rate: Mapped[int] = mapped_column(Integer)
+    union_burst_level: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_1: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_2: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_3: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_4: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_5: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_6: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_7: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_8: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_9: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_10: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_1: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_2: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_3: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_4: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_5: Mapped[int] = mapped_column(Integer)
+    resist_status_id: Mapped[int] = mapped_column(Integer)
+    accuracy: Mapped[int] = mapped_column(Integer)
 
 
-class SekaiSchedule(DeclarativeBase, Base["SekaiSchedule"]):
+class SekaiSchedule(Base):
     __tablename__ = 'sekai_schedule'
 
-    sekai_id: int = Column(Integer, primary_key=True)
-    last_sekai_id: int = Column(Integer, nullable=False)
-    fix_reward_group_id: int = Column(Integer, nullable=False)
-    damage_rank_id: int = Column(Integer, nullable=False)
-    teaser_time: str = Column(Text, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    count_start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    end_losstime: str = Column(Text, nullable=False)
-    result_end: str = Column(Text, nullable=False)
+    sekai_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    last_sekai_id: Mapped[int] = mapped_column(Integer)
+    fix_reward_group_id: Mapped[int] = mapped_column(Integer)
+    damage_rank_id: Mapped[int] = mapped_column(Integer)
+    teaser_time: Mapped[str] = mapped_column(Text)
+    start_time: Mapped[str] = mapped_column(Text)
+    count_start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    end_losstime: Mapped[str] = mapped_column(Text)
+    result_end: Mapped[str] = mapped_column(Text)
 
 
-class SekaiTopDatum(DeclarativeBase, Base["SekaiTopDatum"]):
+class SekaiTopDatum(Base):
     __tablename__ = 'sekai_top_data'
+    __table_args__ = (
+        Index('sekai_top_data_0_sekai_id', 'sekai_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    sekai_id: int = Column(Integer, nullable=False, index=True)
-    name: str = Column(Text, nullable=False)
-    description: str = Column(Text, nullable=False)
-    top_bg: int = Column(Integer, nullable=False)
-    position_x: int = Column(Integer, nullable=False)
-    position_y: int = Column(Integer, nullable=False)
-    scale_ratio: float = Column(Float, nullable=False)
-    sheet_id: str = Column(Text, nullable=False)
-    que_id: str = Column(Text, nullable=False)
-    boss_mode: int = Column(Integer, nullable=False)
-    sekai_boss_mode_id: int = Column(Integer, nullable=False)
-    boss_hp_from: str = Column(Text, nullable=False)
-    boss_hp_to: str = Column(Text, nullable=False)
-    boss_time_from: str = Column(Text, nullable=False)
-    boss_time_to: str = Column(Text, nullable=False)
-    duration: int = Column(Integer, nullable=False)
-    story_id: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    sekai_id: Mapped[int] = mapped_column(Integer)
+    name: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
+    top_bg: Mapped[int] = mapped_column(Integer)
+    position_x: Mapped[int] = mapped_column(Integer)
+    position_y: Mapped[int] = mapped_column(Integer)
+    scale_ratio: Mapped[float] = mapped_column(Float)
+    sheet_id: Mapped[str] = mapped_column(Text)
+    que_id: Mapped[str] = mapped_column(Text)
+    boss_mode: Mapped[int] = mapped_column(Integer)
+    sekai_boss_mode_id: Mapped[int] = mapped_column(Integer)
+    boss_hp_from: Mapped[str] = mapped_column(Text)
+    boss_hp_to: Mapped[str] = mapped_column(Text)
+    boss_time_from: Mapped[str] = mapped_column(Text)
+    boss_time_to: Mapped[str] = mapped_column(Text)
+    duration: Mapped[int] = mapped_column(Integer)
+    story_id: Mapped[int] = mapped_column(Integer)
 
 
-class SekaiTopStoryDatum(DeclarativeBase, Base["SekaiTopStoryDatum"]):
+class SekaiTopStoryDatum(Base):
     __tablename__ = 'sekai_top_story_data'
+    __table_args__ = (
+        Index('sekai_top_story_data_0_sekai_id', 'sekai_id'),
+    )
 
-    sekai_id: int = Column(Integer, nullable=False, index=True)
-    story_id: int = Column(Integer, primary_key=True)
-    boss_time_from: str = Column(Text, nullable=False)
-    boss_time_to: str = Column(Text, nullable=False)
+    sekai_id: Mapped[int] = mapped_column(Integer)
+    story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    boss_time_from: Mapped[str] = mapped_column(Text)
+    boss_time_to: Mapped[str] = mapped_column(Text)
 
 
-class SekaiUnlockStoryCondition(DeclarativeBase, Base["SekaiUnlockStoryCondition"]):
+class SekaiUnlockStoryCondition(Base):
     __tablename__ = 'sekai_unlock_story_condition'
 
-    story_id: int = Column(Integer, primary_key=True)
-    sekai_id: int = Column(Integer, nullable=False)
-    condition_entry: int = Column(Integer, nullable=False)
-    condition_fix_reward_id: int = Column(Integer, nullable=False)
-    condition_time: str = Column(Text, nullable=False)
+    story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    sekai_id: Mapped[int] = mapped_column(Integer)
+    condition_entry: Mapped[int] = mapped_column(Integer)
+    condition_fix_reward_id: Mapped[int] = mapped_column(Integer)
+    condition_time: Mapped[str] = mapped_column(Text)
 
 
-class SerialCodeDatum(DeclarativeBase, Base["SerialCodeDatum"]):
+class SerialCodeDatum(Base):
     __tablename__ = 'serial_code_data'
 
-    serial_campaign_id: int = Column(Integer, primary_key=True)
-    serial_group_id: int = Column(Integer, nullable=False)
-    campaign_name: str = Column(Text, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    limit_num: int = Column(Integer, nullable=False)
+    serial_campaign_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    serial_group_id: Mapped[int] = mapped_column(Integer)
+    campaign_name: Mapped[str] = mapped_column(Text)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    limit_num: Mapped[int] = mapped_column(Integer)
+    count_share_id: Mapped[int] = mapped_column(Integer)
 
 
-class SerialGroupDatum(DeclarativeBase, Base["SerialGroupDatum"]):
+class SerialGroupDatum(Base):
     __tablename__ = 'serial_group_data'
 
-    serial_group_id: int = Column(Integer, primary_key=True)
-    campaign_name: str = Column(Text, nullable=False)
-    serial_campaign_id_1: int = Column(Integer, nullable=False)
-    serial_campaign_id_2: int = Column(Integer, nullable=False)
-    serial_campaign_id_3: int = Column(Integer, nullable=False)
-    serial_campaign_id_4: int = Column(Integer, nullable=False)
-    serial_campaign_id_5: int = Column(Integer, nullable=False)
-    serial_campaign_id_6: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    serial_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    campaign_name: Mapped[str] = mapped_column(Text)
+    serial_campaign_id_1: Mapped[int] = mapped_column(Integer)
+    serial_campaign_id_2: Mapped[int] = mapped_column(Integer)
+    serial_campaign_id_3: Mapped[int] = mapped_column(Integer)
+    serial_campaign_id_4: Mapped[int] = mapped_column(Integer)
+    serial_campaign_id_5: Mapped[int] = mapped_column(Integer)
+    serial_campaign_id_6: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class SeriesUnlockCondition(DeclarativeBase, Base["SeriesUnlockCondition"]):
+class SeriesUnlockCondition(Base):
     __tablename__ = 'series_unlock_condition'
 
-    sequel_event_id: int = Column(Integer, primary_key=True)
-    condition_story_id_1: int = Column(Integer, nullable=False)
-    condition_story_id_2: int = Column(Integer, nullable=False)
-    condition_event_id: int = Column(Integer, nullable=False)
-    condition_quest_id: int = Column(Integer, nullable=False)
-    condition_boss_id: int = Column(Integer, nullable=False)
+    sequel_event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    condition_story_id_1: Mapped[int] = mapped_column(Integer)
+    condition_story_id_2: Mapped[int] = mapped_column(Integer)
+    condition_event_id: Mapped[int] = mapped_column(Integer)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    condition_boss_id: Mapped[int] = mapped_column(Integer)
 
 
-class ShioriBattleMissionDatum(DeclarativeBase, Base["ShioriBattleMissionDatum"]):
+class ShioriBattleMissionDatum(Base):
     __tablename__ = 'shiori_battle_mission_data'
 
-    mission_id: int = Column(Integer, primary_key=True)
-    disp_group: int = Column(Integer, nullable=False)
-    category_icon: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    mission_condition: int = Column(Integer, nullable=False)
-    condition_value_1: int = Column(Integer)
-    condition_value_2: int = Column(Integer)
-    condition_value_3: int = Column(Integer)
-    condition_value_4: int = Column(Integer)
-    condition_value_5: int = Column(Integer)
-    condition_value_6: int = Column(Integer)
-    condition_value_7: int = Column(Integer)
-    condition_value_8: int = Column(Integer)
-    condition_value_9: int = Column(Integer)
-    condition_value_10: int = Column(Integer)
-    condition_num: int = Column(Integer, nullable=False)
-    mission_reward_id: int = Column(Integer, nullable=False)
-    system_id: int = Column(Integer)
-    event_id: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    disp_group: Mapped[int] = mapped_column(Integer)
+    category_icon: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    mission_condition: Mapped[int] = mapped_column(Integer)
+    condition_num: Mapped[int] = mapped_column(Integer)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    event_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    condition_value_1: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_2: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_3: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_4: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_5: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_6: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_7: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_8: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_9: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_10: Mapped[Optional[int]] = mapped_column(Integer)
+    system_id: Mapped[Optional[int]] = mapped_column(Integer)
 
 
-class ShioriBos(DeclarativeBase, Base["ShioriBos"]):
+class ShioriBoss(Base):
     __tablename__ = 'shiori_boss'
     __table_args__ = (
+        Index('shiori_boss_0_event_id', 'event_id'),
         Index('shiori_boss_0_event_id_1_difficulty', 'event_id', 'difficulty'),
+        Index('shiori_boss_0_wave_group_id_1', 'wave_group_id_1')
     )
 
-    boss_id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False, index=True)
-    area_id: int = Column(Integer, nullable=False)
-    difficulty: int = Column(Integer, nullable=False)
-    quest_name: str = Column(Text, nullable=False)
-    position_x: int = Column(Integer, nullable=False)
-    position_y: int = Column(Integer, nullable=False)
-    boss_position_x: int = Column(Integer, nullable=False)
-    boss_position_y: int = Column(Integer, nullable=False)
-    result_boss_position_y: int = Column(Integer, nullable=False)
-    icon_id: int = Column(Integer, nullable=False)
-    icon_display_scale: float = Column(Float, nullable=False)
-    icon_collider_scale: float = Column(Float, nullable=False)
-    limit_time: int = Column(Integer, nullable=False)
-    clear_reward_group: int = Column(Integer, nullable=False)
-    background_1: int = Column(Integer, nullable=False)
-    wave_group_id_1: int = Column(Integer, nullable=False, index=True)
-    wave_bgm_sheet_id_1: str = Column(Text, nullable=False)
-    wave_bgm_que_id_1: str = Column(Text, nullable=False)
-    story_id_wavestart_1: int = Column(Integer, nullable=False)
-    story_id_waveend_1: int = Column(Integer, nullable=False)
-    detail_bg_id: int = Column(Integer, nullable=False)
-    detail_bg_position: int = Column(Integer, nullable=False)
-    detail_boss_bg_size: float = Column(Float, nullable=False)
-    detail_boss_bg_height: float = Column(Float, nullable=False)
-    map_position_x: float = Column(Float, nullable=False)
-    map_position_y: float = Column(Float, nullable=False)
-    map_size: float = Column(Float, nullable=False)
-    deatail_aura_size: float = Column(Float, nullable=False)
-    map_aura_size: float = Column(Float, nullable=False)
-    disp_on_bg: int = Column(Integer, nullable=False)
-    qd_mode: int = Column(Integer, nullable=False)
+    boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    area_id: Mapped[int] = mapped_column(Integer)
+    difficulty: Mapped[int] = mapped_column(Integer)
+    quest_name: Mapped[str] = mapped_column(Text)
+    position_x: Mapped[int] = mapped_column(Integer)
+    position_y: Mapped[int] = mapped_column(Integer)
+    boss_position_x: Mapped[int] = mapped_column(Integer)
+    boss_position_y: Mapped[int] = mapped_column(Integer)
+    result_boss_position_y: Mapped[int] = mapped_column(Integer)
+    icon_id: Mapped[int] = mapped_column(Integer)
+    icon_display_scale: Mapped[float] = mapped_column(Float)
+    icon_collider_scale: Mapped[float] = mapped_column(Float)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    clear_reward_group: Mapped[int] = mapped_column(Integer)
+    background_1: Mapped[int] = mapped_column(Integer)
+    wave_group_id_1: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_1: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_1: Mapped[str] = mapped_column(Text)
+    story_id_wavestart_1: Mapped[int] = mapped_column(Integer)
+    story_id_waveend_1: Mapped[int] = mapped_column(Integer)
+    detail_bg_id: Mapped[int] = mapped_column(Integer)
+    detail_bg_position: Mapped[int] = mapped_column(Integer)
+    detail_boss_bg_size: Mapped[float] = mapped_column(Float)
+    detail_boss_bg_height: Mapped[float] = mapped_column(Float)
+    map_position_x: Mapped[float] = mapped_column(Float)
+    map_position_y: Mapped[float] = mapped_column(Float)
+    map_size: Mapped[float] = mapped_column(Float)
+    map_arrow_offset: Mapped[float] = mapped_column(Float)
+    deatail_aura_size: Mapped[float] = mapped_column(Float)
+    map_aura_size: Mapped[float] = mapped_column(Float)
+    disp_on_bg: Mapped[int] = mapped_column(Integer)
+    qd_mode: Mapped[int] = mapped_column(Integer)
+    td_mode: Mapped[int] = mapped_column(Integer)
 
 
-class ShioriBossCondition(DeclarativeBase, Base["ShioriBossCondition"]):
+class ShioriBossCondition(Base):
     __tablename__ = 'shiori_boss_condition'
 
-    boss_id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False)
-    condition_quest_id: int = Column(Integer, nullable=False)
-    condition_boss_id: int = Column(Integer, nullable=False)
-    release_quest_id: int = Column(Integer, nullable=False)
-    release_boss_id: int = Column(Integer, nullable=False)
+    boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    condition_boss_id: Mapped[int] = mapped_column(Integer)
+    release_quest_id: Mapped[int] = mapped_column(Integer)
+    release_boss_id: Mapped[int] = mapped_column(Integer)
 
 
-class ShioriDescription(DeclarativeBase, Base["ShioriDescription"]):
+class ShioriDescription(Base):
     __tablename__ = 'shiori_description'
+    __table_args__ = (
+        Index('shiori_description_0_type', 'type'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    type: int = Column(Integer, nullable=False, index=True)
-    description: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    type: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
 
 
-class ShioriEnemyParameter(DeclarativeBase, Base["ShioriEnemyParameter"]):
+class ShioriEnemyParameter(Base):
     __tablename__ = 'shiori_enemy_parameter'
 
-    enemy_id: int = Column(Integer, primary_key=True)
-    unit_id: int = Column(Integer, nullable=False)
-    level: int = Column(Integer, nullable=False)
-    rarity: int = Column(Integer, nullable=False)
-    promotion_level: int = Column(Integer, nullable=False)
-    hp: int = Column(Integer, nullable=False)
-    atk: int = Column(Integer, nullable=False)
-    magic_str: int = Column(Integer, nullable=False)
-    _def: int = Column('def', Integer, nullable=False)
-    magic_def: int = Column(Integer, nullable=False)
-    physical_critical: int = Column(Integer, nullable=False)
-    magic_critical: int = Column(Integer, nullable=False)
-    wave_hp_recovery: int = Column(Integer, nullable=False)
-    wave_energy_recovery: int = Column(Integer, nullable=False)
-    dodge: int = Column(Integer, nullable=False)
-    physical_penetrate: int = Column(Integer, nullable=False)
-    magic_penetrate: int = Column(Integer, nullable=False)
-    life_steal: int = Column(Integer, nullable=False)
-    hp_recovery_rate: int = Column(Integer, nullable=False)
-    energy_recovery_rate: int = Column(Integer, nullable=False)
-    energy_reduce_rate: int = Column(Integer, nullable=False)
-    union_burst_level: int = Column(Integer, nullable=False)
-    main_skill_lv_1: int = Column(Integer, nullable=False)
-    main_skill_lv_2: int = Column(Integer, nullable=False)
-    main_skill_lv_3: int = Column(Integer, nullable=False)
-    main_skill_lv_4: int = Column(Integer, nullable=False)
-    main_skill_lv_5: int = Column(Integer, nullable=False)
-    main_skill_lv_6: int = Column(Integer, nullable=False)
-    main_skill_lv_7: int = Column(Integer, nullable=False)
-    main_skill_lv_8: int = Column(Integer, nullable=False)
-    main_skill_lv_9: int = Column(Integer, nullable=False)
-    main_skill_lv_10: int = Column(Integer, nullable=False)
-    ex_skill_lv_1: int = Column(Integer, nullable=False)
-    ex_skill_lv_2: int = Column(Integer, nullable=False)
-    ex_skill_lv_3: int = Column(Integer, nullable=False)
-    ex_skill_lv_4: int = Column(Integer, nullable=False)
-    ex_skill_lv_5: int = Column(Integer, nullable=False)
-    resist_status_id: int = Column(Integer, nullable=False)
-    resist_variation_id: int = Column(Integer, nullable=False)
-    accuracy: int = Column(Integer, nullable=False)
+    enemy_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    level: Mapped[int] = mapped_column(Integer)
+    rarity: Mapped[int] = mapped_column(Integer)
+    promotion_level: Mapped[int] = mapped_column(Integer)
+    hp: Mapped[int] = mapped_column(Integer)
+    atk: Mapped[int] = mapped_column(Integer)
+    magic_str: Mapped[int] = mapped_column(Integer)
+    def_: Mapped[int] = mapped_column('def', Integer)
+    magic_def: Mapped[int] = mapped_column(Integer)
+    physical_critical: Mapped[int] = mapped_column(Integer)
+    magic_critical: Mapped[int] = mapped_column(Integer)
+    wave_hp_recovery: Mapped[int] = mapped_column(Integer)
+    wave_energy_recovery: Mapped[int] = mapped_column(Integer)
+    dodge: Mapped[int] = mapped_column(Integer)
+    physical_penetrate: Mapped[int] = mapped_column(Integer)
+    magic_penetrate: Mapped[int] = mapped_column(Integer)
+    life_steal: Mapped[int] = mapped_column(Integer)
+    hp_recovery_rate: Mapped[int] = mapped_column(Integer)
+    energy_recovery_rate: Mapped[int] = mapped_column(Integer)
+    energy_reduce_rate: Mapped[int] = mapped_column(Integer)
+    union_burst_level: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_1: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_2: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_3: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_4: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_5: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_6: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_7: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_8: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_9: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_10: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_1: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_2: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_3: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_4: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_5: Mapped[int] = mapped_column(Integer)
+    resist_status_id: Mapped[int] = mapped_column(Integer)
+    resist_variation_id: Mapped[int] = mapped_column(Integer)
+    accuracy: Mapped[int] = mapped_column(Integer)
 
 
-class ShioriEventList(DeclarativeBase, Base["ShioriEventList"]):
+class ShioriEventList(Base):
     __tablename__ = 'shiori_event_list'
+    __table_args__ = (
+        Index('shiori_event_list_0_original_event_id', 'original_event_id'),
+        Index('shiori_event_list_0_series_event_id', 'series_event_id')
+    )
 
-    event_id: int = Column(Integer, primary_key=True)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    condition_story_id: int = Column(Integer, nullable=False)
-    condition_chara_id: int = Column(Integer, nullable=False)
-    condition_main_quest_id: int = Column(Integer, nullable=False)
-    condition_shiori_quest_id: int = Column(Integer, nullable=False)
-    original_event_id: int = Column(Integer, nullable=False, index=True)
-    original_start_time: str = Column(Text, nullable=False)
-    gojuon_order: int = Column(Integer, nullable=False)
-    help_index: str = Column(Text, nullable=False)
+    event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    banner_y: Mapped[int] = mapped_column(Integer)
+    condition_story_id: Mapped[int] = mapped_column(Integer)
+    condition_chara_id: Mapped[int] = mapped_column(Integer)
+    condition_main_quest_id: Mapped[int] = mapped_column(Integer)
+    condition_shiori_quest_id: Mapped[int] = mapped_column(Integer)
+    original_event_id: Mapped[int] = mapped_column(Integer)
+    series_event_id: Mapped[int] = mapped_column(Integer)
+    original_start_time: Mapped[str] = mapped_column(Text)
+    gojuon_order: Mapped[int] = mapped_column(Integer)
+    help_index: Mapped[str] = mapped_column(Text)
 
 
-class ShioriItem(DeclarativeBase, Base["ShioriItem"]):
+class ShioriItem(Base):
     __tablename__ = 'shiori_item'
 
-    event_id: int = Column(Integer, primary_key=True)
-    unit_material_id_1: int = Column(Integer, nullable=False)
-    unit_material_id_2: int = Column(Integer, nullable=False)
+    event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_material_id_1: Mapped[int] = mapped_column(Integer)
+    unit_material_id_2: Mapped[int] = mapped_column(Integer)
 
 
-class ShioriMissionRewardDatum(DeclarativeBase, Base["ShioriMissionRewardDatum"]):
+class ShioriMissionRewardDatum(Base):
     __tablename__ = 'shiori_mission_reward_data'
+    __table_args__ = (
+        Index('shiori_mission_reward_data_0_mission_reward_id', 'mission_reward_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    mission_reward_id: int = Column(Integer, nullable=False, index=True)
-    reward_type: int = Column(Integer, nullable=False)
-    reward_id: int = Column(Integer)
-    reward_num: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_num: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[Optional[int]] = mapped_column(Integer)
 
 
-class ShioriQuest(DeclarativeBase, Base["ShioriQuest"]):
+class ShioriQuest(Base):
     __tablename__ = 'shiori_quest'
+    __table_args__ = (
+        Index('shiori_quest_0_drop_reward_id', 'drop_reward_id'),
+        Index('shiori_quest_0_event_id', 'event_id')
+    )
 
-    quest_id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False, index=True)
-    area_id: int = Column(Integer, nullable=False)
-    quest_seq: int = Column(Integer, nullable=False)
-    quest_name: str = Column(Text, nullable=False)
-    position_x: int = Column(Integer, nullable=False)
-    position_y: int = Column(Integer, nullable=False)
-    icon_id: int = Column(Integer, nullable=False)
-    icon_offset_x: float = Column(Float, nullable=False)
-    icon_offset_y: float = Column(Float, nullable=False)
-    icon_scale: float = Column(Float, nullable=False)
-    stamina: int = Column(Integer, nullable=False)
-    stamina_start: int = Column(Integer, nullable=False)
-    team_exp: int = Column(Integer, nullable=False)
-    unit_exp: int = Column(Integer, nullable=False)
-    love: int = Column(Integer, nullable=False)
-    limit_time: int = Column(Integer, nullable=False)
-    daily_limit: int = Column(Integer, nullable=False)
-    clear_reward_group: int = Column(Integer, nullable=False)
-    rank_reward_group: int = Column(Integer, nullable=False)
-    drop_reward_type: int = Column(Integer, nullable=False)
-    drop_reward_id: int = Column(Integer, nullable=False, index=True)
-    drop_reward_num: int = Column(Integer, nullable=False)
-    drop_reward_odds: int = Column(Integer, nullable=False)
-    wave_group_id_1: int = Column(Integer, nullable=False)
-    background_1: int = Column(Integer, nullable=False)
-    wave_bgm_sheet_id_1: str = Column(Text, nullable=False)
-    wave_bgm_que_id_1: str = Column(Text, nullable=False)
-    story_id_wavestart_1: int = Column(Integer, nullable=False)
-    story_id_waveend_1: int = Column(Integer, nullable=False)
-    wave_group_id_2: int = Column(Integer, nullable=False)
-    background_2: int = Column(Integer, nullable=False)
-    wave_bgm_sheet_id_2: str = Column(Text, nullable=False)
-    wave_bgm_que_id_2: str = Column(Text, nullable=False)
-    story_id_wavestart_2: int = Column(Integer, nullable=False)
-    story_id_waveend_2: int = Column(Integer, nullable=False)
-    wave_group_id_3: int = Column(Integer, nullable=False)
-    background_3: int = Column(Integer, nullable=False)
-    wave_bgm_sheet_id_3: str = Column(Text, nullable=False)
-    wave_bgm_que_id_3: str = Column(Text, nullable=False)
-    story_id_wavestart_3: int = Column(Integer, nullable=False)
-    story_id_waveend_3: int = Column(Integer, nullable=False)
-    quest_detail_bg_id: int = Column(Integer, nullable=False)
-    quest_detail_bg_position: int = Column(Integer, nullable=False)
+    quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    area_id: Mapped[int] = mapped_column(Integer)
+    quest_seq: Mapped[int] = mapped_column(Integer)
+    quest_name: Mapped[str] = mapped_column(Text)
+    position_x: Mapped[int] = mapped_column(Integer)
+    position_y: Mapped[int] = mapped_column(Integer)
+    icon_id: Mapped[int] = mapped_column(Integer)
+    icon_offset_x: Mapped[float] = mapped_column(Float)
+    icon_offset_y: Mapped[float] = mapped_column(Float)
+    icon_scale: Mapped[float] = mapped_column(Float)
+    stamina: Mapped[int] = mapped_column(Integer)
+    stamina_start: Mapped[int] = mapped_column(Integer)
+    team_exp: Mapped[int] = mapped_column(Integer)
+    unit_exp: Mapped[int] = mapped_column(Integer)
+    love: Mapped[int] = mapped_column(Integer)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    daily_limit: Mapped[int] = mapped_column(Integer)
+    clear_reward_group: Mapped[int] = mapped_column(Integer)
+    rank_reward_group: Mapped[int] = mapped_column(Integer)
+    drop_reward_type: Mapped[int] = mapped_column(Integer)
+    drop_reward_id: Mapped[int] = mapped_column(Integer)
+    drop_reward_num: Mapped[int] = mapped_column(Integer)
+    drop_reward_odds: Mapped[int] = mapped_column(Integer)
+    wave_group_id_1: Mapped[int] = mapped_column(Integer)
+    background_1: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_1: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_1: Mapped[str] = mapped_column(Text)
+    story_id_wavestart_1: Mapped[int] = mapped_column(Integer)
+    story_id_waveend_1: Mapped[int] = mapped_column(Integer)
+    wave_group_id_2: Mapped[int] = mapped_column(Integer)
+    background_2: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_2: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_2: Mapped[str] = mapped_column(Text)
+    story_id_wavestart_2: Mapped[int] = mapped_column(Integer)
+    story_id_waveend_2: Mapped[int] = mapped_column(Integer)
+    wave_group_id_3: Mapped[int] = mapped_column(Integer)
+    background_3: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_3: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_3: Mapped[str] = mapped_column(Text)
+    story_id_wavestart_3: Mapped[int] = mapped_column(Integer)
+    story_id_waveend_3: Mapped[int] = mapped_column(Integer)
+    quest_detail_bg_id: Mapped[int] = mapped_column(Integer)
+    quest_detail_bg_position: Mapped[int] = mapped_column(Integer)
 
 
-class ShioriQuestArea(DeclarativeBase, Base["ShioriQuestArea"]):
+class ShioriQuestArea(Base):
     __tablename__ = 'shiori_quest_area'
+    __table_args__ = (
+        Index('shiori_quest_area_0_event_id', 'event_id'),
+    )
 
-    area_id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False, index=True)
-    area_name: str = Column(Text, nullable=False)
-    map_type: int = Column(Integer, nullable=False)
-    sheet_id: str = Column(Text, nullable=False)
-    que_id: str = Column(Text, nullable=False)
-    area_disp: int = Column(Integer, nullable=False)
-    map_id: int = Column(Integer, nullable=False)
-    scroll_width: int = Column(Integer, nullable=False)
-    scroll_height: int = Column(Integer, nullable=False)
-    open_tutorial_id: int = Column(Integer, nullable=False)
-    tutorial_param_1: str = Column(Text, nullable=False)
-    tutorial_param_2: str = Column(Text, nullable=False)
-    additional_effect: int = Column(Integer, nullable=False)
+    area_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    area_name: Mapped[str] = mapped_column(Text)
+    map_type: Mapped[int] = mapped_column(Integer)
+    sheet_id: Mapped[str] = mapped_column(Text)
+    que_id: Mapped[str] = mapped_column(Text)
+    area_disp: Mapped[int] = mapped_column(Integer)
+    map_id: Mapped[int] = mapped_column(Integer)
+    scroll_width: Mapped[int] = mapped_column(Integer)
+    scroll_height: Mapped[int] = mapped_column(Integer)
+    open_tutorial_id: Mapped[int] = mapped_column(Integer)
+    tutorial_param_1: Mapped[str] = mapped_column(Text)
+    tutorial_param_2: Mapped[str] = mapped_column(Text)
+    additional_effect: Mapped[int] = mapped_column(Integer)
 
 
-class ShioriQuestCondition(DeclarativeBase, Base["ShioriQuestCondition"]):
+class ShioriQuestCondition(Base):
     __tablename__ = 'shiori_quest_condition'
 
-    quest_id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False)
-    condition_quest_id: int = Column(Integer, nullable=False)
-    condition_boss_id: int = Column(Integer, nullable=False)
-    release_quest_id: int = Column(Integer, nullable=False)
-    release_boss_id: int = Column(Integer, nullable=False)
-    condition_main_quest_id: int = Column(Integer, nullable=False)
+    quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    condition_boss_id: Mapped[int] = mapped_column(Integer)
+    release_quest_id: Mapped[int] = mapped_column(Integer)
+    release_boss_id: Mapped[int] = mapped_column(Integer)
+    condition_main_quest_id: Mapped[int] = mapped_column(Integer)
 
 
-class ShioriStationaryMissionDatum(DeclarativeBase, Base["ShioriStationaryMissionDatum"]):
+class ShioriStationaryMissionDatum(Base):
     __tablename__ = 'shiori_stationary_mission_data'
 
-    stationary_mission_id: int = Column(Integer, primary_key=True)
-    disp_group: int = Column(Integer, nullable=False)
-    category_icon: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    mission_condition: int = Column(Integer, nullable=False)
-    condition_value_1: int = Column(Integer)
-    condition_value_2: int = Column(Integer)
-    condition_value_3: int = Column(Integer)
-    condition_num: int = Column(Integer, nullable=False)
-    mission_reward_id: int = Column(Integer, nullable=False)
-    system_id: int = Column(Integer)
-    event_id: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    stationary_mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    disp_group: Mapped[int] = mapped_column(Integer)
+    category_icon: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    mission_condition: Mapped[int] = mapped_column(Integer)
+    condition_num: Mapped[int] = mapped_column(Integer)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    event_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    condition_value_1: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_2: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_3: Mapped[Optional[int]] = mapped_column(Integer)
+    system_id: Mapped[Optional[int]] = mapped_column(Integer)
 
 
-class ShioriUnlockUnitCondition(DeclarativeBase, Base["ShioriUnlockUnitCondition"]):
+class ShioriUnlockUnitCondition(Base):
     __tablename__ = 'shiori_unlock_unit_condition'
     __table_args__ = (
-        Index('shiori_unlock_unit_condition_0_unit_id_1_event_id', 'unit_id', 'event_id'),
+        Index('shiori_unlock_unit_condition_0_condition_mission_id', 'condition_mission_id'),
+        Index('shiori_unlock_unit_condition_0_unit_id_1_event_id', 'unit_id', 'event_id')
     )
 
-    id: int = Column(Integer, primary_key=True)
-    unit_id: int = Column(Integer, nullable=False)
-    event_id: int = Column(Integer, nullable=False)
-    condition_mission_id: int = Column(Integer, nullable=False, index=True)
-    top_description: str = Column(Text, nullable=False)
-    description_1: str = Column(Text, nullable=False)
-    description_2: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    event_id: Mapped[int] = mapped_column(Integer)
+    condition_mission_id: Mapped[int] = mapped_column(Integer)
+    top_description: Mapped[str] = mapped_column(Text)
+    description_1: Mapped[str] = mapped_column(Text)
+    description_2: Mapped[str] = mapped_column(Text)
 
 
-class ShioriWaveGroupDatum(DeclarativeBase, Base["ShioriWaveGroupDatum"]):
+class ShioriWaveGroupDatum(Base):
     __tablename__ = 'shiori_wave_group_data'
 
-    wave_group_id: int = Column(Integer, primary_key=True)
-    difficulty: int = Column(Integer, nullable=False)
-    wave: int = Column(Integer, nullable=False)
-    enemy_id_1: int = Column(Integer, nullable=False)
-    enemy_id_2: int = Column(Integer, nullable=False)
-    enemy_id_3: int = Column(Integer, nullable=False)
-    enemy_id_4: int = Column(Integer, nullable=False)
-    enemy_id_5: int = Column(Integer, nullable=False)
-    drop_gold_1: int = Column(Integer, nullable=False)
-    reward_group_id_1: int = Column(Integer, nullable=False)
-    disp_reward_type_1: int = Column(Integer, nullable=False)
-    disp_reward_id_1: int = Column(Integer, nullable=False)
-    reward_lot_count_1: int = Column(Integer, nullable=False)
-    reward_odds_1: int = Column(Integer, nullable=False)
-    drop_gold_2: int = Column(Integer, nullable=False)
-    reward_group_id_2: int = Column(Integer, nullable=False)
-    disp_reward_type_2: int = Column(Integer, nullable=False)
-    disp_reward_id_2: int = Column(Integer, nullable=False)
-    reward_lot_count_2: int = Column(Integer, nullable=False)
-    reward_odds_2: int = Column(Integer, nullable=False)
-    drop_gold_3: int = Column(Integer, nullable=False)
-    reward_group_id_3: int = Column(Integer, nullable=False)
-    disp_reward_type_3: int = Column(Integer, nullable=False)
-    disp_reward_id_3: int = Column(Integer, nullable=False)
-    reward_lot_count_3: int = Column(Integer, nullable=False)
-    reward_odds_3: int = Column(Integer, nullable=False)
-    drop_gold_4: int = Column(Integer, nullable=False)
-    reward_group_id_4: int = Column(Integer, nullable=False)
-    disp_reward_type_4: int = Column(Integer, nullable=False)
-    disp_reward_id_4: int = Column(Integer, nullable=False)
-    reward_lot_count_4: int = Column(Integer, nullable=False)
-    reward_odds_4: int = Column(Integer, nullable=False)
-    drop_gold_5: int = Column(Integer, nullable=False)
-    reward_group_id_5: int = Column(Integer, nullable=False)
-    disp_reward_type_5: int = Column(Integer, nullable=False)
-    disp_reward_id_5: int = Column(Integer, nullable=False)
-    reward_lot_count_5: int = Column(Integer, nullable=False)
-    reward_odds_5: int = Column(Integer, nullable=False)
+    wave_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    difficulty: Mapped[int] = mapped_column(Integer)
+    wave: Mapped[int] = mapped_column(Integer)
+    enemy_id_1: Mapped[int] = mapped_column(Integer)
+    enemy_id_2: Mapped[int] = mapped_column(Integer)
+    enemy_id_3: Mapped[int] = mapped_column(Integer)
+    enemy_id_4: Mapped[int] = mapped_column(Integer)
+    enemy_id_5: Mapped[int] = mapped_column(Integer)
+    drop_gold_1: Mapped[int] = mapped_column(Integer)
+    reward_group_id_1: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_1: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_1: Mapped[int] = mapped_column(Integer)
+    reward_odds_1: Mapped[int] = mapped_column(Integer)
+    drop_gold_2: Mapped[int] = mapped_column(Integer)
+    reward_group_id_2: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_2: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_2: Mapped[int] = mapped_column(Integer)
+    reward_odds_2: Mapped[int] = mapped_column(Integer)
+    drop_gold_3: Mapped[int] = mapped_column(Integer)
+    reward_group_id_3: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_3: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_3: Mapped[int] = mapped_column(Integer)
+    reward_odds_3: Mapped[int] = mapped_column(Integer)
+    drop_gold_4: Mapped[int] = mapped_column(Integer)
+    reward_group_id_4: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_4: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_4: Mapped[int] = mapped_column(Integer)
+    reward_odds_4: Mapped[int] = mapped_column(Integer)
+    drop_gold_5: Mapped[int] = mapped_column(Integer)
+    reward_group_id_5: Mapped[int] = mapped_column(Integer)
+    disp_reward_type_5: Mapped[int] = mapped_column(Integer)
+    disp_reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_lot_count_5: Mapped[int] = mapped_column(Integer)
+    reward_odds_5: Mapped[int] = mapped_column(Integer)
 
 
-class ShopStaticPriceGroup(DeclarativeBase, Base["ShopStaticPriceGroup"]):
+class ShopStaticPriceGroup(Base):
     __tablename__ = 'shop_static_price_group'
 
-    id: int = Column(Integer, primary_key=True)
-    price_group_id: int = Column(Integer, nullable=False)
-    buy_count_from: int = Column(Integer, nullable=False)
-    buy_count_to: int = Column(Integer, nullable=False)
-    count: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    price_group_id: Mapped[int] = mapped_column(Integer)
+    buy_count_from: Mapped[int] = mapped_column(Integer)
+    buy_count_to: Mapped[int] = mapped_column(Integer)
+    count: Mapped[int] = mapped_column(Integer)
 
 
-class SkeStoryDatum(DeclarativeBase, Base["SkeStoryDatum"]):
+class SjrChara(Base):
+    __tablename__ = 'sjr_chara'
+
+    sjr_chara_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    personality: Mapped[int] = mapped_column(Integer)
+    speed: Mapped[int] = mapped_column(Integer)
+    tired_coefficient: Mapped[int] = mapped_column(Integer)
+    spring: Mapped[int] = mapped_column(Integer)
+    resume_time: Mapped[float] = mapped_column(Float)
+    proper_id: Mapped[int] = mapped_column(Integer)
+    ub_id: Mapped[int] = mapped_column(Integer)
+    tp_length: Mapped[float] = mapped_column(Float)
+    description: Mapped[str] = mapped_column(Text)
+    recommend_type_1: Mapped[int] = mapped_column(Integer)
+    recommend_type_2: Mapped[int] = mapped_column(Integer)
+    recommend_type_3: Mapped[int] = mapped_column(Integer)
+
+
+class SjrCourse(Base):
+    __tablename__ = 'sjr_course'
+
+    course_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    type: Mapped[int] = mapped_column(Integer)
+    difficulty_level: Mapped[int] = mapped_column(Integer)
+    feature: Mapped[int] = mapped_column(Integer)
+    length: Mapped[int] = mapped_column(Integer)
+    peek_pos: Mapped[int] = mapped_column(Integer)
+    time: Mapped[float] = mapped_column(Float)
+    rail_1: Mapped[int] = mapped_column(Integer)
+    rail_2: Mapped[int] = mapped_column(Integer)
+    rail_3: Mapped[int] = mapped_column(Integer)
+
+
+class SjrDramaScript(Base):
+    __tablename__ = 'sjr_drama_script'
+    __table_args__ = (
+        Index('sjr_drama_script_0_drama_id', 'drama_id'),
+    )
+
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
+
+
+class SjrEmblem(Base):
+    __tablename__ = 'sjr_emblem'
+
+    emblem_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    description: Mapped[str] = mapped_column(Text)
+
+
+class SjrFeatureGroup(Base):
+    __tablename__ = 'sjr_feature_group'
+
+    feature_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    group_id: Mapped[int] = mapped_column(Integer)
+
+
+class SjrNameFormer(Base):
+    __tablename__ = 'sjr_name_former'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    constrain_group: Mapped[int] = mapped_column(Integer)
+    condition_type_1: Mapped[int] = mapped_column(Integer)
+    condition_type_2: Mapped[int] = mapped_column(Integer)
+    condition_type_3: Mapped[int] = mapped_column(Integer)
+    condition_value_1: Mapped[int] = mapped_column(Integer)
+    condition_value_2: Mapped[int] = mapped_column(Integer)
+    condition_value_3: Mapped[int] = mapped_column(Integer)
+
+
+class SjrNameLater(Base):
+    __tablename__ = 'sjr_name_later'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    name_group: Mapped[int] = mapped_column(Integer)
+    score_from: Mapped[int] = mapped_column(Integer)
+    score_to: Mapped[int] = mapped_column(Integer)
+
+
+class SjrNpcActionOdds(Base):
+    __tablename__ = 'sjr_npc_action_odds'
+    __table_args__ = (
+        Index('sjr_npc_action_odds_0_action_odds_id', 'action_odds_id'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    action_odds_id: Mapped[int] = mapped_column(Integer)
+    distance: Mapped[int] = mapped_column(Integer)
+    angle: Mapped[int] = mapped_column(Integer)
+    rate: Mapped[int] = mapped_column(Integer)
+
+
+class SjrParameterEvaluation(Base):
+    __tablename__ = 'sjr_parameter_evaluation'
+
+    parameter_type: Mapped[int] = mapped_column(Integer, primary_key=True)
+    border_1: Mapped[float] = mapped_column(Float)
+    border_2: Mapped[float] = mapped_column(Float)
+    border_3: Mapped[float] = mapped_column(Float)
+
+
+class SjrProperEvaluation(Base):
+    __tablename__ = 'sjr_proper_evaluation'
+
+    group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    border_1: Mapped[int] = mapped_column(Integer)
+    border_2: Mapped[int] = mapped_column(Integer)
+
+
+class SjrProperFeature(Base):
+    __tablename__ = 'sjr_proper_feature'
+
+    proper_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    feature_group_1: Mapped[int] = mapped_column(Integer)
+    feature_group_2: Mapped[int] = mapped_column(Integer)
+    feature_group_3: Mapped[int] = mapped_column(Integer)
+    value_1: Mapped[int] = mapped_column(Integer)
+    value_2: Mapped[int] = mapped_column(Integer)
+    value_3: Mapped[int] = mapped_column(Integer)
+
+
+class SjrRail(Base):
+    __tablename__ = 'sjr_rail'
+    __table_args__ = (
+        Index('sjr_rail_0_rail_id', 'rail_id'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    rail_id: Mapped[int] = mapped_column(Integer)
+    gimmick_id: Mapped[int] = mapped_column(Integer)
+    gimmick_pos: Mapped[int] = mapped_column(Integer)
+
+
+class SjrReward(Base):
+    __tablename__ = 'sjr_reward'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    sjr_score: Mapped[int] = mapped_column(Integer)
+    mission_detail: Mapped[str] = mapped_column(Text)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_count_5: Mapped[int] = mapped_column(Integer)
+
+
+class SjrScore(Base):
+    __tablename__ = 'sjr_score'
+
+    round: Mapped[int] = mapped_column(Integer, primary_key=True)
+    type: Mapped[int] = mapped_column(Integer, primary_key=True)
+    first_score: Mapped[int] = mapped_column(Integer)
+    second_score: Mapped[int] = mapped_column(Integer)
+    third_score: Mapped[int] = mapped_column(Integer)
+    time_score: Mapped[int] = mapped_column(Integer)
+    action_score: Mapped[int] = mapped_column(Integer)
+    normal_bonus: Mapped[float] = mapped_column(Float)
+    hard_bonus: Mapped[float] = mapped_column(Float)
+    extra_bonus: Mapped[float] = mapped_column(Float)
+
+
+class SjrUbDatum(Base):
+    __tablename__ = 'sjr_ub_data'
+
+    ub_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    top_description: Mapped[str] = mapped_column(Text)
+    in_game_description: Mapped[str] = mapped_column(Text)
+    ub_type: Mapped[int] = mapped_column(Integer)
+    ub_value_1: Mapped[int] = mapped_column(Integer)
+    ub_value_2: Mapped[int] = mapped_column(Integer)
+    ub_value_3: Mapped[int] = mapped_column(Integer)
+    ub_value_4: Mapped[int] = mapped_column(Integer)
+
+
+class SkeStoryDatum(Base):
     __tablename__ = 'ske_story_data'
+    __table_args__ = (
+        Index('ske_story_data_0_original_event_id', 'original_event_id'),
+    )
 
-    sub_story_id: int = Column(Integer, primary_key=True)
-    original_event_id: int = Column(Integer, nullable=False, index=True)
-    title: str = Column(Text, nullable=False)
-    unlock_condition_quest_id: int = Column(Integer, nullable=False)
-    unlock_condition_boss_id: int = Column(Integer, nullable=False)
-    read_condition_event_story_id: int = Column(Integer, nullable=False)
+    sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    original_event_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    unlock_condition_quest_id: Mapped[int] = mapped_column(Integer)
+    unlock_condition_boss_id: Mapped[int] = mapped_column(Integer)
+    read_condition_event_story_id: Mapped[int] = mapped_column(Integer)
 
 
-class SkeStoryScript(DeclarativeBase, Base["SkeStoryScript"]):
+class SkeStoryScript(Base):
     __tablename__ = 'ske_story_script'
+    __table_args__ = (
+        Index('ske_story_script_0_story_id', 'story_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    story_id: int = Column(Integer, nullable=False, index=True)
-    seq_num: int = Column(Integer, nullable=False)
-    type: int = Column(Integer, nullable=False)
-    line_num: int = Column(Integer, nullable=False)
-    start_pos: int = Column(Integer, nullable=False)
-    end_pos: int = Column(Integer, nullable=False)
-    seek_time: float = Column(Float, nullable=False)
-    sheet_name: str = Column(Text, nullable=False)
-    cue_name: str = Column(Text, nullable=False)
-    command: int = Column(Integer, nullable=False)
-    command_param: float = Column(Float, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_id: Mapped[int] = mapped_column(Integer)
+    seq_num: Mapped[int] = mapped_column(Integer)
+    type: Mapped[int] = mapped_column(Integer)
+    line_num: Mapped[int] = mapped_column(Integer)
+    start_pos: Mapped[int] = mapped_column(Integer)
+    end_pos: Mapped[int] = mapped_column(Integer)
+    seek_time: Mapped[float] = mapped_column(Float)
+    sheet_name: Mapped[str] = mapped_column(Text)
+    cue_name: Mapped[str] = mapped_column(Text)
+    command: Mapped[int] = mapped_column(Integer)
+    command_param: Mapped[float] = mapped_column(Float)
 
 
-class SkillAction(DeclarativeBase, Base["SkillAction"]):
+class SkillAction(Base):
     __tablename__ = 'skill_action'
 
-    action_id: int = Column(Integer, primary_key=True)
-    class_id: int = Column(Integer, nullable=False)
-    action_type: int = Column(Integer, nullable=False)
-    action_detail_1: int = Column(Integer, nullable=False)
-    action_detail_2: int = Column(Integer, nullable=False)
-    action_detail_3: int = Column(Integer, nullable=False)
-    action_value_1: float = Column(Float, nullable=False)
-    action_value_2: float = Column(Float, nullable=False)
-    action_value_3: float = Column(Float, nullable=False)
-    action_value_4: float = Column(Float, nullable=False)
-    action_value_5: float = Column(Float, nullable=False)
-    action_value_6: float = Column(Float, nullable=False)
-    action_value_7: float = Column(Float, nullable=False)
-    target_assignment: int = Column(Integer, nullable=False)
-    target_area: int = Column(Integer, nullable=False)
-    target_range: int = Column(Integer, nullable=False)
-    target_type: int = Column(Integer, nullable=False)
-    target_number: int = Column(Integer, nullable=False)
-    target_count: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    level_up_disp: str = Column(Text, nullable=False)
+    action_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    class_id: Mapped[int] = mapped_column(Integer)
+    action_type: Mapped[int] = mapped_column(Integer)
+    action_detail_1: Mapped[int] = mapped_column(Integer)
+    action_detail_2: Mapped[int] = mapped_column(Integer)
+    action_detail_3: Mapped[int] = mapped_column(Integer)
+    action_value_1: Mapped[float] = mapped_column(Float)
+    action_value_2: Mapped[float] = mapped_column(Float)
+    action_value_3: Mapped[float] = mapped_column(Float)
+    action_value_4: Mapped[float] = mapped_column(Float)
+    action_value_5: Mapped[float] = mapped_column(Float)
+    action_value_6: Mapped[float] = mapped_column(Float)
+    action_value_7: Mapped[float] = mapped_column(Float)
+    target_assignment: Mapped[int] = mapped_column(Integer)
+    target_area: Mapped[int] = mapped_column(Integer)
+    target_range: Mapped[int] = mapped_column(Integer)
+    target_type: Mapped[int] = mapped_column(Integer)
+    target_number: Mapped[int] = mapped_column(Integer)
+    target_count: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    level_up_disp: Mapped[str] = mapped_column(Text)
 
 
-class SkillCost(DeclarativeBase, Base["SkillCost"]):
+class SkillCost(Base):
     __tablename__ = 'skill_cost'
 
-    target_level: int = Column(Integer, primary_key=True)
-    cost: int = Column(Integer, nullable=False)
+    target_level: Mapped[int] = mapped_column(Integer, primary_key=True)
+    cost: Mapped[int] = mapped_column(Integer)
 
 
-class SkillDatum(DeclarativeBase, Base["SkillDatum"]):
+class SkillDatum(Base):
     __tablename__ = 'skill_data'
 
-    skill_id: int = Column(Integer, primary_key=True)
-    name: str = Column(Text)
-    skill_type: int = Column(Integer, nullable=False)
-    skill_area_width: int = Column(Integer, nullable=False)
-    skill_cast_time: float = Column(Float, nullable=False)
-    boss_ub_cool_time: float = Column(Float, nullable=False)
-    action_1: int = Column(Integer, nullable=False)
-    action_2: int = Column(Integer, nullable=False)
-    action_3: int = Column(Integer, nullable=False)
-    action_4: int = Column(Integer, nullable=False)
-    action_5: int = Column(Integer, nullable=False)
-    action_6: int = Column(Integer, nullable=False)
-    action_7: int = Column(Integer, nullable=False)
-    depend_action_1: int = Column(Integer, nullable=False)
-    depend_action_2: int = Column(Integer, nullable=False)
-    depend_action_3: int = Column(Integer, nullable=False)
-    depend_action_4: int = Column(Integer, nullable=False)
-    depend_action_5: int = Column(Integer, nullable=False)
-    depend_action_6: int = Column(Integer, nullable=False)
-    depend_action_7: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    icon_type: int = Column(Integer, nullable=False)
+    skill_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    skill_type: Mapped[int] = mapped_column(Integer)
+    skill_area_width: Mapped[int] = mapped_column(Integer)
+    skill_cast_time: Mapped[float] = mapped_column(Float)
+    boss_ub_cool_time: Mapped[float] = mapped_column(Float)
+    action_1: Mapped[int] = mapped_column(Integer)
+    action_2: Mapped[int] = mapped_column(Integer)
+    action_3: Mapped[int] = mapped_column(Integer)
+    action_4: Mapped[int] = mapped_column(Integer)
+    action_5: Mapped[int] = mapped_column(Integer)
+    action_6: Mapped[int] = mapped_column(Integer)
+    action_7: Mapped[int] = mapped_column(Integer)
+    action_8: Mapped[int] = mapped_column(Integer)
+    action_9: Mapped[int] = mapped_column(Integer)
+    action_10: Mapped[int] = mapped_column(Integer)
+    depend_action_1: Mapped[int] = mapped_column(Integer)
+    depend_action_2: Mapped[int] = mapped_column(Integer)
+    depend_action_3: Mapped[int] = mapped_column(Integer)
+    depend_action_4: Mapped[int] = mapped_column(Integer)
+    depend_action_5: Mapped[int] = mapped_column(Integer)
+    depend_action_6: Mapped[int] = mapped_column(Integer)
+    depend_action_7: Mapped[int] = mapped_column(Integer)
+    depend_action_8: Mapped[int] = mapped_column(Integer)
+    depend_action_9: Mapped[int] = mapped_column(Integer)
+    depend_action_10: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    icon_type: Mapped[int] = mapped_column(Integer)
+    name: Mapped[Optional[str]] = mapped_column(Text)
 
 
-class SkipBossDatum(DeclarativeBase, Base["SkipBossDatum"]):
+class SkipBossDatum(Base):
     __tablename__ = 'skip_boss_data'
 
-    boss_id: int = Column(Integer, primary_key=True)
-    skip_motion_id: int = Column(Integer, nullable=False)
-    skip_bg_id: int = Column(Integer, nullable=False)
-    skip_position_x: int = Column(Integer, nullable=False)
-    skip_position_y: int = Column(Integer, nullable=False)
-    skip_scale_x: float = Column(Float, nullable=False)
-    skip_scale_y: float = Column(Float, nullable=False)
+    boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    skip_motion_id: Mapped[int] = mapped_column(Integer)
+    skip_bg_id: Mapped[int] = mapped_column(Integer)
+    skip_position_x: Mapped[int] = mapped_column(Integer)
+    skip_position_y: Mapped[int] = mapped_column(Integer)
+    skip_scale_x: Mapped[float] = mapped_column(Float)
+    skip_scale_y: Mapped[float] = mapped_column(Float)
 
 
-class SkipMonsterDatum(DeclarativeBase, Base["SkipMonsterDatum"]):
+class SkipMonsterDatum(Base):
     __tablename__ = 'skip_monster_data'
 
-    quest_id: int = Column(Integer, primary_key=True)
-    area_id: int = Column(Integer, nullable=False)
-    quest_name: str = Column(Text, nullable=False)
-    wave_group_id_1: int = Column(Integer, nullable=False)
-    bg_skip_id: int = Column(Integer, nullable=False)
+    quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    area_id: Mapped[int] = mapped_column(Integer)
+    quest_name: Mapped[str] = mapped_column(Text)
+    wave_group_id_1: Mapped[int] = mapped_column(Integer)
+    bg_skip_id: Mapped[int] = mapped_column(Integer)
 
 
-class SpBattleVoice(DeclarativeBase, Base["SpBattleVoice"]):
+class SpBattleVoice(Base):
     __tablename__ = 'sp_battle_voice'
+    __table_args__ = (
+        Index('sp_battle_voice_0_unit_id', 'unit_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True, nullable=False)
-    unit_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    voice_type: int = Column(Integer, nullable=False)
-    value: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    voice_type: Mapped[int] = mapped_column(Integer)
+    value: Mapped[int] = mapped_column(Integer)
 
 
-class SpDetailVoice(DeclarativeBase, Base["SpDetailVoice"]):
+class SpDetailVoice(Base):
     __tablename__ = 'sp_detail_voice'
 
-    unit_id: int = Column(Integer, primary_key=True)
-    cue_name_1: str = Column(Text, nullable=False)
-    cue_name_2: str = Column(Text, nullable=False)
-    cue_name_3: str = Column(Text, nullable=False)
-    cue_name_4: str = Column(Text, nullable=False)
-    cue_name_5: str = Column(Text, nullable=False)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    cue_name_1: Mapped[str] = mapped_column(Text)
+    cue_name_2: Mapped[str] = mapped_column(Text)
+    cue_name_3: Mapped[str] = mapped_column(Text)
+    cue_name_4: Mapped[str] = mapped_column(Text)
+    cue_name_5: Mapped[str] = mapped_column(Text)
 
 
-class SpLoseVoice(DeclarativeBase, Base["SpLoseVoice"]):
+class SpLoseVoice(Base):
     __tablename__ = 'sp_lose_voice'
 
-    original_unit_id: int = Column(Integer, primary_key=True)
-    unit_id_1: int = Column(Integer, nullable=False)
-    unit_1_pos_x: int = Column(Integer, nullable=False)
-    unit_1_pos_y: int = Column(Integer, nullable=False)
-    unit_1_depth: int = Column(Integer, nullable=False)
-    unit_1_clip: int = Column(Integer, nullable=False)
-    unit_id_2: int = Column(Integer, nullable=False)
-    unit_2_pos_x: int = Column(Integer, nullable=False)
-    unit_2_pos_y: int = Column(Integer, nullable=False)
-    unit_2_depth: int = Column(Integer, nullable=False)
-    unit_2_clip: int = Column(Integer, nullable=False)
-    unit_id_3: int = Column(Integer, nullable=False)
-    unit_3_pos_x: int = Column(Integer, nullable=False)
-    unit_3_pos_y: int = Column(Integer, nullable=False)
-    unit_3_depth: int = Column(Integer, nullable=False)
-    unit_3_clip: int = Column(Integer, nullable=False)
-    unit_only_disp: int = Column(Integer, nullable=False)
-    speaker_unit_id_1: int = Column(Integer, nullable=False)
-    speaker_unit_id_2: int = Column(Integer, nullable=False)
-    speaker_unit_id_3: int = Column(Integer, nullable=False)
-    speaker_unit_id_4: int = Column(Integer, nullable=False)
-    speaker_unit_id_5: int = Column(Integer, nullable=False)
-    speaker_unit_id_6: int = Column(Integer, nullable=False)
-    speaker_unit_id_7: int = Column(Integer, nullable=False)
-    speaker_unit_id_8: int = Column(Integer, nullable=False)
-    speaker_unit_id_9: int = Column(Integer, nullable=False)
-    speaker_unit_id_10: int = Column(Integer, nullable=False)
+    original_unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id_1: Mapped[int] = mapped_column(Integer)
+    unit_1_pos_x: Mapped[int] = mapped_column(Integer)
+    unit_1_pos_y: Mapped[int] = mapped_column(Integer)
+    unit_1_depth: Mapped[int] = mapped_column(Integer)
+    unit_1_clip: Mapped[int] = mapped_column(Integer)
+    unit_id_2: Mapped[int] = mapped_column(Integer)
+    unit_2_pos_x: Mapped[int] = mapped_column(Integer)
+    unit_2_pos_y: Mapped[int] = mapped_column(Integer)
+    unit_2_depth: Mapped[int] = mapped_column(Integer)
+    unit_2_clip: Mapped[int] = mapped_column(Integer)
+    unit_id_3: Mapped[int] = mapped_column(Integer)
+    unit_3_pos_x: Mapped[int] = mapped_column(Integer)
+    unit_3_pos_y: Mapped[int] = mapped_column(Integer)
+    unit_3_depth: Mapped[int] = mapped_column(Integer)
+    unit_3_clip: Mapped[int] = mapped_column(Integer)
+    unit_only_disp: Mapped[int] = mapped_column(Integer)
+    speaker_unit_id_1: Mapped[int] = mapped_column(Integer)
+    speaker_unit_id_2: Mapped[int] = mapped_column(Integer)
+    speaker_unit_id_3: Mapped[int] = mapped_column(Integer)
+    speaker_unit_id_4: Mapped[int] = mapped_column(Integer)
+    speaker_unit_id_5: Mapped[int] = mapped_column(Integer)
+    speaker_unit_id_6: Mapped[int] = mapped_column(Integer)
+    speaker_unit_id_7: Mapped[int] = mapped_column(Integer)
+    speaker_unit_id_8: Mapped[int] = mapped_column(Integer)
+    speaker_unit_id_9: Mapped[int] = mapped_column(Integer)
+    speaker_unit_id_10: Mapped[int] = mapped_column(Integer)
 
 
-class SpLoseVoiceGroup(DeclarativeBase, Base["SpLoseVoiceGroup"]):
+class SpLoseVoiceGroup(Base):
     __tablename__ = 'sp_lose_voice_group'
 
-    group_id: int = Column(Integer, primary_key=True, nullable=False)
-    unit_id: int = Column(Integer, primary_key=True, nullable=False)
-    speaker_unit_id: int = Column(Integer, nullable=False)
+    group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    speaker_unit_id: Mapped[int] = mapped_column(Integer)
 
 
-class SpaceBattleDatum(DeclarativeBase, Base["SpaceBattleDatum"]):
+class SpaceBattleDatum(Base):
     __tablename__ = 'space_battle_data'
 
-    space_battle_id: int = Column(Integer, primary_key=True)
-    space_enemy_id: int = Column(Integer, nullable=False)
-    limit_time: int = Column(Integer, nullable=False)
-    clear_reward_group: int = Column(Integer, nullable=False)
-    background: int = Column(Integer, nullable=False)
-    sheet_id: str = Column(Text, nullable=False)
-    que_id: str = Column(Text, nullable=False)
-    result_boss_position_y: int = Column(Integer, nullable=False)
-    quest_detail_bg_id: int = Column(Integer, nullable=False)
-    quest_detail_bg_position: int = Column(Integer, nullable=False)
-    quest_name: str = Column(Text, nullable=False)
+    space_battle_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    space_enemy_id: Mapped[int] = mapped_column(Integer)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    clear_reward_group: Mapped[int] = mapped_column(Integer)
+    background: Mapped[int] = mapped_column(Integer)
+    sheet_id: Mapped[str] = mapped_column(Text)
+    que_id: Mapped[str] = mapped_column(Text)
+    result_boss_position_y: Mapped[int] = mapped_column(Integer)
+    quest_detail_bg_id: Mapped[int] = mapped_column(Integer)
+    quest_detail_bg_position: Mapped[int] = mapped_column(Integer)
+    quest_name: Mapped[str] = mapped_column(Text)
 
 
-class SpaceSchedule(DeclarativeBase, Base["SpaceSchedule"]):
+class SpaceSchedule(Base):
     __tablename__ = 'space_schedule'
 
-    space_id: int = Column(Integer, primary_key=True)
-    teaser_time: str = Column(Text, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    count_start_time: str = Column(Text, nullable=False)
-    count_end_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    sid: int = Column(Integer, nullable=False)
-    pre_story_id: int = Column(Integer, nullable=False)
+    space_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    teaser_time: Mapped[str] = mapped_column(Text)
+    start_time: Mapped[str] = mapped_column(Text)
+    count_start_time: Mapped[str] = mapped_column(Text)
+    count_end_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    sid: Mapped[int] = mapped_column(Integer)
+    pre_story_id: Mapped[int] = mapped_column(Integer)
 
 
-class SpaceTopDatum(DeclarativeBase, Base["SpaceTopDatum"]):
+class SpaceTopDatum(Base):
     __tablename__ = 'space_top_data'
+    __table_args__ = (
+        Index('space_top_data_0_space_id', 'space_id'),
+        Index('space_top_data_0_story_id', 'story_id')
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    space_id: int = Column(Integer, nullable=False, index=True)
-    space_battle_id: int = Column(Integer, nullable=False)
-    part_flag: int = Column(Integer, nullable=False)
-    story_id: int = Column(Integer, nullable=False, index=True)
-    time_from: str = Column(Text, nullable=False)
-    time_to: str = Column(Text, nullable=False)
-    skip_battle_time: str = Column(Text, nullable=False)
-    name: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    space_id: Mapped[int] = mapped_column(Integer)
+    space_battle_id: Mapped[int] = mapped_column(Integer)
+    part_flag: Mapped[int] = mapped_column(Integer)
+    story_id: Mapped[int] = mapped_column(Integer)
+    time_from: Mapped[str] = mapped_column(Text)
+    time_to: Mapped[str] = mapped_column(Text)
+    skip_battle_time: Mapped[str] = mapped_column(Text)
+    name: Mapped[str] = mapped_column(Text)
 
 
-class SpecialStill(DeclarativeBase, Base["SpecialStill"]):
+class SpecialStill(Base):
     __tablename__ = 'special_still'
 
-    still_id: int = Column(Integer, primary_key=True)
-    type: int = Column(Integer, nullable=False)
-    back_momory_type: int = Column(Integer, nullable=False)
-    value: int = Column(Integer, nullable=False)
+    still_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    type: Mapped[int] = mapped_column(Integer)
+    back_momory_type: Mapped[int] = mapped_column(Integer)
+    value: Mapped[int] = mapped_column(Integer)
 
 
-class SpecialStoryBanner(DeclarativeBase, Base["SpecialStoryBanner"]):
+class SpecialStoryBanner(Base):
     __tablename__ = 'special_story_banner'
+    __table_args__ = (
+        Index('special_story_banner_0_story_group_id', 'story_group_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    story_group_id: int = Column(Integer, nullable=False, index=True)
-    start_time: str = Column(Text, nullable=False)
-    remind_end_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_group_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    remind_end_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class SpecialfesBanner(DeclarativeBase, Base["SpecialfesBanner"]):
+class SpecialfesBanner(Base):
     __tablename__ = 'specialfes_banner'
 
-    gacha_id: int = Column(Integer, primary_key=True)
-    banner_id_1: int = Column(Integer, nullable=False)
-    banner_id_2: int = Column(Integer, nullable=False)
-    banner_id_3: int = Column(Integer, nullable=False)
-    banner_id_4: int = Column(Integer, nullable=False)
-    banner_id_5: int = Column(Integer, nullable=False)
-    banner_id_6: int = Column(Integer, nullable=False)
-    banner_id_7: int = Column(Integer, nullable=False)
-    banner_id_8: int = Column(Integer, nullable=False)
-    banner_id_9: int = Column(Integer, nullable=False)
-    banner_id_10: int = Column(Integer, nullable=False)
+    gacha_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    banner_id_1: Mapped[int] = mapped_column(Integer)
+    banner_id_2: Mapped[int] = mapped_column(Integer)
+    banner_id_3: Mapped[int] = mapped_column(Integer)
+    banner_id_4: Mapped[int] = mapped_column(Integer)
+    banner_id_5: Mapped[int] = mapped_column(Integer)
+    banner_id_6: Mapped[int] = mapped_column(Integer)
+    banner_id_7: Mapped[int] = mapped_column(Integer)
+    banner_id_8: Mapped[int] = mapped_column(Integer)
+    banner_id_9: Mapped[int] = mapped_column(Integer)
+    banner_id_10: Mapped[int] = mapped_column(Integer)
 
 
-class SpskillLabelDatum(DeclarativeBase, Base["SpskillLabelDatum"]):
+class SpotDramaScriptDatum(Base):
+    __tablename__ = 'spot_drama_script_data'
+    __table_args__ = (
+        Index('spot_drama_script_data_0_drama_id', 'drama_id'),
+    )
+
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
+
+
+class SpskillLabelDatum(Base):
     __tablename__ = 'spskill_label_data'
 
-    unit_id: int = Column(Integer, primary_key=True)
-    normal_label_text: str = Column(Text, nullable=False)
-    sp_label_text: str = Column(Text, nullable=False)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    normal_label_text: Mapped[str] = mapped_column(Text)
+    sp_label_text: Mapped[str] = mapped_column(Text)
 
 
-class SpskillLvInitializeDatum(DeclarativeBase, Base["SpskillLvInitializeDatum"]):
+class SpskillLvInitializeDatum(Base):
     __tablename__ = 'spskill_lv_initialize_data'
 
-    initialize_skill_id: int = Column(Integer, primary_key=True)
-    base_skill_id: int = Column(Integer, nullable=False)
+    initialize_skill_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    base_skill_id: Mapped[int] = mapped_column(Integer)
 
-class SrtAction(DeclarativeBase, Base["SrtAction"]):
+
+class SreAddTimesDatum(Base):
+    __tablename__ = 'sre_add_times_data'
+    __table_args__ = (
+        Index('sre_add_times_data_0_sre_id', 'sre_id'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    sre_id: Mapped[int] = mapped_column(Integer)
+    add_times: Mapped[int] = mapped_column(Integer)
+    add_times_time: Mapped[str] = mapped_column(Text)
+
+
+class SreBattleBonus(Base):
+    __tablename__ = 'sre_battle_bonus'
+    __table_args__ = (
+        Index('sre_battle_bonus_0_sre_id_1_sre_boss_id', 'sre_id', 'sre_boss_id'),
+        Index('sre_battle_bonus_0_sre_id_1_type', 'sre_id', 'type'),
+        Index('sre_battle_bonus_0_type', 'type'),
+        Index('sre_battle_bonus_0_type_1_sre_boss_id', 'type', 'sre_boss_id')
+    )
+
+    sre_battle_bonus_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    type: Mapped[int] = mapped_column(Integer)
+    sre_boss_id: Mapped[int] = mapped_column(Integer)
+    sre_id: Mapped[int] = mapped_column(Integer)
+    phase: Mapped[int] = mapped_column(Integer)
+    condition_hp: Mapped[str] = mapped_column(Text)
+    condition_time: Mapped[int] = mapped_column(Integer)
+    sre_battle_effect_id: Mapped[int] = mapped_column(Integer)
+    duration: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
+    battle_bonus_story_id: Mapped[int] = mapped_column(Integer)
+
+
+class SreBattleBonusEffect(Base):
+    __tablename__ = 'sre_battle_bonus_effect'
+
+    sre_battle_effect_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    enemy_id: Mapped[int] = mapped_column(Integer)
+    icon_id: Mapped[int] = mapped_column(Integer)
+    text_id: Mapped[int] = mapped_column(Integer)
+    skill_id: Mapped[int] = mapped_column(Integer)
+    target_type: Mapped[int] = mapped_column(Integer)
+
+
+class SreBossDatum(Base):
+    __tablename__ = 'sre_boss_data'
+    __table_args__ = (
+        Index('sre_boss_data_0_sre_id', 'sre_id'),
+        Index('sre_boss_data_0_sre_id_1_phase', 'sre_id', 'phase')
+    )
+
+    sre_boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    sre_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    phase: Mapped[int] = mapped_column(Integer)
+    name: Mapped[str] = mapped_column(Text)
+    battle_start_story_id: Mapped[int] = mapped_column(Integer)
+    battle_finish_story_id: Mapped[int] = mapped_column(Integer)
+    disappearance_story_id: Mapped[int] = mapped_column(Integer)
+    all_disappearance_story_id: Mapped[int] = mapped_column(Integer)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    max_raid_hp: Mapped[str] = mapped_column(Text)
+    reward_image_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_image_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_image_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    reward_image_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    reward_image_5: Mapped[int] = mapped_column(Integer)
+    reward_count_5: Mapped[int] = mapped_column(Integer)
+    challenge_reward_group_id: Mapped[int] = mapped_column(Integer)
+    challenge_odds_group_id: Mapped[int] = mapped_column(Integer)
+    expel_reward_group_id: Mapped[int] = mapped_column(Integer)
+    extermination_reward_group_id: Mapped[int] = mapped_column(Integer)
+    background: Mapped[int] = mapped_column(Integer)
+    bg_position: Mapped[int] = mapped_column(Integer)
+    enemy_position_x_1: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_1: Mapped[int] = mapped_column(Integer)
+    enemy_size_1: Mapped[float] = mapped_column(Float)
+    result_boss_position_y_1: Mapped[float] = mapped_column(Float)
+    lane_priority_1: Mapped[int] = mapped_column(Integer)
+    enemy_position_x_2: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_2: Mapped[int] = mapped_column(Integer)
+    enemy_size_2: Mapped[float] = mapped_column(Float)
+    result_boss_position_y_2: Mapped[float] = mapped_column(Float)
+    lane_priority_2: Mapped[int] = mapped_column(Integer)
+    enemy_position_x_3: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_3: Mapped[int] = mapped_column(Integer)
+    enemy_size_3: Mapped[float] = mapped_column(Float)
+    result_boss_position_y_3: Mapped[float] = mapped_column(Float)
+    lane_priority_3: Mapped[int] = mapped_column(Integer)
+    enemy_position_x_4: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_4: Mapped[int] = mapped_column(Integer)
+    enemy_size_4: Mapped[float] = mapped_column(Float)
+    result_boss_position_y_4: Mapped[float] = mapped_column(Float)
+    lane_priority_4: Mapped[int] = mapped_column(Integer)
+    enemy_position_x_5: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_5: Mapped[int] = mapped_column(Integer)
+    enemy_size_5: Mapped[float] = mapped_column(Float)
+    result_boss_position_y_5: Mapped[float] = mapped_column(Float)
+    lane_priority_5: Mapped[int] = mapped_column(Integer)
+    wave_bgm: Mapped[str] = mapped_column(Text)
+    bonus_max: Mapped[int] = mapped_column(Integer)
+    deck_number: Mapped[int] = mapped_column(Integer)
+
+
+class SreEffect(Base):
+    __tablename__ = 'sre_effect'
+
+    effect_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    bonus_1: Mapped[int] = mapped_column(Integer)
+    bonus_2: Mapped[int] = mapped_column(Integer)
+    bonus_3: Mapped[int] = mapped_column(Integer)
+    bonus_4: Mapped[int] = mapped_column(Integer)
+    bonus_5: Mapped[int] = mapped_column(Integer)
+
+
+class SreEffectiveUnit(Base):
+    __tablename__ = 'sre_effective_unit'
+    __table_args__ = (
+        Index('sre_effective_unit_0_sre_boss_id_1_sre_id', 'sre_boss_id', 'sre_id'),
+    )
+
+    sre_boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    sre_id: Mapped[int] = mapped_column(Integer)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    effect_id: Mapped[int] = mapped_column(Integer)
+    support_effect_id: Mapped[int] = mapped_column(Integer)
+
+
+class SreEnemyParameter(Base):
+    __tablename__ = 'sre_enemy_parameter'
+
+    enemy_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    name: Mapped[str] = mapped_column(Text)
+    level: Mapped[int] = mapped_column(Integer)
+    rarity: Mapped[int] = mapped_column(Integer)
+    promotion_level: Mapped[int] = mapped_column(Integer)
+    hp: Mapped[int] = mapped_column(Integer)
+    atk: Mapped[int] = mapped_column(Integer)
+    magic_str: Mapped[int] = mapped_column(Integer)
+    def_: Mapped[int] = mapped_column('def', Integer)
+    magic_def: Mapped[int] = mapped_column(Integer)
+    physical_critical: Mapped[int] = mapped_column(Integer)
+    magic_critical: Mapped[int] = mapped_column(Integer)
+    wave_hp_recovery: Mapped[int] = mapped_column(Integer)
+    wave_energy_recovery: Mapped[int] = mapped_column(Integer)
+    dodge: Mapped[int] = mapped_column(Integer)
+    physical_penetrate: Mapped[int] = mapped_column(Integer)
+    magic_penetrate: Mapped[int] = mapped_column(Integer)
+    life_steal: Mapped[int] = mapped_column(Integer)
+    hp_recovery_rate: Mapped[int] = mapped_column(Integer)
+    energy_recovery_rate: Mapped[int] = mapped_column(Integer)
+    energy_reduce_rate: Mapped[int] = mapped_column(Integer)
+    union_burst_level: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_1: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_2: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_3: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_4: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_5: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_6: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_7: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_8: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_9: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_10: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_1: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_2: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_3: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_4: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_5: Mapped[int] = mapped_column(Integer)
+    resist_status_id: Mapped[int] = mapped_column(Integer)
+    resist_variation_id: Mapped[int] = mapped_column(Integer)
+    accuracy: Mapped[int] = mapped_column(Integer)
+    unique_equipment_flag_1: Mapped[int] = mapped_column(Integer)
+    break_durability: Mapped[int] = mapped_column(Integer)
+    virtual_hp: Mapped[int] = mapped_column(Integer)
+
+
+class SreExterminationReward(Base):
+    __tablename__ = 'sre_extermination_reward'
+
+    extermination_reward_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_count_5: Mapped[int] = mapped_column(Integer)
+
+
+class SreMissionCategoryDatum(Base):
+    __tablename__ = 'sre_mission_category_data'
+
+    category_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+
+
+class SreMissionDatum(Base):
+    __tablename__ = 'sre_mission_data'
+    __table_args__ = (
+        Index('sre_mission_data_0_sre_id', 'sre_id'),
+        Index('sre_mission_data_0_sre_id_1_category_id', 'sre_id', 'category_id')
+    )
+
+    sre_mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    sre_id: Mapped[int] = mapped_column(Integer)
+    category_id: Mapped[int] = mapped_column(Integer)
+    disp_group: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    mission_condition: Mapped[int] = mapped_column(Integer)
+    sre_boss_id: Mapped[int] = mapped_column(Integer)
+    condition_value: Mapped[int] = mapped_column(Integer)
+    condition_num: Mapped[str] = mapped_column(Text)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+
+
+class SreMissionRewardDatum(Base):
+    __tablename__ = 'sre_mission_reward_data'
+    __table_args__ = (
+        Index('sre_mission_reward_data_0_mission_reward_id', 'mission_reward_id'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_num: Mapped[int] = mapped_column(Integer)
+
+
+class SreQuestDifficultyDatum(Base):
+    __tablename__ = 'sre_quest_difficulty_data'
+
+    sre_boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    difficulty: Mapped[int] = mapped_column(Integer, primary_key=True)
+    sre_id: Mapped[int] = mapped_column(Integer)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    icon_id: Mapped[int] = mapped_column(Integer)
+
+
+class SreSchedule(Base):
+    __tablename__ = 'sre_schedule'
+
+    sre_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    teaser_time: Mapped[str] = mapped_column(Text)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    count_start_time: Mapped[str] = mapped_column(Text)
+    close_time: Mapped[str] = mapped_column(Text)
+    story_id: Mapped[int] = mapped_column(Integer)
+    close_story_condition_id: Mapped[int] = mapped_column(Integer)
+    close_story_id: Mapped[int] = mapped_column(Integer)
+    top_bgm: Mapped[str] = mapped_column(Text)
+    top_bg: Mapped[str] = mapped_column(Text)
+
+
+class SreWaveGroupDatum(Base):
+    __tablename__ = 'sre_wave_group_data'
+    __table_args__ = (
+        Index('sre_wave_group_data_0_wave_group_id', 'wave_group_id'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    odds: Mapped[int] = mapped_column(Integer)
+    enemy_id_1: Mapped[int] = mapped_column(Integer)
+    drop_gold_1: Mapped[int] = mapped_column(Integer)
+    drop_reward_id_1: Mapped[int] = mapped_column(Integer)
+    enemy_id_2: Mapped[int] = mapped_column(Integer)
+    drop_gold_2: Mapped[int] = mapped_column(Integer)
+    drop_reward_id_2: Mapped[int] = mapped_column(Integer)
+    enemy_id_3: Mapped[int] = mapped_column(Integer)
+    drop_gold_3: Mapped[int] = mapped_column(Integer)
+    drop_reward_id_3: Mapped[int] = mapped_column(Integer)
+    enemy_id_4: Mapped[int] = mapped_column(Integer)
+    drop_gold_4: Mapped[int] = mapped_column(Integer)
+    drop_reward_id_4: Mapped[int] = mapped_column(Integer)
+    enemy_id_5: Mapped[int] = mapped_column(Integer)
+    drop_gold_5: Mapped[int] = mapped_column(Integer)
+    drop_reward_id_5: Mapped[int] = mapped_column(Integer)
+    guest_enemy_id: Mapped[int] = mapped_column(Integer)
+    guest_lane: Mapped[int] = mapped_column(Integer)
+
+
+class SrtAction(Base):
     __tablename__ = 'srt_action'
 
-    action_name: str = Column(Text, primary_key=True)
-    inori_action: str = Column(Text, nullable=False)
-    dragon_action: str = Column(Text, nullable=False)
-    kaya_action: str = Column(Text, nullable=False)
-    homare_action: str = Column(Text, nullable=False)
-    talk_text_type: int = Column(Integer, nullable=False)
-    talk_text: str = Column(Text, nullable=False)
-    voice_list: str = Column(Text, nullable=False)
+    action_name: Mapped[str] = mapped_column(Text, primary_key=True)
+    inori_action: Mapped[str] = mapped_column(Text)
+    dragon_action: Mapped[str] = mapped_column(Text)
+    kaya_action: Mapped[str] = mapped_column(Text)
+    homare_action: Mapped[str] = mapped_column(Text)
+    talk_text_type: Mapped[int] = mapped_column(Integer)
+    talk_text: Mapped[str] = mapped_column(Text)
+    voice_list: Mapped[str] = mapped_column(Text)
 
 
-class SrtPanel(DeclarativeBase, Base["SrtPanel"]):
+class SrtPanel(Base):
     __tablename__ = 'srt_panel'
+    __table_args__ = (
+        Index('srt_panel_0_panel_id', 'panel_id'),
+        Index('srt_panel_0_version', 'version')
+    )
 
-    reading_id: int = Column(Integer, primary_key=True)
-    reading: str = Column(Text, nullable=False)
-    read_type: int = Column(Integer, nullable=False)
-    panel_id: int = Column(Integer, nullable=False, index=True)
-    detail_text: str = Column(Text, nullable=False)
-    version: int = Column(Integer, nullable=False, index=True)
-    head_symbol: str = Column(Text, nullable=False)
-    tail_symbol: str = Column(Text, nullable=False)
+    reading_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reading: Mapped[str] = mapped_column(Text)
+    read_type: Mapped[int] = mapped_column(Integer)
+    panel_id: Mapped[int] = mapped_column(Integer)
+    detail_text: Mapped[str] = mapped_column(Text)
+    version: Mapped[int] = mapped_column(Integer)
+    head_symbol: Mapped[str] = mapped_column(Text)
+    tail_symbol: Mapped[str] = mapped_column(Text)
 
 
-class SrtReward(DeclarativeBase, Base["SrtReward"]):
+class SrtReward(Base):
     __tablename__ = 'srt_reward'
 
-    id: int = Column(Integer, primary_key=True)
-    srt_score: int = Column(Integer, nullable=False)
-    mission_detail: str = Column(Text, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_count_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_count_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_count_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_count_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_count_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    srt_score: Mapped[int] = mapped_column(Integer)
+    mission_detail: Mapped[str] = mapped_column(Text)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_count_5: Mapped[int] = mapped_column(Integer)
 
 
-class SrtScore(DeclarativeBase, Base["SrtScore"]):
+class SrtScore(Base):
     __tablename__ = 'srt_score'
 
-    difficulty_level: int = Column(Integer, primary_key=True)
-    coefficient_read_type_1: int = Column(Integer, nullable=False)
-    coefficient_read_type_2: int = Column(Integer, nullable=False)
-    coefficient_read_type_3: int = Column(Integer, nullable=False)
-    coefficient_count_priconne_panel: int = Column(Integer, nullable=False)
-    coefficient_fever: int = Column(Integer, nullable=False)
-    constant_turn_bonus: int = Column(Integer, nullable=False)
-    coefficient_turn_bonus: int = Column(Integer, nullable=False)
-    coefficient_avg_answer_time: int = Column(Integer, nullable=False)
-    constant_wrong_num: int = Column(Integer, nullable=False)
-    coefficient_wrong_num: int = Column(Integer, nullable=False)
+    difficulty_level: Mapped[int] = mapped_column(Integer, primary_key=True)
+    coefficient_read_type_1: Mapped[int] = mapped_column(Integer)
+    coefficient_read_type_2: Mapped[int] = mapped_column(Integer)
+    coefficient_read_type_3: Mapped[int] = mapped_column(Integer)
+    coefficient_count_priconne_panel: Mapped[int] = mapped_column(Integer)
+    coefficient_fever: Mapped[int] = mapped_column(Integer)
+    constant_turn_bonus: Mapped[int] = mapped_column(Integer)
+    coefficient_turn_bonus: Mapped[int] = mapped_column(Integer)
+    coefficient_avg_answer_time: Mapped[int] = mapped_column(Integer)
+    constant_wrong_num: Mapped[int] = mapped_column(Integer)
+    coefficient_wrong_num: Mapped[int] = mapped_column(Integer)
 
 
-class SrtTopTalk(DeclarativeBase, Base["SrtTopTalk"]):
+class SrtTopTalk(Base):
     __tablename__ = 'srt_top_talk'
+    __table_args__ = (
+        Index('srt_top_talk_0_talk_id', 'talk_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    talk_id: int = Column(Integer, nullable=False, index=True)
-    chara_index: int = Column(Integer, nullable=False)
-    talk_text: str = Column(Text, nullable=False)
-    sheet_name: str = Column(Text, nullable=False)
-    cue_name: str = Column(Text, nullable=False)
-    direction: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    talk_id: Mapped[int] = mapped_column(Integer)
+    chara_index: Mapped[int] = mapped_column(Integer)
+    talk_text: Mapped[str] = mapped_column(Text)
+    sheet_name: Mapped[str] = mapped_column(Text)
+    cue_name: Mapped[str] = mapped_column(Text)
+    direction: Mapped[int] = mapped_column(Integer)
 
 
-class SspStoryDatum(DeclarativeBase, Base["SspStoryDatum"]):
+class SspStoryDatum(Base):
     __tablename__ = 'ssp_story_data'
+    __table_args__ = (
+        Index('ssp_story_data_0_contents_type', 'contents_type'),
+        Index('ssp_story_data_0_original_event_id', 'original_event_id')
+    )
 
-    sub_story_id: int = Column(Integer, primary_key=True)
-    original_event_id: int = Column(Integer, nullable=False, index=True)
-    title: str = Column(Text, nullable=False)
-    contents_type: int = Column(Integer, nullable=False, index=True)
-    condition_quest_id: int = Column(Integer, nullable=False)
-    condition_boss_id: int = Column(Integer, nullable=False)
-    read_condition: int = Column(Integer, nullable=False)
+    sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    original_event_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    contents_type: Mapped[int] = mapped_column(Integer)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    condition_boss_id: Mapped[int] = mapped_column(Integer)
+    read_condition: Mapped[int] = mapped_column(Integer)
 
 
-class Stamp(DeclarativeBase, Base["Stamp"]):
+class Stamp(Base):
     __tablename__ = 'stamp'
 
-    stamp_id: int = Column(Integer, primary_key=True)
-    disp_order: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    start_date: str = Column(Text, nullable=False)
-    end_date: str = Column(Text, nullable=False)
+    stamp_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    disp_order: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    start_date: Mapped[str] = mapped_column(Text)
+    end_date: Mapped[str] = mapped_column(Text)
 
 
-class StationaryMissionDatum(DeclarativeBase, Base["StationaryMissionDatum"]):
+class StationaryMissionDatum(Base):
     __tablename__ = 'stationary_mission_data'
 
-    stationary_mission_id: int = Column(Integer, primary_key=True)
-    disp_group: int = Column(Integer, nullable=False)
-    category_icon: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    mission_condition: int = Column(Integer, nullable=False)
-    condition_value_1: int = Column(Integer)
-    condition_value_2: int = Column(Integer)
-    condition_value_3: int = Column(Integer)
-    condition_value_4: int = Column(Integer)
-    condition_value_5: int = Column(Integer)
-    condition_value_6: int = Column(Integer)
-    condition_value_7: int = Column(Integer)
-    condition_value_8: int = Column(Integer)
-    condition_value_9: int = Column(Integer)
-    condition_value_10: int = Column(Integer)
-    condition_num: int = Column(Integer, nullable=False)
-    mission_reward_id: int = Column(Integer, nullable=False)
-    system_id: int = Column(Integer)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    min_level: int = Column(Integer, nullable=False)
-    max_level: int = Column(Integer, nullable=False)
-    title_color_id: int = Column(Integer, nullable=False)
-    visible_flag: int = Column(Integer, nullable=False)
+    stationary_mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    disp_group: Mapped[int] = mapped_column(Integer)
+    category_icon: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    mission_condition: Mapped[int] = mapped_column(Integer)
+    condition_num: Mapped[int] = mapped_column(Integer)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    min_level: Mapped[int] = mapped_column(Integer)
+    max_level: Mapped[int] = mapped_column(Integer)
+    title_color_id: Mapped[int] = mapped_column(Integer)
+    visible_flag: Mapped[int] = mapped_column(Integer)
+    condition_value_1: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_2: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_3: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_4: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_5: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_6: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_7: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_8: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_9: Mapped[Optional[int]] = mapped_column(Integer)
+    condition_value_10: Mapped[Optional[int]] = mapped_column(Integer)
+    system_id: Mapped[Optional[int]] = mapped_column(Integer)
 
 
-class Still(DeclarativeBase, Base["Still"]):
+class Still(Base):
     __tablename__ = 'still'
+    __table_args__ = (
+        Index('still_0_still_group_id', 'still_group_id'),
+        Index('still_0_story_id', 'story_id')
+    )
 
-    still_id: int = Column(Integer, primary_key=True)
-    story_group_id: int = Column(Integer, nullable=False)
-    story_id: int = Column(Integer, nullable=False, index=True)
-    still_group_id: int = Column(Integer, nullable=False, index=True)
-    vertical_still_flg: int = Column(Integer, nullable=False)
-    position_y: int = Column(Integer, nullable=False)
-    unit_id_1: int = Column(Integer, nullable=False)
-    unit_id_2: int = Column(Integer, nullable=False)
-    unit_id_3: int = Column(Integer, nullable=False)
-    unit_id_4: int = Column(Integer, nullable=False)
-    unit_id_5: int = Column(Integer, nullable=False)
-    unit_id_6: int = Column(Integer, nullable=False)
-    unit_id_7: int = Column(Integer, nullable=False)
-    unit_id_8: int = Column(Integer, nullable=False)
-    unit_id_9: int = Column(Integer, nullable=False)
-    unit_id_10: int = Column(Integer, nullable=False)
-    facial_id: int = Column(Integer, nullable=False)
-    album_ignore: int = Column(Integer, nullable=False)
-    my_page_flag: int = Column(Integer, nullable=False)
-    scroll_direction: int = Column(Integer, nullable=False)
+    still_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_group_id: Mapped[int] = mapped_column(Integer)
+    story_id: Mapped[int] = mapped_column(Integer)
+    still_group_id: Mapped[int] = mapped_column(Integer)
+    vertical_still_flg: Mapped[int] = mapped_column(Integer)
+    position_y: Mapped[int] = mapped_column(Integer)
+    unit_id_1: Mapped[int] = mapped_column(Integer)
+    unit_id_2: Mapped[int] = mapped_column(Integer)
+    unit_id_3: Mapped[int] = mapped_column(Integer)
+    unit_id_4: Mapped[int] = mapped_column(Integer)
+    unit_id_5: Mapped[int] = mapped_column(Integer)
+    unit_id_6: Mapped[int] = mapped_column(Integer)
+    unit_id_7: Mapped[int] = mapped_column(Integer)
+    unit_id_8: Mapped[int] = mapped_column(Integer)
+    unit_id_9: Mapped[int] = mapped_column(Integer)
+    unit_id_10: Mapped[int] = mapped_column(Integer)
+    facial_id: Mapped[int] = mapped_column(Integer)
+    album_ignore: Mapped[int] = mapped_column(Integer)
+    my_page_flag: Mapped[int] = mapped_column(Integer)
+    scroll_direction: Mapped[int] = mapped_column(Integer)
 
 
-class StoryCharacterMask(DeclarativeBase, Base["StoryCharacterMask"]):
+class StoryBulkSkip(Base):
+    __tablename__ = 'story_bulk_skip'
+
+    bulk_skip_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_id_from: Mapped[int] = mapped_column(Integer)
+    story_id_to: Mapped[int] = mapped_column(Integer)
+    release_level: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    balloon_sprite_name: Mapped[str] = mapped_column(Text)
+    label_sprite_name: Mapped[str] = mapped_column(Text)
+    button_sprite_name: Mapped[str] = mapped_column(Text)
+
+
+class StoryCharacterMask(Base):
     __tablename__ = 'story_character_mask'
 
-    chara_id: int = Column(Integer, primary_key=True)
-    offset: float = Column(Float, nullable=False)
-    size: float = Column(Float, nullable=False)
-    softness: float = Column(Float, nullable=False)
+    chara_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    offset: Mapped[float] = mapped_column(Float)
+    size: Mapped[float] = mapped_column(Float)
+    softness: Mapped[float] = mapped_column(Float)
 
 
-class StoryDatum(DeclarativeBase, Base["StoryDatum"]):
+class StoryDatum(Base):
     __tablename__ = 'story_data'
 
-    story_group_id: int = Column(Integer, primary_key=True)
-    story_type: int = Column(Integer, nullable=False)
-    value: int = Column(Integer, nullable=False)
-    title: str = Column(Text, nullable=False)
-    thumbnail_id: int = Column(Integer, nullable=False)
-    disp_order: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    order: int = Column(Integer, nullable=False)
-    condition_free_flag: int = Column(Integer, nullable=False)
-    gojuon_order: int = Column(Integer, nullable=False)
+    story_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_type: Mapped[int] = mapped_column(Integer)
+    value: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    thumbnail_id: Mapped[int] = mapped_column(Integer)
+    disp_order: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    order: Mapped[int] = mapped_column(Integer)
+    condition_free_flag: Mapped[int] = mapped_column(Integer)
+    gojuon_order: Mapped[int] = mapped_column(Integer)
 
 
-class StoryDetail(DeclarativeBase, Base["StoryDetail"]):
+class StoryDetail(Base):
     __tablename__ = 'story_detail'
+    __table_args__ = (
+        Index('story_detail_0_unlock_quest_id', 'unlock_quest_id'),
+    )
 
-    story_id: int = Column(Integer, primary_key=True)
-    story_group_id: int = Column(Integer, nullable=False)
-    title: str = Column(Text, nullable=False)
-    sub_title: str = Column(Text, nullable=False)
-    visible_type: int = Column(Integer, nullable=False)
-    story_end: int = Column(Integer, nullable=False)
-    pre_story_id: int = Column(Integer, nullable=False)
-    force_unlock_time: str = Column(Text, nullable=False)
-    pre_story_id_2: int = Column(Integer, nullable=False)
-    force_unlock_time_2: str = Column(Text, nullable=False)
-    love_level: int = Column(Integer, nullable=False)
-    requirement_id: int = Column(Integer, nullable=False)
-    unlock_quest_id: int = Column(Integer, nullable=False)
-    story_quest_id: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_value_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_value_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_value_3: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_group_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    sub_title: Mapped[str] = mapped_column(Text)
+    visible_type: Mapped[int] = mapped_column(Integer)
+    story_end: Mapped[int] = mapped_column(Integer)
+    pre_story_id: Mapped[int] = mapped_column(Integer)
+    force_unlock_time: Mapped[str] = mapped_column(Text)
+    pre_story_id_2: Mapped[int] = mapped_column(Integer)
+    force_unlock_time_2: Mapped[str] = mapped_column(Text)
+    love_level: Mapped[int] = mapped_column(Integer)
+    requirement_id: Mapped[int] = mapped_column(Integer)
+    unlock_quest_id: Mapped[int] = mapped_column(Integer)
+    story_quest_id: Mapped[int] = mapped_column(Integer)
+    lock_all_text: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_value_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_value_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_value_3: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class StoryQuestDatum(DeclarativeBase, Base["StoryQuestDatum"]):
+class StoryQuestDatum(Base):
     __tablename__ = 'story_quest_data'
 
-    story_quest_id: int = Column(Integer, primary_key=True)
-    story_id: int = Column(Integer, nullable=False)
-    quest_name: str = Column(Text, nullable=False)
-    limit_time: int = Column(Integer, nullable=False)
-    background_1: int = Column(Integer, nullable=False)
-    wave_group_id_1: int = Column(Integer, nullable=False)
-    wave_bgm_sheet_id_1: str = Column(Text, nullable=False)
-    wave_bgm_que_id_1: str = Column(Text, nullable=False)
-    background_2: int = Column(Integer, nullable=False)
-    wave_group_id_2: int = Column(Integer, nullable=False)
-    wave_bgm_sheet_id_2: str = Column(Text, nullable=False)
-    wave_bgm_que_id_2: str = Column(Text, nullable=False)
-    background_3: int = Column(Integer, nullable=False)
-    wave_group_id_3: int = Column(Integer, nullable=False)
-    wave_bgm_sheet_id_3: str = Column(Text, nullable=False)
-    wave_bgm_que_id_3: str = Column(Text, nullable=False)
-    guest_unit_1: int = Column(Integer, nullable=False)
-    guest_unit_2: int = Column(Integer, nullable=False)
-    guest_unit_3: int = Column(Integer, nullable=False)
-    guest_unit_4: int = Column(Integer, nullable=False)
-    guest_unit_5: int = Column(Integer, nullable=False)
+    story_quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_id: Mapped[int] = mapped_column(Integer)
+    quest_name: Mapped[str] = mapped_column(Text)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    background_1: Mapped[int] = mapped_column(Integer)
+    wave_group_id_1: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_1: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_1: Mapped[str] = mapped_column(Text)
+    background_2: Mapped[int] = mapped_column(Integer)
+    wave_group_id_2: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_2: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_2: Mapped[str] = mapped_column(Text)
+    background_3: Mapped[int] = mapped_column(Integer)
+    wave_group_id_3: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_3: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_3: Mapped[str] = mapped_column(Text)
+    guest_unit_1: Mapped[int] = mapped_column(Integer)
+    guest_unit_2: Mapped[int] = mapped_column(Integer)
+    guest_unit_3: Mapped[int] = mapped_column(Integer)
+    guest_unit_4: Mapped[int] = mapped_column(Integer)
+    guest_unit_5: Mapped[int] = mapped_column(Integer)
 
 
-class SvdDramaScript(DeclarativeBase, Base["SvdDramaScript"]):
+class SvdDramaScript(Base):
     __tablename__ = 'svd_drama_script'
+    __table_args__ = (
+        Index('svd_drama_script_0_drama_id', 'drama_id'),
+    )
 
-    command_id: int = Column(Integer, primary_key=True)
-    drama_id: int = Column(Integer, nullable=False, index=True)
-    command_type: int = Column(Integer, nullable=False)
-    param_01: str = Column(Text, nullable=False)
-    param_02: str = Column(Text, nullable=False)
-    param_03: str = Column(Text, nullable=False)
-    param_04: str = Column(Text, nullable=False)
-    param_05: str = Column(Text, nullable=False)
-    param_06: str = Column(Text, nullable=False)
-    param_07: str = Column(Text, nullable=False)
-    param_08: str = Column(Text, nullable=False)
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
 
 
-class SvdStoryDatum(DeclarativeBase, Base["SvdStoryDatum"]):
+class SvdStoryDatum(Base):
     __tablename__ = 'svd_story_data'
+    __table_args__ = (
+        Index('svd_story_data_0_original_event_id', 'original_event_id'),
+    )
 
-    sub_story_id: int = Column(Integer, primary_key=True)
-    original_event_id: int = Column(Integer, nullable=False, index=True)
-    title: str = Column(Text, nullable=False)
-    read_condition_time: str = Column(Text, nullable=False)
-    condition_quest_id: int = Column(Integer, nullable=False)
-    condition_boss_id: int = Column(Integer, nullable=False)
-    read_condition: int = Column(Integer, nullable=False)
+    sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    original_event_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    read_condition_time: Mapped[str] = mapped_column(Text)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    condition_boss_id: Mapped[int] = mapped_column(Integer)
+    read_condition: Mapped[int] = mapped_column(Integer)
 
 
-class SvdStoryScript(DeclarativeBase, Base["SvdStoryScript"]):
+class SvdStoryScript(Base):
     __tablename__ = 'svd_story_script'
+    __table_args__ = (
+        Index('svd_story_script_0_story_id', 'story_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    story_id: int = Column(Integer, nullable=False, index=True)
-    seq_num: int = Column(Integer, nullable=False)
-    type: int = Column(Integer, nullable=False)
-    line_num: int = Column(Integer, nullable=False)
-    start_pos: int = Column(Integer, nullable=False)
-    end_pos: int = Column(Integer, nullable=False)
-    seek_time: float = Column(Float, nullable=False)
-    sheet_name: str = Column(Text, nullable=False)
-    cue_name: str = Column(Text, nullable=False)
-    command: int = Column(Integer, nullable=False)
-    command_param: float = Column(Float, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_id: Mapped[int] = mapped_column(Integer)
+    seq_num: Mapped[int] = mapped_column(Integer)
+    type: Mapped[int] = mapped_column(Integer)
+    line_num: Mapped[int] = mapped_column(Integer)
+    start_pos: Mapped[int] = mapped_column(Integer)
+    end_pos: Mapped[int] = mapped_column(Integer)
+    seek_time: Mapped[float] = mapped_column(Float)
+    sheet_name: Mapped[str] = mapped_column(Text)
+    cue_name: Mapped[str] = mapped_column(Text)
+    command: Mapped[int] = mapped_column(Integer)
+    command_param: Mapped[float] = mapped_column(Float)
 
 
-class TaqCompletionReward(DeclarativeBase, Base["TaqCompletionReward"]):
+class TaqCompletionRewards(Base):
     __tablename__ = 'taq_completion_rewards'
 
-    id: int = Column(Integer, primary_key=True)
-    completion_num: int = Column(Integer, nullable=False)
-    mission_detail: str = Column(Text, nullable=False)
-    emblem_id: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    completion_num: Mapped[int] = mapped_column(Integer)
+    mission_detail: Mapped[str] = mapped_column(Text)
+    emblem_id: Mapped[int] = mapped_column(Integer)
 
 
-class TaqDatum(DeclarativeBase, Base["TaqDatum"]):
+class TaqDatum(Base):
     __tablename__ = 'taq_data'
 
-    taq_no: int = Column(Integer, primary_key=True)
-    genre: int = Column(Integer, nullable=False)
-    taq_type: int = Column(Integer, nullable=False)
-    difficulty: int = Column(Integer, nullable=False)
-    word: str = Column(Text, nullable=False)
-    chunk: str = Column(Text, nullable=False)
-    detail: str = Column(Text, nullable=False)
-    detail_2: str = Column(Text, nullable=False)
-    assist_detail: str = Column(Text, nullable=False)
-    image_id: int = Column(Integer, nullable=False)
-    char_no_1: int = Column(Integer, nullable=False)
-    char_no_2: int = Column(Integer, nullable=False)
-    char_no_3: int = Column(Integer, nullable=False)
-    char_no_4: int = Column(Integer, nullable=False)
-    char_no_5: int = Column(Integer, nullable=False)
-    input_type_1: int = Column(Integer, nullable=False)
-    input_type_2: int = Column(Integer, nullable=False)
-    input_type_3: int = Column(Integer, nullable=False)
-    input_type_4: int = Column(Integer, nullable=False)
-    input_type_5: int = Column(Integer, nullable=False)
+    taq_no: Mapped[int] = mapped_column(Integer, primary_key=True)
+    genre: Mapped[int] = mapped_column(Integer)
+    taq_type: Mapped[int] = mapped_column(Integer)
+    difficulty: Mapped[int] = mapped_column(Integer)
+    word: Mapped[str] = mapped_column(Text)
+    chunk: Mapped[str] = mapped_column(Text)
+    detail: Mapped[str] = mapped_column(Text)
+    detail_2: Mapped[str] = mapped_column(Text)
+    assist_detail: Mapped[str] = mapped_column(Text)
+    image_id: Mapped[int] = mapped_column(Integer)
+    char_no_1: Mapped[int] = mapped_column(Integer)
+    char_no_2: Mapped[int] = mapped_column(Integer)
+    char_no_3: Mapped[int] = mapped_column(Integer)
+    char_no_4: Mapped[int] = mapped_column(Integer)
+    char_no_5: Mapped[int] = mapped_column(Integer)
+    input_type_1: Mapped[int] = mapped_column(Integer)
+    input_type_2: Mapped[int] = mapped_column(Integer)
+    input_type_3: Mapped[int] = mapped_column(Integer)
+    input_type_4: Mapped[int] = mapped_column(Integer)
+    input_type_5: Mapped[int] = mapped_column(Integer)
 
 
-class TaqDramaScript(DeclarativeBase, Base["TaqDramaScript"]):
+class TaqDramaScript(Base):
     __tablename__ = 'taq_drama_script'
+    __table_args__ = (
+        Index('taq_drama_script_0_drama_id', 'drama_id'),
+    )
 
-    command_id: int = Column(Integer, primary_key=True)
-    drama_id: int = Column(Integer, nullable=False, index=True)
-    command_type: int = Column(Integer, nullable=False)
-    param_01: str = Column(Text, nullable=False)
-    param_02: str = Column(Text, nullable=False)
-    param_03: str = Column(Text, nullable=False)
-    param_04: str = Column(Text, nullable=False)
-    param_05: str = Column(Text, nullable=False)
-    param_06: str = Column(Text, nullable=False)
-    param_07: str = Column(Text, nullable=False)
-    param_08: str = Column(Text, nullable=False)
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
 
 
-class TaqGameSetting(DeclarativeBase, Base["TaqGameSetting"]):
+class TaqGameSetting(Base):
     __tablename__ = 'taq_game_setting'
 
-    id: int = Column(Integer, primary_key=True)
-    lottery_rate: float = Column(Float, nullable=False)
-    help_use_count_normal: int = Column(Integer, nullable=False)
-    help_use_count_hard: int = Column(Integer, nullable=False)
-    help_use_count_veryhard: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    lottery_rate: Mapped[float] = mapped_column(Float)
+    help_use_count_normal: Mapped[int] = mapped_column(Integer)
+    help_use_count_hard: Mapped[int] = mapped_column(Integer)
+    help_use_count_veryhard: Mapped[int] = mapped_column(Integer)
 
 
-class TaqGenre(DeclarativeBase, Base["TaqGenre"]):
+class TaqGenre(Base):
     __tablename__ = 'taq_genre'
 
-    genre_id: int = Column(Integer, primary_key=True)
-    genre_name: str = Column(Text, nullable=False)
+    genre_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    genre_name: Mapped[str] = mapped_column(Text)
 
 
-class TaqGoodUnit(DeclarativeBase, Base["TaqGoodUnit"]):
+class TaqGoodUnit(Base):
     __tablename__ = 'taq_good_unit'
 
-    taq_no: int = Column(Integer, primary_key=True)
-    unit_id_1: int = Column(Integer, nullable=False)
-    unit_id_2: int = Column(Integer, nullable=False)
-    unit_id_3: int = Column(Integer, nullable=False)
-    unit_id_4: int = Column(Integer, nullable=False)
-    unit_id_5: int = Column(Integer, nullable=False)
-    unit_id_6: int = Column(Integer, nullable=False)
-    unit_id_7: int = Column(Integer, nullable=False)
-    unit_id_8: int = Column(Integer, nullable=False)
-    unit_id_9: int = Column(Integer, nullable=False)
-    unit_id_10: int = Column(Integer, nullable=False)
+    taq_no: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id_1: Mapped[int] = mapped_column(Integer)
+    unit_id_2: Mapped[int] = mapped_column(Integer)
+    unit_id_3: Mapped[int] = mapped_column(Integer)
+    unit_id_4: Mapped[int] = mapped_column(Integer)
+    unit_id_5: Mapped[int] = mapped_column(Integer)
+    unit_id_6: Mapped[int] = mapped_column(Integer)
+    unit_id_7: Mapped[int] = mapped_column(Integer)
+    unit_id_8: Mapped[int] = mapped_column(Integer)
+    unit_id_9: Mapped[int] = mapped_column(Integer)
+    unit_id_10: Mapped[int] = mapped_column(Integer)
 
 
-class TaqIncorrectWord(DeclarativeBase, Base["TaqIncorrectWord"]):
+class TaqIncorrectWord(Base):
     __tablename__ = 'taq_incorrect_word'
 
-    word_id: int = Column(Integer, primary_key=True)
-    incorrect_word: str = Column(Text, nullable=False)
+    word_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    incorrect_word: Mapped[str] = mapped_column(Text)
 
 
-class TaqKanjiList(DeclarativeBase, Base["TaqKanjiList"]):
+class TaqKanjiList(Base):
     __tablename__ = 'taq_kanji_list'
 
-    id: int = Column(Integer, primary_key=True)
-    kanji: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    kanji: Mapped[str] = mapped_column(Text)
 
 
-class TaqNecessaryWord(DeclarativeBase, Base["TaqNecessaryWord"]):
+class TaqNecessaryWord(Base):
     __tablename__ = 'taq_necessary_word'
 
-    taq_no: int = Column(Integer, primary_key=True)
-    necessary_word_1: str = Column(Text, nullable=False)
-    unnecessary_word_1: str = Column(Text, nullable=False)
-    necessary_word_2: str = Column(Text, nullable=False)
-    unnecessary_word_2: str = Column(Text, nullable=False)
-    necessary_word_3: str = Column(Text, nullable=False)
-    unnecessary_word_3: str = Column(Text, nullable=False)
-    necessary_word_4: str = Column(Text, nullable=False)
-    unnecessary_word_4: str = Column(Text, nullable=False)
-    necessary_word_5: str = Column(Text, nullable=False)
-    unnecessary_word_5: str = Column(Text, nullable=False)
+    taq_no: Mapped[int] = mapped_column(Integer, primary_key=True)
+    necessary_word_1: Mapped[str] = mapped_column(Text)
+    unnecessary_word_1: Mapped[str] = mapped_column(Text)
+    necessary_word_2: Mapped[str] = mapped_column(Text)
+    unnecessary_word_2: Mapped[str] = mapped_column(Text)
+    necessary_word_3: Mapped[str] = mapped_column(Text)
+    unnecessary_word_3: Mapped[str] = mapped_column(Text)
+    necessary_word_4: Mapped[str] = mapped_column(Text)
+    unnecessary_word_4: Mapped[str] = mapped_column(Text)
+    necessary_word_5: Mapped[str] = mapped_column(Text)
+    unnecessary_word_5: Mapped[str] = mapped_column(Text)
 
 
-class TaqReward(DeclarativeBase, Base["TaqReward"]):
+class TaqRewards(Base):
     __tablename__ = 'taq_rewards'
 
-    id: int = Column(Integer, primary_key=True)
-    score: int = Column(Integer, nullable=False)
-    mission_detail: str = Column(Text, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_count_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_count_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_count_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_count_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_count_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    score: Mapped[int] = mapped_column(Integer)
+    mission_detail: Mapped[str] = mapped_column(Text)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_count_5: Mapped[int] = mapped_column(Integer)
 
 
-class TaqUnit(DeclarativeBase, Base["TaqUnit"]):
+class TaqUnit(Base):
     __tablename__ = 'taq_unit'
 
-    unit_id: int = Column(Integer, primary_key=True)
-    sort_order: int = Column(Integer, nullable=False)
-    personality_id: int = Column(Integer, nullable=False)
-    genre_status_1: int = Column(Integer, nullable=False)
-    genre_status_2: int = Column(Integer, nullable=False)
-    genre_status_3: int = Column(Integer, nullable=False)
-    genre_status_4: int = Column(Integer, nullable=False)
-    genre_status_5: int = Column(Integer, nullable=False)
-    genre_status_6: int = Column(Integer, nullable=False)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    sort_order: Mapped[int] = mapped_column(Integer)
+    personality_id: Mapped[int] = mapped_column(Integer)
+    genre_status_1: Mapped[int] = mapped_column(Integer)
+    genre_status_2: Mapped[int] = mapped_column(Integer)
+    genre_status_3: Mapped[int] = mapped_column(Integer)
+    genre_status_4: Mapped[int] = mapped_column(Integer)
+    genre_status_5: Mapped[int] = mapped_column(Integer)
+    genre_status_6: Mapped[int] = mapped_column(Integer)
 
 
-class ThumbnailHideCondition(DeclarativeBase, Base["ThumbnailHideCondition"]):
+class TdfBattleEffect(Base):
+    __tablename__ = 'tdf_battle_effect'
+    __table_args__ = (
+        Index('tdf_battle_effect_0_quest_id', 'quest_id'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    quest_id: Mapped[int] = mapped_column(Integer)
+    icon_name: Mapped[str] = mapped_column(Text)
+    effect_name: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
+
+
+class TdfDifficultyIconDatum(Base):
+    __tablename__ = 'tdf_difficulty_icon_data'
+
+    difficulty: Mapped[int] = mapped_column(Integer, primary_key=True)
+    icon_name: Mapped[str] = mapped_column(Text)
+    effect_id: Mapped[int] = mapped_column(Integer)
+
+
+class TdfPhaseDatum(Base):
+    __tablename__ = 'tdf_phase_data'
+
+    schedule_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    phase_num: Mapped[int] = mapped_column(Integer, primary_key=True)
+    need_clear_num: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
+
+
+class TdfQuestDatum(Base):
+    __tablename__ = 'tdf_quest_data'
+
+    quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    limit_num: Mapped[int] = mapped_column(Integer)
+    difficulty: Mapped[int] = mapped_column(Integer)
+    reward_image_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_image_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_image_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    reward_image_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    reward_image_5: Mapped[int] = mapped_column(Integer)
+    reward_count_5: Mapped[int] = mapped_column(Integer)
+    reward_group_id: Mapped[int] = mapped_column(Integer)
+    chest_id: Mapped[int] = mapped_column(Integer)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    enemy_position_x_1: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_1: Mapped[int] = mapped_column(Integer)
+    enemy_size_1: Mapped[float] = mapped_column(Float)
+    enemy_position_x_2: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_2: Mapped[int] = mapped_column(Integer)
+    enemy_size_2: Mapped[float] = mapped_column(Float)
+    enemy_position_x_3: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_3: Mapped[int] = mapped_column(Integer)
+    enemy_size_3: Mapped[float] = mapped_column(Float)
+    enemy_position_x_4: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_4: Mapped[int] = mapped_column(Integer)
+    enemy_size_4: Mapped[float] = mapped_column(Float)
+    enemy_position_x_5: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_5: Mapped[int] = mapped_column(Integer)
+    enemy_size_5: Mapped[float] = mapped_column(Float)
+    wave_bgm: Mapped[str] = mapped_column(Text)
+    background: Mapped[int] = mapped_column(Integer)
+    bg_position: Mapped[int] = mapped_column(Integer)
+
+
+class TdfSchedule(Base):
+    __tablename__ = 'tdf_schedule'
+
+    schedule_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    count_start_time: Mapped[str] = mapped_column(Text)
+    recovery_disable_time: Mapped[str] = mapped_column(Text)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    ex_quest_id: Mapped[int] = mapped_column(Integer)
+
+
+class TdfTopOffset(Base):
+    __tablename__ = 'tdf_top_offset'
+
+    slot_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    position_x: Mapped[int] = mapped_column(Integer)
+    position_y: Mapped[int] = mapped_column(Integer)
+
+
+class TdfWaveGroupDatum(Base):
+    __tablename__ = 'tdf_wave_group_data'
+
+    wave_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    enemy_id_1: Mapped[int] = mapped_column(Integer)
+    enemy_id_2: Mapped[int] = mapped_column(Integer)
+    enemy_id_3: Mapped[int] = mapped_column(Integer)
+    enemy_id_4: Mapped[int] = mapped_column(Integer)
+    enemy_id_5: Mapped[int] = mapped_column(Integer)
+
+
+class ThumbnailHideCondition(Base):
     __tablename__ = 'thumbnail_hide_condition'
 
-    story_group_id: int = Column(Integer, primary_key=True)
-    hide_story_id_from: int = Column(Integer, nullable=False)
-    hide_story_id_to: int = Column(Integer, nullable=False)
-    unlock_condition_story_id: int = Column(Integer, nullable=False)
+    story_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    hide_story_id_from: Mapped[int] = mapped_column(Integer)
+    hide_story_id_to: Mapped[int] = mapped_column(Integer)
+    unlock_condition_story_id: Mapped[int] = mapped_column(Integer)
+    is_hide_title: Mapped[int] = mapped_column(Integer)
 
 
-class TicketGachaDatum(DeclarativeBase, Base["TicketGachaDatum"]):
+class TicketGachaDatum(Base):
     __tablename__ = 'ticket_gacha_data'
 
-    gacha_id: int = Column(Integer, primary_key=True)
-    gacha_name: str = Column(Text, nullable=False)
-    gacha_type: int = Column(Integer, nullable=False)
-    ticket_id: int = Column(Integer, nullable=False)
-    gacha_times: int = Column(Integer, nullable=False)
-    gacha_detail: int = Column(Integer, nullable=False)
-    guarantee_rarity: str = Column(Text, nullable=False)
-    rarity_odds: str = Column(Text, nullable=False)
-    chara_odds_star1: str = Column(Text, nullable=False)
-    chara_odds_star2: str = Column(Text, nullable=False)
-    chara_odds_star3: str = Column(Text, nullable=False)
-    staging_type: int = Column(Integer, nullable=False)
+    gacha_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    gacha_name: Mapped[str] = mapped_column(Text)
+    gacha_type: Mapped[int] = mapped_column(Integer)
+    ticket_id: Mapped[int] = mapped_column(Integer)
+    gacha_times: Mapped[int] = mapped_column(Integer)
+    gacha_detail: Mapped[int] = mapped_column(Integer)
+    guarantee_rarity: Mapped[str] = mapped_column(Text)
+    rarity_odds: Mapped[str] = mapped_column(Text)
+    chara_odds_star1: Mapped[str] = mapped_column(Text)
+    chara_odds_star2: Mapped[str] = mapped_column(Text)
+    chara_odds_star3: Mapped[str] = mapped_column(Text)
+    staging_type: Mapped[int] = mapped_column(Integer)
 
 
-class Tip(DeclarativeBase, Base["Tip"]):
+class Tips(Base):
     __tablename__ = 'tips'
 
-    id: int = Column(Integer, primary_key=True)
-    value: int = Column(Integer, nullable=False)
-    tips_index: int = Column(Integer, nullable=False)
-    title: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    value: Mapped[int] = mapped_column(Integer)
+    tips_index: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
 
 
-class TmeMapDatum(DeclarativeBase, Base["TmeMapDatum"]):
+class TmeMapDatum(Base):
     __tablename__ = 'tme_map_data'
+    __table_args__ = (
+        Index('tme_map_data_0_event_id', 'event_id'),
+    )
 
-    tme_object_id: int = Column(Integer, primary_key=True)
-    event_id: int = Column(Integer, nullable=False, index=True)
-    condition_story_id: int = Column(Integer, nullable=False)
-    area_difficulty_type: int = Column(Integer, nullable=False)
-    release_effect: int = Column(Integer, nullable=False)
-    tap_effect: int = Column(Integer, nullable=False)
+    tme_object_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[int] = mapped_column(Integer)
+    condition_story_id: Mapped[int] = mapped_column(Integer)
+    area_difficulty_type: Mapped[int] = mapped_column(Integer)
+    release_effect: Mapped[int] = mapped_column(Integer)
+    tap_effect: Mapped[int] = mapped_column(Integer)
 
 
-class TowerAreaDatum(DeclarativeBase, Base["TowerAreaDatum"]):
+class TowerAreaDatum(Base):
     __tablename__ = 'tower_area_data'
 
-    tower_area_id: int = Column(Integer, primary_key=True)
-    max_floor_num: int = Column(Integer, nullable=False)
-    area_bg: int = Column(Integer, nullable=False)
-    tower_bgm: str = Column(Text, nullable=False)
-    cloister_quest_id: int = Column(Integer, nullable=False)
+    tower_area_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    max_floor_num: Mapped[int] = mapped_column(Integer)
+    area_bg: Mapped[int] = mapped_column(Integer)
+    tower_bgm: Mapped[str] = mapped_column(Text)
+    cloister_quest_id: Mapped[int] = mapped_column(Integer)
 
 
-class TowerCloisterQuestDatum(DeclarativeBase, Base["TowerCloisterQuestDatum"]):
+class TowerCloisterQuestDatum(Base):
     __tablename__ = 'tower_cloister_quest_data'
 
-    tower_cloister_quest_id: int = Column(Integer, primary_key=True)
-    daily_limit: int = Column(Integer, nullable=False)
-    limit_time: int = Column(Integer, nullable=False)
-    recovery_hp_rate: int = Column(Integer, nullable=False)
-    recovery_tp_rate: int = Column(Integer, nullable=False)
-    start_tp_rate: int = Column(Integer, nullable=False)
-    fix_reward_group_id: int = Column(Integer, nullable=False)
-    drop_reward_group_id: int = Column(Integer, nullable=False)
-    background_1: int = Column(Integer, nullable=False)
-    wave_group_id_1: int = Column(Integer, nullable=False)
-    background_2: int = Column(Integer, nullable=False)
-    wave_group_id_2: int = Column(Integer, nullable=False)
-    background_3: int = Column(Integer, nullable=False)
-    wave_group_id_3: int = Column(Integer, nullable=False)
-    wave_bgm: str = Column(Text, nullable=False)
-    reward_image_1: int = Column(Integer, nullable=False)
-    reward_image_2: int = Column(Integer, nullable=False)
-    reward_image_3: int = Column(Integer, nullable=False)
-    reward_image_4: int = Column(Integer, nullable=False)
-    reward_image_5: int = Column(Integer, nullable=False)
-    w1_enemy_position_x_1: int = Column(Integer, nullable=False)
-    w1_enemy_local_position_y_1: int = Column(Integer, nullable=False)
-    w1_enemy_size_1: float = Column(Float, nullable=False)
-    w1_enemy_position_x_2: int = Column(Integer, nullable=False)
-    w1_enemy_local_position_y_2: int = Column(Integer, nullable=False)
-    w1_enemy_size_2: float = Column(Float, nullable=False)
-    w1_enemy_position_x_3: int = Column(Integer, nullable=False)
-    w1_enemy_local_position_y_3: int = Column(Integer, nullable=False)
-    w1_enemy_size_3: float = Column(Float, nullable=False)
-    w1_enemy_position_x_4: int = Column(Integer, nullable=False)
-    w1_enemy_local_position_y_4: int = Column(Integer, nullable=False)
-    w1_enemy_size_4: float = Column(Float, nullable=False)
-    w1_enemy_position_x_5: int = Column(Integer, nullable=False)
-    w1_enemy_local_position_y_5: int = Column(Integer, nullable=False)
-    w1_enemy_size_5: float = Column(Float, nullable=False)
-    w2_enemy_position_x_1: int = Column(Integer, nullable=False)
-    w2_enemy_local_position_y_1: int = Column(Integer, nullable=False)
-    w2_enemy_size_1: float = Column(Float, nullable=False)
-    w2_enemy_position_x_2: int = Column(Integer, nullable=False)
-    w2_enemy_local_position_y_2: int = Column(Integer, nullable=False)
-    w2_enemy_size_2: float = Column(Float, nullable=False)
-    w2_enemy_position_x_3: int = Column(Integer, nullable=False)
-    w2_enemy_local_position_y_3: int = Column(Integer, nullable=False)
-    w2_enemy_size_3: float = Column(Float, nullable=False)
-    w2_enemy_position_x_4: int = Column(Integer, nullable=False)
-    w2_enemy_local_position_y_4: int = Column(Integer, nullable=False)
-    w2_enemy_size_4: float = Column(Float, nullable=False)
-    w2_enemy_position_x_5: int = Column(Integer, nullable=False)
-    w2_enemy_local_position_y_5: int = Column(Integer, nullable=False)
-    w2_enemy_size_5: float = Column(Float, nullable=False)
-    w3_enemy_position_x_1: int = Column(Integer, nullable=False)
-    w3_enemy_local_position_y_1: int = Column(Integer, nullable=False)
-    w3_enemy_size_1: float = Column(Float, nullable=False)
-    w3_enemy_position_x_2: int = Column(Integer, nullable=False)
-    w3_enemy_local_position_y_2: int = Column(Integer, nullable=False)
-    w3_enemy_size_2: float = Column(Float, nullable=False)
-    w3_enemy_position_x_3: int = Column(Integer, nullable=False)
-    w3_enemy_local_position_y_3: int = Column(Integer, nullable=False)
-    w3_enemy_size_3: float = Column(Float, nullable=False)
-    w3_enemy_position_x_4: int = Column(Integer, nullable=False)
-    w3_enemy_local_position_y_4: int = Column(Integer, nullable=False)
-    w3_enemy_size_4: float = Column(Float, nullable=False)
-    w3_enemy_position_x_5: int = Column(Integer, nullable=False)
-    w3_enemy_local_position_y_5: int = Column(Integer, nullable=False)
-    w3_enemy_size_5: float = Column(Float, nullable=False)
-    background: int = Column(Integer, nullable=False)
-    bg_position: int = Column(Integer, nullable=False)
+    tower_cloister_quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    daily_limit: Mapped[int] = mapped_column(Integer)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    recovery_hp_rate: Mapped[int] = mapped_column(Integer)
+    recovery_tp_rate: Mapped[int] = mapped_column(Integer)
+    start_tp_rate: Mapped[int] = mapped_column(Integer)
+    fix_reward_group_id: Mapped[int] = mapped_column(Integer)
+    drop_reward_group_id: Mapped[int] = mapped_column(Integer)
+    background_1: Mapped[int] = mapped_column(Integer)
+    wave_group_id_1: Mapped[int] = mapped_column(Integer)
+    background_2: Mapped[int] = mapped_column(Integer)
+    wave_group_id_2: Mapped[int] = mapped_column(Integer)
+    background_3: Mapped[int] = mapped_column(Integer)
+    wave_group_id_3: Mapped[int] = mapped_column(Integer)
+    wave_bgm: Mapped[str] = mapped_column(Text)
+    reward_image_1: Mapped[int] = mapped_column(Integer)
+    reward_image_2: Mapped[int] = mapped_column(Integer)
+    reward_image_3: Mapped[int] = mapped_column(Integer)
+    reward_image_4: Mapped[int] = mapped_column(Integer)
+    reward_image_5: Mapped[int] = mapped_column(Integer)
+    w1_enemy_position_x_1: Mapped[int] = mapped_column(Integer)
+    w1_enemy_local_position_y_1: Mapped[int] = mapped_column(Integer)
+    w1_enemy_size_1: Mapped[float] = mapped_column(Float)
+    w1_enemy_position_x_2: Mapped[int] = mapped_column(Integer)
+    w1_enemy_local_position_y_2: Mapped[int] = mapped_column(Integer)
+    w1_enemy_size_2: Mapped[float] = mapped_column(Float)
+    w1_enemy_position_x_3: Mapped[int] = mapped_column(Integer)
+    w1_enemy_local_position_y_3: Mapped[int] = mapped_column(Integer)
+    w1_enemy_size_3: Mapped[float] = mapped_column(Float)
+    w1_enemy_position_x_4: Mapped[int] = mapped_column(Integer)
+    w1_enemy_local_position_y_4: Mapped[int] = mapped_column(Integer)
+    w1_enemy_size_4: Mapped[float] = mapped_column(Float)
+    w1_enemy_position_x_5: Mapped[int] = mapped_column(Integer)
+    w1_enemy_local_position_y_5: Mapped[int] = mapped_column(Integer)
+    w1_enemy_size_5: Mapped[float] = mapped_column(Float)
+    w2_enemy_position_x_1: Mapped[int] = mapped_column(Integer)
+    w2_enemy_local_position_y_1: Mapped[int] = mapped_column(Integer)
+    w2_enemy_size_1: Mapped[float] = mapped_column(Float)
+    w2_enemy_position_x_2: Mapped[int] = mapped_column(Integer)
+    w2_enemy_local_position_y_2: Mapped[int] = mapped_column(Integer)
+    w2_enemy_size_2: Mapped[float] = mapped_column(Float)
+    w2_enemy_position_x_3: Mapped[int] = mapped_column(Integer)
+    w2_enemy_local_position_y_3: Mapped[int] = mapped_column(Integer)
+    w2_enemy_size_3: Mapped[float] = mapped_column(Float)
+    w2_enemy_position_x_4: Mapped[int] = mapped_column(Integer)
+    w2_enemy_local_position_y_4: Mapped[int] = mapped_column(Integer)
+    w2_enemy_size_4: Mapped[float] = mapped_column(Float)
+    w2_enemy_position_x_5: Mapped[int] = mapped_column(Integer)
+    w2_enemy_local_position_y_5: Mapped[int] = mapped_column(Integer)
+    w2_enemy_size_5: Mapped[float] = mapped_column(Float)
+    w3_enemy_position_x_1: Mapped[int] = mapped_column(Integer)
+    w3_enemy_local_position_y_1: Mapped[int] = mapped_column(Integer)
+    w3_enemy_size_1: Mapped[float] = mapped_column(Float)
+    w3_enemy_position_x_2: Mapped[int] = mapped_column(Integer)
+    w3_enemy_local_position_y_2: Mapped[int] = mapped_column(Integer)
+    w3_enemy_size_2: Mapped[float] = mapped_column(Float)
+    w3_enemy_position_x_3: Mapped[int] = mapped_column(Integer)
+    w3_enemy_local_position_y_3: Mapped[int] = mapped_column(Integer)
+    w3_enemy_size_3: Mapped[float] = mapped_column(Float)
+    w3_enemy_position_x_4: Mapped[int] = mapped_column(Integer)
+    w3_enemy_local_position_y_4: Mapped[int] = mapped_column(Integer)
+    w3_enemy_size_4: Mapped[float] = mapped_column(Float)
+    w3_enemy_position_x_5: Mapped[int] = mapped_column(Integer)
+    w3_enemy_local_position_y_5: Mapped[int] = mapped_column(Integer)
+    w3_enemy_size_5: Mapped[float] = mapped_column(Float)
+    background: Mapped[int] = mapped_column(Integer)
+    bg_position: Mapped[int] = mapped_column(Integer)
 
 
-class TowerEnemyParameter(DeclarativeBase, Base["TowerEnemyParameter"]):
+class TowerEnemyParameter(Base):
     __tablename__ = 'tower_enemy_parameter'
 
-    enemy_id: int = Column(Integer, primary_key=True)
-    unit_id: int = Column(Integer, nullable=False)
-    name: str = Column(Text, nullable=False)
-    level: int = Column(Integer, nullable=False)
-    rarity: int = Column(Integer, nullable=False)
-    promotion_level: int = Column(Integer, nullable=False)
-    hp: int = Column(Integer, nullable=False)
-    atk: int = Column(Integer, nullable=False)
-    magic_str: int = Column(Integer, nullable=False)
-    _def: int = Column('def', Integer, nullable=False)
-    magic_def: int = Column(Integer, nullable=False)
-    physical_critical: int = Column(Integer, nullable=False)
-    magic_critical: int = Column(Integer, nullable=False)
-    wave_hp_recovery: int = Column(Integer, nullable=False)
-    wave_energy_recovery: int = Column(Integer, nullable=False)
-    dodge: int = Column(Integer, nullable=False)
-    physical_penetrate: int = Column(Integer, nullable=False)
-    magic_penetrate: int = Column(Integer, nullable=False)
-    life_steal: int = Column(Integer, nullable=False)
-    hp_recovery_rate: int = Column(Integer, nullable=False)
-    energy_recovery_rate: int = Column(Integer, nullable=False)
-    energy_reduce_rate: int = Column(Integer, nullable=False)
-    union_burst_level: int = Column(Integer, nullable=False)
-    main_skill_lv_1: int = Column(Integer, nullable=False)
-    main_skill_lv_2: int = Column(Integer, nullable=False)
-    main_skill_lv_3: int = Column(Integer, nullable=False)
-    main_skill_lv_4: int = Column(Integer, nullable=False)
-    main_skill_lv_5: int = Column(Integer, nullable=False)
-    main_skill_lv_6: int = Column(Integer, nullable=False)
-    main_skill_lv_7: int = Column(Integer, nullable=False)
-    main_skill_lv_8: int = Column(Integer, nullable=False)
-    main_skill_lv_9: int = Column(Integer, nullable=False)
-    main_skill_lv_10: int = Column(Integer, nullable=False)
-    ex_skill_lv_1: int = Column(Integer, nullable=False)
-    ex_skill_lv_2: int = Column(Integer, nullable=False)
-    ex_skill_lv_3: int = Column(Integer, nullable=False)
-    ex_skill_lv_4: int = Column(Integer, nullable=False)
-    ex_skill_lv_5: int = Column(Integer, nullable=False)
-    resist_status_id: int = Column(Integer, nullable=False)
-    resist_variation_id: int = Column(Integer, nullable=False)
-    accuracy: int = Column(Integer, nullable=False)
-    enemy_color: int = Column(Integer, nullable=False)
+    enemy_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    name: Mapped[str] = mapped_column(Text)
+    level: Mapped[int] = mapped_column(Integer)
+    rarity: Mapped[int] = mapped_column(Integer)
+    promotion_level: Mapped[int] = mapped_column(Integer)
+    hp: Mapped[int] = mapped_column(Integer)
+    atk: Mapped[int] = mapped_column(Integer)
+    magic_str: Mapped[int] = mapped_column(Integer)
+    def_: Mapped[int] = mapped_column('def', Integer)
+    magic_def: Mapped[int] = mapped_column(Integer)
+    physical_critical: Mapped[int] = mapped_column(Integer)
+    magic_critical: Mapped[int] = mapped_column(Integer)
+    wave_hp_recovery: Mapped[int] = mapped_column(Integer)
+    wave_energy_recovery: Mapped[int] = mapped_column(Integer)
+    dodge: Mapped[int] = mapped_column(Integer)
+    physical_penetrate: Mapped[int] = mapped_column(Integer)
+    magic_penetrate: Mapped[int] = mapped_column(Integer)
+    life_steal: Mapped[int] = mapped_column(Integer)
+    hp_recovery_rate: Mapped[int] = mapped_column(Integer)
+    energy_recovery_rate: Mapped[int] = mapped_column(Integer)
+    energy_reduce_rate: Mapped[int] = mapped_column(Integer)
+    union_burst_level: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_1: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_2: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_3: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_4: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_5: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_6: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_7: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_8: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_9: Mapped[int] = mapped_column(Integer)
+    main_skill_lv_10: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_1: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_2: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_3: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_4: Mapped[int] = mapped_column(Integer)
+    ex_skill_lv_5: Mapped[int] = mapped_column(Integer)
+    resist_status_id: Mapped[int] = mapped_column(Integer)
+    resist_variation_id: Mapped[int] = mapped_column(Integer)
+    accuracy: Mapped[int] = mapped_column(Integer)
+    enemy_color: Mapped[int] = mapped_column(Integer)
 
 
-class TowerExQuestDatum(DeclarativeBase, Base["TowerExQuestDatum"]):
+class TowerExQuestDatum(Base):
     __tablename__ = 'tower_ex_quest_data'
+    __table_args__ = (
+        Index('tower_ex_quest_data_0_floor_num', 'floor_num'),
+    )
 
-    tower_ex_quest_id: int = Column(Integer, primary_key=True)
-    tower_area_id: int = Column(Integer, nullable=False)
-    floor_num: int = Column(Integer, nullable=False, index=True)
-    stamina: int = Column(Integer, nullable=False)
-    stamina_start: int = Column(Integer, nullable=False)
-    team_exp: int = Column(Integer, nullable=False)
-    limit_time: int = Column(Integer, nullable=False)
-    reward_image_1: int = Column(Integer, nullable=False)
-    reward_count_1: int = Column(Integer, nullable=False)
-    reward_image_2: int = Column(Integer, nullable=False)
-    reward_count_2: int = Column(Integer, nullable=False)
-    reward_image_3: int = Column(Integer, nullable=False)
-    reward_count_3: int = Column(Integer, nullable=False)
-    reward_image_4: int = Column(Integer, nullable=False)
-    reward_count_4: int = Column(Integer, nullable=False)
-    reward_image_5: int = Column(Integer, nullable=False)
-    reward_count_5: int = Column(Integer, nullable=False)
-    additional_reward_type: int = Column(Integer, nullable=False)
-    additional_reward_id: int = Column(Integer, nullable=False)
-    fix_reward_group_id: int = Column(Integer, nullable=False)
-    chest_id: int = Column(Integer, nullable=False)
-    background: int = Column(Integer, nullable=False)
-    bg_position: int = Column(Integer, nullable=False)
-    wave_group_id: int = Column(Integer, nullable=False)
-    enemy_position_x_1: int = Column(Integer, nullable=False)
-    enemy_local_position_y_1: int = Column(Integer, nullable=False)
-    enemy_size_1: float = Column(Float, nullable=False)
-    enemy_position_x_2: int = Column(Integer, nullable=False)
-    enemy_local_position_y_2: int = Column(Integer, nullable=False)
-    enemy_size_2: float = Column(Float, nullable=False)
-    enemy_position_x_3: int = Column(Integer, nullable=False)
-    enemy_local_position_y_3: int = Column(Integer, nullable=False)
-    enemy_size_3: float = Column(Float, nullable=False)
-    enemy_position_x_4: int = Column(Integer, nullable=False)
-    enemy_local_position_y_4: int = Column(Integer, nullable=False)
-    enemy_size_4: float = Column(Float, nullable=False)
-    enemy_position_x_5: int = Column(Integer, nullable=False)
-    enemy_local_position_y_5: int = Column(Integer, nullable=False)
-    enemy_size_5: float = Column(Float, nullable=False)
-    wave_bgm: str = Column(Text, nullable=False)
-    clp_flag: int = Column(Integer, nullable=False)
-    skip_level: int = Column(Integer, nullable=False)
+    tower_ex_quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tower_area_id: Mapped[int] = mapped_column(Integer)
+    floor_num: Mapped[int] = mapped_column(Integer)
+    stamina: Mapped[int] = mapped_column(Integer)
+    stamina_start: Mapped[int] = mapped_column(Integer)
+    team_exp: Mapped[int] = mapped_column(Integer)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    reward_image_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_image_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_image_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    reward_image_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    reward_image_5: Mapped[int] = mapped_column(Integer)
+    reward_count_5: Mapped[int] = mapped_column(Integer)
+    additional_reward_type: Mapped[int] = mapped_column(Integer)
+    additional_reward_id: Mapped[int] = mapped_column(Integer)
+    fix_reward_group_id: Mapped[int] = mapped_column(Integer)
+    chest_id: Mapped[int] = mapped_column(Integer)
+    background: Mapped[int] = mapped_column(Integer)
+    bg_position: Mapped[int] = mapped_column(Integer)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    enemy_position_x_1: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_1: Mapped[int] = mapped_column(Integer)
+    enemy_size_1: Mapped[float] = mapped_column(Float)
+    enemy_position_x_2: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_2: Mapped[int] = mapped_column(Integer)
+    enemy_size_2: Mapped[float] = mapped_column(Float)
+    enemy_position_x_3: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_3: Mapped[int] = mapped_column(Integer)
+    enemy_size_3: Mapped[float] = mapped_column(Float)
+    enemy_position_x_4: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_4: Mapped[int] = mapped_column(Integer)
+    enemy_size_4: Mapped[float] = mapped_column(Float)
+    enemy_position_x_5: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_5: Mapped[int] = mapped_column(Integer)
+    enemy_size_5: Mapped[float] = mapped_column(Float)
+    wave_bgm: Mapped[str] = mapped_column(Text)
+    clp_flag: Mapped[int] = mapped_column(Integer)
+    skip_level: Mapped[int] = mapped_column(Integer)
 
 
-class TowerQuestDatum(DeclarativeBase, Base["TowerQuestDatum"]):
+class TowerQuestDatum(Base):
     __tablename__ = 'tower_quest_data'
+    __table_args__ = (
+        Index('tower_quest_data_0_floor_num', 'floor_num'),
+    )
 
-    tower_quest_id: int = Column(Integer, primary_key=True)
-    tower_area_id: int = Column(Integer, nullable=False)
-    floor_num: int = Column(Integer, nullable=False, index=True)
-    floor_image_type: int = Column(Integer, nullable=False)
-    floor_image_add_type: int = Column(Integer, nullable=False)
-    open_tower_ex_quest_id: int = Column(Integer, nullable=False)
-    boss_floor_flg: int = Column(Integer, nullable=False)
-    stamina: int = Column(Integer, nullable=False)
-    stamina_start: int = Column(Integer, nullable=False)
-    team_exp: int = Column(Integer, nullable=False)
-    limit_time: int = Column(Integer, nullable=False)
-    recovery_hp_rate: int = Column(Integer, nullable=False)
-    recovery_tp_rate: int = Column(Integer, nullable=False)
-    start_tp_rate: int = Column(Integer, nullable=False)
-    reward_image_1: int = Column(Integer, nullable=False)
-    reward_count_1: int = Column(Integer, nullable=False)
-    reward_image_2: int = Column(Integer, nullable=False)
-    reward_count_2: int = Column(Integer, nullable=False)
-    reward_image_3: int = Column(Integer, nullable=False)
-    reward_count_3: int = Column(Integer, nullable=False)
-    reward_image_4: int = Column(Integer, nullable=False)
-    reward_count_4: int = Column(Integer, nullable=False)
-    reward_image_5: int = Column(Integer, nullable=False)
-    reward_count_5: int = Column(Integer, nullable=False)
-    additional_reward_type: int = Column(Integer, nullable=False)
-    additional_reward_id: int = Column(Integer, nullable=False)
-    fix_reward_group_id: int = Column(Integer, nullable=False)
-    odds_group_id: int = Column(Integer, nullable=False)
-    chest_id: int = Column(Integer, nullable=False)
-    background: int = Column(Integer, nullable=False)
-    bg_position: int = Column(Integer, nullable=False)
-    wave_group_id: int = Column(Integer, nullable=False)
-    enemy_position_x_1: int = Column(Integer, nullable=False)
-    enemy_local_position_y_1: int = Column(Integer, nullable=False)
-    enemy_size_1: float = Column(Float, nullable=False)
-    enemy_position_x_2: int = Column(Integer, nullable=False)
-    enemy_local_position_y_2: int = Column(Integer, nullable=False)
-    enemy_size_2: float = Column(Float, nullable=False)
-    enemy_position_x_3: int = Column(Integer, nullable=False)
-    enemy_local_position_y_3: int = Column(Integer, nullable=False)
-    enemy_size_3: float = Column(Float, nullable=False)
-    enemy_position_x_4: int = Column(Integer, nullable=False)
-    enemy_local_position_y_4: int = Column(Integer, nullable=False)
-    enemy_size_4: float = Column(Float, nullable=False)
-    enemy_position_x_5: int = Column(Integer, nullable=False)
-    enemy_local_position_y_5: int = Column(Integer, nullable=False)
-    enemy_size_5: float = Column(Float, nullable=False)
-    wave_bgm: str = Column(Text, nullable=False)
-    clp_flag: int = Column(Integer, nullable=False)
-    skip_level: int = Column(Integer, nullable=False)
+    tower_quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tower_area_id: Mapped[int] = mapped_column(Integer)
+    floor_num: Mapped[int] = mapped_column(Integer)
+    floor_image_type: Mapped[int] = mapped_column(Integer)
+    floor_image_add_type: Mapped[int] = mapped_column(Integer)
+    open_tower_ex_quest_id: Mapped[int] = mapped_column(Integer)
+    boss_floor_flg: Mapped[int] = mapped_column(Integer)
+    stamina: Mapped[int] = mapped_column(Integer)
+    stamina_start: Mapped[int] = mapped_column(Integer)
+    team_exp: Mapped[int] = mapped_column(Integer)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    recovery_hp_rate: Mapped[int] = mapped_column(Integer)
+    recovery_tp_rate: Mapped[int] = mapped_column(Integer)
+    start_tp_rate: Mapped[int] = mapped_column(Integer)
+    reward_image_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_image_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_image_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    reward_image_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    reward_image_5: Mapped[int] = mapped_column(Integer)
+    reward_count_5: Mapped[int] = mapped_column(Integer)
+    additional_reward_type: Mapped[int] = mapped_column(Integer)
+    additional_reward_id: Mapped[int] = mapped_column(Integer)
+    fix_reward_group_id: Mapped[int] = mapped_column(Integer)
+    odds_group_id: Mapped[int] = mapped_column(Integer)
+    chest_id: Mapped[int] = mapped_column(Integer)
+    background: Mapped[int] = mapped_column(Integer)
+    bg_position: Mapped[int] = mapped_column(Integer)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    enemy_position_x_1: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_1: Mapped[int] = mapped_column(Integer)
+    enemy_size_1: Mapped[float] = mapped_column(Float)
+    enemy_position_x_2: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_2: Mapped[int] = mapped_column(Integer)
+    enemy_size_2: Mapped[float] = mapped_column(Float)
+    enemy_position_x_3: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_3: Mapped[int] = mapped_column(Integer)
+    enemy_size_3: Mapped[float] = mapped_column(Float)
+    enemy_position_x_4: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_4: Mapped[int] = mapped_column(Integer)
+    enemy_size_4: Mapped[float] = mapped_column(Float)
+    enemy_position_x_5: Mapped[int] = mapped_column(Integer)
+    enemy_local_position_y_5: Mapped[int] = mapped_column(Integer)
+    enemy_size_5: Mapped[float] = mapped_column(Float)
+    wave_bgm: Mapped[str] = mapped_column(Text)
+    clp_flag: Mapped[int] = mapped_column(Integer)
+    skip_level: Mapped[int] = mapped_column(Integer)
 
 
-class TowerQuestFixRewardGroup(DeclarativeBase, Base["TowerQuestFixRewardGroup"]):
+class TowerQuestFixRewardGroup(Base):
     __tablename__ = 'tower_quest_fix_reward_group'
 
-    fix_reward_group_id: int = Column(Integer, primary_key=True)
-    treasure_type_1: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    treasure_type_2: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    treasure_type_3: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    treasure_type_4: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    treasure_type_5: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
-    treasure_type_6: int = Column(Integer, nullable=False)
-    reward_type_6: int = Column(Integer, nullable=False)
-    reward_id_6: int = Column(Integer, nullable=False)
-    reward_num_6: int = Column(Integer, nullable=False)
-    treasure_type_7: int = Column(Integer, nullable=False)
-    reward_type_7: int = Column(Integer, nullable=False)
-    reward_id_7: int = Column(Integer, nullable=False)
-    reward_num_7: int = Column(Integer, nullable=False)
-    treasure_type_8: int = Column(Integer, nullable=False)
-    reward_type_8: int = Column(Integer, nullable=False)
-    reward_id_8: int = Column(Integer, nullable=False)
-    reward_num_8: int = Column(Integer, nullable=False)
-    treasure_type_9: int = Column(Integer, nullable=False)
-    reward_type_9: int = Column(Integer, nullable=False)
-    reward_id_9: int = Column(Integer, nullable=False)
-    reward_num_9: int = Column(Integer, nullable=False)
-    treasure_type_10: int = Column(Integer, nullable=False)
-    reward_type_10: int = Column(Integer, nullable=False)
-    reward_id_10: int = Column(Integer, nullable=False)
-    reward_num_10: int = Column(Integer, nullable=False)
+    fix_reward_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    treasure_type_1: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    treasure_type_2: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    treasure_type_3: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    treasure_type_4: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    treasure_type_5: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
+    treasure_type_6: Mapped[int] = mapped_column(Integer)
+    reward_type_6: Mapped[int] = mapped_column(Integer)
+    reward_id_6: Mapped[int] = mapped_column(Integer)
+    reward_num_6: Mapped[int] = mapped_column(Integer)
+    treasure_type_7: Mapped[int] = mapped_column(Integer)
+    reward_type_7: Mapped[int] = mapped_column(Integer)
+    reward_id_7: Mapped[int] = mapped_column(Integer)
+    reward_num_7: Mapped[int] = mapped_column(Integer)
+    treasure_type_8: Mapped[int] = mapped_column(Integer)
+    reward_type_8: Mapped[int] = mapped_column(Integer)
+    reward_id_8: Mapped[int] = mapped_column(Integer)
+    reward_num_8: Mapped[int] = mapped_column(Integer)
+    treasure_type_9: Mapped[int] = mapped_column(Integer)
+    reward_type_9: Mapped[int] = mapped_column(Integer)
+    reward_id_9: Mapped[int] = mapped_column(Integer)
+    reward_num_9: Mapped[int] = mapped_column(Integer)
+    treasure_type_10: Mapped[int] = mapped_column(Integer)
+    reward_type_10: Mapped[int] = mapped_column(Integer)
+    reward_id_10: Mapped[int] = mapped_column(Integer)
+    reward_num_10: Mapped[int] = mapped_column(Integer)
 
 
-class TowerQuestOddsGroup(DeclarativeBase, Base["TowerQuestOddsGroup"]):
+class TowerQuestOddsGroup(Base):
     __tablename__ = 'tower_quest_odds_group'
+    __table_args__ = (
+        Index('tower_quest_odds_group_0_odds_group_id', 'odds_group_id'),
+    )
 
-    odds_group_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    team_level_from: int = Column(Integer, primary_key=True, nullable=False)
-    team_level_to: int = Column(Integer, primary_key=True, nullable=False)
-    treasure_type_1: int = Column(Integer, nullable=False)
-    odds_csv_1: str = Column(Text, nullable=False)
-    treasure_type_2: int = Column(Integer, nullable=False)
-    odds_csv_2: str = Column(Text, nullable=False)
-    treasure_type_3: int = Column(Integer, nullable=False)
-    odds_csv_3: str = Column(Text, nullable=False)
-    treasure_type_4: int = Column(Integer, nullable=False)
-    odds_csv_4: str = Column(Text, nullable=False)
-    treasure_type_5: int = Column(Integer, nullable=False)
-    odds_csv_5: str = Column(Text, nullable=False)
-    treasure_type_6: int = Column(Integer, nullable=False)
-    odds_csv_6: str = Column(Text, nullable=False)
-    treasure_type_7: int = Column(Integer, nullable=False)
-    odds_csv_7: str = Column(Text, nullable=False)
-    treasure_type_8: int = Column(Integer, nullable=False)
-    odds_csv_8: str = Column(Text, nullable=False)
-    treasure_type_9: int = Column(Integer, nullable=False)
-    odds_csv_9: str = Column(Text, nullable=False)
-    treasure_type_10: int = Column(Integer, nullable=False)
-    odds_csv_10: str = Column(Text, nullable=False)
+    odds_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    team_level_from: Mapped[int] = mapped_column(Integer, primary_key=True)
+    team_level_to: Mapped[int] = mapped_column(Integer, primary_key=True)
+    treasure_type_1: Mapped[int] = mapped_column(Integer)
+    odds_csv_1: Mapped[str] = mapped_column(Text)
+    treasure_type_2: Mapped[int] = mapped_column(Integer)
+    odds_csv_2: Mapped[str] = mapped_column(Text)
+    treasure_type_3: Mapped[int] = mapped_column(Integer)
+    odds_csv_3: Mapped[str] = mapped_column(Text)
+    treasure_type_4: Mapped[int] = mapped_column(Integer)
+    odds_csv_4: Mapped[str] = mapped_column(Text)
+    treasure_type_5: Mapped[int] = mapped_column(Integer)
+    odds_csv_5: Mapped[str] = mapped_column(Text)
+    treasure_type_6: Mapped[int] = mapped_column(Integer)
+    odds_csv_6: Mapped[str] = mapped_column(Text)
+    treasure_type_7: Mapped[int] = mapped_column(Integer)
+    odds_csv_7: Mapped[str] = mapped_column(Text)
+    treasure_type_8: Mapped[int] = mapped_column(Integer)
+    odds_csv_8: Mapped[str] = mapped_column(Text)
+    treasure_type_9: Mapped[int] = mapped_column(Integer)
+    odds_csv_9: Mapped[str] = mapped_column(Text)
+    treasure_type_10: Mapped[int] = mapped_column(Integer)
+    odds_csv_10: Mapped[str] = mapped_column(Text)
 
 
-class TowerSchedule(DeclarativeBase, Base["TowerSchedule"]):
+class TowerSchedule(Base):
     __tablename__ = 'tower_schedule'
+    __table_args__ = (
+        Index('tower_schedule_0_opening_story_id', 'opening_story_id'),
+    )
 
-    tower_schedule_id: int = Column(Integer, primary_key=True)
-    max_tower_area_id: int = Column(Integer, nullable=False)
-    opening_story_id: int = Column(Integer, nullable=False, index=True)
-    count_start_time: str = Column(Text, nullable=False)
-    recovery_disable_time: str = Column(Text, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    tower_schedule_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    max_tower_area_id: Mapped[int] = mapped_column(Integer)
+    opening_story_id: Mapped[int] = mapped_column(Integer)
+    count_start_time: Mapped[str] = mapped_column(Text)
+    recovery_disable_time: Mapped[str] = mapped_column(Text)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class TowerStoryDatum(DeclarativeBase, Base["TowerStoryDatum"]):
+class TowerStoryDatum(Base):
     __tablename__ = 'tower_story_data'
 
-    story_group_id: int = Column(Integer, primary_key=True)
-    story_type: int = Column(Integer, nullable=False)
-    value: int = Column(Integer, nullable=False)
-    title: str = Column(Text, nullable=False)
-    thumbnail_id: int = Column(Integer, nullable=False)
-    disp_order: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    story_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_type: Mapped[int] = mapped_column(Integer)
+    value: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    thumbnail_id: Mapped[int] = mapped_column(Integer)
+    disp_order: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class TowerStoryDetail(DeclarativeBase, Base["TowerStoryDetail"]):
+class TowerStoryDetail(Base):
     __tablename__ = 'tower_story_detail'
 
-    story_id: int = Column(Integer, primary_key=True)
-    story_group_id: int = Column(Integer, nullable=False)
-    title: str = Column(Text, nullable=False)
-    sub_title: str = Column(Text, nullable=False)
-    visible_type: int = Column(Integer, nullable=False)
-    story_end: int = Column(Integer, nullable=False)
-    pre_story_id: int = Column(Integer, nullable=False)
-    love_level: int = Column(Integer, nullable=False)
-    requirement_id: int = Column(Integer, nullable=False)
-    unlock_quest_id: int = Column(Integer, nullable=False)
-    story_quest_id: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_value_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_value_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_value_3: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_group_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    sub_title: Mapped[str] = mapped_column(Text)
+    visible_type: Mapped[int] = mapped_column(Integer)
+    story_end: Mapped[int] = mapped_column(Integer)
+    pre_story_id: Mapped[int] = mapped_column(Integer)
+    love_level: Mapped[int] = mapped_column(Integer)
+    requirement_id: Mapped[int] = mapped_column(Integer)
+    unlock_quest_id: Mapped[int] = mapped_column(Integer)
+    story_quest_id: Mapped[int] = mapped_column(Integer)
+    lock_all_text: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_value_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_value_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_value_3: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class TowerWaveGroupDatum(DeclarativeBase, Base["TowerWaveGroupDatum"]):
+class TowerWaveGroupDatum(Base):
     __tablename__ = 'tower_wave_group_data'
 
-    id: int = Column(Integer, nullable=False)
-    wave_group_id: int = Column(Integer, primary_key=True)
-    odds: int = Column(Integer, nullable=False)
-    enemy_id_1: int = Column(Integer, nullable=False)
-    enemy_id_2: int = Column(Integer, nullable=False)
-    enemy_id_3: int = Column(Integer, nullable=False)
-    enemy_id_4: int = Column(Integer, nullable=False)
-    enemy_id_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer)
+    wave_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    odds: Mapped[int] = mapped_column(Integer)
+    enemy_id_1: Mapped[int] = mapped_column(Integer)
+    enemy_id_2: Mapped[int] = mapped_column(Integer)
+    enemy_id_3: Mapped[int] = mapped_column(Integer)
+    enemy_id_4: Mapped[int] = mapped_column(Integer)
+    enemy_id_5: Mapped[int] = mapped_column(Integer)
 
 
-class TrainingQuestDatum(DeclarativeBase, Base["TrainingQuestDatum"]):
+class TpRecoveryAt(Base):
+    __tablename__ = 'tp_recovery_at'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    limit_value: Mapped[int] = mapped_column(Integer)
+    correction_value: Mapped[float] = mapped_column(Float)
+
+
+class TrainingQuestDatum(Base):
     __tablename__ = 'training_quest_data'
 
-    quest_id: int = Column(Integer, primary_key=True)
-    area_id: int = Column(Integer, nullable=False)
-    quest_name: str = Column(Text, nullable=False)
-    limit_team_level: int = Column(Integer, nullable=False)
-    unlock_quest_id_1: int = Column(Integer, nullable=False)
-    unlock_quest_id_2: int = Column(Integer, nullable=False)
-    stamina: int = Column(Integer, nullable=False)
-    stamina_start: int = Column(Integer, nullable=False)
-    team_exp: int = Column(Integer, nullable=False)
-    unit_exp: int = Column(Integer, nullable=False)
-    limit_time: int = Column(Integer, nullable=False)
-    rank_reward_group: int = Column(Integer, nullable=False)
-    background_1: int = Column(Integer, nullable=False)
-    wave_group_id_1: int = Column(Integer, nullable=False)
-    wave_bgm_sheet_id_1: str = Column(Text, nullable=False)
-    wave_bgm_que_id_1: str = Column(Text, nullable=False)
-    background_2: int = Column(Integer, nullable=False)
-    wave_group_id_2: int = Column(Integer, nullable=False)
-    wave_bgm_sheet_id_2: str = Column(Text, nullable=False)
-    wave_bgm_que_id_2: str = Column(Text, nullable=False)
-    background_3: int = Column(Integer, nullable=False)
-    wave_group_id_3: int = Column(Integer, nullable=False)
-    wave_bgm_sheet_id_3: str = Column(Text, nullable=False)
-    wave_bgm_que_id_3: str = Column(Text, nullable=False)
-    enemy_image_1: int = Column(Integer, nullable=False)
-    enemy_image_2: int = Column(Integer, nullable=False)
-    enemy_image_3: int = Column(Integer, nullable=False)
-    enemy_image_4: int = Column(Integer, nullable=False)
-    enemy_image_5: int = Column(Integer, nullable=False)
-    reward_image_1: int = Column(Integer, nullable=False)
-    reward_image_2: int = Column(Integer, nullable=False)
-    reward_image_3: int = Column(Integer, nullable=False)
-    reward_image_4: int = Column(Integer, nullable=False)
-    reward_image_5: int = Column(Integer, nullable=False)
-    training_quest_detail_bg_id: int = Column(Integer, nullable=False)
-    training_quest_detail_bg_position: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    area_id: Mapped[int] = mapped_column(Integer)
+    quest_name: Mapped[str] = mapped_column(Text)
+    limit_team_level: Mapped[int] = mapped_column(Integer)
+    unlock_quest_id_1: Mapped[int] = mapped_column(Integer)
+    unlock_quest_id_2: Mapped[int] = mapped_column(Integer)
+    stamina: Mapped[int] = mapped_column(Integer)
+    stamina_start: Mapped[int] = mapped_column(Integer)
+    team_exp: Mapped[int] = mapped_column(Integer)
+    unit_exp: Mapped[int] = mapped_column(Integer)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    rank_reward_group: Mapped[int] = mapped_column(Integer)
+    background_1: Mapped[int] = mapped_column(Integer)
+    wave_group_id_1: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_1: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_1: Mapped[str] = mapped_column(Text)
+    background_2: Mapped[int] = mapped_column(Integer)
+    wave_group_id_2: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_2: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_2: Mapped[str] = mapped_column(Text)
+    background_3: Mapped[int] = mapped_column(Integer)
+    wave_group_id_3: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id_3: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id_3: Mapped[str] = mapped_column(Text)
+    enemy_image_1: Mapped[int] = mapped_column(Integer)
+    enemy_image_2: Mapped[int] = mapped_column(Integer)
+    enemy_image_3: Mapped[int] = mapped_column(Integer)
+    enemy_image_4: Mapped[int] = mapped_column(Integer)
+    enemy_image_5: Mapped[int] = mapped_column(Integer)
+    reward_image_1: Mapped[int] = mapped_column(Integer)
+    reward_image_2: Mapped[int] = mapped_column(Integer)
+    reward_image_3: Mapped[int] = mapped_column(Integer)
+    reward_image_4: Mapped[int] = mapped_column(Integer)
+    reward_image_5: Mapped[int] = mapped_column(Integer)
+    training_quest_detail_bg_id: Mapped[int] = mapped_column(Integer)
+    training_quest_detail_bg_position: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class TrialBattleCategory(DeclarativeBase, Base["TrialBattleCategory"]):
+class TravelAreaDatum(Base):
+    __tablename__ = 'travel_area_data'
+
+    travel_area_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    travel_area_name: Mapped[str] = mapped_column(Text)
+    condition_team_lv: Mapped[int] = mapped_column(Integer)
+    bg_id: Mapped[int] = mapped_column(Integer)
+    top_icon_id: Mapped[int] = mapped_column(Integer)
+    top_icon_x: Mapped[int] = mapped_column(Integer)
+    top_icon_y: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+
+
+class TravelDecreaseTimeCost(Base):
+    __tablename__ = 'travel_decrease_time_cost'
+
+    count: Mapped[int] = mapped_column(Integer, primary_key=True)
+    cost: Mapped[int] = mapped_column(Integer)
+
+
+class TravelExEventDatum(Base):
+    __tablename__ = 'travel_ex_event_data'
+
+    still_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    title: Mapped[str] = mapped_column(Text)
+    disp_order: Mapped[int] = mapped_column(Integer)
+
+
+class TravelExEventDrama(Base):
+    __tablename__ = 'travel_ex_event_drama'
+    __table_args__ = (
+        Index('travel_ex_event_drama_0_drama_id', 'drama_id'),
+    )
+
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
+
+
+class TravelQuestDatum(Base):
+    __tablename__ = 'travel_quest_data'
+    __table_args__ = (
+        Index('travel_quest_data_0_travel_area_id', 'travel_area_id'),
+    )
+
+    travel_quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    travel_area_id: Mapped[int] = mapped_column(Integer)
+    travel_quest_name: Mapped[str] = mapped_column(Text)
+    limit_unit_num: Mapped[int] = mapped_column(Integer)
+    need_power: Mapped[int] = mapped_column(Integer)
+    travel_time: Mapped[int] = mapped_column(Integer)
+    travel_time_decrease_limit: Mapped[int] = mapped_column(Integer)
+    travel_decrease_flag: Mapped[int] = mapped_column(Integer)
+    main_reward_1: Mapped[int] = mapped_column(Integer)
+    main_reward_2: Mapped[int] = mapped_column(Integer)
+    main_reward_3: Mapped[int] = mapped_column(Integer)
+    main_reward_4: Mapped[int] = mapped_column(Integer)
+    main_reward_5: Mapped[int] = mapped_column(Integer)
+    icon_id: Mapped[int] = mapped_column(Integer)
+    icon_x: Mapped[int] = mapped_column(Integer)
+    icon_y: Mapped[int] = mapped_column(Integer)
+    situation_group_id: Mapped[int] = mapped_column(Integer)
+
+
+class TravelQuestResult(Base):
+    __tablename__ = 'travel_quest_result'
+
+    situation_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    except_unit_group_id: Mapped[int] = mapped_column(Integer)
+
+
+class TravelQuestResultGroup(Base):
+    __tablename__ = 'travel_quest_result_group'
+    __table_args__ = (
+        Index('travel_quest_result_group_0_situation_group_id', 'situation_group_id'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    situation_group_id: Mapped[int] = mapped_column(Integer)
+    situation_id: Mapped[int] = mapped_column(Integer)
+
+
+class TravelQuestSubReward(Base):
+    __tablename__ = 'travel_quest_sub_reward'
+    __table_args__ = (
+        Index('travel_quest_sub_reward_0_reward_id', 'reward_id'),
+        Index('travel_quest_sub_reward_0_travel_quest_id', 'travel_quest_id')
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    travel_quest_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    disp_order: Mapped[int] = mapped_column(Integer)
+
+
+class TravelResultExceptUnitGroup(Base):
+    __tablename__ = 'travel_result_except_unit_group'
+    __table_args__ = (
+        Index('travel_result_except_unit_group_0_except_unit_group_id', 'except_unit_group_id'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    except_unit_group_id: Mapped[int] = mapped_column(Integer)
+    except_unit_id: Mapped[int] = mapped_column(Integer)
+
+
+class TravelRoundEventDatum(Base):
+    __tablename__ = 'travel_round_event_data'
+
+    round_event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    round: Mapped[int] = mapped_column(Integer, primary_key=True)
+    pos_id: Mapped[int] = mapped_column(Integer)
+    transition_drama_id: Mapped[int] = mapped_column(Integer)
+    main_drama_id: Mapped[int] = mapped_column(Integer)
+    left_door_pre_drama_id: Mapped[int] = mapped_column(Integer)
+    right_door_pre_drama_id: Mapped[int] = mapped_column(Integer)
+    event_icon_id: Mapped[int] = mapped_column(Integer)
+    travel_treasure_box_type: Mapped[int] = mapped_column(Integer)
+
+
+class TravelRoundEventDrama(Base):
+    __tablename__ = 'travel_round_event_drama'
+    __table_args__ = (
+        Index('travel_round_event_drama_0_drama_id', 'drama_id'),
+    )
+
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
+
+
+class TravelStartDrama(Base):
+    __tablename__ = 'travel_start_drama'
+    __table_args__ = (
+        Index('travel_start_drama_0_drama_id', 'drama_id'),
+    )
+
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
+
+
+class TravelTopEventDatum(Base):
+    __tablename__ = 'travel_top_event_data'
+    __table_args__ = (
+        Index('travel_top_event_data_0_top_event_id', 'top_event_id'),
+    )
+
+    top_event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_group: Mapped[int] = mapped_column(Integer)
+    drama_type: Mapped[int] = mapped_column(Integer)
+    pattern: Mapped[int] = mapped_column(Integer, primary_key=True)
+    zoom_offset_x: Mapped[int] = mapped_column(Integer)
+    zoom_offset_y: Mapped[int] = mapped_column(Integer)
+    pre_drama_id: Mapped[int] = mapped_column(Integer)
+    main_drama_id: Mapped[int] = mapped_column(Integer)
+    branch_id_1: Mapped[int] = mapped_column(Integer)
+    branch_id_2: Mapped[int] = mapped_column(Integer)
+    branch_id_3: Mapped[int] = mapped_column(Integer)
+    branch_id_4: Mapped[int] = mapped_column(Integer)
+    branch_id_5: Mapped[int] = mapped_column(Integer)
+    chest_id: Mapped[int] = mapped_column(Integer)
+    top_icon_type: Mapped[int] = mapped_column(Integer)
+
+
+class TravelTopEventDrama(Base):
+    __tablename__ = 'travel_top_event_drama'
+    __table_args__ = (
+        Index('travel_top_event_drama_0_drama_id', 'drama_id'),
+    )
+
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
+
+
+class TravelTopEventPosDetail(Base):
+    __tablename__ = 'travel_top_event_pos_detail'
+
+    pos_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    pos_group_id: Mapped[int] = mapped_column(Integer)
+    pos_x: Mapped[int] = mapped_column(Integer)
+    pos_y: Mapped[int] = mapped_column(Integer)
+    all_pos_flag: Mapped[int] = mapped_column(Integer)
+
+
+class TrialBattleCategory(Base):
     __tablename__ = 'trial_battle_category'
 
-    category_id: int = Column(Integer, primary_key=True)
-    category_name: str = Column(Text, nullable=False)
-    icon_id: int = Column(Integer, nullable=False)
-    label_type_1: int = Column(Integer, nullable=False)
-    label_type_2: int = Column(Integer, nullable=False)
-    label_type_3: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    description_detail: str = Column(Text, nullable=False)
+    category_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    category_name: Mapped[str] = mapped_column(Text)
+    icon_id: Mapped[int] = mapped_column(Integer)
+    label_type_1: Mapped[int] = mapped_column(Integer)
+    label_type_2: Mapped[int] = mapped_column(Integer)
+    label_type_3: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    description_detail: Mapped[str] = mapped_column(Text)
 
 
-class TrialBattleDatum(DeclarativeBase, Base["TrialBattleDatum"]):
+class TrialBattleDatum(Base):
     __tablename__ = 'trial_battle_data'
+    __table_args__ = (
+        Index('trial_battle_data_0_category_id', 'category_id'),
+    )
 
-    quest_id: int = Column(Integer, primary_key=True)
-    category_id: int = Column(Integer, nullable=False, index=True)
-    difficulty: int = Column(Integer, nullable=False)
-    battle_name: str = Column(Text, nullable=False)
-    detail_bg_id: int = Column(Integer, nullable=False)
-    detail_bg_position: int = Column(Integer, nullable=False)
-    detail_boss_bg_size: int = Column(Integer, nullable=False)
-    detail_boss_bg_height: int = Column(Integer, nullable=False)
-    result_boss_position_y: int = Column(Integer, nullable=False)
-    limit_time: int = Column(Integer, nullable=False)
-    background: int = Column(Integer, nullable=False)
-    wave_group_id: int = Column(Integer, nullable=False)
-    wave_bgm_sheet_id: str = Column(Text, nullable=False)
-    wave_bgm_que_id: str = Column(Text, nullable=False)
-    clear_reward_group: int = Column(Integer, nullable=False)
+    quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    category_id: Mapped[int] = mapped_column(Integer)
+    difficulty: Mapped[int] = mapped_column(Integer)
+    battle_name: Mapped[str] = mapped_column(Text)
+    detail_bg_id: Mapped[int] = mapped_column(Integer)
+    detail_bg_position: Mapped[int] = mapped_column(Integer)
+    detail_boss_bg_size: Mapped[int] = mapped_column(Integer)
+    detail_boss_bg_height: Mapped[int] = mapped_column(Integer)
+    result_boss_position_y: Mapped[int] = mapped_column(Integer)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    background: Mapped[int] = mapped_column(Integer)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    wave_bgm_sheet_id: Mapped[str] = mapped_column(Text)
+    wave_bgm_que_id: Mapped[str] = mapped_column(Text)
+    clear_reward_group: Mapped[int] = mapped_column(Integer)
 
 
-class TrialBattleMissionDatum(DeclarativeBase, Base["TrialBattleMissionDatum"]):
+class TrialBattleMissionDatum(Base):
     __tablename__ = 'trial_battle_mission_data'
 
-    trial_mission_id: int = Column(Integer, primary_key=True)
-    disp_group: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    mission_condition: int = Column(Integer, nullable=False)
-    quest_id: int = Column(Integer, nullable=False)
-    condition_value: int = Column(Integer, nullable=False)
-    condition_num: int = Column(Integer, nullable=False)
-    mission_reward_id: int = Column(Integer, nullable=False)
+    trial_mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    disp_group: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    mission_condition: Mapped[int] = mapped_column(Integer)
+    quest_id: Mapped[int] = mapped_column(Integer)
+    condition_value: Mapped[int] = mapped_column(Integer)
+    condition_num: Mapped[int] = mapped_column(Integer)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
 
 
-class TrialBattleMissionReward(DeclarativeBase, Base["TrialBattleMissionReward"]):
+class TrialBattleMissionReward(Base):
     __tablename__ = 'trial_battle_mission_reward'
+    __table_args__ = (
+        Index('trial_battle_mission_reward_0_mission_reward_id', 'mission_reward_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    mission_reward_id: int = Column(Integer, nullable=False, index=True)
-    reward_type: int = Column(Integer, nullable=False)
-    reward_id: int = Column(Integer, nullable=False)
-    reward_num: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    mission_reward_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_num: Mapped[int] = mapped_column(Integer)
 
 
-class TrialBattleRewardDatum(DeclarativeBase, Base["TrialBattleRewardDatum"]):
+class TrialBattleRewardDatum(Base):
     __tablename__ = 'trial_battle_reward_data'
 
-    reward_group_id: int = Column(Integer, primary_key=True)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
+    reward_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
 
 
-class TtkDrama(DeclarativeBase, Base["TtkDrama"]):
+class TtkDrama(Base):
     __tablename__ = 'ttk_drama'
+    __table_args__ = (
+        Index('ttk_drama_0_drama_id', 'drama_id'),
+    )
 
-    command_id: int = Column(Integer, primary_key=True)
-    drama_id: int = Column(Integer, nullable=False, index=True)
-    command_type: int = Column(Integer, nullable=False)
-    param_01: str = Column(Text, nullable=False)
-    param_02: str = Column(Text, nullable=False)
-    param_03: str = Column(Text, nullable=False)
-    param_04: str = Column(Text, nullable=False)
-    param_05: str = Column(Text, nullable=False)
-    param_06: str = Column(Text, nullable=False)
-    param_07: str = Column(Text, nullable=False)
-    param_08: str = Column(Text, nullable=False)
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
 
 
-class TtkEnemy(DeclarativeBase, Base["TtkEnemy"]):
+class TtkEnemy(Base):
     __tablename__ = 'ttk_enemy'
 
-    enemy_id: int = Column(Integer, primary_key=True)
-    score: int = Column(Integer, nullable=False)
-    coin: int = Column(Integer, nullable=False)
-    max: int = Column(Integer, nullable=False)
+    enemy_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    score: Mapped[int] = mapped_column(Integer)
+    coin: Mapped[int] = mapped_column(Integer)
+    max: Mapped[int] = mapped_column(Integer)
 
 
-class TtkNaviComment(DeclarativeBase, Base["TtkNaviComment"]):
+class TtkNaviComment(Base):
     __tablename__ = 'ttk_navi_comment'
 
-    comment_id: int = Column(Integer, primary_key=True)
-    where_type: int = Column(Integer, nullable=False)
-    character_id: int = Column(Integer, nullable=False)
-    face_type: int = Column(Integer, nullable=False)
-    character_name: str = Column(Text, nullable=False)
-    description: str = Column(Text)
-    voice_id: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    pos_x: float = Column(Float, nullable=False)
-    pos_y: float = Column(Float, nullable=False)
-    change_face_time: float = Column(Float, nullable=False)
-    change_face_type: int = Column(Integer, nullable=False)
-    event_id: int = Column(Integer, nullable=False)
+    comment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    where_type: Mapped[int] = mapped_column(Integer)
+    character_id: Mapped[int] = mapped_column(Integer)
+    face_type: Mapped[int] = mapped_column(Integer)
+    character_name: Mapped[str] = mapped_column(Text)
+    voice_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    pos_x: Mapped[float] = mapped_column(Float)
+    pos_y: Mapped[float] = mapped_column(Float)
+    change_face_time: Mapped[float] = mapped_column(Float)
+    change_face_type: Mapped[int] = mapped_column(Integer)
+    event_id: Mapped[int] = mapped_column(Integer)
+    description: Mapped[Optional[str]] = mapped_column(Text)
 
 
-class TtkReward(DeclarativeBase, Base["TtkReward"]):
+class TtkReward(Base):
     __tablename__ = 'ttk_reward'
+    __table_args__ = (
+        Index('ttk_reward_0_ttk_score', 'ttk_score'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    ttk_score: int = Column(Integer, nullable=False, index=True)
-    mission_detail: str = Column(Text, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_count_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_count_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_count_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_count_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_count_5: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    ttk_score: Mapped[int] = mapped_column(Integer)
+    mission_detail: Mapped[str] = mapped_column(Text)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_count_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_count_5: Mapped[int] = mapped_column(Integer)
 
 
-class TtkScore(DeclarativeBase, Base["TtkScore"]):
+class TtkScore(Base):
     __tablename__ = 'ttk_score'
 
-    difficulty_level: int = Column(Integer, primary_key=True)
-    coefficient_difficulty: int = Column(Integer, nullable=False)
-    coefficient_coin_score: int = Column(Integer, nullable=False)
-    life: int = Column(Integer, nullable=False)
-    coefficient_wrong_num: int = Column(Integer, nullable=False)
+    difficulty_level: Mapped[int] = mapped_column(Integer, primary_key=True)
+    coefficient_difficulty: Mapped[int] = mapped_column(Integer)
+    coefficient_coin_score: Mapped[int] = mapped_column(Integer)
+    life: Mapped[int] = mapped_column(Integer)
+    coefficient_wrong_num: Mapped[int] = mapped_column(Integer)
 
 
-class TtkStory(DeclarativeBase, Base["TtkStory"]):
+class TtkStory(Base):
     __tablename__ = 'ttk_story'
+    __table_args__ = (
+        Index('ttk_story_0_ttk_score', 'ttk_score'),
+    )
 
-    ttk_story_id: int = Column(Integer, primary_key=True)
-    ttk_score: int = Column(Integer, nullable=False, index=True)
-    title: str = Column(Text, nullable=False)
+    ttk_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    ttk_score: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
 
 
-class TtkStoryScript(DeclarativeBase, Base["TtkStoryScript"]):
+class TtkStoryScript(Base):
     __tablename__ = 'ttk_story_script'
+    __table_args__ = (
+        Index('ttk_story_script_0_story_id', 'story_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    story_id: int = Column(Integer, nullable=False, index=True)
-    seq_num: int = Column(Integer, nullable=False)
-    type: int = Column(Integer, nullable=False)
-    line_num: int = Column(Integer, nullable=False)
-    start_pos: int = Column(Integer, nullable=False)
-    end_pos: int = Column(Integer, nullable=False)
-    seek_time: float = Column(Float, nullable=False)
-    sheet_name: str = Column(Text, nullable=False)
-    cue_name: str = Column(Text, nullable=False)
-    command: int = Column(Integer, nullable=False)
-    command_param: float = Column(Float, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_id: Mapped[int] = mapped_column(Integer)
+    seq_num: Mapped[int] = mapped_column(Integer)
+    type: Mapped[int] = mapped_column(Integer)
+    line_num: Mapped[int] = mapped_column(Integer)
+    start_pos: Mapped[int] = mapped_column(Integer)
+    end_pos: Mapped[int] = mapped_column(Integer)
+    seek_time: Mapped[float] = mapped_column(Float)
+    sheet_name: Mapped[str] = mapped_column(Text)
+    cue_name: Mapped[str] = mapped_column(Text)
+    command: Mapped[int] = mapped_column(Integer)
+    command_param: Mapped[float] = mapped_column(Float)
 
 
-class TtkWeapon(DeclarativeBase, Base["TtkWeapon"]):
+class TtkWeapon(Base):
     __tablename__ = 'ttk_weapon'
+    __table_args__ = (
+        Index('ttk_weapon_0_ttk_score', 'ttk_score'),
+    )
 
-    ttk_weapon_id: int = Column(Integer, primary_key=True)
-    ttk_score: int = Column(Integer, nullable=False, index=True)
-    name: str = Column(Text, nullable=False)
+    ttk_weapon_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    ttk_score: Mapped[int] = mapped_column(Integer)
+    name: Mapped[str] = mapped_column(Text)
 
 
-class UbAutoDatum(DeclarativeBase, Base["UbAutoDatum"]):
+class UbAutoDatum(Base):
     __tablename__ = 'ub_auto_data'
 
-    ub_auto_id: int = Column(Integer, primary_key=True)
-    auto_type: int = Column(Integer, nullable=False)
-    auto_detail_1: int = Column(Integer, nullable=False)
-    auto_detail_2: int = Column(Integer, nullable=False)
-    auto_detail_3: int = Column(Integer, nullable=False)
-    auto_detail_4: int = Column(Integer, nullable=False)
-    auto_detail_5: int = Column(Integer, nullable=False)
-    auto_value_1: int = Column(Integer, nullable=False)
-    auto_value_2: int = Column(Integer, nullable=False)
-    auto_value_3: int = Column(Integer, nullable=False)
-    auto_value_4: int = Column(Integer, nullable=False)
-    auto_value_5: int = Column(Integer, nullable=False)
+    ub_auto_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    auto_type: Mapped[int] = mapped_column(Integer)
+    auto_detail_1: Mapped[int] = mapped_column(Integer)
+    auto_detail_2: Mapped[int] = mapped_column(Integer)
+    auto_detail_3: Mapped[int] = mapped_column(Integer)
+    auto_detail_4: Mapped[int] = mapped_column(Integer)
+    auto_detail_5: Mapped[int] = mapped_column(Integer)
+    auto_value_1: Mapped[int] = mapped_column(Integer)
+    auto_value_2: Mapped[int] = mapped_column(Integer)
+    auto_value_3: Mapped[int] = mapped_column(Integer)
+    auto_value_4: Mapped[int] = mapped_column(Integer)
+    auto_value_5: Mapped[int] = mapped_column(Integer)
 
 
-class UbAutoDefine(DeclarativeBase, Base["UbAutoDefine"]):
+class UbAutoDefine(Base):
     __tablename__ = 'ub_auto_define'
 
-    skill_id: int = Column(Integer, primary_key=True)
-    ub_auto_id_1: int = Column(Integer, nullable=False)
-    ub_auto_id_2: int = Column(Integer, nullable=False)
-    ub_auto_id_3: int = Column(Integer, nullable=False)
-    ub_auto_id_4: int = Column(Integer, nullable=False)
-    ub_auto_id_5: int = Column(Integer, nullable=False)
+    skill_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    ub_auto_id_1: Mapped[int] = mapped_column(Integer)
+    ub_auto_id_2: Mapped[int] = mapped_column(Integer)
+    ub_auto_id_3: Mapped[int] = mapped_column(Integer)
+    ub_auto_id_4: Mapped[int] = mapped_column(Integer)
+    ub_auto_id_5: Mapped[int] = mapped_column(Integer)
 
 
-class UekBos(DeclarativeBase, Base["UekBos"]):
+class UekBoss(Base):
     __tablename__ = 'uek_boss'
+    __table_args__ = (
+        Index('uek_boss_0_enemy_id', 'enemy_id'),
+    )
 
-    area: int = Column(Integer, primary_key=True)
-    quest_name: str = Column(Text, nullable=False)
-    limit_time: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
-    background: int = Column(Integer, nullable=False)
-    enemy_id: int = Column(Integer, nullable=False, index=True)
-    bgm_sheet_id: str = Column(Text, nullable=False)
-    bgm_que_id: str = Column(Text, nullable=False)
-    detail_bg_id: int = Column(Integer, nullable=False)
-    detail_bg_position: int = Column(Integer, nullable=False)
-    detail_boss_bg_size: float = Column(Float, nullable=False)
-    detail_boss_bg_height: int = Column(Integer, nullable=False)
-    result_boss_position_y: int = Column(Integer, nullable=False)
-    result_movie: int = Column(Integer, nullable=False)
+    area: Mapped[int] = mapped_column(Integer, primary_key=True)
+    quest_name: Mapped[str] = mapped_column(Text)
+    limit_time: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
+    background: Mapped[int] = mapped_column(Integer)
+    enemy_id: Mapped[int] = mapped_column(Integer)
+    bgm_sheet_id: Mapped[str] = mapped_column(Text)
+    bgm_que_id: Mapped[str] = mapped_column(Text)
+    detail_bg_id: Mapped[int] = mapped_column(Integer)
+    detail_bg_position: Mapped[int] = mapped_column(Integer)
+    detail_boss_bg_size: Mapped[float] = mapped_column(Float)
+    detail_boss_bg_height: Mapped[int] = mapped_column(Integer)
+    result_boss_position_y: Mapped[int] = mapped_column(Integer)
+    result_movie: Mapped[int] = mapped_column(Integer)
 
 
-class UekDrama(DeclarativeBase, Base["UekDrama"]):
+class UekDrama(Base):
     __tablename__ = 'uek_drama'
+    __table_args__ = (
+        Index('uek_drama_0_drama_id', 'drama_id'),
+    )
 
-    command_id: int = Column(Integer, primary_key=True)
-    drama_id: int = Column(Integer, nullable=False, index=True)
-    command_type: int = Column(Integer, nullable=False)
-    param_01: str = Column(Text, nullable=False)
-    param_02: str = Column(Text, nullable=False)
-    param_03: str = Column(Text, nullable=False)
-    param_04: str = Column(Text, nullable=False)
-    param_05: str = Column(Text, nullable=False)
-    param_06: str = Column(Text, nullable=False)
-    param_07: str = Column(Text, nullable=False)
-    param_08: str = Column(Text, nullable=False)
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
 
 
-class UekMission(DeclarativeBase, Base["UekMission"]):
+class UekMission(Base):
     __tablename__ = 'uek_mission'
 
-    mission_id: int = Column(Integer, primary_key=True)
-    area: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    mission_condition: int = Column(Integer, nullable=False)
-    condition_value_1: int = Column(Integer, nullable=False)
-    condition_value_2: int = Column(Integer, nullable=False)
-    condition_value_3: int = Column(Integer, nullable=False)
-    condition_value_4: int = Column(Integer, nullable=False)
-    condition_value_5: int = Column(Integer, nullable=False)
-    condition_num: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    reward_id_4: int = Column(Integer, nullable=False)
-    reward_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    reward_id_5: int = Column(Integer, nullable=False)
-    reward_num_5: int = Column(Integer, nullable=False)
-    system_id: int = Column(Integer, nullable=False)
-    event_id: int = Column(Integer, nullable=False)
+    mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    area: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    mission_condition: Mapped[int] = mapped_column(Integer)
+    condition_value_1: Mapped[int] = mapped_column(Integer)
+    condition_value_2: Mapped[int] = mapped_column(Integer)
+    condition_value_3: Mapped[int] = mapped_column(Integer)
+    condition_value_4: Mapped[int] = mapped_column(Integer)
+    condition_value_5: Mapped[int] = mapped_column(Integer)
+    condition_num: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    reward_id_4: Mapped[int] = mapped_column(Integer)
+    reward_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    reward_id_5: Mapped[int] = mapped_column(Integer)
+    reward_num_5: Mapped[int] = mapped_column(Integer)
+    system_id: Mapped[int] = mapped_column(Integer)
+    event_id: Mapped[int] = mapped_column(Integer)
 
 
-class UekSpineAnimLink(DeclarativeBase, Base["UekSpineAnimLink"]):
+class UekSpineAnimLink(Base):
     __tablename__ = 'uek_spine_anim_link'
+    __table_args__ = (
+        Index('uek_spine_anim_link_0_anim_num', 'anim_num'),
+    )
 
-    spine_id: int = Column(Integer, primary_key=True)
-    anim_num: int = Column(Integer, nullable=False, index=True)
+    spine_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    anim_num: Mapped[int] = mapped_column(Integer)
 
 
-class UniqueEquipEnhanceRate(DeclarativeBase, Base["UniqueEquipEnhanceRate"]):
+class UniqueEquipConsumeGroup(Base):
+    __tablename__ = 'unique_equip_consume_group'
+    __table_args__ = (
+        Index('unique_equip_consume_group_0_group_id', 'group_id'),
+        Index('unique_equip_consume_group_0_item_id', 'item_id', unique=True)
+    )
+
+    group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    index_in_group: Mapped[int] = mapped_column(Integer, primary_key=True)
+    item_id: Mapped[int] = mapped_column(Integer)
+
+
+class UniqueEquipCraftEnhance(Base):
+    __tablename__ = 'unique_equip_craft_enhance'
+    __table_args__ = (
+        Index('unique_equip_craft_enhance_0_consume_group_id', 'consume_group_id'),
+    )
+
+    equipment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    consume_group_id: Mapped[int] = mapped_column(Integer)
+
+
+class UniqueEquipEnhanceRate(Base):
     __tablename__ = 'unique_equip_enhance_rate'
+    __table_args__ = (
+        Index('unique_equip_enhance_rate_0_equipment_id', 'equipment_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    equipment_id: int = Column(Integer, nullable=False, index=True)
-    min_lv: int = Column(Integer, nullable=False)
-    max_lv: int = Column(Integer, nullable=False)
-    hp: float = Column(Float, nullable=False)
-    atk: float = Column(Float, nullable=False)
-    magic_str: float = Column(Float, nullable=False)
-    _def: float = Column('def', Float, nullable=False)
-    magic_def: float = Column(Float, nullable=False)
-    physical_critical: float = Column(Float, nullable=False)
-    magic_critical: float = Column(Float, nullable=False)
-    wave_hp_recovery: float = Column(Float, nullable=False)
-    wave_energy_recovery: float = Column(Float, nullable=False)
-    dodge: float = Column(Float, nullable=False)
-    physical_penetrate: float = Column(Float, nullable=False)
-    magic_penetrate: float = Column(Float, nullable=False)
-    life_steal: float = Column(Float, nullable=False)
-    hp_recovery_rate: float = Column(Float, nullable=False)
-    energy_recovery_rate: float = Column(Float, nullable=False)
-    energy_reduce_rate: float = Column(Float, nullable=False)
-    accuracy: float = Column(Float, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    equipment_id: Mapped[int] = mapped_column(Integer)
+    min_lv: Mapped[int] = mapped_column(Integer)
+    max_lv: Mapped[int] = mapped_column(Integer)
+    hp: Mapped[float] = mapped_column(Float)
+    atk: Mapped[float] = mapped_column(Float)
+    magic_str: Mapped[float] = mapped_column(Float)
+    def_: Mapped[float] = mapped_column('def', Float)
+    magic_def: Mapped[float] = mapped_column(Float)
+    physical_critical: Mapped[float] = mapped_column(Float)
+    magic_critical: Mapped[float] = mapped_column(Float)
+    wave_hp_recovery: Mapped[float] = mapped_column(Float)
+    wave_energy_recovery: Mapped[float] = mapped_column(Float)
+    dodge: Mapped[float] = mapped_column(Float)
+    physical_penetrate: Mapped[float] = mapped_column(Float)
+    magic_penetrate: Mapped[float] = mapped_column(Float)
+    life_steal: Mapped[float] = mapped_column(Float)
+    hp_recovery_rate: Mapped[float] = mapped_column(Float)
+    energy_recovery_rate: Mapped[float] = mapped_column(Float)
+    energy_reduce_rate: Mapped[float] = mapped_column(Float)
+    accuracy: Mapped[float] = mapped_column(Float)
 
 
-class UniqueEquipmentBonu(DeclarativeBase, Base["UniqueEquipmentBonu"]):
+class UniqueEquipmentBonus(Base):
     __tablename__ = 'unique_equipment_bonus'
+    __table_args__ = (
+        Index('unique_equipment_bonus_0_equipment_id', 'equipment_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    equipment_id: int = Column(Integer, nullable=False, index=True)
-    min_lv: int = Column(Integer, nullable=False)
-    max_lv: int = Column(Integer, nullable=False)
-    hp: float = Column(Float, nullable=False)
-    atk: float = Column(Float, nullable=False)
-    magic_str: float = Column(Float, nullable=False)
-    _def: float = Column('def', Float, nullable=False)
-    magic_def: float = Column(Float, nullable=False)
-    physical_critical: float = Column(Float, nullable=False)
-    magic_critical: float = Column(Float, nullable=False)
-    wave_hp_recovery: float = Column(Float, nullable=False)
-    wave_energy_recovery: float = Column(Float, nullable=False)
-    dodge: float = Column(Float, nullable=False)
-    physical_penetrate: float = Column(Float, nullable=False)
-    magic_penetrate: float = Column(Float, nullable=False)
-    life_steal: float = Column(Float, nullable=False)
-    hp_recovery_rate: float = Column(Float, nullable=False)
-    energy_recovery_rate: float = Column(Float, nullable=False)
-    energy_reduce_rate: float = Column(Float, nullable=False)
-    accuracy: float = Column(Float, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    equipment_id: Mapped[int] = mapped_column(Integer)
+    min_lv: Mapped[int] = mapped_column(Integer)
+    max_lv: Mapped[int] = mapped_column(Integer)
+    hp: Mapped[float] = mapped_column(Float)
+    atk: Mapped[float] = mapped_column(Float)
+    magic_str: Mapped[float] = mapped_column(Float)
+    def_: Mapped[float] = mapped_column('def', Float)
+    magic_def: Mapped[float] = mapped_column(Float)
+    physical_critical: Mapped[float] = mapped_column(Float)
+    magic_critical: Mapped[float] = mapped_column(Float)
+    wave_hp_recovery: Mapped[float] = mapped_column(Float)
+    wave_energy_recovery: Mapped[float] = mapped_column(Float)
+    dodge: Mapped[float] = mapped_column(Float)
+    physical_penetrate: Mapped[float] = mapped_column(Float)
+    magic_penetrate: Mapped[float] = mapped_column(Float)
+    life_steal: Mapped[float] = mapped_column(Float)
+    hp_recovery_rate: Mapped[float] = mapped_column(Float)
+    energy_recovery_rate: Mapped[float] = mapped_column(Float)
+    energy_reduce_rate: Mapped[float] = mapped_column(Float)
+    accuracy: Mapped[float] = mapped_column(Float)
 
 
-class UniqueEquipmentCraft(DeclarativeBase, Base["UniqueEquipmentCraft"]):
+class UniqueEquipmentCraft(Base):
     __tablename__ = 'unique_equipment_craft'
 
-    equip_id: int = Column(Integer, primary_key=True)
-    crafted_cost: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    item_id_1: int = Column(Integer, nullable=False)
-    consume_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    item_id_2: int = Column(Integer, nullable=False)
-    consume_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    item_id_3: int = Column(Integer, nullable=False)
-    consume_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    item_id_4: int = Column(Integer, nullable=False)
-    consume_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    item_id_5: int = Column(Integer, nullable=False)
-    consume_num_5: int = Column(Integer, nullable=False)
-    reward_type_6: int = Column(Integer, nullable=False)
-    item_id_6: int = Column(Integer, nullable=False)
-    consume_num_6: int = Column(Integer, nullable=False)
-    reward_type_7: int = Column(Integer, nullable=False)
-    item_id_7: int = Column(Integer, nullable=False)
-    consume_num_7: int = Column(Integer, nullable=False)
-    reward_type_8: int = Column(Integer, nullable=False)
-    item_id_8: int = Column(Integer, nullable=False)
-    consume_num_8: int = Column(Integer, nullable=False)
-    reward_type_9: int = Column(Integer, nullable=False)
-    item_id_9: int = Column(Integer, nullable=False)
-    consume_num_9: int = Column(Integer, nullable=False)
-    reward_type_10: int = Column(Integer, nullable=False)
-    item_id_10: int = Column(Integer, nullable=False)
-    consume_num_10: int = Column(Integer, nullable=False)
+    equip_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    crafted_cost: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    item_id_1: Mapped[int] = mapped_column(Integer)
+    consume_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    item_id_2: Mapped[int] = mapped_column(Integer)
+    consume_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    item_id_3: Mapped[int] = mapped_column(Integer)
+    consume_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    item_id_4: Mapped[int] = mapped_column(Integer)
+    consume_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    item_id_5: Mapped[int] = mapped_column(Integer)
+    consume_num_5: Mapped[int] = mapped_column(Integer)
+    reward_type_6: Mapped[int] = mapped_column(Integer)
+    item_id_6: Mapped[int] = mapped_column(Integer)
+    consume_num_6: Mapped[int] = mapped_column(Integer)
+    reward_type_7: Mapped[int] = mapped_column(Integer)
+    item_id_7: Mapped[int] = mapped_column(Integer)
+    consume_num_7: Mapped[int] = mapped_column(Integer)
+    reward_type_8: Mapped[int] = mapped_column(Integer)
+    item_id_8: Mapped[int] = mapped_column(Integer)
+    consume_num_8: Mapped[int] = mapped_column(Integer)
+    reward_type_9: Mapped[int] = mapped_column(Integer)
+    item_id_9: Mapped[int] = mapped_column(Integer)
+    consume_num_9: Mapped[int] = mapped_column(Integer)
+    reward_type_10: Mapped[int] = mapped_column(Integer)
+    item_id_10: Mapped[int] = mapped_column(Integer)
+    consume_num_10: Mapped[int] = mapped_column(Integer)
 
 
-class UniqueEquipmentDatum(DeclarativeBase, Base["UniqueEquipmentDatum"]):
+class UniqueEquipmentDatum(Base):
     __tablename__ = 'unique_equipment_data'
 
-    equipment_id: int = Column(Integer, primary_key=True)
-    equipment_name: str = Column(Text, nullable=False)
-    description: str = Column(Text, nullable=False)
-    promotion_level: int = Column(Integer, nullable=False)
-    craft_flg: int = Column(Integer, nullable=False)
-    equipment_enhance_point: int = Column(Integer, nullable=False)
-    sale_price: int = Column(Integer, nullable=False)
-    require_level: int = Column(Integer, nullable=False)
-    hp: float = Column(Float, nullable=False)
-    atk: float = Column(Float, nullable=False)
-    magic_str: float = Column(Float, nullable=False)
-    _def: float = Column('def', Float, nullable=False)
-    magic_def: float = Column(Float, nullable=False)
-    physical_critical: float = Column(Float, nullable=False)
-    magic_critical: float = Column(Float, nullable=False)
-    wave_hp_recovery: float = Column(Float, nullable=False)
-    wave_energy_recovery: float = Column(Float, nullable=False)
-    dodge: float = Column(Float, nullable=False)
-    physical_penetrate: float = Column(Float, nullable=False)
-    magic_penetrate: float = Column(Float, nullable=False)
-    life_steal: float = Column(Float, nullable=False)
-    hp_recovery_rate: float = Column(Float, nullable=False)
-    energy_recovery_rate: float = Column(Float, nullable=False)
-    energy_reduce_rate: float = Column(Float, nullable=False)
-    enable_donation: int = Column(Integer, nullable=False)
-    accuracy: float = Column(Float, nullable=False)
+    equipment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    equipment_name: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
+    promotion_level: Mapped[int] = mapped_column(Integer)
+    craft_flg: Mapped[int] = mapped_column(Integer)
+    equipment_enhance_point: Mapped[int] = mapped_column(Integer)
+    sale_price: Mapped[int] = mapped_column(Integer)
+    require_level: Mapped[int] = mapped_column(Integer)
+    hp: Mapped[float] = mapped_column(Float)
+    atk: Mapped[float] = mapped_column(Float)
+    magic_str: Mapped[float] = mapped_column(Float)
+    def_: Mapped[float] = mapped_column('def', Float)
+    magic_def: Mapped[float] = mapped_column(Float)
+    physical_critical: Mapped[float] = mapped_column(Float)
+    magic_critical: Mapped[float] = mapped_column(Float)
+    wave_hp_recovery: Mapped[float] = mapped_column(Float)
+    wave_energy_recovery: Mapped[float] = mapped_column(Float)
+    dodge: Mapped[float] = mapped_column(Float)
+    physical_penetrate: Mapped[float] = mapped_column(Float)
+    magic_penetrate: Mapped[float] = mapped_column(Float)
+    life_steal: Mapped[float] = mapped_column(Float)
+    hp_recovery_rate: Mapped[float] = mapped_column(Float)
+    energy_recovery_rate: Mapped[float] = mapped_column(Float)
+    energy_reduce_rate: Mapped[float] = mapped_column(Float)
+    enable_donation: Mapped[int] = mapped_column(Integer)
+    accuracy: Mapped[float] = mapped_column(Float)
 
 
-class UniqueEquipmentEnhanceDatum(DeclarativeBase, Base["UniqueEquipmentEnhanceDatum"]):
+class UniqueEquipmentEnhanceDatum(Base):
     __tablename__ = 'unique_equipment_enhance_data'
 
-    equip_slot: int = Column(Integer, primary_key=True, nullable=False)
-    enhance_level: int = Column(Integer, primary_key=True, nullable=False)
-    needed_point: int = Column(Integer, nullable=False)
-    total_point: int = Column(Integer, nullable=False)
-    needed_mana: int = Column(Integer, nullable=False)
-    rank: int = Column(Integer, nullable=False)
+    equip_slot: Mapped[int] = mapped_column(Integer, primary_key=True)
+    enhance_level: Mapped[int] = mapped_column(Integer, primary_key=True)
+    needed_point: Mapped[int] = mapped_column(Integer)
+    total_point: Mapped[int] = mapped_column(Integer)
+    needed_mana: Mapped[int] = mapped_column(Integer)
+    rank: Mapped[int] = mapped_column(Integer)
 
 
-class UniqueEquipmentEnhanceRate(DeclarativeBase, Base["UniqueEquipmentEnhanceRate"]):
+class UniqueEquipmentEnhanceRate(Base):
     __tablename__ = 'unique_equipment_enhance_rate'
 
-    equipment_id: int = Column(Integer, primary_key=True)
-    equipment_name: str = Column(Text, nullable=False)
-    description: str = Column(Text, nullable=False)
-    promotion_level: int = Column(Integer, nullable=False)
-    hp: float = Column(Float, nullable=False)
-    atk: float = Column(Float, nullable=False)
-    magic_str: float = Column(Float, nullable=False)
-    _def: float = Column('def', Float, nullable=False)
-    magic_def: float = Column(Float, nullable=False)
-    physical_critical: float = Column(Float, nullable=False)
-    magic_critical: float = Column(Float, nullable=False)
-    wave_hp_recovery: float = Column(Float, nullable=False)
-    wave_energy_recovery: float = Column(Float, nullable=False)
-    dodge: float = Column(Float, nullable=False)
-    physical_penetrate: float = Column(Float, nullable=False)
-    magic_penetrate: float = Column(Float, nullable=False)
-    life_steal: float = Column(Float, nullable=False)
-    hp_recovery_rate: float = Column(Float, nullable=False)
-    energy_recovery_rate: float = Column(Float, nullable=False)
-    energy_reduce_rate: float = Column(Float, nullable=False)
-    accuracy: float = Column(Float, nullable=False)
+    equipment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    equipment_name: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
+    promotion_level: Mapped[int] = mapped_column(Integer)
+    hp: Mapped[float] = mapped_column(Float)
+    atk: Mapped[float] = mapped_column(Float)
+    magic_str: Mapped[float] = mapped_column(Float)
+    def_: Mapped[float] = mapped_column('def', Float)
+    magic_def: Mapped[float] = mapped_column(Float)
+    physical_critical: Mapped[float] = mapped_column(Float)
+    magic_critical: Mapped[float] = mapped_column(Float)
+    wave_hp_recovery: Mapped[float] = mapped_column(Float)
+    wave_energy_recovery: Mapped[float] = mapped_column(Float)
+    dodge: Mapped[float] = mapped_column(Float)
+    physical_penetrate: Mapped[float] = mapped_column(Float)
+    magic_penetrate: Mapped[float] = mapped_column(Float)
+    life_steal: Mapped[float] = mapped_column(Float)
+    hp_recovery_rate: Mapped[float] = mapped_column(Float)
+    energy_recovery_rate: Mapped[float] = mapped_column(Float)
+    energy_reduce_rate: Mapped[float] = mapped_column(Float)
+    accuracy: Mapped[float] = mapped_column(Float)
 
 
-class UniqueEquipmentRankup(DeclarativeBase, Base["UniqueEquipmentRankup"]):
+class UniqueEquipmentRankup(Base):
     __tablename__ = 'unique_equipment_rankup'
+    __table_args__ = (
+        Index('unique_equipment_rankup_0_equip_id', 'equip_id'),
+    )
 
-    equip_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    unique_equip_rank: int = Column(Integer, primary_key=True, nullable=False)
-    unit_level: int = Column(Integer, nullable=False)
-    crafted_cost: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    item_id_1: int = Column(Integer, nullable=False)
-    consume_num_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    item_id_2: int = Column(Integer, nullable=False)
-    consume_num_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    item_id_3: int = Column(Integer, nullable=False)
-    consume_num_3: int = Column(Integer, nullable=False)
-    reward_type_4: int = Column(Integer, nullable=False)
-    item_id_4: int = Column(Integer, nullable=False)
-    consume_num_4: int = Column(Integer, nullable=False)
-    reward_type_5: int = Column(Integer, nullable=False)
-    item_id_5: int = Column(Integer, nullable=False)
-    consume_num_5: int = Column(Integer, nullable=False)
-    reward_type_6: int = Column(Integer, nullable=False)
-    item_id_6: int = Column(Integer, nullable=False)
-    consume_num_6: int = Column(Integer, nullable=False)
-    reward_type_7: int = Column(Integer, nullable=False)
-    item_id_7: int = Column(Integer, nullable=False)
-    consume_num_7: int = Column(Integer, nullable=False)
-    reward_type_8: int = Column(Integer, nullable=False)
-    item_id_8: int = Column(Integer, nullable=False)
-    consume_num_8: int = Column(Integer, nullable=False)
-    reward_type_9: int = Column(Integer, nullable=False)
-    item_id_9: int = Column(Integer, nullable=False)
-    consume_num_9: int = Column(Integer, nullable=False)
-    reward_type_10: int = Column(Integer, nullable=False)
-    item_id_10: int = Column(Integer, nullable=False)
-    consume_num_10: int = Column(Integer, nullable=False)
+    equip_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unique_equip_rank: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_level: Mapped[int] = mapped_column(Integer)
+    crafted_cost: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    item_id_1: Mapped[int] = mapped_column(Integer)
+    consume_num_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    item_id_2: Mapped[int] = mapped_column(Integer)
+    consume_num_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    item_id_3: Mapped[int] = mapped_column(Integer)
+    consume_num_3: Mapped[int] = mapped_column(Integer)
+    reward_type_4: Mapped[int] = mapped_column(Integer)
+    item_id_4: Mapped[int] = mapped_column(Integer)
+    consume_num_4: Mapped[int] = mapped_column(Integer)
+    reward_type_5: Mapped[int] = mapped_column(Integer)
+    item_id_5: Mapped[int] = mapped_column(Integer)
+    consume_num_5: Mapped[int] = mapped_column(Integer)
+    reward_type_6: Mapped[int] = mapped_column(Integer)
+    item_id_6: Mapped[int] = mapped_column(Integer)
+    consume_num_6: Mapped[int] = mapped_column(Integer)
+    reward_type_7: Mapped[int] = mapped_column(Integer)
+    item_id_7: Mapped[int] = mapped_column(Integer)
+    consume_num_7: Mapped[int] = mapped_column(Integer)
+    reward_type_8: Mapped[int] = mapped_column(Integer)
+    item_id_8: Mapped[int] = mapped_column(Integer)
+    consume_num_8: Mapped[int] = mapped_column(Integer)
+    reward_type_9: Mapped[int] = mapped_column(Integer)
+    item_id_9: Mapped[int] = mapped_column(Integer)
+    consume_num_9: Mapped[int] = mapped_column(Integer)
+    reward_type_10: Mapped[int] = mapped_column(Integer)
+    item_id_10: Mapped[int] = mapped_column(Integer)
+    consume_num_10: Mapped[int] = mapped_column(Integer)
 
 
-class UnitAttackPattern(DeclarativeBase, Base["UnitAttackPattern"]):
+class UnitAttackPattern(Base):
     __tablename__ = 'unit_attack_pattern'
 
-    pattern_id: int = Column(Integer, primary_key=True)
-    unit_id: int = Column(Integer, nullable=False)
-    loop_start: int = Column(Integer, nullable=False)
-    loop_end: int = Column(Integer, nullable=False)
-    atk_pattern_1: int = Column(Integer, nullable=False)
-    atk_pattern_2: int = Column(Integer, nullable=False)
-    atk_pattern_3: int = Column(Integer, nullable=False)
-    atk_pattern_4: int = Column(Integer, nullable=False)
-    atk_pattern_5: int = Column(Integer, nullable=False)
-    atk_pattern_6: int = Column(Integer, nullable=False)
-    atk_pattern_7: int = Column(Integer, nullable=False)
-    atk_pattern_8: int = Column(Integer, nullable=False)
-    atk_pattern_9: int = Column(Integer, nullable=False)
-    atk_pattern_10: int = Column(Integer, nullable=False)
-    atk_pattern_11: int = Column(Integer, nullable=False)
-    atk_pattern_12: int = Column(Integer, nullable=False)
-    atk_pattern_13: int = Column(Integer, nullable=False)
-    atk_pattern_14: int = Column(Integer, nullable=False)
-    atk_pattern_15: int = Column(Integer, nullable=False)
-    atk_pattern_16: int = Column(Integer, nullable=False)
-    atk_pattern_17: int = Column(Integer, nullable=False)
-    atk_pattern_18: int = Column(Integer, nullable=False)
-    atk_pattern_19: int = Column(Integer, nullable=False)
-    atk_pattern_20: int = Column(Integer, nullable=False)
+    pattern_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    loop_start: Mapped[int] = mapped_column(Integer)
+    loop_end: Mapped[int] = mapped_column(Integer)
+    atk_pattern_1: Mapped[int] = mapped_column(Integer)
+    atk_pattern_2: Mapped[int] = mapped_column(Integer)
+    atk_pattern_3: Mapped[int] = mapped_column(Integer)
+    atk_pattern_4: Mapped[int] = mapped_column(Integer)
+    atk_pattern_5: Mapped[int] = mapped_column(Integer)
+    atk_pattern_6: Mapped[int] = mapped_column(Integer)
+    atk_pattern_7: Mapped[int] = mapped_column(Integer)
+    atk_pattern_8: Mapped[int] = mapped_column(Integer)
+    atk_pattern_9: Mapped[int] = mapped_column(Integer)
+    atk_pattern_10: Mapped[int] = mapped_column(Integer)
+    atk_pattern_11: Mapped[int] = mapped_column(Integer)
+    atk_pattern_12: Mapped[int] = mapped_column(Integer)
+    atk_pattern_13: Mapped[int] = mapped_column(Integer)
+    atk_pattern_14: Mapped[int] = mapped_column(Integer)
+    atk_pattern_15: Mapped[int] = mapped_column(Integer)
+    atk_pattern_16: Mapped[int] = mapped_column(Integer)
+    atk_pattern_17: Mapped[int] = mapped_column(Integer)
+    atk_pattern_18: Mapped[int] = mapped_column(Integer)
+    atk_pattern_19: Mapped[int] = mapped_column(Integer)
+    atk_pattern_20: Mapped[int] = mapped_column(Integer)
 
 
-class UnitBackground(DeclarativeBase, Base["UnitBackground"]):
+class UnitBackground(Base):
     __tablename__ = 'unit_background'
 
-    unit_id: int = Column(Integer, primary_key=True)
-    unit_name: str = Column(Text, nullable=False)
-    bg_id: int = Column(Integer, nullable=False)
-    bg_name: str = Column(Text, nullable=False)
-    position: float = Column(Float, nullable=False)
-    face_type: int = Column(Integer, nullable=False)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_name: Mapped[str] = mapped_column(Text)
+    bg_id: Mapped[int] = mapped_column(Integer)
+    bg_name: Mapped[str] = mapped_column(Text)
+    position: Mapped[float] = mapped_column(Float)
+    face_type: Mapped[int] = mapped_column(Integer)
 
 
-class UnitClipSetting(DeclarativeBase, Base["UnitClipSetting"]):
+class UnitClipSetting(Base):
     __tablename__ = 'unit_clip_setting'
 
-    clip_id: int = Column(Integer, primary_key=True)
-    center_x: int = Column(Integer, nullable=False)
-    size_x: int = Column(Integer, nullable=False)
-    softness_x: int = Column(Integer, nullable=False)
+    clip_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    center_x: Mapped[int] = mapped_column(Integer)
+    size_x: Mapped[int] = mapped_column(Integer)
+    softness_x: Mapped[int] = mapped_column(Integer)
 
 
-class UnitComment(DeclarativeBase, Base["UnitComment"]):
+class UnitComments(Base):
     __tablename__ = 'unit_comments'
     __table_args__ = (
-        Index('unit_comments_0_unit_id_1_use_type', 'unit_id', 'use_type'),
+        Index('unit_comments_0_unit_id', 'unit_id'),
+        Index('unit_comments_0_unit_id_1_use_type', 'unit_id', 'use_type')
     )
 
-    id: int = Column(Integer, primary_key=True)
-    unit_id: int = Column(Integer, nullable=False, index=True)
-    use_type: int = Column(Integer, nullable=False)
-    voice_id: int = Column(Integer, nullable=False)
-    face_id: int = Column(Integer, nullable=False)
-    change_time: float = Column(Float, nullable=False)
-    change_face: int = Column(Integer, nullable=False)
-    description: str = Column(Text, nullable=False)
-    all_comments_flag: int = Column(Integer, nullable=False)
-    target_unit_id: int = Column(Integer, nullable=False)
-    face_id_2: int = Column(Integer, nullable=False)
-    change_time_2: float = Column(Float, nullable=False)
-    change_face_2: int = Column(Integer, nullable=False)
-    face_id_3: int = Column(Integer, nullable=False)
-    change_time_3: float = Column(Float, nullable=False)
-    change_face_3: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    use_type: Mapped[int] = mapped_column(Integer)
+    voice_id: Mapped[int] = mapped_column(Integer)
+    face_id: Mapped[int] = mapped_column(Integer)
+    change_time: Mapped[float] = mapped_column(Float)
+    change_face: Mapped[int] = mapped_column(Integer)
+    description: Mapped[str] = mapped_column(Text)
+    all_comments_flag: Mapped[int] = mapped_column(Integer)
+    target_unit_id: Mapped[int] = mapped_column(Integer)
+    face_id_2: Mapped[int] = mapped_column(Integer)
+    change_time_2: Mapped[float] = mapped_column(Float)
+    change_face_2: Mapped[int] = mapped_column(Integer)
+    face_id_3: Mapped[int] = mapped_column(Integer)
+    change_time_3: Mapped[float] = mapped_column(Float)
+    change_face_3: Mapped[int] = mapped_column(Integer)
 
 
-class UnitConversion(DeclarativeBase, Base["UnitConversion"]):
+class UnitConversion(Base):
     __tablename__ = 'unit_conversion'
+    __table_args__ = (
+        Index('unit_conversion_0_unit_id', 'unit_id', unique=True),
+    )
 
-    original_unit_id: int = Column(Integer, primary_key=True)
-    unit_id: int = Column(Integer, nullable=False, unique=True)
+    original_unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer)
 
 
-class UnitDatum(DeclarativeBase, Base["UnitDatum"]):
+class UnitDatum(Base):
     __tablename__ = 'unit_data'
+    __table_args__ = (
+        Index('unit_data_0_original_unit_id', 'original_unit_id'),
+    )
 
-    unit_id: int = Column(Integer, primary_key=True)
-    unit_name: str = Column(Text, nullable=False)
-    kana: str = Column(Text, nullable=False)
-    prefab_id: int = Column(Integer, nullable=False)
-    prefab_id_battle: int = Column(Integer, nullable=False)
-    is_limited: int = Column(Integer, nullable=False)
-    rarity: int = Column(Integer, nullable=False)
-    motion_type: int = Column(Integer, nullable=False)
-    se_type: int = Column(Integer, nullable=False)
-    move_speed: int = Column(Integer, nullable=False)
-    search_area_width: int = Column(Integer, nullable=False)
-    atk_type: int = Column(Integer, nullable=False)
-    normal_atk_cast_time: float = Column(Float, nullable=False)
-    cutin_1: int = Column(Integer, nullable=False)
-    cutin_2: int = Column(Integer, nullable=False)
-    cutin1_star6: int = Column(Integer, nullable=False)
-    cutin2_star6: int = Column(Integer, nullable=False)
-    guild_id: int = Column(Integer, nullable=False)
-    exskill_display: int = Column(Integer, nullable=False)
-    comment: str = Column(Text, nullable=False)
-    only_disp_owned: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    original_unit_id: int = Column(Integer, nullable=False)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_name: Mapped[str] = mapped_column(Text)
+    kana: Mapped[str] = mapped_column(Text)
+    prefab_id: Mapped[int] = mapped_column(Integer)
+    prefab_id_battle: Mapped[int] = mapped_column(Integer)
+    is_limited: Mapped[int] = mapped_column(Integer)
+    rarity: Mapped[int] = mapped_column(Integer)
+    motion_type: Mapped[int] = mapped_column(Integer)
+    se_type: Mapped[int] = mapped_column(Integer)
+    move_speed: Mapped[int] = mapped_column(Integer)
+    search_area_width: Mapped[int] = mapped_column(Integer)
+    atk_type: Mapped[int] = mapped_column(Integer)
+    normal_atk_cast_time: Mapped[float] = mapped_column(Float)
+    cutin_1: Mapped[int] = mapped_column(Integer)
+    cutin_2: Mapped[int] = mapped_column(Integer)
+    cutin1_star6: Mapped[int] = mapped_column(Integer)
+    cutin2_star6: Mapped[int] = mapped_column(Integer)
+    guild_id: Mapped[int] = mapped_column(Integer)
+    exskill_display: Mapped[int] = mapped_column(Integer)
+    comment: Mapped[str] = mapped_column(Text)
+    only_disp_owned: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    original_unit_id: Mapped[int] = mapped_column(Integer)
 
 
-class UnitEnemyDatum(DeclarativeBase, Base["UnitEnemyDatum"]):
+class UnitEnemyDatum(Base):
     __tablename__ = 'unit_enemy_data'
 
-    unit_id: int = Column(Integer, primary_key=True)
-    unit_name: str = Column(Text, nullable=False)
-    prefab_id: int = Column(Integer, nullable=False)
-    motion_type: int = Column(Integer, nullable=False)
-    se_type: int = Column(Integer, nullable=False)
-    move_speed: int = Column(Integer, nullable=False)
-    search_area_width: int = Column(Integer, nullable=False)
-    atk_type: int = Column(Integer, nullable=False)
-    normal_atk_cast_time: float = Column(Float, nullable=False)
-    cutin: int = Column(Integer, nullable=False)
-    cutin_star6: int = Column(Integer, nullable=False)
-    visual_change_flag: int = Column(Integer, nullable=False)
-    comment: str = Column(Text, nullable=False)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_name: Mapped[str] = mapped_column(Text)
+    prefab_id: Mapped[int] = mapped_column(Integer)
+    motion_type: Mapped[int] = mapped_column(Integer)
+    se_type: Mapped[int] = mapped_column(Integer)
+    move_speed: Mapped[int] = mapped_column(Integer)
+    search_area_width: Mapped[int] = mapped_column(Integer)
+    atk_type: Mapped[int] = mapped_column(Integer)
+    normal_atk_cast_time: Mapped[float] = mapped_column(Float)
+    cutin: Mapped[int] = mapped_column(Integer)
+    cutin_star6: Mapped[int] = mapped_column(Integer)
+    visual_change_flag: Mapped[int] = mapped_column(Integer)
+    comment: Mapped[str] = mapped_column(Text)
 
 
-class UnitIntroduction(DeclarativeBase, Base["UnitIntroduction"]):
+class UnitExEquipmentSlot(Base):
+    __tablename__ = 'unit_ex_equipment_slot'
+
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slot_category_1: Mapped[int] = mapped_column(Integer)
+    slot_category_2: Mapped[int] = mapped_column(Integer)
+    slot_category_3: Mapped[int] = mapped_column(Integer)
+
+
+class UnitIntroduction(Base):
     __tablename__ = 'unit_introduction'
-
-    id: int = Column(Integer, primary_key=True)
-    gacha_id: int = Column(Integer, nullable=False, index=True)
-    introduction_number: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
-    maximum_chunk_size_1: int = Column(Integer, nullable=False)
-    maximum_chunk_size_loop_1: int = Column(Integer, nullable=False)
-    maximum_chunk_size_2: int = Column(Integer, nullable=False)
-    maximum_chunk_size_loop_2: int = Column(Integer, nullable=False)
-    maximum_chunk_size_3: int = Column(Integer, nullable=False)
-    maximum_chunk_size_loop_3: int = Column(Integer, nullable=False)
-
-
-class UnitMotionList(DeclarativeBase, Base["UnitMotionList"]):
-    __tablename__ = 'unit_motion_list'
-
-    unit_id: int = Column(Integer, primary_key=True)
-    sp_motion: int = Column(Integer, nullable=False)
-
-
-class UnitMypagePo(DeclarativeBase, Base["UnitMypagePo"]):
-    __tablename__ = 'unit_mypage_pos'
-
-    id: int = Column(Integer, primary_key=True)
-    pos_x: float = Column(Float, nullable=False)
-    pos_y: float = Column(Float, nullable=False)
-    scale: float = Column(Float, nullable=False)
-
-
-class UnitPosAdjustment(DeclarativeBase, Base["UnitPosAdjustment"]):
-    __tablename__ = 'unit_pos_adjustment'
-
-    unit_id: int = Column(Integer, primary_key=True)
-    id_1: int = Column(Integer, nullable=False)
-    id_2: int = Column(Integer, nullable=False)
-    id_3: int = Column(Integer, nullable=False)
-    home_1_pos_x: int = Column(Integer, nullable=False)
-    home_1_pos_y: int = Column(Integer, nullable=False)
-    home_1_depth: int = Column(Integer, nullable=False)
-    home_1_clip: int = Column(Integer, nullable=False)
-    home_2_pos_x: int = Column(Integer, nullable=False)
-    home_2_pos_y: int = Column(Integer, nullable=False)
-    home_2_depth: int = Column(Integer, nullable=False)
-    home_2_clip: int = Column(Integer, nullable=False)
-    home_3_pos_x: int = Column(Integer, nullable=False)
-    home_3_pos_y: int = Column(Integer, nullable=False)
-    home_3_depth: int = Column(Integer, nullable=False)
-    home_3_clip: int = Column(Integer, nullable=False)
-    profile_1_pos_x: int = Column(Integer, nullable=False)
-    profile_1_pos_y: int = Column(Integer, nullable=False)
-    profile_1_depth: int = Column(Integer, nullable=False)
-    profile_1_scale: float = Column(Float, nullable=False)
-    profile_1_clip: int = Column(Integer, nullable=False)
-    profile_2_pos_x: int = Column(Integer, nullable=False)
-    profile_2_pos_y: int = Column(Integer, nullable=False)
-    profile_2_depth: int = Column(Integer, nullable=False)
-    profile_2_scale: float = Column(Float, nullable=False)
-    profile_2_clip: int = Column(Integer, nullable=False)
-    profile_3_pos_x: int = Column(Integer, nullable=False)
-    profile_3_pos_y: int = Column(Integer, nullable=False)
-    profile_3_depth: int = Column(Integer, nullable=False)
-    profile_3_scale: float = Column(Float, nullable=False)
-    profile_3_clip: int = Column(Integer, nullable=False)
-    actual_id1: int = Column(Integer, nullable=False)
-    actual_1_pos_x: int = Column(Integer, nullable=False)
-    actual_1_pos_y: int = Column(Integer, nullable=False)
-    actual_1_depth: int = Column(Integer, nullable=False)
-    actual_1_clip: int = Column(Integer, nullable=False)
-    actual_id2: int = Column(Integer, nullable=False)
-    actual_2_pos_x: int = Column(Integer, nullable=False)
-    actual_2_pos_y: int = Column(Integer, nullable=False)
-    actual_2_depth: int = Column(Integer, nullable=False)
-    actual_2_clip: int = Column(Integer, nullable=False)
-    actual_id3: int = Column(Integer, nullable=False)
-    actual_3_pos_x: int = Column(Integer, nullable=False)
-    actual_3_pos_y: int = Column(Integer, nullable=False)
-    actual_3_depth: int = Column(Integer, nullable=False)
-    actual_3_clip: int = Column(Integer, nullable=False)
-    skip_position_x: int = Column(Integer, nullable=False)
-    friend_pos_x: int = Column(Integer, nullable=False)
-    is_myprofile_image: int = Column(Integer, nullable=False)
-
-
-class UnitProfile(DeclarativeBase, Base["UnitProfile"]):
-    __tablename__ = 'unit_profile'
-
-    unit_id: int = Column(Integer, primary_key=True)
-    unit_name: str = Column(Text, nullable=False)
-    age: str = Column(Text, nullable=False)
-    guild: str = Column(Text, nullable=False)
-    race: str = Column(Text, nullable=False)
-    height: str = Column(Text, nullable=False)
-    weight: str = Column(Text, nullable=False)
-    birth_month: str = Column(Text, nullable=False)
-    birth_day: str = Column(Text, nullable=False)
-    blood_type: str = Column(Text, nullable=False)
-    favorite: str = Column(Text, nullable=False)
-    voice: str = Column(Text, nullable=False)
-    voice_id: int = Column(Integer, nullable=False)
-    catch_copy: str = Column(Text, nullable=False)
-    self_text: str = Column(Text, nullable=False)
-    guild_id: str = Column(Text, nullable=False)
-
-
-class UnitPromotion(DeclarativeBase, Base["UnitPromotion"]):
-    __tablename__ = 'unit_promotion'
-
-    unit_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    promotion_level: int = Column(Integer, primary_key=True, nullable=False)
-    equip_slot_1: int = Column(Integer, nullable=False)
-    equip_slot_2: int = Column(Integer, nullable=False)
-    equip_slot_3: int = Column(Integer, nullable=False)
-    equip_slot_4: int = Column(Integer, nullable=False)
-    equip_slot_5: int = Column(Integer, nullable=False)
-    equip_slot_6: int = Column(Integer, nullable=False)
-
-
-class UnitPromotionStatu(DeclarativeBase, Base["UnitPromotionStatu"]):
-    __tablename__ = 'unit_promotion_status'
-
-    unit_id: int = Column(Integer, primary_key=True, nullable=False)
-    promotion_level: int = Column(Integer, primary_key=True, nullable=False)
-    hp: float = Column(Float, nullable=False)
-    atk: float = Column(Float, nullable=False)
-    magic_str: float = Column(Float, nullable=False)
-    _def: float = Column('def', Float, nullable=False)
-    magic_def: float = Column(Float, nullable=False)
-    physical_critical: float = Column(Float, nullable=False)
-    magic_critical: float = Column(Float, nullable=False)
-    wave_hp_recovery: float = Column(Float, nullable=False)
-    wave_energy_recovery: float = Column(Float, nullable=False)
-    dodge: float = Column(Float, nullable=False)
-    physical_penetrate: float = Column(Float, nullable=False)
-    magic_penetrate: float = Column(Float, nullable=False)
-    life_steal: float = Column(Float, nullable=False)
-    hp_recovery_rate: float = Column(Float, nullable=False)
-    energy_recovery_rate: float = Column(Float, nullable=False)
-    energy_reduce_rate: float = Column(Float, nullable=False)
-    accuracy: float = Column(Float, nullable=False)
-
-
-class UnitRarity(DeclarativeBase, Base["UnitRarity"]):
-    __tablename__ = 'unit_rarity'
-
-    unit_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    rarity: int = Column(Integer, primary_key=True, nullable=False)
-    hp: float = Column(Float, nullable=False)
-    hp_growth: float = Column(Float, nullable=False)
-    atk: float = Column(Float, nullable=False)
-    atk_growth: float = Column(Float, nullable=False)
-    magic_str: float = Column(Float, nullable=False)
-    magic_str_growth: float = Column(Float, nullable=False)
-    _def: float = Column('def', Float, nullable=False)
-    def_growth: float = Column(Float, nullable=False)
-    magic_def: float = Column(Float, nullable=False)
-    magic_def_growth: float = Column(Float, nullable=False)
-    physical_critical: float = Column(Float, nullable=False)
-    physical_critical_growth: float = Column(Float, nullable=False)
-    magic_critical: float = Column(Float, nullable=False)
-    magic_critical_growth: float = Column(Float, nullable=False)
-    wave_hp_recovery: float = Column(Float, nullable=False)
-    wave_hp_recovery_growth: float = Column(Float, nullable=False)
-    wave_energy_recovery: float = Column(Float, nullable=False)
-    wave_energy_recovery_growth: float = Column(Float, nullable=False)
-    dodge: float = Column(Float, nullable=False)
-    dodge_growth: float = Column(Float, nullable=False)
-    physical_penetrate: float = Column(Float, nullable=False)
-    physical_penetrate_growth: float = Column(Float, nullable=False)
-    magic_penetrate: float = Column(Float, nullable=False)
-    magic_penetrate_growth: float = Column(Float, nullable=False)
-    life_steal: float = Column(Float, nullable=False)
-    life_steal_growth: float = Column(Float, nullable=False)
-    hp_recovery_rate: float = Column(Float, nullable=False)
-    hp_recovery_rate_growth: float = Column(Float, nullable=False)
-    energy_recovery_rate: float = Column(Float, nullable=False)
-    energy_recovery_rate_growth: float = Column(Float, nullable=False)
-    energy_reduce_rate: float = Column(Float, nullable=False)
-    energy_reduce_rate_growth: float = Column(Float, nullable=False)
-    unit_material_id: int = Column(Integer, nullable=False, index=True)
-    consume_num: int = Column(Integer, nullable=False)
-    consume_gold: int = Column(Integer, nullable=False)
-    accuracy: float = Column(Float, nullable=False)
-    accuracy_growth: float = Column(Float, nullable=False)
-
-
-class UnitSkillDatum(DeclarativeBase, Base["UnitSkillDatum"]):
-    __tablename__ = 'unit_skill_data'
-
-    unit_id: int = Column(Integer, primary_key=True)
-    union_burst: int = Column(Integer, nullable=False)
-    main_skill_1: int = Column(Integer, nullable=False)
-    main_skill_2: int = Column(Integer, nullable=False)
-    main_skill_3: int = Column(Integer, nullable=False)
-    main_skill_4: int = Column(Integer, nullable=False)
-    main_skill_5: int = Column(Integer, nullable=False)
-    main_skill_6: int = Column(Integer, nullable=False)
-    main_skill_7: int = Column(Integer, nullable=False)
-    main_skill_8: int = Column(Integer, nullable=False)
-    main_skill_9: int = Column(Integer, nullable=False)
-    main_skill_10: int = Column(Integer, nullable=False)
-    ex_skill_1: int = Column(Integer, nullable=False)
-    ex_skill_evolution_1: int = Column(Integer, nullable=False)
-    ex_skill_2: int = Column(Integer, nullable=False)
-    ex_skill_evolution_2: int = Column(Integer, nullable=False)
-    ex_skill_3: int = Column(Integer, nullable=False)
-    ex_skill_evolution_3: int = Column(Integer, nullable=False)
-    ex_skill_4: int = Column(Integer, nullable=False)
-    ex_skill_evolution_4: int = Column(Integer, nullable=False)
-    ex_skill_5: int = Column(Integer, nullable=False)
-    ex_skill_evolution_5: int = Column(Integer, nullable=False)
-    sp_union_burst: int = Column(Integer, nullable=False)
-    sp_skill_1: int = Column(Integer, nullable=False)
-    sp_skill_2: int = Column(Integer, nullable=False)
-    sp_skill_3: int = Column(Integer, nullable=False)
-    sp_skill_4: int = Column(Integer, nullable=False)
-    sp_skill_5: int = Column(Integer, nullable=False)
-    union_burst_evolution: int = Column(Integer, nullable=False)
-    main_skill_evolution_1: int = Column(Integer, nullable=False)
-    main_skill_evolution_2: int = Column(Integer, nullable=False)
-    sp_skill_evolution_1: int = Column(Integer, nullable=False)
-    sp_skill_evolution_2: int = Column(Integer, nullable=False)
-
-
-class UnitSkillDataRf(DeclarativeBase, Base["UnitSkillDataRf"]):
-    __tablename__ = 'unit_skill_data_rf'
-
-    id: int = Column(Integer, primary_key=True)
-    skill_id: int = Column(Integer, nullable=False, index=True)
-    rf_skill_id: int = Column(Integer, nullable=False, index=True)
-    min_lv: int = Column(Integer, nullable=False)
-    max_lv: int = Column(Integer, nullable=False)
-
-
-class UnitStatusCoefficient(DeclarativeBase, Base["UnitStatusCoefficient"]):
-    __tablename__ = 'unit_status_coefficient'
-
-    coefficient_id: int = Column(Integer, primary_key=True)
-    hp_coefficient: float = Column(Float, nullable=False)
-    atk_coefficient: float = Column(Float, nullable=False)
-    magic_str_coefficient: float = Column(Float, nullable=False)
-    def_coefficient: float = Column(Float, nullable=False)
-    magic_def_coefficient: float = Column(Float, nullable=False)
-    physical_critical_coefficient: float = Column(Float, nullable=False)
-    magic_critical_coefficient: float = Column(Float, nullable=False)
-    wave_hp_recovery_coefficient: float = Column(Float, nullable=False)
-    wave_energy_recovery_coefficient: float = Column(Float, nullable=False)
-    dodge_coefficient: float = Column(Float, nullable=False)
-    physical_penetrate_coefficient: float = Column(Float, nullable=False)
-    magic_penetrate_coefficient: float = Column(Float, nullable=False)
-    life_steal_coefficient: float = Column(Float, nullable=False)
-    hp_recovery_rate_coefficient: float = Column(Float, nullable=False)
-    energy_recovery_rate_coefficient: float = Column(Float, nullable=False)
-    energy_reduce_rate_coefficient: float = Column(Float, nullable=False)
-    skill_lv_coefficient: float = Column(Float, nullable=False)
-    exskill_evolution_coefficient: int = Column(Integer, nullable=False)
-    overall_coefficient: float = Column(Float, nullable=False)
-    accuracy_coefficient: float = Column(Float, nullable=False)
-    skill1_evolution_coefficient: int = Column(Integer, nullable=False)
-    skill1_evolution_slv_coefficient: float = Column(Float, nullable=False)
-    ub_evolution_coefficient: int = Column(Integer, nullable=False)
-    ub_evolution_slv_coefficient: float = Column(Float, nullable=False)
-
-
-class UnitUniqueEquip(DeclarativeBase, Base["UnitUniqueEquip"]):
-    __tablename__ = 'unit_unique_equip'
-
-    unit_id: int = Column(Integer, primary_key=True)
-    equip_slot: int = Column(Integer, nullable=False)
-    equip_id: int = Column(Integer, nullable=False)
-
-
-class UnlockRarity6(DeclarativeBase, Base["UnlockRarity6"]):
-    __tablename__ = 'unlock_rarity_6'
     __table_args__ = (
-        Index('unlock_rarity_6_0_unit_id_1_unlock_level', 'unit_id', 'unlock_level'),
-        Index('unlock_rarity_6_0_unit_id_1_slot_id', 'unit_id', 'slot_id')
+        Index('unit_introduction_0_gacha_id', 'gacha_id'),
     )
 
-    unit_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    slot_id: int = Column(Integer, primary_key=True, nullable=False)
-    unlock_level: int = Column(Integer, primary_key=True, nullable=False)
-    unlock_flag: int = Column(Integer, nullable=False)
-    consume_gold: int = Column(Integer, nullable=False)
-    material_type: int = Column(Integer, nullable=False)
-    material_id: int = Column(Integer, nullable=False, index=True)
-    material_count: int = Column(Integer, nullable=False)
-    hp: int = Column(Integer, nullable=False)
-    atk: int = Column(Integer, nullable=False)
-    magic_str: int = Column(Integer, nullable=False)
-    _def: int = Column('def', Integer, nullable=False)
-    magic_def: int = Column(Integer, nullable=False)
-    physical_critical: int = Column(Integer, nullable=False)
-    magic_critical: int = Column(Integer, nullable=False)
-    wave_hp_recovery: int = Column(Integer, nullable=False)
-    wave_energy_recovery: int = Column(Integer, nullable=False)
-    dodge: int = Column(Integer, nullable=False)
-    physical_penetrate: int = Column(Integer, nullable=False)
-    magic_penetrate: int = Column(Integer, nullable=False)
-    life_steal: int = Column(Integer, nullable=False)
-    hp_recovery_rate: int = Column(Integer, nullable=False)
-    energy_recovery_rate: int = Column(Integer, nullable=False)
-    energy_reduce_rate: int = Column(Integer, nullable=False)
-    accuracy: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    gacha_id: Mapped[int] = mapped_column(Integer)
+    introduction_number: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+    maximum_chunk_size_1: Mapped[int] = mapped_column(Integer)
+    maximum_chunk_size_loop_1: Mapped[int] = mapped_column(Integer)
+    maximum_chunk_size_2: Mapped[int] = mapped_column(Integer)
+    maximum_chunk_size_loop_2: Mapped[int] = mapped_column(Integer)
+    maximum_chunk_size_3: Mapped[int] = mapped_column(Integer)
+    maximum_chunk_size_loop_3: Mapped[int] = mapped_column(Integer)
 
 
-class UnlockSkillDatum(DeclarativeBase, Base["UnlockSkillDatum"]):
+class UnitMotionList(Base):
+    __tablename__ = 'unit_motion_list'
+
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    sp_motion: Mapped[int] = mapped_column(Integer)
+
+
+class UnitMypagePos(Base):
+    __tablename__ = 'unit_mypage_pos'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    pos_x: Mapped[float] = mapped_column(Float)
+    pos_y: Mapped[float] = mapped_column(Float)
+    scale: Mapped[float] = mapped_column(Float)
+
+
+class UnitPosAdjustment(Base):
+    __tablename__ = 'unit_pos_adjustment'
+
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    id_1: Mapped[int] = mapped_column(Integer)
+    id_2: Mapped[int] = mapped_column(Integer)
+    id_3: Mapped[int] = mapped_column(Integer)
+    home_1_pos_x: Mapped[int] = mapped_column(Integer)
+    home_1_pos_y: Mapped[int] = mapped_column(Integer)
+    home_1_depth: Mapped[int] = mapped_column(Integer)
+    home_1_clip: Mapped[int] = mapped_column(Integer)
+    home_2_pos_x: Mapped[int] = mapped_column(Integer)
+    home_2_pos_y: Mapped[int] = mapped_column(Integer)
+    home_2_depth: Mapped[int] = mapped_column(Integer)
+    home_2_clip: Mapped[int] = mapped_column(Integer)
+    home_3_pos_x: Mapped[int] = mapped_column(Integer)
+    home_3_pos_y: Mapped[int] = mapped_column(Integer)
+    home_3_depth: Mapped[int] = mapped_column(Integer)
+    home_3_clip: Mapped[int] = mapped_column(Integer)
+    profile_1_pos_x: Mapped[int] = mapped_column(Integer)
+    profile_1_pos_y: Mapped[int] = mapped_column(Integer)
+    profile_1_depth: Mapped[int] = mapped_column(Integer)
+    profile_1_scale: Mapped[float] = mapped_column(Float)
+    profile_1_clip: Mapped[int] = mapped_column(Integer)
+    profile_2_pos_x: Mapped[int] = mapped_column(Integer)
+    profile_2_pos_y: Mapped[int] = mapped_column(Integer)
+    profile_2_depth: Mapped[int] = mapped_column(Integer)
+    profile_2_scale: Mapped[float] = mapped_column(Float)
+    profile_2_clip: Mapped[int] = mapped_column(Integer)
+    profile_3_pos_x: Mapped[int] = mapped_column(Integer)
+    profile_3_pos_y: Mapped[int] = mapped_column(Integer)
+    profile_3_depth: Mapped[int] = mapped_column(Integer)
+    profile_3_scale: Mapped[float] = mapped_column(Float)
+    profile_3_clip: Mapped[int] = mapped_column(Integer)
+    actual_id1: Mapped[int] = mapped_column(Integer)
+    actual_1_pos_x: Mapped[int] = mapped_column(Integer)
+    actual_1_pos_y: Mapped[int] = mapped_column(Integer)
+    actual_1_depth: Mapped[int] = mapped_column(Integer)
+    actual_1_clip: Mapped[int] = mapped_column(Integer)
+    actual_id2: Mapped[int] = mapped_column(Integer)
+    actual_2_pos_x: Mapped[int] = mapped_column(Integer)
+    actual_2_pos_y: Mapped[int] = mapped_column(Integer)
+    actual_2_depth: Mapped[int] = mapped_column(Integer)
+    actual_2_clip: Mapped[int] = mapped_column(Integer)
+    actual_id3: Mapped[int] = mapped_column(Integer)
+    actual_3_pos_x: Mapped[int] = mapped_column(Integer)
+    actual_3_pos_y: Mapped[int] = mapped_column(Integer)
+    actual_3_depth: Mapped[int] = mapped_column(Integer)
+    actual_3_clip: Mapped[int] = mapped_column(Integer)
+    skip_position_x: Mapped[int] = mapped_column(Integer)
+    friend_pos_x: Mapped[int] = mapped_column(Integer)
+    is_myprofile_image: Mapped[int] = mapped_column(Integer)
+
+
+class UnitProfile(Base):
+    __tablename__ = 'unit_profile'
+
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_name: Mapped[str] = mapped_column(Text)
+    age: Mapped[str] = mapped_column(Text)
+    guild: Mapped[str] = mapped_column(Text)
+    race: Mapped[str] = mapped_column(Text)
+    height: Mapped[str] = mapped_column(Text)
+    weight: Mapped[str] = mapped_column(Text)
+    birth_month: Mapped[str] = mapped_column(Text)
+    birth_day: Mapped[str] = mapped_column(Text)
+    blood_type: Mapped[str] = mapped_column(Text)
+    favorite: Mapped[str] = mapped_column(Text)
+    voice: Mapped[str] = mapped_column(Text)
+    voice_id: Mapped[int] = mapped_column(Integer)
+    catch_copy: Mapped[str] = mapped_column(Text)
+    self_text: Mapped[str] = mapped_column(Text)
+    guild_id: Mapped[str] = mapped_column(Text)
+
+
+class UnitPromotion(Base):
+    __tablename__ = 'unit_promotion'
+    __table_args__ = (
+        Index('unit_promotion_0_unit_id', 'unit_id'),
+    )
+
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    promotion_level: Mapped[int] = mapped_column(Integer, primary_key=True)
+    equip_slot_1: Mapped[int] = mapped_column(Integer)
+    equip_slot_2: Mapped[int] = mapped_column(Integer)
+    equip_slot_3: Mapped[int] = mapped_column(Integer)
+    equip_slot_4: Mapped[int] = mapped_column(Integer)
+    equip_slot_5: Mapped[int] = mapped_column(Integer)
+    equip_slot_6: Mapped[int] = mapped_column(Integer)
+
+
+class UnitPromotionStatus(Base):
+    __tablename__ = 'unit_promotion_status'
+
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    promotion_level: Mapped[int] = mapped_column(Integer, primary_key=True)
+    hp: Mapped[float] = mapped_column(Float)
+    atk: Mapped[float] = mapped_column(Float)
+    magic_str: Mapped[float] = mapped_column(Float)
+    def_: Mapped[float] = mapped_column('def', Float)
+    magic_def: Mapped[float] = mapped_column(Float)
+    physical_critical: Mapped[float] = mapped_column(Float)
+    magic_critical: Mapped[float] = mapped_column(Float)
+    wave_hp_recovery: Mapped[float] = mapped_column(Float)
+    wave_energy_recovery: Mapped[float] = mapped_column(Float)
+    dodge: Mapped[float] = mapped_column(Float)
+    physical_penetrate: Mapped[float] = mapped_column(Float)
+    magic_penetrate: Mapped[float] = mapped_column(Float)
+    life_steal: Mapped[float] = mapped_column(Float)
+    hp_recovery_rate: Mapped[float] = mapped_column(Float)
+    energy_recovery_rate: Mapped[float] = mapped_column(Float)
+    energy_reduce_rate: Mapped[float] = mapped_column(Float)
+    accuracy: Mapped[float] = mapped_column(Float)
+
+
+class UnitRarity(Base):
+    __tablename__ = 'unit_rarity'
+    __table_args__ = (
+        Index('unit_rarity_0_unit_id', 'unit_id'),
+        Index('unit_rarity_0_unit_material_id', 'unit_material_id')
+    )
+
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    rarity: Mapped[int] = mapped_column(Integer, primary_key=True)
+    hp: Mapped[float] = mapped_column(Float)
+    hp_growth: Mapped[float] = mapped_column(Float)
+    atk: Mapped[float] = mapped_column(Float)
+    atk_growth: Mapped[float] = mapped_column(Float)
+    magic_str: Mapped[float] = mapped_column(Float)
+    magic_str_growth: Mapped[float] = mapped_column(Float)
+    def_: Mapped[float] = mapped_column('def', Float)
+    def_growth: Mapped[float] = mapped_column(Float)
+    magic_def: Mapped[float] = mapped_column(Float)
+    magic_def_growth: Mapped[float] = mapped_column(Float)
+    physical_critical: Mapped[float] = mapped_column(Float)
+    physical_critical_growth: Mapped[float] = mapped_column(Float)
+    magic_critical: Mapped[float] = mapped_column(Float)
+    magic_critical_growth: Mapped[float] = mapped_column(Float)
+    wave_hp_recovery: Mapped[float] = mapped_column(Float)
+    wave_hp_recovery_growth: Mapped[float] = mapped_column(Float)
+    wave_energy_recovery: Mapped[float] = mapped_column(Float)
+    wave_energy_recovery_growth: Mapped[float] = mapped_column(Float)
+    dodge: Mapped[float] = mapped_column(Float)
+    dodge_growth: Mapped[float] = mapped_column(Float)
+    physical_penetrate: Mapped[float] = mapped_column(Float)
+    physical_penetrate_growth: Mapped[float] = mapped_column(Float)
+    magic_penetrate: Mapped[float] = mapped_column(Float)
+    magic_penetrate_growth: Mapped[float] = mapped_column(Float)
+    life_steal: Mapped[float] = mapped_column(Float)
+    life_steal_growth: Mapped[float] = mapped_column(Float)
+    hp_recovery_rate: Mapped[float] = mapped_column(Float)
+    hp_recovery_rate_growth: Mapped[float] = mapped_column(Float)
+    energy_recovery_rate: Mapped[float] = mapped_column(Float)
+    energy_recovery_rate_growth: Mapped[float] = mapped_column(Float)
+    energy_reduce_rate: Mapped[float] = mapped_column(Float)
+    energy_reduce_rate_growth: Mapped[float] = mapped_column(Float)
+    unit_material_id: Mapped[int] = mapped_column(Integer)
+    consume_num: Mapped[int] = mapped_column(Integer)
+    consume_gold: Mapped[int] = mapped_column(Integer)
+    accuracy: Mapped[float] = mapped_column(Float)
+    accuracy_growth: Mapped[float] = mapped_column(Float)
+
+
+class UnitSkillDatum(Base):
+    __tablename__ = 'unit_skill_data'
+
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    union_burst: Mapped[int] = mapped_column(Integer)
+    main_skill_1: Mapped[int] = mapped_column(Integer)
+    main_skill_2: Mapped[int] = mapped_column(Integer)
+    main_skill_3: Mapped[int] = mapped_column(Integer)
+    main_skill_4: Mapped[int] = mapped_column(Integer)
+    main_skill_5: Mapped[int] = mapped_column(Integer)
+    main_skill_6: Mapped[int] = mapped_column(Integer)
+    main_skill_7: Mapped[int] = mapped_column(Integer)
+    main_skill_8: Mapped[int] = mapped_column(Integer)
+    main_skill_9: Mapped[int] = mapped_column(Integer)
+    main_skill_10: Mapped[int] = mapped_column(Integer)
+    ex_skill_1: Mapped[int] = mapped_column(Integer)
+    ex_skill_evolution_1: Mapped[int] = mapped_column(Integer)
+    ex_skill_2: Mapped[int] = mapped_column(Integer)
+    ex_skill_evolution_2: Mapped[int] = mapped_column(Integer)
+    ex_skill_3: Mapped[int] = mapped_column(Integer)
+    ex_skill_evolution_3: Mapped[int] = mapped_column(Integer)
+    ex_skill_4: Mapped[int] = mapped_column(Integer)
+    ex_skill_evolution_4: Mapped[int] = mapped_column(Integer)
+    ex_skill_5: Mapped[int] = mapped_column(Integer)
+    ex_skill_evolution_5: Mapped[int] = mapped_column(Integer)
+    sp_union_burst: Mapped[int] = mapped_column(Integer)
+    sp_skill_1: Mapped[int] = mapped_column(Integer)
+    sp_skill_2: Mapped[int] = mapped_column(Integer)
+    sp_skill_3: Mapped[int] = mapped_column(Integer)
+    sp_skill_4: Mapped[int] = mapped_column(Integer)
+    sp_skill_5: Mapped[int] = mapped_column(Integer)
+    union_burst_evolution: Mapped[int] = mapped_column(Integer)
+    main_skill_evolution_1: Mapped[int] = mapped_column(Integer)
+    main_skill_evolution_2: Mapped[int] = mapped_column(Integer)
+    sp_skill_evolution_1: Mapped[int] = mapped_column(Integer)
+    sp_skill_evolution_2: Mapped[int] = mapped_column(Integer)
+
+
+class UnitSkillDataRf(Base):
+    __tablename__ = 'unit_skill_data_rf'
+    __table_args__ = (
+        Index('unit_skill_data_rf_0_rf_skill_id', 'rf_skill_id'),
+        Index('unit_skill_data_rf_0_skill_id', 'skill_id')
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    skill_id: Mapped[int] = mapped_column(Integer)
+    rf_skill_id: Mapped[int] = mapped_column(Integer)
+    min_lv: Mapped[int] = mapped_column(Integer)
+    max_lv: Mapped[int] = mapped_column(Integer)
+
+
+class UnitStatusCoefficient(Base):
+    __tablename__ = 'unit_status_coefficient'
+
+    coefficient_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    hp_coefficient: Mapped[float] = mapped_column(Float)
+    atk_coefficient: Mapped[float] = mapped_column(Float)
+    magic_str_coefficient: Mapped[float] = mapped_column(Float)
+    def_coefficient: Mapped[float] = mapped_column(Float)
+    magic_def_coefficient: Mapped[float] = mapped_column(Float)
+    physical_critical_coefficient: Mapped[float] = mapped_column(Float)
+    magic_critical_coefficient: Mapped[float] = mapped_column(Float)
+    wave_hp_recovery_coefficient: Mapped[float] = mapped_column(Float)
+    wave_energy_recovery_coefficient: Mapped[float] = mapped_column(Float)
+    dodge_coefficient: Mapped[float] = mapped_column(Float)
+    physical_penetrate_coefficient: Mapped[float] = mapped_column(Float)
+    magic_penetrate_coefficient: Mapped[float] = mapped_column(Float)
+    life_steal_coefficient: Mapped[float] = mapped_column(Float)
+    hp_recovery_rate_coefficient: Mapped[float] = mapped_column(Float)
+    energy_recovery_rate_coefficient: Mapped[float] = mapped_column(Float)
+    energy_reduce_rate_coefficient: Mapped[float] = mapped_column(Float)
+    skill_lv_coefficient: Mapped[float] = mapped_column(Float)
+    exskill_evolution_coefficient: Mapped[int] = mapped_column(Integer)
+    overall_coefficient: Mapped[float] = mapped_column(Float)
+    accuracy_coefficient: Mapped[float] = mapped_column(Float)
+    skill1_evolution_coefficient: Mapped[int] = mapped_column(Integer)
+    skill1_evolution_slv_coefficient: Mapped[float] = mapped_column(Float)
+    skill2_evolution_coefficient: Mapped[int] = mapped_column(Integer)
+    skill2_evolution_slv_coefficient: Mapped[float] = mapped_column(Float)
+    ub_evolution_coefficient: Mapped[int] = mapped_column(Integer)
+    ub_evolution_slv_coefficient: Mapped[float] = mapped_column(Float)
+
+
+class UnitUniqueEquip(Base):
+    __tablename__ = 'unit_unique_equip'
+
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    equip_slot: Mapped[int] = mapped_column(Integer)
+    equip_id: Mapped[int] = mapped_column(Integer)
+
+
+class UnitUniqueEquipment(Base):
+    __tablename__ = 'unit_unique_equipment'
+    __table_args__ = (
+        Index('unit_unique_equipment_0_unit_id', 'unit_id'),
+    )
+
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    equip_slot: Mapped[int] = mapped_column(Integer, primary_key=True)
+    equip_id: Mapped[int] = mapped_column(Integer)
+
+
+class UnlockRarity6(Base):
+    __tablename__ = 'unlock_rarity_6'
+    __table_args__ = (
+        Index('unlock_rarity_6_0_material_id', 'material_id'),
+        Index('unlock_rarity_6_0_unit_id', 'unit_id'),
+        Index('unlock_rarity_6_0_unit_id_1_slot_id', 'unit_id', 'slot_id'),
+        Index('unlock_rarity_6_0_unit_id_1_unlock_level', 'unit_id', 'unlock_level')
+    )
+
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slot_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unlock_level: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unlock_flag: Mapped[int] = mapped_column(Integer)
+    consume_gold: Mapped[int] = mapped_column(Integer)
+    material_type: Mapped[int] = mapped_column(Integer)
+    material_id: Mapped[int] = mapped_column(Integer)
+    material_count: Mapped[int] = mapped_column(Integer)
+    hp: Mapped[int] = mapped_column(Integer)
+    atk: Mapped[int] = mapped_column(Integer)
+    magic_str: Mapped[int] = mapped_column(Integer)
+    def_: Mapped[int] = mapped_column('def', Integer)
+    magic_def: Mapped[int] = mapped_column(Integer)
+    physical_critical: Mapped[int] = mapped_column(Integer)
+    magic_critical: Mapped[int] = mapped_column(Integer)
+    wave_hp_recovery: Mapped[int] = mapped_column(Integer)
+    wave_energy_recovery: Mapped[int] = mapped_column(Integer)
+    dodge: Mapped[int] = mapped_column(Integer)
+    physical_penetrate: Mapped[int] = mapped_column(Integer)
+    magic_penetrate: Mapped[int] = mapped_column(Integer)
+    life_steal: Mapped[int] = mapped_column(Integer)
+    hp_recovery_rate: Mapped[int] = mapped_column(Integer)
+    energy_recovery_rate: Mapped[int] = mapped_column(Integer)
+    energy_reduce_rate: Mapped[int] = mapped_column(Integer)
+    accuracy: Mapped[int] = mapped_column(Integer)
+
+
+class UnlockSkillDatum(Base):
     __tablename__ = 'unlock_skill_data'
 
-    promotion_level: int = Column(Integer, nullable=False)
-    unlock_skill: int = Column(Integer, primary_key=True)
+    promotion_level: Mapped[int] = mapped_column(Integer)
+    unlock_skill: Mapped[int] = mapped_column(Integer, primary_key=True)
 
 
-class UnlockUnitCondition(DeclarativeBase, Base["UnlockUnitCondition"]):
+class UnlockUnitCondition(Base):
     __tablename__ = 'unlock_unit_condition'
 
-    unit_id: int = Column(Integer, primary_key=True)
-    unit_name: str = Column(Text, nullable=False)
-    class_id: int = Column(Integer, nullable=False)
-    pre_unit_id: int = Column(Integer, nullable=False)
-    condition_type_1: int = Column(Integer, nullable=False)
-    condition_type_detail_1: int = Column(Integer, nullable=False)
-    condition_id_1: int = Column(Integer, nullable=False)
-    count_1: int = Column(Integer, nullable=False)
-    condition_type_2: int = Column(Integer, nullable=False)
-    condition_type_detail_2: int = Column(Integer, nullable=False)
-    condition_id_2: int = Column(Integer, nullable=False)
-    count_2: int = Column(Integer, nullable=False)
-    condition_type_3: int = Column(Integer, nullable=False)
-    condition_type_detail_3: int = Column(Integer, nullable=False)
-    condition_id_3: int = Column(Integer, nullable=False)
-    count_3: int = Column(Integer, nullable=False)
-    condition_type_4: int = Column(Integer, nullable=False)
-    condition_type_detail_4: int = Column(Integer, nullable=False)
-    condition_id_4: int = Column(Integer, nullable=False)
-    count_4: int = Column(Integer, nullable=False)
-    condition_type_5: int = Column(Integer, nullable=False)
-    condition_type_detail_5: int = Column(Integer, nullable=False)
-    condition_id_5: int = Column(Integer, nullable=False)
-    count_5: int = Column(Integer, nullable=False)
-    release_effect_type: int = Column(Integer, nullable=False)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_name: Mapped[str] = mapped_column(Text)
+    class_id: Mapped[int] = mapped_column(Integer)
+    pre_unit_id: Mapped[int] = mapped_column(Integer)
+    condition_type_1: Mapped[int] = mapped_column(Integer)
+    condition_type_detail_1: Mapped[int] = mapped_column(Integer)
+    condition_id_1: Mapped[int] = mapped_column(Integer)
+    count_1: Mapped[int] = mapped_column(Integer)
+    condition_type_2: Mapped[int] = mapped_column(Integer)
+    condition_type_detail_2: Mapped[int] = mapped_column(Integer)
+    condition_id_2: Mapped[int] = mapped_column(Integer)
+    count_2: Mapped[int] = mapped_column(Integer)
+    condition_type_3: Mapped[int] = mapped_column(Integer)
+    condition_type_detail_3: Mapped[int] = mapped_column(Integer)
+    condition_id_3: Mapped[int] = mapped_column(Integer)
+    count_3: Mapped[int] = mapped_column(Integer)
+    condition_type_4: Mapped[int] = mapped_column(Integer)
+    condition_type_detail_4: Mapped[int] = mapped_column(Integer)
+    condition_id_4: Mapped[int] = mapped_column(Integer)
+    count_4: Mapped[int] = mapped_column(Integer)
+    condition_type_5: Mapped[int] = mapped_column(Integer)
+    condition_type_detail_5: Mapped[int] = mapped_column(Integer)
+    condition_id_5: Mapped[int] = mapped_column(Integer)
+    count_5: Mapped[int] = mapped_column(Integer)
+    release_effect_type: Mapped[int] = mapped_column(Integer)
 
 
-class VisualCustomize(DeclarativeBase, Base["VisualCustomize"]):
+class VisualCustomize(Base):
     __tablename__ = 'visual_customize'
 
-    id: int = Column(Integer, primary_key=True)
-    title_prefab: int = Column(Integer, nullable=False)
-    title_movie: int = Column(Integer, nullable=False)
-    title_voice: int = Column(Integer, nullable=False)
-    story_top_movie: int = Column(Integer, nullable=False)
-    quest_top_movie: int = Column(Integer, nullable=False)
-    profile_logo: int = Column(Integer, nullable=False)
-    watched_story_id: int = Column(Integer, nullable=False)
-    start_time: str = Column(Text, nullable=False)
-    end_time: str = Column(Text, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    title_prefab: Mapped[int] = mapped_column(Integer)
+    title_movie: Mapped[int] = mapped_column(Integer)
+    title_voice: Mapped[int] = mapped_column(Integer)
+    story_top_movie: Mapped[int] = mapped_column(Integer)
+    quest_top_movie: Mapped[int] = mapped_column(Integer)
+    profile_logo: Mapped[int] = mapped_column(Integer)
+    watched_story_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
 
 
-class VoiceGroup(DeclarativeBase, Base["VoiceGroup"]):
+class VoiceGroup(Base):
     __tablename__ = 'voice_group'
 
-    group_id: int = Column(Integer, primary_key=True)
-    group_id_comment: str = Column(Text, nullable=False)
-    group_unit_id_01: int = Column(Integer, nullable=False)
-    group_unit_id_02: int = Column(Integer, nullable=False)
-    group_unit_id_03: int = Column(Integer, nullable=False)
-    group_unit_id_04: int = Column(Integer, nullable=False)
-    group_unit_id_05: int = Column(Integer, nullable=False)
+    group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    group_id_comment: Mapped[str] = mapped_column(Text)
+    group_unit_id_01: Mapped[int] = mapped_column(Integer)
+    group_unit_id_02: Mapped[int] = mapped_column(Integer)
+    group_unit_id_03: Mapped[int] = mapped_column(Integer)
+    group_unit_id_04: Mapped[int] = mapped_column(Integer)
+    group_unit_id_05: Mapped[int] = mapped_column(Integer)
 
 
-class VoiceGroupChara(DeclarativeBase, Base["VoiceGroupChara"]):
+class VoiceGroupChara(Base):
     __tablename__ = 'voice_group_chara'
 
-    group_unit_id: int = Column(Integer, primary_key=True)
-    group_unit_id_comment: str = Column(Text, nullable=False)
-    unit_id_01: int = Column(Integer, nullable=False)
-    unit_id_02: int = Column(Integer, nullable=False)
-    unit_id_03: int = Column(Integer, nullable=False)
-    unit_id_04: int = Column(Integer, nullable=False)
-    unit_id_05: int = Column(Integer, nullable=False)
-    unit_id_06: int = Column(Integer, nullable=False)
-    unit_id_07: int = Column(Integer, nullable=False)
-    unit_id_08: int = Column(Integer, nullable=False)
-    unit_id_09: int = Column(Integer, nullable=False)
-    unit_id_10: int = Column(Integer, nullable=False)
+    group_unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    group_unit_id_comment: Mapped[str] = mapped_column(Text)
+    unit_id_01: Mapped[int] = mapped_column(Integer)
+    unit_id_02: Mapped[int] = mapped_column(Integer)
+    unit_id_03: Mapped[int] = mapped_column(Integer)
+    unit_id_04: Mapped[int] = mapped_column(Integer)
+    unit_id_05: Mapped[int] = mapped_column(Integer)
+    unit_id_06: Mapped[int] = mapped_column(Integer)
+    unit_id_07: Mapped[int] = mapped_column(Integer)
+    unit_id_08: Mapped[int] = mapped_column(Integer)
+    unit_id_09: Mapped[int] = mapped_column(Integer)
+    unit_id_10: Mapped[int] = mapped_column(Integer)
 
 
-class VoteDatum(DeclarativeBase, Base["VoteDatum"]):
+class VoteDatum(Base):
     __tablename__ = 'vote_data'
 
-    vote_id: int = Column(Integer, primary_key=True)
-    vote_start_time: str = Column(Text, nullable=False)
-    vote_end_time: str = Column(Text, nullable=False)
-    result_start_time: str = Column(Text, nullable=False)
-    result_end_time: str = Column(Text, nullable=False)
-    start_story_id: int = Column(Integer, nullable=False)
-    result_story_id: int = Column(Integer, nullable=False)
+    vote_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    vote_start_time: Mapped[str] = mapped_column(Text)
+    vote_end_time: Mapped[str] = mapped_column(Text)
+    result_start_time: Mapped[str] = mapped_column(Text)
+    result_end_time: Mapped[str] = mapped_column(Text)
+    start_story_id: Mapped[int] = mapped_column(Integer)
+    result_story_id: Mapped[int] = mapped_column(Integer)
 
 
-class VoteInfo(DeclarativeBase, Base["VoteInfo"]):
+class VoteInfo(Base):
     __tablename__ = 'vote_info'
 
-    vote_id: int = Column(Integer, primary_key=True, nullable=False)
-    vote_help_index: int = Column(Integer, primary_key=True, nullable=False)
-    vote_title: str = Column(Text, nullable=False)
-    vote_help: str = Column(Text, nullable=False)
+    vote_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    vote_help_index: Mapped[int] = mapped_column(Integer, primary_key=True)
+    vote_title: Mapped[str] = mapped_column(Text)
+    vote_help: Mapped[str] = mapped_column(Text)
 
 
-class VoteUnit(DeclarativeBase, Base["VoteUnit"]):
+class VoteUnit(Base):
     __tablename__ = 'vote_unit'
 
-    vote_id: int = Column(Integer, primary_key=True, nullable=False)
-    unit_id: int = Column(Integer, primary_key=True, nullable=False)
-    unit_rarity: int = Column(Integer, nullable=False)
+    vote_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_rarity: Mapped[int] = mapped_column(Integer)
 
 
-class WacBirthdayDramaScript(DeclarativeBase, Base["WacBirthdayDramaScript"]):
+class WacBirthdayDramaScript(Base):
     __tablename__ = 'wac_birthday_drama_script'
+    __table_args__ = (
+        Index('wac_birthday_drama_script_0_drama_id', 'drama_id'),
+    )
 
-    command_id: int = Column(Integer, primary_key=True)
-    drama_id: int = Column(Integer, nullable=False, index=True)
-    command_type: int = Column(Integer, nullable=False)
-    param_01: str = Column(Text, nullable=False)
-    param_02: str = Column(Text, nullable=False)
-    param_03: str = Column(Text, nullable=False)
-    param_04: str = Column(Text, nullable=False)
-    param_05: str = Column(Text, nullable=False)
-    param_06: str = Column(Text, nullable=False)
-    param_07: str = Column(Text, nullable=False)
-    param_08: str = Column(Text, nullable=False)
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
 
 
-class WacDatum(DeclarativeBase, Base["WacDatum"]):
+class WacDatum(Base):
     __tablename__ = 'wac_data'
+    __table_args__ = (
+        Index('wac_data_0_mural_group_id', 'mural_group_id'),
+    )
 
-    wac_id: int = Column(Integer, primary_key=True, nullable=False)
-    date_id: int = Column(Integer, primary_key=True, nullable=False)
-    unlock_time: str = Column(Text, nullable=False)
-    pre_drama_id: int = Column(Integer, nullable=False)
-    post_drama_id: int = Column(Integer, nullable=False)
-    idle_drama_id: int = Column(Integer, nullable=False)
-    bg_id: int = Column(Integer, nullable=False)
-    effect_id: int = Column(Integer, nullable=False)
-    mural_group_id: int = Column(Integer, nullable=False, index=True)
-    mural_offset_x: float = Column(Float, nullable=False)
-    birthday_login_bonus_id: int = Column(Integer, nullable=False)
-    unit_id_1: int = Column(Integer, nullable=False)
-    unit_id_2: int = Column(Integer, nullable=False)
-    draw_end_to_center: int = Column(Integer, nullable=False)
+    wac_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    date_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unlock_time: Mapped[str] = mapped_column(Text)
+    pre_drama_id: Mapped[int] = mapped_column(Integer)
+    post_drama_id: Mapped[int] = mapped_column(Integer)
+    idle_drama_id: Mapped[int] = mapped_column(Integer)
+    bg_id: Mapped[int] = mapped_column(Integer)
+    effect_id: Mapped[int] = mapped_column(Integer)
+    mural_group_id: Mapped[int] = mapped_column(Integer)
+    mural_offset_x: Mapped[float] = mapped_column(Float)
+    birthday_login_bonus_id: Mapped[int] = mapped_column(Integer)
+    unit_id_1: Mapped[int] = mapped_column(Integer)
+    unit_id_2: Mapped[int] = mapped_column(Integer)
+    draw_end_to_center: Mapped[int] = mapped_column(Integer)
+    unit_search_id: Mapped[int] = mapped_column(Integer)
 
 
-class WacDramaScript(DeclarativeBase, Base["WacDramaScript"]):
+class WacDramaScript(Base):
     __tablename__ = 'wac_drama_script'
+    __table_args__ = (
+        Index('wac_drama_script_0_drama_id', 'drama_id'),
+    )
 
-    command_id: int = Column(Integer, primary_key=True)
-    drama_id: int = Column(Integer, nullable=False, index=True)
-    command_type: int = Column(Integer, nullable=False)
-    param_01: str = Column(Text, nullable=False)
-    param_02: str = Column(Text, nullable=False)
-    param_03: str = Column(Text, nullable=False)
-    param_04: str = Column(Text, nullable=False)
-    param_05: str = Column(Text, nullable=False)
-    param_06: str = Column(Text, nullable=False)
-    param_07: str = Column(Text, nullable=False)
-    param_08: str = Column(Text, nullable=False)
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
 
 
-class WacMuralBgDatum(DeclarativeBase, Base["WacMuralBgDatum"]):
+class WacMuralBgDatum(Base):
     __tablename__ = 'wac_mural_bg_data'
 
-    wac_id: int = Column(Integer, primary_key=True, nullable=False)
-    date_id: int = Column(Integer, primary_key=True, nullable=False)
-    bg_id: int = Column(Integer, nullable=False)
-    type: int = Column(Integer, nullable=False)
-    start_offset_x: str = Column(Text, nullable=False)
-    end_offset_x: str = Column(Text, nullable=False)
+    wac_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    date_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    bg_id: Mapped[int] = mapped_column(Integer)
+    type: Mapped[int] = mapped_column(Integer)
+    start_offset_x: Mapped[str] = mapped_column(Text)
+    end_offset_x: Mapped[str] = mapped_column(Text)
 
 
-class WacMuralDatum(DeclarativeBase, Base["WacMuralDatum"]):
+class WacMuralDatum(Base):
     __tablename__ = 'wac_mural_data'
+    __table_args__ = (
+        Index('wac_mural_data_0_mural_group_id', 'mural_group_id'),
+    )
 
-    mural_group_id: int = Column(Integer, primary_key=True, nullable=False, index=True)
-    date_id: int = Column(Integer, primary_key=True, nullable=False)
-    parts_id: int = Column(Integer, nullable=False)
-    pos_x: int = Column(Integer, nullable=False)
-    pos_y: int = Column(Integer, nullable=False)
-    depth: int = Column(Integer, nullable=False)
-    width: int = Column(Integer, nullable=False)
-    height: int = Column(Integer, nullable=False)
+    mural_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    date_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    parts_id: Mapped[int] = mapped_column(Integer)
+    pos_x: Mapped[int] = mapped_column(Integer)
+    pos_y: Mapped[int] = mapped_column(Integer)
+    depth: Mapped[int] = mapped_column(Integer)
+    width: Mapped[int] = mapped_column(Integer)
+    height: Mapped[int] = mapped_column(Integer)
 
 
-class WacPresentStillDatum(DeclarativeBase, Base["WacPresentStillDatum"]):
+class WacPresentStillDatum(Base):
     __tablename__ = 'wac_present_still_data'
 
-    wac_id: int = Column(Integer, primary_key=True, nullable=False)
-    date_id: int = Column(Integer, primary_key=True, nullable=False)
-    still_id: int = Column(Integer, nullable=False)
+    wac_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    date_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    still_id: Mapped[int] = mapped_column(Integer)
 
 
-class WaveGroupDatum(DeclarativeBase, Base["WaveGroupDatum"]):
+class WacUnitSearchDatum(Base):
+    __tablename__ = 'wac_unit_search_data'
+    __table_args__ = (
+        Index('wac_unit_search_data_0_unit_id', 'unit_id'),
+        Index('wac_unit_search_data_0_unit_search_id', 'unit_search_id')
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_search_id: Mapped[int] = mapped_column(Integer)
+    unit_id: Mapped[int] = mapped_column(Integer)
+
+
+class WaveGroupDatum(Base):
     __tablename__ = 'wave_group_data'
+    __table_args__ = (
+        Index('wave_group_data_0_wave_group_id', 'wave_group_id'),
+    )
 
-    id: int = Column(Integer, primary_key=True)
-    wave_group_id: int = Column(Integer, nullable=False)
-    odds: int = Column(Integer, nullable=False)
-    enemy_id_1: int = Column(Integer, nullable=False)
-    drop_gold_1: int = Column(Integer, nullable=False)
-    drop_reward_id_1: int = Column(Integer, nullable=False)
-    enemy_id_2: int = Column(Integer, nullable=False)
-    drop_gold_2: int = Column(Integer, nullable=False)
-    drop_reward_id_2: int = Column(Integer, nullable=False)
-    enemy_id_3: int = Column(Integer, nullable=False)
-    drop_gold_3: int = Column(Integer, nullable=False)
-    drop_reward_id_3: int = Column(Integer, nullable=False)
-    enemy_id_4: int = Column(Integer, nullable=False)
-    drop_gold_4: int = Column(Integer, nullable=False)
-    drop_reward_id_4: int = Column(Integer, nullable=False)
-    enemy_id_5: int = Column(Integer, nullable=False)
-    drop_gold_5: int = Column(Integer, nullable=False)
-    drop_reward_id_5: int = Column(Integer, nullable=False)
-    guest_enemy_id: int = Column(Integer, nullable=False)
-    guest_lane: int = Column(Integer, nullable=False)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    odds: Mapped[int] = mapped_column(Integer)
+    enemy_id_1: Mapped[int] = mapped_column(Integer)
+    drop_gold_1: Mapped[int] = mapped_column(Integer)
+    drop_reward_id_1: Mapped[int] = mapped_column(Integer)
+    enemy_id_2: Mapped[int] = mapped_column(Integer)
+    drop_gold_2: Mapped[int] = mapped_column(Integer)
+    drop_reward_id_2: Mapped[int] = mapped_column(Integer)
+    enemy_id_3: Mapped[int] = mapped_column(Integer)
+    drop_gold_3: Mapped[int] = mapped_column(Integer)
+    drop_reward_id_3: Mapped[int] = mapped_column(Integer)
+    enemy_id_4: Mapped[int] = mapped_column(Integer)
+    drop_gold_4: Mapped[int] = mapped_column(Integer)
+    drop_reward_id_4: Mapped[int] = mapped_column(Integer)
+    enemy_id_5: Mapped[int] = mapped_column(Integer)
+    drop_gold_5: Mapped[int] = mapped_column(Integer)
+    drop_reward_id_5: Mapped[int] = mapped_column(Integer)
+    guest_enemy_id: Mapped[int] = mapped_column(Integer)
+    guest_lane: Mapped[int] = mapped_column(Integer)
 
-    def get_drop_reward_ids(self) -> Iterator[int]:
-        yield self.drop_reward_id_1
-        yield self.drop_reward_id_2
-        yield self.drop_reward_id_3
-        yield self.drop_reward_id_4
-        yield self.drop_reward_id_5
 
-class Worldmap(DeclarativeBase, Base["Worldmap"]):
+class WonStoryDatum(Base):
+    __tablename__ = 'won_story_data'
+    __table_args__ = (
+        Index('won_story_data_0_note_id', 'note_id'),
+        Index('won_story_data_0_original_event_id', 'original_event_id'),
+        Index('won_story_data_0_unit_id_1_is_last', 'unit_id', 'is_last')
+    )
+
+    sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    original_event_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    is_last: Mapped[int] = mapped_column(Integer)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_count: Mapped[int] = mapped_column(Integer)
+    note_id: Mapped[int] = mapped_column(Integer)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    order: Mapped[int] = mapped_column(Integer)
+
+
+class WonStoryScript(Base):
+    __tablename__ = 'won_story_script'
+    __table_args__ = (
+        Index('won_story_script_0_story_id', 'story_id'),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    story_id: Mapped[int] = mapped_column(Integer)
+    seq_num: Mapped[int] = mapped_column(Integer)
+    type: Mapped[int] = mapped_column(Integer)
+    line_num: Mapped[int] = mapped_column(Integer)
+    start_pos: Mapped[int] = mapped_column(Integer)
+    end_pos: Mapped[int] = mapped_column(Integer)
+    seek_time: Mapped[float] = mapped_column(Float)
+    sheet_name: Mapped[str] = mapped_column(Text)
+    cue_name: Mapped[str] = mapped_column(Text)
+    command: Mapped[int] = mapped_column(Integer)
+    command_param: Mapped[float] = mapped_column(Float)
+
+
+class Worldmap(Base):
     __tablename__ = 'worldmap'
+    __table_args__ = (
+        Index('worldmap_0_map_type', 'map_type'),
+    )
 
-    course_id: int = Column(Integer, primary_key=True)
-    name: str = Column(Text, nullable=False)
-    map_id: int = Column(Integer, nullable=False)
-    sheet_id: str = Column(Text, nullable=False)
-    que_id: str = Column(Text, nullable=False)
-    start_area_id: int = Column(Integer, nullable=False)
-    end_area_id: int = Column(Integer, nullable=False)
+    course_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    map_id: Mapped[int] = mapped_column(Integer)
+    map_type: Mapped[int] = mapped_column(Integer)
+    sheet_id: Mapped[str] = mapped_column(Text)
+    que_id: Mapped[str] = mapped_column(Text)
+    start_area_id: Mapped[int] = mapped_column(Integer)
+    end_area_id: Mapped[int] = mapped_column(Integer)
+    view_mode: Mapped[int] = mapped_column(Integer)
+    tutorial_adv_id: Mapped[int] = mapped_column(Integer)
 
 
-class YsnStoryDatum(DeclarativeBase, Base["YsnStoryDatum"]):
+class WtmStoryDatum(Base):
+    __tablename__ = 'wtm_story_data'
+    __table_args__ = (
+        Index('wtm_story_data_0_original_event_id', 'original_event_id'),
+    )
+
+    sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    original_event_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    wtm_story_type: Mapped[int] = mapped_column(Integer)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    condition_sub_story_id_1: Mapped[int] = mapped_column(Integer)
+    condition_sub_story_id_2: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_count: Mapped[int] = mapped_column(Integer)
+    emblem_id: Mapped[int] = mapped_column(Integer)
+
+
+class WtsNaviComment(Base):
+    __tablename__ = 'wts_navi_comment'
+    __table_args__ = (
+        Index('wts_navi_comment_0_where_type', 'where_type'),
+    )
+
+    comment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    where_type: Mapped[int] = mapped_column(Integer)
+    character_id: Mapped[int] = mapped_column(Integer)
+    face_type: Mapped[int] = mapped_column(Integer)
+    voice_id: Mapped[int] = mapped_column(Integer)
+    pos_x: Mapped[float] = mapped_column(Float)
+    pos_y: Mapped[float] = mapped_column(Float)
+    change_face_time: Mapped[float] = mapped_column(Float)
+    change_face_type: Mapped[int] = mapped_column(Integer)
+    original_event_id: Mapped[int] = mapped_column(Integer)
+
+
+class WtsStoryDatum(Base):
+    __tablename__ = 'wts_story_data'
+    __table_args__ = (
+        Index('wts_story_data_0_original_event_id', 'original_event_id'),
+    )
+
+    sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    repeat_story_id: Mapped[int] = mapped_column(Integer)
+    original_event_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_count: Mapped[int] = mapped_column(Integer)
+
+
+class XehStoryDatum(Base):
+    __tablename__ = 'xeh_story_data'
+    __table_args__ = (
+        Index('xeh_story_data_0_original_event_id', 'original_event_id'),
+    )
+
+    sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    original_event_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_count: Mapped[int] = mapped_column(Integer)
+
+
+class YsnStoryDatum(Base):
     __tablename__ = 'ysn_story_data'
+    __table_args__ = (
+        Index('ysn_story_data_0_original_event_id', 'original_event_id'),
+    )
 
-    sub_story_id: int = Column(Integer, primary_key=True)
-    original_event_id: int = Column(Integer, nullable=False, index=True)
-    title: str = Column(Text, nullable=False)
-    condition_story_id: int = Column(Integer, nullable=False)
-    disp_order: int = Column(Integer, nullable=False)
-    reward_type_1: int = Column(Integer, nullable=False)
-    reward_id_1: int = Column(Integer, nullable=False)
-    reward_count_1: int = Column(Integer, nullable=False)
-    reward_type_2: int = Column(Integer, nullable=False)
-    reward_id_2: int = Column(Integer, nullable=False)
-    reward_count_2: int = Column(Integer, nullable=False)
-    reward_type_3: int = Column(Integer, nullable=False)
-    reward_id_3: int = Column(Integer, nullable=False)
-    reward_count_3: int = Column(Integer, nullable=False)
+    sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    original_event_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    condition_story_id: Mapped[int] = mapped_column(Integer)
+    disp_order: Mapped[int] = mapped_column(Integer)
+    reward_type_1: Mapped[int] = mapped_column(Integer)
+    reward_id_1: Mapped[int] = mapped_column(Integer)
+    reward_count_1: Mapped[int] = mapped_column(Integer)
+    reward_type_2: Mapped[int] = mapped_column(Integer)
+    reward_id_2: Mapped[int] = mapped_column(Integer)
+    reward_count_2: Mapped[int] = mapped_column(Integer)
+    reward_type_3: Mapped[int] = mapped_column(Integer)
+    reward_id_3: Mapped[int] = mapped_column(Integer)
+    reward_count_3: Mapped[int] = mapped_column(Integer)
