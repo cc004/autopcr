@@ -1,5 +1,5 @@
 import time
-from typing import Set, Dict, Tuple, Union
+from typing import List, Dict, Tuple, Union
 import typing
 from ..model.enums import eCampaignCategory
 from ..model.common import eInventoryType, RoomUserItem, InventoryInfo
@@ -7,6 +7,7 @@ from ..model.custom import ItemType
 import datetime
 from collections import Counter
 from .dbmgr import dbmgr
+from .methods import *
 from .models import *
 from ..util.linq import flow
 from queue import SimpleQueue
@@ -158,8 +159,8 @@ class database():
                 )
             )
 
-            self.unit_unique_equip: Dict[int, Dict[int, UnitUniqueEquip]] = (
-                UnitUniqueEquip.query(db)
+            self.unit_unique_equip: Dict[int, Dict[int, UnitUniqueEquipment]] = (
+                UnitUniqueEquipment.query(db)
                 .group_by(lambda x: x.equip_slot)
                 .to_dict(lambda x: x.key, lambda x: 
                     x.to_dict(lambda x: x.unit_id, lambda x: x))
