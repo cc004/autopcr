@@ -638,8 +638,11 @@ class database():
     def is_unit_pure_memory(self, item: ItemType) -> bool:
         return item[0] == eInventoryType.Item and item[1] >= 32000 and item[1] < 33000
 
-    def is_equip(self, item: ItemType) -> bool:
-        return item[0] == eInventoryType.Equip and item[1] >= 101000 and item[1] < 140000
+    def is_equip(self, item: ItemType, uncraftable_only: bool = False) -> bool:
+        return item[0] == eInventoryType.Equip and item[1] >= 101000 and item[1] < 140000 and (not uncraftable_only or not self.is_equip_craftable(item))
+
+    def is_equip_craftable(self, item: ItemType) -> bool:
+        return item in self.equip_craft
 
     def is_room_item_level_upable(self, team_level: int, item: RoomUserItem) -> bool:
         return item.room_item_level < self.room_item[item.room_item_id].max_level and team_level // 10 >= item.room_item_level and (item.level_up_end_time is None or item.level_up_end_time < time.time())
@@ -881,7 +884,7 @@ class database():
         .to_list()
 
     def get_equip_max_star(self, equip_id: int):
-        return max(self.equipment_enhance_data[self.equip_data[equip_id].promotion_level].keys())
+        return max(self.equipment_enhance_data[self.equip_data[equip_id].promotion_level].keys()) if self.equip_data[equip_id].promotion_level in self.equipment_enhance_data else 0
 
     def get_equip_star_pt(self, equip_id: int, star: int):
         equip = self.equip_data[equip_id]
