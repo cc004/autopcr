@@ -274,7 +274,7 @@ class datamgr(Component[apiclient]):
 
     def get_equip_demand_gap(self, start_rank: Union[None, int] = None, like_unit_only: bool = False) -> typing.Counter[ItemType]:
         demand = self.get_equip_demand(start_rank, like_unit_only)
-        gap = self.get_demand_gap(demand, lambda x: db.is_equip(x))
+        gap = self.get_demand_gap(demand, lambda x: db.is_equip(x, uncraftable_only=True))
         return gap
 
     def get_memory_demand(self) -> typing.Counter[ItemType]:
