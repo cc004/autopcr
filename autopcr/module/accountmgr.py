@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
 from ..core.pcrclient import pcrclient
 from .modulemgr import ModuleManager
-import os, re
+import os, re, shutil
 from typing import Any, Dict, Iterator, List
 from ..constants import CONFIG_PATH, OLD_CONFIG_PATH, RESULT_DIR
 from asyncio import Lock
@@ -334,7 +334,7 @@ class UserManager:
         if account:
             self.load(qid).delete(account)
         else:
-            os.removedirs(self.qid_path(qid))
+            shutil.rmtree(self.qid_path(qid))
 
     def qids(self) -> Iterator[str]:
         for fn in os.listdir(self.root):
