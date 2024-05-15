@@ -442,9 +442,9 @@ async def config_clear_daily(botev: BotEvent):
 @sv.on_prefix(f"{prefix}")
 @wrap_hoshino_event
 @wrap_tool
-@wrap_config
 @wrap_accountmgr
 @wrap_account
+@wrap_config
 @check_final_args_be_empty
 async def tool_used(botev: BotEvent, tool: ToolInfo, config: Dict[str, str], acc: Account):
     alias = escape(acc.alias)
