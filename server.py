@@ -1,6 +1,5 @@
 from collections import Counter
-from typing import Any, Callable, Coroutine, Dict
-import os
+from typing import Any, Callable, Coroutine, Dict, List
 
 from .autopcr.util.draw_table import outp_b64
 from .autopcr.http_server.httpserver import HttpServer
@@ -15,10 +14,8 @@ from nonebot import MessageSegment
 from nonebot import on_startup
 import hoshino
 from hoshino import HoshinoBot, Service, priv
-from hoshino.config import SUPERUSERS
 from hoshino.util import escape
 from hoshino.typing import CQEvent, MessageSegment
-import random
 from quart_auth import QuartAuth
 from quart_rate_limiter import RateLimiter
 from quart_compress import Compress
@@ -32,30 +29,27 @@ app = nonebot.get_bot().server_app
 QuartAuth(app, cookie_secure=False)
 RateLimiter(app)
 Compress(app)
-app.secret_key = secrets.token_urlsafe(16)
+app.secret_key = secrets.token_urlsafe(16) # cookie expires when reboot
 app.register_blueprint(server.app)
-for rule in app.url_map.iter_rules():
-    print(f"{rule.rule}\t{', '.join(rule.methods)}")
-
-ROOT_PATH = os.path.dirname(__file__)
-cron_group = ""  # 定时任务的通知群
-cron_notic_enable = True # 定时任务通知开关
 
 prefix = '#'
 
 sv_help = f"""
-[{prefix}配置日常] 一切的开始
-[{prefix}清日常 [昵称]] 清日常，无昵称则默认账号
-[{prefix}清日常所有] 清该qq号下所有号的日常
-[{prefix}日常记录] 查看清日常状态
-[{prefix}日常报告[昵称] [0/1/2/3]] 最近四次清日常报告
-[{prefix}定时日志] 查看定时运行状态
-[{prefix}查心碎 [昵称]] 查询缺口心碎
-[{prefix}查记忆碎片 [昵称] [可刷取]] 查询缺口记忆碎片，可刷取只仅查看h图可刷的碎片
-[{prefix}查装备 [昵称] [rank] [fav]] 查询缺口装备，[rank]为数字，只查询>=rank的角色缺口装备，fav表示只查询favorite的角色
-[{prefix}刷图推荐 [昵称] [rank] [fav]] 查询缺口装备的刷图推荐，格式同上
-[{prefix}公会支援] 查询公会支援角色配置
-"""
+- {prefix}配置日常 一切的开始
+- {prefix}清日常 [昵称] 无昵称则默认账号
+- {prefix}清日常所有 清该qq号下所有号的日常
+指令格式： 命令 昵称 参数，下述省略昵称，<>表示必填，[]表示可选，|表示分割
+- {prefix}日常记录 查看清日常状态
+- {prefix}日常报告 [0|1|2|3] 最近四次清日常报告
+- {prefix}定时日志 查看定时运行状态
+- {prefix}查心碎 查询缺口心碎
+- {prefix}查记忆碎片 [可刷取] 查询缺口记忆碎片，可刷取只仅查看h图可刷的碎片
+- {prefix}查装备 [<rank>] [fav] 查询缺口装备，rank为数字，只查询>=rank的角色缺口装备，fav表示只查询favorite的角色
+- {prefix}刷图推荐 [<rank>] [fav] 查询缺口装备的刷图推荐，格式同上
+- {prefix}公会支援 查询公会支援角色配置
+- {prefix}卡池 查看当前卡池
+- {prefix}来发十连 <卡池id> [抽到出] [单抽券] [开抽] 赛博抽卡，谨慎使用。卡池id来自【{prefix}卡池】，[抽到出]表示抽到出货或达天井，[单抽券]表示仅用厕纸，[开抽]表示确认抽卡。已有up也可再次触发。
+""".strip()
 
 if address is None:
     try:
@@ -90,27 +84,66 @@ sv = Service(
     help_=sv_help  # 帮助文本
 )
 
-@sv.on_fullmatch(["帮助自动清日常"])
-async def bangzhu_text(bot, ev):
-    await bot.finish(ev, sv_help, at_sender=True)
-
-
 @on_startup
 async def init():
     await db_start()
     from .autopcr.module.crons import queue_crons
     queue_crons()
 
-from dataclasses import dataclass
-@dataclass
-class ToolInfo:
-    key: str
-    config_parser: Callable[..., Coroutine[Any, Any, Any]]
+class BotEvent:
+    def __init__(self): ...
+    async def finish(self, msg: str): ...
+    async def send(self, msg: str): ...
+    async def target_qq(self) -> str: ...
+    async def send_qq(self) -> str: ...
+    async def message(self) -> List[str]: ...
+    async def is_admin(self) -> bool: ...
 
-tool_info: Dict[str, ToolInfo]= {}
+class HoshinoEvent(BotEvent):
+    def __init__(self, bot: HoshinoBot, ev: CQEvent):
+        self.bot = bot
+        self.ev = ev
 
-async def check_validate(bot: HoshinoBot, ev: CQEvent, acc: Account):
+        self.user_id = str(ev.user_id)
 
+        self.at_sb = []
+        self._message = []
+        for m in ev.message:
+            if m.type == 'at' and m.data['qq'] != 'all':
+                self.at_sb.append(str(m.data['qq']))
+            elif m.type == 'text': # ignore other type
+                self._message += m.data['text'].split()
+        print(self._message)
+
+    async def target_qq(self):
+        if len(self.at_sb) > 1:
+            await self.finish("只能指定一个用户")
+
+        return self.at_sb[0] if self.at_sb else str(self.user_id)
+    
+    async def send_qq(self):
+        return self.user_id
+
+    async def message(self):
+        return self._message
+
+    async def send(self, msg: str):
+        msg = f"[CQ:reply,id={self.ev.message_id}]{msg}"
+        await self.bot.send(self.ev, msg)
+
+    async def finish(self, msg: str):
+        await self.bot.finish(self.ev, msg)
+
+    async def is_admin(self) -> bool:
+        return priv.check_priv(self.ev, priv.ADMIN)
+
+def wrap_hoshino_event(func):
+    async def wrapper(bot: HoshinoBot, ev: CQEvent, *args, **kwargs):
+        await func(HoshinoEvent(bot, ev), *args, **kwargs)
+    wrapper.__name__ = func.__name__
+    return wrapper
+
+async def check_validate(botev: BotEvent, acc: Account):
     from .autopcr.bsdk.validator import validate_dict
     for _ in range(120):
         if acc.qq in validate_dict:
@@ -122,8 +155,8 @@ async def check_validate(bot: HoshinoBot, ev: CQEvent, acc: Account):
             url = validate_dict[acc.data.username].url
             url = address + url.lstrip("/daily/")
             
-            msg=f"[CQ:reply,id={ev.ev.message_id}]pcr账号登录需要验证码，请点击以下链接在120秒内完成认证:\n{url}"
-            bot.send(ev, msg)
+            msg=f"pcr账号登录需要验证码，请点击以下链接在120秒内完成认证:\n{url}"
+            await botev.send(msg)
 
             del validate_dict[acc.data.username]
 
@@ -145,6 +178,23 @@ async def is_valid_qq(qq: str):
                     return True
     return False
 
+def check_final_args_be_empty(func):
+    async def wrapper(botev: BotEvent, *args, **kwargs):
+        msg = await botev.message()
+        if msg:
+            await botev.finish("未知的参数：【" + " ".join(msg) + "】")
+        await func(botev, *args, **kwargs)
+    wrapper.__name__ = func.__name__
+    return wrapper
+
+from dataclasses import dataclass
+@dataclass
+class ToolInfo:
+    key: str
+    config_parser: Callable[..., Coroutine[Any, Any, Any]]
+
+tool_info: Dict[str, ToolInfo]= {}
+
 def register_tool(name: str, key: str):
     def wrapper(func):
         tool_info[name] = ToolInfo(key=key, config_parser=func)
@@ -156,95 +206,88 @@ def register_tool(name: str, key: str):
     return wrapper
 
 def wrap_accountmgr(func):
-    async def wrapper(bot: HoshinoBot, ev: CQEvent, *args, **kwargs):
-        user_id = None
+    async def wrapper(botev: BotEvent, *args, **kwargs):
+        target_qq = await botev.target_qq()
+        sender_qq = await botev.send_qq()
 
-        for m in ev.message:
-            if m.type == 'at' and m.data['qq'] != 'all':
-                user_id = str(m.data['qq'])
-        if user_id is None:  # 本人
-            user_id = str(ev.user_id)
-        else:   
-            if not priv.check_priv(ev,priv.ADMIN):
-                return bot.finish(ev, f'[CQ:reply,id={ev.message_id}]指定用户清日常需要管理员权限')
+        if sender_qq != target_qq and not await botev.is_admin():
+            await botev.finish("只有管理员可以操作他人账号")
 
-        if user_id not in usermgr.qids():
-            return bot.finish(ev, f'[CQ:reply,id={ev.message_id}]未找到{user_id}的账号，请发送【{prefix}配置日常】进行配置')
+        if target_qq not in usermgr.qids():
+            await botev.finish(f"未找到{target_qq}的账号，请发送【{prefix}配置日常】进行配置")
 
-        async with usermgr.load(user_id, readonly=True) as accmgr:
-            await func(bot = bot, ev = ev, accmgr = accmgr, *args, **kwargs)
+        async with usermgr.load(target_qq, readonly=True) as accmgr:
+            await func(botev = botev, accmgr = accmgr, *args, **kwargs)
 
     wrapper.__name__ = func.__name__
     return wrapper
 
 def wrap_account(func):
-    async def wrapper(bot: HoshinoBot, ev: CQEvent, accmgr: AccountManager, *args, **kwargs):
-        alias = ""
+    async def wrapper(botev: BotEvent, accmgr: AccountManager, *args, **kwargs):
+        msg = await botev.message()
 
-        for m in ev.message:
-            if m.type == 'text':
-                alias = str(m.data['text']).strip().split(' ')[0]
-                break
+        alias = msg[0] if msg else ""
+
+        if alias not in accmgr.accounts():
+            alias = accmgr.default_account
+        else:
+            del msg[0]
 
         if len(list(accmgr.accounts())) == 1:
             alias = list(accmgr.accounts())[0]
 
         if alias not in accmgr.accounts():
-            alias = accmgr.default_account
-
-        if alias not in accmgr.accounts():
             if alias:
-                bot.finish(ev, f"[CQ:reply,id={ev.message_id}]未找到昵称为【{alias}】的账号")
+                await botev.finish(f"未找到昵称为【{alias}】的账号")
             else:
-                bot.finish(ev, f"[CQ:reply,id={ev.message_id}]存在多账号且未设置默认账号，请指定昵称")
+                await botev.finish(f"存在多账号且未找到默认账号，请指定昵称")
 
         async with accmgr.load(alias) as acc:
-            await func(bot = bot, ev = ev, acc = acc, *args, **kwargs)
+            await func(botev = botev, acc = acc, *args, **kwargs)
 
     wrapper.__name__ = func.__name__
     return wrapper
 
 def wrap_tool(func):
-    async def wrapper(bot: HoshinoBot, ev: CQEvent, *args, **kwargs):
-        tool = ""
-        index = 0
-        raw = ""
-        for i, m in enumerate(ev.message):
-            if m.type == 'text':
-                raw = str(m.data['text']).strip().split(' ')
-                tool = raw[0]
-                index = i
-                break
+    async def wrapper(botev: BotEvent, *args, **kwargs):
+        msg = await botev.message()
+        tool = msg[0] if msg else ""
 
         if tool not in tool_info:
-            return bot.finish(ev, f"[CQ:reply,id={ev.message_id}]未找到工具【{tool}】")
-
-        ev.message[index].data['text'] = ' '.join(raw[1:])
+            await botev.finish(f"未找到工具【{tool}】")
+        del msg[0]
 
         tool = tool_info[tool]
 
-        await func(bot = bot, ev = ev, tool = tool, *args, **kwargs)
+        await func(botev = botev, tool = tool, *args, **kwargs)
 
     wrapper.__name__ = func.__name__
     return wrapper
 
 def wrap_config(func):
-    async def wrapper(bot: HoshinoBot, ev: CQEvent, tool: ToolInfo, *args, **kwargs):
-        config = await tool.config_parser(bot, ev)
-        await func(bot = bot, ev = ev, tool = tool, config = config, *args, **kwargs)
+    async def wrapper(botev: BotEvent, tool: ToolInfo, *args, **kwargs):
+        config = await tool.config_parser(botev)
+        await func(botev = botev, tool = tool, config = config, *args, **kwargs)
 
     wrapper.__name__ = func.__name__
     return wrapper
 
+@sv.on_fullmatch(["帮助自动清日常", f"{prefix}帮助"])
+@wrap_hoshino_event
+async def bangzhu_text(botev: BotEvent):
+    msg = outp_b64(await drawer.draw_msgs(sv_help.split("\n")))
+    await botev.finish(msg)
+
 @sv.on_fullmatch(f"{prefix}清日常所有")
+@wrap_hoshino_event
 @wrap_accountmgr
-async def clean_daily_all(bot: HoshinoBot, ev: CQEvent, accmgr: AccountManager):
+async def clean_daily_all(botev: BotEvent, accmgr: AccountManager):
     loop = asyncio.get_event_loop()
     task = []
     alias = []
     async def clean_daily_pre(alias: str):
         async with accmgr.load(alias) as acc:
-            return await clean_daily(bot, ev, acc)
+            return await clean_daily(botev, acc)
 
     for acc in accmgr.accounts():
         alias.append(escape(acc))
@@ -252,7 +295,7 @@ async def clean_daily_all(bot: HoshinoBot, ev: CQEvent, accmgr: AccountManager):
 
     try:
         alias_str = ','.join(alias)
-        await bot.send(ev, f"[CQ:reply,id={ev.message_id}]开始为{alias_str}清理日常")
+        await botev.send(f"开始为{alias_str}清理日常")
     except Exception as e:  
         print(e)
 
@@ -260,27 +303,27 @@ async def clean_daily_all(bot: HoshinoBot, ev: CQEvent, accmgr: AccountManager):
     img = await drawer.horizon_concatenate([img for img in imgs if not isinstance(img, Exception)])
     err = [(alias[i], msg) for i, msg in enumerate(imgs) if isinstance(msg, Exception)]
 
-    msg = f"[CQ:reply,id={ev.message_id}]"
-    msg += outp_b64(img)
-    await bot.send(ev, msg)
+    msg = outp_b64(img)
+    await botev.send(msg)
 
     if err:
-        msg = f"[CQ:reply,id={ev.message_id}]"
-        msg += "\n".join([f"{a}: {m}" for a, m in err])
-        await bot.send(ev, msg)
+        msg = "\n".join([f"{a}: {m}" for a, m in err])
+        await botev.send(msg)
 
 @sv.on_fullmatch(f"{prefix}查内鬼")
-async def find_ghost(bot: HoshinoBot, ev: CQEvent):
+@wrap_hoshino_event
+async def find_ghost(botev: BotEvent):
     msg = []
     for qq in usermgr.qids():
         if not await is_valid_qq(qq):
             msg.append(qq)
     if not msg:
         msg.append("未找到内鬼")
-    await bot.finish(ev, " ".join(msg))
+    await botev.finish(" ".join(msg))
 
 @sv.on_fullmatch(f"{prefix}清内鬼")
-async def clean_ghost(bot: HoshinoBot, ev: CQEvent):
+@wrap_hoshino_event
+async def clean_ghost(botev: BotEvent):
     msg = []
     for qq in usermgr.qids():
         if not await is_valid_qq(qq):
@@ -291,64 +334,69 @@ async def clean_ghost(bot: HoshinoBot, ev: CQEvent):
         for qq in msg:
             usermgr.delete(qq)
         msg = [f"已清除{len(msg)}个内鬼:"] + msg
-    await bot.finish(ev, " ".join(msg))
+    await botev.finish(" ".join(msg))
 
 @sv.on_prefix(f"{prefix}清日常")
+@wrap_hoshino_event
 @wrap_accountmgr
 @wrap_account
-async def clean_daily_from(bot: HoshinoBot, ev: CQEvent, acc: Account):
+@check_final_args_be_empty
+async def clean_daily_from(botev: BotEvent, acc: Account):
     alias = escape(acc.alias)
     try:
-        await bot.send(ev, f"[CQ:reply,id={ev.message_id}]开始为{alias}清理日常")
+        await botev.send(f"开始为{alias}清理日常")
     except Exception as e:  
         print(e)
 
     try:
-        img = await clean_daily(bot = bot, ev = ev, acc = acc)
-        msg = f"[CQ:reply,id={ev.message_id}]{alias}"
+        img = await clean_daily(botev = botev, acc = acc)
+        msg = f"{alias}"
         msg += MessageSegment.image(f'file:///{img}')
-        await bot.send(ev, msg)
+        await botev.send(msg)
     except Exception as e:
-        await bot.send(ev, f'[CQ:reply,id={ev.message_id}]{alias}: {e}')
+        await botev.send(f'{alias}: {e}')
 
-async def clean_daily(bot: HoshinoBot, ev: CQEvent, acc: Account):
+async def clean_daily(botev: BotEvent, acc: Account):
     loop = asyncio.get_event_loop()
-    loop.create_task(check_validate(bot, ev, acc))
-
+    loop.create_task(check_validate(botev, acc))
     img, _ = await acc.do_daily()
     return img
 
-
 @sv.on_prefix(f"{prefix}日常报告")
+@wrap_hoshino_event
 @wrap_accountmgr
 @wrap_account
-async def clean_daily_result(bot: HoshinoBot, ev: CQEvent, acc: Account):
+async def clean_daily_result(botev: BotEvent, acc: Account):
     result_id = 0
+    msg = await botev.message()
     try:
-        result_id = int(ev.message.extract_plain_text().split(' ')[-1].strip())
+        result_id = int(msg[0])
+        del msg[0]
     except Exception as e:
         pass
     img = await acc.get_daily_result_from_id(result_id)
     if not img:
-        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + "未找到日常报告")
-    await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + MessageSegment.image(f'file:///{img}'))
+        await botev.finish("未找到日常报告")
+    await botev.finish(MessageSegment.image(f'file:///{img}'))
 
 @sv.on_prefix(f"{prefix}日常记录")
+@wrap_hoshino_event
 @wrap_accountmgr
-async def clean_daily_time(bot: HoshinoBot, ev: CQEvent, accmgr: AccountManager):
+async def clean_daily_time(botev: BotEvent, accmgr: AccountManager):
     content = []
     for alias in accmgr.accounts():
         async with accmgr.load(alias, readonly=True) as acc:
             content += [[acc.alias, daily_result.time, "#" + daily_result.status] for daily_result in acc.data.daily_result]
 
     if not content:
-        await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + "暂无日常记录")
+        await botev.finish("暂无日常记录")
     header = ["昵称", "清日常时间", "状态"]
     img = outp_b64(await drawer.draw(header, content))
-    await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + img)
+    await botev.finish(img)
 
 @sv.on_prefix(f"{prefix}定时日志")
-async def cron_log(bot: HoshinoBot, ev: CQEvent):
+@wrap_hoshino_event
+async def cron_log(botev: BotEvent):
     from .autopcr.module.crons import CRONLOG_PATH
     with open(CRONLOG_PATH, 'r', encoding='utf-8') as f:
         msg = [line.strip() for line in f.readlines()]
@@ -356,11 +404,12 @@ async def cron_log(bot: HoshinoBot, ev: CQEvent):
     msg = msg[::-1]
     if not msg:
         msg.append("暂无定时日志")
-    msg = outp_b64(await drawer.draw_msgs(msg))
-    await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + msg)
+    img = outp_b64(await drawer.draw_msgs(msg))
+    await botev.finish(img)
 
 @sv.on_prefix(f"{prefix}定时统计")
-async def cron_statistic(bot: HoshinoBot, ev: CQEvent):
+@wrap_hoshino_event
+async def cron_statistic(botev: BotEvent):
     cnt_clanbattle = Counter()
     cnt = Counter()
     for qq in usermgr.qids():
@@ -382,49 +431,61 @@ async def cron_statistic(bot: HoshinoBot, ev: CQEvent):
     content.append(["总计", str(sum(cnt.values())), str(sum(cnt_clanbattle.values()))])
     header = ["时间", "定时任务数", "公会战任务数"]
 
-    msg = outp_b64(await drawer.draw(header, content))
-    await bot.finish(ev, f"[CQ:reply,id={ev.message_id}]" + msg)
+    img = outp_b64(await drawer.draw(header, content))
+    await botev.finish(img)
 
 @sv.on_fullmatch(f"{prefix}配置日常")
-async def config_clear_daily(bot: HoshinoBot, ev: CQEvent):
-    await bot.finish(ev, address + "login")
+@wrap_hoshino_event
+async def config_clear_daily(botev: BotEvent):
+    await botev.finish(address + "login")
 
 @sv.on_prefix(f"{prefix}")
+@wrap_hoshino_event
 @wrap_tool
 @wrap_config
 @wrap_accountmgr
 @wrap_account
-async def tool_used(bot: HoshinoBot, ev: CQEvent, tool: ToolInfo, config: Dict[str, str], acc: Account):
+@check_final_args_be_empty
+async def tool_used(botev: BotEvent, tool: ToolInfo, config: Dict[str, str], acc: Account):
     alias = escape(acc.alias)
     try:
         loop = asyncio.get_event_loop()
-        loop.create_task(check_validate(bot, ev, acc))
+        loop.create_task(check_validate(botev, acc))
 
         img = await acc.do_from_key(config, tool.key)
-        msg = f"[CQ:reply,id={ev.message_id}]{alias}"
+        msg = f"{alias}"
         msg += MessageSegment.image(f'file:///{img}')
-        await bot.send(ev, msg)
+        await botev.send(msg)
     except Exception as e:
-        await bot.send(ev, f'[CQ:reply,id={ev.message_id}]{alias}: {e}')
+        await botev.send(f'{alias}: {e}')
 
 @sv.on_fullmatch(f"{prefix}卡池")
-async def gacha_current(bot: HoshinoBot, ev: CQEvent):
+@wrap_hoshino_event
+async def gacha_current(botev: BotEvent):
     msg = '\n'.join(db.get_cur_gacha())
-    await bot.finish(ev, msg)
+    await botev.finish(msg)
+
+def is_args_exist(msg: List[str], key: str):
+    if key in msg:
+        msg.remove(key)
+        return True
+    return False
 
 @register_tool("公会支援", 'get_clan_support_unit')
-async def clan_support(bot: HoshinoBot, ev: CQEvent):
+async def clan_support(botev: BotEvent):
     return {}
 
 @register_tool("查心碎", "get_need_xinsui")
-async def find_xinsui(bot: HoshinoBot, ev: CQEvent):
+async def find_xinsui(botev: BotEvent):
     return {}
 
 @register_tool("jjc回刺", "jjc_back")
-async def jjc_back(bot: HoshinoBot, ev: CQEvent):
+async def jjc_back(botev: BotEvent):
+    msg = await botev.message()
     opponent_jjc_rank = 0
     try:
-        opponent_jjc_rank = int(ev.message.extract_plain_text().split(' ')[-1].strip())
+        opponent_jjc_rank = int(msg[0])
+        del msg[0]
     except:
         pass
     config = {
@@ -433,10 +494,12 @@ async def jjc_back(bot: HoshinoBot, ev: CQEvent):
     return config
 
 @register_tool("pjjc回刺", "pjjc_back")
-async def pjjc_back(bot: HoshinoBot, ev: CQEvent):
+async def pjjc_back(botev: BotEvent):
+    msg = await botev.message()
     opponent_pjjc_rank = 0
     try:
-        opponent_pjjc_rank = int(ev.message.extract_plain_text().split(' ')[-1].strip())
+        opponent_pjjc_rank = int(msg[0])
+        del msg[0]
     except:
         pass
     config = {
@@ -445,10 +508,11 @@ async def pjjc_back(bot: HoshinoBot, ev: CQEvent):
     return config
 
 @register_tool("jjc透视", "jjc_info")
-async def jjc_info(bot: HoshinoBot, ev: CQEvent):
+async def jjc_info(botev: BotEvent):
     use_cache = True
+    msg = await botev.message()
     try:
-        use_cache = False if ev.message.extract_plain_text().split(' ')[-1].strip() == 'flush' else True
+        use_cache = not is_args_exist(msg, 'flush')
     except:
         pass
     config = {
@@ -457,10 +521,11 @@ async def jjc_info(bot: HoshinoBot, ev: CQEvent):
     return config
 
 @register_tool("pjjc透视", "pjjc_info")
-async def pjjc_info(bot: HoshinoBot, ev: CQEvent):
+async def pjjc_info(botev: BotEvent):
     use_cache = True
+    msg = await botev.message()
     try:
-        use_cache = False if ev.message.extract_plain_text().split(' ')[-1].strip() == 'flush' else True
+        use_cache = not is_args_exist(msg, 'flush')
     except:
         pass
     config = {
@@ -469,11 +534,11 @@ async def pjjc_info(bot: HoshinoBot, ev: CQEvent):
     return config
 
 @register_tool("查记忆碎片", "get_need_memory")
-async def find_memory(bot: HoshinoBot, ev: CQEvent):
+async def find_memory(botev: BotEvent):
     sweep_get_able_unit_memory = False
+    msg = await botev.message()
     try:
-        if ev.message.extract_plain_text().split(' ')[-1].strip() == '可刷取':
-            sweep_get_able_unit_memory = True
+        sweep_get_able_unit_memory = is_args_exist(msg, '可刷取')
     except:
         pass
     config = {
@@ -483,40 +548,72 @@ async def find_memory(bot: HoshinoBot, ev: CQEvent):
 
 
 @register_tool(f"来发十连", "gacha_start")
-async def shilian(bot: HoshinoBot, ev: CQEvent):
+async def shilian(botev: BotEvent):
     cc_until_get = False
-    pool_id = 0
+    pool_id = ""
+    really_do = False
+    ticket = False
+    msg = await botev.message()
     try:
-        if ev.message.extract_plain_text().split(' ')[-1].strip() == '抽到出':
-            cc_until_get = True
+        pool_id = msg[0]
+        del msg[0]
     except:
         pass
+
     try:
-        msg = ev.message.extract_plain_text().split(' ')
+        cc_until_get = is_args_exist(msg, '抽到出')
+    except:
+        pass
+
+    try:
+        really_do = is_args_exist(msg, '开抽')
+    except:
+        pass
+
+    try:
+        ticket = is_args_exist(msg, '单抽券')
+    except:
+        pass
+
+    current_gacha = {gacha.split(':')[0]: gacha for gacha in db.get_cur_gacha()}
+
+    if pool_id not in current_gacha:
+        await botev.finish(f"未找到该卡池{pool_id}")
+
+    pool_id = current_gacha[pool_id]
+
+    if not really_do:
+        msg = f"卡池{pool_id}\n"
         if cc_until_get:
-            pool_id = msg[-3].strip() + " " + msg[-2].strip()
-        else:
-            pool_id = msg[-2].strip() + " " + msg[-1].strip()
-    except:
-        pass
+            msg += "抽到出\n"
+        if ticket:
+            msg += "单抽券\n"
+        msg += "确认无误，消息末尾加上【开抽】即可开始抽卡"
+        await botev.finish(msg)
 
     config = {
         "pool_id": pool_id,
         "cc_until_get": cc_until_get,
+        "single_ticket": ticket,
     }
     return config
 
 @register_tool(f"查装备", "get_need_equip")
-async def find_equip(bot: HoshinoBot, ev: CQEvent):
+async def find_equip(botev: BotEvent):
     like_unit_only = False
+    start_rank = None
+    msg = await botev.message()
     try:
-        if ev.message.extract_plain_text().split(' ')[-1].strip() == 'fav':
-            like_unit_only = True
-            start_rank = int(ev.message.extract_plain_text().split(' ')[-2])
-        else:
-            start_rank = int(ev.message.extract_plain_text().split(' ')[-1])
+        like_unit_only = is_args_exist(msg, 'fav')
     except:
-        start_rank = None
+        pass
+
+    try:
+        start_rank = msg[0]
+        del msg[0]
+    except:
+        pass
+
 
     config = {
         "start_rank": start_rank,
@@ -525,16 +622,19 @@ async def find_equip(bot: HoshinoBot, ev: CQEvent):
     return config
 
 @register_tool(f"刷图推荐", "get_normal_quest_recommand")
-async def quest_recommand(bot: HoshinoBot, ev: CQEvent):
+async def quest_recommand(botev: BotEvent):
     like_unit_only = False
+    start_rank = None
+    msg = await botev.message()
     try:
-        if ev.message.extract_plain_text().split(' ')[-1].strip() == 'fav':
-            like_unit_only = True
-            start_rank = int(ev.message.extract_plain_text().split(' ')[-2])
-        else:
-            start_rank = int(ev.message.extract_plain_text().split(' ')[-1])
+        like_unit_only = is_args_exist(msg, 'fav')
     except:
-        start_rank = None
+        pass
+    try:
+        start_rank = msg[0]
+        del msg[0]
+    except:
+        pass
 
     config = {
         "start_rank": start_rank,
@@ -544,5 +644,5 @@ async def quest_recommand(bot: HoshinoBot, ev: CQEvent):
 
 
 # @register_tool("获取导入", "get_library_import_data")
-# async def get_library_import(bot: HoshinoBot, ev: CQEvent):
+# async def get_library_import(botev: BotEvent):
     # return {}
