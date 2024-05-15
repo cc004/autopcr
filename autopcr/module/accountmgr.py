@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
 from ..core.pcrclient import pcrclient
 from .modulemgr import ModuleManager
-import os, re
+import os, re, shutil
 from typing import Any, Dict, Iterator, List
 from ..constants import CONFIG_PATH, OLD_CONFIG_PATH, RESULT_DIR
 from asyncio import Lock
@@ -219,7 +219,7 @@ class AccountManager:
 
     def create_account(self, account: str) -> Account:
         if not AccountManager.pathsyntax.fullmatch(account):
-            raise AccountException('非法账户名')
+            raise AccountException(f'非法账户名{account}')
         if account in self.accounts():
             raise AccountException('账号已存在')
         with open(self.path(account), 'w') as f:
@@ -240,7 +240,7 @@ class AccountManager:
 
     def load(self, account: str = "", readonly = False) -> Account:
         if not AccountManager.pathsyntax.fullmatch(account):
-            raise AccountException('非法账户名')
+            raise AccountException(f'非法账户名{account}')
         if not account:
             account = self.secret.default_account
         if not account and len(list(self.accounts())) == 1:
@@ -254,7 +254,7 @@ class AccountManager:
 
     def delete(self, account: str): 
         if not AccountManager.pathsyntax.fullmatch(account):
-            raise AccountException('非法账户名')
+            raise AccountException(f'非法账户名{account}')
         os.remove(self.path(account))
 
     @property
@@ -334,7 +334,7 @@ class UserManager:
         if account:
             self.load(qid).delete(account)
         else:
-            os.removedirs(self.qid_path(qid))
+            shutil.rmtree(self.qid_path(qid))
 
     def qids(self) -> Iterator[str]:
         for fn in os.listdir(self.root):

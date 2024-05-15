@@ -108,6 +108,9 @@ class underground_skip(Module):
         double_mana = client.data.is_dungeon_mana_campaign()
         rest = infos.rest_challenge_count[0].count
         if infos.enter_area_id != 0:
+            if db.is_secret_dungeon_id(infos.enter_area_id):
+                raise AbortError("当前位于里地下城，不支持扫荡")
+
             self._log(f"当前位于【{dungeon_name(infos.enter_area_id)}】")
             if double_mana:
                 self._log(f"今日地下城双倍mana")

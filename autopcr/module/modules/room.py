@@ -76,14 +76,14 @@ class room_like_back(Module):
                 continue
             try:
                 resp = await client.room_like(user.room_user_info.viewer_id)
+                result += resp.reward_list
+                like_user.append(user.room_user_info.name)
+                cnt += 1
             except Exception as e:
                 if str(e).startswith("此玩家未读取的点赞数"):
                     continue
                 else:
                     raise(e)
-            result += resp.reward_list
-            like_user.append(user.room_user_info.name)
-            cnt += 1
 
         result = await client.serlize_reward(result)
         self._log(f"为【{'|'.join(like_user)}】点赞，获得了:\n" + result)

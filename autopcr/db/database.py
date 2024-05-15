@@ -1,5 +1,5 @@
 import time
-from typing import Set, Dict, Tuple, Union
+from typing import List, Dict, Tuple, Union
 import typing
 from ..model.enums import eCampaignCategory
 from ..model.common import eInventoryType, RoomUserItem, InventoryInfo
@@ -7,6 +7,7 @@ from ..model.custom import ItemType
 import datetime
 from collections import Counter
 from .dbmgr import dbmgr
+from .methods import *
 from .models import *
 from ..util.linq import flow
 from queue import SimpleQueue
@@ -158,8 +159,8 @@ class database():
                 )
             )
 
-            self.unit_unique_equip: Dict[int, Dict[int, UnitUniqueEquip]] = (
-                UnitUniqueEquip.query(db)
+            self.unit_unique_equip: Dict[int, Dict[int, UnitUniqueEquipment]] = (
+                UnitUniqueEquipment.query(db)
                 .group_by(lambda x: x.equip_slot)
                 .to_dict(lambda x: x.key, lambda x: 
                     x.to_dict(lambda x: x.unit_id, lambda x: x))
@@ -261,6 +262,7 @@ class database():
 
             self.dungeon_area: Dict[int, DungeonArea] = (
                 DungeonArea.query(db)
+                .where(lambda x: self.is_dungeon_id(x.dungeon_area_id))
                 .to_dict(lambda x: x.dungeon_area_id, lambda x: x)
             )
 
@@ -637,8 +639,11 @@ class database():
     def is_unit_pure_memory(self, item: ItemType) -> bool:
         return item[0] == eInventoryType.Item and item[1] >= 32000 and item[1] < 33000
 
-    def is_equip(self, item: ItemType) -> bool:
-        return item[0] == eInventoryType.Equip and item[1] >= 101000 and item[1] < 140000
+    def is_equip(self, item: ItemType, uncraftable_only: bool = False) -> bool:
+        return item[0] == eInventoryType.Equip and item[1] >= 101000 and item[1] < 140000 and (not uncraftable_only or not self.is_equip_craftable(item))
+
+    def is_equip_craftable(self, item: ItemType) -> bool:
+        return item in self.equip_craft
 
     def is_room_item_level_upable(self, team_level: int, item: RoomUserItem) -> bool:
         return item.room_item_level < self.room_item[item.room_item_id].max_level and team_level // 10 >= item.room_item_level and (item.level_up_end_time is None or item.level_up_end_time < time.time())
@@ -795,7 +800,6 @@ class database():
         return self.is_target_time(schedule, now)
 
     def is_secret_dungeon_time(self) -> bool:
-        # TODO unknown start_time & count_start_time
         schedule = [(db.parse_time(schedule.start_time), db.parse_time(schedule.end_time)) 
                     for schedule in self.secret_dungeon_schedule.values()]
         return self.is_target_time(schedule)
@@ -880,7 +884,7 @@ class database():
         .to_list()
 
     def get_equip_max_star(self, equip_id: int):
-        return max(self.equipment_enhance_data[self.equip_data[equip_id].promotion_level].keys())
+        return max(self.equipment_enhance_data[self.equip_data[equip_id].promotion_level].keys()) if self.equip_data[equip_id].promotion_level in self.equipment_enhance_data else 0
 
     def get_equip_star_pt(self, equip_id: int, star: int):
         equip = self.equip_data[equip_id]
@@ -915,6 +919,12 @@ class database():
         gacha_data = self.gacha_data[gacha_id]
         start_time = self.parse_time(gacha_data.start_time)
         return self.is_today(start_time)
+
+    def is_dungeon_id(self, dungeon_id: int) -> bool:
+        return dungeon_id // 1000 == 31
+
+    def is_secret_dungeon_id(self, dungeon_id: int) -> bool:
+        return dungeon_id // 1000 == 32
 
     def unit_rank_candidate(self):
         return list(range(1, self.equip_max_rank + 1))
