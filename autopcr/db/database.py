@@ -159,6 +159,13 @@ class database():
                 )
             )
 
+            self.team_info: Dict[int, ExperienceTeam] = (
+                ExperienceTeam.query(db)
+                .to_dict(lambda x: x.team_level, lambda x: x)
+            )
+
+            self.team_max_level: int = max(self.team_info.keys()) - 1
+
             self.unit_unique_equip: Dict[int, Dict[int, UnitUniqueEquipment]] = (
                 UnitUniqueEquipment.query(db)
                 .group_by(lambda x: x.equip_slot)
@@ -176,6 +183,7 @@ class database():
             self.unique_equipment_max_level: Dict[int, int] = {
                 equip_slot: max(self.unique_equipment_enhance_data[equip_slot].keys()) for equip_slot in self.unique_equipment_enhance_data
             }
+            self.unique_equipment_max_level[1] = (self.team_max_level + 9) // 10 * 10 # 手动修正
 
             self.exceed_level_unit_required: Dict[int, ExceedLevelUnit] = (
                 ExceedLevelUnit.query(db)
@@ -340,13 +348,6 @@ class database():
                 TowerQuestDatum.query(db)
                 .to_dict(lambda x: x.tower_quest_id, lambda x: x)
             )
-
-            self.team_info: Dict[int, ExperienceTeam] = (
-                ExperienceTeam.query(db)
-                .to_dict(lambda x: x.team_level, lambda x: x)
-            )
-
-            self.team_max_level: int = max(self.team_info.keys()) - 1
 
             self.event_story_data: Dict[int, EventStoryDatum] = (
                 EventStoryDatum.query(db)
