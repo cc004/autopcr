@@ -512,8 +512,7 @@ async def jjc_info(botev: BotEvent):
     use_cache = True
     msg = await botev.message()
     try:
-        use_cache = is_args_exist(msg, 'flush')
-        del msg[0]
+        use_cache = not is_args_exist(msg, 'flush')
     except:
         pass
     config = {
@@ -526,8 +525,7 @@ async def pjjc_info(botev: BotEvent):
     use_cache = True
     msg = await botev.message()
     try:
-        use_cache = is_args_exist(msg, 'flush')
-        del msg[0]
+        use_cache = not is_args_exist(msg, 'flush')
     except:
         pass
     config = {
@@ -541,7 +539,6 @@ async def find_memory(botev: BotEvent):
     msg = await botev.message()
     try:
         sweep_get_able_unit_memory = is_args_exist(msg, '可刷取')
-        del msg[0]
     except:
         pass
     config = {
