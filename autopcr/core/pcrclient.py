@@ -559,9 +559,10 @@ class pcrclient(apiclient):
         times = {msg.message_id : msg.create_time for msg in resp.clan_chat_message if msg.message_type == eClanChatMessageType.DONATION}
         return (equip for equip in resp.equip_requests if times[equip.message_id] > self.server_time - 28800)
     
-    async def recover_stamina(self):
+    async def recover_stamina(self, recover_count: int = 1):
         req = ShopRecoverStaminaRequest()
         req.current_currency_num = self.data.jewel.free_jewel + self.data.jewel.jewel
+        req.recover_count = recover_count
         return await self.request(req)
 
     async def get_arena_history(self):
