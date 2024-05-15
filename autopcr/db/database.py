@@ -262,6 +262,7 @@ class database():
 
             self.dungeon_area: Dict[int, DungeonArea] = (
                 DungeonArea.query(db)
+                .where(lambda x: self.is_dungeon_id(x.dungeon_area_id))
                 .to_dict(lambda x: x.dungeon_area_id, lambda x: x)
             )
 
@@ -799,7 +800,6 @@ class database():
         return self.is_target_time(schedule, now)
 
     def is_secret_dungeon_time(self) -> bool:
-        # TODO unknown start_time & count_start_time
         schedule = [(db.parse_time(schedule.start_time), db.parse_time(schedule.end_time)) 
                     for schedule in self.secret_dungeon_schedule.values()]
         return self.is_target_time(schedule)
@@ -919,6 +919,12 @@ class database():
         gacha_data = self.gacha_data[gacha_id]
         start_time = self.parse_time(gacha_data.start_time)
         return self.is_today(start_time)
+
+    def is_dungeon_id(self, dungeon_id: int) -> bool:
+        return dungeon_id // 1000 == 31
+
+    def is_secret_dungeon_id(self, dungeon_id: int) -> bool:
+        return dungeon_id // 1000 == 32
 
     def unit_rank_candidate(self):
         return list(range(1, self.equip_max_rank + 1))
