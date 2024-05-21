@@ -45,11 +45,12 @@ class pcrclient(apiclient):
         req.mission_id = mission_id
         return await self.request(req)
 
-    async def deck_update(self, deck_number: int, units: List[int]):
+    async def deck_update(self, deck_number: int, units: List[int], sorted: bool = False):
         req = DeckUpdateRequest()
         req.deck_number = deck_number
         cnt = len(units)
-        units = db.deck_sort_unit(units)
+        if not sorted:
+            units = db.deck_sort_unit(units)
         for i in range(1, 6):
             setattr(req, f"unit_id_{i}",units[i - 1] if i <= cnt else 0) 
         return await self.request(req)
@@ -599,6 +600,11 @@ class pcrclient(apiclient):
         req = DungeonInfoRequest()
         return await self.request(req)
 
+    async def get_special_dungeon_info(self ,dungeon_area_id: int):
+        req = SpecialDungeonTopRequest()
+        req.dungeon_area_id = dungeon_area_id
+        return await self.request(req)
+
     async def skip_dungeon(self, dungeon_area_id: int):
         req = DungeonSkipRequest()
         req.dungeon_area_id = dungeon_area_id
@@ -649,7 +655,7 @@ class pcrclient(apiclient):
                 result.append(f"未知物品({value[2],type},{value[2].id})x{value[0]}({value[1]})")
         if target is not None and len(result) == 0:
             result.append(f"{db.get_inventory_name_san(target)}x0({self.data.get_inventory(target)})")
-        return '\n'.join(result)
+        return '\n'.join(result) if result else "无"
 
     async def serialize_unit_info(self, unit_data: Union[UnitData, UnitDataLight]) -> Tuple[bool, str]:
         info = []
@@ -869,6 +875,16 @@ class pcrclient(apiclient):
 
     async def enter_dungeon(self, area: int):
         req = DungeonEnterAreaRequest()
+        req.dungeon_area_id = area
+        return await self.request(req)
+
+    async def enter_special_dungeon(self, area: int):
+        req = SpecialDungeonEnterAreaRequest()
+        req.dungeon_area_id = area
+        return await self.request(req)
+
+    async def reset_special_dungeon(self, area: int):
+        req = SpecialDungeonResetRequest()
         req.dungeon_area_id = area
         return await self.request(req)
 

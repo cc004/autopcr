@@ -274,6 +274,12 @@ class database():
                 .to_dict(lambda x: x.dungeon_area_id, lambda x: x)
             )
 
+            self.secret_dungeon_area: Dict[int, DungeonArea] = (
+                DungeonArea.query(db)
+                .where(lambda x: self.is_secret_dungeon_id(x.dungeon_area_id))
+                .to_dict(lambda x: x.dungeon_area_id, lambda x: x)
+            )
+
             self.secret_dungeon_schedule: Dict[int, SecretDungeonSchedule] = (
                 SecretDungeonSchedule.query(db)
                 .to_dict(lambda x: x.dungeon_area_id, lambda x: x)
@@ -804,6 +810,12 @@ class database():
         schedule = [(db.parse_time(schedule.start_time), db.parse_time(schedule.end_time)) 
                     for schedule in self.secret_dungeon_schedule.values()]
         return self.is_target_time(schedule)
+
+    def get_open_secret_dungeon_area(self) -> int:
+        schedule = [schedule.dungeon_area_id 
+                    for schedule in self.secret_dungeon_schedule.values() if self.is_target_time([(db.parse_time(schedule.start_time), db.parse_time(schedule.end_time))])]
+        assert len(schedule) == 1
+        return schedule[0]
 
     def parse_time(self, time: str) -> datetime.datetime:
         if time.count(':') == 1: # 怎么以前没有秒的
