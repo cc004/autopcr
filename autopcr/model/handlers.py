@@ -431,6 +431,23 @@ class DungeonSkipResponse(responses.DungeonSkipResponse):
         if self.user_gold:
             mgr.gold = self.user_gold
 
+@handles
+class SpecialDungeonEnterAreaResponse(responses.SpecialDungeonEnterAreaResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.skip_result_list:
+            for result in self.skip_result_list:
+                for reward in result.reward_list:
+                    mgr.update_inventory(reward)
+        if self.total_floor_reward_info:
+            for reward in self.total_floor_reward_info:
+                mgr.update_inventory(reward)
+        if self.mission_reward_info:
+            for reward in self.mission_reward_info:
+                mgr.update_inventory(reward)
+        # missing update_bank_gold
+        if self.user_gold:
+            mgr.gold = self.user_gold
+
 
 @handles
 class DungeonResetResponse(responses.DungeonResetResponse):
