@@ -73,7 +73,7 @@ class underground_skip(Module):
             return db.dungeon_area[id].dungeon_name
 
         def get_cleared_max_dungeon_id():
-            return max([0] + infos.dungeon_cleared_area_id_list)
+            return max([0] + [id for id in infos.dungeon_cleared_area_id_list if db.is_dungeon_id(id)])
 
         def get_max_dungeon_id():
             return (flow(db.dungeon_area.values())
