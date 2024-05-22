@@ -73,7 +73,7 @@ class underground_skip(Module):
             return db.dungeon_area[id].dungeon_name
 
         def get_cleared_max_dungeon_id():
-            return max([0] + infos.dungeon_cleared_area_id_list)
+            return max([0] + [id for id in infos.dungeon_cleared_area_id_list if db.is_dungeon_id(id)])
 
         def get_max_dungeon_id():
             return (flow(db.dungeon_area.values())
@@ -109,7 +109,7 @@ class underground_skip(Module):
         rest = infos.rest_challenge_count[0].count
         if infos.enter_area_id != 0:
             if db.is_secret_dungeon_id(infos.enter_area_id):
-                raise AbortError("当前位于里地下城，不支持扫荡")
+                raise SkipError("当前位于里地下城")
 
             self._log(f"当前位于【{dungeon_name(infos.enter_area_id)}】")
             if double_mana:
@@ -123,10 +123,11 @@ class underground_skip(Module):
                 else:
                     if always_sweep:
                         rest = await do_sweep(infos.enter_area_id)
+
+        if secret_dungeon_stop and db.is_secret_dungeon_time():
+            raise SkipError("今日里地下城活动，不扫荡普通地下城")
                         
         if rest:
-            if secret_dungeon_stop and db.is_secret_dungeon_time():
-                raise SkipError("今日里地下城活动，不扫荡普通地下城")
             if not_max_stop and get_max_dungeon_id() != get_cleared_max_dungeon_id():
                 raise AbortError(f"最高级地下城【{dungeon_name(get_max_dungeon_id())}】未通关，不扫荡")
             if double_mana or always_sweep:
@@ -135,6 +136,63 @@ class underground_skip(Module):
                 await do_enter()
         else:
             raise SkipError("今日已扫荡地下城")
+
+@booltype("secret_dungeon_retreat", "自动撤退", False)
+@description('只进入特别地下城，以期扫荡前5层。需首通一次。自动撤退指首通后，当前位于特别地下城，且还有挑战次数，则会撤退后再次进入，以扫荡前5层，用于只打30层。')
+@name('特别地下城扫荡')
+@default(True)
+class special_underground_skip(Module):
+    async def do_task(self, client: pcrclient):
+        if not db.is_secret_dungeon_time():
+            raise SkipError("当前无特别地下城")
+
+        infos = await client.get_dungeon_info()
+        special_dungeon_area = db.get_open_secret_dungeon_area()
+        special_info = await client.get_special_dungeon_info(special_dungeon_area)
+        secret_dungeon_retreat = self.get_config("secret_dungeon_retreat")
+
+        def dungeon_name(id: int):
+            return db.secret_dungeon_area[id].dungeon_name
+
+        async def do_retreat(id: int):
+            await client.reset_special_dungeon(id)
+            self._log(f"从【{dungeon_name(id)}】撤退")
+
+        async def do_enter(id):
+            await client.deck_update(ePartyType.DUNGEON, [0, 0, 0, 0, 0], sorted=True)
+
+            req = await client.enter_special_dungeon(id)
+            reward_list = req.skip_result_list if req.skip_result_list else []
+            rewards = [reward for reward_item in reward_list for reward in reward_item.reward_list 
+                       if db.is_unit_memory((reward.type, reward.id)) 
+                       or db.xinsui == (reward.type, reward.id)
+                       or db.xingqiubei == (reward.type, reward.id)]
+            result = await client.serlize_reward(rewards)
+            self._log(f"进入了【{dungeon_name(id)}】,获得了:\n{result}")
+
+        rest = infos.rest_challenge_count[0].count
+        if infos.enter_area_id != 0:
+            if not db.is_secret_dungeon_id(infos.enter_area_id):
+                raise AbortError("当前位于普通地下城，不支持扫荡")
+
+            self._log(f"当前位于【{dungeon_name(infos.enter_area_id)}】")
+            if rest:
+                if secret_dungeon_retreat:
+                    if special_info.clear_num == 0:
+                        raise AbortError("特别地下城未通关，将不撤退")
+                    await do_retreat(infos.enter_area_id)
+                else:
+                    raise AbortError("今天仍有挑战次数，但设置不撤退")
+
+                        
+        if rest:
+            await do_enter(special_dungeon_area)
+
+        if special_info.clear_num == 0:
+            raise AbortError("特别地下城尚未首通，请记得通关")
+
+        if not rest:
+            raise SkipError("今日已扫荡特别地下城")
 
 
 @stamina_relative

@@ -119,6 +119,11 @@ class sessionmgr(Component[apiclient]):
                 req.tips_id_list = []
                 await next.request(req)
 
+                req = DailyTaskTopRequest()
+                req.setting_alchemy_count = 1
+                req.is_check_by_term_normal_gacha = 0
+                await next.request(req)
+
                 self._logged = True
                 break
             except ApiException:
