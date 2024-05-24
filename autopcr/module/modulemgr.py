@@ -75,10 +75,10 @@ class ModuleManager:
     def generate_tools_config(self):
         return self.generate_config(self.tool_modules)
     
-    async def do_daily(self) -> Tuple[str, str]:
+    async def do_daily(self, isAdminCall: bool = False) -> Tuple[str, str]:
         status = "success"
         try:
-            resp = await self.do_task(self.client.keys, self.daily_modules)
+            resp = await self.do_task(self.client.keys, self.daily_modules, isAdminCall)
             img = await drawer.draw_tasks_result(resp)
             status = "error" if any(r.status == "error" for r in resp.result.values()) else status
         except Exception as e:
@@ -88,13 +88,13 @@ class ModuleManager:
         file_path = await self.parent.save_daily_result(img, status)
         return file_path, status
 
-    async def do_from_key(self, config: dict, key: str) -> str:
+    async def do_from_key(self, config: dict, key: str, isAdminCall: bool = False) -> str:
         config.update({
             key: True,
             "stamina_relative_not_run": False
         })
         modules = [self.name_to_modules[key]]
-        raw_resp = await self.do_task(config, modules)
+        raw_resp = await self.do_task(config, modules, isAdminCall)
         resp = raw_resp.result[key] 
 
         if modules[0].text_result:
@@ -104,7 +104,10 @@ class ModuleManager:
             file_path = await self.parent.save_single_result(key, img)
         return file_path
 
-    async def do_task(self, config: dict, modules: List[Module]) -> TaskResult:
+    async def do_task(self, config: dict, modules: List[Module], isAdminCall: bool = False) -> TaskResult:
+        if db.is_clan_battle_time() and self.parent.is_clan_battle_forbidden() and not isAdminCall:
+            raise ValueError("会战期间禁止执行任务")
+
         client = self.client
         client.keys["stamina_relative_not_run"] = any(db.is_campaign(campaign) for campaign in client.keys.get("stamina_relative_not_run_campaign_before_one_day", []))
 

@@ -184,6 +184,10 @@ class Account(ModuleManager):
     def delete(self):
         self._parent.delete(self.alias)
 
+    def is_clan_battle_forbidden(self):
+        username = self.data.username.lower()
+        return self._parent._parent.is_clan_battle_forbidden(username)
+
 class AccountManager:
     pathsyntax = re.compile(r'[^\\\|?*/]{1,32}')
 
@@ -288,6 +292,16 @@ class UserManager:
         self.root = root
         self.user_lock: Dict[str, Lock] = {}
         self.account_lock: Dict[str, Dict[str, Lock]] = {}
+        self.clan_battle_forbidden = set()
+
+    def is_clan_battle_forbidden(self, username: str) -> bool:
+        if os.path.exists(os.path.join(CONFIG_PATH, 'clan_battle_forbidden.txt')):
+            with open(os.path.join(CONFIG_PATH, 'clan_battle_forbidden.txt'), 'r') as f:
+                data = f.read().splitlines()
+                self.clan_battle_forbidden = set([x.strip().lower() for x in data])
+            return username in self.clan_battle_forbidden
+        else:
+            return False
 
     def validate_password(self, qid: str, password: str) -> bool:
         try:
