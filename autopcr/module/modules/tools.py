@@ -198,18 +198,34 @@ class Arena(Module):
         target_rank: int = self.target_rank()
         self_rank = await self.self_rank(client)
 
-        if target_rank:
+        if target_rank > 0:
             target = await self.get_rank_info(client, target_rank)
             target_info = (await client.get_profile(target.viewer_id)).user_info
             self._log(f"{target_info.user_name}({target.viewer_id})")
             self._log(f"{self_rank} -> {target_rank}({target_info.user_name})")
             defend = await self.get_defend_from_info(target)
         else:
-            history = await self.get_arena_history(client)
-            if not history:
-                raise SkipError("没有被刺记录")
-            history = history[0]
-            history_detail = await self.get_history_detail(history.log_id, client)
+            historys = await self.get_arena_history(client)
+            if not historys:
+                raise AbortError("没有被刺记录")
+            id = -target_rank
+            if id == 0:
+                for i, h in enumerate(historys):
+                    h_detail = await self.get_history_detail(h.log_id, client)
+                    if h_detail.is_challenge:
+                        self._log(f"查找第{i + 1}条记录")
+                        history = h
+                        history_detail = h_detail
+                        break
+                else:
+                    raise AbortError("没有刺人记录")
+            else:
+                self._log(f"查找第{id}条记录")
+                if len(historys) < id:
+                    raise AbortError(f"只有{len(historys)}条被刺记录")
+                history = historys[id - 1]
+                history_detail = await self.get_history_detail(history.log_id, client)
+
             target = history.opponent_user
 
             target_info = (await client.get_profile(target.viewer_id)).user_info
@@ -256,10 +272,10 @@ class Arena(Module):
         msg = [defend_str, "-------", attack_str]
         self._log('\n'.join(msg))
 
-@description('查询jjc回刺阵容，并自动设置进攻队伍，对手排名0则查找对战纪录第一条')
+@description('查询jjc回刺阵容，并自动设置进攻队伍，对手排名=0则查找对战纪录第一条刺人的，<0则查找对战纪录，-1表示第一条，-2表示第二条，以此类推')
 @name('jjc回刺查询')
 @default(True)
-@inttype("opponent_jjc_rank", "对手排名", 0, [i for i in range(0, 101)])
+@inttype("opponent_jjc_rank", "对手排名", -1, [i for i in range(-20, 101)])
 class jjc_back(Arena):
 
     def target_rank(self) -> int:
@@ -325,10 +341,10 @@ class jjc_back(Arena):
     async def get_attack_team(self, defen: List[int]) -> List[ArenaQueryResult]:
         return await ArenaQuery.get_attack(self.available_unit, defen)
 
-@description('查询pjjc回刺阵容，并自动设置进攻队伍，对手排名0则查找对战纪录第一条')
+@description('查询pjjc回刺阵容，并自动设置进攻队伍，对手排名=0则查找对战纪录第一条刺人的，<0则查找对战纪录，-1表示第一条，-2表示第二条，以此类推')
 @name('pjjc回刺查询')
 @default(True)
-@inttype("opponent_pjjc_rank", "对手排名", 0, [i for i in range(0, 101)])
+@inttype("opponent_pjjc_rank", "对手排名", -1, [i for i in range(-20, 101)])
 class pjjc_back(Arena):
     def target_rank(self) -> int:
         return self.get_config("opponent_pjjc_rank")
