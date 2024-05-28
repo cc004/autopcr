@@ -1,0 +1,63 @@
+# This is a basic workflow to help you get started with Actions
+name: build docker image
+# Controls when the action will run.
+on:
+  push:
+    branches:
+      - main
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      BuildAndPush:
+        description: "BuildAndPush"
+        default: false
+        type: boolean
+        required: true
+
+jobs:
+  buildx:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Set Timezone
+        uses: szenius/set-timezone@v2.0
+        with: 
+          timezoneLinux: "Asia/Shanghai"
+
+      - name: Get current date
+        id: date
+        run: echo "today=$(date +'%Y-%m-%d_%H-%M')" >> $GITHUB_ENV
+
+      - name: Docker Setup QEMU
+        uses: docker/setup-qemu-action@v3.0.0
+    
+      - name: Docker Setup Buildx
+        uses: docker/setup-buildx-action@v3.3.0
+    
+      - name: Available platforms
+        run: echo ${{ steps.buildx.outputs.platforms }}
+
+      - name: Docker Login
+        uses: docker/login-action@v3.2.0
+    
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        if: github.event_name != 'workflow_dispatch' || github.event_name == 'workflow_dispatch' && github.event.inputs.BuildAndPush == true
+        uses: docker/build-push-action@v5.3.0
+    
+        with:
+          context: .
+          file: ./Dockerfile
+          # 所需要的体系结构，可以在 Available platforms 步骤中获取所有的可用架构
+          platforms: linux/amd64,linux/arm64/v8
+          # 镜像推送时间
+          push: ${{ github.event_name != 'pull_request' }}
+          # 给清单打上多个标签
+          tags: |
+            ${{ vars.IMAGE_NAME }}:${{ env.today }}
+            ${{ vars.IMAGE_NAME }}:latest
