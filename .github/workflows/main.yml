@@ -61,3 +61,5 @@ jobs:
           tags: |
             ${{ vars.IMAGE_NAME }}:${{ env.today }}
             ${{ vars.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
