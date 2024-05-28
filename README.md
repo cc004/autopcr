@@ -29,5 +29,5 @@ py -3.8 httpserver_test.py
 
 ## Action（仅适用于HTTP 服务器模式）
 添加环境变量IMAGE_NAME定义镜像名称,例如autopcr/autopcr<br>
-添加机密DOCKERHUB_USERNAME和DOCKERHUB_TOKEN用于推送到dockerhub
+添加机密DOCKERHUB_USERNAME和DOCKERHUB_TOKEN用于推送到dockerhub<br>
 手动点击或者push操作触发action
