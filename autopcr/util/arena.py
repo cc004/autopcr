@@ -1,5 +1,5 @@
 from typing import List, Set, Tuple
-import json, asyncio, time
+import json, asyncio, time, os
 from os.path import join, exists
 from random import random, choice, sample
 from math import log
@@ -49,6 +49,8 @@ class ArenaQuery:
         except:
             from ..constants import AUTH_KEY
             key = AUTH_KEY
+        if not key:
+            key = os.getenv('AUTH_KEY', None)     
         if not key:
             raise ValueError("请配置key")
         return key
