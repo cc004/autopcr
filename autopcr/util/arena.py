@@ -33,7 +33,12 @@ class ArenaQuery:
             self.buffer = json.load(fp)
 
     def __get_query_ip(self):
-        return "https://api.pcrdfans.com/x/v1/search"
+        query_ip = os.getenv('QUERY_IP', None)
+        if query_ip:
+            return query_ip
+        else:
+            return "https://api.pcrdfans.com/x/v1/search"
+    
 
     def __get_query_header(self):
         return {
