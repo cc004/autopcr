@@ -117,12 +117,13 @@ class sessionmgr(Component[apiclient]):
                 req.gold_history = 0
                 req.is_first = 1
                 req.tips_id_list = []
-                await next.request(req)
+                resp = await next.request(req)
 
-                req = DailyTaskTopRequest()
-                req.setting_alchemy_count = 1
-                req.is_check_by_term_normal_gacha = 0
-                await next.request(req)
+                if resp.quest_list and any(1 for quest in resp.quest_list if quest.quest_id == 11003005 and quest.result_type == eMissionStatusType.AlreadyReceive): # clear normal 3-5 and unlock daily task
+                    req = DailyTaskTopRequest()
+                    req.setting_alchemy_count = 1
+                    req.is_check_by_term_normal_gacha = 0
+                    await next.request(req)
 
                 self._logged = True
                 break
