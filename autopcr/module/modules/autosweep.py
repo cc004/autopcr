@@ -101,10 +101,11 @@ class simple_demand_sweep_base(Module):
                         if str(e).endswith("体力不足"):
                             stop = True
                             if not tmp and not self.log: self._log(str(e))
-                        elif str(e).endswith("未通关或不存在"):
+                        elif str(e).endswith("未通关或不存在") or str(e).endswith("未三星"):
                             self._log(f"{db.get_inventory_name_san(token)}: {str(e)}")
                         else:
-                            raise e
+                            self._log(str(e))
+                            raise AbortError()
                         break
                 if stop:
                     break
@@ -119,7 +120,8 @@ class simple_demand_sweep_base(Module):
             if tmp:
                 self._log(await client.serlize_reward(tmp))
             if not self.log:
-                raise SkipError("需刷取的图均无次数")
+                self._log("需刷取的图均无次数")
+                raise SkipError()
 
 
 @conditional_execution("hard_sweep_run_time", ["h庆典"])

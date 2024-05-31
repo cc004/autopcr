@@ -151,7 +151,6 @@ class ArenaQuery:
         return result
 
     def attack_score(self, record: ArenaQueryResult) -> float: # the bigger, the better
-        confidence_level = 0.95
         up_vote = record.up
         down_vote = record.down
 
@@ -162,9 +161,9 @@ class ArenaQuery:
         def mean(x) -> float:
             return (x[0] + x[1]) / 2
 
-        from statsmodels.stats.proportion import proportion_confint
-        positive_rate_ci = proportion_confint(up_vote, total_vote, alpha=1-confidence_level, method='wilson')
-        negative_rate_ci = proportion_confint(down_vote, total_vote, alpha=1-confidence_level, method='wilson')
+        from .statistics import wilson_score_interval as proportion_confint
+        positive_rate_ci = proportion_confint(up_vote, total_vote)
+        negative_rate_ci = proportion_confint(down_vote, total_vote)
         composite_score = mean(positive_rate_ci) - mean(negative_rate_ci)
         return composite_score 
 

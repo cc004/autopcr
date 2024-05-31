@@ -482,7 +482,7 @@ async def find_xinsui(botev: BotEvent):
 @register_tool("jjc回刺", "jjc_back")
 async def jjc_back(botev: BotEvent):
     msg = await botev.message()
-    opponent_jjc_rank = 0
+    opponent_jjc_rank = -1
     try:
         opponent_jjc_rank = int(msg[0])
         del msg[0]
@@ -496,7 +496,7 @@ async def jjc_back(botev: BotEvent):
 @register_tool("pjjc回刺", "pjjc_back")
 async def pjjc_back(botev: BotEvent):
     msg = await botev.message()
-    opponent_pjjc_rank = 0
+    opponent_pjjc_rank = -1
     try:
         opponent_pjjc_rank = int(msg[0])
         del msg[0]
