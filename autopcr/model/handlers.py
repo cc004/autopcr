@@ -23,6 +23,11 @@ class SourceIniGetMaintenanceStatusResponse(sdkrequests.SourceIniGetMaintenanceS
 class SkillLevelUpResponse(responses.SkillLevelUpResponse):
     async def update(self, mgr: datamgr, request):
         mgr.unit[self.unit_data.id] = self.unit_data
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        if self.item_data:
+            for item in self.item_data:
+                mgr.update_inventory(item)
 
 @handles
 class UnitFreeLevelUpResponse(responses.UnitFreeLevelUpResponse):
@@ -546,7 +551,8 @@ class SubStorySkeConfirmResponse(responses.SubStorySkeConfirmResponse):
 class UnitCraftEquipResponse(responses.UnitCraftEquipResponse):
     async def update(self, mgr: datamgr, request):
         mgr.unit[self.unit_data.id] = self.unit_data
-        mgr.gold = self.user_gold
+        if self.user_gold:
+            mgr.gold = self.user_gold
         if self.item_data:
             for item in self.item_data:
                 mgr.update_inventory(item)
@@ -559,7 +565,8 @@ class UnitCraftEquipResponse(responses.UnitCraftEquipResponse):
 class UnitMultiPromotionResponse(responses.UnitMultiPromotionResponse):
     async def update(self, mgr: datamgr, request):
         mgr.unit[self.unit_data.id] = self.unit_data
-        mgr.gold = self.user_gold
+        if self.user_gold:
+            mgr.gold = self.user_gold
         if self.item_data:
             for item in self.item_data:
                 mgr.update_inventory(item)
