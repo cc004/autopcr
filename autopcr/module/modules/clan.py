@@ -28,7 +28,8 @@ class clan_like(Module):
 @description('对某颜色缺口数量最多的装备发起请求')
 @name("装备请求")
 @singlechoice("clan_equip_request_color", "装备颜色", "all", ["all", "Silver", "Gold", "Purple", 'Red', 'Green'])
-@singlechoice("clan_equip_request_consider_unit", "需求角色", "all", ["all", 'favorite'])
+@singlechoice("clan_equip_request_consider_unit_rank", "起始品级", "所有", ["所有", '最高', '次高', '次次高'])
+@booltype("clan_equip_request_consider_unit_fav", "收藏角色", False)
 @default(False)
 class clan_equip_request(Module):
     color_to_promotion = {
@@ -52,8 +53,16 @@ class clan_equip_request(Module):
             msg = f"收到{db.get_equip_name(res.request.equip_id)}x{res.request.donation_num}：" + ' '.join(f"{user.name}x{user.num}" for user in res.request.history)
             self._log(msg.strip("："))
 
-        fav = (self.get_config('clan_equip_request_consider_unit') == 'favorite')
-        demand = client.data.get_equip_demand_gap(like_unit_only=fav)
+        opt: Dict[Union[int, str], int] = {
+            '所有': 1,
+            '最高': db.equip_max_rank,
+            '次高': db.equip_max_rank - 1,
+            '次次高': db.equip_max_rank - 2,
+        }
+
+        fav: bool = self.get_config('clan_equip_request_consider_unit_fav')
+        start_rank: int = opt[self.get_config('clan_equip_request_consider_unit_rank')]
+        demand = client.data.get_equip_demand_gap(like_unit_only=fav, start_rank=start_rank)
         config_color: str = self.get_config('clan_equip_request_color')
         target_level = self.color_to_promotion[config_color]
 
