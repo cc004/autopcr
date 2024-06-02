@@ -4,6 +4,7 @@ from ...core.pcrclient import pcrclient
 from ...model.custom import ItemType
 from ...db.models import QuestDatum, ShioriQuest
 from typing import List, Dict, Tuple
+import typing
 from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
@@ -11,25 +12,51 @@ from collections import Counter
 import datetime
 
 @conditional_execution("normal_sweep_run_time", ["n庆典"])
-@singlechoice("normal_sweep_consider_unit", "需求角色", "favorite", ["all", "max_rank", "max_rank-1", "max_rank-2", 'favorite'])
-@description('根据【刷图推荐】结果刷n图')
+@singlechoice("normal_sweep_strategy", "刷取策略", "刷最缺", ["刷最缺", "均匀刷"])
+@booltype("normal_sweep_equip_ok_to_full", "刷满则考虑所有角色", False)
+@singlechoice("normal_sweep_consider_unit", "起始品级", "所有", ["所有", "最高", "次高", "次次高"])
+@booltype("normal_sweep_consider_unit_fav", "收藏角色", True)
+@description('根据【刷图推荐】结果刷n图，均匀刷指每次刷取的图覆盖所缺的需求装备，若无缺装备则刷取推荐的第一张图')
 @name('智能刷n图')
 @default(False)
 @stamina_relative
 class smart_normal_sweep(Module):
 
+    async def get_quests(self, quest_list: List[int], strategy: str, gap: typing.Counter[ItemType]) -> List[int]:
+        ret = []
+        lack = set(item for item, need in gap.items() if need > 0)
+        if not lack or strategy == "刷最缺":
+            ret.append(quest_list[0])
+        elif strategy == "均匀刷":
+            uncover = lack
+            ret = []
+            for quest in quest_list:
+                if any(item in uncover for item in db.normal_quest_rewards[quest]):
+                    ret.append(quest)
+                    uncover -= set(db.normal_quest_rewards[quest])
+                    if not uncover:
+                        break
+        else:
+            raise ValueError(f"未知策略{strategy}")
+
+        if not ret:
+            self._log("无需刷取的图，这不太可能")
+        return ret
+
     async def do_task(self, client: pcrclient):
 
-        if self.get_config('normal_sweep_consider_unit') == 'favorite':
-            demand = client.data.get_equip_demand(like_unit_only = True)
-        else:
-            opt: Dict[Union[int, str], int] = {
-                'all': 1,
-                'max_rank': db.equip_max_rank,
-                'max_rank-1': db.equip_max_rank - 1,
-                'max_rank-2': db.equip_max_rank - 2,
-            }
-            demand = client.data.get_equip_demand(start_rank = opt[self.get_config('normal_sweep_consider_unit')])
+        like_unit_only: bool = self.get_config('normal_sweep_consider_unit_fav')
+        rank: str = self.get_config('normal_sweep_consider_unit')
+        strategy: str = self.get_config('normal_sweep_strategy')
+        full2all: bool = self.get_config('normal_sweep_equip_ok_to_full')
+        opt: Dict[Union[int, str], int] = {
+            '所有': 1,
+            '最高': db.equip_max_rank,
+            '次高': db.equip_max_rank - 1,
+            '次次高': db.equip_max_rank - 2,
+        }
+        demand = client.data.get_equip_demand(like_unit_only=like_unit_only, start_rank = opt[rank])
+        all_demand = client.data.get_equip_demand()
 
         clean_cnt = Counter()
         quest_id = []
@@ -38,28 +65,36 @@ class smart_normal_sweep(Module):
         stop: bool = False
 
         try:
+            target_quest = []
             for i in range(10000):
 
                 if i % 3 == 0:
 
                     gap = client.data.get_demand_gap(demand, lambda x: db.is_equip(x))
+                    if all(gap[item] <= 0 for item in gap):
+                        self._log("需求装备均已盈余")
+                        if full2all:
+                            gap = client.data.get_demand_gap(all_demand, lambda x: db.is_equip(x))
+                            self._log("考虑所有角色的需求装备")
+
                     quest_weight = client.data.get_quest_weght(gap)
                     quest_id = sorted(quest_list, key = lambda x: quest_weight[x], reverse = True)
+                    target_quest = await self.get_quests(quest_id, strategy, gap)
 
-                target_id = quest_id[0]
-                try:
-                    resp = await client.quest_skip_aware(target_id, 3)
-                    tmp.extend([item for item in resp if db.is_equip((item.type, item.id))]) 
-                    clean_cnt[target_id] += 3
-                except SkipError:
-                    pass
-                except AbortError as e:
-                    stop = True
-                    if str(e).endswith("体力不足"):
-                        if not tmp and not self.log: self._log(str(e))
-                    else:
-                        raise e
-                    break
+                for target_id in target_quest:
+                    try:
+                        resp = await client.quest_skip_aware(target_id, 3)
+                        tmp.extend([item for item in resp if db.is_equip((item.type, item.id))]) 
+                        clean_cnt[target_id] += 3
+                    except SkipError:
+                        pass
+                    except AbortError as e:
+                        stop = True
+                        if str(e).endswith("体力不足"):
+                            if not tmp and not self.log: self._log(str(e))
+                        else:
+                            raise e
+                        break
                 if stop:
                     break
         except:
@@ -183,7 +218,7 @@ unique_equip_2_pure_memory_id = [
         (32046, 1), # 水猫剑
         (32048, 1), # 水子龙
         (32060, 1), # 黑猫
-        (32016, 1), # 暴击弓
+        (32016, 2), # 暴击弓，水爆
         (32031, 1), # 万圣忍
         (32050, 1), # 万圣大眼
         (32007, 1), # 万圣布丁
@@ -199,6 +234,8 @@ unique_equip_2_pure_memory_id = [
         (32030, 1), # 忍扇
         (32040, 1), # 生菜
         (32013, 1), # 七七香
+        (32028, 1), # 水电
+        (32018, 1), # 老师
 ]
 @conditional_execution("very_hard_sweep_run_time", ["vh庆典"])
 @description('储备专二需求的150碎片，包括' + ','.join(db.get_item_name(item_id) for item_id, _ in unique_equip_2_pure_memory_id))
