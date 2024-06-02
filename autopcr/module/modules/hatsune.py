@@ -55,12 +55,16 @@ class hatsune_h_sweep(Module):
         if is_abort: raise AbortError("")
         if is_skip: raise SkipError("")
 
-@singlechoice("hatsune_hboss_strategy", "扫荡策略", "保留当日vh份", ["保留当日vh份", "保留当日及未来vh份"])
-@description('未打今日vh保留30+未打sp保留90')
+@multichoice("hatsune_hboss_strategy", "扫荡策略", ["保留今日vh", "保留未来vh","保留sp"], ["保留今日vh", "保留未来vh","保留sp"])
+@description('vh保留30，sp保留90，若无通关则会保留')
 @name('扫荡活动h本boss')
 @default("none")
 class hatsune_hboss_sweep(Module):
     async def do_task(self, client: pcrclient):
+        strategy: List[str] = self.get_config('hatsune_hboss_strategy')
+        today_vh: bool = "保留今日vh" in strategy
+        future_vh: bool = "保留未来vh" in strategy
+        today_sp: bool = "保留sp" in strategy
         is_error = False
         is_abort = False
         is_skip = True
@@ -85,13 +89,13 @@ class hatsune_hboss_sweep(Module):
                     raise AbortError(f"h本boss未解锁")
                 if not boss_info[hboss_id].kill_num:
                     raise AbortError(f"h本boss未首通")
-                if not boss_info[spboss_id].kill_num:
+                if today_sp and not boss_info[spboss_id].kill_num:
                     self._log("sp未通关，保留90张")
                     times -= 3
-                if not boss_info[vhboss_id].daily_kill_count:
+                if today_vh and not boss_info[vhboss_id].daily_kill_count:
                     self._log("今日vh未通关，保留30张")
                     times -= 1
-                if self.get_config('hatsune_hboss_strategy') == "保留当日及未来vh份":
+                if future_vh:
                     left_day = (db.get_start_time(db.parse_time(event.end_time)) - db.get_today_start_time()).days 
                     self._log(f"距离活动结束还有{left_day}天，保留{left_day * 30}张")
                     times -= left_day
