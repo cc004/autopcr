@@ -609,7 +609,7 @@ async def find_equip(botev: BotEvent):
         pass
 
     try:
-        start_rank = msg[0]
+        start_rank = int(msg[0])
         del msg[0]
     except:
         pass
@@ -631,7 +631,7 @@ async def quest_recommand(botev: BotEvent):
     except:
         pass
     try:
-        start_rank = msg[0]
+        start_rank = int(msg[0])
         del msg[0]
     except:
         pass
