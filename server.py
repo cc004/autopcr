@@ -145,11 +145,11 @@ def wrap_hoshino_event(func):
 
 async def check_validate(botev: BotEvent, acc: Account):
     from .autopcr.bsdk.validator import validate_dict
-    for _ in range(120):
-        if acc.qq in validate_dict:
+    for _ in range(360):
+        if acc.data.username in validate_dict:
             status = validate_dict[acc.data.username].status
             if status == "ok":
-                del validate_dict[acc.alias]
+                del validate_dict[acc.data.username]
                 break
 
             url = validate_dict[acc.data.username].url
