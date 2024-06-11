@@ -61,7 +61,8 @@ async def autoValidator(account, gt, challenge, userid):
         uuid = res["uuid"]
         msg = [f"uuid={uuid}"]
         ccnt = 0
-        while ccnt < 1:
+        up = 5
+        while ccnt <= up:
             ccnt += 1
             res = await aiorequests.get(url=f"https://pcrd.tencentbot.top/check/{uuid}", headers=header)
             res.raise_for_status()
@@ -76,6 +77,7 @@ async def autoValidator(account, gt, challenge, userid):
                 msg = []
                 print(f'farm: {uuid} in queue, sleep {tim} seconds')
                 await asyncio.sleep(tim)
+                if tim >= 30: ccnt += 1
             else:
                 info = res["info"]
                 if info in ["fail", "url invalid"]:
