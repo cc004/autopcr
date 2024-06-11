@@ -9,9 +9,12 @@ cron_log_buffer = asyncio.Queue()
 CRONLOG_PATH = os.path.join(CACHE_DIR, "http_server", "cron_log.txt")
 
 async def _cron(task):
+    last = datetime.datetime.now() - datetime.timedelta(minutes=1)
     while True:
-        await asyncio.sleep(60)
+        await asyncio.sleep(30)
         cur = datetime.datetime.now()
+        if cur.minute == last.minute: continue
+        last = cur
         asyncio.get_event_loop().create_task(task(cur))
 
 async def task(qid, account):
@@ -32,7 +35,7 @@ async def _run_crons(cur):
                         await cron_log_buffer.put(f"{db.format_time(cur)}: doing cron for {qid} {account}")
 
 async def cron_log():
-    if not os.path.exists(CRONLOG_PATH):
+    if not os.path.exists(os.path.dirname(CRONLOG_PATH)):
         os.mkdir(os.path.dirname(CRONLOG_PATH))
     fp = open(CRONLOG_PATH, "a")
     while True:
