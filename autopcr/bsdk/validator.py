@@ -21,7 +21,7 @@ validate_ok_dict: Dict[str, ValidateInfo] = {}
 
 async def manualValidator(account, gt, challenge, userid):
     id = questutils.create_quest_token()
-    url = f"/daily/geetest.html?id={id}&captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
+    url = f"/daily/validate?id={id}&captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
     validate_dict[account] = ValidateInfo(
             id=id,
             challenge=challenge,
@@ -61,7 +61,8 @@ async def autoValidator(account, gt, challenge, userid):
         uuid = res["uuid"]
         msg = [f"uuid={uuid}"]
         ccnt = 0
-        while ccnt < 10:
+        up = 5
+        while ccnt <= up:
             ccnt += 1
             res = await aiorequests.get(url=f"https://pcrd.tencentbot.top/check/{uuid}", headers=header)
             res.raise_for_status()
@@ -76,6 +77,7 @@ async def autoValidator(account, gt, challenge, userid):
                 msg = []
                 print(f'farm: {uuid} in queue, sleep {tim} seconds')
                 await asyncio.sleep(tim)
+                if tim >= 30: ccnt += 1
             else:
                 info = res["info"]
                 if info in ["fail", "url invalid"]:
@@ -84,8 +86,9 @@ async def autoValidator(account, gt, challenge, userid):
                     await asyncio.sleep(8)
                 elif 'validate' in info:
                     ret = info
-            if ccnt >= 10:
-                raise Exception("Captcha failed")
+                    break
+        else:
+            raise Exception("Captcha failed")
     except:
         if not ret: ret = await manualValidator(account, gt, challenge, userid)
 

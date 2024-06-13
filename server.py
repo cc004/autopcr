@@ -145,11 +145,11 @@ def wrap_hoshino_event(func):
 
 async def check_validate(botev: BotEvent, acc: Account):
     from .autopcr.bsdk.validator import validate_dict
-    for _ in range(120):
-        if acc.qq in validate_dict:
+    for _ in range(360):
+        if acc.data.username in validate_dict:
             status = validate_dict[acc.data.username].status
             if status == "ok":
-                del validate_dict[acc.alias]
+                del validate_dict[acc.data.username]
                 break
 
             url = validate_dict[acc.data.username].url
@@ -609,7 +609,7 @@ async def find_equip(botev: BotEvent):
         pass
 
     try:
-        start_rank = msg[0]
+        start_rank = int(msg[0])
         del msg[0]
     except:
         pass
@@ -631,7 +631,7 @@ async def quest_recommand(botev: BotEvent):
     except:
         pass
     try:
-        start_rank = msg[0]
+        start_rank = int(msg[0])
         del msg[0]
     except:
         pass
