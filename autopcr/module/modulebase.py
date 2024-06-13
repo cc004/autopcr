@@ -150,8 +150,9 @@ class Module:
         value = self._parent.get_config(key, default)
         if key in self.config and self.config[key].config_type == "multi":
             if not isinstance(value, list):
-                value = [value]
-            value = [v for v in value if v in self.config[key].candidates]
+                value = default
+            else:
+                value = [v for v in value if v in self.config[key].candidates]
         if key != self.key and self.config[key].candidates and (
             not isinstance(value, list) and (
                 value not in self.config[key].candidates or 

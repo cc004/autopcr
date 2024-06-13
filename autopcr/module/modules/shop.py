@@ -30,8 +30,11 @@ class shop_buyer(Module):
     @abstractmethod
     def buy_kind(self) -> List[str]: ...
 
-    def require_equip_units(self) -> str:
-        return 'all'
+    def require_equip_units_fav(self) -> bool:
+        return False
+
+    def require_equip_units_rank(self) -> str:
+        return '所有'
 
     async def _get_shop(self, client: pcrclient):
         res = await client.get_shop_item_list()
@@ -51,16 +54,13 @@ class shop_buyer(Module):
         result = []
 
         while True:
-            if self.require_equip_units() == 'favorite':
-                equip_demand_gap = client.data.get_equip_demand_gap(like_unit_only=True)
-            else:
-                opt: Dict[Union[int, str], int] = {
-                    'all': 1,
-                    'max_rank': db.equip_max_rank,
-                    'max_rank-1': db.equip_max_rank - 1,
-                    'max_rank-2': db.equip_max_rank - 2,
-                }
-                equip_demand_gap = client.data.get_equip_demand_gap(start_rank=opt[self.require_equip_units()])
+            opt: Dict[Union[int, str], int] = {
+                '所有': 1,
+                '最高': db.equip_max_rank,
+                '次高': db.equip_max_rank - 1,
+                '次次高': db.equip_max_rank - 2,
+            }
+            equip_demand_gap = client.data.get_equip_demand_gap(like_unit_only=self.require_equip_units_fav(), start_rank=opt[self.require_equip_units_rank()])
 
             memory_demand_gap = client.data.get_memory_demand_gap()
 
@@ -106,9 +106,9 @@ class shop_buyer(Module):
             msg = await client.serlize_reward(result)
             self._log(msg)
 
-@singlechoice('shop_buy_exp_count_limit', "经验药水停止阈值", 99000, [100, 1000, 5000, 10000, 50000, 99000])
-@singlechoice('shop_buy_equip_upper_count_limit', "强化石停止阈值", 99000, [100, 1000, 5000, 10000, 50000, 99000])
-@singlechoice('normal_shop_buy_coin_limit', "货币停止阈值", 5000000, [0, 5000000, 10000000, 20000000])
+@singlechoice('shop_buy_exp_count_limit', "经验药水储备", 99000, [100, 1000, 5000, 10000, 50000, 99000])
+@singlechoice('shop_buy_equip_upper_count_limit', "强化石储备", 99000, [100, 1000, 5000, 10000, 50000, 99000])
+@singlechoice('normal_shop_buy_coin_limit', "货币阈值", 5000000, [0, 5000000, 10000000, 20000000])
 @inttype('normal_shop_reset_count', "重置次数(<=20)", 0, [i for i in range(21)])
 @multichoice("normal_shop_buy_kind", "购买种类", ['经验药水', '强化石'], ['经验药水', '强化石'])
 @description('')
@@ -120,7 +120,7 @@ class normal_shop(shop_buyer):
     def reset_count(self) -> int: return self.get_config('normal_shop_reset_count')
     def buy_kind(self) -> List[str]: return self.get_config('normal_shop_buy_kind')
 
-@singlechoice('limit_shop_buy_coin_limit', "货币停止阈值", 5000000, [0, 5000000, 10000000, 20000000])
+@singlechoice('limit_shop_buy_coin_limit', "货币阈值", 5000000, [0, 5000000, 10000000, 20000000])
 @multichoice("limit_shop_buy_kind", "购买种类", ['经验药水', '装备'], ['经验药水', '装备'])
 @description('此项购买不使用最大值')
 @name('限定商店购买')
@@ -133,13 +133,15 @@ class limit_shop(shop_buyer):
     def reset_count(self) -> int: return 0
     def buy_kind(self) -> List[str]: return self.get_config('limit_shop_buy_kind')
 
-@singlechoice('underground_shop_buy_memory_count_limit', "记忆碎片盈余停止阈值", 0, [0, 10, 20, 120, 270, 9900])
-@singlechoice('underground_shop_buy_equip_count_limit', "装备盈余停止阈值", 0, [0, 20, 50, 100, 200, 500, 9900])
-@singlechoice('underground_shop_buy_coin_limit', "货币停止阈值", 10000, [0, 10000, 50000, 100000, 200000])
-@singlechoice("underground_shop_buy_equip_consider_unit", "按角色需求购买装备", "all", ["all", "max_rank", "max_rank-1", "max_rank-2", 'favorite'])
+@singlechoice('underground_shop_buy_memory_count_limit', "记忆碎片盈余值", 0, [0, 10, 20, 120, 270, 9900])
+@singlechoice('underground_shop_buy_equip_count_limit', "装备盈余值", 0, [0, 20, 50, 100, 200, 500, 9900])
+@singlechoice('underground_shop_buy_coin_limit', "货币阈值", 10000, [0, 10000, 50000, 100000, 200000])
+@singlechoice("underground_shop_buy_equip_consider_unit_rank", "角色起始品级", "所有", ["所有", "最高", "次高", "次次高"])
+@booltype("underground_shop_buy_equip_consider_unit_fav", "收藏角色", False) 
 @inttype('underground_shop_reset_count', "重置次数(<=200)", 0, [i for i in range(201)])
 @multichoice("underground_shop_buy_kind", "购买种类", ['记忆碎片', '装备'], ['记忆碎片', '装备'])
 @name('地下城商店购买')
+@description('根据需求购买装备和记忆碎片，可设置需求角色的品级和收藏角色')
 @default(False)
 class underground_shop(shop_buyer):
     def _equip_count(self):
@@ -150,15 +152,18 @@ class underground_shop(shop_buyer):
     def system_id(self) -> eSystemId: return eSystemId.EXPEDITION_SHOP
     def reset_count(self) -> int: return self.get_config('underground_shop_reset_count')
     def buy_kind(self) -> List[str]: return self.get_config('underground_shop_buy_kind')
-    def require_equip_units(self) -> str: return self.get_config('underground_shop_buy_equip_consider_unit')
+    def require_equip_units_fav(self) -> bool: return self.get_config('underground_shop_buy_equip_consider_unit_fav')
+    def require_equip_units_rank(self) -> str: return self.get_config('underground_shop_buy_equip_consider_unit_rank')
 
-@singlechoice('jjc_shop_buy_memory_count_limit', "记忆碎片盈余停止阈值", 0, [0, 10, 20, 120, 270, 9900])
-@singlechoice('jjc_shop_buy_equip_count_limit', "装备盈余停止阈值", 0, [0, 20, 50, 100, 200, 500, 9900])
-@singlechoice('jjc_shop_buy_coin_limit', "货币停止阈值", 10000, [0, 10000, 50000, 100000, 200000])
-@singlechoice("jjc_shop_buy_equip_consider_unit", "按角色需求购买装备", "all", ["all", "max_rank", "max_rank-1", "max_rank-2", 'favorite'])
+@singlechoice('jjc_shop_buy_memory_count_limit', "记忆碎片盈余值", 0, [0, 10, 20, 120, 270, 9900])
+@singlechoice('jjc_shop_buy_equip_count_limit', "装备盈余值", 0, [0, 20, 50, 100, 200, 500, 9900])
+@singlechoice('jjc_shop_buy_coin_limit', "货币阈值", 10000, [0, 10000, 50000, 100000, 200000])
+@singlechoice("jjc_shop_buy_equip_consider_unit_rank", "角色起始品级", "所有", ["所有", "最高", "次高", "次次高"])
+@booltype("jjc_shop_buy_equip_consider_unit_fav", "收藏角色", False) 
 @inttype('jjc_shop_reset_count', "重置次数(<=20)", 0, [i for i in range(21)])
 @multichoice("jjc_shop_buy_kind", "购买种类", ['记忆碎片', '装备'], ['记忆碎片', '装备'])
 @name('jjc商店购买')
+@description('根据需求购买装备和记忆碎片，可设置需求角色的品级和收藏角色')
 @default(False)
 class jjc_shop(shop_buyer):
     def _equip_count(self):
@@ -169,15 +174,18 @@ class jjc_shop(shop_buyer):
     def system_id(self) -> eSystemId: return eSystemId.ARENA_SHOP
     def reset_count(self) -> int: return self.get_config('jjc_shop_reset_count')
     def buy_kind(self) -> List[str]: return self.get_config('jjc_shop_buy_kind')
-    def require_equip_units(self) -> str: return self.get_config('jjc_shop_buy_equip_consider_unit')
+    def require_equip_units_fav(self) -> bool: return self.get_config('jjc_shop_buy_equip_consider_unit_fav')
+    def require_equip_units_rank(self) -> str: return self.get_config('jjc_shop_buy_equip_consider_unit_rank')
 
-@singlechoice('pjjc_shop_buy_memory_count_limit', "记忆碎片盈余停止阈值", 0, [0, 10, 20, 120, 270, 9900])
-@singlechoice('pjjc_shop_buy_equip_count_limit', "装备盈余停止阈值", 0, [0, 20, 50, 100, 200, 500, 9900])
-@singlechoice('pjjc_shop_buy_coin_limit', "货币停止阈值", 10000, [0, 10000, 50000, 100000, 200000])
-@singlechoice("pjjc_shop_buy_equip_consider_unit", "按角色需求购买装备", "all", ["all", "max_rank", "max_rank-1", "max_rank-2", 'favorite'])
+@singlechoice('pjjc_shop_buy_memory_count_limit', "记忆碎片盈余值", 0, [0, 10, 20, 120, 270, 9900])
+@singlechoice('pjjc_shop_buy_equip_count_limit', "装备盈余值", 0, [0, 20, 50, 100, 200, 500, 9900])
+@singlechoice('pjjc_shop_buy_coin_limit', "货币阈值", 10000, [0, 10000, 50000, 100000, 200000])
+@singlechoice("pjjc_shop_buy_equip_consider_unit_rank", "角色起始品级", "所有", ["所有", "最高", "次高", "次次高"])
+@booltype("pjjc_shop_buy_equip_consider_unit_fav", "收藏角色", False) 
 @inttype('pjjc_shop_reset_count', "重置次数(<=20)", 0, [i for i in range(21)])
 @multichoice("pjjc_shop_buy_kind", "购买种类", ['记忆碎片', '装备'], ['记忆碎片', '装备'])
 @name('pjjc商店购买')
+@description('根据需求购买装备和记忆碎片，可设置需求角色的品级和收藏角色')
 @default(False)
 class pjjc_shop(shop_buyer):
     def _equip_count(self):
@@ -188,16 +196,19 @@ class pjjc_shop(shop_buyer):
     def system_id(self) -> eSystemId: return eSystemId.GRAND_ARENA_SHOP
     def reset_count(self) -> int: return self.get_config('pjjc_shop_reset_count')
     def buy_kind(self) -> List[str]: return self.get_config('pjjc_shop_buy_kind')
-    def require_equip_units(self) -> str: return self.get_config('pjjc_shop_buy_equip_consider_unit')
+    def require_equip_units_fav(self) -> bool: return self.get_config('pjjc_shop_buy_equip_consider_unit_fav')
+    def require_equip_units_rank(self) -> str: return self.get_config('pjjc_shop_buy_equip_consider_unit_rank')
 
 
-@singlechoice('clanbattle_shop_buy_memory_count_limit', "记忆碎片盈余停止阈值", 0, [0, 10, 20, 120, 270, 9900])
-@singlechoice('clanbattle_shop_buy_equip_count_limit', "装备盈余停止阈值", 0, [0, 20, 50, 100, 200, 500, 9900])
-@singlechoice('clanbattle_shop_buy_coin_limit', "货币停止阈值", 10000, [0, 10000, 50000, 100000, 200000])
-@singlechoice("clanbattle_shop_buy_equip_consider_unit", "按角色需求购买装备", "all", ["all", "max_rank", "max_rank-1", "max_rank-2", 'favorite'])
+@singlechoice('clanbattle_shop_buy_memory_count_limit', "记忆碎片盈余值", 0, [0, 10, 20, 120, 270, 9900])
+@singlechoice('clanbattle_shop_buy_equip_count_limit', "装备盈余值", 0, [0, 20, 50, 100, 200, 500, 9900])
+@singlechoice('clanbattle_shop_buy_coin_limit', "货币阈值", 10000, [0, 10000, 50000, 100000, 200000])
+@singlechoice("clanbattle_shop_buy_equip_consider_unit_rank", "角色起始品级", "所有", ["所有", "最高", "次高", "次次高"])
+@booltype("clanbattle_shop_buy_equip_consider_unit_fav", "收藏角色", False) 
 @inttype('clanbattle_shop_reset_count', "重置次数(<=20)", 0, [i for i in range(21)])
 @multichoice("clanbattle_shop_buy_kind", "购买种类", ['记忆碎片'], ['记忆碎片', '装备'])
 @name('会战商店购买')
+@description('根据需求购买装备和记忆碎片，可设置需求角色的品级和收藏角色')
 @default(False)
 class clanbattle_shop(shop_buyer):
     def _equip_count(self):
@@ -208,5 +219,6 @@ class clanbattle_shop(shop_buyer):
     def system_id(self) -> eSystemId: return eSystemId.CLAN_BATTLE_SHOP
     def reset_count(self) -> int: return self.get_config('clanbattle_shop_reset_count')
     def buy_kind(self) -> List[str]: return self.get_config('clanbattle_shop_buy_kind')
-    def require_equip_units(self) -> str: return self.get_config('clanbattle_shop_buy_equip_consider_unit')
+    def require_equip_units_fav(self) -> bool: return self.get_config('clanbattle_shop_buy_equip_consider_unit_fav')
+    def require_equip_units_rank(self) -> str: return self.get_config('clanbattle_shop_buy_equip_consider_unit_rank')
 
