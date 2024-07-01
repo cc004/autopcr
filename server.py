@@ -43,7 +43,7 @@ sv_help = f"""
 - {prefix}日常报告 [0|1|2|3] 最近四次清日常报告
 - {prefix}定时日志 查看定时运行状态
 - {prefix}查心碎 查询缺口心碎
-- {prefix}查记忆碎片 [可刷取] 查询缺口记忆碎片，可刷取只仅查看h图可刷的碎片
+- {prefix}查记忆碎片 [可刷取|大师币] 查询缺口记忆碎片，可按地图可刷取或大师币商店过滤
 - {prefix}查装备 [<rank>] [fav] 查询缺口装备，rank为数字，只查询>=rank的角色缺口装备，fav表示只查询favorite的角色
 - {prefix}刷图推荐 [<rank>] [fav] 查询缺口装备的刷图推荐，格式同上
 - {prefix}公会支援 查询公会支援角色配置
@@ -535,14 +535,17 @@ async def pjjc_info(botev: BotEvent):
 
 @register_tool("查记忆碎片", "get_need_memory")
 async def find_memory(botev: BotEvent):
-    sweep_get_able_unit_memory = False
+    memory_demand_consider_unit = '所有'
     msg = await botev.message()
     try:
-        sweep_get_able_unit_memory = is_args_exist(msg, '可刷取')
+        if is_args_exist(msg, '可刷取'):
+            memory_demand_consider_unit = '地图可刷取'
+        elif is_args_exist(msg, '大师币'):
+            memory_demand_consider_unit = '大师币商店'
     except:
         pass
     config = {
-        "sweep_get_able_unit_memory": sweep_get_able_unit_memory,
+        "memory_demand_consider_unit": memory_demand_consider_unit,
     }
     return config
 
