@@ -106,8 +106,8 @@ class shop_buyer(Module):
             msg = await client.serlize_reward(result)
             self._log(msg)
 
-@singlechoice('shop_buy_exp_count_limit', "经验药水储备", 99000, [100, 1000, 5000, 10000, 50000, 99000])
-@singlechoice('shop_buy_equip_upper_count_limit', "强化石储备", 99000, [100, 1000, 5000, 10000, 50000, 99000])
+@singlechoice('shop_buy_exp_count_limit', "经验药水储备", 999000, [1000, 10000, 100000, 500000, 999000])
+@singlechoice('shop_buy_equip_upper_count_limit', "强化石储备", 999000, [1000, 10000, 100000, 500000, 999000])
 @singlechoice('normal_shop_buy_coin_limit', "货币阈值", 5000000, [0, 5000000, 10000000, 20000000])
 @inttype('normal_shop_reset_count', "重置次数(<=20)", 0, [i for i in range(21)])
 @multichoice("normal_shop_buy_kind", "购买种类", ['经验药水', '强化石'], ['经验药水', '强化石'])
@@ -126,8 +126,8 @@ class normal_shop(shop_buyer):
 @name('限定商店购买')
 @default(False)
 class limit_shop(shop_buyer):
-    def _exp_count(self): return 99000 if "经验药水" in self.get_config('limit_shop_buy_kind') else 0
-    def _equip_count(self): return 9900 if "装备" in self.get_config('limit_shop_buy_kind') else 0
+    def _exp_count(self): return 999000 if "经验药水" in self.get_config('limit_shop_buy_kind') else 0
+    def _equip_count(self): return 999000 if "装备" in self.get_config('limit_shop_buy_kind') else 0
     def coin_limit(self) -> int: return self.get_config('limit_shop_buy_coin_limit')
     def system_id(self) -> eSystemId: return eSystemId.LIMITED_SHOP
     def reset_count(self) -> int: return 0
