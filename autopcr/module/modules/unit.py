@@ -247,9 +247,10 @@ class unit_skill_level_up(UnitController):
 
             for pos, skill in skills:
                 try:
-                    await self.unit_skill_up_aware(pos, skill, skill().skill_level + 1, growth_limit)
-                    stop = True
-                    break
+                    if skill().skill_level < self.unit.unit_level:
+                        await self.unit_skill_up_aware(pos, skill, skill().skill_level + 1, growth_limit)
+                        stop = True
+                        break
                 except AbortError as e:
                     print(e)
                     continue
