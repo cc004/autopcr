@@ -10,12 +10,11 @@ from .autopcr.util.draw import instance as drawer
 import asyncio
 
 import nonebot
-from nonebot import MessageSegment
 from nonebot import on_startup
 import hoshino
 from hoshino import HoshinoBot, Service, priv
 from hoshino.util import escape
-from hoshino.typing import CQEvent, MessageSegment
+from hoshino.typing import CQEvent
 from quart_auth import QuartAuth
 from quart_rate_limiter import RateLimiter
 from quart_compress import Compress
@@ -351,7 +350,7 @@ async def clean_daily_from(botev: BotEvent, acc: Account):
     try:
         img = await clean_daily(botev = botev, acc = acc)
         msg = f"{alias}"
-        msg += MessageSegment.image(f'file:///{img}')
+        msg += outp_b64(img)
         await botev.send(msg)
     except Exception as e:
         await botev.send(f'{alias}: {e}')
@@ -377,7 +376,7 @@ async def clean_daily_result(botev: BotEvent, acc: Account):
     img = await acc.get_daily_result_from_id(result_id)
     if not img:
         await botev.finish("未找到日常报告")
-    await botev.finish(MessageSegment.image(f'file:///{img}'))
+    await botev.finish(outp_b64(img))
 
 @sv.on_prefix(f"{prefix}日常记录")
 @wrap_hoshino_event
@@ -454,7 +453,7 @@ async def tool_used(botev: BotEvent, tool: ToolInfo, config: Dict[str, str], acc
 
         img = await acc.do_from_key(config, tool.key)
         msg = f"{alias}"
-        msg += MessageSegment.image(f'file:///{img}')
+        msg += outp_b64(img)
         await botev.send(msg)
     except Exception as e:
         await botev.send(f'{alias}: {e}')
