@@ -1,14 +1,14 @@
 from abc import abstractmethod
 from dataclasses import dataclass
-import datetime
 from dataclasses_json import dataclass_json
 from ..core.pcrclient import pcrclient
 from ..model.error import *
 from ..model.enums import *
-from typing import Dict
+from typing import Dict, List, Tuple
 import traceback
 from ..constants import CACHE_DIR
 from .config import Config, _wrap_init
+from enum import Enum
 
 def default(val):
     return lambda cls:_wrap_init(cls, lambda self: setattr(self, 'default', val))
@@ -25,11 +25,47 @@ def notimplemented(cls):
 def notrunnable(cls):
     return _wrap_init(cls, lambda self: setattr(self, 'runnable', False))
 
-def stamina_relative(cls):
-    return _wrap_init(cls, lambda self: setattr(self, 'stamina_relative', True))
+def tag_stamina_consume(cls):
+    def setter(self):
+        self.tags.append("体力消耗")
+        self.stamina_relative = True
+        old_do_check = self.do_check
+        async def new_do_check(client: pcrclient) -> Tuple[bool, str]:
+            ok, msg = await old_do_check(client)
+            if not ok: 
+                return ok, msg
+            if client.is_stamina_consume_not_run():
+                return False, '体力消耗，不执行'
+            return True, ''
+        self.do_check = new_do_check
+
+    return _wrap_init(cls, setter)
+
+def tag_stamina_get(cls):
+    def setter(self):
+        self.tags.append("体力获取")
+        self.stamina_relative = True
+        old_do_check = self.do_check
+        async def new_do_check(client: pcrclient) -> Tuple[bool, str]:
+            ok, msg = await old_do_check(client)
+            if not ok: 
+                return ok, msg
+            if client.is_stamina_get_not_run():
+                return False, '体力获取，不执行'
+            return True, ''
+        self.do_check = new_do_check
+    return _wrap_init(cls, setter)
 
 def text_result(cls):
     return _wrap_init(cls, lambda self: setattr(self, 'text_result', True))
+
+class ModuleStatus(Enum):
+    success = "成功"
+    skip = "跳过"
+    warning = "警告"
+    abort = "中止"
+    error = "错误"
+    panic = "致命"
 
 @dataclass_json
 @dataclass
@@ -37,7 +73,7 @@ class ModuleResult:
     name: str = ""
     config: str = ""
     log: str = ""
-    status: str = ""
+    status: ModuleStatus = ModuleStatus.success
 
 # refers to a schudule to be done
 class Module:
@@ -48,6 +84,7 @@ class Module:
         self.default: bool = False
         self.runnable: bool = True
         self.text_result: bool = False
+        self.tags: List[str] = []
         self.stamina_relative: bool = False
         self.description: str = self.name
         self.config: Dict[str, Config] = {}
@@ -55,6 +92,7 @@ class Module:
         from .modulemgr import ModuleManager
         self._parent: ModuleManager = parent
         self.log = []
+        self.warn = []
 
         from os.path import join
         self.cache_path: str = join(CACHE_DIR, "modules", self.key, self._parent.parent.id + ".json")
@@ -93,38 +131,50 @@ class Module:
     @abstractmethod
     async def do_task(self, client: pcrclient): ...
 
+    async def do_check(self, client: pcrclient) -> Tuple[bool, str]:
+        enable = self.get_config(self.key)
+        if not enable:
+            return False, "功能未启用"
+        else:
+            return True, ""
+
     async def do_from(self, client: pcrclient) -> ModuleResult:
         result: ModuleResult = ModuleResult(
                 name=self.name,
                 config = '\n'.join([f"{self.config[key].desc}: {self.get_config_str(key)}" for key in self.config]),
-                status = "",
-                log = "",
             )
         try:
             self.log.clear()
+            self.warn.clear()
 
-            if self.get_config(self.key):
-                if self.stamina_relative and client.keys.get('stamina_relative_not_run', False):
-                    raise SkipError('体力相关，不执行')
+            if not client.logged:
+                await client.login()
 
-                await self.do_task(client)
+            ok, msg = await self.do_check(client)
+            if not ok:
+                raise SkipError(msg)
+
+            await self.do_task(client)
+
+            if self.warn:
+                result.status = ModuleStatus.warning
             else:
-                raise SkipError('功能未启用')
-
-
-            result.status = "success"
+                result.status = ModuleStatus.success
         except SkipError as e:
             result.log = str(e)
-            result.status = "skip"
+            result.status = ModuleStatus.skip
         except AbortError as e:
             result.log = str(e)
-            result.status = "abort"
+            result.status = ModuleStatus.abort
+        except PanicError as e:
+            result.log = str(e)
+            result.status = ModuleStatus.panic
         except Exception as e:
             traceback.print_exc()
             result.log = str(e)
-            result.status = "error"
+            result.status = ModuleStatus.error
         finally:
-            result.log = ('\n'.join(self.log) + "\n" + result.log).strip() or "ok"
+            result.log = ('\n'.join(self.warn + self.log) + "\n" + result.log).strip() or "ok"
 
         return result
 
@@ -163,10 +213,10 @@ class Module:
             value = default
         return value
 
-    def generate_config(self):
+    def generate_config(self) -> dict:
         return {key: self.config[key].dict() for key in self.config}
 
-    def generate_info(self):
+    def generate_info(self) -> dict:
         return {
                 'key': self.key,
                 'name': self.name,
@@ -175,10 +225,16 @@ class Module:
                 'config_order': list(self.generate_config().keys()),
                 'implemented': self.implmented,
                 'stamina_relative': self.stamina_relative,
+                'tags': self.tags,
                 'runnable': self.runnable,
                 'text_result': self.text_result
                 }
 
-    def _log(self, msg):
+    def _log(self, msg: str):
         self.log.append(msg)
 
+    def _warn(self, msg: str):
+        self.warn.append(msg)
+
+    def _abort(self, msg: str = ""):
+        raise AbortError(msg)

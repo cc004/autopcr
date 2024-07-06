@@ -1,5 +1,6 @@
 from typing import Dict
 from ..util import aiorequests, questutils
+from ..model.error import PanicError
 from json import loads
 import asyncio
 from dataclasses import dataclass
@@ -42,7 +43,7 @@ async def manualValidator(account, gt, challenge, userid):
             del validate_ok_dict[id]
             break
     else:
-        raise ValueError("验证码验证超时")
+        raise PanicError("验证码验证超时")
 
     return info
 

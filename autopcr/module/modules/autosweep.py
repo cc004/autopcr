@@ -11,7 +11,7 @@ from ...model.enums import *
 from collections import Counter
 import datetime
 
-@conditional_execution("normal_sweep_run_time", ["n庆典"])
+@conditional_execution1("normal_sweep_run_time", ["n庆典"])
 @singlechoice("normal_sweep_strategy", "刷取策略", "刷最缺", ["刷最缺", "均匀刷"])
 @booltype("normal_sweep_equip_ok_to_full", "刷满则考虑所有角色", False)
 @singlechoice("normal_sweep_consider_unit", "起始品级", "所有", ["所有", "最高", "次高", "次次高"])
@@ -19,7 +19,7 @@ import datetime
 @description('根据【刷图推荐】结果刷n图，均匀刷指每次刷取的图覆盖所缺的需求装备，若无缺装备则刷取推荐的第一张图')
 @name('智能刷n图')
 @default(False)
-@stamina_relative
+@tag_stamina_consume
 class smart_normal_sweep(Module):
 
     async def get_quests(self, quest_list: List[int], strategy: str, gap: typing.Counter[ItemType]) -> List[int]:
@@ -63,6 +63,7 @@ class smart_normal_sweep(Module):
         tmp = []
         quest_list: List[int] = [id for id, quest in db.normal_quest_data.items() if db.parse_time(quest.start_time) <= datetime.datetime.now()]
         stop: bool = False
+        first: bool = True
 
         try:
             target_quest = []
@@ -72,10 +73,12 @@ class smart_normal_sweep(Module):
 
                     gap = client.data.get_demand_gap(demand, lambda x: db.is_equip(x))
                     if all(gap[item] <= 0 for item in gap):
-                        self._log("需求装备均已盈余")
-                        if full2all:
-                            gap = client.data.get_demand_gap(all_demand, lambda x: db.is_equip(x))
-                            self._log("考虑所有角色的需求装备")
+                        if first:
+                            first = False
+                            self._log("需求装备均已盈余")
+                            if full2all:
+                                gap = client.data.get_demand_gap(all_demand, lambda x: db.is_equip(x))
+                                self._log("考虑所有角色的需求装备")
 
                     quest_weight = client.data.get_quest_weght(gap)
                     quest_id = sorted(quest_list, key = lambda x: quest_weight[x], reverse = True)
@@ -137,7 +140,7 @@ class simple_demand_sweep_base(Module):
                             stop = True
                             if not tmp and not self.log: self._log(str(e))
                         elif str(e).endswith("未通关或不存在") or str(e).endswith("未三星"):
-                            self._log(f"{db.get_inventory_name_san(token)}: {str(e)}")
+                            self._warn(f"{db.get_inventory_name_san(token)}: {str(e)}")
                         else:
                             self._log(str(e))
                             raise AbortError()
@@ -159,13 +162,13 @@ class simple_demand_sweep_base(Module):
                 raise SkipError()
 
 
-@conditional_execution("hard_sweep_run_time", ["h庆典"])
+@conditional_execution1("hard_sweep_run_time", ["h庆典"])
 @singlechoice('hard_sweep_consider_unit_order', "刷取顺序", "缺口少优先", ["缺口少优先", "缺口大优先"])
 @booltype('hard_sweep_consider_high_rarity_first', "三星角色优先", False)
 @description('根据记忆碎片缺口刷hard图，不包括外传')
 @name('智能刷hard图')
 @default(False)
-@stamina_relative
+@tag_stamina_consume
 class smart_hard_sweep(simple_demand_sweep_base):
 
     async def get_need_list(self, client: pcrclient) -> List[Tuple[ItemType, int]]:
@@ -187,12 +190,12 @@ class smart_hard_sweep(simple_demand_sweep_base):
     def get_max_times(self, client: pcrclient, quest_id: int) -> int:
         return 3
 
-@conditional_execution("shiori_sweep_run_time", ["无庆典"])
+@conditional_execution1("shiori_sweep_run_time", ["无庆典"])
 @singlechoice('shiori_sweep_consider_unit_order', "刷取顺序", "缺口少优先", ["缺口少优先", "缺口大优先"])
 @description('根据记忆碎片缺口刷外传图')
 @name('智能刷外传图')
 @default(False)
-@stamina_relative
+@tag_stamina_consume
 class smart_shiori_sweep(simple_demand_sweep_base):
 
     async def get_need_list(self, client: pcrclient) -> List[Tuple[ItemType, int]]:
@@ -240,11 +243,11 @@ unique_equip_2_pure_memory_id = [
         (32017, 1), # 水狗
         (32010, 1), # 水狐
 ]
-@conditional_execution("very_hard_sweep_run_time", ["vh庆典"])
+@conditional_execution1("very_hard_sweep_run_time", ["vh庆典"])
 @description('储备专二需求的150碎片，包括' + ','.join(db.get_item_name(item_id) for item_id, _ in unique_equip_2_pure_memory_id))
 @name('专二纯净碎片储备')
 @default(False)
-@stamina_relative
+@tag_stamina_consume
 class mirai_very_hard_sweep(simple_demand_sweep_base):
     async def get_need_list(self, client: pcrclient) -> List[Tuple[ItemType, int]]:
         need_list = client.data.get_pure_memory_demand_gap()
@@ -265,7 +268,7 @@ class mirai_very_hard_sweep(simple_demand_sweep_base):
 @description('根据纯净碎片缺口智能刷vh图')
 @name('智能刷very hard图')
 @default(True)
-@stamina_relative
+@tag_stamina_consume
 class smart_very_hard_sweep(simple_demand_sweep_base):
     times: int = -1
 
@@ -294,10 +297,10 @@ class smart_very_hard_sweep(simple_demand_sweep_base):
 当被动体力回复完全消耗后，刷图结束
 '''.strip())
 @name("自定义刷图")
-@conditional_execution("start_run_time", ['h庆典'], desc="start刷取庆典", check=False)
-@conditional_execution("loop_run_time", ['n庆典'], desc="loop刷取庆典", check=False)
+@conditional_execution1("start_run_time", ['h庆典'], desc="start刷取庆典", check=False)
+@conditional_execution1("loop_run_time", ['n庆典'], desc="loop刷取庆典", check=False)
 @default(False)
-@stamina_relative
+@tag_stamina_consume
 class smart_sweep(Module):
     async def do_task(self, client: pcrclient):
         nloop: List[Tuple[int, int]] = []
@@ -322,7 +325,7 @@ class smart_sweep(Module):
                     for x in loop:
                         yield x
                     if not have_normal:
-                        raise AbortError("no normal, stop")
+                        raise AbortError("为什么loop里没n关卡？")
 
         result = []
         if nloop == [] and loop == []:

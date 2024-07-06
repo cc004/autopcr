@@ -1,13 +1,15 @@
 from collections import Counter
 from typing import Any, Callable, Coroutine, Dict, List, Tuple
 
+from .autopcr.module.modulemgr import TaskResult
+from .autopcr.module.modulebase import ModuleStatus
 from .autopcr.util.draw_table import outp_b64
 from .autopcr.http_server.httpserver import HttpServer
 from .autopcr.db.database import db
 from .autopcr.module.accountmgr import Account, AccountManager, instance as usermgr
 from .autopcr.db.dbstart import db_start
 from .autopcr.util.draw import instance as drawer
-import asyncio
+import asyncio, datetime
 
 import nonebot
 from nonebot import on_startup
@@ -305,9 +307,11 @@ async def clean_daily_all(botev: BotEvent, accmgr: AccountManager):
     except Exception as e:  
         print(e)
 
-    imgs = await asyncio.gather(*task, return_exceptions=True)
-    img = await drawer.horizon_concatenate([img for img in imgs if not isinstance(img, Exception)])
-    err = [(alias[i], msg) for i, msg in enumerate(imgs) if isinstance(msg, Exception)]
+    resps = await asyncio.gather(*task, return_exceptions=True)
+    header = ["昵称", "清日常结果", "状态"]
+    content = [[alias[i], daily_result[0].result[daily_result[0].order[-1]].log, "#" + daily_result[1]] for i, daily_result in enumerate(resps) if not isinstance(daily_result, Exception)]
+    img = await drawer.draw(header, content)
+    err = [(alias[i], resp) for i, resp in enumerate(resps) if isinstance(resp, Exception)]
 
     msg = outp_b64(img)
     await botev.send(msg)
@@ -393,18 +397,19 @@ async def clean_daily_from(botev: BotEvent, acc: Account):
 
     try:
         is_admin_call = await botev.is_admin()
-        img = await clean_daily(botev = botev, acc = acc, is_admin_call = is_admin_call)
+        resp, _ = await clean_daily(botev = botev, acc = acc, is_admin_call = is_admin_call)
+        img = await drawer.draw_tasks_result(resp)
         msg = f"{alias}"
         msg += outp_b64(img)
         await botev.send(msg)
     except Exception as e:
         await botev.send(f'{alias}: {e}')
 
-async def clean_daily(botev: BotEvent, acc: Account, is_admin_call = False):
+async def clean_daily(botev: BotEvent, acc: Account, is_admin_call = False) -> Tuple[TaskResult, str]:
     loop = asyncio.get_event_loop()
     loop.create_task(check_validate(botev, acc))
-    img, _ = await acc.do_daily(is_admin_call)
-    return img
+    resp, status = await acc.do_daily(is_admin_call)
+    return resp, status.value
 
 @sv.on_prefix(f"{prefix}日常报告")
 @wrap_hoshino_event
@@ -418,9 +423,10 @@ async def clean_daily_result(botev: BotEvent, acc: Account):
         del msg[0]
     except Exception as e:
         pass
-    img = await acc.get_daily_result_from_id(result_id)
-    if not img:
+    resp = await acc.get_daily_result_from_id(result_id)
+    if not resp:
         await botev.finish("未找到日常报告")
+    img = await drawer.draw_tasks_result(resp)
     await botev.finish(outp_b64(img))
 
 @sv.on_prefix(f"{prefix}日常记录")
@@ -441,13 +447,50 @@ async def clean_daily_time(botev: BotEvent, accmgr: AccountManager):
 @sv.on_prefix(f"{prefix}定时日志")
 @wrap_hoshino_event
 async def cron_log(botev: BotEvent):
-    from .autopcr.module.crons import CRONLOG_PATH
+    from .autopcr.module.crons import CRONLOG_PATH, CronLog
     with open(CRONLOG_PATH, 'r', encoding='utf-8') as f:
-        msg = [line.strip() for line in f.readlines()]
+        msg = [CronLog.from_json(line.strip()) for line in f.readlines()]
+    args = await botev.message()
+    cur = datetime.datetime.now()
+    if is_args_exist(args, '错误'):
+        msg = [log for log in msg if log.status == ModuleStatus.error]
+    if is_args_exist(args, '警告'):
+        msg = [log for log in msg if log.status == ModuleStatus.warning]
+    if is_args_exist(args, '成功'):
+        msg = [log for log in msg if log.status == ModuleStatus.success]
+    if is_args_exist(args, '昨日'):
+        cur -= datetime.timedelta(days=1)
+        msg = [log for log in msg if log.time.date() == cur.date()]
+    if is_args_exist(args, '今日'):
+        msg = [log for log in msg if log.time.date() == cur.date()]
+
     msg = msg[-40:]
     msg = msg[::-1]
+    msg = [str(log) for log in msg]
     if not msg:
         msg.append("暂无定时日志")
+    img = outp_b64(await drawer.draw_msgs(msg))
+    await botev.finish(img)
+
+@sv.on_prefix(f"{prefix}定时状态")
+@wrap_hoshino_event
+async def cron_status(botev: BotEvent):
+    from .autopcr.module.crons import CRONLOG_PATH, CronLog, CronOperation
+    with open(CRONLOG_PATH, 'r', encoding='utf-8') as f:
+        logs = [CronLog.from_json(line.strip()) for line in f.readlines()]
+    cur = datetime.datetime.now()
+    msg = await botev.message()
+    if is_args_exist(msg, '昨日'):
+        cur -= datetime.timedelta(days=1)
+    start_logs = [log for log in logs if log.operation == CronOperation.START and log.time.date() == cur.date()]
+    finish_logs = [log for log in logs if log.operation == CronOperation.FINISH and log.time.date() == cur.date()]
+    status = Counter([log.status for log in finish_logs])
+    msg = [f'今日定时任务：启动{len(start_logs)}个，完成{len(finish_logs)}个'] 
+    msg += [f"{k.value}: {v}" for k, v in status.items()]
+    # notice = [log for log in logs if log.status != ModuleStatus.success]
+    # if notice:
+        # msg += [""]
+        # msg += [str(log) for log in notice]
     img = outp_b64(await drawer.draw_msgs(msg))
     await botev.finish(img)
 
@@ -497,7 +540,8 @@ async def tool_used(botev: BotEvent, tool: ToolInfo, config: Dict[str, str], acc
         loop.create_task(check_validate(botev, acc))
 
         is_admin_call = await botev.is_admin()
-        img = await acc.do_from_key(config, tool.key, is_admin_call)
+        resp, _ = await acc.do_from_key(config, tool.key, is_admin_call)
+        img = await drawer.draw_task_result(resp)
         msg = f"{alias}"
         msg += outp_b64(img)
         await botev.send(msg)

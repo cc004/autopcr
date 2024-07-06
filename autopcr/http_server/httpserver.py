@@ -6,12 +6,12 @@ from quart import request, Blueprint, send_file, send_from_directory
 from quart_rate_limiter import RateLimiter, rate_limit, RateLimitExceeded
 from quart_auth import AuthUser, QuartAuth, Unauthorized, current_user, login_required, login_user, logout_user
 from quart_compress import Compress
-import secrets
-import os
+import secrets, os, io
 from typing import Callable, Coroutine, Any
 
 from ..module.accountmgr import Account, AccountManager, UserException, instance as usermgr, AccountException
 from ..constants import CACHE_DIR
+from ..util.draw import instance as drawer
 
 CACHE_HTTP_DIR = os.path.join(CACHE_DIR, 'http_server')
 
@@ -193,12 +193,12 @@ class HttpServer:
         @HttpServer.wrapaccount()
         async def do_daily(mgr: Account):
             try:
-                file_path, _ = await mgr.do_daily()
-                return await send_file(file_path, mimetype='image/jpg')
+                await mgr.do_daily()
+                return mgr.generate_result_info(), 200
             except ValueError as e:
                 return str(e), 400
             except Exception as e:
-                print(e)
+                traceback.print_exc()
                 return "服务器发生错误", 500
 
         @self.api.route('/account/<string:acc>/daily_result/<string:safe_time>', methods = ['GET'])
@@ -207,12 +207,16 @@ class HttpServer:
         @HttpServer.wrapaccount(readonly= True)
         async def daily_result(mgr: Account, safe_time: str):
             try:
-                file_path = await mgr.get_daily_result_from_time(safe_time)
-                return await send_file(file_path, mimetype='image/jpg')
+                resp = await mgr.get_daily_result_from_time(safe_time)
+                if not resp:
+                    return "无结果", 404
+                img = await drawer.draw_tasks_result(resp)
+                bytesio = await drawer.img2bytesio(img)
+                return await send_file(bytesio, mimetype='image/jpg')
             except ValueError as e:
                 return str(e), 400
             except Exception as e:
-                print(e)
+                traceback.print_exc()
                 return "服务器发生错误", 500
 
         @self.api.route('/account/<string:acc>/do_single', methods = ['POST'])
@@ -222,18 +226,18 @@ class HttpServer:
         async def do_single(mgr: Account):
             data = await request.get_json()
             order = data.get("order", "")
+            resp_text = request.args.get('text', 'false').lower()
             try:
-                file_path = await mgr.do_from_key(deepcopy(mgr.client.keys), order)
-                if file_path.endswith("jpg"):
-                    return await send_file(file_path, mimetype='image/jpg')
+                resp, _ = await mgr.do_from_key(deepcopy(mgr.client.keys), order)
+                if resp_text == 'false':
+                    img = await drawer.draw_task_result(resp)
+                    bytesio = await drawer.img2bytesio(img)
+                    return await send_file(bytesio, mimetype='image/jpg')
                 else:
-                    with open(file_path, 'rb') as f:
-                        data = f.read()
-                    return data, 200
+                    return resp.log, 200
             except ValueError as e:
                 return str(e), 400
             except Exception as e:
-                print(e)
                 traceback.print_exc()
                 return "服务器发生错误", 500
 
@@ -242,18 +246,18 @@ class HttpServer:
         @HttpServer.wrapaccountmgr(readonly = True)
         @HttpServer.wrapaccount(readonly= True)
         async def single_result(mgr: Account, order: str):
+            resp_text = request.args.get('text', 'false').lower()
             try:
-                file_path = await mgr.get_single_result(order)
-
-                if not file_path:
+                resp = await mgr.get_single_result(order)
+                if not resp:
                     return "无结果", 404
 
-                if file_path.endswith("jpg"):
-                    return await send_file(file_path, mimetype='image/jpg')
+                if resp_text == 'false':
+                    img = await drawer.draw_task_result(resp)
+                    bytesio = await drawer.img2bytesio(img)
+                    return await send_file(bytesio, mimetype='image/jpg')
                 else:
-                    with open(file_path, 'rb') as f:
-                        data = f.read()
-                    return data, 200
+                    return resp.log, 200
             except ValueError as e:
                 return str(e), 400
             except Exception as e:
