@@ -1,12 +1,35 @@
 import asyncio
+from dataclasses import dataclass
 import datetime
+from enum import Enum
+import traceback
+
+from dataclasses_json import dataclass_json
+
+from ..module.modulebase import ModuleStatus
 from ..module.accountmgr import instance as usermgr
 from ..db.database import db
 from ..constants import CACHE_DIR
 import os
 
-cron_log_buffer = asyncio.Queue()
 CRONLOG_PATH = os.path.join(CACHE_DIR, "http_server", "cron_log.txt")
+
+class CronOperation(Enum):
+    START = "start"
+    FINISH = "finish"
+
+@dataclass_json
+@dataclass
+class CronLog:
+    operation: CronOperation
+    time: datetime.datetime
+    qid: str
+    account: str
+    status: ModuleStatus
+    log: str = ""
+
+    def __str__(self):
+        return f"{db.format_time(self.time)} {self.operation.value} cron job: {self.qid} {self.account} {self.status.value}"
 
 async def _cron(task):
     last = datetime.datetime.now() - datetime.timedelta(minutes=1)
@@ -17,34 +40,34 @@ async def _cron(task):
         last = cur
         asyncio.get_event_loop().create_task(task(cur))
 
-async def task(qid, account):
+async def task(qid, account, cur):
     async with usermgr.load(qid, readonly=True) as accountmgr:
         async with accountmgr.load(account) as mgr:
-            _, status = await mgr.do_daily()
-            cur = datetime.datetime.now()
-            await cron_log_buffer.put(f"{db.format_time(cur)}: done cron for {qid} {account}, {status}")
+            try:
+                if await mgr.is_cron_run(cur.hour, cur.minute):
+                    write_cron_log(CronOperation.START, cur, qid, account, ModuleStatus.success)
+                    _, status = await mgr.do_daily()
+                    cur = datetime.datetime.now()
+                    write_cron_log(CronOperation.FINISH, cur, qid, account, status)
+            except Exception as e:
+                print(f"error in cron job {qid} {account}")
+                traceback.print_exc()
+                write_cron_log(CronOperation.START, cur, qid, account, ModuleStatus.error, str(e))
 
 async def _run_crons(cur):
     print(f"doing cron check in {cur.hour} {cur.minute}")
     for qid in usermgr.qids():
         async with usermgr.load(qid, readonly=True) as accountmgr:
             for account in accountmgr.accounts():
-                async with accountmgr.load(account, readonly=True) as acc:
-                    if acc.is_cron_run(cur.hour, cur.minute):
-                        asyncio.get_event_loop().create_task(task(qid, account))
-                        await cron_log_buffer.put(f"{db.format_time(cur)}: doing cron for {qid} {account}")
+                asyncio.get_event_loop().create_task(task(qid, account, cur))
 
-async def cron_log():
+def write_cron_log(operation: CronOperation, cur: datetime.datetime, qid: str, account: str, status: ModuleStatus, log: str = ""):
     if not os.path.exists(os.path.dirname(CRONLOG_PATH)):
         os.mkdir(os.path.dirname(CRONLOG_PATH))
-    fp = open(CRONLOG_PATH, "a")
-    while True:
-        log = await cron_log_buffer.get()
-        fp.write(log + "\n")
-        fp.flush()
+    with open(CRONLOG_PATH, "a") as fp:
+        fp.write(CronLog(operation, cur, qid, account, status, log).to_json() + "\n")
 
 def queue_crons():
     async def task(cur):
         await _run_crons(cur)
     asyncio.get_event_loop().create_task(_cron(task))
-    asyncio.get_event_loop().create_task(cron_log())

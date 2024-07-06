@@ -440,6 +440,13 @@ class database():
                 RoomItem.query(db)
                 .to_dict(lambda x: x.id, lambda x: x)
             )
+
+            self.room_item_detail: Dict[int, Dict[int, RoomItemDetail]] = ( # id, level
+                RoomItemDetail.query(db)
+                .group_by(lambda x: x.room_item_id)
+                .to_dict(lambda x: x.key, lambda x: 
+                    x.to_dict(lambda x: x.level, lambda x: x))
+            )
             
             self.daily_mission_data: Dict[int, DailyMissionDatum] = (
                 DailyMissionDatum.query(db)
@@ -653,7 +660,10 @@ class database():
         return item in self.equip_craft
 
     def is_room_item_level_upable(self, team_level: int, item: RoomUserItem) -> bool:
-        return item.room_item_level < self.room_item[item.room_item_id].max_level and team_level // 10 >= item.room_item_level and (item.level_up_end_time is None or item.level_up_end_time < time.time())
+        return (item.room_item_level < self.room_item[item.room_item_id].max_level and 
+                item.room_item_level in self.room_item_detail[item.room_item_id] and
+                team_level >= self.room_item_detail[item.room_item_id][item.room_item_level].lvup_trigger_value and 
+                (item.level_up_end_time is None or item.level_up_end_time < time.time()))
 
     def is_normal_quest(self, quest_id: int) -> bool:
         return quest_id // 1000000 == 11
@@ -777,6 +787,7 @@ class database():
             "h3以上前夕": lambda: not self.is_target_time(h3, now) and self.is_target_time(h3, tomorrow),
             "会战前夕": lambda: not self.is_clan_battle_time(now) and self.is_clan_battle_time(tomorrow),
             "会战期间": lambda: self.is_clan_battle_time(now),
+            "总是执行": lambda: True,
         }
         if campaign not in campaign_list:
             raise ValueError(f"不支持的庆典查询：{campaign}")

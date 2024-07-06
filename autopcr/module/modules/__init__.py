@@ -17,6 +17,8 @@ cron_modules = [
     cron2,
     cron3,
     cron4,
+    cron5,
+    cron6,
 ]
 
 daily_modules = [
