@@ -241,15 +241,16 @@ class unit_skill_level_up(UnitController):
         stop = False
 
         while not stop:
-            skills = [(eSkillLocationCategory(eSkillLocationCategory.UNION_BURST_SKILL + id), lambda: self.unit.union_burst[id]) for id, skill in enumerate(self.unit.union_burst)] +  \
-                    [(eSkillLocationCategory(eSkillLocationCategory.MAIN_SKILL_1 + id), lambda: self.unit.main_skill[id]) for id, skill in enumerate(self.unit.main_skill)] +  \
-                    [(eSkillLocationCategory(eSkillLocationCategory.EX_SKILL_1 + id), lambda: self.unit.ex_skill[id]) for id, skill in enumerate(self.unit.ex_skill)]
+            skills = [(eSkillLocationCategory(eSkillLocationCategory.UNION_BURST_SKILL + id), lambda id=id: self.unit.union_burst[id]) for id, skill in enumerate(self.unit.union_burst)] +  \
+                    [(eSkillLocationCategory(eSkillLocationCategory.MAIN_SKILL_1 + id), lambda id=id: self.unit.main_skill[id]) for id, skill in enumerate(self.unit.main_skill)] +  \
+                    [(eSkillLocationCategory(eSkillLocationCategory.EX_SKILL_1 + id), lambda id=id: self.unit.ex_skill[id]) for id, skill in enumerate(self.unit.ex_skill)]
 
             for pos, skill in skills:
                 try:
-                    await self.unit_skill_up_aware(pos, skill, skill().skill_level + 1, growth_limit)
-                    stop = True
-                    break
+                    if skill().skill_level < self.unit.unit_level:
+                        await self.unit_skill_up_aware(pos, skill, skill().skill_level + 1, growth_limit)
+                        stop = True
+                        break
                 except AbortError as e:
                     print(e)
                     continue

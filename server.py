@@ -10,12 +10,11 @@ from .autopcr.util.draw import instance as drawer
 import asyncio
 
 import nonebot
-from nonebot import MessageSegment
 from nonebot import on_startup
 import hoshino
 from hoshino import HoshinoBot, Service, priv
 from hoshino.util import escape
-from hoshino.typing import CQEvent, MessageSegment
+from hoshino.typing import CQEvent
 from quart_auth import QuartAuth
 from quart_rate_limiter import RateLimiter
 from quart_compress import Compress
@@ -43,7 +42,7 @@ sv_help = f"""
 - {prefix}日常报告 [0|1|2|3] 最近四次清日常报告
 - {prefix}定时日志 查看定时运行状态
 - {prefix}查心碎 查询缺口心碎
-- {prefix}查记忆碎片 [可刷取] 查询缺口记忆碎片，可刷取只仅查看h图可刷的碎片
+- {prefix}查记忆碎片 [可刷取|大师币] 查询缺口记忆碎片，可按地图可刷取或大师币商店过滤
 - {prefix}查装备 [<rank>] [fav] 查询缺口装备，rank为数字，只查询>=rank的角色缺口装备，fav表示只查询favorite的角色
 - {prefix}刷图推荐 [<rank>] [fav] 查询缺口装备的刷图推荐，格式同上
 - {prefix}公会支援 查询公会支援角色配置
@@ -351,7 +350,7 @@ async def clean_daily_from(botev: BotEvent, acc: Account):
     try:
         img = await clean_daily(botev = botev, acc = acc)
         msg = f"{alias}"
-        msg += MessageSegment.image(f'file:///{img}')
+        msg += outp_b64(img)
         await botev.send(msg)
     except Exception as e:
         await botev.send(f'{alias}: {e}')
@@ -377,7 +376,7 @@ async def clean_daily_result(botev: BotEvent, acc: Account):
     img = await acc.get_daily_result_from_id(result_id)
     if not img:
         await botev.finish("未找到日常报告")
-    await botev.finish(MessageSegment.image(f'file:///{img}'))
+    await botev.finish(outp_b64(img))
 
 @sv.on_prefix(f"{prefix}日常记录")
 @wrap_hoshino_event
@@ -454,7 +453,7 @@ async def tool_used(botev: BotEvent, tool: ToolInfo, config: Dict[str, str], acc
 
         img = await acc.do_from_key(config, tool.key)
         msg = f"{alias}"
-        msg += MessageSegment.image(f'file:///{img}')
+        msg += outp_b64(img)
         await botev.send(msg)
     except Exception as e:
         await botev.send(f'{alias}: {e}')
@@ -535,14 +534,17 @@ async def pjjc_info(botev: BotEvent):
 
 @register_tool("查记忆碎片", "get_need_memory")
 async def find_memory(botev: BotEvent):
-    sweep_get_able_unit_memory = False
+    memory_demand_consider_unit = '所有'
     msg = await botev.message()
     try:
-        sweep_get_able_unit_memory = is_args_exist(msg, '可刷取')
+        if is_args_exist(msg, '可刷取'):
+            memory_demand_consider_unit = '地图可刷取'
+        elif is_args_exist(msg, '大师币'):
+            memory_demand_consider_unit = '大师币商店'
     except:
         pass
     config = {
-        "sweep_get_able_unit_memory": sweep_get_able_unit_memory,
+        "memory_demand_consider_unit": memory_demand_consider_unit,
     }
     return config
 
