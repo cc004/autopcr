@@ -4,10 +4,12 @@ from io import BytesIO
 import base64
 
 def outp_b64(outp_img):
-        buf = BytesIO()
-        outp_img.save(buf, format='JPEG')
-        base64_str = f'base64://{base64.b64encode(buf.getvalue()).decode()}'
-        return f'[CQ:image,file={base64_str}]'
+    if isinstance(outp_img, str):
+        outp_img = Image.open(outp_img)
+    buf = BytesIO()
+    outp_img.save(buf, format='JPEG')
+    base64_str = f'base64://{base64.b64encode(buf.getvalue()).decode()}'
+    return f'[CQ:image,file={base64_str}]'
 
 def position_tuple(*args):
     Position = namedtuple('Position', ['top', 'right', 'bottom', 'left'])

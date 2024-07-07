@@ -305,11 +305,16 @@ class jjc_back(Arena):
 
     async def update_deck(self, units: ArenaQueryResult, client: pcrclient):
         units_id = [unit.id for unit in units.atk]
-        star_change_unit = [unit for unit in units_id if client.data.unit[unit].unit_rarity == 5 and client.data.unit[unit].battle_rarity != 0]
+        star_change_unit = [unit_id for unit_id in units_id if client.data.unit[unit_id].unit_rarity == 5 and client.data.unit[unit_id].battle_rarity != 0]
         if star_change_unit:
             res = [ChangeRarityUnit(unit_id=unit_id, battle_rarity=5) for unit_id in star_change_unit]
             self._log(f"将{'|'.join([db.get_unit_name(unit_id) for unit_id in star_change_unit])}调至5星")
             await client.unit_change_rarity(res)
+
+        under_rank_bonus_unit = [unit for unit in units_id if client.data.unit[unit].promotion_level < db.equip_max_rank - 1]
+        if under_rank_bonus_unit:
+            self._log(f"警告：{'|'.join([db.get_unit_name(unit_id) for unit_id in under_rank_bonus_unit])}无品级加成")
+
         await client.deck_update(ePartyType.ARENA, units_id)
 
     async def get_rank_info(self, client: pcrclient, rank: int) -> RankingSearchOpponent: 
@@ -383,6 +388,11 @@ class pjjc_back(Arena):
             res = [ChangeRarityUnit(unit_id=unit_id, battle_rarity=5) for unit_id in star_change_unit]
             self._log(f"将{'|'.join([db.get_unit_name(unit_id) for unit_id in star_change_unit])}调至5星")
             await client.unit_change_rarity(res)
+
+        under_rank_bonus_unit = [uni_id for unit_id in units_id for uni_id in unit_id if 
+                                 client.data.unit[uni_id].promotion_level < db.equip_max_rank - 1]
+        if under_rank_bonus_unit:
+            self._log(f"警告：{'|'.join([db.get_unit_name(unit_id) for unit_id in under_rank_bonus_unit])}无品级加成")
 
         deck_list = []
         for i, unit_id in enumerate(units_id):
@@ -508,17 +518,28 @@ class get_library_import_data(Module):
         self._log(msg)
 
 @description('根据每个角色拉满星级、开专、升级至当前最高专所需的记忆碎片减去库存的结果')
-@booltype("sweep_get_able_unit_memory", "地图可刷取角色", False)
+@singlechoice('memory_demand_consider_unit', '考虑角色', '所有', ['所有', '地图可刷取', '大师币商店'])
 @name('获取记忆碎片缺口')
 @default(True)
 class get_need_memory(Module):
     async def do_task(self, client: pcrclient):
         demand = list(client.data.get_memory_demand_gap().items())
         demand = sorted(demand, key=lambda x: x[1], reverse=True)
-        if self.get_config("sweep_get_able_unit_memory"):
+        consider = self.get_config("memory_demand_consider_unit")
+        msg = {}
+        if consider == "地图可刷取":
             demand = [i for i in demand if i[0] in db.memory_hard_quest or i[0] in db.memory_shiori_quest]
+        elif consider == "大师币商店":
+            shop_content = await client.get_shop_item_list()
+            master_shops = [shop for shop in shop_content.shop_list if shop.system_id == eSystemId.COUNTER_STOP_SHOP]
+            if not master_shops:
+                raise AbortError("大师币商店未开启")
+            master_shop = master_shops[0]
+            master_shop_item = set((item.type, item.item_id) for item in master_shop.item_list)
+            msg = {(item.type, item.item_id): "已买" for item in master_shop.item_list if item.sold}
+            demand = [i for i in demand if i[0] in master_shop_item]
 
-        msg = '\n'.join([f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片' for item in demand])
+        msg = '\n'.join([f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片{("(" + msg[item[0]] + ")") if item[0] in msg else ""}' for item in demand])
         self._log(msg)
 
 @description('根据每个角色开专、升级至当前最高专所需的心碎减去库存的结果，大心转换成10心碎')
@@ -586,3 +607,4 @@ class get_normal_quest_recommand(Module):
 
         msg = '\n--------\n'.join(tot)
         self._log(msg)
+
