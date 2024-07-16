@@ -4,13 +4,11 @@ from ...core.pcrclient import pcrclient
 from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
-from typing import List
-from ...model.requests import SendGiftData
 
 @description('包括mana体力等等哦')
 @name('收取家园产物')
 @default(True)
-@stamina_relative
+@tag_stamina_get
 class room_accept_all(Module):
     async def do_task(self, client: pcrclient):
         room = await client.room_start()
@@ -25,33 +23,27 @@ class room_accept_all(Module):
 @description('等级提升时可自动升级')
 @name('升级家园家具')
 @default(True)
-@stamina_relative
+@tag_stamina_get
 class room_upper_all(Module):
     async def do_task(self, client: pcrclient):
         room = await client.room_start()
-        floors = {}
-        cnt = 0
-        for layout in room.room_layout.floor_layout:
-            cnt += 1
-            for item in layout.floor:
-                floors[item.serial_id] = cnt
-        
-        is_warning = False
+        floors = {item.serial_id: floor + 1 for floor, floor_layout in enumerate(room.room_layout.floor_layout) for item in floor_layout.floor}
 
         for x in room.user_room_item_list:
             if db.is_room_item_level_upable(client.data.team_level, x):
                 if x.serial_id not in floors:
-                    self._log(f"{db.get_room_item_name(x.room_item_id)}未放置，无法升级")
-                    is_warning = True
+                    self._warn(f"{db.get_room_item_name(x.room_item_id)}未放置，无法升级")
                 else:
-                    await client.room_level_up_item(floors[x.serial_id], x)
-                    self._log(f"开始升级{db.get_room_item_name(x.room_item_id)}至{x.room_item_level + 1}级")
+                    gold = client.data.get_shop_gold(eSystemId.GOLD_SHOP)
+                    cost = db.room_item_detail[x.room_item_id][x.room_item_level].lvup_item1_num
+                    if gold < cost:
+                        self._warn(f"金币{gold} < {cost}，无法升级{db.get_room_item_name(x.room_item_id)}至{x.room_item_level + 1}级")
+                    else:
+                        self._log(f"开始升级{db.get_room_item_name(x.room_item_id)}至{x.room_item_level + 1}级")
+                        await client.room_level_up_item(floors[x.serial_id], x)
 
-        if not self.log:
+        if not self.log and not self.warn:
             raise SkipError('没有可升级的家园物品。')
-
-        if is_warning: # 感觉还是把等级放到日志里更好点
-            raise AbortError()
 
 @description('先回赞，再随机点赞')
 @name('公会小屋点赞')

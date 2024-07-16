@@ -60,6 +60,7 @@ class UnitController(Module):
     # md python 没有引用
     async def unit_skill_up_aware(self, location: eSkillLocationCategory, skill: Callable[[], SkillLevelInfo], target_skill_level: int, limit: Union[None, GrowthParameter] = None):
         if limit and limit.skill_level < target_skill_level:
+            raise AbortError(f"{db.get_unit_name(self.unit.id)}技能{self.skill_name[location]}超过了免费可提升等级{limit.skill_level}，请自行完成免费可提升的所有内容")
             self._log(f"{db.get_unit_name(self.unit.id)}技能{self.skill_name[location]}超过了免费可提升等级{limit.skill_level},先提升至等级{limit.skill_level}")
             await self.unit_skill_up_aware(location, skill, limit.skill_level, limit)
 
@@ -99,6 +100,7 @@ class UnitController(Module):
 
     async def unit_promotion_up_aware(self, target_promotion_level: int, limit: Union[None, GrowthParameter]):
         if limit and target_promotion_level > limit.promotion_level:
+            raise AbortError(f"目标品级{target_promotion_level}超过了免费可提升品级{limit.promotion_level}，请自行完成免费可提升的所有内容")
             self._log(f"目标品级{target_promotion_level}超过了免费可提升品级{limit.promotion_level},先提升至品级{limit.promotion_level}")
             await self.unit_promotion_up_aware(limit.promotion_level, limit)
 
@@ -127,6 +129,7 @@ class UnitController(Module):
 
     async def unit_level_up_aware(self, target_level: int, limit: Union[GrowthParameter, None] = None):
         if limit and target_level > limit.unit_level:
+                raise AbortError(f"目标等级{target_level}超过了免费可提升等级{limit.unit_level}，请自行完成免费可提升的所有内容")
                 self._log(f"目标等级{target_level}超过了免费可提升等级{limit.unit_level},先提升至等级{limit.unit_level}")
                 await self.unit_level_up_aware(limit.unit_level, limit)
 

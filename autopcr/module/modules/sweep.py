@@ -25,7 +25,7 @@ class explore_sweep(Module):
                 raise AbortError("不存在可扫荡的探索")
             max_quest = self.get_max_quest(client)
             if self.not_max_stop() and max_quest != quest_id:
-                raise AbortError(f"最高级探索{max_quest}未通关，不扫荡")
+                raise AbortError(f"最高级探索{max_quest}未通关，不扫荡\n如欲扫荡已通关的，请关闭【非最高不扫荡】")
             name = db.quest_name[quest_id]
             await client.training_quest_skip(quest_id, remain_cnt)
             self._log(f"{name}扫荡{remain_cnt}次")
@@ -65,6 +65,8 @@ class explore_mana(explore_sweep):
 class underground_skip(Module):
     async def do_task(self, client: pcrclient):
         infos = await client.get_dungeon_info()
+        if not infos.dungeon_cleared_area_id_list:
+            infos.dungeon_cleared_area_id_list = []
         not_max_stop = self.get_config("underground_not_max_stop")
         always_sweep = self.get_config("underground_sweep") == "总是扫荡"
         secret_dungeon_stop = self.get_config("secret_dungeon_stop")
@@ -129,7 +131,7 @@ class underground_skip(Module):
                         
         if rest:
             if not_max_stop and get_max_dungeon_id() != get_cleared_max_dungeon_id():
-                raise AbortError(f"最高级地下城【{dungeon_name(get_max_dungeon_id())}】未通关，不扫荡")
+                raise AbortError(f"最高级地下城【{dungeon_name(get_max_dungeon_id())}】未通关，不扫荡\n如欲扫荡已通关的，请关闭【非最高不扫荡】")
             if double_mana or always_sweep:
                 await do_sweep()
             else:
@@ -195,7 +197,7 @@ class special_underground_skip(Module):
             raise SkipError("今日已扫荡特别地下城")
 
 
-@stamina_relative
+@tag_stamina_consume
 class investigate_sweep(Module):
     @abstractmethod
     def quest_id(self) -> int: ...
@@ -222,7 +224,7 @@ class xinsui_sweep(investigate_sweep):
     def target_item(self) -> ItemType:
         return db.xinsui
     def force_stop(self, client: pcrclient) -> bool:
-        return any(client.data.is_campaign(campaign) for campaign in client.keys.get("force_stop_heart_sweep", [])) # TODO FIX
+        return client.is_heart_sweep_not_run()
     def value(self, campaign: bool):
         if not campaign:
             return self.get_config(f'heart{self.quest_id() % 10}_sweep_times')
@@ -235,7 +237,7 @@ class starcup_sweep(investigate_sweep):
     def target_item(self) -> ItemType:
         return db.xingqiubei
     def force_stop(self, client: pcrclient) -> bool:
-        return any(client.data.is_campaign(campaign) for campaign in client.keys.get("force_stop_star_cup_sweep", [])) # TODO FIX
+        return client.is_star_cup_sweep_not_run()
     def value(self, campaign: bool):
         if not campaign:
             return self.get_config(f'starcup{self.quest_id() % 10}_sweep_times')

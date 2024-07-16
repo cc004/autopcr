@@ -2,11 +2,6 @@ from typing import List, Dict
 from .enums import *
 from pydantic import BaseModel, Field
 
-class LegionBattleIniSetting(BaseModel):
-    support_limit: int = None
-    support_change_interval: int = None
-    remaining_count_max: int = None
-    limit_unit_level: int = None
 class SkillLevelInfo(BaseModel):
     skill_id: int = None
     skill_level: int = None
@@ -125,6 +120,8 @@ class UnitData(BaseModel):
     TotalAccuracy: int = None
     TotalEnergyRecoveryRate: int = None
     TotalEnergyReduceRate: int = None
+    UniqueEquipSlot1: EquipSlot = None
+    UniqueEquipSlot2: EquipSlot = None
 class DuplicateUnitInfo(BaseModel):
     unit_id: int = None
     rarity: int = None
@@ -345,6 +342,7 @@ class ClanBattleBattleLog(BaseModel):
     enemy_damage: int = None
     is_auto: int = None
     units: List[MyLogUnitData] = None
+    phase: int = None
 class BossHistory(BaseModel):
     id: int = None
     difficulty: int = None
@@ -530,6 +528,7 @@ class BossInfo(BaseModel):
     enemy_id: int = None
     max_hp: int = None
     current_hp: int = None
+    phase: int = None
 class BossReward(BaseModel):
     clan_battle_id: int = None
     lap_num: int = None
@@ -538,6 +537,7 @@ class BossReward(BaseModel):
     kill_time: int = None
     reward_info: List[InventoryInfo] = None
     period: int = None
+    phase: int = None
 class RankResult(BaseModel):
     clan_battle_id: int = None
     period: int = None
@@ -553,6 +553,7 @@ class ClanBattleCarryOverInfo(BaseModel):
     using_unit: List[int] = None
     support_owner_viewer_id: int = None
     support_unit: UnitDataForView = None
+    change_phase: int = None
 class ClanBattleTopUserClanInformation(BaseModel):
     clan_name: str = None
     clan_role: int = None
@@ -673,6 +674,7 @@ class DailyTaskParam(BaseModel):
     random_clan_member_name: str = None
     remaining_count: int = None
     is_season_changed: bool = None
+    special_dungeon_challenged: bool = None
 class DailyTaskData(BaseModel):
     task_type: int = None
     status: int = None
@@ -939,6 +941,7 @@ class GachaParameter(BaseModel):
     exec_count: int = None
     select_pickup_slot_num: int = None
     priority_list: List[int] = None
+    original_gacha_id: int = None
 class CampaignGachaInfo(BaseModel):
     campaign_id: int = None
     fg1_exec_cnt: int = None
@@ -1547,6 +1550,14 @@ class SpecialFesDiscountIniSetting(BaseModel):
     open_time: int = None
     limit_count: int = None
     cost: int = None
+class CaravanSetting(BaseModel):
+    limit_caravan_mile: int = None
+    limit_caravan_lottery: int = None
+    limit_caravan_treasure: int = None
+    limit_caravan_treasure_by_type: int = None
+    limit_caravan_dish_by_type: int = None
+class MultiRankUnitLimitSetting(BaseModel):
+    multi_rank_unit_limit: int = None
 class IniSetting(BaseModel):
     equipment_enhance: EquipStrSetting = None
     quest: QuestSetting = None
@@ -1577,7 +1588,7 @@ class IniSetting(BaseModel):
     multiple_skip: BulkSkipSetting = None
     friend_support_unit: FriendSupportUnitIniSetting = None
     kaiser_battle: KaiserBattleIniSetting = None
-    legion_battle: LegionBattleIniSetting = None
+    legion_battle: StoryRaidEvenBattletIniSetting = None
     sre: StoryRaidEvenBattletIniSetting = None
     serial_code: SerialCodeIniSetting = None
     arena_skip_upper_rank: int = None
@@ -1586,6 +1597,8 @@ class IniSetting(BaseModel):
     ex_equip: ExEquipIniSetting = None
     max_once_consume_gold: MaxOnceConsumeGoldSetting = None
     sfd: SpecialFesDiscountIniSetting = None
+    caravan: CaravanSetting = None
+    multi_rank_unit_limit: MultiRankUnitLimitSetting = None
 class LoginBonusData(BaseModel):
     campaign_id: int = None
     total_count: int = None
@@ -1886,6 +1899,7 @@ class ProfileQuestInfo(BaseModel):
     normal_quest: List[int] = None
     hard_quest: List[int] = None
     very_hard_quest: List[int] = None
+    byway_quest: int = None
 class SupportUnitForProfile(BaseModel):
     position: int = None
     unit_data: UnitDataLight = None
@@ -2350,6 +2364,7 @@ class TravelAppearTopEvent(BaseModel):
     IsDebugCreate: bool = None
     IsDebugDispTreasure: bool = None
     DebugChoiceSelectDramaId: int = None
+    DebugDispRewardNum: int = None
 class TrialBattleFinishUnit(BaseModel):
     unit_damage_list: List[UnitDamageInfo] = None
     unit_hp_list: List[UnitHpInfo] = None
@@ -2502,6 +2517,139 @@ class VoteRanking(BaseModel):
     rarity_1: List[VoteRank] = None
     rarity_2: List[VoteRank] = None
     rarity_3: List[VoteRank] = None
+class AsmAnswerInfo(BaseModel):
+    wave_no: int = None
+    asm_id: int = None
+    answer: List[int] = None
+    elapsed_msec: int = None
+    is_correct: bool = None
+class AsmScoreResult(BaseModel):
+    correct_count: int = None
+    correct_score: int = None
+    elapsed_msec_avg: int = None
+    elapsed_msec_avg_score: int = None
+    total_score: int = None
+    past_high_score: int = None
+class AsmRewardInfo(BaseModel):
+    trigger_score: int = None
+    reward_type: eInventoryType = None
+    reward_id: int = None
+    reward_count: int = None
+class AsmUnlockStory(BaseModel):
+    trigger_score: int = None
+    story_id: int = None
+class AsmMemoryGaugeEmblem(BaseModel):
+    trigger_score: int = None
+    emblem_id: int = None
+class AsmCompletionEmblem(BaseModel):
+    archive_num: int = None
+    emblem_id: int = None
+class AsmArchiveInfo(BaseModel):
+    asm_id: int = None
+    status: int = None
+class AsmMemoryGaugeInfo(BaseModel):
+    gauge_id: int = None
+    score: int = None
+class BywayDeliveryItemInfo(BaseModel):
+    slot_id: int = None
+    condition_id: int = None
+    consume_num: int = None
+class CaravanDishSellData(BaseModel):
+    id: int = None
+    current_num: int = None
+    sell_num: int = None
+class CaravanDishData(BaseModel):
+    id: int = None
+    stock: int = None
+class CaravanShopBlockLineup(BaseModel):
+    slot_id: int = None
+    type: int = None
+    item_id: int = None
+    num: int = None
+    price: int = None
+    discounted_price: int = None
+    discount_rate: int = None
+    is_sold: int = None
+class CccFinishItemCountInfo(BaseModel):
+    ccc_object_id: int = None
+    count: int = None
+class CaravanGoalBonusTreasureData(BaseModel):
+    id: int = None
+    count: int = None
+class CaravanTreasureAppraisalData(BaseModel):
+    id: int = None
+    result_id: int = None
+class CaravanDishEffectData(BaseModel):
+    id: int = None
+    effect_turn: int = None
+    effect_count: int = None
+class CaravanEventEffectData(BaseModel):
+    event_id: int = None
+    effect_turn: int = None
+    effect_count: int = None
+class CaravanTreasureData(BaseModel):
+    id: int = None
+    stock: int = None
+class CaravanCoinShopData(BaseModel):
+    slot_id: int = None
+    purchase_count: int = None
+class CaravanResetTreasureData(BaseModel):
+    id: int = None
+    count: int = None
+class CaravanTopGoalReward(BaseModel):
+    goal_turn: int = None
+    lottery_result_list: List[InventoryInfo] = None
+    treasure_appraisal_list: List[CaravanTreasureAppraisalData] = None
+    reset_treasure_list: List[CaravanResetTreasureData] = None
+class ColosseumBattleFinishUnitInfo(BaseModel):
+    damage: int = None
+    unit_id: int = None
+    hp: int = None
+    passive_skill_hp: int = None
+class ColosseumScore(BaseModel):
+    quest_id: int = None
+    score: int = None
+    battle_point: int = None
+    win_point: int = None
+    enemy_hp_point: int = None
+    unit_hp_point: int = None
+    team_level: int = None
+    remain_time: int = None
+    remain_time_point: int = None
+    bonus_applied_point_1: int = None
+    bonus_applied_point_2: int = None
+class ColosseumUnitDamageInfo(BaseModel):
+    is_my_unit: int = None
+    unit_id: int = None
+    damage: int = None
+class ColosseumHistoryInfo(BaseModel):
+    replay_log_id: int = None
+    win_or_lose: int = None
+    user_unit_info: List[UnitDataForView] = None
+    versus_user_unit_info: List[UnitDataForView] = None
+    damage_list: List[ColosseumUnitDamageInfo] = None
+    score: ColosseumScore = None
+class ColosseumRankingInfo(BaseModel):
+    rank: int = None
+    team_level: int = None
+    user_name: str = None
+    emblem: EmblemData = None
+    favorite_unit: UnitDataForView = None
+    total_score: int = None
+class MonthlyFreeGachaInfo(BaseModel):
+    fg1_exec_cnt: int = None
+    fg1_last_exec_time: int = None
+    fg10_exec_cnt: int = None
+    fg10_last_exec_time: int = None
+class BeginnerCharaExchangeTicketProductData(BaseModel):
+    csv_data_id: int = None
+    beginner_id: int = None
+    ticket_id: int = None
+    ticket_count: int = None
+    forced_exchange_time: int = None
+    number_of_product_purchased: int = None
+    start_time: int = None
+    end_time: int = None
 class SeasonPassData(BaseModel):
     SeasonPassRewards: Dict[int, List[int]] = None
     HasBuy: bool = None
@@ -2514,9 +2662,38 @@ class SeasonPassData(BaseModel):
     weekly_point: int = None
     missions: List[UserMissionInfo] = None
     received_rewards: List[int] = None
+class BannerLinkedPackList(BaseModel):
+    id: int = None
+    remaining_count: int = None
+    start_time: int = None
+    end_time: int = None
+class MonthlyGachaInfo(BaseModel):
+    end_time: int = None
+    original_gacha_id: int = None
+    exchange_num: int = None
+    max_exchange_num: int = None
+    gacha_point_info: GachaPointInfo = None
 class ExchangeRewards(BaseModel):
     id: int = None
     type: int = None
     count: int = None
     stock: int = None
     received: int = None
+class BuyBulkBuyItemList(BaseModel):
+    slot_id: int = None
+    count: int = None
+class TravelRoundEventResult(BaseModel):
+    Result: eRoundEventResultType = None
+    result_drama_id: int = None
+    reward_list: List[InventoryInfo] = None
+class TravelAppearRoundEvent(BaseModel):
+    round_event_id: int = None
+    skin_id_list: List[int] = None
+    round: int = None
+    left_door_effect_id: int = None
+    right_door_effect_id: int = None
+    expect_reward_list: List[InventoryInfo] = None
+class MultiAutomaticPromotion(BaseModel):
+    unit_id: int = None
+    equip_recipe_list: List[RequiredMaterialList] = None
+    item_list: List[ItemInfo] = None

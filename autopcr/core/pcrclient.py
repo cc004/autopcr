@@ -21,6 +21,10 @@ class pcrclient(apiclient):
     def name(self) -> str:
         return self.data.name
 
+    @property
+    def logged(self):
+        return self.session._logged
+
     async def login(self):
         await self.request(None)
 
@@ -188,6 +192,10 @@ class pcrclient(apiclient):
 
     async def get_gacha_index(self):
         req = GachaIndexRequest()
+        return await self.request(req)
+
+    async def get_gacha_resident_index(self):
+        req = GachaMonthlyIndexRequest()
         return await self.request(req)
 
     async def gacha_select_prize(self, prizegacha_id: int, item_id: int):
@@ -733,14 +741,10 @@ class pcrclient(apiclient):
 
     @property
     def stamina_recover_cnt(self) -> int:
-        if self.data.is_normal_quest_campaign():
-            times = min(4, self.data.get_normal_quest_campaign_times())
-            return self.keys.get(f'sweep_recover_stamina_times_n{times}', 0)
-        elif self.data.is_hard_quest_campaign():
-            times = min(3, self.data.get_hard_quest_campaign_times())
-            return self.keys.get(f'sweep_recover_stamina_times_h{times}', 0)
-        else:
-            return self.keys.get(f'sweep_recover_stamina_times', 0)
+        return self.keys.get('stamina_recover_times', 0)
+
+    def set_stamina_recover_cnt(self, value: int):
+        self.keys['stamina_recover_times'] = value
 
     async def quest_skip_aware(self, quest: int, times: int, recover: bool = False, is_total: bool = False):
         name = db.quest_name[quest] if quest in db.quest_name else f"未知关卡{quest}"
@@ -986,3 +990,33 @@ class pcrclient(apiclient):
         req.drama_id = drama_id
         req.from_system_id = from_system_id
         return await self.request(req)
+
+    def set_stamina_consume_not_run(self):
+        self.keys['stamina_consume_not_run'] = True
+
+    def is_stamina_consume_not_run(self):
+        return self.keys.get('stamina_consume_not_run', False)
+
+    def set_stamina_get_not_run(self):
+        self.keys['stamina_get_not_run'] = True
+
+    def is_stamina_get_not_run(self):
+        return self.keys.get('stamina_get_not_run', False)
+
+    def set_star_cup_sweep_not_run(self):
+        self.keys['star_cup_sweep_not_run'] = True
+
+    def is_star_cup_sweep_not_run(self):
+        return self.keys.get('star_cup_sweep_not_run', False)
+
+    def set_heart_sweep_not_run(self):
+        self.keys['heart_sweep_not_run'] = True
+
+    def is_heart_sweep_not_run(self):
+        return self.keys.get('heart_sweep_not_run', False)
+
+    def set_cron_run(self):
+        self.keys['cron_run'] = True
+
+    def is_cron_run(self):
+        return self.keys.get('cron_run', False)

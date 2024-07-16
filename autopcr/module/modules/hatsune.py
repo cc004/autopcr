@@ -12,10 +12,10 @@ from ...model.enums import *
 @description('')
 @name('扫荡活动h本')
 @default(False)
-@stamina_relative
+@tag_stamina_consume
 class hatsune_h_sweep(Module):
     async def do_task(self, client: pcrclient):
-        area = self.get_config('hatsune_h_sweep_quest')
+        area: List[int] = self.get_config('hatsune_h_sweep_quest')
         not_sweep_hatsune: List[str] = self.get_config('hatsune_h_sweep_not_event')
         not_sweep_hatsune_id = set(int(event.split(':')[0]) for event in not_sweep_hatsune)
         hard = 200
@@ -26,7 +26,6 @@ class hatsune_h_sweep(Module):
         for event in db.get_active_hatsune():
             event_name = db.event_name[event.event_id]
             self._log(f"{event.event_id}:{event_name}：")
-            print(not_sweep_hatsune_id, event.event_id)
             if event.event_id in not_sweep_hatsune_id:
                 self._log(f"不扫荡h本")
                 continue
@@ -58,7 +57,7 @@ class hatsune_h_sweep(Module):
 @multichoice("hatsune_hboss_strategy", "扫荡策略", ["保留今日vh", "保留未来vh","保留sp"], ["保留今日vh", "保留未来vh","保留sp"])
 @description('vh保留30，sp保留90，若无通关则会保留')
 @name('扫荡活动h本boss')
-@default("none")
+@default(True)
 class hatsune_hboss_sweep(Module):
     async def do_task(self, client: pcrclient):
         strategy: List[str] = self.get_config('hatsune_hboss_strategy')
@@ -220,7 +219,7 @@ class hatsune_mission_accept2(hatsune_mission_accept_base):
 @description('剩余体力全部刷活动图')
 @name('全刷活动普图')
 @default(False)
-@stamina_relative
+@tag_stamina_consume
 class all_in_hatsune(Module):
     async def do_task(self, client: pcrclient):
         quest = 0
@@ -244,7 +243,9 @@ class all_in_hatsune(Module):
 
         count = client.data.stamina // db.quest_info[quest].stamina
 
-        if count == 0: raise AbortError("体力不足")
-        await client.quest_skip_aware(quest, count)
-        self._log(f"已刷{quest}图{count}次")
+        if count == 0: 
+            self._log("体力不足")
+        else:
+            await client.quest_skip_aware(quest, count)
+            self._log(f"已刷{quest}图{count}次")
 

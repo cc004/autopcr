@@ -10,7 +10,7 @@ from ...db.database import db
 @description('在公会中自动随机选择一位成员点赞。')
 @name("公会点赞")
 @default(True)
-@stamina_relative
+@tag_stamina_get
 class clan_like(Module):
     async def do_task(self, client: pcrclient):
         if client.data.clan_like_count:
@@ -20,7 +20,7 @@ class clan_like(Module):
             raise AbortError("未加入公会")
         info = clan.clan
         members = [(x.viewer_id, x.name) for x in info.members if x.viewer_id != client.viewer_id]
-        if len(members) == 0: raise AbortError("No other members in clan")
+        if len(members) == 0: raise AbortError("nobody's home?")
         rnd = random.choice(members)
         await client.clan_like(rnd[0])
         self._log(f"为【{rnd[1]}】点赞")

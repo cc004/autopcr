@@ -17,6 +17,8 @@ cron_modules = [
     cron2,
     cron3,
     cron4,
+    cron5,
+    cron6,
 ]
 
 daily_modules = [
@@ -27,6 +29,7 @@ daily_modules = [
     room_like_back,
     free_gacha,
     normal_gacha,
+    monthly_gacha,
     room_accept_all,
     explore_exp,
     explore_mana,

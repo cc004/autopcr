@@ -69,14 +69,14 @@ class sessionmgr(Component[apiclient]):
                                 if not (await next.request(req)).is_risk:
                                     break
                             else:
-                                raise ValueError("登录失败，帐号存在风险")
+                                raise PanicError("登录失败，帐号存在风险")
                     except ApiException:
                         pass
                 
                 self._sdkaccount = None
                 await self._bililogin()
             else:
-                raise ValueError("登录失败")
+                raise PanicError("登录失败")
         except Exception:
             raise
         finally:
@@ -94,7 +94,7 @@ class sessionmgr(Component[apiclient]):
                 manifest = await next.request(SourceIniGetMaintenanceStatusRequest())
                 self._container._headers['MANIFEST-VER'] = manifest.required_manifest_ver
                 if manifest.maintenance_message:
-                    raise ValueError(manifest.maintenance_message)
+                    raise PanicError(manifest.maintenance_message)
                 
                 await self._ensure_token(next)
                 
@@ -104,7 +104,7 @@ class sessionmgr(Component[apiclient]):
                 req.campaign_user = random.randint(0, 100000) & ~1
                 
                 if not (await next.request(req)).now_tutorial:
-                    raise ValueError("账号未过完教程")
+                    raise PanicError("账号未过完教程")
                 
                 # await next.request(CheckAgreementRequest())
 
