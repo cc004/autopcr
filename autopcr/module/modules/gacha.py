@@ -7,9 +7,8 @@ from ...db.database import db
 from ...model.enums import *
 from ...model.common import GachaParameter
 import datetime
-from collections import Counter
 
-@description('扭曲装备扭蛋')
+@description('进行装备扭蛋')
 @name('普通扭蛋')
 @default(True)
 class normal_gacha(Module):
@@ -28,6 +27,43 @@ class normal_gacha(Module):
         if memory:
             msg = await client.serlize_reward(memory) + f"\n{10 - len(memory)}件装备"
         self._log(msg)
+
+@description('每日免费一抽')
+@name('凭证扭蛋')
+@default(True)
+class monthly_gacha(Module):
+    async def do_task(self, client: pcrclient):
+        if not client.data.resident_info:
+            raise SkipError("未购买凭证月卡")
+        resp = await client.get_gacha_resident_index()
+        if len(resp.gacha_info) != 1:
+            raise ValueError("怎么有多个凭证扭蛋可以同时抽取？")
+        end_time = datetime.datetime.fromtimestamp(client.data.resident_info.end_time)
+        if db.is_today(end_time):
+            self._warn("今日凭证扭蛋最后一天")
+        point_info = client.data.resident_info.gacha_point_info
+        if point_info.current_point >= point_info.max_point:
+            raise AbortError(f"已达到天井{point_info.current_point}pt，请上号兑换角色")
+        gacha = resp.gacha_info[0]
+        gacha_reward: GachaReward = GachaReward()
+        if not resp.free_gacha_info.fg1_exec_cnt:
+            self._log("今日单抽已使用")
+        else:
+            self._log("使用单抽")
+            gacha_reward += await client.exec_gacha_aware(gacha, 1, eGachaDrawType.Monthly_Free_Single, 1, 0)
+
+        if not resp.free_gacha_info.fg10_exec_cnt and resp.free_gacha_info.fg10_last_exec_time:
+            self._log("十连已使用")
+        elif resp.free_gacha_info.fg10_exec_cnt:
+            self._log("使用十连")
+            gacha_reward += await client.exec_gacha_aware(gacha, 10, eGachaDrawType.Monthly_Free_Multi, 1, 0)
+
+        reward = await client.serlize_gacha_reward(gacha_reward)
+        if reward != "无":
+            self._log(reward)
+            point = client.data.gacha_point[gacha.exchange_id].current_point if gacha.exchange_id in client.data.gacha_point else 0
+            self._log(f"当前pt为{point}")
+
 
 @description('有免费十连时自动抽取')
 @name('免费十连')

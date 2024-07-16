@@ -27,6 +27,7 @@ daily_modules = [
     room_like_back,
     free_gacha,
     normal_gacha,
+    monthly_gacha,
     room_accept_all,
     explore_exp,
     explore_mana,

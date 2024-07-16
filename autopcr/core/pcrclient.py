@@ -190,6 +190,10 @@ class pcrclient(apiclient):
         req = GachaIndexRequest()
         return await self.request(req)
 
+    async def get_gacha_resident_index(self):
+        req = GachaMonthlyIndexRequest()
+        return await self.request(req)
+
     async def gacha_select_prize(self, prizegacha_id: int, item_id: int):
         req = GachaSelectPrizeRequest()
         req.prizegacha_id = prizegacha_id
