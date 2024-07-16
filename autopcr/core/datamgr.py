@@ -19,6 +19,7 @@ from asyncio import Lock
 class datamgr(Component[apiclient]):
     settings: IniSetting = None
     dungeon_avaliable: bool = False
+    resident_info: MonthlyGachaInfo = None
     finishedQuest: Set[int] = None
     jewel: UserJewel = None
     gold: UserGold = None

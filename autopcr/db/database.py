@@ -700,20 +700,6 @@ class database():
     def get_campaign_times(self, campaign_id: int) -> float:
         return self.campaign_schedule[campaign_id].value
 
-    def get_dungeon_mana_before_day(self) -> int:
-        now = datetime.datetime.now()
-        dungeon = (
-            flow(self.campaign_schedule.values())
-            .where(
-                lambda x: x.campaign_category == eCampaignCategory.GOLD_DROP_AMOUNT_DUNGEON and 
-                db.parse_time(x.start_time) > now
-            )
-            .min(lambda x: x.start_time)
-        )
-        today = self.get_today_start_time()
-        dungeon = self.get_start_time(db.parse_time(dungeon[2]))
-        return (dungeon - today).days
-
     def get_active_hatsune(self) -> List[HatsuneSchedule]:
         now = datetime.datetime.now()
         return flow(self.hatsune_schedule.values()) \
