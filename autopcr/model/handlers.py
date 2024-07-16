@@ -265,6 +265,8 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         mgr.team_level = self.user_info.team_level
         mgr.jewel = self.user_jewel
         mgr.gold = self.user_gold
+        if self.resident_info:
+            mgr.resident_info = self.resident_info
         if self.bank_bought:
             mgr.user_gold_bank_info = self.user_gold_bank_info
         mgr.clan_like_count = self.clan_like_count

@@ -19,6 +19,7 @@ from asyncio import Lock
 class datamgr(Component[apiclient]):
     settings: IniSetting = None
     dungeon_avaliable: bool = False
+    resident_info: MonthlyGachaInfo = None
     finishedQuest: Set[int] = None
     jewel: UserJewel = None
     gold: UserGold = None
@@ -105,6 +106,11 @@ class datamgr(Component[apiclient]):
             "h3及以上": lambda: self.get_hard_quest_campaign_times() >= 3,
             "vh2": lambda: self.get_very_hard_quest_campaign_times() == 2,
             "vh3及以上": lambda: self.get_very_hard_quest_campaign_times() >= 3,
+            "无庆典": lambda: not self.is_quest_campaign(),
+            "n庆典": lambda: self.is_normal_quest_campaign(),
+            "h庆典": lambda: self.is_hard_quest_campaign(),
+            "vh庆典": lambda: self.is_very_hard_quest_campaign(),
+            "总是执行": lambda: True,
         }
         if campaign not in campaign_list:
             raise ValueError(f"不支持的庆典查询：{campaign}")
@@ -404,16 +410,18 @@ class datamgr(Component[apiclient]):
             return self.gold.gold_id_free + self.gold.gold_id_pay
         if shop_id == eSystemId.LIMITED_SHOP: # 限定商店
             return self.gold.gold_id_free + self.gold.gold_id_pay
+        elif shop_id == eSystemId.EXPEDITION_SHOP: # 地下城店
+            return self.get_inventory((eInventoryType.Item, 90002))
         elif shop_id == eSystemId.ARENA_SHOP: # jjc店
             return self.get_inventory((eInventoryType.Item, 90003))
         elif shop_id == eSystemId.GRAND_ARENA_SHOP: # pjjc店
             return self.get_inventory((eInventoryType.Item, 90004))
-        elif shop_id == eSystemId.EXPEDITION_SHOP: # 地下城店
-            return self.get_inventory((eInventoryType.Item, 90002))
-        elif shop_id == eSystemId.CLAN_BATTLE_SHOP: # 会战店
-            return self.get_inventory((eInventoryType.Item, 90006))
         elif shop_id == eSystemId.MEMORY_PIECE_SHOP: # 女神店
             return self.get_inventory((eInventoryType.Item, 90005))
+        elif shop_id == eSystemId.CLAN_BATTLE_SHOP: # 会战店
+            return self.get_inventory((eInventoryType.Item, 90006))
+        elif shop_id == eSystemId.GOLD_SHOP: # 小屋商店
+            return self.get_inventory((eInventoryType.Item, 90007))
         elif shop_id == eSystemId.COUNTER_STOP_SHOP: # 大师店
             return self.get_inventory((eInventoryType.Item, 90008))
         else:

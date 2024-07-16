@@ -1,4 +1,4 @@
-import os
+import os, io
 from typing import List
 from PIL import Image, ImageFont 
 from ..constants import DATA_DIR
@@ -18,10 +18,12 @@ class Drawer():
             'font': '#DFE2E6',
             'rowline': 'white',
             'colline': 'white',
-            'success': '#255035',
-            'skip': '#35778D',
-            'abort': '#937526',
-            'error': '#79282C',
+            '成功': '#255035',
+            '跳过': '#35778D',
+            '警告': '#FF8C00',
+            '中止': '#937526',
+            '错误': '#79282C',
+            '致命': '#8B0000',
         }
 
     def light_color(self):
@@ -33,10 +35,12 @@ class Drawer():
             'font': 'black',
             'rowline': 'black',
             'colline': 'black',
-            'success': '#E1FFB5',
-            'skip': '#C8D6FA',
-            'abort': 'yellow',
-            'error': 'red',
+            '成功': '#E1FFB5',
+            '跳过': '#C8D6FA',
+            '警告': '#FFD700',
+            '中止': 'yellow',
+            '错误': 'red',
+            '致命': '#8B0000',
         }
 
     def color(self):
@@ -62,12 +66,12 @@ class Drawer():
             if value.log == "功能未启用":
                 continue
             cnt += 1
-            content.append([str(cnt), value.name.strip(), value.config.strip(), "#"+value.status.strip(), value.log.strip()])
+            content.append([str(cnt), value.name.strip(), value.config.strip(), "#"+value.status.value, value.log.strip()])
         img = await self.draw(header, content)
         return img
 
     async def draw_task_result(self, data: "ModuleResult") -> Image.Image:
-        content = [["配置", data.config.strip()], ["状态", "#"+data.status.strip()], ["结果", data.log.strip()]]
+        content = [["配置", data.config.strip()], ["状态", "#"+data.status.value], ["结果", data.log.strip()]]
         header = ["名字", data.name.strip()]
         img = await self.draw(header, content)
         return img
@@ -92,5 +96,11 @@ class Drawer():
             x_offset += img.size[0]
 
         return new_image
+    
+    async def img2bytesio(self, img: Image.Image) -> io.BytesIO:
+        img_byte_arr = io.BytesIO()
+        img.save(img_byte_arr, format='JPEG')
+        img_byte_arr.seek(0)
+        return img_byte_arr
 
 instance = Drawer()

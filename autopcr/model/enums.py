@@ -20,13 +20,16 @@ class eInventoryType(IntEnum):
     BankGold = 17
     ExtraEquip = 18
     CustomMyPageFrame = 19
-    EquipmentBox = 50
-    SeasonPassStamina = 51
     RoomItemLevelUp = 901
-    SeasonPassPoint = 1001
-    SeasonPassLevel = 1002
     Other = 9999
     INVALID_VALUE = -1
+    CaravanItem = 21
+    CaravanTreasure = 22
+    CaravanDish = 23
+    EquipmentBox = 50
+    SeasonPassStamina = 51
+    SeasonPassPoint = 1001
+    SeasonPassLevel = 1002
 
 class ePromotionLevel(IntEnum):
     LEVEL_1 = 1
@@ -119,6 +122,17 @@ class ePartyType(IntEnum):
     STORY_RAID_EVENT_RAID_4 = 1008
     MIROKU_MAIN_BATTLE = 3008
     INVALID_VALUE = -1
+    BYWAY_QUEST = 42
+    BYWAY_QUEST_EX = 43
+    COLOSSEUM_NORMAL_1 = 44
+    COLOSSEUM_NORMAL_2 = 45
+    COLOSSEUM_NORMAL_3 = 46
+    COLOSSEUM_HARD_1 = 47
+    COLOSSEUM_HARD_2 = 48
+    COLOSSEUM_HARD_3 = 49
+    COLOSSEUM_EXTRA_1 = 50
+    COLOSSEUM_EXTRA_2 = 51
+    COLOSSEUM_EXTRA_3 = 52
 
 class eClanRole(IntEnum):
     MEMBER = 0
@@ -326,6 +340,13 @@ class eSystemId(IntEnum):
     SHIORI_EVENT_COMMON_BOSS = 8008
     SHIORI_EVENT_VERY_HARD_BOSS = 8010
     INVALID_VALUE = -1
+    BYWAY_QUEST = 126
+    COLOSSEUM = 127
+    CARAVAN = 128
+    SEASON_PASS = 90001
+    MONTHLY_GACHA = 90002
+    CARAVAN_MILE_SHOP = 990001
+    CARAVAN_COIN_SHOP = 990002
 
 class eShopItemBannerType(IntEnum):
     NONE = 0
@@ -445,6 +466,8 @@ class eGachaDrawType(IntEnum):
     SpFesCmapaign10Shot = 10
     SpFesDiscount10Shot = 11
     INVALID_VALUE = -1
+    Monthly_Free_Single = 9005
+    Monthly_Free_Multi = 9006
 
 class eSkillLocationCategory(IntEnum):
     NO_SKILLSLOT = 0
@@ -578,3 +601,9 @@ class eStoryVisibleType(IntEnum):
 	DUMMY_STORY_ONLY_ALBUM = 10
 	DUMMY_STORY_NOT_OP_LOGO = 11
 	EVENT_SPECIAL_STORY = 12
+
+class eRoundEventResultType(IntEnum):
+    SUCCESS = 1
+    FAILURE = 2
+    END = 3
+

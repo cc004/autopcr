@@ -70,7 +70,8 @@ class main_story_reading(Module):
         for story in db.main_story:
             if story.story_id not in read_story and story.pre_story_id in read_story:
                 if not await client.unlock_quest_id(story.unlock_quest_id):
-                    raise AbortError(f"区域{story.unlock_quest_id}未通关，无法观看{story.title}\n")
+                    self._log(f"区域{story.unlock_quest_id}未通关，无法观看{story.title}\n")
+                    break
                 await client.read_story(story.story_id)
                 read_story.add(story.story_id)
                 self._log(f"阅读了{story.title}")
@@ -94,7 +95,8 @@ class tower_story_reading(Module):
             if story.story_id not in read_story and story.pre_story_id in read_story:
                 if not await client.unlock_quest_id(story.unlock_quest_id):
                     floor_num = db.tower_quest[story.unlock_quest_id].floor_num if story.unlock_quest_id in db.tower_quest else 0
-                    raise AbortError(f"层数{floor_num}未通关，无法观看{story.title}\n")
+                    self._log(f"层数{floor_num}未通关，无法观看{story.title}\n")
+                    break
                 await client.read_story(story.story_id)
                 read_story.add(story.story_id)
                 self._log(f"阅读了{story.title}")
@@ -147,7 +149,7 @@ class hatsune_sub_story_reading(Module):
         for sub_storys in client.data.event_sub_story.values() or []:
             reader = GetSubStoryReader(sub_storys, client)
             if not reader:
-                self._log(f"暂不支持的活动{db.event_name[sub_storys.event_id]}")
+                self._warn(f"暂不支持的活动{db.event_name[sub_storys.event_id]}")
                 continue
 
             if any(sub_story.status == eEventSubStoryStatus.ADDED for sub_story in sub_storys.sub_story_info_list):

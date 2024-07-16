@@ -3,6 +3,7 @@ from types import MethodType
 from dataclasses import dataclass
 from ..core import pcrclient
 from ..model.error import SkipError
+from ..db.database import db
 
 @dataclass
 class Config():
@@ -13,7 +14,7 @@ class Config():
     config_type: str
     _parent: "Module"
 
-    async def do_check(self, client: pcrclient) -> Tuple[bool, str]: ...
+    async def do_check(self, client: Union[None, pcrclient] = None) -> Tuple[bool, str]: ...
 
     @property
     def candidates(self):
@@ -66,13 +67,18 @@ def config_option(key:str, desc: str, default, candidates: Union[list, Callable]
         cls.config[key] = config
 
         if check:
-            old_do_task = cls.do_task
-            async def do_task(*args, **kwargs):
+            old_do_check = cls.do_check
+            async def new_do_check(*args, **kwargs):
+                ok, msg = await old_do_check(*args, **kwargs)
+                if not ok:
+                    return False, msg
+
                 ok, msg = await config.do_check(*args, **kwargs)
                 if not ok:
-                    raise SkipError(msg)
-                await old_do_task(*args, **kwargs)
-            cls.do_task = do_task
+                    return False, msg
+                return True, ""
+
+            cls.do_check = new_do_check
 
         return cls
 
@@ -103,25 +109,33 @@ def timetype(key:str, desc: str, default):
         return config_option(key=key, desc=desc, default=default, config_type='time')(cls)
     return decorator
 
-def conditional_execution(key: str, default, desc: str = "执行条件", check: bool = True):
+def conditional_execution1(key: str, default, desc: str = "执行条件", check: bool = True): # need login
     async def do_check(self, client: pcrclient) -> Tuple[bool, str]:
-        run_time = set(self.get_value())
-        if not (
-        "无庆典" in run_time and not client.data.is_quest_campaign()
-        or "n庆典" in run_time and client.data.is_normal_quest_campaign()
-        or  "h庆典" in run_time and client.data.is_hard_quest_campaign()
-        or  "vh庆典" in run_time and client.data.is_very_hard_quest_campaign()
-        or "总是执行" in run_time):
-            return False, "今日不符合执行条件，不刷取"
-        return True, ""
+        run_time = self.get_value()
+        hit = [campaign for campaign in run_time if client.data.is_campaign(campaign)]
+        if hit:
+            return True, "今日" + ','.join(hit) + "，执行"
+        return False, "今日不符合执行条件"
 
     return multichoice(key=key, desc=desc, default=default, candidates=["无庆典", "n庆典", "h庆典", "vh庆典", "总是执行"], do_check = do_check, check = check)
 
+def conditional_execution2(key: str, default, desc: str = "执行条件", check: bool = True): # not need login
+    async def do_check(self) -> Tuple[bool, str]:
+        run_time = self.get_value()
+        hit = [campaign for campaign in run_time if db.is_campaign(campaign)]
+        if hit:
+            return True, "今日" + ','.join(hit) + "，执行"
+        return False, "今日不符合执行条件"
+
+    return multichoice(key=key, desc=desc, default=default, candidates=['n3以上前夕','n3以上首日午前','h3以上前夕','会战前夕','会战期间','总是执行'], do_check = do_check, check = check)
+
+
 def conditional_not_execution(key: str, default, desc: str = "不执行条件", check: bool = True):
     async def do_check(self, client: pcrclient) -> Tuple[bool, str]:
-        run_time = set(self.get_value())
-        if any(client.data.is_campaign(campaign) for campaign in run_time):
-            return False, "今日符合不执行条件，不刷取"
+        run_time = self.get_value()
+        hit = [campaign for campaign in run_time if client.data.is_campaign(campaign)]
+        if hit:
+            return False, "今日" + ','.join(hit) + "，不执行"
         return True, ""
 
     return multichoice(key=key, desc=desc, default=default, candidates=["n2", "n3", "n4及以上", "h2", "h3及以上", "vh2", "vh3及以上"], do_check = do_check, check = check)

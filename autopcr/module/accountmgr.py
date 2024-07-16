@@ -3,9 +3,9 @@
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
 from ..core.pcrclient import pcrclient
-from .modulemgr import ModuleManager
+from .modulemgr import ModuleManager, TaskResult, ModuleResult
 import os, re, shutil
-from typing import Any, Dict, Iterator, List
+from typing import Any, Dict, Iterator, List, Union
 from ..constants import CONFIG_PATH, OLD_CONFIG_PATH, RESULT_DIR
 from asyncio import Lock
 import json
@@ -13,7 +13,7 @@ from copy import deepcopy
 import hashlib
 from ..db.database import db
 import datetime
-from PIL import Image
+import traceback
 
 class AccountException(Exception):
     pass
@@ -82,11 +82,12 @@ class Account(ModuleManager):
         with open(self._filename, 'w') as f:
             f.write(self.data.to_json())
 
-    async def save_daily_result(self, result: Image.Image, status: str) -> str:
+    async def save_daily_result(self, result: TaskResult, status: str):
         now = datetime.datetime.now()
         time_safe = db.format_time_safe(now)
-        file = os.path.join(RESULT_DIR, f"{self.token}_daily_{time_safe}.jpg")
-        result.save(file, optimize=True, quality=75)
+        file = os.path.join(RESULT_DIR, f"{self.token}_daily_{time_safe}.json")
+        with open(file, 'w') as f:
+            f.write(result.to_json())
 
         old_list = self.data.daily_result
         while len(old_list) >= 4:
@@ -95,41 +96,38 @@ class Account(ModuleManager):
             old_list.pop()
         item = DailyResult(path = file, time = db.format_time(now), time_safe=time_safe, status = status)
         self.data.daily_result = [item] + old_list
-        return file
 
-    async def save_single_result(self, module: str, result: Image.Image) -> str:
-        file = os.path.join(RESULT_DIR, f"{self.token}_{module}.jpg")
-        result.save(file, optimize=True, quality=75)
-        return file
-
-    async def save_single_result_text(self, module: str, result: str) -> str:
-        file = os.path.join(RESULT_DIR, f"{self.token}_{module}.txt")
+    async def save_single_result(self, module: str, result: ModuleResult):
+        file = os.path.join(RESULT_DIR, f"{self.token}_{module}.json")
         with open(file, 'w') as f:
-            f.write(result)
-        return file
+            f.write(result.to_json())
 
-    async def get_daily_result_from_id(self, id: int = 0) -> str:
+    async def get_daily_result_from_id(self, id: int = 0) -> Union[None, TaskResult]:
         if len(self.data.daily_result) > id:
-            return self.data.daily_result[id].path
+            try:
+                with open(self.data.daily_result[id].path, 'r') as f:
+                    return TaskResult.from_json(f.read())
+            except Exception as e:
+                traceback.print_exc()
+                return None
         else:
-            return ""
+            return None
 
-    async def get_daily_result_from_time(self, safe_time: str) -> str:
+    async def get_daily_result_from_time(self, safe_time: str) -> Union[None, TaskResult]:
         ret = [daily_result.path for daily_result in self.data.daily_result if safe_time == daily_result.time_safe]
         if ret:
-            return ret[0]
+            with open(ret[0], 'r') as f:
+                return TaskResult.from_json(f.read())
         else:
-            return ""
+            return None
 
-    async def get_single_result(self, module) -> str:
-        file = os.path.join(RESULT_DIR, f"{self.token}_{module}.jpg")
-        file2 = os.path.join(RESULT_DIR, f"{self.token}_{module}.txt")
+    async def get_single_result(self, module) -> Union[None, ModuleResult]:
+        file = os.path.join(RESULT_DIR, f"{self.token}_{module}.json")
         if os.path.exists(file):
-            return file
-        elif os.path.exists(file2):
-            return file2
+            with open(file, 'r') as f:
+                return ModuleResult.from_json(f.read())
         else:
-            return ""
+            return None
 
     def get_last_daily_clean(self) -> DailyResult:
         if self.data.daily_result:
@@ -173,6 +171,14 @@ class Account(ModuleManager):
             'area': [{"key": 'daily', "name":"日常"}, {"key": 'tools', "name":"工具"}]
         }
 
+    def generate_result_info(self):
+        ret = {
+            'name': self.alias,
+            'daily_clean_time': self.get_last_daily_clean().to_dict(),
+            'daily_clean_time_list': [daily_result.safe_info().to_dict() for daily_result in self.data.daily_result],
+            }
+        return ret
+
     def generate_daily_info(self):
         info = super().generate_daily_config()
         return info
@@ -183,6 +189,10 @@ class Account(ModuleManager):
 
     def delete(self):
         self._parent.delete(self.alias)
+
+    def is_clan_battle_forbidden(self):
+        username = self.data.username.lower()
+        return self._parent._parent.is_clan_battle_forbidden(username)
 
 class AccountManager:
     pathsyntax = re.compile(r'[^\\\|?*/]{1,32}')
@@ -270,11 +280,7 @@ class AccountManager:
         accounts = []
         for account in self.accounts():
             async with self.load(account, readonly = True) as acc:
-                accounts.append({
-                    'name': account,
-                    'daily_clean_time': acc.get_last_daily_clean().to_dict(),
-                    'daily_clean_time_list': [daily_result.safe_info().to_dict() for daily_result in acc.data.daily_result],
-                    })
+                accounts.append(acc.generate_result_info())
         return {
             'qq': self.qid,
             'default_account': self.default_account,
@@ -288,6 +294,16 @@ class UserManager:
         self.root = root
         self.user_lock: Dict[str, Lock] = {}
         self.account_lock: Dict[str, Dict[str, Lock]] = {}
+        self.clan_battle_forbidden = set()
+
+    def is_clan_battle_forbidden(self, username: str) -> bool:
+        if os.path.exists(os.path.join(CONFIG_PATH, 'clan_battle_forbidden.txt')):
+            with open(os.path.join(CONFIG_PATH, 'clan_battle_forbidden.txt'), 'r') as f:
+                data = f.read().splitlines()
+                self.clan_battle_forbidden = set([x.strip().lower() for x in data])
+            return username in self.clan_battle_forbidden
+        else:
+            return False
 
     def validate_password(self, qid: str, password: str) -> bool:
         try:
