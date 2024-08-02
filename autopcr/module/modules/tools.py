@@ -313,7 +313,7 @@ class jjc_back(Arena):
 
         under_rank_bonus_unit = [unit for unit in units_id if client.data.unit[unit].promotion_level < db.equip_max_rank - 1]
         if under_rank_bonus_unit:
-            self._log(f"警告：{'|'.join([db.get_unit_name(unit_id) for unit_id in under_rank_bonus_unit])}无品级加成")
+            self._warn(f"警告：{'|'.join([db.get_unit_name(unit_id) for unit_id in under_rank_bonus_unit])}无品级加成")
 
         await client.deck_update(ePartyType.ARENA, units_id)
 
@@ -392,7 +392,7 @@ class pjjc_back(Arena):
         under_rank_bonus_unit = [uni_id for unit_id in units_id for uni_id in unit_id if 
                                  client.data.unit[uni_id].promotion_level < db.equip_max_rank - 1]
         if under_rank_bonus_unit:
-            self._log(f"警告：{'|'.join([db.get_unit_name(unit_id) for unit_id in under_rank_bonus_unit])}无品级加成")
+            self._warn(f"警告：{'|'.join([db.get_unit_name(unit_id) for unit_id in under_rank_bonus_unit])}无品级加成")
 
         deck_list = []
         for i, unit_id in enumerate(units_id):
@@ -551,9 +551,11 @@ class get_need_xinsui(Module):
         result = sorted(result, key=lambda x: x[1])
         msg = [f"{db.get_inventory_name_san(item[0])}: 需要{item[1]}片" for item in result]
 
-        store = client.data.get_inventory(db.xinsui) + client.data.get_inventory(db.heart) * 10
+        piece = client.data.get_inventory(db.xinsui)
+        heart = client.data.get_inventory(db.heart)
+        store = piece + heart * 10
         cnt = need - store
-        tot = f"当前心碎数量为{store}(大心自动转换成10心碎)，需要{need}，"
+        tot = f"当前心碎数量为{store}={piece}+{heart}*10，需要{need}，"
         if cnt > 0:
             tot += f"缺口数量为:{cnt}"
         elif cnt < 0:
