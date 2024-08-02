@@ -42,7 +42,8 @@ class hatsune_h_sweep(Module):
                 except SkipError as e:
                     self._log(f"{quest_id}: {str(e)}")
                 except AbortError as e:
-                    is_abort = True
+                    if not str(e).endswith("体力不足"):
+                        is_abort = True
                     self._log(f"{quest_id}: {str(e)}")
                     break
                 except Exception as e: 
