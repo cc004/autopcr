@@ -1,3 +1,4 @@
+from typing import Union
 from ..core.pcrclient import pcrclient
 from ..model.common import EventSubStory
 from ..db.database import db
@@ -25,10 +26,23 @@ class SubStoryReader:
     def __init__(self, client: pcrclient):
         self.client = client
 
-def GetSubStoryReader(sub_story_data: EventSubStory, client: pcrclient) -> SubStoryReader:
+def GetSubStoryReader(sub_story_data: EventSubStory, client: pcrclient) -> Union[SubStoryReader, None]:
     if sub_story_data.event_id in constructor:
         return constructor[sub_story_data.event_id](client)
     return None
+
+@EventId(10098)
+class lsv_substory(SubStoryReader):
+
+    def is_readable(self, sub_story_id: int) -> bool:
+        open_time = db.parse_time(db.lsv_story_data[sub_story_id].time_condition)
+        return datetime.datetime.now() >= open_time
+
+    def title(self, sub_story_id: int) -> str:
+        return db.lsv_story_data[sub_story_id].title
+
+    async def read(self, sub_story_id: int):
+        await self.client.read_lsv_story(sub_story_id)
 
 @EventId(10084)
 @EventId(10085)

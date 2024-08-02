@@ -212,7 +212,7 @@ class unit_equip_enhance_up(UnitController):
                 equip = self.unit.equip_slot[id]
                 
                 if equip.id == 999999: # 未实装
-                    continue
+                    raise AbortError("装备已强化至最高级，请更换角色")
 
                 slot_num = id + 1
                 if not equip.is_slot:
