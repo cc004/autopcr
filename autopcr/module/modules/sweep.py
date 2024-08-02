@@ -154,13 +154,21 @@ class special_underground_skip(Module):
         secret_dungeon_retreat = self.get_config("secret_dungeon_retreat")
 
         def dungeon_name(id: int):
-            return db.secret_dungeon_area[id].dungeon_name
+            if id in db.dungeon_area:
+                return db.dungeon_area[id].dungeon_name
+            elif id in db.secret_dungeon_area:
+                return db.secret_dungeon_area[id].dungeon_name
+            else:
+                return f"未知地下城{id}"
 
         async def do_retreat(id: int):
             await client.reset_special_dungeon(id)
             self._log(f"从【{dungeon_name(id)}】撤退")
 
         async def do_enter(id):
+            if db.secret_dungeon_area[id].open_area_id not in infos.dungeon_cleared_area_id_list:
+                raise AbortError(f"【{dungeon_name(id)}】未讨伐，无法进入特别地下城")
+
             await client.deck_update(ePartyType.DUNGEON, [0, 0, 0, 0, 0], sorted=True)
 
             req = await client.enter_special_dungeon(id)
