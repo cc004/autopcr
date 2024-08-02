@@ -295,6 +295,11 @@ class pcrclient(apiclient):
         await self.story_check(story_id)
         return await self.story_view(story_id)
 
+    async def read_lsv_story(self, sub_story_id: int):
+        req = SubStoryLsvReadStoryRequest()
+        req.sub_story_id = sub_story_id
+        await self.request(req)
+
     async def read_ysn_story(self, sub_story_id: int):
         req = SubStoryYsnReadStoryRequest()
         req.sub_story_id = sub_story_id

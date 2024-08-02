@@ -448,7 +448,7 @@ async def clean_daily_time(botev: BotEvent, accmgr: AccountManager):
 @wrap_hoshino_event
 async def cron_log(botev: BotEvent):
     from .autopcr.module.crons import CRONLOG_PATH, CronLog
-    with open(CRONLOG_PATH, 'r', encoding='utf-8') as f:
+    with open(CRONLOG_PATH, 'r') as f:
         msg = [CronLog.from_json(line.strip()) for line in f.readlines()]
     args = await botev.message()
     cur = datetime.datetime.now()
@@ -476,7 +476,7 @@ async def cron_log(botev: BotEvent):
 @wrap_hoshino_event
 async def cron_status(botev: BotEvent):
     from .autopcr.module.crons import CRONLOG_PATH, CronLog, CronOperation
-    with open(CRONLOG_PATH, 'r', encoding='utf-8') as f:
+    with open(CRONLOG_PATH, 'r') as f:
         logs = [CronLog.from_json(line.strip()) for line in f.readlines()]
     cur = datetime.datetime.now()
     msg = await botev.message()

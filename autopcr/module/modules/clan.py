@@ -66,7 +66,10 @@ class clan_equip_request(Module):
         config_color: str = self.get_config('clan_equip_request_color')
         target_level = self.color_to_promotion[config_color]
 
-        consider_equip = [(equip_id, num) for (item_type, equip_id), num in demand.items() if db.equip_data[equip_id].enable_donation and (db.equip_data[equip_id].promotion_level == target_level or config_color == 'all')]
+        consider_equip = [(equip_id, num) for (item_type, equip_id), num in demand.items() if 
+                          db.equip_data[equip_id].enable_donation and 
+                          db.equip_data[equip_id].require_level <= client.data.team_level and
+                          (db.equip_data[equip_id].promotion_level == target_level or config_color == 'all')]
         consider_equip = sorted(consider_equip, key=lambda x: x[1], reverse=True)
 
         if consider_equip:

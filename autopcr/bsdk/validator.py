@@ -71,6 +71,8 @@ async def autoValidator(account, gt, challenge, userid):
             res = loads(res)
             if "queue_num" in res:
                 nu = res["queue_num"]
+                if nu >= 20: raise Exception("Captcha failed")
+
                 msg.append(f"queue_num={nu}")
                 tim = min(int(nu), 3) * 10
                 msg.append(f"sleep={tim}")
@@ -78,7 +80,7 @@ async def autoValidator(account, gt, challenge, userid):
                 msg = []
                 print(f'farm: {uuid} in queue, sleep {tim} seconds')
                 await asyncio.sleep(tim)
-                if tim >= 30: ccnt += 1
+                if tim >= 30: ccnt += 2
             else:
                 info = res["info"]
                 if info in ["fail", "url invalid"]:

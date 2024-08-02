@@ -42,7 +42,8 @@ class hatsune_h_sweep(Module):
                 except SkipError as e:
                     self._log(f"{quest_id}: {str(e)}")
                 except AbortError as e:
-                    is_abort = True
+                    if not str(e).endswith("体力不足"):
+                        is_abort = True
                     self._log(f"{quest_id}: {str(e)}")
                     break
                 except Exception as e: 
@@ -241,11 +242,27 @@ class all_in_hatsune(Module):
         event_name = db.event_name[sweep_hatsune_id]
         self._log(f"刷取{event_name}活动")
 
-        count = client.data.stamina // db.quest_info[quest].stamina
+        count = 0
+        while True:
+            try:
+                await client.quest_skip_aware(quest, 12)
+                count += 12
+            except SkipError as e:
+                pass
+            except AbortError as e:
+                if not str(e).endswith("体力不足"):
+                    self._log(f"{str(e)}")
+                    raise AbortError("")
+                break
 
-        if count == 0: 
-            self._log("体力不足")
-        else:
-            await client.quest_skip_aware(quest, count)
+        remain = client.data.stamina // db.quest_info[quest].stamina
+
+        if remain: 
+            await client.quest_skip_aware(quest, remain)
+            count += remain
+
+        if count:
             self._log(f"已刷{quest}图{count}次")
+        else:
+            raise SkipError("体力不足")
 
