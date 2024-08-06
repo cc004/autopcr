@@ -3,7 +3,9 @@
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
 from ..core.pcrclient import pcrclient
+from ..core.sdkclient import account, platform
 from .modulemgr import ModuleManager, TaskResult, ModuleResult
+from ..bsdk.bsdkclient import create
 import os, re, shutil
 from typing import Any, Dict, Iterator, List, Union
 from ..constants import CONFIG_PATH, OLD_CONFIG_PATH, RESULT_DIR
@@ -139,21 +141,19 @@ class Account(ModuleManager):
         return self.get_android_client()
 
     def get_ios_client(self) -> pcrclient: # Header TODO
-        client = pcrclient({
-            'account': self.data.username,
-            'password': self.data.password,
-            'channel': 1000,
-            'platform': 1
-        })
+        client = pcrclient(create(account(
+            self.data.username,
+            self.data.password,
+            platform.IOS
+        )))
         return client
 
     def get_android_client(self) -> pcrclient:
-        client = pcrclient({
-            'account': self.data.username,
-            'password': self.data.password,
-            'channel': 1,
-            'platform': 2
-        })
+        client = pcrclient(create(account(
+            self.data.username,
+            self.data.password,
+            platform.Android
+        )))
         return client
 
     def generate_info(self):

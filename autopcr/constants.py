@@ -1,5 +1,7 @@
 import os
 
+
+SDK_CLIENT = 'bsdkclient' # bsdkclient: b服, qsdkclient: 渠道服
 ROOT_DIR = os.path.join(os.path.dirname(__file__), '..')
 CACHE_DIR = os.path.join(ROOT_DIR, './cache/')
 RESULT_DIR = os.path.join(ROOT_DIR, './result/')
@@ -26,7 +28,7 @@ DEFAULT_HEADERS = {
     'LOCALE': 'CN',
     'PLATFORM-OS-VERSION': 'Android OS 5.1.1 / API-22 (LMY48Z/rel.se.infra.20200612.100533)',
     'REGION-CODE': '',
-    'RES-KEY': 'ab00a0a6dd915a052a2ef7fd649083e5',
+    # 'RES-KEY': 'ab00a0a6dd915a052a2ef7fd649083e5',
     'RES-VER': '10002200',
     'SHORT-UDID': '0'
 }
@@ -48,7 +50,7 @@ IOS_HEADERS = {
     'LOCALE': 'CN',
     'PLATFORM-OS-VERSION': 'iOS 17.3',
     'REGION-CODE': '',
-    'RES-KEY': 'ab00a0a6dd915a052a2ef7fd649083e5',
+    # 'RES-KEY': 'ab00a0a6dd915a052a2ef7fd649083e5',
     'RES-VER': '10002200',
     'SHORT-UDID': '0'
 }
