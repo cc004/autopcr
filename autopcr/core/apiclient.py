@@ -11,6 +11,7 @@ from json import loads
 from hashlib import md5
 from Crypto.Cipher import AES
 from base64 import b64encode, b64decode
+from .sdkclient import sdkclient
 from traceback import print_exc
 from ..constants import DEFAULT_HEADERS, IOS_HEADERS, refresh_headers
 
@@ -51,20 +52,16 @@ TResponse = TypeVar('TResponse', bound=ResponseBase, covariant=True)
 class apiclient(Container["apiclient"]):
     server_time: int = 0
     viewer_id: int = 0
-    servers: list = ['https://l3-prod-all-gs-gzlj.bilibiligame.net/']
+    servers: list = [] #['https://l3-prod-all-gs-gzlj.bilibiligame.net/']
     active_server: int = 0
     _requestid: str = ''
     _sessionid: str=  ''
-    def __init__(self, account):
+    def __init__(self, sdk: sdkclient):
         super().__init__()
-        self._headers = {}
-        platform = account['platform']
-        if platform == 2:
-            for key in DEFAULT_HEADERS.keys():
-                self._headers[key] = DEFAULT_HEADERS[key]
-        else:
-            for key in IOS_HEADERS.keys():
-                self._headers[key] = IOS_HEADERS[key]
+        self._headers = sdk.header()
+        self.servers = [
+            sdk.apiroot
+        ]
         self._lck = Lock()
 
     @property
