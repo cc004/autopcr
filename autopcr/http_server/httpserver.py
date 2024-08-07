@@ -149,8 +149,10 @@ class HttpServer:
                 data = await request.get_json()
                 if 'username' in data:
                     account.data.username = data['username']
-                if 'password' in data:
+                if 'password' in data and data['password'] != '*' * 8:
                     account.data.password = data['password']
+                if 'channel' in data:
+                    account.data.channel = data['channel']
                 return "保存账户信息成功", 200
             elif request.method == "DELETE":
                 account.delete()

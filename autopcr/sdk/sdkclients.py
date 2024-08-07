@@ -1,7 +1,7 @@
 from .bsgamesdk import login
 from ..model.error import PanicError
-from ..core.sdkclient import sdkclient, account
-from ..constants import SDK_CLIENT
+from ..core.sdkclient import sdkclient
+from ..constants import BSDK, QSDK
 
 class bsdkclient(sdkclient):
     async def login(self):
@@ -52,9 +52,11 @@ class qsdkclient(sdkclient):
         raise NotImplementedError
                   
 sdkclients = {
-    'bsdkclient': bsdkclient,
-    'qsdkclient': qsdkclient
+    BSDK: bsdkclient,
+    QSDK: qsdkclient
 }
 
-def create(*args, **kwargs) -> sdkclient:
-    return sdkclients[SDK_CLIENT](*args, **kwargs)
+def create(channel, *args, **kwargs) -> sdkclient:
+    if channel not in sdkclients:
+        raise ValueError(f"Invalid channel {channel}")
+    return sdkclients[channel](*args, **kwargs)

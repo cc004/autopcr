@@ -1,9 +1,9 @@
 import os
 
-BSDK = 'bsdkclient'
-QSDK = 'qsdkclient'
+BSDK = '官服'
+QSDK = '渠道服'
 
-SDK_CLIENT = BSDK # BSDK: b服, QSDK: 渠道服
+CHANNEL_OPTION = [BSDK, QSDK]
 
 DEBUG_LOG = False
 ERROR_LOG = True
