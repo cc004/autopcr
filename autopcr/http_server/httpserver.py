@@ -269,7 +269,7 @@ class HttpServer:
         @HttpServer.wrapaccountmgr(readonly = True)
         @HttpServer.wrapaccount(readonly = True)
         async def query_validate(mgr: Account):
-            from ..bsdk.validator import validate_dict, ValidateInfo
+            from ..sdk.validator import validate_dict, ValidateInfo
             if mgr.data.username not in validate_dict:
                 return ValidateInfo(status="empty").to_dict(), 200
             else:
@@ -280,11 +280,11 @@ class HttpServer:
         @self.api.route('/validate', methods = ['POST'])
         async def validate(): # TODO think to check login or not
             data = await request.get_json()
-            from ..bsdk.validator import validate_ok_dict
+            from ..sdk.validator import validate_ok_dict
             if 'id' not in data:
                 return "incorrect", 403
             id = data['id']
-            from ..bsdk.validator import ValidateInfo
+            from ..sdk.validator import ValidateInfo
             validate_ok_dict[id] = ValidateInfo.from_dict(data)
             return "", 200
 

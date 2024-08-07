@@ -1,8 +1,8 @@
 from enum import Enum
 from typing import Tuple
 from abc import abstractmethod
-from ..bsdk.validator import autoValidator
-from ..bsdk.bsgamesdk import captch
+from ..sdk.validator import autoValidator
+from ..sdk.bsgamesdk import captch
 from copy import deepcopy
 from ..constants import DEFAULT_HEADERS, IOS_HEADERS
 
