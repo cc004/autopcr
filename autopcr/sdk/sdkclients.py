@@ -57,5 +57,4 @@ sdkclients = {
 }
 
 def create(*args, **kwargs) -> sdkclient:
-    # from ..bsdk.bsdkclient import *
     return sdkclients[SDK_CLIENT](*args, **kwargs)

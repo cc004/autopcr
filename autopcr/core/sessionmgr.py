@@ -10,9 +10,9 @@ class sessionmgr(Component[apiclient]):
     def __init__(self, sdk: sdkclient, *arg, **kwargs):
         super().__init__()
         self.cacheDir = os.path.join(CACHE_DIR, 'token')
-        self.bsdk = sdk
-        self._platform = self.bsdk.platform_id
-        self._channel = self.bsdk.channel
+        self.sdk = sdk
+        self._platform = self.sdk.platform_id
+        self._channel = self.sdk.channel
         self._account: str = sdk.account
         self._logged = False
         self.auto_relogin = True
@@ -22,7 +22,7 @@ class sessionmgr(Component[apiclient]):
         self.cacheFile = os.path.join(self.cacheDir, hashlib.md5(self._account.encode('utf-8')).hexdigest())
 
     async def _bililogin(self):
-        uid, access_key = await self.bsdk.login()
+        uid, access_key = await self.sdk.login()
         self._sdkaccount = {
                 'uid': uid,
                 'access_key': access_key
@@ -45,7 +45,7 @@ class sessionmgr(Component[apiclient]):
                             break
                         else:
                             for _ in range(5):
-                                captch_done = await self.bsdk.do_captcha()
+                                captch_done = await self.sdk.do_captcha()
                                 req = ToolSdkLoginRequest(
                                     uid=self._sdkaccount['uid'],
                                     access_key=self._sdkaccount['access_key'],
@@ -72,7 +72,7 @@ class sessionmgr(Component[apiclient]):
         except Exception:
             raise
         finally:
-            from ..bsdk.validator import validate_dict, ValidateInfo
+            from ..sdk.validator import validate_dict, ValidateInfo
             validate_dict[self._account] = ValidateInfo(status="ok")
 
     async def _login(self, next: RequestHandler):

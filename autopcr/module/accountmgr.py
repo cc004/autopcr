@@ -5,7 +5,7 @@ from dataclasses_json import dataclass_json
 from ..core.pcrclient import pcrclient
 from ..core.sdkclient import account, platform
 from .modulemgr import ModuleManager, TaskResult, ModuleResult
-from ..bsdk.bsdkclient import create
+from ..sdk.sdkclients import create
 import os, re, shutil
 from typing import Any, Dict, Iterator, List, Union
 from ..constants import CONFIG_PATH, OLD_CONFIG_PATH, RESULT_DIR

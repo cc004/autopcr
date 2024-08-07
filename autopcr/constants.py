@@ -1,7 +1,10 @@
 import os
 
+BSDK = 'bsdkclient'
+QSDK = 'qsdkclient'
 
-SDK_CLIENT = 'bsdkclient' # bsdkclient: b服, qsdkclient: 渠道服
+SDK_CLIENT = BSDK # BSDK: b服, QSDK: 渠道服
+
 DEBUG_LOG = False
 ERROR_LOG = True
 ROOT_DIR = os.path.join(os.path.dirname(__file__), '..')
