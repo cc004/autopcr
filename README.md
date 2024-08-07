@@ -21,7 +21,7 @@ py -3.8 httpserver_test.py
 
 ## 渠道服支持
 
-渠道服需要自抓`uid`和`access_key`，作为用户名和密码，渠道服和b服同一模块目前仅能支持一个，更改登录使用b服或者渠道服需要到`autopcr/constants.py`中修改`SDK_CLIENT`为`BSDK`或者`QSDK`（默认为`BSDK`，即b服）
+渠道服需要自抓`uid`和`access_key`，作为用户名和密码。
 
 ## Credits
 - aiorequests 来自 [HoshinoBot](https://github.com/Ice-Cirno/HoshinoBot)

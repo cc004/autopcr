@@ -33,7 +33,7 @@ class sdkclient:
         elif info.type == platform.IOS:
             self.platform = '1000'
         else:
-            raise NotImplementedError
+            raise ValueError(f"Invalid platform {info.type}")
         self._account = info
     '''
     returns: uid, access_key
@@ -50,6 +50,8 @@ class sdkclient:
             headers = deepcopy(DEFAULT_HEADERS)
         elif self._account.type == platform.IOS:
             headers = deepcopy(IOS_HEADERS)
+        else:
+            raise ValueError(f"Invalid platform {self._account.type}")
         
         headers['RES-KEY'] = self.reskey
         headers['PLATFORM'] = self.platform
