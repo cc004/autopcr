@@ -2,6 +2,8 @@ import os
 
 
 SDK_CLIENT = 'bsdkclient' # bsdkclient: b服, qsdkclient: 渠道服
+DEBUG_LOG = False
+ERROR_LOG = True
 ROOT_DIR = os.path.join(os.path.dirname(__file__), '..')
 CACHE_DIR = os.path.join(ROOT_DIR, './cache/')
 RESULT_DIR = os.path.join(ROOT_DIR, './result/')

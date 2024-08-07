@@ -62,6 +62,7 @@ class sdkclient:
     @abstractmethod
     def apiroot(self) -> str: ...
     
+    @property
     @abstractmethod
     def platform_id(self) -> str: ...
     
