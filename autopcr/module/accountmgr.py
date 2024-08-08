@@ -3,10 +3,12 @@
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
 from ..core.pcrclient import pcrclient
+from ..core.sdkclient import account, platform
 from .modulemgr import ModuleManager, TaskResult, ModuleResult
+from ..sdk.sdkclients import create
 import os, re, shutil
 from typing import Any, Dict, Iterator, List, Union
-from ..constants import CONFIG_PATH, OLD_CONFIG_PATH, RESULT_DIR
+from ..constants import CONFIG_PATH, OLD_CONFIG_PATH, RESULT_DIR, BSDK, CHANNEL_OPTION
 from asyncio import Lock
 import json
 from copy import deepcopy
@@ -36,6 +38,7 @@ class DailyResult:
 class AccountData:
     username: str = ""
     password: str = ""
+    channel: str = BSDK
     config: Dict[str, Any] = field(default_factory=dict)
     daily_result: List[DailyResult] = field(default_factory=list)
 
@@ -139,21 +142,19 @@ class Account(ModuleManager):
         return self.get_android_client()
 
     def get_ios_client(self) -> pcrclient: # Header TODO
-        client = pcrclient({
-            'account': self.data.username,
-            'password': self.data.password,
-            'channel': 1000,
-            'platform': 1
-        })
+        client = pcrclient(create(self.data.channel, account(
+            self.data.username,
+            self.data.password,
+            platform.IOS
+        )))
         return client
 
     def get_android_client(self) -> pcrclient:
-        client = pcrclient({
-            'account': self.data.username,
-            'password': self.data.password,
-            'channel': 1,
-            'platform': 2
-        })
+        client = pcrclient(create(self.data.channel, account(
+            self.data.username,
+            self.data.password,
+            platform.Android
+        )))
         return client
 
     def generate_info(self):
@@ -168,6 +169,8 @@ class Account(ModuleManager):
             'alias': self.alias,
             'username': self.data.username,
             'password': 8 * "*" if self.data.password else "",
+            'channel': self.data.channel,
+            'channel_option': CHANNEL_OPTION,
             'area': [{"key": 'daily', "name":"日常"}, {"key": 'tools', "name":"工具"}]
         }
 

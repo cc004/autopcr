@@ -151,7 +151,7 @@ def wrap_hoshino_event(func):
     return wrapper
 
 async def check_validate(botev: BotEvent, acc: Account):
-    from .autopcr.bsdk.validator import validate_dict
+    from .autopcr.sdk.validator import validate_dict
     for _ in range(360):
         if acc.data.username in validate_dict:
             status = validate_dict[acc.data.username].status

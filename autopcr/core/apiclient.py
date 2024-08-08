@@ -11,8 +11,8 @@ from json import loads
 from hashlib import md5
 from Crypto.Cipher import AES
 from base64 import b64encode, b64decode
-from traceback import print_exc
-from ..constants import DEFAULT_HEADERS, IOS_HEADERS, refresh_headers
+from .sdkclient import sdkclient
+from ..constants import refresh_headers, DEBUG_LOG, ERROR_LOG
 
 import json
 from enum import Enum
@@ -51,20 +51,16 @@ TResponse = TypeVar('TResponse', bound=ResponseBase, covariant=True)
 class apiclient(Container["apiclient"]):
     server_time: int = 0
     viewer_id: int = 0
-    servers: list = ['https://l3-prod-all-gs-gzlj.bilibiligame.net/']
+    servers: list = [] #['https://l3-prod-all-gs-gzlj.bilibiligame.net/']
     active_server: int = 0
     _requestid: str = ''
     _sessionid: str=  ''
-    def __init__(self, account):
+    def __init__(self, sdk: sdkclient):
         super().__init__()
-        self._headers = {}
-        platform = account['platform']
-        if platform == 2:
-            for key in DEFAULT_HEADERS.keys():
-                self._headers[key] = DEFAULT_HEADERS[key]
-        else:
-            for key in IOS_HEADERS.keys():
-                self._headers[key] = IOS_HEADERS[key]
+        self._headers = sdk.header()
+        self.servers = [
+            sdk.apiroot
+        ]
         self._lck = Lock()
 
     @property
@@ -134,10 +130,14 @@ class apiclient(Container["apiclient"]):
 
         response1 = apiclient._no_null_key(response0)
 
-        # with open('req.log', 'a') as fp:
-        #     fp.write(json.dumps(response0))
-        #     fp.write("\n-------\n")
-        #     fp.write(json.dumps(response1))
+        if DEBUG_LOG:
+            with open('req.log', 'a') as fp:
+                fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
+                fp.write(json.dumps(self._headers, indent=4, ensure_ascii=False) + '\n')
+                fp.write(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
+                fp.write(f'response from {urlroot}\n')
+                fp.write(json.dumps(dict(resp.headers), indent=4, ensure_ascii=False) + '\n')
+                fp.write(json.dumps(response0, indent=4, ensure_ascii=False) + '\n')
 
         response: Response[TResponse] = Response[cls].parse_obj(response1)
 
@@ -172,13 +172,24 @@ class apiclient(Container["apiclient"]):
 
 
         if response.data.server_error and "维护" not in response.data.server_error.message:
-            print(f'pcrclient: /{request.url} api failed {response.data.server_error}')
+            print(f'pcrclient: /{request.url} api failed={response.data_headers.result_code} {response.data.server_error}')
 
-            with open('error.log', 'a') as fp:
-               fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
-               fp.write(json.dumps(self._headers, indent=4, ensure_ascii=False) + '\n')
-               fp.write(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
-               fp.write(json.dumps(json.loads(response.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
+            if ERROR_LOG:
+                with open('error.log', 'a') as fp:
+                    fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
+                    fp.write(json.dumps(self._headers, indent=4, ensure_ascii=False) + '\n')
+                    fp.write(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
+                    fp.write(f'response from {urlroot}\n')
+                    fp.write(json.dumps(dict(resp.headers), indent=4, ensure_ascii=False) + '\n')
+                    fp.write(json.dumps(response0, indent=4, ensure_ascii=False) + '\n')
+
+            self.active_server = (self.active_server + 1) % len(self.servers)
+            
+            #with open('error.log', 'a') as fp:
+            #   fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
+            #   fp.write(json.dumps(self._headers, indent=4, ensure_ascii=False) + '\n')
+            #   fp.write(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
+            #   fp.write(json.dumps(json.loads(response.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
 
             raise ApiException(response.data.server_error.message,
                 response.data.server_error.status,
