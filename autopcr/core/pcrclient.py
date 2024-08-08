@@ -1,5 +1,6 @@
 from ..model.models import *
 from .apiclient import apiclient
+from .sdkclient import sdkclient
 from .sessionmgr import sessionmgr
 from .misc import errorhandler
 from .datamgr import datamgr
@@ -8,11 +9,11 @@ from typing import Tuple, Union
 import typing
 
 class pcrclient(apiclient):
-    def __init__(self, platform, *args, **kwargs):
-        super().__init__(platform)
+    def __init__(self, sdk: sdkclient, *args, **kwargs):
+        super().__init__(sdk)
         self.keys = {}
         self.data = datamgr()
-        self.session = sessionmgr(platform, *args, **kwargs)
+        self.session = sessionmgr(sdk, *args, **kwargs)
         self.register(errorhandler())
         self.register(self.data)
         self.register(self.session)

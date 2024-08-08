@@ -19,6 +19,10 @@ py -3.8 httpserver_test.py
 
 使用前请更新Hoshino到最新版，并**更新Hoshino的配置文件`__bot__.py`**
 
+## 渠道服支持
+
+渠道服需要自抓`uid`和`access_key`，作为用户名和密码。
+
 ## Credits
 - aiorequests 来自 [HoshinoBot](https://github.com/Ice-Cirno/HoshinoBot)
 - 图片绘制改自 [convert2img](https://github.com/SonderXiaoming/convert2img)

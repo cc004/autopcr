@@ -1,34 +1,28 @@
 from .base import Component, RequestHandler
 from .apiclient import apiclient, ApiException
-from ..bsdk.bsdkclient import bsdkclient
+from .sdkclient import sdkclient
 import json, os, random
 from ..model.models import *
 from ..constants import CACHE_DIR
 import hashlib
 
 class sessionmgr(Component[apiclient]):
-    def __init__(self, account, *arg, **kwargs):
+    def __init__(self, sdk: sdkclient, *arg, **kwargs):
         super().__init__()
         self.cacheDir = os.path.join(CACHE_DIR, 'token')
-        self.bsdk = bsdkclient(account, *arg, **kwargs)
-        self._platform = self.bsdk.platform
-        self._channel = self.bsdk.channel
-        self._account = account
+        self.sdk = sdk
+        self._platform = self.sdk.platform_id
+        self._channel = self.sdk.channel
+        self._account: str = sdk.account
         self._logged = False
         self.auto_relogin = True
         self._sdkaccount = None
         if not os.path.exists(self.cacheDir):
             os.makedirs(self.cacheDir)
-        self.cacheFile = os.path.join(self.cacheDir, hashlib.md5(account['account'].encode('utf-8')).hexdigest())
-
-    def register_to(self, container: apiclient):
-        container._headers['PLATFORM'] = str(self._account['platform'])
-        container._headers['PLATFORM-ID'] = str(self._account['platform'])
-        container._headers['CHANNEL-ID'] = str(self._account['channel'])
-        return super().register_to(container)
+        self.cacheFile = os.path.join(self.cacheDir, hashlib.md5(self._account.encode('utf-8')).hexdigest())
 
     async def _bililogin(self):
-        uid, access_key = await self.bsdk.login()
+        uid, access_key = await self.sdk.login()
         self._sdkaccount = {
                 'uid': uid,
                 'access_key': access_key
@@ -51,9 +45,7 @@ class sessionmgr(Component[apiclient]):
                             break
                         else:
                             for _ in range(5):
-                                from ..bsdk.bsgamesdk import captch
-                                cap=await captch()
-                                captch_done=await self.bsdk.captchaVerifier(self.bsdk.account, cap['gt'], cap['challenge'], cap['gt_user_id'])
+                                captch_done = await self.sdk.do_captcha()
                                 req = ToolSdkLoginRequest(
                                     uid=self._sdkaccount['uid'],
                                     access_key=self._sdkaccount['access_key'],
@@ -80,8 +72,8 @@ class sessionmgr(Component[apiclient]):
         except Exception:
             raise
         finally:
-            from ..bsdk.validator import validate_dict, ValidateInfo
-            validate_dict[self._account['account']] = ValidateInfo(status="ok")
+            from ..sdk.validator import validate_dict, ValidateInfo
+            validate_dict[self._account] = ValidateInfo(status="ok")
 
     async def _login(self, next: RequestHandler):
         if os.path.exists(self.cacheFile):
@@ -89,8 +81,12 @@ class sessionmgr(Component[apiclient]):
                 self._sdkaccount = json.load(fp)
         while True:
             try:
-                self._container.servers = [f'http://{server}'.replace('\t', '') for server in (await next.request(SourceIniIndexRequest())).server]
-                self._container.active_server = 0
+                current = self._container.servers[self._container.active_server]
+                self._container.servers = [f'https://{server}'.replace('\t', '') for server in (await next.request(SourceIniIndexRequest())).server]
+                try:
+                    self._container.active_server = self._container.servers.index(current)
+                except ValueError:
+                    self._container.active_server = 0
                 manifest = await next.request(SourceIniGetMaintenanceStatusRequest())
                 self._container._headers['MANIFEST-VER'] = manifest.required_manifest_ver
                 if manifest.maintenance_message:
