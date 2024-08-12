@@ -87,6 +87,7 @@ class shop_buyer(Module):
             
             if slots_to_buy:
                 res = await client.shop_buy_item(shop_content.system_id, slots_to_buy)
+                gold -= cost_gold
                 result.extend(res.purchase_list)
             # else: # 无商品购买还需要重置吗
             #     break
@@ -95,6 +96,9 @@ class shop_buyer(Module):
                 self._log(f"商店已重置{shop_content.reset_count}次，停止购买")
                 break
             
+            if gold < shop_content.reset_cost:
+                self._log(f"商店货币{gold}不足重置{shop_content.reset_cost}，停止购买")
+                break
             await client.shop_reset(shop_content.system_id)
             shop_content = await self._get_shop(client)
 
