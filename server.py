@@ -2,7 +2,7 @@ from collections import Counter
 from typing import Any, Callable, Coroutine, Dict, List, Tuple
 
 from .autopcr.module.modulemgr import TaskResult
-from .autopcr.module.modulebase import ModuleStatus
+from .autopcr.module.modulebase import eResultStatus
 from .autopcr.util.draw_table import outp_b64
 from .autopcr.http_server.httpserver import HttpServer
 from .autopcr.db.database import db
@@ -453,11 +453,11 @@ async def cron_log(botev: BotEvent):
     args = await botev.message()
     cur = datetime.datetime.now()
     if is_args_exist(args, '错误'):
-        msg = [log for log in msg if log.status == ModuleStatus.error]
+        msg = [log for log in msg if log.status == eResultStatus.ERROR]
     if is_args_exist(args, '警告'):
-        msg = [log for log in msg if log.status == ModuleStatus.warning]
+        msg = [log for log in msg if log.status == eResultStatus.WARNING]
     if is_args_exist(args, '成功'):
-        msg = [log for log in msg if log.status == ModuleStatus.success]
+        msg = [log for log in msg if log.status == eResultStatus.SUCCESS]
     if is_args_exist(args, '昨日'):
         cur -= datetime.timedelta(days=1)
         msg = [log for log in msg if log.time.date() == cur.date()]
@@ -475,19 +475,19 @@ async def cron_log(botev: BotEvent):
 @sv.on_prefix(f"{prefix}定时状态")
 @wrap_hoshino_event
 async def cron_status(botev: BotEvent):
-    from .autopcr.module.crons import CRONLOG_PATH, CronLog, CronOperation
+    from .autopcr.module.crons import CRONLOG_PATH, CronLog, eCronOperation
     with open(CRONLOG_PATH, 'r') as f:
         logs = [CronLog.from_json(line.strip()) for line in f.readlines()]
     cur = datetime.datetime.now()
     msg = await botev.message()
     if is_args_exist(msg, '昨日'):
         cur -= datetime.timedelta(days=1)
-    start_logs = [log for log in logs if log.operation == CronOperation.START and log.time.date() == cur.date()]
-    finish_logs = [log for log in logs if log.operation == CronOperation.FINISH and log.time.date() == cur.date()]
+    start_logs = [log for log in logs if log.operation == eCronOperation.START and log.time.date() == cur.date()]
+    finish_logs = [log for log in logs if log.operation == eCronOperation.FINISH and log.time.date() == cur.date()]
     status = Counter([log.status for log in finish_logs])
     msg = [f'今日定时任务：启动{len(start_logs)}个，完成{len(finish_logs)}个'] 
     msg += [f"{k.value}: {v}" for k, v in status.items()]
-    # notice = [log for log in logs if log.status != ModuleStatus.success]
+    # notice = [log for log in logs if log.status != eResultStatus.SUCCESS]
     # if notice:
         # msg += [""]
         # msg += [str(log) for log in notice]
