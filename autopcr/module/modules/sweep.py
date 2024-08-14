@@ -222,7 +222,12 @@ class investigate_sweep(Module):
         if self.force_stop(client):
             raise SkipError("今日强制不刷取")
         times = self.value(self.is_double_drop(client))
-        result = await client.quest_skip_aware(self.quest_id(), times, True, True)
+        try:
+            result = await client.quest_skip_aware(self.quest_id(), times, True, True)
+        except AbortError as e:
+            if str(e).endswith("体力不足"):
+                raise SkipError(str(e))
+            raise e
         msg = await client.serlize_reward(result, self.target_item())
         self._log(f"重置{times // 5 - 1}次，获得了{msg}")
 
@@ -251,6 +256,14 @@ class starcup_sweep(investigate_sweep):
             return self.get_config(f'starcup{self.quest_id() % 10}_sweep_times')
         else:
             return self.get_config(f'starcup{self.quest_id() % 10}_sweep_campaign_times')
+
+@singlechoice("heart5_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("heart5_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
+@name('刷取心碎5')
+@default(False)
+class xinsui5_sweep(xinsui_sweep):
+    def quest_id(self) -> int:
+        return 18001005
 
 @singlechoice("heart4_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
 @singlechoice("heart4_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
