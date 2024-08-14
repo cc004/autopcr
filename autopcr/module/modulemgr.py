@@ -6,7 +6,7 @@ from typing import List, Dict, Tuple
 from ..model.error import *
 from ..model.enums import *
 from ..db.database import db
-from .modulebase import Module, ModuleResult, ModuleStatus
+from .modulebase import Module, ModuleResult, eResultStatus
 
 import traceback
 
@@ -76,13 +76,13 @@ class ModuleManager:
     def generate_tools_config(self):
         return self.generate_config(self.tool_modules)
     
-    async def do_daily(self, isAdminCall: bool = False) -> Tuple[TaskResult, ModuleStatus]:
+    async def do_daily(self, isAdminCall: bool = False) -> Tuple[TaskResult, eResultStatus]:
         resp = await self.do_task(self.client.keys, self.daily_modules, isAdminCall)
-        status = ModuleStatus.success
-        if any(m.status == ModuleStatus.warning or m.status == ModuleStatus.abort for m in resp.result.values()):
-            status = ModuleStatus.warning
-        if any(m.status == ModuleStatus.panic or m.status == ModuleStatus.error for m in resp.result.values()):
-            status = ModuleStatus.error
+        status = eResultStatus.SUCCESS
+        if any(m.status == eResultStatus.WARNING or m.status == eResultStatus.ABORT for m in resp.result.values()):
+            status = eResultStatus.WARNING
+        if any(m.status == eResultStatus.PANIC or m.status == eResultStatus.ERROR for m in resp.result.values()):
+            status = eResultStatus.ERROR
         await self.parent.save_daily_result(resp, status.value)
         return resp, status
 
@@ -113,7 +113,7 @@ class ModuleManager:
         for module in modules:
             resp.order.append(module.key)
             resp.result[module.key] = await module.do_from(client)
-            if resp.result[module.key].status == ModuleStatus.panic:
+            if resp.result[module.key].status == eResultStatus.PANIC:
                 break
         return resp
 
