@@ -59,13 +59,13 @@ def tag_stamina_get(cls):
 def text_result(cls):
     return _wrap_init(cls, lambda self: setattr(self, 'text_result', True))
 
-class ModuleStatus(Enum):
-    success = "成功"
-    skip = "跳过"
-    warning = "警告"
-    abort = "中止"
-    error = "错误"
-    panic = "致命"
+class eResultStatus(Enum):
+    SUCCESS = "成功"
+    SKIP = "跳过"
+    WARNING = "警告"
+    ABORT = "中止"
+    ERROR = "错误"
+    PANIC = "致命"
 
 @dataclass_json
 @dataclass
@@ -73,7 +73,7 @@ class ModuleResult:
     name: str = ""
     config: str = ""
     log: str = ""
-    status: ModuleStatus = ModuleStatus.success
+    status: eResultStatus = eResultStatus.SUCCESS
 
 # refers to a schudule to be done
 class Module:
@@ -157,22 +157,22 @@ class Module:
             await self.do_task(client)
 
             if self.warn:
-                result.status = ModuleStatus.warning
+                result.status = eResultStatus.WARNING
             else:
-                result.status = ModuleStatus.success
+                result.status = eResultStatus.SUCCESS
         except SkipError as e:
             result.log = str(e)
-            result.status = ModuleStatus.skip
+            result.status = eResultStatus.SKIP
         except AbortError as e:
             result.log = str(e)
-            result.status = ModuleStatus.abort
+            result.status = eResultStatus.ABORT
         except PanicError as e:
             result.log = str(e)
-            result.status = ModuleStatus.panic
+            result.status = eResultStatus.PANIC
         except Exception as e:
             traceback.print_exc()
             result.log = str(e)
-            result.status = ModuleStatus.error
+            result.status = eResultStatus.ERROR
         finally:
             result.log = ('\n'.join(self.warn + self.log) + "\n" + result.log).strip() or "ok"
 
