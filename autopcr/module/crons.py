@@ -6,7 +6,7 @@ import traceback
 
 from dataclasses_json import dataclass_json
 
-from ..module.modulebase import ModuleStatus
+from ..module.modulebase import eResultStatus
 from ..module.accountmgr import instance as usermgr
 from ..db.database import db
 from ..constants import CACHE_DIR
@@ -14,18 +14,18 @@ import os
 
 CRONLOG_PATH = os.path.join(CACHE_DIR, "http_server", "cron_log.txt")
 
-class CronOperation(Enum):
+class eCronOperation(Enum):
     START = "start"
     FINISH = "finish"
 
 @dataclass_json
 @dataclass
 class CronLog:
-    operation: CronOperation
+    operation: eCronOperation
     time: datetime.datetime
     qid: str
     account: str
-    status: ModuleStatus
+    status: eResultStatus
     log: str = ""
 
     def __str__(self):
@@ -45,14 +45,14 @@ async def task(qid, account, cur):
         async with accountmgr.load(account) as mgr:
             try:
                 if await mgr.is_cron_run(cur.hour, cur.minute):
-                    write_cron_log(CronOperation.START, cur, qid, account, ModuleStatus.success)
+                    write_cron_log(eCronOperation.START, cur, qid, account, eResultStatus.SUCCESS)
                     _, status = await mgr.do_daily()
                     cur = datetime.datetime.now()
-                    write_cron_log(CronOperation.FINISH, cur, qid, account, status)
+                    write_cron_log(eCronOperation.FINISH, cur, qid, account, status)
             except Exception as e:
                 print(f"error in cron job {qid} {account}")
                 traceback.print_exc()
-                write_cron_log(CronOperation.START, cur, qid, account, ModuleStatus.error, str(e))
+                write_cron_log(eCronOperation.START, cur, qid, account, eResultStatus.ERROR, str(e))
 
 async def _run_crons(cur):
     print(f"doing cron check in {cur.hour} {cur.minute}")
@@ -61,7 +61,7 @@ async def _run_crons(cur):
             for account in accountmgr.accounts():
                 asyncio.get_event_loop().create_task(task(qid, account, cur))
 
-def write_cron_log(operation: CronOperation, cur: datetime.datetime, qid: str, account: str, status: ModuleStatus, log: str = ""):
+def write_cron_log(operation: eCronOperation, cur: datetime.datetime, qid: str, account: str, status: eResultStatus, log: str = ""):
     if not os.path.exists(os.path.dirname(CRONLOG_PATH)):
         os.mkdir(os.path.dirname(CRONLOG_PATH))
     with open(CRONLOG_PATH, "a") as fp:
