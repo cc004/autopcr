@@ -287,7 +287,7 @@ class AccountManager:
         return {
             'qq': self.qid,
             'default_account': self.default_account,
-            'accounts': accounts
+            'accounts': sorted(accounts, key=lambda x: x['name'], reverse=False)
         }
 
 class UserManager:
