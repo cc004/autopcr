@@ -84,6 +84,14 @@ class smart_normal_sweep(Module):
                     quest_id = sorted(quest_list, key = lambda x: quest_weight[x], reverse = True)
                     target_quest = await self.get_quests(quest_id, strategy, gap)
 
+                target_quest = list(set(target_quest).intersection(client.data.finishedQuest))
+                if len(target_quest) < 3:
+                    filtered_quests = [q for q in client.data.finishedQuest if q >= 11000000 and q < 12000000]
+                    if len(filtered_quests) > 10:
+                        target_quest = sorted(filtered_quests, reverse=True)[:10]
+                    else:
+                        target_quest = sorted(filtered_quests, reverse=True)
+
                 for target_id in target_quest:
                     try:
                         resp = await client.quest_skip_aware(target_id, 3)
