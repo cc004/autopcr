@@ -167,21 +167,49 @@ class hatsune_sub_story_reading(Module):
 @name('阅读活动信赖度')
 @default(True)
 class hatsune_dear_reading(Module):
+
+    def get_dear_title(self, event_id: int, story_id: int) -> str:
+        try:
+            group_id = db.dear_story_data[event_id].story_group_id
+            dear_story = db.dear_story_detail[group_id][story_id]
+            return f"{dear_story.title}-{dear_story.sub_title}"
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return f"未知剧情{event_id}-{story_id}"
+
     async def do_task(self, client: pcrclient):
-        event_active = False
+        shiori_event = await client.get_shiori_top()
+        for event_id in shiori_event.clear_event_list:
+            if self.find_cache(str(event_id)):
+                continue
+            if event_id not in db.dear_story_data:
+                continue
+
+            resp = await client.get_shiori_event_top(event_id)
+            resp = await client.get_shiori_dear_top(event_id)
+            for story in resp.unlock_dear_story_info_list:
+                if not story.is_choiced:
+                    await client.read_shiori_dear(event_id, story.story_id)
+                    title = self.get_dear_title(event_id, story.story_id)
+                    self._log(f"阅读了{title}")
+
+            resp = await client.get_shiori_dear_top(event_id)
+            group_id = db.dear_story_data[event_id].story_group_id
+            if sum(1 for story in resp.unlock_dear_story_info_list if story.is_choiced) == len(db.dear_story_detail[group_id]):
+                self.save_cache(str(event_id), 'readed')
+
         for event in db.get_open_hatsune():
-            event_active = True
             resp = (await client.get_hatsune_top(event.event_id))
-            if resp.unchoiced_dear_story_id_list == None:
+            if not resp.unchoiced_dear_story_id_list:
                 continue
             resp = (await client.get_hatsune_dear_top(event.event_id))
             for story in resp.unlock_dear_story_info_list:
                 if not story.is_choiced:
-                    await client.read_dear(event.event_id, story.story_id)
-                    self._log(f"阅读了{story.story_id}")
+                    await client.read_hatsune_dear(event.event_id, story.story_id)
+                    title = self.get_dear_title(event.event_id, story.story_id)
+                    self._log(f"阅读了{title}")
 
-        if not event_active:
-            raise SkipError("当前无可进入的活动")
         if not self.log:
             raise SkipError("不存在未阅读的活动信赖度剧情")
         self._log(f"共{len(self.log)}篇")
