@@ -340,7 +340,7 @@ class pcrclient(apiclient):
         req.sub_story_id = sub_story_id
         await self.request(req)
 
-    async def read_dear(self, event_id: int, story_id: int):
+    async def read_hatsune_dear(self, event_id: int, story_id: int):
         req = HatsuneDearFinishRequest()
         req.event_id = event_id
         req.story_id = story_id
@@ -439,6 +439,27 @@ class pcrclient(apiclient):
     async def get_profile(self, user: int):
         req = ProfileGetRequest()
         req.target_viewer_id = user
+        return await self.request(req)
+
+    async def get_shiori_top(self):
+        req = ShioriTopRequest()
+        return await self.request(req)
+
+    async def get_shiori_event_top(self, event: int):
+        req = ShioriEventTopRequest()
+        req.event_id = event
+        return await self.request(req)
+
+    async def get_shiori_dear_top(self, event: int):
+        req = ShioriDearTopRequest()
+        req.event_id = event
+        return await self.request(req)
+
+    async def read_shiori_dear(self, event_id: int, story_id: int):
+        req = ShioriDearFinishRequest()
+        req.event_id = event_id
+        req.story_id = story_id
+        req.choice = 1
         return await self.request(req)
 
     async def get_hatsune_top(self, event: int):
