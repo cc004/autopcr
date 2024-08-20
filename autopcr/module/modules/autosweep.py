@@ -16,7 +16,8 @@ import datetime
 @booltype("normal_sweep_equip_ok_to_full", "刷满则考虑所有角色", False)
 @singlechoice("normal_sweep_consider_unit", "起始品级", "所有", ["所有", "最高", "次高", "次次高"])
 @booltype("normal_sweep_consider_unit_fav", "收藏角色", True)
-@description('根据【刷图推荐】结果刷n图，均匀刷指每次刷取的图覆盖所缺的需求装备，若无缺装备则刷取推荐的第一张图')
+@booltype("normal_sweep_only_cleared_quest", "仅可扫荡", False)
+@description('根据【刷图推荐】结果刷n图，均匀刷指每次刷取的图覆盖所缺的需求装备，若无缺装备则刷取推荐的第一张图，仅可扫荡指忽略未三星通关地图')
 @name('智能刷n图')
 @default(False)
 @tag_stamina_consume
@@ -49,6 +50,7 @@ class smart_normal_sweep(Module):
         rank: str = self.get_config('normal_sweep_consider_unit')
         strategy: str = self.get_config('normal_sweep_strategy')
         full2all: bool = self.get_config('normal_sweep_equip_ok_to_full')
+        only_cleared_quest: bool = self.get_config('normal_sweep_only_cleared_quest')
         opt: Dict[Union[int, str], int] = {
             '所有': 1,
             '最高': db.equip_max_rank,
@@ -62,6 +64,8 @@ class smart_normal_sweep(Module):
         quest_id = []
         tmp = []
         quest_list: List[int] = [id for id, quest in db.normal_quest_data.items() if db.parse_time(quest.start_time) <= datetime.datetime.now()]
+        if only_cleared_quest:
+            quest_list = [id for id in quest_list if id in client.data.finishedQuest]
         stop: bool = False
         first: bool = True
 
@@ -83,14 +87,6 @@ class smart_normal_sweep(Module):
                     quest_weight = client.data.get_quest_weght(gap)
                     quest_id = sorted(quest_list, key = lambda x: quest_weight[x], reverse = True)
                     target_quest = await self.get_quests(quest_id, strategy, gap)
-
-                target_quest = list(set(target_quest).intersection(client.data.finishedQuest))
-                if len(target_quest) < 3:
-                    filtered_quests = [q for q in client.data.finishedQuest if q >= 11000000 and q < 12000000]
-                    if len(filtered_quests) > 10:
-                        target_quest = sorted(filtered_quests, reverse=True)[:10]
-                    else:
-                        target_quest = sorted(filtered_quests, reverse=True)
 
                 for target_id in target_quest:
                     try:
