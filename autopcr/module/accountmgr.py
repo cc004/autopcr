@@ -198,7 +198,7 @@ class Account(ModuleManager):
         return self._parent._parent.is_clan_battle_forbidden(username)
 
 class AccountManager:
-    pathsyntax = re.compile(r'[^\\\|?*/]{1,32}')
+    pathsyntax = re.compile(r'[^\\\|?*/#]{1,32}')
 
     def __init__(self, parent: 'UserManager', qid: str, readonly: bool = False):
         if not qid in parent.user_lock:
