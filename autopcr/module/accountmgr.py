@@ -275,7 +275,8 @@ class AccountManager:
         return self.secret.default_account
 
     def accounts(self) -> Iterator[str]:
-        for fn in os.listdir(self.root):
+        account_files = sorted(os.listdir(self.root))
+        for fn in account_files:
             if fn.endswith('.json'):
                 yield fn[:-5]
 
@@ -287,7 +288,7 @@ class AccountManager:
         return {
             'qq': self.qid,
             'default_account': self.default_account,
-            'accounts': sorted(accounts, key=lambda x: x['name'], reverse=False)
+            'accounts': accounts
         }
 
 class UserManager:
