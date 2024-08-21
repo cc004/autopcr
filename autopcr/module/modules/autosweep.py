@@ -352,3 +352,54 @@ class smart_sweep(Module):
                 self._log("---------")
         if result:
             self._log(await client.serlize_reward(result))
+
+@description('''
+循环刷取最新解锁的x张N图，直到体力消耗完
+'''.strip())
+@name("刷最新图")
+@conditional_execution1("last_quest_run_time", ['n庆典'], desc="last刷取庆典", check=False)
+@inttype("last_sweep_quests", "刷取关卡数量", 1, [i for i in range(41)])
+@inttype("last_sweep_quests_count", "单次刷取次数（防止每次都是10体）", 1, [i for i in range(41)])
+@default(False)
+@tag_stamina_consume
+class last_quest_sweep(Module):
+    async def do_task(self, client: pcrclient):
+        loop: List[Tuple[int, int]] = []
+        is_last_quest_run_time, _ = await (self.get_config_instance('last_quest_run_time').do_check(client))
+        if is_last_quest_run_time: self._log(f"刷取start关卡")
+
+        last_sweep_quests: bool = self.get_config('last_sweep_quests')
+        last_sweep_quests_count: bool = self.get_config('last_sweep_quests_count')
+        if last_sweep_quests:
+            filtered_quests = sorted([q for q in client.data.finishedQuest if q >= 11000000 and q < 12000000], reverse=True)
+            if len(filtered_quests) > last_sweep_quests:
+                filtered_quests = filtered_quests[:last_sweep_quests]
+            if filtered_quests:    
+                loop.extend([(p, last_sweep_quests_count) for p in filtered_quests])
+        def _sweep():
+            if loop:
+                while True:
+                    for x in loop:
+                        yield x
+
+        result = []
+        if loop == []:
+            raise SkipError("无刷取关卡")
+        clean_cnt = Counter()
+        for quest_id, count in _sweep(): 
+            try:
+                result += await client.quest_skip_aware(quest_id, count, True, True)
+                clean_cnt[quest_id] += count
+            except SkipError as e:
+                pass
+            except AbortError as e:
+                self._log(str(e))
+                break
+        
+        if clean_cnt:
+                msg = '\n'.join((db.quest_name[quest] if quest in db.quest_name else f"未知关卡{quest}") +
+                f": 刷取{cnt}次" for quest, cnt in clean_cnt.items())
+                self._log(msg)
+                self._log("---------")
+        if result:
+            self._log(await client.serlize_reward(result))
