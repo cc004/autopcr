@@ -295,31 +295,17 @@ class smart_very_hard_sweep(simple_demand_sweep_base):
                 self.times = self.get_config('vh_sweep_campaign_times')
         return self.times
 
-@description('''
-首先按次数逐一刷取名字为start的图
-然后循环按次数刷取设置为loop的图
-当被动体力回复完全消耗后，刷图结束
-'''.strip())
-@name("自定义刷图")
-@conditional_execution1("start_run_time", ['h庆典'], desc="start刷取庆典", check=False)
-@conditional_execution1("loop_run_time", ['n庆典'], desc="loop刷取庆典", check=False)
-@default(False)
-@tag_stamina_consume
-class smart_sweep(Module):
-    async def do_task(self, client: pcrclient):
-        nloop: List[Tuple[int, int]] = []
-        loop: List[Tuple[int, int]] = []
-        is_start_run_time, _ = await (self.get_config_instance('start_run_time').do_check(client))
-        is_loop_run_time, _ = await (self.get_config_instance('loop_run_time').do_check(client))
-        if is_start_run_time: self._log(f"刷取start关卡")
-        if is_loop_run_time: self._log(f"刷取loop关卡")
+class DIY_sweep(Module):
 
-        for tab in client.data.user_my_quest:
-            for x in tab.skip_list:
-                if tab.tab_name == 'start' and is_start_run_time:
-                    nloop.append((x, tab.skip_count))
-                elif tab.tab_name == 'loop' and is_loop_run_time:
-                    loop.append((x, tab.skip_count))
+    async def get_start_quest(self, client: pcrclient) -> List[Tuple[int, int]]:
+        return []
+    async def get_loop_quest(self, client: pcrclient) -> List[Tuple[int, int]]:
+        return []
+
+    async def do_task(self, client: pcrclient):
+        nloop: List[Tuple[int, int]] = await self.get_start_quest(client)
+        loop: List[Tuple[int, int]] = await self.get_loop_quest(client)
+
         have_normal = any(db.is_normal_quest(quest[0]) for quest in loop)
         def _sweep():
             for x in nloop:
@@ -354,52 +340,50 @@ class smart_sweep(Module):
             self._log(await client.serlize_reward(result))
 
 @description('''
-循环刷取最新解锁的x张N图，直到体力消耗完
+首先按次数逐一刷取名字为start的图
+然后循环按次数刷取设置为loop的图
+当被动体力回复完全消耗后，刷图结束
 '''.strip())
-@name("刷最新图")
-@conditional_execution1("last_quest_run_time", ['n庆典'], desc="last刷取庆典", check=False)
-@inttype("last_sweep_quests", "刷取关卡数量", 1, [i for i in range(41)])
-@inttype("last_sweep_quests_count", "单次刷取次数（防止每次都是10体）", 1, [i for i in range(41)])
+@name("自定义刷图")
+@conditional_execution1("start_run_time", ['h庆典'], desc="start刷取庆典", check=False)
+@conditional_execution1("loop_run_time", ['n庆典'], desc="loop刷取庆典", check=False)
 @default(False)
 @tag_stamina_consume
-class last_quest_sweep(Module):
-    async def do_task(self, client: pcrclient):
-        loop: List[Tuple[int, int]] = []
-        is_last_quest_run_time, _ = await (self.get_config_instance('last_quest_run_time').do_check(client))
-        if is_last_quest_run_time: self._log(f"刷取start关卡")
+class smart_sweep(DIY_sweep):
+    async def get_start_quest(self, client: pcrclient) -> List[Tuple[int, int]]: 
+        is_start_run_time, _ = await (self.get_config_instance('start_run_time').do_check(client))
+        quest: List[Tuple[int, int]] = []
+        if is_start_run_time: 
+            self._log(f"刷取start关卡")
+            for tab in client.data.user_my_quest:
+                for x in tab.skip_list:
+                    if tab.tab_name == 'start':
+                        quest.append((x, tab.skip_count))
+        return quest
 
-        last_sweep_quests: bool = self.get_config('last_sweep_quests')
-        last_sweep_quests_count: bool = self.get_config('last_sweep_quests_count')
-        if last_sweep_quests:
-            filtered_quests = sorted([q for q in client.data.finishedQuest if q >= 11000000 and q < 12000000], reverse=True)
-            if len(filtered_quests) > last_sweep_quests:
-                filtered_quests = filtered_quests[:last_sweep_quests]
-            if filtered_quests:    
-                loop.extend([(p, last_sweep_quests_count) for p in filtered_quests])
-        def _sweep():
-            if loop:
-                while True:
-                    for x in loop:
-                        yield x
+    async def get_loop_quest(self, client: pcrclient) -> List[Tuple[int, int]]:
+        is_loop_run_time, _ = await (self.get_config_instance('loop_run_time').do_check(client))
+        quest: List[Tuple[int, int]] = []
+        if is_loop_run_time: 
+            self._log(f"刷取loop关卡")
+            for tab in client.data.user_my_quest:
+                for x in tab.skip_list:
+                    if tab.tab_name == 'loop':
+                        quest.append((x, tab.skip_count))
+        return quest
 
-        result = []
-        if loop == []:
-            raise SkipError("无刷取关卡")
-        clean_cnt = Counter()
-        for quest_id, count in _sweep(): 
-            try:
-                result += await client.quest_skip_aware(quest_id, count, True, True)
-                clean_cnt[quest_id] += count
-            except SkipError as e:
-                pass
-            except AbortError as e:
-                self._log(str(e))
-                break
-        
-        if clean_cnt:
-                msg = '\n'.join((db.quest_name[quest] if quest in db.quest_name else f"未知关卡{quest}") +
-                f": 刷取{cnt}次" for quest, cnt in clean_cnt.items())
-                self._log(msg)
-                self._log("---------")
-        if result:
-            self._log(await client.serlize_reward(result))
+@description('''
+循环刷取最新n图
+'''.strip())
+@name("刷新图")
+@conditional_execution1("last_quest_run_time", ['n庆典'])
+@inttype("last_sweep_quests_count", "刷取次数", 1, [i for i in range(41)])
+@multichoice("last_sweep_quests", '刷取关卡', [], db.last_normal_quest_candidate)
+@default(False)
+@tag_stamina_consume
+class last_quest_sweep(DIY_sweep):
+    async def get_loop_quest(self, client: pcrclient) -> List[Tuple[int, int]]:
+        last_sweep_quests: List[str] = self.get_config('last_sweep_quests')
+        last_sweep_quests_count: int = int(self.get_config('last_sweep_quests_count'))
+        quest: List[Tuple[int, int]] = [(int(id.split(':')[0]), last_sweep_quests_count) for id in last_sweep_quests]
+        return quest
