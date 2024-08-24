@@ -230,10 +230,12 @@ class pcrclient(apiclient):
 
         if target_gacha.selected_item_id == 0:
             prizegacha_id = db.gacha_data[target_gacha.id].prizegacha_id
-            if db.prizegacha_data[prizegacha_id].prize_memory_id_2 != 0:
-                raise AbortError("可选碎片大于一种，请自行手动选择")
-            item_id = db.prizegacha_data[prizegacha_id].prize_memory_id_1
-            await self.gacha_select_prize(prizegacha_id, item_id)
+            prize_memory = list(db.prizegacha_data[prizegacha_id].get_prize_memory_id())
+            if len(prize_memory) > 1:
+                piece_demand = self.data.get_memory_demand_gap()
+                prize_memory = sorted(prize_memory, key = lambda x: -piece_demand.get(x, 0))
+            item_id = prize_memory[0]
+            await self.gacha_select_prize(prizegacha_id, item_id[1])
 
         if target_gacha.exchange_id in self.data.gacha_point and  \
         self.data.gacha_point[target_gacha.exchange_id].current_point >= self.data.gacha_point[target_gacha.exchange_id].max_point:
