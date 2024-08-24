@@ -1,4 +1,4 @@
-from typing import Iterator, Tuple
+from typing import Iterator, Tuple, List
 from ..model.common import eInventoryType
 from ..model.custom import ItemType
 from . import models
@@ -15,6 +15,15 @@ def method(cls):
         if method_name != "__init__" and callable(method_obj):
             setattr(base_cls, method_name, method_obj)
     return cls
+
+@method
+class PrizegachaDatum(models.PrizegachaDatum):
+    def get_prize_memory_id(self) -> Iterator[ItemType]:
+        prize_memory_id_keys: List[str] = [i for i in self.__dict__.keys() if i.startswith("prize_memory_id_")]
+        for prize_memory_id_key in prize_memory_id_keys: # fes池 20列 还会更多列
+            prize_memory_id = getattr(self, prize_memory_id_key)
+            if prize_memory_id != 0:
+                yield (eInventoryType.Item, prize_memory_id)
 
 @method
 class EnemyRewardDatum(models.EnemyRewardDatum):
