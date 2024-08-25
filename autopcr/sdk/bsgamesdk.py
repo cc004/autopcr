@@ -1,5 +1,3 @@
-from typing import Coroutine
-import requests
 import json
 import time
 import hashlib
@@ -93,8 +91,7 @@ async def login(bili_account,bili_pwd, make_captch):
     login_sta= await login1(bili_account,bili_pwd)
     # if "access_key" not in login_sta:
     if login_sta['code'] == 200000:
-        cap=await captch()
-        captch_done=await make_captch(bili_account, cap['gt'],cap['challenge'],cap['gt_user_id'])
+        captch_done=await make_captch(bili_account)
         login_sta=await login2(bili_account,bili_pwd,captch_done["challenge"],captch_done['gt_user_id'],captch_done['validate'])
         return login_sta
     else:
