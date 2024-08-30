@@ -16,7 +16,8 @@ import datetime
 @booltype("normal_sweep_equip_ok_to_full", "刷满则考虑所有角色", False)
 @singlechoice("normal_sweep_consider_unit", "起始品级", "所有", ["所有", "最高", "次高", "次次高"])
 @booltype("normal_sweep_consider_unit_fav", "收藏角色", True)
-@description('根据【刷图推荐】结果刷n图，均匀刷指每次刷取的图覆盖所缺的需求装备，若无缺装备则刷取推荐的第一张图')
+@booltype("normal_sweep_only_cleared_quest", "仅可扫荡", False)
+@description('根据【刷图推荐】结果刷n图，均匀刷指每次刷取的图覆盖所缺的需求装备，若无缺装备则刷取推荐的第一张图，仅可扫荡指忽略未三星通关地图')
 @name('智能刷n图')
 @default(False)
 @tag_stamina_consume
@@ -49,6 +50,7 @@ class smart_normal_sweep(Module):
         rank: str = self.get_config('normal_sweep_consider_unit')
         strategy: str = self.get_config('normal_sweep_strategy')
         full2all: bool = self.get_config('normal_sweep_equip_ok_to_full')
+        only_cleared_quest: bool = self.get_config('normal_sweep_only_cleared_quest')
         opt: Dict[Union[int, str], int] = {
             '所有': 1,
             '最高': db.equip_max_rank,
@@ -62,6 +64,8 @@ class smart_normal_sweep(Module):
         quest_id = []
         tmp = []
         quest_list: List[int] = [id for id, quest in db.normal_quest_data.items() if db.parse_time(quest.start_time) <= datetime.datetime.now()]
+        if only_cleared_quest:
+            quest_list = [id for id in quest_list if id in client.data.finishedQuest]
         stop: bool = False
         first: bool = True
 
@@ -291,31 +295,17 @@ class smart_very_hard_sweep(simple_demand_sweep_base):
                 self.times = self.get_config('vh_sweep_campaign_times')
         return self.times
 
-@description('''
-首先按次数逐一刷取名字为start的图
-然后循环按次数刷取设置为loop的图
-当被动体力回复完全消耗后，刷图结束
-'''.strip())
-@name("自定义刷图")
-@conditional_execution1("start_run_time", ['h庆典'], desc="start刷取庆典", check=False)
-@conditional_execution1("loop_run_time", ['n庆典'], desc="loop刷取庆典", check=False)
-@default(False)
-@tag_stamina_consume
-class smart_sweep(Module):
-    async def do_task(self, client: pcrclient):
-        nloop: List[Tuple[int, int]] = []
-        loop: List[Tuple[int, int]] = []
-        is_start_run_time, _ = await (self.get_config_instance('start_run_time').do_check(client))
-        is_loop_run_time, _ = await (self.get_config_instance('loop_run_time').do_check(client))
-        if is_start_run_time: self._log(f"刷取start关卡")
-        if is_loop_run_time: self._log(f"刷取loop关卡")
+class DIY_sweep(Module):
 
-        for tab in client.data.user_my_quest:
-            for x in tab.skip_list:
-                if tab.tab_name == 'start' and is_start_run_time:
-                    nloop.append((x, tab.skip_count))
-                elif tab.tab_name == 'loop' and is_loop_run_time:
-                    loop.append((x, tab.skip_count))
+    async def get_start_quest(self, client: pcrclient) -> List[Tuple[int, int]]:
+        return []
+    async def get_loop_quest(self, client: pcrclient) -> List[Tuple[int, int]]:
+        return []
+
+    async def do_task(self, client: pcrclient):
+        nloop: List[Tuple[int, int]] = await self.get_start_quest(client)
+        loop: List[Tuple[int, int]] = await self.get_loop_quest(client)
+
         have_normal = any(db.is_normal_quest(quest[0]) for quest in loop)
         def _sweep():
             for x in nloop:
@@ -348,3 +338,51 @@ class smart_sweep(Module):
                 self._log("---------")
         if result:
             self._log(await client.serlize_reward(result))
+
+@description('''
+首先按次数逐一刷取名字为start的图
+然后循环按次数刷取设置为loop的图
+当被动体力回复完全消耗后，刷图结束
+'''.strip())
+@name("自定义刷图")
+@conditional_execution1("start_run_time", ['h庆典'], desc="start刷取庆典", check=False)
+@conditional_execution1("loop_run_time", ['n庆典'], desc="loop刷取庆典", check=False)
+@default(False)
+@tag_stamina_consume
+class smart_sweep(DIY_sweep):
+    async def get_start_quest(self, client: pcrclient) -> List[Tuple[int, int]]: 
+        is_start_run_time, _ = await (self.get_config_instance('start_run_time').do_check(client))
+        quest: List[Tuple[int, int]] = []
+        if is_start_run_time: 
+            self._log(f"刷取start关卡")
+            for tab in client.data.user_my_quest:
+                for x in tab.skip_list:
+                    if tab.tab_name == 'start':
+                        quest.append((x, tab.skip_count))
+        return quest
+
+    async def get_loop_quest(self, client: pcrclient) -> List[Tuple[int, int]]:
+        is_loop_run_time, _ = await (self.get_config_instance('loop_run_time').do_check(client))
+        quest: List[Tuple[int, int]] = []
+        if is_loop_run_time: 
+            self._log(f"刷取loop关卡")
+            for tab in client.data.user_my_quest:
+                for x in tab.skip_list:
+                    if tab.tab_name == 'loop':
+                        quest.append((x, tab.skip_count))
+        return quest
+
+@description('''
+开新图时的便捷设置，将循环刷取所选关卡
+'''.strip())
+@name("刷最新n图")
+@conditional_execution1("last_normal_quest_run_time", ['n庆典'])
+@multichoice("last_normal_quests_sweep", '刷取关卡', [], db.last_normal_quest_candidate)
+@default(False)
+@tag_stamina_consume
+class last_normal_quest_sweep(DIY_sweep):
+    async def get_loop_quest(self, client: pcrclient) -> List[Tuple[int, int]]:
+        last_sweep_quests: List[str] = self.get_config('last_normal_quests_sweep')
+        last_sweep_quests_count: int = 3
+        quest: List[Tuple[int, int]] = [(int(id.split(':')[0]), last_sweep_quests_count) for id in last_sweep_quests]
+        return quest
