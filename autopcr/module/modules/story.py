@@ -44,11 +44,12 @@ class unit_story_reading(Module):
     async def do_task(self, client: pcrclient):
         read_story = set(client.data.read_story_ids)
         read_story.add(0) # no pre story
+        now = datetime.datetime.now()
         for story in db.unit_story:
             if (
                 story.story_id not in read_story and
-                story.pre_story_id in read_story and
-                story.pre_story_id_2 in read_story and
+                (story.pre_story_id in read_story or now >= db.parse_time(story.force_unlock_time)) and
+                (story.pre_story_id_2 in read_story or now >= db.parse_time(story.force_unlock_time_2)) and
                 story.story_group_id in client.data.unit_love_data and 
                 client.data.unit_love_data[story.story_group_id].love_level >= story.love_level
                 ):
