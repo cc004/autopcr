@@ -65,7 +65,7 @@ class monthly_gacha(Module):
             self._log(f"当前pt为{point}")
 
 
-@description('有免费十连时自动抽取')
+@description('有免费十连时自动抽取，附奖池自动选择缺口最多的碎片')
 @name('免费十连')
 @booltype('today_end_gacha_no_do', "当日切卡池前不抽取", True)
 @default(False)

@@ -25,6 +25,18 @@ class database():
         
         with dbmgr.session() as db:
 
+            self.dear_story_data: Dict[int, DearStoryDatum] = (
+                DearStoryDatum.query(db)
+                .to_dict(lambda x: x.value, lambda x: x)
+            )
+
+            self.dear_story_detail: Dict[int, Dict[int, DearStoryDetail]] = (
+                DearStoryDetail.query(db)
+                .group_by(lambda x: x.story_group_id)
+                .to_dict(lambda x: x.key, lambda x: x.to_dict(
+                            lambda x: x.story_id, lambda x: x))
+            )
+
             self.seasonpass_level_reward: Dict[int, SeasonpassLevelReward] = (
                 SeasonpassLevelReward.query(db)
                 .to_dict(lambda x: x.level_id, lambda x: x)

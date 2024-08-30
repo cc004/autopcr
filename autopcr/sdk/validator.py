@@ -2,7 +2,7 @@ from typing import Dict
 from ..util import aiorequests, questutils
 from ..model.error import PanicError
 from json import loads
-import asyncio
+import asyncio, time
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 
@@ -20,7 +20,30 @@ class ValidateInfo:
 validate_dict: Dict[str, ValidateInfo] = {}
 validate_ok_dict: Dict[str, ValidateInfo] = {}
 
-async def manualValidator(account, gt, challenge, userid):
+async def Validator(account):
+    info = None
+    for validator in [remoteValidator, localValidator, manualValidator]:
+        try:
+            info = await validator(account)
+            if info:
+                break
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            pass
+    if not info:
+        raise PanicError("验证码验证超时")
+    return info
+
+async def manualValidator(account):
+    print('use manual validator')
+
+    from .bsgamesdk import captch
+    cap = await captch()
+    challenge = cap['challenge']
+    gt = cap['gt']
+    userid = cap['gt_user_id']
+
     id = questutils.create_quest_token()
     url = f"/daily/validate?id={id}&captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
     validate_dict[account] = ValidateInfo(
@@ -31,6 +54,7 @@ async def manualValidator(account, gt, challenge, userid):
             url=url,
             status="need validate"
     )
+    info = None
     for _ in range(120):
         if id not in validate_ok_dict:
             await asyncio.sleep(1)
@@ -42,19 +66,53 @@ async def manualValidator(account, gt, challenge, userid):
             }
             del validate_ok_dict[id]
             break
-    else:
-        raise PanicError("验证码验证超时")
-
     return info
 
-async def autoValidator(account, gt, challenge, userid):
+
+async def localValidator(account):
+    print('use local validator')
+
+    from .bsgamesdk import captch
+    cap = await captch()
+    challenge = cap['challenge']
+    gt = cap['gt']
+    userid = cap['gt_user_id']
+
+    import bili_ticket_gt_python
+    gt_obj = bili_ticket_gt_python.ClickPy()
+    _type = None
+    info = None
+
+    n = 3
+    for _ in range(n):
+        try:
+            _type = gt_obj.get_type(gt, challenge)
+            break
+        except Exception as e:
+            pass
+
+    if _type == 'click':
+        (c, s, args) = gt_obj.get_new_c_s_args(gt, challenge)
+        st = time.time()
+        w = gt_obj.generate_w(gt_obj.calculate_key(args), gt, challenge, str(c), s, "abcdefghijklmnop")
+        ed = time.time()
+        await asyncio.sleep(max(0, 2 - (ed - st)))
+        (msg, validate) = gt_obj.verify(gt, challenge, w)
+        info = {
+            "challenge": challenge,
+            "gt_user_id": userid,
+            "validate": validate
+        }
+    return info
+
+async def remoteValidator(account):
+    print('use remote validator')
+
     url = f"https://pcrd.tencentbot.top/geetest_renew"
     header = {"Content-Type": "application/json", "User-Agent": "autopcr/1.0.0"}
     info = ""
-    print(f"farm: Auto verifying")
     ret = None
     try:
-        # raise Exception()
         res = await aiorequests.get(url=url, headers=header)
         res.raise_for_status()
         res = await res.content
@@ -69,9 +127,10 @@ async def autoValidator(account, gt, challenge, userid):
             res.raise_for_status()
             res = await res.content
             res = loads(res)
+            print(res)
             if "queue_num" in res:
                 nu = res["queue_num"]
-                if nu >= 20: raise Exception("Captcha failed")
+                if nu >= 35: raise Exception("Captcha failed")
 
                 msg.append(f"queue_num={nu}")
                 tim = min(int(nu), 3) * 10
@@ -80,7 +139,7 @@ async def autoValidator(account, gt, challenge, userid):
                 msg = []
                 print(f'farm: {uuid} in queue, sleep {tim} seconds')
                 await asyncio.sleep(tim)
-                if tim >= 30: ccnt += 2
+                if tim >= 40: ccnt += 2
             else:
                 info = res["info"]
                 if info in ["fail", "url invalid"]:
@@ -93,6 +152,6 @@ async def autoValidator(account, gt, challenge, userid):
         else:
             raise Exception("Captcha failed")
     except:
-        if not ret: ret = await manualValidator(account, gt, challenge, userid)
+        pass
 
     return ret

@@ -230,10 +230,12 @@ class pcrclient(apiclient):
 
         if target_gacha.selected_item_id == 0:
             prizegacha_id = db.gacha_data[target_gacha.id].prizegacha_id
-            if db.prizegacha_data[prizegacha_id].prize_memory_id_2 != 0:
-                raise AbortError("可选碎片大于一种，请自行手动选择")
-            item_id = db.prizegacha_data[prizegacha_id].prize_memory_id_1
-            await self.gacha_select_prize(prizegacha_id, item_id)
+            prize_memory = list(db.prizegacha_data[prizegacha_id].get_prize_memory_id())
+            if len(prize_memory) > 1:
+                piece_demand = self.data.get_memory_demand_gap()
+                prize_memory = sorted(prize_memory, key = lambda x: -piece_demand.get(x, 0))
+            item_id = prize_memory[0]
+            await self.gacha_select_prize(prizegacha_id, item_id[1])
 
         if target_gacha.exchange_id in self.data.gacha_point and  \
         self.data.gacha_point[target_gacha.exchange_id].current_point >= self.data.gacha_point[target_gacha.exchange_id].max_point:
@@ -340,7 +342,7 @@ class pcrclient(apiclient):
         req.sub_story_id = sub_story_id
         await self.request(req)
 
-    async def read_dear(self, event_id: int, story_id: int):
+    async def read_hatsune_dear(self, event_id: int, story_id: int):
         req = HatsuneDearFinishRequest()
         req.event_id = event_id
         req.story_id = story_id
@@ -439,6 +441,27 @@ class pcrclient(apiclient):
     async def get_profile(self, user: int):
         req = ProfileGetRequest()
         req.target_viewer_id = user
+        return await self.request(req)
+
+    async def get_shiori_top(self):
+        req = ShioriTopRequest()
+        return await self.request(req)
+
+    async def get_shiori_event_top(self, event: int):
+        req = ShioriEventTopRequest()
+        req.event_id = event
+        return await self.request(req)
+
+    async def get_shiori_dear_top(self, event: int):
+        req = ShioriDearTopRequest()
+        req.event_id = event
+        return await self.request(req)
+
+    async def read_shiori_dear(self, event_id: int, story_id: int):
+        req = ShioriDearFinishRequest()
+        req.event_id = event_id
+        req.story_id = story_id
+        req.choice = 1
         return await self.request(req)
 
     async def get_hatsune_top(self, event: int):
