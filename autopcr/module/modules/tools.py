@@ -136,7 +136,7 @@ class gacha_start(Module):
             raise 
         finally:
             self._log(f"抽取了{cnt}次{'十连' if not single_ticket else '单抽'}")
-            self._log(await client.serlize_gacha_reward(reward))
+            self._log(await client.serlize_gacha_reward(reward, target_gacha.id))
             point = client.data.gacha_point[target_gacha.exchange_id].current_point if target_gacha.exchange_id in client.data.gacha_point else 0
             self._log(f"当前pt为{point}")
 

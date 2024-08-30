@@ -660,14 +660,14 @@ class pcrclient(apiclient):
         req.type = 1
         await self.request(req)
 
-    async def serlize_gacha_reward(self, gacha: GachaReward):
+    async def serlize_gacha_reward(self, gacha: GachaReward, gacha_id: int = 0):
         res = ""
         if gacha.new_unit:
             res += f"NEW: \n" + '\n'.join([db.get_inventory_name(item) for item in gacha.new_unit]) + '\n'
         if gacha.unit_rarity:
             res += ' '.join(["★"*i + f"x{cnt}" for i, cnt in gacha.unit_rarity.items()]) + '\n'
         if gacha.prize_rarity:
-            res += ' '.join([f"{i}等" + f"x{cnt}" for i, cnt in gacha.prize_rarity.items()]) + '\n'
+            res += ' '.join([f"{db.get_gacha_prize_name(gacha_id, i)}" + f"x{cnt}" for i, cnt in gacha.prize_rarity.items()]) + '\n'
 
         res += await self.serlize_reward(gacha.reward_list)
 
