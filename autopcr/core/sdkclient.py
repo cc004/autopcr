@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Tuple
 from abc import abstractmethod
-from ..sdk.validator import autoValidator
+from ..sdk.validator import Validator
 from ..sdk.bsgamesdk import captch
 from copy import deepcopy
 from ..constants import DEFAULT_HEADERS, IOS_HEADERS
@@ -25,7 +25,7 @@ async def _defaultLogger(msg):
 
 class sdkclient:
     
-    def __init__(self, info: account, captchaVerifier=autoValidator, errlogger=_defaultLogger):
+    def __init__(self, info: account, captchaVerifier=Validator, errlogger=_defaultLogger):
         self.captchaVerifier = captchaVerifier
         self.errlogger = errlogger
         if info.type == platform.Android:
