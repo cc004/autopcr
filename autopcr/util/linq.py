@@ -64,8 +64,8 @@ class flow(Iterator[T], Generic[T]):
 
     def max(self, func: Union[Callable[[T], Any], None] = None) -> T:
         if func is None:
-            return max(self.iterable)
-        return max(self.iterable, key=func)
+            return max(self.iterable, default=None)
+        return max(self.iterable, key=func, default=None)
     
     def min(self, func: Union[Callable[[T], Any], None] = None) -> T:
         if func is None:
