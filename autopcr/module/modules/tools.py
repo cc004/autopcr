@@ -91,6 +91,26 @@ class cook_pudding(Module):
         if is_abort: raise AbortError("")
         if is_skip: raise SkipError("")
 
+@description('看看你缺了什么角色')
+@name('查缺角色')
+@default(True)
+class missing_unit(Module):
+    async def do_task(self, client: pcrclient):
+        missing_unit = set(db.unlock_unit_condition.keys()) - set(client.data.unit.keys())
+        if not missing_unit:
+            self._log("全图鉴玩家！你竟然没有缺少的角色！")
+        else:
+            limit_unit = set(id for id in missing_unit if db.unit_data[id].is_limited)
+            resident_unit = missing_unit - limit_unit
+            self._log(f"缺少{len(missing_unit)}个角色，其中{len(limit_unit)}个限定角色，{len(resident_unit)}个常驻角色")
+            if limit_unit:
+                self._log(f"==限定角色==" )
+                self._log('\n'.join(db.get_unit_name(id) for id in limit_unit))
+                self._log('')
+            if resident_unit:
+                self._log(f"==常驻角色==" )
+                self._log('\n'.join(db.get_unit_name(id) for id in resident_unit))
+
 @description('警告！真抽！抽到出指NEW出保底角色，或达天井停下来，如果已有保底角色，就不会NEW！意味着就是一井！')
 @name('抽卡')
 @booltype("single_ticket", "用单抽券", False)
