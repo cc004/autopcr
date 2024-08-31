@@ -96,6 +96,7 @@ hidden_modules = [
 tool_modules = [
     # cook_pudding,
     unit_promote,
+    missing_unit,
     get_need_equip,
     get_normal_quest_recommand,
     get_need_memory,
