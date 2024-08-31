@@ -91,8 +91,7 @@ class cook_pudding(Module):
         if is_abort: raise AbortError("")
         if is_skip: raise SkipError("")
 
-
-@description('来进行赛博抽卡')
+@description('警告！真抽！抽到出指NEW出保底角色，或达天井停下来，如果已有保底角色，就不会NEW！意味着就是一井！')
 @name('抽卡')
 @booltype("single_ticket", "用单抽券", False)
 @singlechoice("pool_id", "池子", "", db.get_cur_gacha)
@@ -313,7 +312,7 @@ class jjc_back(Arena):
 
         under_rank_bonus_unit = [unit for unit in units_id if client.data.unit[unit].promotion_level < db.equip_max_rank - 1]
         if under_rank_bonus_unit:
-            self._warn(f"警告：{'|'.join([db.get_unit_name(unit_id) for unit_id in under_rank_bonus_unit])}无品级加成")
+            self._warn(f"无品级加成：{'，'.join([db.get_unit_name(unit_id) for unit_id in under_rank_bonus_unit])}")
 
         await client.deck_update(ePartyType.ARENA, units_id)
 
@@ -392,7 +391,7 @@ class pjjc_back(Arena):
         under_rank_bonus_unit = [uni_id for unit_id in units_id for uni_id in unit_id if 
                                  client.data.unit[uni_id].promotion_level < db.equip_max_rank - 1]
         if under_rank_bonus_unit:
-            self._warn(f"警告：{'|'.join([db.get_unit_name(unit_id) for unit_id in under_rank_bonus_unit])}无品级加成")
+            self._warn(f"无品级加成：{'，'.join([db.get_unit_name(unit_id) for unit_id in under_rank_bonus_unit])}")
 
         deck_list = []
         for i, unit_id in enumerate(units_id):

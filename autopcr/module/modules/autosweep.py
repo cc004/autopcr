@@ -356,8 +356,8 @@ class smart_sweep(DIY_sweep):
         if is_start_run_time: 
             self._log(f"刷取start关卡")
             for tab in client.data.user_my_quest:
-                for x in tab.skip_list:
-                    if tab.tab_name == 'start':
+                if tab.tab_name == 'start':
+                    for x in tab.skip_list:
                         quest.append((x, tab.skip_count))
         return quest
 
@@ -367,8 +367,8 @@ class smart_sweep(DIY_sweep):
         if is_loop_run_time: 
             self._log(f"刷取loop关卡")
             for tab in client.data.user_my_quest:
-                for x in tab.skip_list:
-                    if tab.tab_name == 'loop':
+                if tab.tab_name == 'loop':
+                    for x in tab.skip_list:
                         quest.append((x, tab.skip_count))
         return quest
 
