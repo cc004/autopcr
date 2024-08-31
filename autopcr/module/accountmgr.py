@@ -300,6 +300,9 @@ class UserManager:
         self.account_lock: Dict[str, Dict[str, Lock]] = {}
         self.clan_battle_forbidden = set()
 
+        # 初始不存在root目录，创建一下
+        os.makedirs(self.root, exist_ok=True)
+
     def is_clan_battle_forbidden(self, username: str) -> bool:
         if os.path.exists(os.path.join(CONFIG_PATH, 'clan_battle_forbidden.txt')):
             with open(os.path.join(CONFIG_PATH, 'clan_battle_forbidden.txt'), 'r') as f:
