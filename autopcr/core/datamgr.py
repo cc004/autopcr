@@ -120,26 +120,42 @@ class datamgr(Component[apiclient]):
         times = [db.get_campaign_times(campaign_id) for campaign_id in self.campaign_list if condition_func(campaign_id)]
         if not times:
             return 0
-        assert(len(times) == 1)
-        return int(times[0] // 1000)
+        times = max(times)
+        return int(times)
 
     def get_heart_piece_campaign_times(self) -> int:
-        return self.get_campaign_times(db.is_heart_piece_campaign)
+        return self.get_campaign_times(db.is_heart_piece_campaign) // 1000
 
     def get_star_cup_campaign_times(self) -> int:
-        return self.get_campaign_times(db.is_star_cup_campaign)
+        return self.get_campaign_times(db.is_star_cup_campaign) // 1000
 
     def get_normal_quest_campaign_times(self) -> int:
-        return self.get_campaign_times(db.is_normal_quest_campaign)
+        return self.get_campaign_times(db.is_normal_quest_campaign) // 1000
 
     def get_hard_quest_campaign_times(self) -> int:
-        return self.get_campaign_times(db.is_hard_quest_campaign)
+        return self.get_campaign_times(db.is_hard_quest_campaign) // 1000
 
     def get_very_hard_quest_campaign_times(self) -> int:
-        return self.get_campaign_times(db.is_very_hard_quest_campaign)
+        return self.get_campaign_times(db.is_very_hard_quest_campaign) // 1000
 
     def get_dungeon_mana_campaign_times(self) -> int:
-        return self.get_campaign_times(db.is_dungeon_mana_campaign)
+        return self.get_campaign_times(db.is_dungeon_mana_campaign) // 1000
+
+    def get_quest_stamina_half_campaign_times(self, quest: int) -> int:
+        func = lambda campaign_id: \
+            (
+            db.is_normal_quest(quest) and db.is_normal_quest_stamina_half_campaign(campaign_id) 
+            or db.is_hard_quest(quest) and db.is_hard_quest_stamina_half_campaign(campaign_id) 
+            or db.is_very_hard_quest(quest) and db.is_very_hard_quest_stamina_half_campaign(campaign_id) 
+            or db.is_heart_piece_quest(quest) and db.is_heart_piece_stamina_half_campaign(campaign_id) 
+            or db.is_star_cup_quest(quest) and db.is_star_cup_stamina_half_campaign(campaign_id) 
+            or db.is_hatsune_normal_quest(quest) and db.is_hatsune_normal_quest_stamina_half_campaign(campaign_id) 
+            or db.is_hatsune_hard_quest(quest) and db.is_hatsune_hard_quest_stamina_half_campaign(campaign_id) 
+            or db.is_shiori_normal_quest(quest) and db.is_shiori_normal_quest_stamina_half_campaign(campaign_id) 
+            or db.is_shiori_hard_quest(quest) and db.is_shiori_hard_quest_stamina_half_campaign(campaign_id)
+            ) \
+            and db.is_effective_scope_in_campaign(quest, campaign_id)
+        return self.get_campaign_times(func)
 
     def clear_inventory(self):
         self._inventory.clear()
