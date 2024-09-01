@@ -6,7 +6,7 @@ from .misc import errorhandler
 from .datamgr import datamgr
 from ..db.database import db
 from typing import Tuple, Union
-import typing
+import typing, math
 
 class pcrclient(apiclient):
     def __init__(self, sdk: sdkclient, *args, **kwargs):
@@ -797,9 +797,11 @@ class pcrclient(apiclient):
 
 
         info = db.quest_info[quest]
+        stamina_coefficient = self.data.get_quest_stamina_half_campaign_times(quest)
+        if not stamina_coefficient: stamina_coefficient = 100
         result: List[InventoryInfo] = []
         async def skip(times):
-            while self.data.stamina < info.stamina * times:
+            while self.data.stamina < int(math.floor((info.stamina * (stamina_coefficient / 100)))) * times:
                 if self.stamina_recover_cnt > self.data.recover_stamina_exec_count:
                     await self.recover_stamina()
                 else:
@@ -844,55 +846,6 @@ class pcrclient(apiclient):
 
         return result
 
-    '''
-    async def hatsune_quest_skip_aware(self, event: int, quest: int, times: int, recover: bool = False, is_total: bool = False):
-        name = db.quest_name[quest]
-        if not quest in self.data.hatsune_quest_dict[event]:
-            raise AbortError(f"任务{name}未通关或不存在")
-        qinfo = self.data.hatsune_quest_dict[event][quest]
-        if qinfo.clear_flag != 3:
-            raise AbortError(f"任务{name}未三星")
-        info = db.quest_info[quest]
-        async def skip(times):
-            if self.data.stamina < info[1] * times:
-                if self.keys.get('buy_stamina_passive', 0) > self.data.recover_stamina_exec_count:
-                    await self.recover_stamina()
-                else:
-                    raise SkipError(f"任务{name}体力不足")
-            return await self.hatsune_quest_skip(event, quest, times)
-        result: List[InventoryInfo] = []
-        if info[0]:
-            if is_total:
-                times -= qinfo.daily_clear_count
-            max_times = ((self.data.recover_max_time(quest) if recover else 0) + 1) * info[0] - qinfo.daily_clear_count
-            times = min(times, max_times)
-            if times <= 0:
-                raise SkipError(f"任务{name}已达最大次数")
-            remain = info[0] * (qinfo.daily_recovery_count + 1) - qinfo.daily_clear_count
-            while times > 0:
-                if remain == 0:
-                    await self.recover_challenge(quest)
-                    remain = info[0]
-                t = min(times, remain)
-                resp = await skip(t)
-                if resp.quest_result_list:
-                    for result_list in resp.quest_result_list:
-                        result = result + result_list.reward_list
-                if resp.bonus_reward_list:
-                    result = result + resp.bonus_reward_list
-                times -= t
-                remain -= t
-        else:
-            resp = await skip(times)
-            if resp.quest_result_list:
-                for result_list in resp.quest_result_list:
-                    result = result + result_list.reward_list
-            if resp.bonus_reward_list:
-                result = result + resp.bonus_reward_list
-
-        return result
-    '''
-    
     async def refresh(self):
         req = HomeIndexRequest()
         req.message_id = 1
