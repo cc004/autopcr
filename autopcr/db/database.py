@@ -138,7 +138,12 @@ class database():
                 HatsuneSchedule.query(db)
                 .to_dict(lambda x: x.event_id, lambda x: x)
             )
-            
+
+            self.campaign_beginner_data: Dict[int, CampaignBeginnerDatum] = (
+                CampaignBeginnerDatum.query(db)
+                .to_dict(lambda x: x.beginner_id, lambda x: x)
+            )
+
             self.campaign_schedule: Dict[int, CampaignSchedule] = (
                 CampaignSchedule.query(db)
                 .to_dict(lambda x: x.id, lambda x: x)
@@ -700,8 +705,17 @@ class database():
     def is_hatsune_quest(self, quest_id: int) -> bool:
         return quest_id // 1000000 == 10
 
+    def is_hatsune_normal_quest(self, quest_id: int) -> bool:
+        return self.is_hatsune_quest(quest_id) and (quest_id // 100) % 10 == 1
+
+    def is_hatsune_hard_quest(self, quest_id: int) -> bool:
+        return self.is_hatsune_quest(quest_id) and (quest_id // 100) % 10 == 2
+
     def is_shiori_quest(self, quest_id: int) -> bool:
         return quest_id // 1000000 == 20
+
+    def is_shiori_normal_quest(self, quest_id: int) -> bool:
+        return self.is_shiori_quest(quest_id) and (quest_id // 100) % 10 == 1
 
     def is_shiori_hard_quest(self, quest_id: int) -> bool:
         return self.is_shiori_quest(quest_id) and (quest_id // 100) % 10 == 2
@@ -720,6 +734,37 @@ class database():
 
     def is_very_hard_quest_campaign(self, campaign_id: int) -> bool:
         return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.ITEM_DROP_AMOUNT_VERY_HARD
+
+    def is_normal_quest_stamina_half_campaign(self, campaign_id: int) -> bool:
+        return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.HALF_STAMINA_NORMAL \
+                or self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.HALF_STAMINA_BOTH
+
+    def is_hard_quest_stamina_half_campaign(self, campaign_id: int) -> bool:
+        return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.HALF_STAMINA_HARD \
+                or self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.HALF_STAMINA_BOTH
+
+    def is_very_hard_quest_stamina_half_campaign(self, campaign_id: int) -> bool:
+        return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.HALF_STAMINA_VERY_HARD
+
+    def is_heart_piece_stamina_half_campaign(self, campaign_id: int) -> bool:
+        return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.HALF_STAMINA_UNIQUE_EQUIP
+
+    def is_star_cup_stamina_half_campaign(self, campaign_id: int) -> bool:
+        return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.HALF_STAMINA_HIGH_RARITY_EQUIP
+
+    def is_hatsune_normal_quest_stamina_half_campaign(self, campaign_id: int) -> bool:
+        return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.HALF_STAMINA_HATSUNE_NORMAL \
+                or self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.HALF_STAMINA_HATSUNE_BOTH
+
+    def is_hatsune_hard_quest_stamina_half_campaign(self, campaign_id: int) -> bool:
+        return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.HALF_STAMINA_HATSUNE_HARD \
+                or self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.HALF_STAMINA_HATSUNE_BOTH
+
+    def is_shiori_normal_quest_stamina_half_campaign(self, campaign_id: int) -> bool:
+        return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.HALF_STAMINA_SHIORI_NORMAL
+
+    def is_shiori_hard_quest_stamina_half_campaign(self, campaign_id: int) -> bool:
+        return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.HALF_STAMINA_SHIORI_HARD
 
     def is_dungeon_mana_campaign(self, campaign_id: int) -> bool:
         return self.campaign_schedule[campaign_id].campaign_category == eCampaignCategory.GOLD_DROP_AMOUNT_DUNGEON
@@ -809,6 +854,13 @@ class database():
         if campaign not in campaign_list:
             raise ValueError(f"不支持的庆典查询：{campaign}")
         return campaign_list[campaign]()
+
+    def is_effective_scope_in_campaign(self, quest_id: int, campaign_id: int) -> bool:
+        beginner_id = self.campaign_schedule[campaign_id].beginner_id
+        if beginner_id == 0: return True
+        id_from = self.campaign_beginner_data[beginner_id].id_from
+        id_to = self.campaign_beginner_data[beginner_id].id_to
+        return id_from <= quest_id and quest_id <= id_to
 
     def is_clan_battle_time(self, now: Union[None, datetime.datetime] = None) -> bool:
         schedule = [(db.parse_time(schedule.start_time), db.parse_time(schedule.end_time)) 
