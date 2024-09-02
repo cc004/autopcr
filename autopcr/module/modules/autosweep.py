@@ -221,7 +221,7 @@ class smart_shiori_sweep(simple_demand_sweep_base):
         return 5
 
 unique_equip_2_pure_memory_id = [
-        (32025, 1), # 水女仆
+        (32025, 2), # 水女仆，女仆
         (32046, 1), # 水猫剑
         (32048, 1), # 水子龙
         (32060, 1), # 黑猫
