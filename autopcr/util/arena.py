@@ -1,8 +1,7 @@
 from typing import List, Set, Tuple
 import json, asyncio, time
 from os.path import join, exists
-from random import random, choice, sample, choices
-from math import log
+from random import choice, sample, choices
 
 from ..model.custom import PLACEHOLDER, ArenaQueryType, ArenaQueryUnit, ArenaRegion, ArenaQueryResult, ArenaQueryResponse
 from . import aiorequests, pcrdapi
@@ -49,7 +48,7 @@ class ArenaQuery:
 
     @staticmethod
     def _getTs():
-        return int(time())
+        return int(time.time())
 
     @staticmethod
     def _get_query_payload(units, region):
@@ -262,13 +261,17 @@ class ArenaQuery:
     def str_result(self, result: List[ArenaQueryResult]):
         msg = ""
         from ..db.database import db
-        for ret in result:
+        for id, ret in enumerate(result):
+            head = f"{id}. {db.format_time(db.parse_time(ret.updated))}"
             tail = f"{ret.up}/{ret.down}"
             if ret.query_type == ArenaQueryType.APPROXIMATION:
                 tail += f"(近似解)"
             elif ret.query_type == ArenaQueryType.PLACEHOLDER:
                 tail = f"凑解"
-            msg += f'''【{" ".join([db.get_unit_name(unit.id) for unit in ret.atk])}】 {tail}\n'''
+            comment = '\n'.join([f"  | {db.format_time(db.parse_time(c.date))}: {c.msg.strip()}" for c in ret.comment[:3] if c.msg.strip()]) if ret.comment else "  | 无评论"
+            msg += f'''{head}:【{" ".join([db.get_unit_name(unit.id) for unit in ret.atk])}】 {tail}
+{comment}
+'''
 
         return msg
 
