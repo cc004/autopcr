@@ -58,7 +58,7 @@ class monthly_gacha(Module):
             self._log("使用十连")
             gacha_reward += await client.exec_gacha_aware(gacha, 10, eGachaDrawType.Monthly_Free_Multi, 1, 0)
 
-        reward = await client.serlize_gacha_reward(gacha_reward)
+        reward = await client.serlize_gacha_reward(gacha_reward, gacha.id)
         if reward != "无":
             self._log(reward)
             point = client.data.gacha_point[gacha.exchange_id].current_point if gacha.exchange_id in client.data.gacha_point else 0
@@ -115,4 +115,4 @@ class free_gacha(Module):
             gacha_reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Campaign10Shot, cnt, res.campaign_info.campaign_id)
             cnt -= 1
 
-        self._log(await client.serlize_gacha_reward(gacha_reward))
+        self._log(await client.serlize_gacha_reward(gacha_reward, target_gacha.id))

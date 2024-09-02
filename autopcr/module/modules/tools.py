@@ -91,8 +91,27 @@ class cook_pudding(Module):
         if is_abort: raise AbortError("")
         if is_skip: raise SkipError("")
 
+@description('看看你缺了什么角色')
+@name('查缺角色')
+@default(True)
+class missing_unit(Module):
+    async def do_task(self, client: pcrclient):
+        missing_unit = set(db.unlock_unit_condition.keys()) - set(client.data.unit.keys())
+        if not missing_unit:
+            self._log("全图鉴玩家！你竟然没有缺少的角色！")
+        else:
+            limit_unit = set(id for id in missing_unit if db.unit_data[id].is_limited)
+            resident_unit = missing_unit - limit_unit
+            self._log(f"缺少{len(missing_unit)}个角色，其中{len(limit_unit)}个限定角色，{len(resident_unit)}个常驻角色")
+            if limit_unit:
+                self._log(f"==限定角色==" )
+                self._log('\n'.join(db.get_unit_name(id) for id in limit_unit))
+                self._log('')
+            if resident_unit:
+                self._log(f"==常驻角色==" )
+                self._log('\n'.join(db.get_unit_name(id) for id in resident_unit))
 
-@description('来进行赛博抽卡')
+@description('警告！真抽！抽到出指NEW出保底角色，或达天井停下来，如果已有保底角色，就不会NEW！意味着就是一井！')
 @name('抽卡')
 @booltype("single_ticket", "用单抽券", False)
 @singlechoice("pool_id", "池子", "", db.get_cur_gacha)
@@ -136,7 +155,7 @@ class gacha_start(Module):
             raise 
         finally:
             self._log(f"抽取了{cnt}次{'十连' if not single_ticket else '单抽'}")
-            self._log(await client.serlize_gacha_reward(reward))
+            self._log(await client.serlize_gacha_reward(reward, target_gacha.id))
             point = client.data.gacha_point[target_gacha.exchange_id].current_point if target_gacha.exchange_id in client.data.gacha_point else 0
             self._log(f"当前pt为{point}")
 
@@ -311,7 +330,7 @@ class jjc_back(Arena):
 
         under_rank_bonus_unit = [unit for unit in units_id if client.data.unit[unit].promotion_level < db.equip_max_rank - 1]
         if under_rank_bonus_unit:
-            self._warn(f"警告：{'|'.join([db.get_unit_name(unit_id) for unit_id in under_rank_bonus_unit])}无品级加成")
+            self._warn(f"无品级加成：{'，'.join([db.get_unit_name(unit_id) for unit_id in under_rank_bonus_unit])}")
 
         await client.deck_update(ePartyType.ARENA, units_id)
 
@@ -387,7 +406,7 @@ class pjjc_back(Arena):
         under_rank_bonus_unit = [uni_id for unit_id in units_id for uni_id in unit_id if 
                                  client.data.unit[uni_id].promotion_level < db.equip_max_rank - 1]
         if under_rank_bonus_unit:
-            self._warn(f"警告：{'|'.join([db.get_unit_name(unit_id) for unit_id in under_rank_bonus_unit])}无品级加成")
+            self._warn(f"无品级加成：{'，'.join([db.get_unit_name(unit_id) for unit_id in under_rank_bonus_unit])}")
 
         deck_list = []
         for i, unit_id in enumerate(units_id):

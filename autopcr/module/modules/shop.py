@@ -131,7 +131,7 @@ class normal_shop(shop_buyer):
 @default(False)
 class limit_shop(shop_buyer):
     def _exp_count(self): return 999000 if "经验药水" in self.get_config('limit_shop_buy_kind') else 0
-    def _equip_count(self): return 999000 if "装备" in self.get_config('limit_shop_buy_kind') else 0
+    def _equip_count(self): return 999000 if "装备" in self.get_config('limit_shop_buy_kind') else -999000
     def coin_limit(self) -> int: return self.get_config('limit_shop_buy_coin_limit')
     def system_id(self) -> eSystemId: return eSystemId.LIMITED_SHOP
     def reset_count(self) -> int: return 0
