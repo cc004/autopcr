@@ -832,9 +832,12 @@ class database():
         return schedule[0]
 
     def parse_time(self, time: str) -> datetime.datetime:
-        if time.count(':') == 1: # 怎么以前没有秒的
-            time += ":00"
-        return datetime.datetime.strptime(time, '%Y/%m/%d %H:%M:%S')
+        for timeformat in ['%Y/%m/%d %H:%M:%S', '%Y/%m/%d %H:%M', '%Y-%m-%dT%H:%M:%S.%fZ']:
+            try:
+                return datetime.datetime.strptime(time, timeformat)
+            except:
+                pass
+        raise ValueError(f"无法解析时间：{time}")
 
     def parse_time_safe(self, time: str) -> datetime.datetime:
         return datetime.datetime.strptime(time, '%Y%m%d%H%M%S')
