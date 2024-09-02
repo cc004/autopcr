@@ -748,6 +748,9 @@ async def quest_recommand(botev: BotEvent):
     }
     return config
 
+@register_tool("查缺角色", "missing_unit")
+async def find_missing_unit(botev: BotEvent):
+    return {}
 
 # @register_tool("获取导入", "get_library_import_data")
 # async def get_library_import(botev: BotEvent):
