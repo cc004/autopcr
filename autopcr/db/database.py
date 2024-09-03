@@ -895,7 +895,7 @@ class database():
         return schedule[0]
 
     def parse_time(self, time: str) -> datetime.datetime:
-        for timeformat in ['%Y/%m/%d %H:%M:%S', '%Y/%m/%d %H:%M', '%Y-%m-%dT%H:%M:%S.%fZ']:
+        for timeformat in ['%Y/%m/%d %H:%M:%S', '%Y/%m/%d %H:%M', '%Y-%m-%dT%H:%M:%S.%fZ', '%Y-%m-%dT%H:%M:%SZ']:
             try:
                 return datetime.datetime.strptime(time, timeformat)
             except:
@@ -907,6 +907,9 @@ class database():
 
     def format_time(self, time: datetime.datetime) -> str:
         return time.strftime("%Y/%m/%d %H:%M:%S")
+
+    def format_date(self, time: datetime.datetime) -> str:
+        return time.strftime("%Y/%m/%d")
 
     def format_time_safe(self, time: datetime.datetime) -> str:
         return time.strftime("%Y%m%d%H%M%S")
