@@ -262,14 +262,14 @@ class ArenaQuery:
         msg = ""
         from ..db.database import db
         for id, ret in enumerate(result):
-            head = f"{id}. {db.format_time(db.parse_time(ret.updated))}"
+            head = f"{id + 1}. {db.format_date(db.parse_time(ret.updated)) if ret.updated else ''}:"
             tail = f"{ret.up}/{ret.down}"
             if ret.query_type == ArenaQueryType.APPROXIMATION:
                 tail += f"(近似解)"
             elif ret.query_type == ArenaQueryType.PLACEHOLDER:
                 tail = f"凑解"
-            comment = '\n'.join([f"  | {db.format_time(db.parse_time(c.date))}: {c.msg.strip()}" for c in ret.comment[:3] if c.msg.strip()]) if ret.comment else "  | 无评论"
-            msg += f'''{head}:【{" ".join([db.get_unit_name(unit.id) for unit in ret.atk])}】 {tail}
+            comment = '\n'.join([f"  | {db.format_date(db.parse_time(c.date)) if c.date else ''}: {c.msg.strip()}" for c in ret.comment[:3] if c.msg.strip()]) if ret.comment else "  | 无评论"
+            msg += f'''{head}【{" ".join([db.get_unit_name(unit.id) for unit in ret.atk])}】 {tail}
 {comment}
 '''
 
