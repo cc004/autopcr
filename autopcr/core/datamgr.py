@@ -303,7 +303,7 @@ class datamgr(Component[apiclient]):
         result: typing.Counter[ItemType] = Counter()
         for memory_id, unit_id in db.memory_to_unit.items():
             token = (eInventoryType.Item, memory_id)
-            if token not in db.inventory_name: # 未来角色
+            if token not in db.inventory_name or unit_id not in db.unit_data: # 未来角色
                 continue
 
             need = self.get_rarity_memory_demand(unit_id, token, 2) + self.get_unique_equip_memory_demand(unit_id, token) + self.get_exceed_level_unit_demand(unit_id, token)
@@ -314,7 +314,7 @@ class datamgr(Component[apiclient]):
     def get_pure_memory_demand(self) -> typing.Counter[ItemType]:
         result: typing.Counter[ItemType] = Counter()
         for token, unit_id in db.pure_memory_to_unit.items():
-            if token not in db.inventory_name: # 未来角色
+            if token not in db.inventory_name or unit_id not in db.unit_data: # 未来角色
                 continue
 
             need = self.get_rarity_memory_demand(unit_id, token, 1)
