@@ -100,7 +100,7 @@ def draw_table(table, header=[], font=ImageFont.load_default(), cell_pad=(20, 10
                 _left += col_max_wid[j] - draw.textsize(table[i][j], font)[0]
             _top = top 
             _top += (row_max_hei[i] - draw.textsize(table[i][j], font)[1]) // 2 # always vertical center
-            draw.text((_left, _top), table[i][j], font=font, fill=color)
+            draw.text((_left, _top), table[i][j].replace('\t', ' '), font=font, fill=color)
             left += col_max_wid[j] + cell_pad[0] * 2
         top += row_max_hei[i] + cell_pad[1] * 2
 
