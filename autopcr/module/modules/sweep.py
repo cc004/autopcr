@@ -169,7 +169,7 @@ class special_underground_skip(Module):
             if db.secret_dungeon_area[id].open_area_id not in infos.dungeon_cleared_area_id_list:
                 raise AbortError(f"【{dungeon_name(id)}】未讨伐，无法进入特别地下城")
 
-            await client.deck_update(ePartyType.DUNGEON, [0, 0, 0, 0, 0], sorted=True)
+            await client.deck_update(ePartyType.DUNGEON, [0, 0, 0, 0, 0])
 
             req = await client.enter_special_dungeon(id)
             reward_list = req.skip_result_list if req.skip_result_list else []

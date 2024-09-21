@@ -624,3 +624,54 @@ class get_normal_quest_recommand(Module):
         msg = '\n--------\n'.join(tot)
         self._log(msg)
 
+
+@description('从指定面板的指定队开始设置。6行重复，标题+5行角色ID	角色名字	角色等级	角色星级')
+@texttype("set_my_party_text", "队伍阵容", "")
+@inttype("party_start_num", "初始队伍", 1, [i for i in range(1, 11)])
+@inttype("tab_start_num", "初始面板", 1, [i for i in range(1, 7)])
+@name('设置编队')
+class set_my_party(Module):
+    async def do_task(self, client: pcrclient):
+        set_my_party_text: str = self.get_config('set_my_party_text')
+        tab_number: int = self.get_config('tab_start_num')
+        party_number: int = self.get_config('party_start_num') - 1
+        party = set_my_party_text.splitlines()
+        for i in range(0, len(party), 6):
+
+            party_number += 1
+            if party_number == 11:
+                tab_number += 1
+                party_number = 1
+                if tab_number >= 6:
+                    raise AbortError("队伍数量超过上限")
+
+            title = party[i] + "记得借人"
+            unit_list = [u.split('\t') for u in party[i + 1 : i + 1 + 6]]
+
+            own_unit = [u for u in unit_list if int(u[0]) in client.data.unit]
+            not_own_unit = [u for u in unit_list if int(u[0]) not in client.data.unit]
+            if not_own_unit:
+                self._warn(f"{title}未持有：{', '.join([u[1] for u in not_own_unit])}")
+
+            change_rarity_list = []
+            unit_list = []
+            for unit in own_unit:
+                id = int(unit[0])
+                star = int(unit[3])
+                unit_data = client.data.unit[id]
+                now_star = unit_data.battle_rarity if unit_data.battle_rarity else unit_data.unit_rarity
+                if star != now_star:
+                    if star >= 3 and star <= 5 and now_star >= 3 and now_star <= 5:
+                        change_rarity = ChangeRarityUnit(unit_id=id, battle_rarity=star)
+                        change_rarity_list.append(change_rarity)
+                    else:
+                        self._warn(f"{title}：{unit[1]}星级无法{now_star} -> {star}")
+                unit_list.append(id)
+
+            if change_rarity_list:
+                await client.unit_change_rarity(change_rarity_list)
+            if not unit_list:
+                self._warn(f"{title}没有可用的角色")
+            else:
+                await client.set_my_party(tab_number, party_number, 4, title, unit_list, change_rarity_list)
+                self._log(f"设置了{title}")
