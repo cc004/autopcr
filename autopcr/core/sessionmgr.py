@@ -73,7 +73,7 @@ class sessionmgr(Component[apiclient]):
             raise
         finally:
             from ..sdk.validator import validate_dict, ValidateInfo
-            validate_dict[self._account] = ValidateInfo(status="ok")
+            validate_dict[self.sdk.qq].append(ValidateInfo(status="ok"))
 
     async def _login(self, next: RequestHandler):
         if os.path.exists(self.cacheFile):

@@ -2,7 +2,6 @@ from enum import Enum
 from typing import Tuple
 from abc import abstractmethod
 from ..sdk.validator import Validator
-from ..sdk.bsgamesdk import captch
 from copy import deepcopy
 from ..constants import DEFAULT_HEADERS, IOS_HEADERS
 
@@ -12,10 +11,12 @@ class platform(Enum):
 
 class account:
     type: platform
+    qq: str
     username: str
     password: str
     
-    def __init__(self, usr: str, pwd: str, type: platform):
+    def __init__(self, qid: str, usr: str, pwd: str, type: platform):
+        self.qq = qid
         self.username = usr
         self.password = pwd
         self.type = type
@@ -42,8 +43,7 @@ class sdkclient:
     async def login(self) -> Tuple[str, str]: ...
 
     async def do_captcha(self):                                
-        cap = await captch()
-        return await self.captchaVerifier(self.account, cap['gt'], cap['challenge'], cap['gt_user_id'])
+        return await self.captchaVerifier(self.qq)
     
     def header(self):
         if self._account.type == platform.Android:
@@ -75,6 +75,10 @@ class sdkclient:
     @property
     def account(self):
         return self._account.username
+
+    @property
+    def qq(self):
+        return self._account.qq
     
     @property
     @abstractmethod

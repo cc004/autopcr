@@ -7,6 +7,7 @@ class bsdkclient(sdkclient):
     async def login(self):
         while True:
             resp = await login(
+                self._account.qq,
                 self._account.username,
                 self._account.password,
                 self.captchaVerifier

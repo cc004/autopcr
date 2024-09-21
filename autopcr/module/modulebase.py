@@ -59,13 +59,26 @@ def tag_stamina_get(cls):
 def text_result(cls):
     return _wrap_init(cls, lambda self: setattr(self, 'text_result', True))
 
-class eResultStatus(Enum):
+class eResultStatus(str, Enum):
     SUCCESS = "成功"
     SKIP = "跳过"
     WARNING = "警告"
     ABORT = "中止"
     ERROR = "错误"
     PANIC = "致命"
+    @classmethod
+    def _missing_(cls, value):
+        old = {
+            'success': cls.SUCCESS,
+            'skip': cls.SKIP,
+            'warning': cls.WARNING,
+            'abort': cls.ABORT,
+            'error': cls.ERROR,
+            'panic': cls.PANIC
+        }
+        if value in old:
+            return old[value]
+        return ValueError(f"{value} not found in eResultStatus")
 
 @dataclass_json
 @dataclass

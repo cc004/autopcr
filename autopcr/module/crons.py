@@ -46,7 +46,8 @@ async def task(qid, account, cur):
             try:
                 if await mgr.is_cron_run(cur.hour, cur.minute):
                     write_cron_log(eCronOperation.START, cur, qid, account, eResultStatus.SUCCESS)
-                    _, status = await mgr.do_daily()
+                    res = await mgr.do_daily()
+                    status = res.status
                     cur = datetime.datetime.now()
                     write_cron_log(eCronOperation.FINISH, cur, qid, account, status)
             except Exception as e:
