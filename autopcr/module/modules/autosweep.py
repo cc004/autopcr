@@ -81,7 +81,8 @@ class smart_normal_sweep(Module):
                             first = False
                             self._log("需求装备均已盈余")
                             if full2all:
-                                gap = client.data.get_demand_gap(all_demand, lambda x: db.is_equip(x))
+                                demand = all_demand
+                                gap = client.data.get_demand_gap(demand, lambda x: db.is_equip(x))
                                 self._log("考虑所有角色的需求装备")
 
                     quest_weight = client.data.get_quest_weght(gap)

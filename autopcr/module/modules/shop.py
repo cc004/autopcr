@@ -16,6 +16,8 @@ class shop_buyer(Module):
         return self._get_count('经验药水', 'shop_buy_exp_count_limit')
     def _equip_count(self):
         return self._get_count('装备', 'shop_buy_equip_count_limit')
+    def _equip_raw_ore_count(self):
+        return self._get_count('原矿', 'shop_buy_equip_raw_ore_count_limit')
     def _equip_upper_count(self):
         return self._get_count('强化石', 'shop_buy_equip_upper_count_limit')
     def _unit_memory_count(self):
@@ -73,6 +75,7 @@ class shop_buyer(Module):
                     (
                         (db.is_exp_upper((item.type, item.item_id)) and client.data.get_inventory((item.type, item.item_id)) < self._exp_count()) or
                         (db.is_equip_upper((item.type, item.item_id)) and client.data.get_inventory((item.type, item.item_id)) < self._equip_upper_count()) or
+                        (db.is_equip_raw_ore((item.type, item.item_id)) and client.data.get_inventory((item.type, item.item_id)) < self._equip_raw_ore_count()) or
                         (db.is_equip((item.type, item.item_id)) and -equip_demand_gap[(item.type, item.item_id)] < self._equip_count()) or
                         (db.is_unit_memory((item.type, item.item_id)) and -memory_demand_gap[(item.type, item.item_id)] < self._unit_memory_count())
                     )
@@ -125,13 +128,14 @@ class normal_shop(shop_buyer):
     def buy_kind(self) -> List[str]: return self.get_config('normal_shop_buy_kind')
 
 @singlechoice('limit_shop_buy_coin_limit', "货币阈值", 5000000, [0, 5000000, 10000000, 20000000])
-@multichoice("limit_shop_buy_kind", "购买种类", ['经验药水', '装备'], ['经验药水', '装备'])
+@multichoice("limit_shop_buy_kind", "购买种类", ['经验药水', '装备', '原矿'], ['经验药水', '装备', '原矿'])
 @description('此项购买不使用最大值')
 @name('限定商店购买')
 @default(False)
 class limit_shop(shop_buyer):
     def _exp_count(self): return 999000 if "经验药水" in self.get_config('limit_shop_buy_kind') else 0
     def _equip_count(self): return 999000 if "装备" in self.get_config('limit_shop_buy_kind') else -999000
+    def _equip_raw_ore_count(self): return 999000 if "原矿" in self.get_config('limit_shop_buy_kind') else 0
     def coin_limit(self) -> int: return self.get_config('limit_shop_buy_coin_limit')
     def system_id(self) -> eSystemId: return eSystemId.LIMITED_SHOP
     def reset_count(self) -> int: return 0
