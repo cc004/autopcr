@@ -405,6 +405,9 @@ class datamgr(Component[apiclient]):
         else: # hatsune, shiori 0
             return self.settings.hatsune_recover_challenge_count.recovery_max_count
 
+    def filter_inventory(self, filter: Callable) -> List[ItemType]:
+        return [item for item in self._inventory if filter(item) and self._inventory[item] > 0]
+
     def get_inventory(self, item: ItemType) -> int:
         return self._inventory.get(item, 0)
 

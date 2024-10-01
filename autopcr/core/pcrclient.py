@@ -59,6 +59,12 @@ class pcrclient(apiclient):
             setattr(req, f"unit_id_{i}",units[i - 1] if i <= cnt else 0) 
         return await self.request(req)
 
+    async def set_growth_item_unique(self, unit_id: int, item_id: int):
+        req = UnitSetGrowthItemUniqueRequest()
+        req.unit_id = unit_id
+        req.item_id = item_id
+        return await self.request(req)
+
     async def set_my_party_tab(self, tab_number: int, tab_name: str):
         req = SetMyPartyTabRequest()
         req.tab_number = tab_number
@@ -282,7 +288,7 @@ class pcrclient(apiclient):
         if self.data.get_mana() >= mana:
             return True
         elif self.data.get_mana(include_bank = True) >= mana:
-            await self.draw_from_bank(mana, mana - self.data.get_mana())
+            await self.draw_from_bank(self.data.user_gold_bank_info.bank_gold, mana - self.data.get_mana())
             return True
         else:
             return False
