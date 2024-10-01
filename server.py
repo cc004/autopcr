@@ -181,7 +181,8 @@ async def is_valid_qq(qq: str):
     groups = (await sv.get_enable_groups()).keys()
     bot = nonebot.get_bot()
     if qq.startswith("g"):
-        return qq.lstrip('g') in groups
+        gid = qq.lstrip('g')
+        return gid.isdigit() and int(gid) in groups
     else:
         for group in groups:
             try:
@@ -294,10 +295,10 @@ def wrap_config(func):
 
 def require_super_admin(func):
     async def wrapper(botev: BotEvent, *args, **kwargs):
-        if not await botev.is_super_admin():
-            await botev.finish("仅超级管理员可以调用")
+        if await botev.target_qq() != await botev.send_qq() and not await botev.is_super_admin():
+            await botev.finish("仅超级管理员调用他人")
         else:
-            await func(botev = botev, *args, **kwargs)
+            return await func(botev = botev, *args, **kwargs)
 
     wrapper.__name__ = func.__name__
     return wrapper

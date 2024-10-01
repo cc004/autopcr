@@ -187,7 +187,9 @@ class Module:
             result.log = str(e)
             result.status = eResultStatus.ERROR
         finally:
-            result.log = ('\n'.join(self.warn + self.log) + "\n" + result.log).strip() or "ok"
+            result.log = ('\n'.join(self.warn + 
+                                    (['----'] if self.warn and self.log else []) +
+                                    self.log) + "\n" + result.log).strip() or "ok"
 
         return result
 
