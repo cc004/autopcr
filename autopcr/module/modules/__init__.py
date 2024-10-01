@@ -129,6 +129,7 @@ tool_modules = ModuleList(
     [
         # cook_pudding,
         unit_promote,
+        unit_set_unique_equip_growth,
         missing_unit,
         get_need_equip,
         get_normal_quest_recommand,

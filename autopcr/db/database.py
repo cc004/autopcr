@@ -719,6 +719,12 @@ class database():
     def is_equip_craftable(self, item: ItemType) -> bool:
         return item in self.equip_craft
 
+    def is_equip_glow_ball(self, item: ItemType) -> bool:
+        return item[0] == eInventoryType.Item and item[1] >= 21900 and item[1] < 21950
+
+    def is_unique_equip_glow_ball(self, item: ItemType) -> bool:
+        return item[0] == eInventoryType.Item and item[1] >= 21950 and item[1] < 22000
+
     def is_room_item_level_upable(self, team_level: int, item: RoomUserItem) -> bool:
         return (item.room_item_level < self.room_item[item.room_item_id].max_level and 
                 item.room_item_level in self.room_item_detail[item.room_item_id] and
@@ -1039,17 +1045,17 @@ class database():
         return self.unique_equip_rank[equip_slot][rank].enhance_level
 
     def get_unique_equip_rank_from_level(self, equip_slot: int, level: int):
-        pt = self.unique_equipment_enhance_data[equip_slot][level].rank
-        return pt
+        rank = self.unique_equipment_enhance_data[equip_slot][level].rank if level in self.unique_equipment_enhance_data[equip_slot] else 1
+        return rank
 
     def get_unique_equip_rank_required_level(self, slot_id: int, unit_id: int, rank: int):
         rank -= 1 # db是从当前rank升下一级的花费限制，因此升到rank的限制来自于rank-1
         equip_id = db.unit_unique_equip[slot_id][unit_id].equip_id
-        level = self.unique_equipment_rank_up[equip_id][rank].unit_level
+        level = self.unique_equipment_rank_up[equip_id][rank].unit_level if rank > 0 else 1
         return level
 
     def get_unique_equip_pt_from_level(self, equip_slot: int, level: int):
-        pt = self.unique_equipment_enhance_data[equip_slot][level].total_point
+        pt = self.unique_equipment_enhance_data[equip_slot][level].total_point if level in self.unique_equipment_enhance_data[equip_slot] else 0
         return pt
 
     def deck_sort_unit(self, units: List[int]):
