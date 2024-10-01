@@ -16,7 +16,6 @@ import datetime
 @booltype("normal_sweep_equip_ok_to_full", "刷满则考虑所有角色", False)
 @singlechoice("normal_sweep_consider_unit", "起始品级", "所有", ["所有", "最高", "次高", "次次高"])
 @booltype("normal_sweep_consider_unit_fav", "收藏角色", True)
-@booltype("normal_sweep_only_cleared_quest", "仅可扫荡", False)
 @description('根据【刷图推荐】结果刷n图，均匀刷指每次刷取的图覆盖所缺的需求装备，若无缺装备则刷取推荐的第一张图，仅可扫荡指忽略未三星通关地图')
 @name('智能刷n图')
 @default(False)
@@ -50,7 +49,6 @@ class smart_normal_sweep(Module):
         rank: str = self.get_config('normal_sweep_consider_unit')
         strategy: str = self.get_config('normal_sweep_strategy')
         full2all: bool = self.get_config('normal_sweep_equip_ok_to_full')
-        only_cleared_quest: bool = self.get_config('normal_sweep_only_cleared_quest')
         opt: Dict[Union[int, str], int] = {
             '所有': 1,
             '最高': db.equip_max_rank,
@@ -64,8 +62,6 @@ class smart_normal_sweep(Module):
         quest_id = []
         tmp = []
         quest_list: List[int] = [id for id, quest in db.normal_quest_data.items() if db.parse_time(quest.start_time) <= datetime.datetime.now()]
-        if only_cleared_quest:
-            quest_list = [id for id in quest_list if id in client.data.finishedQuest]
         stop: bool = False
         first: bool = True
 
@@ -247,6 +243,9 @@ unique_equip_2_pure_memory_id = [
         (32043, 1), # 水狼
         (32017, 1), # 水狗
         (32010, 1), # 水狐
+        (32036, 1), # mcw
+        (32020, 1), # 瓜兔
+        (32004, 1), # 瓜炸
 ]
 @conditional_execution1("very_hard_sweep_run_time", ["vh庆典"])
 @description('储备专二需求的150碎片，包括' + ','.join(db.get_item_name(item_id) for item_id, _ in unique_equip_2_pure_memory_id))
