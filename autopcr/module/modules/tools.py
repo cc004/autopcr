@@ -646,7 +646,7 @@ class set_my_party(Module):
                     raise AbortError("队伍数量超过上限")
 
             title = party[i] + "记得借人"
-            unit_list = [u.split('\t') for u in party[i + 1 : i + 1 + 6]]
+            unit_list = [u.split('\t') for u in party[i + 1 : i + 1 + 5]]
 
             own_unit = [u for u in unit_list if int(u[0]) in client.data.unit]
             not_own_unit = [u for u in unit_list if int(u[0]) not in client.data.unit]
@@ -659,8 +659,9 @@ class set_my_party(Module):
                 id = int(unit[0])
                 star = int(unit[3])
                 unit_data = client.data.unit[id]
+                can_change_star = unit_data.unit_rarity == 5
                 now_star = unit_data.battle_rarity if unit_data.battle_rarity else unit_data.unit_rarity
-                if star != now_star:
+                if can_change_star and star != now_star:
                     if star >= 3 and star <= 5 and now_star >= 3 and now_star <= 5:
                         change_rarity = ChangeRarityUnit(unit_id=id, battle_rarity=star)
                         change_rarity_list.append(change_rarity)

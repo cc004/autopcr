@@ -129,7 +129,6 @@ class HttpServer:
         @HttpServer.wrapaccountmgr()
         async def create_accounts(accountmgr: AccountManager):
             try:
-                # get file
                 file = await request.files
                 if 'file' not in file:
                     return "请选择文件", 400
@@ -231,7 +230,7 @@ class HttpServer:
         @HttpServer.wrapaccount()
         async def do_daily(mgr: Account):
             try:
-                await mgr.do_daily()
+                await mgr.do_daily(mgr._parent.secret.clan)
                 return mgr.generate_result_info(), 200
             except ValueError as e:
                 return str(e), 400
@@ -340,12 +339,12 @@ class HttpServer:
             server_id = secrets.token_urlsafe(8)
             self.validate_server[accountmgr.qid] = server_id
 
-            async def send_events(server_id):
+            async def send_events(qid, server_id):
                 for _ in range(30):
-                    if self.validate_server[accountmgr.qid] != server_id:
+                    if self.validate_server[qid] != server_id:
                         break
-                    if accountmgr.qid in validate_dict and validate_dict[accountmgr.qid]:
-                        ret = validate_dict[accountmgr.qid].pop().to_json()
+                    if qid in validate_dict and validate_dict[qid]:
+                        ret = validate_dict[qid].pop().to_json()
                         id = secrets.token_urlsafe(8)
                         yield f'''id: {id}
 retry: 1000
@@ -354,7 +353,7 @@ data: {ret}\n\n'''
                         await asyncio.sleep(1)
 
             response = await quart.make_response(
-                send_events(server_id),
+                send_events(accountmgr.qid, server_id),
                 {
                     'Content-Type': 'text/event-stream',
                     'Cache-Control': 'no-cache',
