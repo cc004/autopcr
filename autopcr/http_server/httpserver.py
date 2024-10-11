@@ -144,13 +144,26 @@ class HttpServer:
                 traceback.print_exc()
                 return "服务器发生错误", 500
 
+        @self.api.route('/', methods = ["DELETE"])
+        @login_required
+        @HttpServer.wrapaccountmgr()
+        async def delete_qq(accountmgr: AccountManager):
+            try:
+                accountmgr.delete_mgr()
+                logout_user()
+                return "删除QQ成功", 200
+            except AccountException as e:
+                return str(e), 400
+            except Exception as e:
+                traceback.print_exc()
+                return "服务器发生错误", 500
+
         @self.api.route('/account', methods = ["DELETE"])
         @login_required
         @HttpServer.wrapaccountmgr()
         async def delete_account(accountmgr: AccountManager):
             try:
-                accountmgr.delete_mgr()
-                logout_user()
+                accountmgr.delete_all_accounts()
                 return "删除账号成功", 200
             except AccountException as e:
                 return str(e), 400
@@ -259,12 +272,16 @@ class HttpServer:
         @HttpServer.wrapaccount(readonly= True)
         async def daily_result(mgr: Account, key: str):
             try:
+                resp_text = request.args.get('text', 'false').lower()
                 resp = await mgr.get_daily_result_from_key(key)
                 if not resp:
                     return "无结果", 404
-                img = await drawer.draw_tasks_result(resp)
-                bytesio = await drawer.img2bytesio(img)
-                return await send_file(bytesio, mimetype='image/jpg')
+                if resp_text == 'false':
+                    img = await drawer.draw_tasks_result(resp)
+                    bytesio = await drawer.img2bytesio(img)
+                    return await send_file(bytesio, mimetype='image/jpg')
+                else:
+                    return resp.to_json(), 200
             except ValueError as e:
                 return str(e), 400
             except Exception as e:
@@ -321,7 +338,7 @@ class HttpServer:
                     bytesio = await drawer.img2bytesio(img)
                     return await send_file(bytesio, mimetype='image/jpg')
                 else:
-                    return resp.log, 200
+                    return resp.to_json(), 200
             except ValueError as e:
                 return str(e), 400
             except Exception as e:
