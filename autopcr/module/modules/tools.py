@@ -12,6 +12,8 @@ from ...db.database import db
 from ...model.enums import *
 from ...util.arena import instance as ArenaQuery
 import datetime
+import random
+from collections import Counter
 
 @name('【活动限时】一键做布丁')
 @default(True)
@@ -521,6 +523,28 @@ class pjjc_info(ArenaInfo):
     async def get_rank_info(self, client: pcrclient, num: int, page: int) -> List[GrandArenaSearchOpponent]:
         return (await client.grand_arena_rank(num, page)).ranking
 
+@description('将pjjc防守阵容随机错排')
+@name('pjjc换防')
+class pjjc_shuffle_team(Module):
+    async def do_task(self, client: pcrclient):
+        ids = random.choice([ [1, 2, 0], [2, 0, 1] ])
+        deck_list: List[DeckListData] = []
+        cnt = 3
+        for i in range(cnt):
+            deck_number = getattr(ePartyType, f"GRAND_ARENA_DEF_{i + 1}")
+            units = client.data.deck_list[deck_number]
+            units_id = [getattr(units, f"unit_id_{i + 1}") for i in range(5)]
+
+            deck = DeckListData()
+            deck_number = getattr(ePartyType, f"GRAND_ARENA_DEF_{ids[i] + 1}")
+            deck.deck_number = deck_number
+            deck.unit_list = units_id
+            deck_list.append(deck)
+
+        deck_list.sort(key=lambda x: x.deck_number)
+        self._log('\n'.join([f"{i} -> {j}" for i, j in enumerate(ids)]))
+        await client.deck_update_list(deck_list)
+
 
 @description('获得可导入到兰德索尔图书馆的账号数据')
 @name('兰德索尔图书馆导入数据')
@@ -554,6 +578,20 @@ class get_need_memory(Module):
             demand = [i for i in demand if i[0] in master_shop_item]
 
         msg = '\n'.join([f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片{("(" + msg[item[0]] + ")") if item[0] in msg else ""}' for item in demand])
+        self._log(msg)
+
+@description('根据每个角色升六星（国服当前）、满二专（日服当前）所需的纯净碎片减去库存的结果')
+@name('获取纯净碎片缺口')
+@default(True)
+class get_need_pure_memory(Module):
+    async def do_task(self, client: pcrclient):
+        from .autosweep import unique_equip_2_pure_memory_id
+        need_list = client.data.get_pure_memory_demand_gap()
+        need_list.update(Counter({(eInventoryType.Item, pure_memory_id): 150 * cnt for pure_memory_id, cnt in unique_equip_2_pure_memory_id}))
+        demand = list(need_list.items())
+        demand = sorted(demand, key=lambda x: x[1], reverse=True)
+        msg = {}
+        msg = '\n'.join([f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片' for item in demand])
         self._log(msg)
 
 @description('根据每个角色开专、升级至当前最高专所需的心碎减去库存的结果，大心转换成10心碎')

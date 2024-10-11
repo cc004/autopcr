@@ -45,6 +45,7 @@ sv_help = f"""
 - {prefix}定时日志 查看定时运行状态
 - {prefix}查缺角色 查看缺少的限定常驻角色
 - {prefix}查心碎 查询缺口心碎
+- {prefix}查纯净碎片 查询缺口纯净碎片，国服六星+日服二专需求
 - {prefix}查记忆碎片 [可刷取|大师币] 查询缺口记忆碎片，可按地图可刷取或大师币商店过滤
 - {prefix}查装备 [<rank>] [fav] 查询缺口装备，rank为数字，只查询>=rank的角色缺口装备，fav表示只查询favorite的角色
 - {prefix}刷图推荐 [<rank>] [fav] 查询缺口装备的刷图推荐，格式同上
@@ -677,6 +678,9 @@ async def find_memory(botev: BotEvent):
     }
     return config
 
+@register_tool("查纯净碎片", "get_need_pure_memory")
+async def find_pure_memory(botev: BotEvent):
+    return {}
 
 @register_tool(f"来发十连", "gacha_start")
 @require_super_admin
@@ -773,6 +777,11 @@ async def quest_recommand(botev: BotEvent):
         "like_unit_only": like_unit_only
     }
     return config
+
+
+@register_tool("pjjc换防", "pjjc_shuffle_team")
+async def pjjc_shuffle_team(botev: BotEvent):
+    return {}
 
 @register_tool("查缺角色", "missing_unit")
 async def find_missing_unit(botev: BotEvent):

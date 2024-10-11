@@ -134,6 +134,7 @@ tool_modules = ModuleList(
         get_need_equip,
         get_normal_quest_recommand,
         get_need_memory,
+        get_need_pure_memory,
         get_need_xinsui,
         get_clan_support_unit,
         get_library_import_data,
@@ -141,5 +142,6 @@ tool_modules = ModuleList(
         pjjc_back,
         jjc_info,
         pjjc_info,
+        pjjc_shuffle_team,
     ]
 )
