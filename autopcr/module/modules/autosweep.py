@@ -255,7 +255,7 @@ unique_equip_2_pure_memory_id = [
 class mirai_very_hard_sweep(simple_demand_sweep_base):
     async def get_need_list(self, client: pcrclient) -> List[Tuple[ItemType, int]]:
         need_list = client.data.get_pure_memory_demand_gap()
-        need_list += Counter({(eInventoryType.Item, pure_memory_id): 150 * cnt for pure_memory_id, cnt in unique_equip_2_pure_memory_id})
+        need_list.update(Counter({(eInventoryType.Item, pure_memory_id): 150 * cnt for pure_memory_id, cnt in unique_equip_2_pure_memory_id}))
         need_list = [(token, need) for token, need in need_list.items() if need > 0]
         if not need_list:
             raise SkipError("所有纯净碎片均已盈余")

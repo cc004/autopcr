@@ -304,6 +304,8 @@ class AccountManager:
             self.secret: UserData = UserData.from_json(f.read())
             self.old_secret = deepcopy(self.secret)
 
+        self.secret.clan |= self.qid.startswith('g')
+
     async def __aenter__(self):
         if not self.readonly:
             await self._lck.acquire()
@@ -362,6 +364,10 @@ class AccountManager:
         if not AccountManager.pathsyntax.fullmatch(account):
             raise AccountException(f'非法账户名{account}')
         os.remove(self.path(account))
+
+    def delete_all_accounts(self):
+        for account in self.accounts():
+            self.delete(account)
 
     def delete_mgr(self):
         self._parent.delete(self.qid)
