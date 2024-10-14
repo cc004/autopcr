@@ -1,0 +1,28 @@
+headers:
+  default: &default_headers
+    Accept-Encoding: "gzip"
+    X-Unity-Version: "2021.3.20f1c1"
+    APP-VER: "7.7.2"
+    BATTLE-LOGIC-VERSION: "4"
+    BUNDLE-VER: ""
+    EXCEL-VER: "1.0.0"
+    IP-ADDRESS: "10.0.2.15"
+    LOCALE: "CN"
+    KEYCHAIN: ""
+    REGION-CODE: ""
+    SHORT-UDID: "0"
+    RES-VER: "10002200"
+  android:
+    <<: *default_headers
+    DEVICE: "2"
+    DEVICE-ID: "7b1703a5d9b394e24051d7a5d4818f17"
+    DEVICE-NAME: "OPPO PCRT00"
+    GRAPHICS-DEVICE-NAME: "Adreno (TM) 640"
+    PLATFORM-OS-VERSION: "Android OS 5.1.1 / API-22 (LMY48Z/rel.se.infra.20200612.100533)"
+  ios:
+    <<: *default_headers
+    DEVICE: "1"
+    DEVICE-ID: "CB03A1AC-B27D-5E96-9422-CBF0F4D333D7"
+    DEVICE-NAME: "iPad13,8"
+    GRAPHICS-DEVICE-NAME: "Apple M1"
+    PLATFORM-OS-VERSION: "iOS 17.3"

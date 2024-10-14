@@ -1,8 +1,9 @@
 #type: ignore
 from re import T
 from typing import Generic, TypeVar, Optional
-from pydantic import BaseModel
-from pydantic.generics import GenericModel
+
+from pydantic.v1 import BaseModel, version
+from pydantic.v1.generics import GenericModel
 
 class ErrorInfo(BaseModel):
     title: str = None
@@ -30,7 +31,9 @@ class Response(GenericModel, Generic[TResponse]):
     data_headers: ResponseHeader = None
     data: Optional[TResponse] = None
 
-from pydantic.main import validate_model, object_setattr
+from pydantic.v1.main import validate_model
+object_setattr = object.__setattr__
+
 from typing import Any
 
 class Request(Generic[TResponse], BaseModel):

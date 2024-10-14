@@ -1,0 +1,17 @@
+self:
+#  暂时没用
+  db_version: 0
+log_level: "ERROR"
+channels:
+  BSDK: "官服"
+  QSDK: "渠道服"
+channel_option: ["BSDK", "QSDK"]
+path:
+  constants: "./autopcr/constants.yml"
+  cache: "./cache"
+  result: "./result"
+  data: "./data"
+#  先这样写
+  config: "./http_server/"
+  old_config: "./autopcr/http_server/config"
+auth_key: ""
