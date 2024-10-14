@@ -50,14 +50,38 @@ class pcrclient(apiclient):
         req.mission_id = mission_id
         return await self.request(req)
 
-    async def deck_update(self, deck_number: int, units: List[int], sorted: bool = False):
+    async def deck_update(self, deck_number: int, units: List[int]):
         req = DeckUpdateRequest()
         req.deck_number = deck_number
         cnt = len(units)
-        if not sorted:
-            units = db.deck_sort_unit(units)
+        units = db.deck_sort_unit(units)
         for i in range(1, 6):
             setattr(req, f"unit_id_{i}",units[i - 1] if i <= cnt else 0) 
+        return await self.request(req)
+
+    async def set_growth_item_unique(self, unit_id: int, item_id: int):
+        req = UnitSetGrowthItemUniqueRequest()
+        req.unit_id = unit_id
+        req.item_id = item_id
+        return await self.request(req)
+
+    async def set_my_party_tab(self, tab_number: int, tab_name: str):
+        req = SetMyPartyTabRequest()
+        req.tab_number = tab_number
+        req.tab_name = tab_name
+        return await self.request(req)
+
+    async def set_my_party(self, tab_number: int, party_number: int, party_label_type: int, party_name: str, units: List[int], change_rarity_unit_list: List[ChangeRarityUnit]):
+        req = SetMyPartyRequest()
+        req.tab_number = tab_number
+        req.party_number = party_number
+        req.party_label_type = party_label_type
+        req.party_name = party_name
+        cnt = len(units)
+        units = db.deck_sort_unit(units)
+        for i in range(1, 6):
+            setattr(req, f"unit_id_{i}", units[i - 1] if i <= cnt else 0)
+        req.change_rarity_unit_list = change_rarity_unit_list
         return await self.request(req)
 
     async def deck_update_list(self, deck_list: List):
@@ -124,6 +148,55 @@ class pcrclient(apiclient):
         req.equip_slot_num = equip_slot_num
         req.current_enhancement_pt = current_enhancement_pt
         req.item_list = [InventoryInfoPost(id=item[1], type=eInventoryType.Item, count=count) for item, count in items.items()]
+        return await self.request(req)
+
+    async def unique_equip_free_enhance(self, unit_id: int, equip_slot_num: int, current_enhancement_pt: int, after_enhancement_pt: int):
+        req = EquipmentFreeMultiEnhanceUniqueRequest()
+        req.unit_id = unit_id
+        req.equip_slot_num = equip_slot_num
+        req.current_enhancement_pt = current_enhancement_pt
+        req.after_enhancement_pt = after_enhancement_pt
+        return await self.request(req)
+
+    async def equipment_rankup_unique(self, unit_id: int, equip_slot_num: int, equip_recipe_dict: typing.Counter[ItemType], item_recipe_dict: typing.Counter[ItemType], current_rank: int):
+        req = UniqueEquipRankupRequest()
+        req.unit_id = unit_id
+        req.equip_slot_num = equip_slot_num
+        req.equip_recipe_list = [UserEquipParameterIdCount(id=item[1], count=count) for item, count in equip_recipe_dict.items()]
+        req.item_recipe_list = [UserEquipParameterIdCount(id=item[1], count=count) for item, count in item_recipe_dict.items()]
+        req.current_rank = current_rank
+        return await self.request(req)
+
+    async def equipment_craft_unique(self, equip_id: int, equip_recipe_dict: typing.Counter[ItemType], item_recipe_dict: typing.Counter[ItemType], current_equip_num: int):
+        req = UniqueEquipCraftRequest()
+        req.equip_id = equip_id
+        req.equip_recipe_list = [UserEquipParameterIdCount(id=item[1], count=count) for item, count in equip_recipe_dict.items()]
+        req.item_recipe_list = [UserEquipParameterIdCount(id=item[1], count=count) for item, count in item_recipe_dict.items()]
+        req.current_equip_num = current_equip_num
+        await self.request(req)
+
+    async def equipment_multi_enhance_unique(self, unit_id: int, equip_slot_num: int, current_gold_num: int, craft_equip_recipe_list: List[EnhanceRecipe], craft_item_recipe_list: List[EnhanceRecipe], rank_up_equip_recipe_list: List[EnhanceRecipe], rank_up_item_recipe_list: List[EnhanceRecipe], rank_up_exp_potion_list: List[EnhanceRecipe], current_rank: int, after_rank: int, enhancement_item_list: List[EnhanceRecipe], current_enhancement_pt: int): # 仅用于equipment_craft_unique紧接着调用来装备
+        req = UniqueEquipMultiEnhanceRequest()
+        req.unit_id = unit_id
+        req.equip_slot_num = equip_slot_num
+        req.current_gold_num = current_gold_num
+        req.craft_equip_recipe_list = craft_equip_recipe_list
+        req.craft_item_recipe_list = craft_item_recipe_list
+        req.rank_up_equip_recipe_list = rank_up_equip_recipe_list
+        req.rank_up_item_recipe_list = rank_up_item_recipe_list
+        req.rank_up_exp_potion_list = rank_up_exp_potion_list
+        req.current_rank = current_rank
+        req.after_rank = after_rank
+        req.enhancement_item_list = enhancement_item_list
+        req.current_enhancement_pt = current_enhancement_pt
+        return await self.request(req)
+
+    async def equipment_enhance_unique(self, unit_id: int, equip_slot_num: int, items: typing.Counter[ItemType], current_enhancement_pt: int):
+        req = UniqueEquipEnhanceRequest()
+        req.unit_id = unit_id
+        req.equip_slot_num = equip_slot_num
+        req.item_list = [InventoryInfoPost(id=item[1], type=eInventoryType.Item, count=count) for item, count in items.items()]
+        req.current_enhancement_pt = current_enhancement_pt
         return await self.request(req)
 
     async def equipment_free_enhance(self, unit_id: int, equip_slot_num: int, after_equip_level: int):
@@ -215,7 +288,7 @@ class pcrclient(apiclient):
         if self.data.get_mana() >= mana:
             return True
         elif self.data.get_mana(include_bank = True) >= mana:
-            await self.draw_from_bank(mana, mana - self.data.get_mana())
+            await self.draw_from_bank(self.data.user_gold_bank_info.bank_gold, mana - self.data.get_mana())
             return True
         else:
             return False

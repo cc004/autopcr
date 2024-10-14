@@ -109,6 +109,11 @@ def timetype(key:str, desc: str, default):
         return config_option(key=key, desc=desc, default=default, config_type='time')(cls)
     return decorator
 
+def texttype(key:str, desc: str, default):
+    def decorator(cls):
+        return config_option(key=key, desc=desc, default=default, config_type='text')(cls)
+    return decorator
+
 def conditional_execution1(key: str, default, desc: str = "执行条件", check: bool = True): # need login
     async def do_check(self, client: pcrclient) -> Tuple[bool, str]:
         run_time = self.get_value()

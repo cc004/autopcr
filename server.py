@@ -1,7 +1,7 @@
 from collections import Counter
 from typing import Any, Callable, Coroutine, Dict, List, Tuple
 
-from .autopcr.module.modulemgr import TaskResult
+from .autopcr.module.accountmgr import BATCHINFO, TaskResultInfo
 from .autopcr.module.modulebase import eResultStatus
 from .autopcr.util.draw_table import outp_b64
 from .autopcr.http_server.httpserver import HttpServer
@@ -45,6 +45,7 @@ sv_help = f"""
 - {prefix}定时日志 查看定时运行状态
 - {prefix}查缺角色 查看缺少的限定常驻角色
 - {prefix}查心碎 查询缺口心碎
+- {prefix}查纯净碎片 查询缺口纯净碎片，国服六星+日服二专需求
 - {prefix}查记忆碎片 [可刷取|大师币] 查询缺口记忆碎片，可按地图可刷取或大师币商店过滤
 - {prefix}查装备 [<rank>] [fav] 查询缺口装备，rank为数字，只查询>=rank的角色缺口装备，fav表示只查询favorite的角色
 - {prefix}刷图推荐 [<rank>] [fav] 查询缺口装备的刷图推荐，格式同上
@@ -100,6 +101,7 @@ class BotEvent:
     async def send_qq(self) -> str: ...
     async def message(self) -> List[str]: ...
     async def is_admin(self) -> bool: ...
+    async def is_super_admin(self) -> bool: ...
     async def get_group_member_list(self) -> List: ...
 
 class HoshinoEvent(BotEvent):
@@ -145,28 +147,32 @@ class HoshinoEvent(BotEvent):
     async def is_admin(self) -> bool:
         return priv.check_priv(self.ev, priv.ADMIN)
 
+    async def is_super_admin(self) -> bool:
+        return priv.check_priv(self.ev, priv.SU)
+
 def wrap_hoshino_event(func):
     async def wrapper(bot: HoshinoBot, ev: CQEvent, *args, **kwargs):
         await func(HoshinoEvent(bot, ev), *args, **kwargs)
     wrapper.__name__ = func.__name__
     return wrapper
 
-async def check_validate(botev: BotEvent, acc: Account):
+async def check_validate(botev: BotEvent, qq: str, cnt: int = 1):
     from .autopcr.sdk.validator import validate_dict
     for _ in range(360):
-        if acc.data.username in validate_dict:
-            status = validate_dict[acc.data.username].status
+        if qq in validate_dict and validate_dict[qq]:
+            validate = validate_dict[qq].pop()
+            status = validate.status
             if status == "ok":
-                del validate_dict[acc.data.username]
-                break
+                del validate_dict[qq]
+                cnt -= 1
+                if not cnt: break
+                continue
 
-            url = validate_dict[acc.data.username].url
+            url = validate.url
             url = address + url.lstrip("/daily/")
             
             msg=f"pcr账号登录需要验证码，请点击以下链接在120秒内完成认证:\n{url}"
             await botev.send(msg)
-
-            del validate_dict[acc.data.username]
 
         else:
             await asyncio.sleep(1)
@@ -175,16 +181,20 @@ async def is_valid_qq(qq: str):
     qq = str(qq)
     groups = (await sv.get_enable_groups()).keys()
     bot = nonebot.get_bot()
-    for group in groups:
-        try:
-            async for member in await bot.get_group_member_list(group_id=group):
-                if qq == str(member['user_id']):
-                    return True
-        except:
-            for member in await bot.get_group_member_list(group_id=group):
-                if qq == str(member['user_id']):
-                    return True
-    return False
+    if qq.startswith("g"):
+        gid = qq.lstrip('g')
+        return gid.isdigit() and int(gid) in groups
+    else:
+        for group in groups:
+            try:
+                async for member in await bot.get_group_member_list(group_id=group):
+                    if qq == str(member['user_id']):
+                        return True
+            except:
+                for member in await bot.get_group_member_list(group_id=group):
+                    if qq == str(member['user_id']):
+                        return True
+        return False
 
 def check_final_args_be_empty(func):
     async def wrapper(botev: BotEvent, *args, **kwargs):
@@ -236,15 +246,19 @@ def wrap_account(func):
 
         alias = msg[0] if msg else ""
 
-        if alias not in accmgr.accounts():
+        if alias == '所有':
+            pass
+            # alias = BATCHINFO
+            # del msg[0]
+        elif alias not in accmgr.accounts():
             alias = accmgr.default_account
         else:
             del msg[0]
 
-        if len(list(accmgr.accounts())) == 1:
+        if alias != BATCHINFO and len(list(accmgr.accounts())) == 1:
             alias = list(accmgr.accounts())[0]
 
-        if alias not in accmgr.accounts():
+        if alias != BATCHINFO and alias not in accmgr.accounts():
             if alias:
                 await botev.finish(f"未找到昵称为【{alias}】的账号")
             else:
@@ -280,6 +294,16 @@ def wrap_config(func):
     wrapper.__name__ = func.__name__
     return wrapper
 
+def require_super_admin(func):
+    async def wrapper(botev: BotEvent, *args, **kwargs):
+        if await botev.target_qq() != await botev.send_qq() and not await botev.is_super_admin():
+            await botev.finish("仅超级管理员调用他人")
+        else:
+            return await func(botev = botev, *args, **kwargs)
+
+    wrapper.__name__ = func.__name__
+    return wrapper
+
 @sv.on_fullmatch(["帮助自动清日常", f"{prefix}帮助"])
 @wrap_hoshino_event
 async def bangzhu_text(botev: BotEvent):
@@ -296,7 +320,7 @@ async def clean_daily_all(botev: BotEvent, accmgr: AccountManager):
     is_admin_call = await botev.is_admin()
     async def clean_daily_pre(alias: str):
         async with accmgr.load(alias) as acc:
-            return await clean_daily(botev, acc, is_admin_call)
+            return await acc.do_daily(is_admin_call)
 
     for acc in accmgr.accounts():
         alias.append(escape(acc))
@@ -308,18 +332,19 @@ async def clean_daily_all(botev: BotEvent, accmgr: AccountManager):
     except Exception as e:  
         print(e)
 
-    resps = await asyncio.gather(*task, return_exceptions=True)
+    loop = asyncio.get_event_loop()
+    loop.create_task(check_validate(botev, accmgr.qid, len(alias)))
+
+    resps: List[TaskResultInfo] = await asyncio.gather(*task, return_exceptions=True)
     header = ["昵称", "清日常结果", "状态"]
-    content = [[alias[i], daily_result[0].result[daily_result[0].order[-1]].log, "#" + daily_result[1]] for i, daily_result in enumerate(resps) if not isinstance(daily_result, Exception)]
+    content = [
+                [alias[i], daily_result.get_result().get_last_result().log, "#" + daily_result.status] 
+                for i, daily_result in enumerate(resps)
+            ]
     img = await drawer.draw(header, content)
-    err = [(alias[i], resp) for i, resp in enumerate(resps) if isinstance(resp, Exception)]
 
     msg = outp_b64(img)
     await botev.send(msg)
-
-    if err:
-        msg = "\n".join([f"{a}: {m}" for a, m in err])
-        await botev.send(msg)
 
 @sv.on_fullmatch(f"{prefix}查禁用")
 @wrap_hoshino_event
@@ -398,19 +423,18 @@ async def clean_daily_from(botev: BotEvent, acc: Account):
 
     try:
         is_admin_call = await botev.is_admin()
-        resp, _ = await clean_daily(botev = botev, acc = acc, is_admin_call = is_admin_call)
+
+        loop = asyncio.get_event_loop()
+        loop.create_task(check_validate(botev, acc.qq))
+
+        res = await acc.do_daily(is_admin_call)
+        resp = res.get_result()
         img = await drawer.draw_tasks_result(resp)
         msg = f"{alias}"
         msg += outp_b64(img)
         await botev.send(msg)
     except Exception as e:
         await botev.send(f'{alias}: {e}')
-
-async def clean_daily(botev: BotEvent, acc: Account, is_admin_call = False) -> Tuple[TaskResult, str]:
-    loop = asyncio.get_event_loop()
-    loop.create_task(check_validate(botev, acc))
-    resp, status = await acc.do_daily(is_admin_call)
-    return resp, status.value
 
 @sv.on_prefix(f"{prefix}日常报告")
 @wrap_hoshino_event
@@ -437,7 +461,7 @@ async def clean_daily_time(botev: BotEvent, accmgr: AccountManager):
     content = []
     for alias in accmgr.accounts():
         async with accmgr.load(alias, readonly=True) as acc:
-            content += [[acc.alias, daily_result.time, "#" + daily_result.status] for daily_result in acc.data.daily_result]
+            content += [[acc.alias, daily_result.time, "#" + daily_result.status.value] for daily_result in acc.get_daily_result_list()]
 
     if not content:
         await botev.finish("暂无日常记录")
@@ -538,10 +562,11 @@ async def tool_used(botev: BotEvent, tool: ToolInfo, config: Dict[str, str], acc
     alias = escape(acc.alias)
     try:
         loop = asyncio.get_event_loop()
-        loop.create_task(check_validate(botev, acc))
+        loop.create_task(check_validate(botev, acc.qq))
 
         is_admin_call = await botev.is_admin()
-        resp, _ = await acc.do_from_key(config, tool.key, is_admin_call)
+        resp = await acc.do_from_key(config, tool.key, is_admin_call)
+        resp = resp.get_result()
         img = await drawer.draw_task_result(resp)
         msg = f"{alias}"
         msg += outp_b64(img)
@@ -653,8 +678,12 @@ async def find_memory(botev: BotEvent):
     }
     return config
 
+@register_tool("查纯净碎片", "get_need_pure_memory")
+async def find_pure_memory(botev: BotEvent):
+    return {}
 
 @register_tool(f"来发十连", "gacha_start")
+@require_super_admin
 async def shilian(botev: BotEvent):
     cc_until_get = False
     pool_id = ""
@@ -748,6 +777,11 @@ async def quest_recommand(botev: BotEvent):
         "like_unit_only": like_unit_only
     }
     return config
+
+
+@register_tool("pjjc换防", "pjjc_shuffle_team")
+async def pjjc_shuffle_team(botev: BotEvent):
+    return {}
 
 @register_tool("查缺角色", "missing_unit")
 async def find_missing_unit(botev: BotEvent):

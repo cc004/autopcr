@@ -149,9 +149,15 @@ class special_underground_skip(Module):
             raise SkipError("当前无特别地下城")
 
         infos = await client.get_dungeon_info()
+
         special_dungeon_area = db.get_open_secret_dungeon_area()
-        special_info = await client.get_special_dungeon_info(special_dungeon_area)
+        _special_info = None
         secret_dungeon_retreat = self.get_config("secret_dungeon_retreat")
+        async def special_dungeon_info(refresh: bool = False):
+            nonlocal _special_info
+            if refresh or not _special_info:
+                _special_info = await client.get_special_dungeon_info(special_dungeon_area)
+            return _special_info
 
         def dungeon_name(id: int):
             if id in db.dungeon_area:
@@ -169,7 +175,8 @@ class special_underground_skip(Module):
             if db.secret_dungeon_area[id].open_area_id not in infos.dungeon_cleared_area_id_list:
                 raise AbortError(f"【{dungeon_name(id)}】未讨伐，无法进入特别地下城")
 
-            await client.deck_update(ePartyType.DUNGEON, [0, 0, 0, 0, 0], sorted=True)
+            await special_dungeon_info(refresh=True)
+            await client.deck_update(ePartyType.DUNGEON, [0, 0, 0, 0, 0])
 
             req = await client.enter_special_dungeon(id)
             reward_list = req.skip_result_list if req.skip_result_list else []
@@ -181,6 +188,7 @@ class special_underground_skip(Module):
             self._log(f"进入了【{dungeon_name(id)}】,获得了:\n{result}")
 
         rest = infos.rest_challenge_count[0].count
+
         if infos.enter_area_id != 0:
             if not db.is_secret_dungeon_id(infos.enter_area_id):
                 raise AbortError("当前位于普通地下城，不支持扫荡")
@@ -188,7 +196,7 @@ class special_underground_skip(Module):
             self._log(f"当前位于【{dungeon_name(infos.enter_area_id)}】")
             if rest:
                 if secret_dungeon_retreat:
-                    if special_info.clear_num == 0:
+                    if (await special_dungeon_info()).clear_num == 0:
                         raise AbortError("特别地下城未通关，将不撤退")
                     await do_retreat(infos.enter_area_id)
                 else:
@@ -198,7 +206,7 @@ class special_underground_skip(Module):
         if rest:
             await do_enter(special_dungeon_area)
 
-        if special_info.clear_num == 0:
+        if (await special_dungeon_info()).clear_num == 0:
             raise AbortError("特别地下城尚未首通，请记得通关")
 
         if not rest:

@@ -5,12 +5,14 @@
 自动清日常
 bug反馈/意见/交流群: 885228564
 
-请先运行一次`_download_web.py`下载前端资源。
+请先运行一次`python3 _download_web.py`下载前端资源。
+
+如果网络不好，可自行[下载压缩包](https://github.com/Lanly109/AutoPCR_Web/releases/latest)，然后`python3 _download_web.py /path/to/zip`安装。
 
 ## HTTP 服务器模式
 
 ```bash
-py -3.8 httpserver_test.py
+python3 _httpserver_test.py
 ```
 
 访问`/daily/login`

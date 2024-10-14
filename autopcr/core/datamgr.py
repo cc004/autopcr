@@ -162,28 +162,18 @@ class datamgr(Component[apiclient]):
         self.hatsune_quest_dict.clear()
 
     def get_unique_equip_material_demand(self, equip_slot:int, unit_id: int, token: ItemType) -> int:
-        if unit_id not in db.unit_unique_equip[equip_slot]:
-            return 0
-        equip_id = db.unit_unique_equip[equip_slot][unit_id].equip_id
-        rank = self.unit[unit_id].unique_equip_slot[0].rank if unit_id in self.unit and self.unit[unit_id].unique_equip_slot else -1
-        return (
-            flow(db.unique_equip_required[equip_id].items())
-            .where(lambda x: x[0] >= rank)
-            .select(lambda x: x[1][token])
-            .sum()
-        )
+        start_rank = self.unit[unit_id].unique_equip_slot[0].rank if unit_id in self.unit and self.unit[unit_id].unique_equip_slot else 0
+        demand = db.get_unique_equip_material_demand(unit_id, equip_slot, start_rank, db.unique_equipment_max_rank[equip_slot])
+        return demand.get(token, 0)
 
     def get_unit_eqiup_demand(self, unit_id: int) -> typing.Counter[ItemType]:
         unit = self.unit[unit_id]
+        unit_id = unit.id
         rank = unit.promotion_level
-
-        return db.craft_equip(
-            flow(db.unit_promotion_equip_count[unit_id].items())
-            .where(lambda x: x[0] >= rank)
-            .select(lambda x: x[1])
-            .sum(seed=Counter()) - 
-            Counter((eInventoryType(eInventoryType.Equip), equip.id) for equip in unit.equip_slot if equip.is_slot)
-        )[0]
+        equip_slot = [equip.is_slot for equip in unit.equip_slot]
+        equips = db.get_rank_promote_equip_demand(unit_id, rank, equip_slot, db.equip_max_rank, db.equip_max_rank_equip_slot)
+        equip_demand, mana = db.craft_equip(equips)
+        return equip_demand
 
     def get_exceed_level_unit_demand(self, unit_id: int, token: ItemType) -> int:
         if unit_id in self.unit and self.unit[unit_id].exceed_stage:
@@ -220,7 +210,7 @@ class datamgr(Component[apiclient]):
                 "r": str(unit.unit_rarity),
                 "u": hex(unit.id // 100)[2:],
                 "t": f"{db.equip_max_rank}.{db.equip_max_rank_equip_num}",
-                "q": str(db.unique_equip_rank[unit.unique_equip_slot[0].rank].enhance_level) if unit.unique_equip_slot and unit.unique_equip_slot[0].rank > 0 else "0",
+                "q": str(db.unique_equip_rank[1][unit.unique_equip_slot[0].rank].enhance_level) if unit.unique_equip_slot and unit.unique_equip_slot[0].rank > 0 else "0",
                 "b": "true" if unit.exceed_stage else "false",
                 "f": False
             })
@@ -415,6 +405,9 @@ class datamgr(Component[apiclient]):
         else: # hatsune, shiori 0
             return self.settings.hatsune_recover_challenge_count.recovery_max_count
 
+    def filter_inventory(self, filter: Callable) -> List[ItemType]:
+        return [item for item in self._inventory if filter(item) and self._inventory[item] > 0]
+
     def get_inventory(self, item: ItemType) -> int:
         return self._inventory.get(item, 0)
 
@@ -454,6 +447,10 @@ class datamgr(Component[apiclient]):
                    x.mission_status != eMissionStatusType.NoClear and 
                    db.daily_mission_data[x.mission_id].system_id == system_id)
         )) != 0
+
+    def get_not_enough_item(self, demand: typing.Counter[ItemType]) -> List[Tuple[ItemType, int]]:
+        bad = [(item, cnt - self.get_inventory(item)) for item, cnt in demand.items() if cnt > self.get_inventory(item)]
+        return bad
 
     async def request(self, request: Request[TResponse], next: RequestHandler) -> TResponse:
         resp = await next.request(request)

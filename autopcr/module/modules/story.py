@@ -164,7 +164,7 @@ class hatsune_sub_story_reading(Module):
         else:
             self._log(f"共{len(self.log)}篇")
 
-@description('仅阅读当期活动')
+@description('阅读当期活动和已通关外传')
 @name('阅读活动信赖度')
 @default(True)
 class hatsune_dear_reading(Module):
@@ -188,6 +188,12 @@ class hatsune_dear_reading(Module):
                 continue
 
             resp = await client.get_shiori_event_top(event_id)
+            if not resp.unchoiced_dear_story_id_list and \
+               all(story_id not in client.data.unlock_story_ids for story_id in db.dear_story_detail[db.dear_story_data[event_id].story_group_id]):
+                event_name = db.event_name[event_id]
+                self._log(f"活动{event_name}信赖度未解锁")
+                continue
+
             resp = await client.get_shiori_dear_top(event_id)
             for story in resp.unlock_dear_story_info_list:
                 if not story.is_choiced:

@@ -1,10 +1,11 @@
-from typing import Dict
+from typing import Dict, List
 from ..util import aiorequests, questutils
 from ..model.error import PanicError
 from json import loads
 import asyncio, time
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
+from collections import defaultdict
 
 @dataclass_json
 @dataclass
@@ -17,14 +18,14 @@ class ValidateInfo:
     status: str = ""
     validate: str = ""
 
-validate_dict: Dict[str, ValidateInfo] = {}
+validate_dict: Dict[str, List[ValidateInfo]] = defaultdict(list)
 validate_ok_dict: Dict[str, ValidateInfo] = {}
 
-async def Validator(account):
+async def Validator(qq):
     info = None
     for validator in [remoteValidator, localValidator, manualValidator]:
         try:
-            info = await validator(account)
+            info = await validator(qq)
             if info:
                 break
         except Exception as e:
@@ -35,7 +36,7 @@ async def Validator(account):
         raise PanicError("验证码验证超时")
     return info
 
-async def manualValidator(account):
+async def manualValidator(qq):
     print('use manual validator')
 
     from .bsgamesdk import captch
@@ -46,14 +47,14 @@ async def manualValidator(account):
 
     id = questutils.create_quest_token()
     url = f"/daily/validate?id={id}&captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
-    validate_dict[account] = ValidateInfo(
+    validate_dict[qq].append(ValidateInfo(
             id=id,
             challenge=challenge,
             gt=gt,
             userid=userid,
             url=url,
             status="need validate"
-    )
+    ))
     info = None
     for _ in range(120):
         if id not in validate_ok_dict:
@@ -69,7 +70,7 @@ async def manualValidator(account):
     return info
 
 
-async def localValidator(account):
+async def localValidator(qq):
     print('use local validator')
 
     from .bsgamesdk import captch
@@ -105,7 +106,7 @@ async def localValidator(account):
         }
     return info
 
-async def remoteValidator(account):
+async def remoteValidator(qq):
     print('use remote validator')
 
     url = f"https://pcrd.tencentbot.top/geetest_renew"
