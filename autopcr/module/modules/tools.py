@@ -12,6 +12,8 @@ from ...db.database import db
 from ...model.enums import *
 from ...util.arena import instance as ArenaQuery
 import datetime
+import random
+from collections import Counter
 
 @name('【活动限时】一键做布丁')
 @default(True)
@@ -521,6 +523,28 @@ class pjjc_info(ArenaInfo):
     async def get_rank_info(self, client: pcrclient, num: int, page: int) -> List[GrandArenaSearchOpponent]:
         return (await client.grand_arena_rank(num, page)).ranking
 
+@description('将pjjc防守阵容随机错排')
+@name('pjjc换防')
+class pjjc_shuffle_team(Module):
+    async def do_task(self, client: pcrclient):
+        ids = random.choice([ [1, 2, 0], [2, 0, 1] ])
+        deck_list: List[DeckListData] = []
+        cnt = 3
+        for i in range(cnt):
+            deck_number = getattr(ePartyType, f"GRAND_ARENA_DEF_{i + 1}")
+            units = client.data.deck_list[deck_number]
+            units_id = [getattr(units, f"unit_id_{i + 1}") for i in range(5)]
+
+            deck = DeckListData()
+            deck_number = getattr(ePartyType, f"GRAND_ARENA_DEF_{ids[i] + 1}")
+            deck.deck_number = deck_number
+            deck.unit_list = units_id
+            deck_list.append(deck)
+
+        deck_list.sort(key=lambda x: x.deck_number)
+        self._log('\n'.join([f"{i} -> {j}" for i, j in enumerate(ids)]))
+        await client.deck_update_list(deck_list)
+
 
 @description('获得可导入到兰德索尔图书馆的账号数据')
 @name('兰德索尔图书馆导入数据')
@@ -554,6 +578,20 @@ class get_need_memory(Module):
             demand = [i for i in demand if i[0] in master_shop_item]
 
         msg = '\n'.join([f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片{("(" + msg[item[0]] + ")") if item[0] in msg else ""}' for item in demand])
+        self._log(msg)
+
+@description('根据每个角色升六星（国服当前）、满二专（日服当前）所需的纯净碎片减去库存的结果')
+@name('获取纯净碎片缺口')
+@default(True)
+class get_need_pure_memory(Module):
+    async def do_task(self, client: pcrclient):
+        from .autosweep import unique_equip_2_pure_memory_id
+        need_list = client.data.get_pure_memory_demand_gap()
+        need_list.update(Counter({(eInventoryType.Item, pure_memory_id): 150 * cnt for pure_memory_id, cnt in unique_equip_2_pure_memory_id}))
+        demand = list(need_list.items())
+        demand = sorted(demand, key=lambda x: x[1], reverse=True)
+        msg = {}
+        msg = '\n'.join([f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片' for item in demand])
         self._log(msg)
 
 @description('根据每个角色开专、升级至当前最高专所需的心碎减去库存的结果，大心转换成10心碎')
@@ -624,3 +662,55 @@ class get_normal_quest_recommand(Module):
         msg = '\n--------\n'.join(tot)
         self._log(msg)
 
+
+@description('从指定面板的指定队开始设置。6行重复，标题+5行角色ID	角色名字	角色等级	角色星级')
+@texttype("set_my_party_text", "队伍阵容", "")
+@inttype("party_start_num", "初始队伍", 1, [i for i in range(1, 11)])
+@inttype("tab_start_num", "初始面板", 1, [i for i in range(1, 7)])
+@name('设置编队')
+class set_my_party(Module):
+    async def do_task(self, client: pcrclient):
+        set_my_party_text: str = self.get_config('set_my_party_text')
+        tab_number: int = self.get_config('tab_start_num')
+        party_number: int = self.get_config('party_start_num') - 1
+        party = set_my_party_text.splitlines()
+        for i in range(0, len(party), 6):
+
+            party_number += 1
+            if party_number == 11:
+                tab_number += 1
+                party_number = 1
+                if tab_number >= 6:
+                    raise AbortError("队伍数量超过上限")
+
+            title = party[i] + "记得借人"
+            unit_list = [u.split('\t') for u in party[i + 1 : i + 1 + 5]]
+
+            own_unit = [u for u in unit_list if int(u[0]) in client.data.unit]
+            not_own_unit = [u for u in unit_list if int(u[0]) not in client.data.unit]
+            if not_own_unit:
+                self._warn(f"{title}未持有：{', '.join([u[1] for u in not_own_unit])}")
+
+            change_rarity_list = []
+            unit_list = []
+            for unit in own_unit:
+                id = int(unit[0])
+                star = int(unit[3])
+                unit_data = client.data.unit[id]
+                can_change_star = unit_data.unit_rarity == 5
+                now_star = unit_data.battle_rarity if unit_data.battle_rarity else unit_data.unit_rarity
+                if can_change_star and star != now_star:
+                    if star >= 3 and star <= 5 and now_star >= 3 and now_star <= 5:
+                        change_rarity = ChangeRarityUnit(unit_id=id, battle_rarity=star)
+                        change_rarity_list.append(change_rarity)
+                    else:
+                        self._warn(f"{title}：{unit[1]}星级无法{now_star} -> {star}")
+                unit_list.append(id)
+
+            if change_rarity_list:
+                await client.unit_change_rarity(change_rarity_list)
+            if not unit_list:
+                self._warn(f"{title}没有可用的角色")
+            else:
+                await client.set_my_party(tab_number, party_number, 4, title, unit_list, change_rarity_list)
+                self._log(f"设置了{title}")

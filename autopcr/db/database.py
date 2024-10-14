@@ -83,10 +83,12 @@ class database():
                 )
             )
             
-            self.unique_equip_rank: Dict[int, UniqueEquipmentEnhanceDatum] = ( # 第二维是int？
+            self.unique_equip_rank: Dict[int, Dict[int, UniqueEquipmentEnhanceDatum]] = ( 
                 UniqueEquipmentEnhanceDatum.query(db)
+                .group_by(lambda x: x.equip_slot)
+                .to_dict(lambda x: x.key, lambda x: x
                 .group_by(lambda x: x.rank)
-                .to_dict(lambda x: x.key, lambda x: x.max(lambda y: y.enhance_level))
+                .to_dict(lambda x: x.key, lambda x: x.max(lambda y: y.enhance_level)))
             )
 
             self.equip_craft: Dict[ItemType, List[Tuple[ItemType, int]]] = (
@@ -133,6 +135,16 @@ class database():
             self.equip_max_rank_equip_num: int = max(
                 len(x.get(self.equip_max_rank, {})) for x in self.unit_promotion_equip_count.values()
             )
+
+            self.equip_max_rank_equip_slot: List[bool] = [ # 简洁
+                    [False, True, False, True, False, True],
+                    [False, True, False, True, True, True],
+                    [False, True, True, True, True, True],
+            ][self.equip_max_rank_equip_num - 3]
+
+            self.unique_equipment_max_rank: Dict[int, int] = {
+                equip_slot: max(self.unique_equip_rank[equip_slot].keys()) for equip_slot in self.unique_equip_rank
+            }
 
             self.hatsune_schedule: Dict[int, HatsuneSchedule] = (
                 HatsuneSchedule.query(db)
@@ -195,6 +207,13 @@ class database():
                 .group_by(lambda x: x.equip_slot)
                 .to_dict(lambda x: x.key, lambda x: 
                      x.to_dict(lambda x: x.enhance_level, lambda x: x))
+            )
+
+            self.unique_equipment_rank_up: Dict[int, Dict[int, UniqueEquipmentRankup]] = (
+                UniqueEquipmentRankup.query(db)
+                .group_by(lambda x: x.equip_id)
+                .to_dict(lambda x: x.key, lambda x: x
+                    .to_dict(lambda x: x.unique_equip_rank, lambda x: x))
             )
 
             self.unique_equipment_max_level: Dict[int, int] = {
@@ -481,6 +500,11 @@ class database():
                 .to_dict(lambda x: x.growth_id, lambda x: x)
             )
 
+            self.growth_parameter_unique: Dict[int, GrowthParameterUnique] = (
+                GrowthParameterUnique.query(db)
+                .to_dict(lambda x: x.growth_id, lambda x: x)
+            )
+
             self.unit_data: Dict[int, UnitDatum] = (
                 UnitDatum.query(db)
                 .to_dict(lambda x: x.unit_id, lambda x: x)
@@ -694,6 +718,12 @@ class database():
 
     def is_equip_craftable(self, item: ItemType) -> bool:
         return item in self.equip_craft
+
+    def is_equip_glow_ball(self, item: ItemType) -> bool:
+        return item[0] == eInventoryType.Item and item[1] >= 21900 and item[1] < 21950
+
+    def is_unique_equip_glow_ball(self, item: ItemType) -> bool:
+        return item[0] == eInventoryType.Item and item[1] >= 21950 and item[1] < 22000
 
     def is_room_item_level_upable(self, team_level: int, item: RoomUserItem) -> bool:
         return (item.room_item_level < self.room_item[item.room_item_id].max_level and 
@@ -935,6 +965,17 @@ class database():
     def get_today_start_time(self) -> datetime.datetime:
         return self.get_start_time(datetime.datetime.now())
 
+    def get_unique_equip_material_demand(self, unit_id: int, slot_id:int, start_rank:int, target_rank: int) -> typing.Counter[ItemType]: 
+        if unit_id not in db.unit_unique_equip[slot_id]:
+            return Counter() 
+        equip_id = db.unit_unique_equip[slot_id][unit_id].equip_id
+        return (
+            flow(db.unique_equip_required[equip_id].items())
+            .where(lambda x: x[0] >= start_rank and x[0] < target_rank)
+            .select(lambda x: x[1])
+            .sum(seed = Counter())
+        )
+
     def get_rank_promote_equip_demand(self, unit_id: int, start_rank: int, start_rank_equip_slot: List[bool], target_rank, target_rank_equip_slot: List[bool]) -> typing.Counter[ItemType]: # 都是整装
         ret = (
             (flow(self.unit_promotion_equip_count[unit_id].items())
@@ -1000,8 +1041,25 @@ class database():
         level = max([1] + histort_level)
         return level
 
+    def get_unique_equip_max_level_from_rank(self, equip_slot: int, rank: int):
+        return self.unique_equip_rank[equip_slot][rank].enhance_level
+
+    def get_unique_equip_rank_from_level(self, equip_slot: int, level: int):
+        rank = self.unique_equipment_enhance_data[equip_slot][level].rank if level in self.unique_equipment_enhance_data[equip_slot] else 1
+        return rank
+
+    def get_unique_equip_rank_required_level(self, slot_id: int, unit_id: int, rank: int):
+        rank -= 1 # db是从当前rank升下一级的花费限制，因此升到rank的限制来自于rank-1
+        equip_id = db.unit_unique_equip[slot_id][unit_id].equip_id
+        level = self.unique_equipment_rank_up[equip_id][rank].unit_level if rank > 0 else 1
+        return level
+
+    def get_unique_equip_pt_from_level(self, equip_slot: int, level: int):
+        pt = self.unique_equipment_enhance_data[equip_slot][level].total_point if level in self.unique_equipment_enhance_data[equip_slot] else 0
+        return pt
+
     def deck_sort_unit(self, units: List[int]):
-        return sorted(units, key=lambda x: self.unit_data[x].search_area_width)
+        return sorted(units, key=lambda x: self.unit_data[x].search_area_width if x in self.unit_data else 9999)
 
     def is_stamina_type(self, type_id: int) -> bool:
         return type_id in [eInventoryType.Stamina, eInventoryType.SeasonPassStamina]
@@ -1030,6 +1088,9 @@ class database():
 
     def unit_level_candidate(self):
         return list(range(1, self.team_max_level + 1 + 10))
+
+    def unit_unique_equip_level_candidate(self, equip_slot: int):
+        return list(range(0, self.unique_equipment_max_level[equip_slot] + 1))
 
     def last_normal_quest_candidate(self):
         last_start_time = flow(self.normal_quest_data.values()) \

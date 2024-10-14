@@ -1,3 +1,5 @@
+from dataclasses import field
+from typing import Any
 from .autosweep import *
 from .clan import *
 from .cron import *
@@ -12,100 +14,134 @@ from .tower import *
 from .tools import *
 from .unit import *
 
-cron_modules = [
-    cron1,
-    cron2,
-    cron3,
-    cron4,
-    cron5,
-    cron6,
-]
+@dataclass
+class ModuleList:
+    name: str = ""
+    key: str = ""
+    modules: List[Any] = field(default_factory=list)
 
-daily_modules = [
-    global_config,
-    chara_fortune,
-    mission_receive_first,
-    clan_like,
-    room_like_back,
-    free_gacha,
-    normal_gacha,
-    monthly_gacha,
-    room_accept_all,
-    explore_exp,
-    explore_mana,
-    underground_skip,
-    special_underground_skip,
-    tower_cloister_sweep,
-    smart_very_hard_sweep,
-    jjc_reward,
-    xinsui5_sweep,
-    xinsui4_sweep,
-    xinsui3_sweep,
-    xinsui2_sweep,
-    xinsui1_sweep,
-    starcup2_sweep,
-    starcup1_sweep, 
-    hatsune_h_sweep,
-    hatsune_dear_reading,
-    present_receive,
-    smart_sweep,
-    mirai_very_hard_sweep,
-    smart_hard_sweep,
-    smart_shiori_sweep,
-    last_normal_quest_sweep,
-    smart_normal_sweep,
+cron_modules = ModuleList(
+    '定时',
+    'cron',
+    [
+        cron1,
+        cron2,
+        cron3,
+        cron4,
+        cron5,
+        cron6,
+    ]
+)
 
-    all_in_hatsune,
+daily_modules = ModuleList(
+    '日常',
+    'daily',
+    [
+        global_config,
+        chara_fortune,
+        mission_receive_first,
+        clan_like,
+        room_like_back,
+        free_gacha,
+        normal_gacha,
+        monthly_gacha,
+        room_accept_all,
+        explore_exp,
+        explore_mana,
+        underground_skip,
+        special_underground_skip,
+        tower_cloister_sweep,
+        smart_very_hard_sweep,
+        jjc_reward,
+        xinsui5_sweep,
+        xinsui4_sweep,
+        xinsui3_sweep,
+        xinsui2_sweep,
+        xinsui1_sweep,
+        starcup2_sweep,
+        starcup1_sweep, 
+        hatsune_h_sweep,
+        hatsune_dear_reading,
+        present_receive,
+        smart_sweep,
+        mirai_very_hard_sweep,
+        smart_hard_sweep,
+        smart_shiori_sweep,
+        last_normal_quest_sweep,
+        smart_normal_sweep,
 
-    hatsune_hboss_sweep,
-    hatsune_mission_accept1,
-    hatsune_gacha_exchange,
-    hatsune_mission_accept2,
+        all_in_hatsune,
 
-    jjc_daily,
-    pjjc_daily,
-    unit_equip_enhance_up,
-    unit_skill_level_up,
+        hatsune_hboss_sweep,
+        hatsune_mission_accept1,
+        hatsune_gacha_exchange,
+        hatsune_mission_accept2,
 
-    mission_receive_last,
-    seasonpass_accept,
-    seasonpass_reward,
+        jjc_daily,
+        pjjc_daily,
+        unit_equip_enhance_up,
+        unit_skill_level_up,
 
-    normal_shop,
-    limit_shop,
-    underground_shop,
-    jjc_shop,
-    pjjc_shop,
-    clanbattle_shop,
-    
-    clan_equip_request,
-    love_up,
-    main_story_reading,
-    tower_story_reading,
-    hatsune_story_reading,
-    hatsune_sub_story_reading,
-    guild_story_reading,
-    unit_story_reading,
-    room_upper_all,
-    user_info,
-]
+        mission_receive_last,
+        seasonpass_accept,
+        seasonpass_reward,
 
-hidden_modules = [
-]
+        normal_shop,
+        limit_shop,
+        underground_shop,
+        jjc_shop,
+        pjjc_shop,
+        clanbattle_shop,
+        
+        clan_equip_request,
+        love_up,
+        main_story_reading,
+        tower_story_reading,
+        hatsune_story_reading,
+        hatsune_sub_story_reading,
+        guild_story_reading,
+        unit_story_reading,
+        room_upper_all,
+        user_info,
+    ]
+)
 
-tool_modules = [
-    # cook_pudding,
-    unit_promote,
-    missing_unit,
-    get_need_equip,
-    get_normal_quest_recommand,
-    get_need_memory,
-    get_need_xinsui,
-    get_clan_support_unit,
-    get_library_import_data,
-    jjc_back,
-    pjjc_back,
-    jjc_info,
-    pjjc_info,
-    gacha_start,
-]
+clan_modules = ModuleList(
+    '公会',
+    'clan',
+    [
+        unit_promote_batch,
+        set_my_party,
+    ]
+)
+
+danger_modules = ModuleList(
+    '危险',
+    'danger',
+    [
+        gacha_start,
+    ]
+)
+
+tool_modules = ModuleList(
+    '工具',
+    'tool',
+    [
+        # cook_pudding,
+        unit_promote,
+        unit_set_unique_equip_growth,
+        missing_unit,
+        get_need_equip,
+        get_normal_quest_recommand,
+        get_need_memory,
+        get_need_pure_memory,
+        get_need_xinsui,
+        get_clan_support_unit,
+        get_library_import_data,
+        jjc_back,
+        pjjc_back,
+        jjc_info,
+        pjjc_info,
+        pjjc_shuffle_team,
+    ]
+)

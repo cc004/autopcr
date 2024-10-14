@@ -605,6 +605,82 @@ class EquipEnhanceResponse(responses.EquipEnhanceResponse):
         if self.user_gold:
             mgr.gold = self.user_gold
 
+@handles
+class UniqueEquipEnhanceResponse(responses.UniqueEquipEnhanceResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        mgr.unit[self.unit_data.id] = self.unit_data
+        if self.user_gold:
+            mgr.gold = self.user_gold
+
+@handles
+class UniqueEquipRankupResponse(responses.UniqueEquipRankupResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        mgr.unit[self.unit_data.id] = self.unit_data
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        if self.equip_list:
+            for equip in self.equip_list:
+                mgr.update_inventory(equip)
+
+@handles
+class EquipmentFreeMultiEnhanceUniqueResponse(responses.EquipmentFreeMultiEnhanceUniqueResponse):
+    async def update(self, mgr: datamgr, request):
+        mgr.unit[self.unit_data.id] = self.unit_data
+        if self.equip_list:
+            for equip in self.equip_list:
+                mgr.update_inventory(equip)
+
+@handles
+class UniqueEquipCraftResponse(responses.UniqueEquipCraftResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        if self.equip_list:
+            for equip in self.equip_list:
+                mgr.update_inventory(equip)
+        if self.user_gold:
+            mgr.gold = self.user_gold
+
+@handles
+class UniqueEquipMultiEnhanceResponse(responses.UniqueEquipMultiEnhanceResponse):
+    async def update(self, mgr: datamgr, request):
+        mgr.unit[self.unit_data.id] = self.unit_data
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        if self.equip_list:
+            for equip in self.equip_list:
+                mgr.update_inventory(equip)
+        if self.user_gold:
+            mgr.gold = self.user_gold
+
+@handles
+class UnitSetGrowthItemUniqueResponse(responses.UnitSetGrowthItemUniqueResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.unit_data:
+            mgr.unit[self.unit_data.id] = self.unit_data
+        if self.item_data:
+            for item in self.item_data:
+                mgr.update_inventory(item)
+        if self.growth_parameter_list:
+            mgr.growth_unit.update(
+                    {request.unit_id:
+                         GrowthInfo(unit_id=request.unit_id, growth_parameter_list=self.growth_parameter_list)
+                     })
+
+@handles
+class ChangeRarityResponse(responses.ChangeRarityResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.unit_data_list:
+            for unit in self.unit_data_list:
+                mgr.unit[unit.id] = unit
 
 # 菜 就别玩
 HatsuneTopResponse.__annotations__['event_status'] = HatsuneEventStatus
