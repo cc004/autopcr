@@ -78,7 +78,6 @@ class HttpServer:
 
         @self.api.before_request
         async def check_app_version():
-            return None
             version = request.headers.get('X-App-Version', None)
             if version != APP_VERSION:
                 return f"后端期望前端版本为{APP_VERSION}，请更新", 400
