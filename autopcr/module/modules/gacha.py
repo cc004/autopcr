@@ -85,7 +85,7 @@ class free_gacha(Module):
         if res.campaign_info.fg10_exec_cnt == 0:
             raise SkipError("今日份免费十连已使用")
         cnt = res.campaign_info.fg10_exec_cnt
-        free_gacha_ids = set(gacha.gacha_id for gacha in gacha_list)
+        free_gacha_ids = set(gacha.gacha_id for gacha in gacha_list) & set(db.gacha_data)
         open_gacha_ids = set(gacha.id for gacha in res.gacha_info)
         open_free_gacha_ids = free_gacha_ids & open_gacha_ids
         close_free_gacha_ids = free_gacha_ids - open_gacha_ids
