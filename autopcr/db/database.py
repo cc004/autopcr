@@ -981,9 +981,9 @@ class database():
             (flow(self.unit_promotion_equip_count[unit_id].items())
             .where(lambda x: x[0] >= start_rank and x[0] < target_rank)
             .select(lambda x: x[1])
-            .sum(seed=Counter())) - 
-            Counter((eInventoryType(eInventoryType.Equip), int(getattr(self.unit_promotion[unit_id][start_rank], f"equip_slot_{i}"))) for i in range(1, 7) if start_rank_equip_slot[i - 1]) +
-            Counter((eInventoryType(eInventoryType.Equip), int(getattr(self.unit_promotion[unit_id][target_rank], f"equip_slot_{i}"))) for i in range(1, 7) if target_rank_equip_slot[i - 1])
+            .sum(seed=Counter())) +
+            Counter((eInventoryType(eInventoryType.Equip), int(getattr(self.unit_promotion[unit_id][target_rank], f"equip_slot_{i}"))) for i in range(1, 7) if target_rank_equip_slot[i - 1]) -
+            Counter((eInventoryType(eInventoryType.Equip), int(getattr(self.unit_promotion[unit_id][start_rank], f"equip_slot_{i}"))) for i in range(1, 7) if start_rank_equip_slot[i - 1])
             )
         return ret
 
