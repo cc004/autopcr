@@ -1,12 +1,12 @@
-from pydantic.class_validators import make_generic_validator
-from pydantic.validators import int_validator
+from pydantic.v1.class_validators import make_generic_validator
+from pydantic.v1.validators import int_validator
 from . import responses, sdkrequests
 from .common import *
 from .requests import *
 from ..core.datamgr import datamgr
 from ..db.database import db
 from .enums import eEventSubStoryStatus
-from pydantic.fields import ModelField
+from pydantic.v1.fields import ModelField
 from typing import Optional
 
 def handles(cls):

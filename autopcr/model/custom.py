@@ -2,7 +2,7 @@ from __future__ import annotations
 from .enums import eInventoryType
 from typing import List, Optional, Tuple, Counter as CounterType
 from collections import Counter
-from pydantic import BaseModel, Field
+from pydantic.v1 import BaseModel, Field
 
 ItemType = Tuple[eInventoryType, int]
 

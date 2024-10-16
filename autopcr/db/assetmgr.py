@@ -2,10 +2,11 @@
 from typing import List, Callable
 from ..util import aiorequests
 from ..constants import CACHE_DIR
-import os, pydantic
+import os
+from pydantic.v1 import BaseModel
 import UnityPy
 
-class content(pydantic.BaseModel):
+class content(BaseModel):
     url: str = None
     md5: str = None
     type: str = None
