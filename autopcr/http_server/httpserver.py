@@ -25,6 +25,8 @@ class HttpServer:
 
         self.web = Blueprint('web', __name__, static_folder=static_path)
 
+        # version check & rate limit
+        self.api_limit = Blueprint('api_limit', __name__, url_prefix = "/api")
         self.api = Blueprint('api', __name__, url_prefix = "/api")
 
         self.app = Blueprint('app', __name__, url_prefix = "/daily")
@@ -37,6 +39,7 @@ class HttpServer:
 
         self.app.register_blueprint(self.web)
         self.app.register_blueprint(self.api)
+        self.app.register_blueprint(self.api_limit)
 
         self.host = host
         self.port = port
@@ -76,7 +79,7 @@ class HttpServer:
     
     def configure_routes(self):
 
-        @self.api.before_request
+        @self.api_limit.before_request
         async def check_app_version():
             version = request.headers.get('X-App-Version', None)
             if version != APP_VERSION:
@@ -84,7 +87,7 @@ class HttpServer:
             else:
                 return None
 
-        @self.api.errorhandler(RateLimitExceeded)
+        @self.api_limit.errorhandler(RateLimitExceeded)
         async def handle_rate_limit_exceeded_error(error):
             return "您冲得太快了，休息一下吧", 429
 
@@ -390,7 +393,7 @@ data: {ret}\n\n'''
             validate_ok_dict[id] = ValidateInfo.from_dict(data)
             return "", 200
 
-        @self.api.route('/login/qq', methods = ['POST'])
+        @self.api_limit.route('/login/qq', methods = ['POST'])
         @rate_limit(1, timedelta(seconds=1))
         @rate_limit(3, timedelta(minutes=1))
         async def login_qq():
@@ -407,7 +410,7 @@ data: {ret}\n\n'''
             else:
                 return "无效的QQ或密码", 400
 
-        @self.api.route('/register', methods = ['POST'])
+        @self.api_limit.route('/register', methods = ['POST'])
         @rate_limit(1, timedelta(minutes=1))
         async def register():
             data = await request.get_json()
