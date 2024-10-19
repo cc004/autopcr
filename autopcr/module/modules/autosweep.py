@@ -12,7 +12,7 @@ from collections import Counter
 import datetime
 
 @conditional_execution1("normal_sweep_run_time", ["n庆典"])
-@singlechoice("normal_sweep_strategy", "刷取策略", "刷最缺", ["刷最缺", "均匀刷"])
+@singlechoice("normal_sweep_strategy", "刷取策略", "刷最缺", ["刷最缺", "均匀刷", "刷最新"])
 @booltype("normal_sweep_equip_ok_to_full", "刷满则考虑所有角色", False)
 @singlechoice("normal_sweep_consider_unit", "起始品级", "所有", ["所有", "最高", "次高", "次次高"])
 @booltype("normal_sweep_consider_unit_fav", "收藏角色", True)
@@ -36,6 +36,24 @@ class smart_normal_sweep(Module):
                     uncover -= set(db.normal_quest_rewards[quest])
                     if not uncover:
                         break
+        elif strategy == "刷最新":
+            quest_demand_rewards = {
+                quest: set(i for i in db.normal_quest_rewards[quest] if i in lack)
+                for quest in quest_list
+            }
+            quest_demand_rewards = {k: v for k, v in quest_demand_rewards.items() if v}
+
+            # 如果当前关卡的奖励均可在其他关卡刷到，则删除当前关卡
+            for quest, rewards in sorted(
+                quest_demand_rewards.items(), key=lambda i: i[0]
+            ):
+                for other_quest, other_rewards in quest_demand_rewards.items():
+                    if other_quest != quest and rewards.issubset(other_rewards):
+                        quest_demand_rewards.pop(quest)
+                        break
+
+            if quest_demand_rewards:
+                ret.append(max(quest_demand_rewards.keys()))
         else:
             raise ValueError(f"未知策略{strategy}")
 
