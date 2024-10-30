@@ -1,11 +1,11 @@
 import time
-from typing import List, Dict, Tuple, Union
+from typing import List, Dict, Set, Tuple, Union
 import typing
 from ..model.enums import eCampaignCategory
-from ..model.common import eInventoryType, RoomUserItem, InventoryInfo
+from ..model.common import UnitData, eInventoryType, RoomUserItem, InventoryInfo
 from ..model.custom import ItemType
 import datetime
-from collections import Counter
+from collections import Counter, defaultdict
 from .dbmgr import dbmgr
 from .methods import *
 from .models import *
@@ -82,6 +82,17 @@ class database():
                     extra_drops.get(x.quest_id // 1000, Counter())
                 )
             )
+
+            self.unique_equipment_data: Dict[int, UniqueEquipmentDatum] = (
+                UniqueEquipmentDatum.query(db)
+                .to_dict(lambda x: x.equipment_id, lambda x: x)
+            )
+
+            self.unique_equip_enhance_rate: Dict[int, List[UniqueEquipEnhanceRate]] = (
+                UniqueEquipEnhanceRate.query(db)
+                .group_by(lambda x: x.equipment_id)
+                .to_dict(lambda x: x.key, lambda x: x.to_list())
+            )
             
             self.unique_equip_rank: Dict[int, Dict[int, UniqueEquipmentEnhanceDatum]] = ( 
                 UniqueEquipmentEnhanceDatum.query(db)
@@ -106,6 +117,18 @@ class database():
                 )
             )
 
+            self.unit_status_coefficient: Dict[int, UnitStatusCoefficient] = (
+                UnitStatusCoefficient.query(db)
+                .to_dict(lambda x: x.coefficient_id, lambda x: x)
+            )
+
+            self.promote_bonus: Dict[int, Dict[int, PromotionBonus]] = (
+                PromotionBonus.query(db)
+                .group_by(lambda x: x.unit_id)
+                .to_dict(lambda x: x.key, lambda x: 
+                    x.to_dict(lambda x: x.promotion_level, lambda x: x))
+            )
+
             self.unit_promotion: Dict[int, Dict[int, UnitPromotion]] = (
                 UnitPromotion.query(db)
                 .group_by(lambda x: x.unit_id)
@@ -113,6 +136,15 @@ class database():
                     x.to_dict(lambda y: y.promotion_level, lambda y: y
                     )
                 )
+            )
+
+            self.unit_promotion_status: Dict[int, Dict[int, UnitPromotionStatus]] = (
+                UnitPromotionStatus.query(db)
+                .group_by(lambda x: x.unit_id)
+                .to_dict(lambda x: x.key, lambda x:
+                    x.to_dict(lambda y: y.promotion_level, lambda y: y
+                     )
+                 )
             )
 
             self.unit_promotion_equip_count: Dict[int, Dict[int, typing.Counter[ItemType]]] = (
@@ -225,6 +257,13 @@ class database():
                 ExceedLevelUnit.query(db)
                 .to_dict(lambda x: x.unit_id, lambda x: x)
             )
+
+            self.unit_rarity: Dict[int, Dict[int, UnitRarity]] = (
+                UnitRarity.query(db)
+                .group_by(lambda x: x.unit_id)
+                .to_dict(lambda x: x.key, lambda x: x
+                    .to_dict(lambda x: x.rarity, lambda x: x))
+                )
             
             self.rarity_up_required: Dict[int, Dict[int, typing.Counter[ItemType]]] = (
                 UnitRarity.query(db)
@@ -363,6 +402,16 @@ class database():
                 .concat(TrainingQuestDatum.query(db))
                 .to_dict(lambda x: x.quest_id, lambda x: x.quest_name)
             )
+
+            self.chara_story_status: Dict[int, CharaStoryStatus] = (
+                CharaStoryStatus.query(db)
+                .to_dict(lambda x: x.story_id, lambda x: x)
+            )
+
+            self.chara2story: Dict[int, List[CharaStoryStatus]] = defaultdict(list)
+            for story in self.chara_story_status.values():
+                for unit_id in story.get_effect_unit_ids():
+                    self.chara2story[unit_id].append(story)
             
             self.guild_story: List[StoryDetail] = (
                 StoryDetail.query(db)
@@ -437,6 +486,11 @@ class database():
                 .group_by(lambda x: x.promotion_level)
                 .to_dict(lambda x: x.key, lambda x: 
                      x.to_dict(lambda x: x.equipment_enhance_level, lambda x: x))
+            )
+
+            self.equipment_enhance_rate: Dict[int, EquipmentEnhanceRate] = (
+                EquipmentEnhanceRate.query(db)
+                .to_dict(lambda x: x.equipment_id, lambda x: x)
             )
 
             self.inventory_name: Dict[ItemType, str] = (
@@ -598,15 +652,11 @@ class database():
                 .to_list()
             )
 
-            # self.exp_potion = self.exp_potion[::-1]
-
             self.equip_enhance_stone: List[ItemDatum] = (
                 ItemDatum.query(db)
                 .where(lambda x: x.item_id >= 22001 and x.item_id < 23000)
                 .to_list()
             )
-
-            # self.equip_enhance_stone = self.equip_enhance_stone[::-1]
 
             self.quest_to_event: Dict[int, HatsuneQuest] = (
                 HatsuneQuest.query(db)
@@ -1107,5 +1157,87 @@ class database():
             if prize_rarity in self.prizegacha_sp_detail:
                 return self.prizegacha_sp_detail[prize_rarity].name 
         return f"{prize_rarity}等奖"
+
+    def is_unit_rank_bonus(self, unit_id: int, promotion_level: int) -> bool:
+        return unit_id in self.promote_bonus and promotion_level in self.promote_bonus[unit_id]
+
+    def calc_unit_attribute(self, unit_data: UnitData, read_story: Set[int]) -> UnitAttribute:
+        unit_id = unit_data.id
+        promotion_level = unit_data.promotion_level.value
+        rarity = unit_data.battle_rarity if unit_data.battle_rarity else unit_data.unit_rarity
+
+        base_attribute = UnitAttribute()
+        # 基础属性
+        base_attribute += self.unit_rarity[unit_id][rarity].get_unit_attribute()
+
+        # 等级属性
+        base_attribute += self.unit_rarity[unit_id][rarity].get_unit_attribute_growth(unit_data.unit_level + promotion_level)
+
+        #品级属性
+        if promotion_level > 1:
+            base_attribute += self.unit_promotion_status[unit_id][promotion_level].get_unit_attribute()
+
+        rb_attribute = UnitAttribute()
+        if self.is_unit_rank_bonus(unit_id, promotion_level):
+            rb_attribute += self.promote_bonus[unit_id][promotion_level].get_unit_attribute()
+
+        equip_attribute = UnitAttribute()
+        # 装备属性
+        for equip in unit_data.equip_slot:
+            if equip.is_slot:
+                equip_attribute += (self.equip_data[equip.id].get_unit_attribute() + self.equipment_enhance_rate[equip.id].get_unit_attribute(equip.enhancement_level)).ceil()
+
+        unique_equip_attribute = UnitAttribute()
+        # 专武属性
+        for unique_equip in unit_data.unique_equip_slot:
+            if unique_equip.is_slot:
+                unique_equip_attribute += self.unique_equipment_data[unique_equip.id].get_unit_attribute()
+                for enhance_rate in self.unique_equip_enhance_rate[unique_equip.id]:
+                    unique_equip_attribute += enhance_rate.get_unit_attribute(unique_equip.enhancement_level)
+
+        kizuna_attribute = UnitAttribute()
+        # 羁绊属性
+        for story in self.chara2story[unit_id]:
+            if story.story_id in read_story:
+                kizuna_attribute += story.get_unit_attribute()
+
+        unit_attribute = base_attribute.round() + rb_attribute.round() + equip_attribute.round() + unique_equip_attribute.ceil() + kizuna_attribute.round()
+        return unit_attribute
+
+    def calc_unit_attribute_power(self, unit_data: UnitData, read_story: Set[int], coefficient: UnitStatusCoefficient) -> float:
+        unit_attribute = self.calc_unit_attribute(unit_data, read_story)
+        return unit_attribute.get_power(coefficient)
+
+    def calc_skill_power(self, unit_data: UnitData, coefficient: UnitStatusCoefficient) -> float:
+        unit_rarity = unit_data.unit_rarity if not unit_data.battle_rarity else unit_data.battle_rarity
+        skill_power = 0
+        for ub in unit_data.union_burst:
+            evolution = unit_rarity >= 6
+            base = ub.skill_level
+            coef = coefficient.ub_evolution_slv_coefficient if evolution else 1
+            extra = coefficient.ub_evolution_coefficient if evolution else 0
+            skill_power += base * coef + extra
+
+        for id, skill in enumerate(unit_data.main_skill):
+            evolution = len(unit_data.unique_equip_slot) > id and unit_data.unique_equip_slot[id].is_slot
+            base = skill.skill_level
+            coef = getattr(coefficient, f"skill{id+1}_evolution_slv_coefficient") if evolution else 1
+            extra = getattr(coefficient, f"skill{id+1}_evolution_coefficient") if evolution else 0
+            skill_power += base * coef + extra
+
+        for ex in unit_data.ex_skill:
+            evolution = unit_rarity >= 5
+            base = ex.skill_level
+            coef = 1
+            extra = coefficient.exskill_evolution_coefficient if evolution else 0
+            skill_power += base * coef + extra
+
+        return skill_power * coefficient.skill_lv_coefficient
+
+    def calc_unit_power(self, unit_data: UnitData, read_story: Set[int]) -> float:
+        coefficient = self.unit_status_coefficient[1]
+        attribute_power = self.calc_unit_attribute_power(unit_data, read_story, coefficient)
+        skill_power = self.calc_skill_power(unit_data, coefficient)
+        return attribute_power + skill_power
 
 db = database()
