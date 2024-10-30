@@ -607,3 +607,23 @@ class eRoundEventResultType(IntEnum):
     FAILURE = 2
     END = 3
 
+class eParamType(IntEnum):
+    NONE = 0
+    HP = 1
+    ATK = 2
+    DEF = 3
+    MAGIC_ATK = 4
+    MAGIC_DEF = 5
+    PHYSICAL_CRITICAL = 6
+    MAGIC_CRITICAL = 7
+    DODGE = 8
+    LIFE_STEAL = 9
+    WAVE_HP_RECOVERY = 10
+    WAVE_ENERGY_RECOVERY = 11
+    PHYSICAL_PENETRATE = 12
+    MAGIC_PENETRATE = 13
+    ENERGY_RECOVERY_RATE = 14
+    HP_RECOVERY_RATE = 15
+    ENERGY_REDUCE_RATE = 16
+    ACCURACY = 17
+    INVALID_VALUE = -1

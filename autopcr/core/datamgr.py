@@ -457,3 +457,6 @@ class datamgr(Component[apiclient]):
         if resp: await resp.update(self, request)
         return resp
 
+    async def get_unit_power(self, unit_id: int) -> int:
+        power = db.calc_unit_power(self.unit[unit_id], set(self.read_story_ids))
+        return int(power + 0.5)
