@@ -48,6 +48,7 @@ daily_modules = ModuleList(
         room_accept_all,
         explore_exp,
         explore_mana,
+        travel_quest_sweep,
         underground_skip,
         special_underground_skip,
         tower_cloister_sweep,
@@ -128,6 +129,7 @@ tool_modules = ModuleList(
     'tool',
     [
         # cook_pudding,
+        travel_team_view,
         unit_promote,
         unit_set_unique_equip_growth,
         missing_unit,

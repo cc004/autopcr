@@ -94,6 +94,7 @@ class EnemyRewardDatum(models.EnemyRewardDatum):
         yield Reward(self.reward_type_4, self.reward_id_4, self.reward_num_4, self.odds_4)
         yield Reward(self.reward_type_5, self.reward_id_5, self.reward_num_5, self.odds_5)
 
+
 @method
 class EquipmentCraft(models.EquipmentCraft):
     def get_materials(self) -> Iterator[Tuple[ItemType, int]]:
@@ -123,3 +124,12 @@ class WaveGroupDatum(models.WaveGroupDatum):
         yield self.drop_reward_id_3
         yield self.drop_reward_id_4
         yield self.drop_reward_id_5
+
+@method
+class TravelQuestDatum(models.TravelQuestDatum):
+    def get_rewards(self) -> Iterator[Reward]:
+        yield Reward(eInventoryType.ExtraEquip, self.main_reward_1, 1, 1)
+        yield Reward(eInventoryType.ExtraEquip, self.main_reward_2, 1, 1)
+        yield Reward(eInventoryType.ExtraEquip, self.main_reward_3, 1, 1)
+        yield Reward(eInventoryType.ExtraEquip, self.main_reward_4, 1, 1)
+        yield Reward(eInventoryType.ExtraEquip, self.main_reward_5, 1, 1)

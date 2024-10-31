@@ -7,7 +7,137 @@ from ...db.database import db
 from ...model.enums import *
 from ...model.custom import ItemType
 from ...util.linq import flow
-import datetime
+from ...model.common import InventoryInfo, TravelAppearEventData, TravelCurrentCurrencyNum, TravelDecreaseItem, TravelExtraEquipAutoRecycleOptionData, TravelQuestAddLap, TravelQuestInfo, TravelStartInfo
+import time
+import random
+from collections import Counter
+
+
+@description('''
+仅支持阅读特殊事件+续派遣次数到最大派遣数。
+装备事件为 60%三金装40%一金装 或 100%二金装 选项
+代币事件为 30%1000代币70%200代币 或 100%400代币 选项
+赌狗策略为前者，保守策略为后者
+'''.strip())
+@singlechoice('travel_quest_gold_event_strategy', "代币事件策略", ['随机'], ['保守','赌狗','随机'])
+@singlechoice('travel_quest_equip_event_strategy', "装备事件策略", ['随机'], ['保守','赌狗','随机'])
+@inttype('travel_quest_max_round', "最大派遣数", 3, [2,3,4,5])
+@name("探险")
+@default(True)
+class travel_quest_sweep(Module):
+    def can_receive_count(self, quest: TravelQuestInfo) -> int:
+        st = quest.travel_start_time
+        ed = quest.travel_end_time
+        decrease_time = quest.decrease_time
+        once_time = db.calc_travel_once_time(quest.total_power)
+        now = int(time.time())
+        received_count = quest.received_count
+        cnt = (min(now, ed) - st + decrease_time) // once_time - received_count
+        return cnt
+
+    def quest_still_round(self, quest: TravelQuestInfo) -> int:
+        return quest.total_lap_count - quest.received_count
+
+    def get_choice(self, strategy: str) -> int:
+        if strategy == '赌狗':
+            return 1
+        elif strategy == '保守':
+            return 2
+        else:
+            return random.randint(1, 2)
+
+    async def do_task(self, client: pcrclient):
+        travel_quest_max_round: int = int(self.get_config("travel_quest_max_round"))
+        travel_quest_equip_event_strategy: str = self.get_config("travel_quest_equip_event_strategy")
+        travel_quest_gold_event_strategy: str = self.get_config("travel_quest_gold_event_strategy")
+        reward: List[InventoryInfo] = []
+
+        def get_strategy(event_id: int) -> str:
+            if event_id == 4007:
+                return travel_quest_equip_event_strategy
+            elif event_id == 4009:
+                return travel_quest_gold_event_strategy
+            else:
+                raise ValueError(f"未知可选项事件{event_id}")
+
+        top = await client.travel_top(max(db.get_open_travel_area()), 1)
+
+        if len(top.travel_quest_list) < 3:
+            self._warn(f"正在探险的小队数为{len(top.travel_quest_list)}<3，请上号开始新的探险！")
+
+        if top.top_event_list:
+            for top_event in top.top_event_list:
+                try:
+                    chooice = 0
+                    if top_event.top_event_choice_flag:
+                        strategy = get_strategy(top_event.top_event_id)
+                        chooice = self.get_choice(strategy)
+                    result = await client.travel_receive_top_event_reward(top_event.top_event_appear_id, chooice)
+                    reward.extend(result.reward_list)
+                except Exception as e:
+                    self._warn(f"处理特殊事件{top_event.top_event_id}失败:{e}")
+            self._log(f"阅读{len(top.top_event_list)}个特殊事件")
+        result_count = {}
+        reward2: List[InventoryInfo] = []
+        if any(self.can_receive_count(quest) for quest in top.travel_quest_list):
+            option = TravelExtraEquipAutoRecycleOptionData(rarity=[], frame=[], category=[])
+            result = await client.travel_receive_all(option)
+            secret_travel: List[TravelAppearEventData] = []
+            for quest in result.travel_result:
+                reward2.extend(quest.reward_list)
+                for event in quest.appear_event_list or []:
+                    reward2.extend(event.reward_list)
+                    secret_travel.append(event)
+
+            result_count = Counter([quest.travel_quest_id for quest in result.travel_result])
+            msg = '探索了:' + ' '.join(f"{db.get_quest_name(quest)} x{cnt}" for quest, cnt in result_count.items())
+            self._log(msg)
+            if secret_travel:
+                msg = '触发了秘密探险：' + ' '.join(db.ex_event_data[event.still_id].title for event in secret_travel)
+                self._log(msg)
+
+        if reward or reward2:
+            self._log(f"获得了:")
+            msg = (await client.serlize_reward(reward)).strip('无')
+            if msg: self._log(msg)
+            msg = (await client.serlize_reward(reward2, filter=lambda x: db.is_ex_equip(x) or db.is_unit_memory(x))).strip('无')
+            if msg: self._log(msg)
+            self._log("")
+
+        add_lap_travel_quest_list: List[TravelQuestAddLap] = []
+        add_lap_travel_quest_id: List[int] = []
+        start_travel_quest_list: List[TravelStartInfo] = []
+        for quest in top.travel_quest_list:
+            quest.received_count += result_count.get(quest.travel_quest_id, 0)
+            quest_still_round = self.quest_still_round(quest)
+            if not quest_still_round: # restart
+                start_item = TravelStartInfo(
+                        travel_quest_id = quest.travel_quest_id,
+                        travel_deck = quest.travel_deck,
+                        decrease_time_item = TravelDecreaseItem(jewel = 0, item = 0),
+                        total_lap_count = travel_quest_max_round,
+                 )
+                start_travel_quest_list.append(start_item)
+            else:
+                append_round = travel_quest_max_round - quest_still_round
+                if append_round > 0:
+                    add_item = TravelQuestAddLap(travel_id = quest.travel_id, add_lap_count = append_round)
+                    add_lap_travel_quest_list.append(add_item)
+                    add_lap_travel_quest_id.append(quest.travel_quest_id)
+
+        if start_travel_quest_list or add_lap_travel_quest_list:
+            jewel = client.data.jewel.free_jewel + client.data.jewel.jewel
+            speed_up_paper = client.data.get_inventory(db.travel_speed_up_paper)
+            msg = '\n'.join(f"继续派遣{db.get_quest_name(quest_id)} x{quest.add_lap_count}" for quest_id, quest in zip(add_lap_travel_quest_id, add_lap_travel_quest_list))
+            msg += '\n'.join(f"重新派遣{db.get_quest_name(quest.travel_quest_id)} x{quest.total_lap_count}" for quest in start_travel_quest_list)
+            self._log(msg)
+            action_type = eTravelStartType.ADD_LAP if add_lap_travel_quest_list else eTravelStartType.RESTART
+            if start_travel_quest_list and add_lap_travel_quest_list:
+                action_type = eTravelStartType.RESTART_AND_ADD
+            await client.travel_start(start_travel_quest_list, add_lap_travel_quest_list, [], action_type, TravelCurrentCurrencyNum(jewel = jewel, item=speed_up_paper))
+
+        if not self.log and not reward:
+            raise SkipError("探险仍在继续...")
 
 class explore_sweep(Module):
     @abstractmethod
@@ -26,7 +156,7 @@ class explore_sweep(Module):
             max_quest = self.get_max_quest(client)
             if self.not_max_stop() and max_quest != quest_id:
                 raise AbortError(f"最高级探索{max_quest}未通关，不扫荡\n如欲扫荡已通关的，请关闭【非最高不扫荡】")
-            name = db.quest_name[quest_id]
+            name = db.get_quest_name(quest_id)
             await client.training_quest_skip(quest_id, remain_cnt)
             self._log(f"{name}扫荡{remain_cnt}次")
         else:

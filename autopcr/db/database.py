@@ -19,6 +19,7 @@ class database():
     xingqiubei: ItemType = (eInventoryType.Item, 25001)
     mana: ItemType = (eInventoryType.Gold, 94002)
     jewel: ItemType = (eInventoryType.Jewel, 91002)
+    travel_speed_up_paper: ItemType = (eInventoryType.Item, 23002)
     gacha_single_ticket: ItemType = (eInventoryType.Item, 24001)
 
     def update(self, dbmgr: dbmgr):
@@ -395,14 +396,6 @@ class database():
                 .to_dict(lambda x: x.quest_id, lambda x: x)
             )
 
-            self.quest_name: Dict[int, str] = (
-                QuestDatum.query(db)
-                .concat(HatsuneQuest.query(db))
-                .concat(ShioriQuest.query(db))
-                .concat(TrainingQuestDatum.query(db))
-                .to_dict(lambda x: x.quest_id, lambda x: x.quest_name)
-            )
-
             self.chara_story_status: Dict[int, CharaStoryStatus] = (
                 CharaStoryStatus.query(db)
                 .to_dict(lambda x: x.story_id, lambda x: x)
@@ -516,6 +509,10 @@ class database():
                     CustomMypage.query(db)
                     .select(lambda x: (eInventoryType.CustomMypage, x.still_id, x.still_name))
                 )
+                .concat(
+                    ExEquipmentDatum.query(db)
+                    .select(lambda x: (eInventoryType.ExtraEquip, x.ex_equipment_id, x.name))
+                )
                 .to_dict(lambda x: (x[0], x[1]), lambda x: x[2])
             )
 
@@ -548,6 +545,9 @@ class database():
                 .group_by(lambda x: x.unit_material_id)
                 .to_dict(lambda x: x.key, lambda x: x.first().unit_id)
             )
+            self.unit_to_memory: Dict[int, int] = {
+                value: key for key, value in self.memory_to_unit.items()
+            }
 
             self.growth_parameter: Dict[int, GrowthParameter] = (
                 GrowthParameter.query(db)
@@ -640,7 +640,6 @@ class database():
             self.love_cake: List[ItemDatum] = (
                 ItemDatum.query(db)
                 .where(lambda x: x.item_id >= 50000 and x.item_id < 51000)
-                #.select(lambda x: (x.item_id, x.value))
                 .to_list()
             )
 
@@ -709,8 +708,56 @@ class database():
                 .to_dict(lambda x: x.sub_story_id, lambda x: x)
             )
 
+            self.ex_equipment_data: Dict[int, ExEquipmentDatum] = (
+                ExEquipmentDatum.query(db)
+                .to_dict(lambda x: x.ex_equipment_id, lambda x: x)
+            )
+
+            self.unit_ex_equipment_slot: Dict[int, UnitExEquipmentSlot] = (
+                UnitExEquipmentSlot.query(db)
+                .to_dict(lambda x: x.unit_id, lambda x: x)
+            )
+
+            self.ex_equipment_type_to_clan_battle_ex: Dict[int, int] = { # 只有每个类别的会战装备
+                ex.category: ex.ex_equipment_id for ex in self.ex_equipment_data.values() if ex.clan_battle_equip_flag == 1 and ex.rarity == 3
+            }
+
+            self.ex_event_data: Dict[int, TravelExEventDatum] = (
+                TravelExEventDatum.query(db)
+                .to_dict(lambda x: x.still_id, lambda x: x)
+            )
+
+            self.travel_area_data: Dict[int, TravelAreaDatum] = (
+                TravelAreaDatum.query(db)
+                .to_dict(lambda x: x.travel_area_id, lambda x: x)
+            )
+
+            self.travel_quest_data: Dict[int, TravelQuestDatum] = (
+                TravelQuestDatum.query(db)
+                .to_dict(lambda x: x.travel_quest_id, lambda x: x)
+            )
+
+            self.quest_name: Dict[int, str] = (
+                QuestDatum.query(db)
+                .concat(HatsuneQuest.query(db))
+                .concat(ShioriQuest.query(db))
+                .concat(TrainingQuestDatum.query(db))
+                .to_dict(lambda x: x.quest_id, lambda x: x.quest_name)
+            )
+            self.quest_name.update(
+                {x.travel_quest_id :x.travel_quest_name for x in self.travel_quest_data.values()}
+            )
+
+            self.ex_rarity_name = {
+                1: '铜装',
+                2: '银装',
+                3: '金装',
+                4: '粉装'
+            }
     def get_inventory_name(self, item: InventoryInfo) -> str:
         try:
+            if item.type == eInventoryType.ExtraEquip:
+                return f"{self.ex_rarity_name[self.ex_equipment_data[item.id].rarity]}-" + self.inventory_name[(item.type, item.id)] 
             return self.inventory_name[(item.type, item.id)]
         except:
             return f"未知物品({item.id})"
@@ -745,8 +792,25 @@ class database():
         except:
             return f"未知房间物品({item_id})"
 
+    def get_quest_name(self, quest_id: int) -> str:
+        try:
+            if quest_id in self.travel_quest_data:
+                area = self.travel_quest_data[quest_id].travel_area_id % 10
+                quest = self.travel_quest_data[quest_id].travel_quest_id % 10
+                return f"{area}-{quest}图"
+            else:
+                return self.quest_name[quest_id]
+        except:
+            return f"未知关卡({quest_id})"
+
     def is_daily_mission(self, mission_id: int) -> bool:
         return mission_id in self.daily_mission_data
+
+    def is_ex_equip(self, item: ItemType) -> bool:
+        return item[0] == eInventoryType.ExtraEquip
+
+    def is_clan_ex_equip(self, item: ItemType) -> bool:
+        return item[0] == eInventoryType.ExtraEquip and self.ex_equipment_data[item[1]].clan_battle_equip_flag == 1
 
     def is_exp_upper(self, item: ItemType) -> bool:
         return item[0] == eInventoryType.Item and item[1] >= 20000 and item[1] < 21000
@@ -997,6 +1061,12 @@ class database():
     def format_time_safe(self, time: datetime.datetime) -> str:
         return time.strftime("%Y%m%d%H%M%S")
 
+    def format_second(self, total_seconds: int) -> str:
+        time_delta = datetime.timedelta(seconds=total_seconds)
+        hours, remainder = divmod(time_delta.total_seconds(), 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return f"{int(hours)}:{int(minutes):02}:{int(seconds):02}"
+
     def get_start_time(self, time: datetime.datetime) -> datetime.datetime:
         shift_time = datetime.timedelta(hours = 5);
 
@@ -1108,6 +1178,13 @@ class database():
         pt = self.unique_equipment_enhance_data[equip_slot][level].total_point if level in self.unique_equipment_enhance_data[equip_slot] else 0
         return pt
 
+    def get_open_travel_area(self) -> List[int]:
+        return (flow(self.travel_area_data.values())
+                .where(lambda x: self.is_target_time([(db.parse_time(x.start_time), db.parse_time(x.end_time))]))
+                .select(lambda x: x.travel_area_id)
+                .to_list()
+        )
+
     def deck_sort_unit(self, units: List[int]):
         return sorted(units, key=lambda x: self.unit_data[x].search_area_width if x in self.unit_data else 9999)
 
@@ -1149,6 +1226,11 @@ class database():
         return flow(self.normal_quest_data.values()) \
                 .where(lambda x: x.start_time == last_start_time) \
                 .select(lambda x: f"{x.quest_id}: {x.quest_name.split(' ')[1]}") \
+                .to_list()
+
+    def travel_quest_candidate(self):
+        return flow(self.travel_quest_data.values()) \
+                .select(lambda x: f"{x.travel_quest_id}: {x.travel_quest_name}") \
                 .to_list()
 
     def get_gacha_prize_name(self, gacha_id: int, prize_rarity: int) -> str:
@@ -1239,5 +1321,8 @@ class database():
         attribute_power = self.calc_unit_attribute_power(unit_data, read_story, coefficient)
         skill_power = self.calc_skill_power(unit_data, coefficient)
         return attribute_power + skill_power
+
+    def calc_travel_once_time(self, power: int) -> int:
+        return max(12 * 60 * 60 - (power - 100000 + 199) // 200 * 3, 10 * 60 * 60)
 
 db = database()
