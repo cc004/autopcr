@@ -458,8 +458,7 @@ class starcup1_sweep(starcup_sweep):
 @inttype("travel_target_day", "轮转时间", 7, [2, 3, 5, 7, 10])
 @name('自动探险')
 @description('''
-自动根据轮转进行探险，按轮转时间进行目标切换。
-警告：可能会引起不定期上号，不建议使用。
+自动根据轮转进行探险，按轮转时间进行目标切换，切换时自动用券进行尾轮加速。
 '''.strip())
 @default(False)
 class auto_travel(Module):
