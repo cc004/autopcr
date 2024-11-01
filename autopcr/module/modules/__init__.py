@@ -49,6 +49,7 @@ daily_modules = ModuleList(
         explore_exp,
         explore_mana,
         travel_quest_sweep,
+        auto_travel,
         underground_skip,
         special_underground_skip,
         tower_cloister_sweep,
