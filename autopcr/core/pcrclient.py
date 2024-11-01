@@ -76,14 +76,23 @@ class pcrclient(apiclient):
         req.ex_auto_recycle_option = ex_auto_recycle_option
         return await self.request(req)
 
-    async def travel_decrease_time(self, travel_quest_id: int, travel_id: int, decrease_time_item: TravelDecreaseItem, current_currency_num: TravelCurrentCurrencyNum):
+    async def travel_decrease_time(self, travel_quest_id: int, travel_id: int, decrease_time_item: TravelDecreaseItem):
         req = TravelDecreaseTimeRequest()
         req.travel_quest_id = travel_quest_id
         req.travel_id = travel_id
         req.decrease_time_item = decrease_time_item
-        req.current_currency_num = current_currency_num
+        req.current_currency_num = TravelCurrentCurrencyNum(jewel = self.data.jewel.free_jewel + self.data.jewel.jewel, item = self.data.get_inventory(db.travel_speed_up_paper))
         return await self.request(req)
 
+    async def travel_retire(self, travel_quest: TravelQuestInfo, ex_auto_recycle_option: TravelExtraEquipAutoRecycleOptionData | None = None):
+        if ex_auto_recycle_option is None:
+            ex_auto_recycle_option = TravelExtraEquipAutoRecycleOptionData(rarity=[], frame=[], category=[])
+        req = TravelRetireRequest()
+        req.travel_quest_id = travel_quest.travel_quest_id
+        req.travel_id = travel_quest.travel_id
+        req.ex_auto_recycle_option = ex_auto_recycle_option
+        return await self.request(req)
+        
     async def travel_update_priority_unit_list(self, unit_id_list: List[int]):
         req = TravelUpdatePriorityUnitListRequest()
         req.unit_id_list = unit_id_list

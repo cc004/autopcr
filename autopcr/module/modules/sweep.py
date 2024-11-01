@@ -11,6 +11,7 @@ from ...model.common import InventoryInfo, TravelAppearEventData, TravelCurrentC
 import time
 import random
 from collections import Counter
+import math
 
 
 @description('''
@@ -450,3 +451,79 @@ class starcup2_sweep(starcup_sweep):
 class starcup1_sweep(starcup_sweep):
     def quest_id(self) -> int:
         return 19001001
+
+@multichoice("travel_target_quest1", "轮转目标1", [1], [1, 2, 3, 4, 5])
+@multichoice("travel_target_quest2", "轮转目标2", [4], [1, 2, 3, 4, 5])
+@multichoice("travel_target_quest3", "轮转目标3", [2, 3, 5], [1, 2, 3, 4, 5])
+@inttype("travel_target_day", "轮转时间", 7, [2, 3, 5, 7, 10])
+@name('自动探险')
+@description('''
+自动根据轮转进行探险，按轮转时间进行目标切换。
+警告：可能会引起不定期上号，不建议使用。
+'''.strip())
+@default(False)
+class auto_travel(Module):
+    def today_targets(self) -> List[int]:
+        n = time.localtime().tm_yday // int(self.get_config("travel_target_day"))
+        def get_team(lst, n): return lst[n % len(lst)]
+        return [
+            get_team(self.get_config("travel_target_quest1"), n),
+            get_team(self.get_config("travel_target_quest2"), n),
+            get_team(self.get_config("travel_target_quest3"), n)
+        ]
+    async def do_task(self, client: pcrclient):
+        area_id = max(db.get_open_travel_area())
+        top = await client.travel_top(area_id, 1)
+        targets = set(
+            area_id * 1000 + x for x in self.today_targets()
+        )
+
+        now_targets = {
+            quest.travel_quest_id: quest for quest in top.travel_quest_list
+        }
+
+        to_delete = {k: v for k, v in now_targets.items() if k not in targets}
+        to_add = targets - set(now_targets.keys())
+        
+        start_infos = []
+
+        for add_quest_id, (remove_quest_id, remove_quest) in zip(to_add, to_delete.items()):
+            quest_interval = (remove_quest.travel_end_time - remove_quest.travel_start_time) / remove_quest.total_lap_count
+            for i in range(remove_quest.total_lap_count):
+                if remove_quest.travel_start_time + i * quest_interval > client.server_time:
+                    break
+            
+            delta_time = remove_quest.travel_start_time + i * quest_interval - client.server_time
+            ticket_to_use = math.ceil(delta_time / client.data.settings.travel.decrease_time_by_ticket)
+            if ticket_to_use > client.data.get_inventory(db.travel_speed_up_paper):
+                raise AbortError(f"没有足够的加速券，无法切换目标")
+            if ticket_to_use > top.remain_daily_decrease_count_ticket:
+                raise AbortError(f"本日剩余加速券不足，无法切换目标")
+            if top.remain_daily_retire_count <= 0:
+                raise AbortError("本日剩余撤退次数不足，无法切换目标")
+            
+            if remove_quest:
+                self._log(f"结束探险{remove_quest_id}")
+
+            await client.travel_decrease_time(remove_quest.travel_quest_id, remove_quest.travel_id, TravelDecreaseItem(jewel = 0, item = ticket_to_use))
+            await client.travel_retire(remove_quest)
+
+            top.remain_daily_decrease_count_ticket -= ticket_to_use
+            top.remain_daily_retire_count -= 1
+
+            start_infos.append(
+                TravelStartInfo(
+                    travel_quest_id = add_quest_id,
+                    travel_deck = remove_quest.travel_deck,
+                    decrease_time_item = TravelDecreaseItem(jewel = 0, item = 0),
+                    total_lap_count = client.data.settings.travel.travel_quest_max_repeat_count
+                )
+            )
+        
+        await client.travel_start(
+            start_infos,
+            [],
+            [],
+            eTravelStartType.RESTART,
+            TravelCurrentCurrencyNum(jewel = client.data.jewel.free_jewel + client.data.jewel.jewel, item = client.data.get_inventory(db.travel_speed_up_paper))
+        )
