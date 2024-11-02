@@ -504,9 +504,9 @@ class travel_round(Module):
                              if remove_quest.travel_start_time + i * quest_interval - remove_quest.decrease_time > client.server_time)
 
             if next_loop < remove_quest.total_lap_count:
-                delta_time = int(remove_quest.travel_start_time + remove_quest.decrease_time + next_loop * quest_interval - client.server_time)
+                delta_time = int(remove_quest.travel_start_time + next_loop * quest_interval - remove_quest.decrease_time - client.server_time)
                 ticket_to_use = int(math.ceil(delta_time / client.data.settings.travel.decrease_time_by_ticket))
-                if ticket_to_use < travel_speed_up_paper_threshold:
+                if ticket_to_use <= travel_speed_up_paper_threshold:
                     self._log(f"一轮剩余时间{db.format_second(delta_time)}小于使用阈值{travel_speed_up_paper_threshold}小时，加速一轮")
                     if ticket_to_use > client.data.get_inventory(db.travel_speed_up_paper):
                         ticket_to_use = 0
