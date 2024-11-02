@@ -2,7 +2,7 @@ from typing import List, Set
 
 from ...util.ilp_solver import dispatch_solver
 
-from ...model.common import ChangeRarityUnit, DeckListData, GrandArenaHistoryDetailInfo, GrandArenaHistoryInfo, GrandArenaSearchOpponent, ProfileUserInfo, RankingSearchOpponent, TravelCurrentCurrencyNum, TravelDecreaseItem, TravelStartInfo, VersusResult, VersusResultDetail
+from ...model.common import ChangeRarityUnit, DeckListData, GrandArenaHistoryDetailInfo, GrandArenaHistoryInfo, GrandArenaSearchOpponent, ProfileUserInfo, RankingSearchOpponent, TravelDecreaseItem, TravelStartInfo, VersusResult, VersusResultDetail
 from ...model.responses import PsyTopResponse
 from ...db.models import GachaExchangeLineup
 from ...model.custom import ArenaQueryResult, GachaReward, ItemType
@@ -20,17 +20,15 @@ from collections import Counter
 @name('计算探险编队')
 @default(True)
 @booltype('travel_team_view_go', '探险出发', False)
-@inttype('travel_team_view_go_cnt', '出发次数', 3, [1,2,3,4,5])
 @multichoice('travel_team_view_quest_id', '探险任务', [], db.travel_quest_candidate)
 @booltype('travel_team_view_auto_memory', '自动设置记忆碎片', True)
-@description('根据设定的记忆碎片优先级，从剩余可派遣角色中自动计算战力平衡编队，自动设置记忆碎片指记忆碎片优先度不足够派出队伍时，根据盈亏情况补充')
+@description('根据设定的记忆碎片优先级，从剩余可派遣角色中自动计算战力平衡编队，自动设置记忆碎片指记忆碎片优先度不足够派出队伍时，根据盈亏情况补充，探险出发指以计算出的编队出发')
 class travel_team_view(Module):
     async def do_task(self, client: pcrclient):
         travel_team_auto_memory = self.get_config('travel_team_view_auto_memory')
         travel_team_go = self.get_config('travel_team_view_go')
-        travel_team_go_cnt: int = int(self.get_config('travel_team_view_go_cnt'))
         travel_quest_id_raw: List[str] = self.get_config('travel_team_view_quest_id')
-        travel_quest_id = [int(x.split(':')[0]) for x in travel_quest_id_raw]
+        travel_quest_id = [db.get_travel_quest_id_from_candidate(x) for x in travel_quest_id_raw]
 
         top = await client.travel_top(max(db.get_open_travel_area()), 1)
         unit_list = top.priority_unit_list
@@ -115,16 +113,14 @@ class travel_team_view(Module):
                         travel_quest_id = quest,
                         travel_deck = team,
                         decrease_time_item = TravelDecreaseItem(jewel = 0, item = 0),
-                        total_lap_count = travel_team_go_cnt,
+                        total_lap_count = client.data.settings.travel.travel_quest_max_repeat_count,
                  )
                 start_travel_quest_list.append(start_item)
 
-            jewel = client.data.jewel.free_jewel + client.data.jewel.jewel
-            speed_up_paper = client.data.get_inventory(db.travel_speed_up_paper)
             action_type = eTravelStartType.NORMAL
             msg = '\n'.join(f"派遣第{id}队到{db.get_quest_name(quest.travel_quest_id)}x{quest.total_lap_count}" for id, quest in enumerate(start_travel_quest_list, start = 1))
             self._log(msg)
-            await client.travel_start(start_travel_quest_list, [], [], action_type, TravelCurrentCurrencyNum(jewel = jewel, item=speed_up_paper))
+            await client.travel_start(start_travel_quest_list, [], [], action_type)
 
 
 @name('【活动限时】一键做布丁')
