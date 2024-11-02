@@ -78,7 +78,7 @@ class travel_team_view(Module):
                 unit_list.extend(new_unit)
                 await client.travel_update_priority_unit_list(unit_list)
 
-        unit_power = {unit: await client.data.get_unit_power(unit) for unit in client.data.unit}
+        unit_power = {unit: client.data.get_unit_power(unit) for unit in client.data.unit}
         unit_list.sort(key=lambda x: unit_power[x], reverse=True)
 
         teams = [

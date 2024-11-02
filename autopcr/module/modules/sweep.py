@@ -467,6 +467,8 @@ class travel_round(Module):
         target_quest1: List[str] = self.get_config("travel_target_quest1")
         target_quest2: List[str] = self.get_config("travel_target_quest2")
         target_quest3: List[str] = self.get_config("travel_target_quest3")
+        if not target_quest1 or not target_quest2 or not target_quest3:
+            raise AbortError("三个轮转目标未全设置！")
         if set(target_quest1) & set(target_quest2) or set(target_quest1) & set(target_quest3) or set(target_quest2) & set(target_quest3):
             raise AbortError("三个轮转目标有重叠！请修改！")
 
