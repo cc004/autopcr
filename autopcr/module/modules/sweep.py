@@ -22,7 +22,7 @@ import math
 '''.strip())
 @singlechoice('travel_quest_gold_event_strategy', "代币事件策略", '赌狗', ['保守','赌狗','随机'])
 @singlechoice('travel_quest_equip_event_strategy', "装备事件策略", '赌狗', ['保守','赌狗','随机'])
-@name("探险")
+@name("探险续航")
 @default(True)
 class travel_quest_sweep(Module):
     def can_receive_count(self, quest: TravelQuestInfo) -> int:
@@ -88,7 +88,7 @@ class travel_quest_sweep(Module):
                     secret_travel.append(event)
 
             result_count = Counter([quest.travel_quest_id for quest in result.travel_result])
-            msg = '探索了:' + ' '.join(f"{db.get_quest_name(quest)} x{cnt}" for quest, cnt in result_count.items())
+            msg = '探索了' + ' '.join(f"{db.get_quest_name(quest)}{cnt}次" for quest, cnt in result_count.items())
             self._log(msg)
             if secret_travel:
                 msg = '触发了秘密探险：' + ' '.join(db.ex_event_data[event.still_id].title for event in secret_travel)
@@ -464,12 +464,18 @@ class travel_round(Module):
         return now >= quest.travel_end_time - quest.decrease_time
 
     def today_targets(self) -> List[int]:
+        target_quest1: List[str] = self.get_config("travel_target_quest1")
+        target_quest2: List[str] = self.get_config("travel_target_quest2")
+        target_quest3: List[str] = self.get_config("travel_target_quest3")
+        if set(target_quest1) & set(target_quest2) or set(target_quest1) & set(target_quest3) or set(target_quest2) & set(target_quest3):
+            raise AbortError("三个轮转目标有重叠！请修改！")
+
         n = time.localtime().tm_yday // int(self.get_config("travel_target_day"))
         def get_quest_id(lst: List, n): return db.get_travel_quest_id_from_candidate(lst[n % len(lst)])
         return [
-            get_quest_id(self.get_config("travel_target_quest1"), n),
-            get_quest_id(self.get_config("travel_target_quest2"), n),
-            get_quest_id(self.get_config("travel_target_quest3"), n)
+            get_quest_id(target_quest1, n),
+            get_quest_id(target_quest2, n),
+            get_quest_id(target_quest3, n)
         ]
     async def do_task(self, client: pcrclient):
         top = await client.travel_top(max(db.get_open_travel_area()), 1)
