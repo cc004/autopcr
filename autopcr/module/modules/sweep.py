@@ -7,7 +7,7 @@ from ...db.database import db
 from ...model.enums import *
 from ...model.custom import ItemType
 from ...util.linq import flow
-from ...model.common import InventoryInfo, TravelAppearEventData, TravelCurrentCurrencyNum, TravelDecreaseItem, TravelExtraEquipAutoRecycleOptionData, TravelQuestAddLap, TravelQuestInfo, TravelStartInfo
+from ...model.common import InventoryInfo, TravelAppearEventData, TravelDecreaseItem, TravelQuestAddLap, TravelQuestInfo, TravelStartInfo
 import time
 import random
 from collections import Counter
@@ -20,9 +20,8 @@ import math
 代币事件为 30%1000代币70%200代币 或 100%400代币 选项
 赌狗策略为前者，保守策略为后者
 '''.strip())
-@singlechoice('travel_quest_gold_event_strategy', "代币事件策略", ['随机'], ['保守','赌狗','随机'])
-@singlechoice('travel_quest_equip_event_strategy', "装备事件策略", ['随机'], ['保守','赌狗','随机'])
-@inttype('travel_quest_max_round', "最大派遣数", 3, [2,3,4,5])
+@singlechoice('travel_quest_gold_event_strategy', "代币事件策略", '赌狗', ['保守','赌狗','随机'])
+@singlechoice('travel_quest_equip_event_strategy', "装备事件策略", '赌狗', ['保守','赌狗','随机'])
 @name("探险")
 @default(True)
 class travel_quest_sweep(Module):
@@ -48,7 +47,6 @@ class travel_quest_sweep(Module):
             return random.randint(1, 2)
 
     async def do_task(self, client: pcrclient):
-        travel_quest_max_round: int = int(self.get_config("travel_quest_max_round"))
         travel_quest_equip_event_strategy: str = self.get_config("travel_quest_equip_event_strategy")
         travel_quest_gold_event_strategy: str = self.get_config("travel_quest_gold_event_strategy")
         reward: List[InventoryInfo] = []
@@ -81,8 +79,7 @@ class travel_quest_sweep(Module):
         result_count = {}
         reward2: List[InventoryInfo] = []
         if any(self.can_receive_count(quest) for quest in top.travel_quest_list):
-            option = TravelExtraEquipAutoRecycleOptionData(rarity=[], frame=[], category=[])
-            result = await client.travel_receive_all(option)
+            result = await client.travel_receive_all()
             secret_travel: List[TravelAppearEventData] = []
             for quest in result.travel_result:
                 reward2.extend(quest.reward_list)
@@ -120,24 +117,22 @@ class travel_quest_sweep(Module):
                  )
                 start_travel_quest_list.append(start_item)
             else:
-                append_round = travel_quest_max_round - quest_still_round
+                append_round = client.data.settings.travel.travel_quest_max_repeat_count - quest_still_round
                 if append_round > 0:
                     add_item = TravelQuestAddLap(travel_id = quest.travel_id, add_lap_count = append_round)
                     add_lap_travel_quest_list.append(add_item)
                     add_lap_travel_quest_id.append(quest.travel_quest_id)
 
         if start_travel_quest_list or add_lap_travel_quest_list:
-            jewel = client.data.jewel.free_jewel + client.data.jewel.jewel
-            speed_up_paper = client.data.get_inventory(db.travel_speed_up_paper)
             msg = '\n'.join(f"继续派遣{db.get_quest_name(quest_id)} x{quest.add_lap_count}" for quest_id, quest in zip(add_lap_travel_quest_id, add_lap_travel_quest_list))
             msg += '\n'.join(f"重新派遣{db.get_quest_name(quest.travel_quest_id)} x{quest.total_lap_count}" for quest in start_travel_quest_list)
             self._log(msg)
             action_type = eTravelStartType.ADD_LAP if add_lap_travel_quest_list else eTravelStartType.RESTART
             if start_travel_quest_list and add_lap_travel_quest_list:
                 action_type = eTravelStartType.RESTART_AND_ADD
-            await client.travel_start(start_travel_quest_list, add_lap_travel_quest_list, [], action_type, TravelCurrentCurrencyNum(jewel = jewel, item=speed_up_paper))
+            await client.travel_start(start_travel_quest_list, add_lap_travel_quest_list, [], action_type)
 
-        if not self.log and not reward:
+        if not self.log:
             raise SkipError("探险仍在继续...")
 
 class explore_sweep(Module):
@@ -452,63 +447,91 @@ class starcup1_sweep(starcup_sweep):
     def quest_id(self) -> int:
         return 19001001
 
-@multichoice("travel_target_quest1", "轮转目标1", [1], [1, 2, 3, 4, 5])
-@multichoice("travel_target_quest2", "轮转目标2", [4], [1, 2, 3, 4, 5])
-@multichoice("travel_target_quest3", "轮转目标3", [2, 3, 5], [1, 2, 3, 4, 5])
-@inttype("travel_target_day", "轮转时间", 7, [2, 3, 5, 7, 10])
-@name('自动探险')
+@inttype("travel_speed_up_paper_threshold", "加速阈值", 6, list(range(12)))
+@inttype("travel_target_day", "轮转天数", 7, [2, 3, 5, 7, 10])
+@multichoice("travel_target_quest3", "轮转目标3", ['1-2','1-3','1-5'], db.travel_quest_candidate)
+@multichoice("travel_target_quest2", "轮转目标2", ['1-4'], db.travel_quest_candidate)
+@multichoice("travel_target_quest1", "轮转目标1", ['1-1'], db.travel_quest_candidate)
+@name('探险轮转')
 @description('''
-自动根据轮转进行探险，按轮转时间进行目标切换，切换时自动用券进行尾轮加速。
+自动根据轮转进行探险，按轮转时间进行目标切换，需保持三支队探险。
+切换时若一轮剩余时间小于阈值且可加速时则加速，否则直接撤退。
 '''.strip())
-@default(False)
-class auto_travel(Module):
+@default(True)
+class travel_round(Module):
+    def is_finish_quest(self, quest: TravelQuestInfo) -> bool:
+        now = int(time.time())
+        return now >= quest.travel_end_time - quest.decrease_time
+
     def today_targets(self) -> List[int]:
         n = time.localtime().tm_yday // int(self.get_config("travel_target_day"))
-        def get_team(lst, n): return lst[n % len(lst)]
+        def get_quest_id(lst: List, n): return db.get_travel_quest_id_from_candidate(lst[n % len(lst)])
         return [
-            get_team(self.get_config("travel_target_quest1"), n),
-            get_team(self.get_config("travel_target_quest2"), n),
-            get_team(self.get_config("travel_target_quest3"), n)
+            get_quest_id(self.get_config("travel_target_quest1"), n),
+            get_quest_id(self.get_config("travel_target_quest2"), n),
+            get_quest_id(self.get_config("travel_target_quest3"), n)
         ]
     async def do_task(self, client: pcrclient):
-        area_id = max(db.get_open_travel_area())
-        top = await client.travel_top(area_id, 1)
-        targets = set(
-            area_id * 1000 + x for x in self.today_targets()
-        )
-
-        now_targets = {
+        top = await client.travel_top(max(db.get_open_travel_area()), 1)
+        now_quest = {
             quest.travel_quest_id: quest for quest in top.travel_quest_list
         }
+        if len(now_quest) != 3:
+            raise AbortError(f"当前探险队数为{len(now_quest)}<3，不支持轮换！")
 
-        to_delete = {k: v for k, v in now_targets.items() if k not in targets}
-        to_add = targets - set(now_targets.keys())
-        
+        travel_speed_up_paper_threshold = int(self.get_config("travel_speed_up_paper_threshold"))
+        target_quest = set(self.today_targets())
+        self._log(f"当前探险为{', '.join(db.get_quest_name(quest) for quest in now_quest)}")
+        self._log(f"今日目标为{', '.join(db.get_quest_name(quest) for quest in target_quest)}")
+
+        to_delete = {k: v for k, v in now_quest.items() if k not in target_quest}
+        to_add = target_quest - set(now_quest.keys())
+
         start_infos = []
-
+        reward = []
         for add_quest_id, (remove_quest_id, remove_quest) in zip(to_add, to_delete.items()):
+            self._log(f"{db.get_quest_name(remove_quest_id)}->{db.get_quest_name(add_quest_id)}")
             quest_interval = (remove_quest.travel_end_time - remove_quest.travel_start_time) / remove_quest.total_lap_count
-            for i in range(remove_quest.total_lap_count):
-                if remove_quest.travel_start_time + i * quest_interval > client.server_time:
-                    break
-            
-            delta_time = remove_quest.travel_start_time + i * quest_interval - client.server_time
-            ticket_to_use = math.ceil(delta_time / client.data.settings.travel.decrease_time_by_ticket)
-            if ticket_to_use > client.data.get_inventory(db.travel_speed_up_paper):
-                raise AbortError(f"没有足够的加速券，无法切换目标")
-            if ticket_to_use > top.remain_daily_decrease_count_ticket:
-                raise AbortError(f"本日剩余加速券不足，无法切换目标")
-            if top.remain_daily_retire_count <= 0:
-                raise AbortError("本日剩余撤退次数不足，无法切换目标")
-            
-            if remove_quest:
-                self._log(f"结束探险{remove_quest_id}")
+            next_loop = next(i for i in range(remove_quest.received_count, remove_quest.total_lap_count + 1) 
+                             if remove_quest.travel_start_time + i * quest_interval - remove_quest.decrease_time > client.server_time)
 
-            await client.travel_decrease_time(remove_quest.travel_quest_id, remove_quest.travel_id, TravelDecreaseItem(jewel = 0, item = ticket_to_use))
-            await client.travel_retire(remove_quest)
+            if next_loop < remove_quest.total_lap_count:
+                delta_time = int(remove_quest.travel_start_time + remove_quest.decrease_time + next_loop * quest_interval - client.server_time)
+                ticket_to_use = int(math.ceil(delta_time / client.data.settings.travel.decrease_time_by_ticket))
+                if ticket_to_use < travel_speed_up_paper_threshold:
+                    self._log(f"一轮剩余时间{db.format_second(delta_time)}小于使用阈值{travel_speed_up_paper_threshold}小时，加速一轮")
+                    if ticket_to_use > client.data.get_inventory(db.travel_speed_up_paper):
+                        ticket_to_use = 0
+                        self._warn(f"没有足够的加速券，无法加速")
+                    if ticket_to_use > top.remain_daily_decrease_count_ticket:
+                        ticket_to_use = 0
+                        self._warn(f"本日使用加速券次数不足，无法加速")
+                else:
+                    ticket_to_use = 0
+                    self._log(f"一轮剩余{db.format_second(delta_time)}大于阈值{travel_speed_up_paper_threshold}小时，直接撤退")
 
-            top.remain_daily_decrease_count_ticket -= ticket_to_use
-            top.remain_daily_retire_count -= 1
+                if top.remain_daily_retire_count <= 0:
+                    self._warn(f"本日已无撤退次数，无法{db.get_quest_name(remove_quest_id)}->{db.get_quest_name(add_quest_id)}")
+                    continue
+
+                if ticket_to_use:
+                    self._log(f"{db.get_quest_name(remove_quest_id)}使用加速券x{ticket_to_use}")
+                    ret = await client.travel_decrease_time(remove_quest.travel_quest_id, remove_quest.travel_id, TravelDecreaseItem(jewel = 0, item = ticket_to_use))
+                    top.remain_daily_decrease_count_ticket = ret.remain_daily_decrease_count_ticket
+                    remove_quest.decrease_time += ticket_to_use * client.data.settings.travel.decrease_time_by_ticket
+
+            if self.is_finish_quest(remove_quest):
+                self._log(f"{db.get_quest_name(remove_quest_id)}完成")
+                ret = await client.travel_receive(remove_quest.travel_id)
+                for result in ret.travel_result:
+                    reward.extend(result.reward_list)
+            else:
+                self._log(f"{db.get_quest_name(remove_quest_id)}撤退")
+                ret = await client.travel_retire(remove_quest.travel_quest_id, remove_quest.travel_id)
+                top.remain_daily_retire_count = ret.remain_daily_retire_count
+                if ret.travel_result:
+                    for result in ret.travel_result:
+                        reward.extend(result.reward_list)
 
             start_infos.append(
                 TravelStartInfo(
@@ -518,11 +541,14 @@ class auto_travel(Module):
                     total_lap_count = client.data.settings.travel.travel_quest_max_repeat_count
                 )
             )
-        
-        await client.travel_start(
-            start_infos,
-            [],
-            [],
-            eTravelStartType.RESTART,
-            TravelCurrentCurrencyNum(jewel = client.data.jewel.free_jewel + client.data.jewel.jewel, item = client.data.get_inventory(db.travel_speed_up_paper))
-        )
+
+        if reward:
+            self._log(f"获得了:")
+            msg = (await client.serlize_reward(reward, filter=lambda x: db.is_ex_equip(x) or db.is_unit_memory(x)))
+            if msg: self._log(msg)
+            self._log("")
+
+        if start_infos:
+            msg = '\n'.join(f"派遣{db.get_quest_name(quest.travel_quest_id)} x{quest.total_lap_count}" for quest in start_infos)
+            self._log(msg)
+            await client.travel_start(start_infos, [], [], eTravelStartType.NORMAL)
