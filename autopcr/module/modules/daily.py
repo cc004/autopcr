@@ -330,7 +330,7 @@ class user_info(Module):
         mana = client.data.gold.gold_id_free
         sweep_ticket = client.data.get_inventory((eInventoryType.Item, 23001))
         pig = client.data.get_inventory((eInventoryType.Item, 90005))
-        tot_power = sum([(await client.data.get_unit_power(unit)) for unit in client.data.unit])
+        tot_power = sum([client.data.get_unit_power(unit) for unit in client.data.unit])
 
         if stamina >= max_stamina:
             self._warn(f"体力爆了！")

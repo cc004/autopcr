@@ -51,6 +51,8 @@ class pcrclient(apiclient):
         return await self.request(req)
 
     async def travel_top(self, travel_area_id: int, get_ex_equip_album_flag: int):
+        if not self.data.is_quest_cleared(11018001):
+            raise SkipError("探险未解锁")
         req = TravelTopRequest()
         req.travel_area_id = travel_area_id
         req.get_ex_equip_album_flag = get_ex_equip_album_flag

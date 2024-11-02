@@ -486,11 +486,15 @@ class datamgr(Component[apiclient]):
         bad = [(item, cnt - self.get_inventory(item)) for item, cnt in demand.items() if cnt > self.get_inventory(item)]
         return bad
 
+    def get_unit_power(self, unit_id: int) -> int:
+        power = db.calc_unit_power(self.unit[unit_id], set(self.read_story_ids))
+        return int(power + 0.5)
+
+    def is_quest_cleared(self, quest: int) -> bool:
+        return quest in self.quest_dict and self.quest_dict[quest].result_type == eMissionStatusType.AlreadyReceive
+
     async def request(self, request: Request[TResponse], next: RequestHandler) -> TResponse:
         resp = await next.request(request)
         if resp: await resp.update(self, request)
         return resp
 
-    async def get_unit_power(self, unit_id: int) -> int:
-        power = db.calc_unit_power(self.unit[unit_id], set(self.read_story_ids))
-        return int(power + 0.5)
