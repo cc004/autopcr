@@ -1230,8 +1230,13 @@ class database():
 
     def travel_quest_candidate(self):
         return flow(self.travel_quest_data.values()) \
-                .select(lambda x: f"{x.travel_quest_id}: {x.travel_quest_name}") \
+                .select(lambda x: f"{x.travel_area_id % 10}-{x.travel_quest_id % 10}") \
                 .to_list()
+
+    def get_travel_quest_id_from_candidate(self, candidate: str):
+        area, quest = candidate.split('-')
+        ret = next(x.travel_quest_id for x in self.travel_quest_data.values() if x.travel_area_id % 10 == int(area) and x.travel_quest_id % 10 == int(quest))
+        return ret
 
     def get_gacha_prize_name(self, gacha_id: int, prize_rarity: int) -> str:
         if gacha_id in self.prizegacha_sp_data:

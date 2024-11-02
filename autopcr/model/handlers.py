@@ -694,6 +694,34 @@ class TravelReceiveAllResponse(responses.TravelReceiveAllResponse):
                 mgr.update_inventory(item)
 
 @handles
+class TravelReceiveResponse(responses.TravelReceiveResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        for result in self.travel_result:
+            for item in result.reward_list:
+                mgr.update_inventory(item)
+
+@handles
+class TravelRetireResponse(responses.TravelRetireResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        if self.travel_result:
+            for result in self.travel_result:
+                for item in result.reward_list:
+                    mgr.update_inventory(item)
+
+@handles
+class TravelDecreaseTimeResponse(responses.TravelDecreaseTimeResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        if self.user_jewel:
+            mgr.jewel = self.user_jewel
+
+@handles
 class TravelReceiveTopEventRewardResponse(responses.TravelReceiveTopEventRewardResponse):
     async def update(self, mgr: datamgr, request):
         if self.user_gold:
