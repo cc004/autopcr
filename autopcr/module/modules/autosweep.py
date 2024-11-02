@@ -160,7 +160,7 @@ class simple_demand_sweep_base(Module):
                 self._log("---------")
             if tmp:
                 self._log(await client.serlize_reward(tmp, filter=self.filter_reward_func()))
-            if not self.log and not self.warn:
+            if not self.log:
                 self._log("需刷取的图均无次数")
                 raise SkipError()
 

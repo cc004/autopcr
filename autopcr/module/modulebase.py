@@ -249,6 +249,7 @@ class Module:
         self.log.append(msg)
 
     def _warn(self, msg: str):
+        self.log.append(msg)
         self.warn.append(msg)
 
     def _abort(self, msg: str = ""):
