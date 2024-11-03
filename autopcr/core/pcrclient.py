@@ -755,10 +755,14 @@ class pcrclient(apiclient):
         return await self.request(req)
     
     async def get_arena_info(self):
+        if not self.data.is_quest_cleared(11004006):
+            raise SkipError("未解锁竞技场")
         req = ArenaInfoRequest()
         return await self.request(req)
     
     async def get_grand_arena_info(self):
+        if not self.data.is_quest_cleared(11008015):
+            raise SkipError("未解锁公主竞技场")
         req = GrandArenaInfoRequest()
         return await self.request(req)
     
