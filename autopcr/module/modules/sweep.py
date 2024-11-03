@@ -113,7 +113,7 @@ class travel_quest_sweep(Module):
                         travel_quest_id = quest.travel_quest_id,
                         travel_deck = quest.travel_deck,
                         decrease_time_item = TravelDecreaseItem(jewel = 0, item = 0),
-                        total_lap_count = travel_quest_max_round,
+                        total_lap_count = client.data.settings.travel.travel_quest_max_repeat_count,
                  )
                 start_travel_quest_list.append(start_item)
             else:
