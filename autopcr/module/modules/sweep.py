@@ -16,12 +16,14 @@ import math
 
 @description('''
 仅支持阅读特殊事件+续派遣次数到最大派遣数。
+加速券大于保留值则会加速，建议与探险轮转的加速阈值保持一致。
 装备事件为 60%三金装40%一金装 或 100%二金装 选项
 代币事件为 30%1000代币70%200代币 或 100%400代币 选项
 赌狗策略为前者，保守策略为后者
 '''.strip())
 @singlechoice('travel_quest_gold_event_strategy', "代币事件策略", '赌狗', ['保守','赌狗','随机'])
 @singlechoice('travel_quest_equip_event_strategy', "装备事件策略", '赌狗', ['保守','赌狗','随机'])
+@inttype('travel_quest_speed_up_paper_hold', "加速券保留", 6, list(range(37)))
 @name("探险续航")
 @default(True)
 class travel_quest_sweep(Module):
@@ -49,6 +51,7 @@ class travel_quest_sweep(Module):
     async def do_task(self, client: pcrclient):
         travel_quest_equip_event_strategy: str = self.get_config("travel_quest_equip_event_strategy")
         travel_quest_gold_event_strategy: str = self.get_config("travel_quest_gold_event_strategy")
+        travel_quest_speed_up_paper_hold: int = self.get_config("travel_quest_speed_up_paper_hold")
         reward: List[InventoryInfo] = []
 
         def get_strategy(event_id: int) -> str:
@@ -61,8 +64,10 @@ class travel_quest_sweep(Module):
 
         top = await client.travel_top(max(db.get_open_travel_area()), 1)
 
-        if len(top.travel_quest_list) < 3:
-            self._warn(f"正在探险的小队数为{len(top.travel_quest_list)}<3，请上号开始新的探险！")
+        team_count = len(top.travel_quest_list)
+
+        if team_count < 3:
+            self._warn(f"正在探险的小队数为{team_count}<3，请上号开始新的探险！")
 
         if top.top_event_list:
             for top_event in top.top_event_list:
@@ -105,6 +110,7 @@ class travel_quest_sweep(Module):
         add_lap_travel_quest_list: List[TravelQuestAddLap] = []
         add_lap_travel_quest_id: List[int] = []
         start_travel_quest_list: List[TravelStartInfo] = []
+        new_quest_list: List[TravelQuestInfo] = [] # avoid api call again
         for quest in top.travel_quest_list:
             quest.received_count += result_count.get(quest.travel_quest_id, 0)
             quest_still_round = self.quest_still_round(quest)
@@ -122,6 +128,8 @@ class travel_quest_sweep(Module):
                     add_item = TravelQuestAddLap(travel_id = quest.travel_id, add_lap_count = append_round)
                     add_lap_travel_quest_list.append(add_item)
                     add_lap_travel_quest_id.append(quest.travel_quest_id)
+                else:
+                    new_quest_list.append(quest)
 
         if start_travel_quest_list or add_lap_travel_quest_list:
             msg = '\n'.join(f"继续派遣{db.get_quest_name(quest_id)} x{quest.add_lap_count}" for quest_id, quest in zip(add_lap_travel_quest_id, add_lap_travel_quest_list))
@@ -130,7 +138,21 @@ class travel_quest_sweep(Module):
             action_type = eTravelStartType.ADD_LAP if add_lap_travel_quest_list else eTravelStartType.RESTART
             if start_travel_quest_list and add_lap_travel_quest_list:
                 action_type = eTravelStartType.RESTART_AND_ADD
-            await client.travel_start(start_travel_quest_list, add_lap_travel_quest_list, [], action_type)
+            ret = await client.travel_start(start_travel_quest_list, add_lap_travel_quest_list, [], action_type)
+            new_quest_list.extend(ret.travel_quest_list)
+
+        total_use = max(
+                min(top.remain_daily_decrease_count_ticket, client.data.get_inventory(db.travel_speed_up_paper)) 
+                - travel_quest_speed_up_paper_hold, 0)
+        if team_count and total_use: # avoid divide by zero
+            self._log(f"可使用加速券{total_use}张")
+            quest_use = [total_use // team_count + (i < total_use % team_count) for i in range(team_count)]
+            for quest, use in zip(new_quest_list, quest_use):
+                if use:
+                    self._log(f"{db.get_quest_name(quest.travel_quest_id)}使用加速券x{use}")
+                    ret = await client.travel_decrease_time(quest.travel_quest_id, quest.travel_id, TravelDecreaseItem(jewel = 0, item = use))
+                    top.remain_daily_decrease_count_ticket = ret.remain_daily_decrease_count_ticket
+                    # need receive again?
 
         if not self.log:
             raise SkipError("探险仍在继续...")
@@ -472,7 +494,7 @@ class travel_round(Module):
         if set(target_quest1) & set(target_quest2) or set(target_quest1) & set(target_quest3) or set(target_quest2) & set(target_quest3):
             raise AbortError("三个轮转目标有重叠！请修改！")
 
-        n = time.localtime().tm_yday // int(self.get_config("travel_target_day"))
+        n = db.get_today_start_time().timetuple().tm_yday // int(self.get_config("travel_target_day"))
         def get_quest_id(lst: List, n): return db.get_travel_quest_id_from_candidate(lst[n % len(lst)])
         return [
             get_quest_id(target_quest1, n),
