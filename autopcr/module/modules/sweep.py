@@ -133,7 +133,8 @@ class travel_quest_sweep(Module):
 
         if start_travel_quest_list or add_lap_travel_quest_list:
             msg = '\n'.join(f"继续派遣{db.get_quest_name(quest_id)} x{quest.add_lap_count}" for quest_id, quest in zip(add_lap_travel_quest_id, add_lap_travel_quest_list))
-            msg += '\n'.join(f"重新派遣{db.get_quest_name(quest.travel_quest_id)} x{quest.total_lap_count}" for quest in start_travel_quest_list)
+            self._log(msg)
+            msg = '\n'.join(f"重新派遣{db.get_quest_name(quest.travel_quest_id)} x{quest.total_lap_count}" for quest in start_travel_quest_list)
             self._log(msg)
             action_type = eTravelStartType.ADD_LAP if add_lap_travel_quest_list else eTravelStartType.RESTART
             if start_travel_quest_list and add_lap_travel_quest_list:
@@ -523,7 +524,8 @@ class travel_round(Module):
             self._log(f"{db.get_quest_name(remove_quest_id)}->{db.get_quest_name(add_quest_id)}")
             quest_interval = (remove_quest.travel_end_time - remove_quest.travel_start_time) / remove_quest.total_lap_count
             next_loop = next(i for i in range(remove_quest.received_count, remove_quest.total_lap_count + 1) 
-                             if remove_quest.travel_start_time + i * quest_interval - remove_quest.decrease_time > client.server_time)
+                             if i == remove_quest.total_lap_count 
+                             or remove_quest.travel_start_time + i * quest_interval - remove_quest.decrease_time > client.server_time)
 
             if next_loop < remove_quest.total_lap_count:
                 delta_time = int(remove_quest.travel_start_time + next_loop * quest_interval - remove_quest.decrease_time - client.server_time)
