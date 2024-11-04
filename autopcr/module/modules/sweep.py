@@ -23,7 +23,7 @@ import math
 '''.strip())
 @singlechoice('travel_quest_gold_event_strategy', "代币事件策略", '赌狗', ['保守','赌狗','随机'])
 @singlechoice('travel_quest_equip_event_strategy', "装备事件策略", '赌狗', ['保守','赌狗','随机'])
-@inttype('travel_quest_speed_up_paper_hold', "加速券保留", 6, list(range(37)))
+@inttype('travel_quest_speed_up_paper_hold', "加速券保留", 6, list(range(3001)))
 @name("探险续航")
 @default(True)
 class travel_quest_sweep(Module):
