@@ -92,7 +92,7 @@ class pcrclient(apiclient):
         if ex_auto_recycle_option is None:
             ex_auto_recycle_option = TravelExtraEquipAutoRecycleOptionData(rarity=[], frame=[], category=[])
         req = TravelReceiveRequest()
-        req.travel_quest_id = travel_id
+        req.travel_id = travel_id
         req.ex_auto_recycle_option = ex_auto_recycle_option
         return await self.request(req)
 
