@@ -23,7 +23,7 @@ import math
 '''.strip())
 @singlechoice('travel_quest_gold_event_strategy', "代币事件策略", '赌狗', ['保守','赌狗','随机'])
 @singlechoice('travel_quest_equip_event_strategy', "装备事件策略", '赌狗', ['保守','赌狗','随机'])
-@inttype('travel_quest_speed_up_paper_hold', "加速券保留", 6, list(range(3001)))
+@inttype('travel_quest_speed_up_paper_hold', "加速券保留", 12, list(range(3001)))
 @name("探险续航")
 @default(True)
 class travel_quest_sweep(Module):
@@ -470,8 +470,8 @@ class starcup1_sweep(starcup_sweep):
     def quest_id(self) -> int:
         return 19001001
 
-@inttype("travel_speed_up_paper_threshold", "加速阈值", 6, list(range(12)))
-@inttype("travel_target_day", "轮转天数", 7, [2, 3, 5, 7, 10])
+@inttype("travel_speed_up_paper_threshold", "加速阈值", 12, list(range(13)))
+@inttype("travel_target_day", "轮转天数", 7, list(range(1, 31)))
 @multichoice("travel_target_quest3", "轮转目标3", ['1-2','1-3','1-5'], db.travel_quest_candidate)
 @multichoice("travel_target_quest2", "轮转目标2", ['1-4'], db.travel_quest_candidate)
 @multichoice("travel_target_quest1", "轮转目标1", ['1-1'], db.travel_quest_candidate)
