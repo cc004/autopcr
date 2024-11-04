@@ -330,10 +330,13 @@ class user_info(Module):
         mana = client.data.gold.gold_id_free
         sweep_ticket = client.data.get_inventory((eInventoryType.Item, 23001))
         pig = client.data.get_inventory((eInventoryType.Item, 90005))
+        tot_power = sum([client.data.get_unit_power(unit) for unit in client.data.unit])
 
         if stamina >= max_stamina:
             self._warn(f"体力爆了！")
-        self._log(f"{name} 体力{stamina}({max_stamina}) 等级{level} 钻石{jewel} mana{mana} 扫荡券{sweep_ticket} 母猪石{pig}")
-        self._log(f"已购买体力数：{client.data.recover_stamina_exec_count}")
+        self._log(f"{name} 体力{stamina}({max_stamina}) 等级{level} 钻石{jewel}")
+        self._log(f"玛那{mana} 扫荡券{sweep_ticket} 母猪石{pig}")
+        self._log(f"全角色战力：{tot_power}")
+        self._log(f"已氪体数：{client.data.recover_stamina_exec_count}")
         self._log(f"清日常时间：{now}")
 

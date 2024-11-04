@@ -412,7 +412,7 @@ class unit_set_unique_equip_growth(UnitController):
         self.unit_id = int(unit_id)
         await self.set_unique_growth_unit()
 
-@description('支持全部角色，装备星级-1表示不穿装备，自动拉等级指当前等级不足以穿装备或提升技能等级，将会提升角色等级')
+@description('支持全部角色，装备星级-1表示不穿装备，自动拉等级指当前等级不足以穿装备或提升技能等级，将会提升角色等级，自动拉品级指当前品级不足以装备专武时，会提升角色品级')
 @name('拉角色练度')
 @booltype("unit_promote_rank_when_fail_to_unique_equip", "自动拉品级", False)
 @booltype("unit_promote_level_when_fail_to_equip_or_skill", "自动拉等级", False)

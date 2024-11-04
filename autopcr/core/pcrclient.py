@@ -5,7 +5,7 @@ from .sessionmgr import sessionmgr
 from .misc import errorhandler
 from .datamgr import datamgr
 from ..db.database import db
-from typing import Tuple, Union
+from typing import Callable, Tuple, Union
 import typing, math
 
 class pcrclient(apiclient):
@@ -48,6 +48,66 @@ class pcrclient(apiclient):
         req = SeasonPassMissionAcceptRequest()
         req.season_id = season_id
         req.mission_id = mission_id
+        return await self.request(req)
+
+    async def travel_top(self, travel_area_id: int, get_ex_equip_album_flag: int):
+        if not self.data.is_quest_cleared(11018001):
+            raise SkipError("探险未解锁")
+        req = TravelTopRequest()
+        req.travel_area_id = travel_area_id
+        req.get_ex_equip_album_flag = get_ex_equip_album_flag
+        return await self.request(req)
+
+    async def travel_start(self, start_travel_quest_list: List[TravelStartInfo], add_lap_travel_quest_list: List[TravelQuestAddLap], start_secret_travel_quest_list: List[SecretTravelStartInfo], action_type: eTravelStartType):
+        req = TravelStartRequest()
+        req.start_travel_quest_list = start_travel_quest_list
+        req.add_lap_travel_quest_list = add_lap_travel_quest_list
+        req.start_secret_travel_quest_list = start_secret_travel_quest_list
+        req.action_type = action_type
+        req.current_currency_num = TravelCurrentCurrencyNum(jewel = self.data.jewel.free_jewel + self.data.jewel.jewel, item = self.data.get_inventory(db.travel_speed_up_paper))
+        return await self.request(req)
+
+    async def travel_receive_top_event_reward(self, top_event_appear_id: int, choice_number: int):
+        req = TravelReceiveTopEventRewardRequest()
+        req.top_event_appear_id = top_event_appear_id
+        req.choice_number = choice_number
+        return await self.request(req)
+
+    async def travel_receive_all(self, ex_auto_recycle_option: Union[TravelExtraEquipAutoRecycleOptionData, None] = None):
+        if ex_auto_recycle_option is None:
+            ex_auto_recycle_option = TravelExtraEquipAutoRecycleOptionData(rarity=[], frame=[], category=[])
+        req = TravelReceiveAllRequest()
+        req.ex_auto_recycle_option = ex_auto_recycle_option
+        return await self.request(req)
+
+    async def travel_decrease_time(self, travel_quest_id: int, travel_id: int, decrease_time_item: TravelDecreaseItem):
+        req = TravelDecreaseTimeRequest()
+        req.travel_quest_id = travel_quest_id
+        req.travel_id = travel_id
+        req.decrease_time_item = decrease_time_item
+        req.current_currency_num = TravelCurrentCurrencyNum(jewel = self.data.jewel.free_jewel + self.data.jewel.jewel, item = self.data.get_inventory(db.travel_speed_up_paper))
+        return await self.request(req)
+
+    async def travel_receive(self, travel_id: int, ex_auto_recycle_option: Union[TravelExtraEquipAutoRecycleOptionData, None] = None):
+        if ex_auto_recycle_option is None:
+            ex_auto_recycle_option = TravelExtraEquipAutoRecycleOptionData(rarity=[], frame=[], category=[])
+        req = TravelReceiveRequest()
+        req.travel_quest_id = travel_id
+        req.ex_auto_recycle_option = ex_auto_recycle_option
+        return await self.request(req)
+
+    async def travel_retire(self, travel_quest_id: int, travel_id: int, ex_auto_recycle_option: Union[TravelExtraEquipAutoRecycleOptionData, None] = None):
+        if ex_auto_recycle_option is None:
+            ex_auto_recycle_option = TravelExtraEquipAutoRecycleOptionData(rarity=[], frame=[], category=[])
+        req = TravelRetireRequest()
+        req.travel_quest_id = travel_quest_id
+        req.travel_id = travel_id
+        req.ex_auto_recycle_option = ex_auto_recycle_option
+        return await self.request(req)
+        
+    async def travel_update_priority_unit_list(self, unit_id_list: List[int]):
+        req = TravelUpdatePriorityUnitListRequest()
+        req.unit_id_list = unit_id_list
         return await self.request(req)
 
     async def deck_update(self, deck_number: int, units: List[int]):
@@ -695,10 +755,14 @@ class pcrclient(apiclient):
         return await self.request(req)
     
     async def get_arena_info(self):
+        if not self.data.is_quest_cleared(11004006):
+            raise SkipError("未解锁竞技场")
         req = ArenaInfoRequest()
         return await self.request(req)
     
     async def get_grand_arena_info(self):
+        if not self.data.is_quest_cleared(11008015):
+            raise SkipError("未解锁公主竞技场")
         req = GrandArenaInfoRequest()
         return await self.request(req)
     
@@ -746,11 +810,10 @@ class pcrclient(apiclient):
 
         return res
     
-    async def serlize_reward(self, reward_list: List[InventoryInfo], target: Union[ItemType, None] = None):
-        result = []
+    async def serlize_reward(self, reward_list: List[InventoryInfo], target: Union[ItemType, None] = None, filter: Union[None, Callable[[ItemType],bool]] = None):
         rewards = {}
         for reward in reward_list:
-            if target is None or (reward.type == target[0] and reward.id == target[1]):
+            if target and (reward.type == target[0] and reward.id == target[1]) or filter and filter((reward.type, reward.id)) or not target and not filter:
                 if (reward.id, reward.type) not in rewards:
                     rewards[(reward.id, reward.type)] = [reward.count, reward.stock, reward]
                 else:
@@ -758,6 +821,7 @@ class pcrclient(apiclient):
                     rewards[(reward.id, reward.type)][1] = max(reward.stock, rewards[(reward.id, reward.type)][1])
         reward_item = list(rewards.values())
         reward_item = sorted(reward_item, key = lambda x: x[0], reverse = True)
+        result = []
         for value in reward_item:
             try:
                 result.append(f"{db.get_inventory_name(value[2])}x{value[0]}({value[1]})")
@@ -849,7 +913,7 @@ class pcrclient(apiclient):
         self.keys['stamina_recover_times'] = value
 
     async def quest_skip_aware(self, quest: int, times: int, recover: bool = False, is_total: bool = False):
-        name = db.quest_name[quest] if quest in db.quest_name else f"未知关卡{quest}"
+        name = db.get_quest_name(quest)
         if db.is_hatsune_quest(quest):
             event = db.quest_to_event[quest].event_id
             if not quest in self.data.hatsune_quest_dict[event]:

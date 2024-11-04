@@ -42,7 +42,7 @@ class room_upper_all(Module):
                         self._log(f"开始升级{db.get_room_item_name(x.room_item_id)}至{x.room_item_level + 1}级")
                         await client.room_level_up_item(floors[x.serial_id], x)
 
-        if not self.log and not self.warn:
+        if not self.log:
             raise SkipError('没有可升级的家园物品。')
 
 @description('先回赞，再随机点赞')
