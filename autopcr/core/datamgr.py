@@ -53,12 +53,14 @@ class datamgr(Component[apiclient]):
     dispatch_units: List[UnitDataForClanMember] = None
     event_sub_story: Dict[int, EventSubStory] = None
     user_gold_bank_info: UserBankGoldInfo = None
+    ex_equips: Dict[int, ExtraEquipInfo] = None
 
     def __init__(self):
         self.finishedQuest = set()
         self.hatsune_quest_dict = {}
         self._inventory = {}
         self.deck_list = {}
+        self.ex_equips = {}
         self.campaign_list = []
 
     lck = Lock()
@@ -253,8 +255,17 @@ class datamgr(Component[apiclient]):
     def _weight_mapper(cnt: int) -> float:
         return max(0, cnt) + max(0, cnt + 300) * .1 + max(0, cnt + 600) * .01 + max(0, cnt + 900) * .001
 
-    def get_quest_weght(self, require_equip: typing.Counter[ItemType]) -> Dict[int, float]: # weight demand
-        
+    def get_ex_quest_weght(self, require_equip: typing.Counter[ItemType]) -> Dict[int, float]: 
+        return (
+            flow(db.travel_quest_data.items())
+            .to_dict(lambda x: x[0], lambda x:
+                flow(x[1].get_rewards())
+                .select(lambda y: require_equip.get(y.reward_item, 0))
+                .sum() 
+            )
+        )
+
+    def get_quest_weght(self, require_equip: typing.Counter[ItemType]) -> Dict[int, float]: 
         return (
             flow(db.normal_quest_rewards.items())
             .to_dict(lambda x: x[0], lambda x:
@@ -320,6 +331,27 @@ class datamgr(Component[apiclient]):
     def get_pure_memory_demand_gap(self) -> typing.Counter[ItemType]: # need -- >0
         demand = self.get_pure_memory_demand()
         gap = self.get_demand_gap(demand, lambda x: db.is_unit_pure_memory(x))
+        return gap
+
+    def get_clan_ex_equip_demand(self, start_rank: Union[None, int] = None, like_unit_only: bool = False) -> typing.Counter[ItemType]:
+        ex_type: typing.Counter[int] = Counter()
+        for unit_id in self.unit:
+            if like_unit_only and not self.unit[unit_id].favorite_flag:
+                continue
+            if start_rank and self.unit[unit_id].promotion_level < start_rank:
+                continue
+            ex_type[db.unit_ex_equipment_slot[unit_id].slot_category_1] += 1
+            ex_type[db.unit_ex_equipment_slot[unit_id].slot_category_2] += 1
+            ex_type[db.unit_ex_equipment_slot[unit_id].slot_category_3] += 1
+        result: typing.Counter[ItemType] = Counter({
+            (eInventoryType.ExtraEquip, db.ex_equipment_type_to_clan_battle_ex[ex]): cnt 
+                for ex, cnt in ex_type.items()
+        })
+        return result
+
+    def get_clan_ex_equip_gap(self, start_rank: Union[None, int] = None, like_unit_only: bool = False) -> typing.Counter[ItemType]:
+        demand = self.get_clan_ex_equip_demand(start_rank, like_unit_only)
+        gap = self.get_demand_gap(demand, lambda x: db.is_clan_ex_equip(x))
         return gap
 
     def get_suixin_demand(self) -> Tuple[List[Tuple[ItemType, int]], int]:
@@ -388,6 +420,8 @@ class datamgr(Component[apiclient]):
                 self.unit_love_data[unit_id].chara_id = unit_id
                 self.unit_love_data[unit_id].chara_love = 0
                 self.unit_love_data[unit_id].love_level = 0
+        elif item.type == eInventoryType.ExtraEquip:
+            self.ex_equips[item.id] = item.ex_equip
         else:
             self._inventory[token] = item.stock
 
@@ -451,6 +485,13 @@ class datamgr(Component[apiclient]):
     def get_not_enough_item(self, demand: typing.Counter[ItemType]) -> List[Tuple[ItemType, int]]:
         bad = [(item, cnt - self.get_inventory(item)) for item, cnt in demand.items() if cnt > self.get_inventory(item)]
         return bad
+
+    def get_unit_power(self, unit_id: int) -> int:
+        power = db.calc_unit_power(self.unit[unit_id], set(self.read_story_ids))
+        return int(power + 0.5)
+
+    def is_quest_cleared(self, quest: int) -> bool:
+        return quest in self.quest_dict and self.quest_dict[quest].result_type == eMissionStatusType.AlreadyReceive
 
     async def request(self, request: Request[TResponse], next: RequestHandler) -> TResponse:
         resp = await next.request(request)

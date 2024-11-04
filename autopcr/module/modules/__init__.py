@@ -46,6 +46,8 @@ daily_modules = ModuleList(
         normal_gacha,
         monthly_gacha,
         room_accept_all,
+        travel_round,
+        travel_quest_sweep,
         explore_exp,
         explore_mana,
         underground_skip,
@@ -128,6 +130,7 @@ tool_modules = ModuleList(
     'tool',
     [
         # cook_pudding,
+        travel_team_view,
         unit_promote,
         unit_set_unique_equip_growth,
         missing_unit,

@@ -1,9 +1,11 @@
 from typing import List, Set
 
-from ...model.common import ChangeRarityUnit, DeckListData, GrandArenaHistoryDetailInfo, GrandArenaHistoryInfo, GrandArenaSearchOpponent, ProfileUserInfo, RankingSearchOpponent, VersusResult, VersusResultDetail
+from ...util.ilp_solver import dispatch_solver
+
+from ...model.common import ChangeRarityUnit, DeckListData, GrandArenaHistoryDetailInfo, GrandArenaHistoryInfo, GrandArenaSearchOpponent, ProfileUserInfo, RankingSearchOpponent, TravelDecreaseItem, TravelStartInfo, VersusResult, VersusResultDetail
 from ...model.responses import PsyTopResponse
 from ...db.models import GachaExchangeLineup
-from ...model.custom import ArenaQueryResult, ArenaRegion, GachaReward, ItemType
+from ...model.custom import ArenaQueryResult, GachaReward, ItemType
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
@@ -14,6 +16,112 @@ from ...util.arena import instance as ArenaQuery
 import datetime
 import random
 from collections import Counter
+
+@name('计算探险编队')
+@default(True)
+@booltype('travel_team_view_go', '探险出发', False)
+@multichoice('travel_team_view_quest_id', '探险任务', [], db.travel_quest_candidate)
+@booltype('travel_team_view_auto_memory', '自动设置记忆碎片', True)
+@description('根据设定的记忆碎片优先级，从剩余可派遣角色中自动计算战力平衡编队，自动设置记忆碎片指记忆碎片优先度不足够派出队伍时，根据盈亏情况补充，探险出发指以计算出的编队出发')
+class travel_team_view(Module):
+    async def do_task(self, client: pcrclient):
+        travel_team_auto_memory = self.get_config('travel_team_view_auto_memory')
+        travel_team_go = self.get_config('travel_team_view_go')
+        travel_quest_id_raw: List[str] = self.get_config('travel_team_view_quest_id')
+        travel_quest_id = [db.get_travel_quest_id_from_candidate(x) for x in travel_quest_id_raw]
+
+        top = await client.travel_top(max(db.get_open_travel_area()), 1)
+        unit_list = top.priority_unit_list
+
+        memory_gap = client.data.get_memory_demand_gap()
+        if unit_list:
+            memory_need = []
+            for unit in unit_list:
+                token = (eInventoryType.Item, db.unit_to_memory[unit])
+                memory_need.append((token, memory_gap[token]))
+            msg = '\n'.join([f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片' for item in memory_need])
+            self._log(f"记忆碎片优先级的盈缺情况：\n{msg}")
+            self._log("----")
+
+        if top.travel_quest_list:
+            self._log('当前派遣区域：')
+            for quest in top.travel_quest_list:
+                import time
+                now = int(time.time())
+                leave_time = int(quest.travel_end_time - quest.decrease_time - now)
+                self._log(f"{db.get_quest_name(quest.travel_quest_id)} -{db.format_second(leave_time)}")
+                if quest.travel_quest_id in travel_quest_id: travel_quest_id.remove(quest.travel_quest_id)
+
+        teams_go = 3 - len(top.travel_quest_list)
+        if not teams_go:
+            raise AbortError("已经派遣了3支队伍")
+        memory_unit = 3 * teams_go
+
+        forbid_unit = []
+        for quest in top.travel_quest_list:
+            forbid_unit.extend(quest.travel_deck)
+        forbid_unit = set(forbid_unit)
+
+        unit_list = [unit for unit in unit_list if unit not in forbid_unit][:memory_unit]
+        if len(unit_list) != memory_unit:
+            if not travel_team_auto_memory:
+                raise AbortError(f"设置的未派遣的记忆碎片优先级的角色不足{memory_unit}个，请前往游戏里设置更多角色")
+            else:
+                leave = memory_unit - len(unit_list)
+                new_unit = sorted(
+                        [unit_id for unit_id in client.data.unit if unit_id not in unit_list and unit_id not in forbid_unit], 
+                        key=lambda x: memory_gap[(eInventoryType.Item, db.unit_to_memory[x])], 
+                        reverse=True)[:leave]
+                msg = f"设置的未派遣的记忆碎片优先级的角色不足{memory_unit}个，将根据盈亏情况补充以下角色：\n"
+                msg += ' '.join(f"{db.get_unit_name(unit)}" for unit in new_unit)
+                self._log(msg)
+                unit_list.extend(new_unit)
+                await client.travel_update_priority_unit_list(unit_list)
+
+        unit_power = {unit: client.data.get_unit_power(unit) for unit in client.data.unit}
+        unit_list.sort(key=lambda x: unit_power[x], reverse=True)
+
+        teams = [
+            unit_list[st::3] for st in range(teams_go)
+        ]
+
+        start_power = [sum(unit_power[unit] for unit in teams[i]) for i in range(teams_go)]
+        candidate_unit_id = sorted([unit_id for unit_id in unit_power if unit_id not in unit_list and unit_id not in forbid_unit], key=lambda x: unit_power[x], reverse=True)[:teams_go * 7]
+        candidate_unit_power = [unit_power[unit] for unit in candidate_unit_id]
+
+        ret, sol = dispatch_solver(start_power, candidate_unit_power, 7)
+        if not ret:
+            raise AbortError("无解！这不可能！")
+        for pos, unit in zip(sol, candidate_unit_id):
+            teams[pos].append(unit)
+
+        teams_power = [sum(unit_power[unit] for unit in teams[i]) for i in range(teams_go)]
+
+        for id, (team, power) in enumerate(zip(teams, teams_power), start=1):
+            time = db.format_second(db.calc_travel_once_time(power))
+            self._log(f"第{id}队({time})总战力{power}=" + '+'.join(f"{unit_power[unit]}" for unit in team))
+            self._log(' '.join(f"{db.get_unit_name(unit)}" for unit in team))
+
+        if travel_team_go:
+            self._log('----')
+            if len(travel_quest_id) != teams_go:
+                raise AbortError(f"队伍数量{teams_go}与派遣图数{travel_quest_id}不匹配")
+
+            start_travel_quest_list: List[TravelStartInfo] = []
+            for id, (team, quest) in enumerate(zip(teams, travel_quest_id), start = 1):
+                start_item = TravelStartInfo(
+                        travel_quest_id = quest,
+                        travel_deck = team,
+                        decrease_time_item = TravelDecreaseItem(jewel = 0, item = 0),
+                        total_lap_count = client.data.settings.travel.travel_quest_max_repeat_count,
+                 )
+                start_travel_quest_list.append(start_item)
+
+            action_type = eTravelStartType.NORMAL
+            msg = '\n'.join(f"派遣第{id}队到{db.get_quest_name(quest.travel_quest_id)}x{quest.total_lap_count}" for id, quest in enumerate(start_travel_quest_list, start = 1))
+            self._log(msg)
+            await client.travel_start(start_travel_quest_list, [], [], action_type)
+
 
 @name('【活动限时】一键做布丁')
 @default(True)
@@ -652,7 +760,7 @@ class get_normal_quest_recommand(Module):
         tot = []
         for i in range(10):
             id = quest_id[i]
-            name = db.quest_name[id]
+            name = db.get_quest_name(id)
             tokens: List[ItemType] = [i for i in db.normal_quest_rewards[id]]
             msg = f"{name}:\n" + '\n'.join([
                 (f'{db.get_inventory_name_san(token)}: {"缺少" if require_equip[token] > 0 else "盈余"}{abs(require_equip[token])}片')
