@@ -29,11 +29,12 @@ def ilp_solver(ub: List[int], target: int, limit: int, effect: List[int]) -> Tup
     print(LpStatus[prob.status])
     return prob.status == LpStatusOptimal, ret
 
-def dispatch_solver(start: List[int], candidate: List[int], choose: int) -> Tuple[bool, List[int]]:
+def dispatch_solver(start: List[int], candidate: List[int], lb: List[int], choose: int) -> Tuple[bool, List[int]]:
     '''
     数字分配，使得不同组的数字和尽可能平均
     :param start: 组的初始数字和
     :param candidate: 候选数字
+    :param lb: 每组数字和的下界
     :param choose: 每组选择的数字个数
     :return: 是否有解，数字分配结果
     '''
@@ -42,6 +43,7 @@ def dispatch_solver(start: List[int], candidate: List[int], choose: int) -> Tupl
     n = len(start)
     m = len(candidate)
     assert n * choose == m, "候选数需等于安排数"
+    assert len(start) == len(lb), "组数需等于组下界数"
     prob = LpProblem(name='dispatch', sense=LpMinimize)
 
     x = [[LpVariable(vname(j, i), lowBound=0, upBound=1, cat=LpInteger) for i in range(n)] for j in range(m)]
@@ -56,6 +58,7 @@ def dispatch_solver(start: List[int], candidate: List[int], choose: int) -> Tupl
 
     for i in range(n):
         prob += lpSum([x[j][i] for j in range(m)]) == choose, f"dispatch_{i}"
+        prob += psum[i] >= lb[i], f"dispatch_lb_{i}"
         prob += max >= psum[i], f"max_{i}"
         prob += min <= psum[i], f"min_{i}"
 

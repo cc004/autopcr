@@ -55,6 +55,10 @@ class travel_team_view(Module):
         teams_go = 3 - len(top.travel_quest_list)
         if not teams_go:
             raise AbortError("已经派遣了3支队伍")
+        if teams_go < len(travel_quest_id):
+            raise AbortError(f"可派队伍数量{teams_go}<需派图数{travel_quest_id}")
+        teams_go = len(travel_quest_id)
+
         memory_unit = 3 * teams_go
 
         forbid_unit = []
@@ -89,9 +93,10 @@ class travel_team_view(Module):
         candidate_unit_id = sorted([unit_id for unit_id in unit_power if unit_id not in unit_list and unit_id not in forbid_unit], key=lambda x: unit_power[x], reverse=True)[:teams_go * 7]
         candidate_unit_power = [unit_power[unit] for unit in candidate_unit_id]
 
-        ret, sol = dispatch_solver(start_power, candidate_unit_power, 7)
+        lb = [db.travel_quest_data[quest].need_power for quest in travel_quest_id]
+        ret, sol = dispatch_solver(start_power, candidate_unit_power, lb, 7)
         if not ret:
-            raise AbortError("无解！这不可能！")
+            raise AbortError(f"无法凑出战力满足最低要求的{teams_go}支队伍！")
         for pos, unit in zip(sol, candidate_unit_id):
             teams[pos].append(unit)
 
@@ -104,8 +109,6 @@ class travel_team_view(Module):
 
         if travel_team_go:
             self._log('----')
-            if len(travel_quest_id) != teams_go:
-                raise AbortError(f"队伍数量{teams_go}与派遣图数{travel_quest_id}不匹配")
 
             start_travel_quest_list: List[TravelStartInfo] = []
             for id, (team, quest) in enumerate(zip(teams, travel_quest_id), start = 1):
