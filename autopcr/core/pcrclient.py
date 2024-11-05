@@ -266,16 +266,16 @@ class pcrclient(apiclient):
         req.after_equip_level = after_equip_level
         return await self.request(req)
 
-    async def get_clan_battle_top(self, clan_id: int, is_first: int, current_clan_battle_coin: int):
+    async def get_clan_battle_top(self, is_first: int, current_clan_battle_coin: int):
         req = ClanBattleTopRequest()
-        req.clan_id = clan_id
+        req.clan_id = self.data.clan
         req.is_first = is_first
         req.current_clan_battle_coin = current_clan_battle_coin
         return await self.request(req)
 
-    async def get_clan_battle_support_unit_list(self, clan_id: int):
+    async def get_clan_battle_support_unit_list(self):
         req = ClanBattleSupportUnitList2Request()
-        req.clan_id = clan_id
+        req.clan_id = self.data.clan
         return await self.request(req)
 
     async def grand_arena_rank(self, limit: int, page: int):
@@ -711,9 +711,9 @@ class pcrclient(apiclient):
         req.random_count = times
         return await self.request(req)
 
-    async def equip_get_request(self, clan_id: int, message_id: int):
+    async def equip_get_request(self, message_id: int):
         req = EquipGetRequestRequest()
-        req.clan_id = clan_id
+        req.clan_id = self.data.clan
         req.message_id = message_id
         return await self.request(req)
     
