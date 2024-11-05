@@ -18,6 +18,7 @@ import hashlib
 from ..db.database import db
 import datetime
 import traceback
+from .validator import create_validator
 
 class AccountException(Exception):
     pass
@@ -199,20 +200,18 @@ class Account(ModuleManager):
 
     def get_ios_client(self) -> pcrclient: # Header TODO
         client = pcrclient(create(self.data.channel, account(
-            self.qq,
             self.data.username,
             self.data.password,
             platform.IOS
-        )))
+        )), captchaVerifier = create_validator(self.qq))
         return client
 
     def get_android_client(self) -> pcrclient:
         client = pcrclient(create(self.data.channel, account(
-            self.qq,
             self.data.username,
             self.data.password,
             platform.Android
-        )))
+        )), captchaVerifier = create_validator(self.qq))
         return client
 
     def generate_info(self):

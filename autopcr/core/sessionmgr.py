@@ -72,8 +72,7 @@ class sessionmgr(Component[apiclient]):
         except Exception:
             raise
         finally:
-            from ..sdk.validator import validate_dict, ValidateInfo
-            validate_dict[self.sdk.qq].append(ValidateInfo(status="ok"))
+            await self.sdk.invoke_post_login()
 
     async def _login(self, next: RequestHandler):
         if os.path.exists(self.cacheFile):
