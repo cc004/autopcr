@@ -1,5 +1,7 @@
 import os
 
+CLIENT_POOL_SIZE_MAX = 100
+
 BSDK = '官服'
 QSDK = '渠道服'
 
