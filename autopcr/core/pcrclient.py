@@ -9,11 +9,11 @@ from typing import Callable, Tuple, Union
 import typing, math
 
 class pcrclient(apiclient):
-    def __init__(self, sdk: sdkclient, *args, **kwargs):
+    def __init__(self, sdk: sdkclient):
         super().__init__(sdk)
         self.keys = {}
         self.data = datamgr()
-        self.session = sessionmgr(sdk, *args, **kwargs)
+        self.session = sessionmgr(sdk)
         self.register(errorhandler())
         self.register(self.data)
         self.register(self.session)

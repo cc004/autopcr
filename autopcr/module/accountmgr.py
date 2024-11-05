@@ -7,7 +7,6 @@ from dataclasses_json import dataclass_json
 from ..core.pcrclient import pcrclient
 from ..core.sdkclient import account, platform
 from .modulemgr import ModuleManager, TaskResult, ModuleResult, eResultStatus
-from ..sdk.sdkclients import create
 import os, re, shutil
 from typing import Any, Dict, Iterator, List, Tuple, Union
 from ..constants import CONFIG_PATH, OLD_CONFIG_PATH, RESULT_DIR, BSDK, CHANNEL_OPTION
@@ -19,6 +18,7 @@ from ..db.database import db
 import datetime
 import traceback
 from .validator import create_validator
+from .clientpool import instance as clientpool
 
 class AccountException(Exception):
     pass
@@ -199,19 +199,19 @@ class Account(ModuleManager):
         return self.get_android_client()
 
     def get_ios_client(self) -> pcrclient: # Header TODO
-        client = pcrclient(create(self.data.channel, account(
+        client = clientpool.get_client(self.data.channel, account(
             self.data.username,
             self.data.password,
             platform.IOS
-        )), captchaVerifier = create_validator(self.qq))
+        ), captchaVerifier = create_validator(self.qq))
         return client
 
     def get_android_client(self) -> pcrclient:
-        client = pcrclient(create(self.data.channel, account(
+        client = clientpool.get_client(self.data.channel, account(
             self.data.username,
             self.data.password,
             platform.Android
-        )), captchaVerifier = create_validator(self.qq))
+        ), captchaVerifier = create_validator(self.qq))
         return client
 
     def generate_info(self):

@@ -7,7 +7,7 @@ from ..constants import CACHE_DIR
 import hashlib
 
 class sessionmgr(Component[apiclient]):
-    def __init__(self, sdk: sdkclient, *arg, **kwargs):
+    def __init__(self, sdk: sdkclient):
         super().__init__()
         self.cacheDir = os.path.join(CACHE_DIR, 'token')
         self.sdk = sdk
