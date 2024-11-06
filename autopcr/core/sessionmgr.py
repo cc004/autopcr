@@ -131,6 +131,10 @@ class sessionmgr(Component[apiclient]):
         try:
             return await next.request(request)
         except ApiException as ex:
+            if ex.status == 6002:
+                self._logged = False
+                return await self.request(request, next)
+            
             if ex.status == 3 and self.auto_relogin:
                 self._logged = False
             raise
