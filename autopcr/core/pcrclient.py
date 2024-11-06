@@ -2,7 +2,7 @@ from ..model.models import *
 from .apiclient import apiclient
 from .sdkclient import sdkclient
 from .sessionmgr import sessionmgr
-from .misc import errorhandler
+from .misc import errorhandler, mutexhandler
 from .datamgr import datamgr
 from ..db.database import db
 from typing import Callable, Tuple, Union
@@ -17,6 +17,7 @@ class pcrclient(apiclient):
         self.register(errorhandler())
         self.register(self.data)
         self.register(self.session)
+        self.register(mutexhandler())
     
     @property
     def name(self) -> str:

@@ -17,31 +17,12 @@ from ..constants import refresh_headers, DEBUG_LOG, ERROR_LOG
 import json
 from enum import Enum
 
-class CuteResultCode(Enum):
-    API_RESULT_SUCCESS_CODE = 1
-    RESULT_CODE_MAINTENANCE_COMMON = 101
-    RESULT_CODE_SERVER_ERROR = 102
-    API_RESULT_SESSION_ERROR = 201
-    RESULT_CODE_ACCOUNT_BLOCK_ERROR = 203
-    API_RESULT_VERSION_ERROR = 204
-    RESULT_CODE_PROCESSED_ERROR = 213
-    RESULT_CODE_DMM_ONETIMETOKEN_EXPIRED = 318
-    API_RESULT_APPRES_VERSION_ERROR = 217
-    API_RESULT_REQUEST_DECODE_ERROR = 218
-    API_RESULT_RESPONSE_DECODE_ERROR = 219
-    RESULT_CODE_MAINTENANCE_FROM = 2700
-    RESULT_CODE_MAINTENANCE_TO = 2999
-
-
 class ApiException(Exception):
 
     def __init__(self, message, status, result_code):
         super().__init__(message)
         self.status = status
-        try:
-            self.result_code = CuteResultCode(result_code)
-        except ValueError:
-            self.result_code = result_code
+        self.result_code = result_code
 
 class NetworkException(Exception):
     pass
