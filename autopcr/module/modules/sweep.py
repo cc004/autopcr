@@ -12,6 +12,7 @@ import time
 import random
 from collections import Counter
 import math
+from typing import Set
 
 
 @description('''
@@ -21,6 +22,7 @@ import math
 代币事件为 30%1000代币70%200代币 或 100%400代币 选项
 赌狗策略为前者，保守策略为后者
 '''.strip())
+@multichoice("travel_speed_up_target", "加速地图", ['1-1', '1-4'], db.travel_quest_candidate)
 @singlechoice('travel_quest_gold_event_strategy', "代币事件策略", '赌狗', ['保守','赌狗','随机'])
 @singlechoice('travel_quest_equip_event_strategy', "装备事件策略", '赌狗', ['保守','赌狗','随机'])
 @inttype('travel_quest_speed_up_paper_hold', "加速券保留", 12, list(range(3001)))
@@ -146,8 +148,15 @@ class travel_quest_sweep(Module):
                 min(top.remain_daily_decrease_count_ticket, client.data.get_inventory(db.travel_speed_up_paper)) 
                 - travel_quest_speed_up_paper_hold, 0)
         if team_count and total_use: # avoid divide by zero
+            travel_speed_up_target = self.get_config("travel_speed_up_target")
             self._log(f"可使用加速券{total_use}张")
-            quest_use = [total_use // team_count + (i < total_use % team_count) for i in range(team_count)]
+            speed_up_quest_id: Set[int] = {db.get_travel_quest_id_from_candidate(i) for i in travel_speed_up_target}
+            speed_up_team_count = sum(1 for quest in new_quest_list if quest.travel_quest_id in speed_up_quest_id)
+            quest_use = [total_use // speed_up_team_count if can_use else 0 for can_use in
+                         [quest.travel_quest_id in speed_up_quest_id for quest in new_quest_list]]
+            if (paper_remain := total_use - sum(quest_use)) and speed_up_team_count:
+                for i in random.choices([i for i, v in enumerate(quest_use) if v], k=paper_remain):
+                    quest_use[i] += 1
             for quest, use in zip(new_quest_list, quest_use):
                 if use:
                     self._log(f"{db.get_quest_name(quest.travel_quest_id)}使用加速券x{use}")
