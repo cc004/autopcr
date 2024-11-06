@@ -150,7 +150,6 @@ class travel_quest_sweep(Module):
         if team_count and total_use: # avoid divide by zero
             travel_speed_up_target = self.get_config("travel_speed_up_target")
             self._log(f"可使用加速券{total_use}张")
-            self._log(f"加速地图：{','.join(travel_speed_up_target)}")
             speed_up_quest_id: Set[int] = {db.get_travel_quest_id_from_candidate(i) for i in travel_speed_up_target}
             speed_up_team_count = sum(1 for quest in new_quest_list if quest.travel_quest_id in speed_up_quest_id)
             quest_use = [total_use // speed_up_team_count if can_use else 0 for can_use in
