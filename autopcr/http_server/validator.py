@@ -46,11 +46,6 @@ async def Validator(qq, client: sdkclient):
 
 async def manualValidator(qq, client: sdkclient):
 
-    async def post_login():
-        validate_dict[qq].append(ValidateInfo(status="ok"))
-    
-    client.post_login = post_login
-
     print('use manual validator')
 
     cap = await captch()
