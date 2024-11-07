@@ -18,7 +18,7 @@ class ClientPool:
         key = (channel, account.username)
         if key in self._pool:
             cache = self._pool[key]
-            if cache.platform == account.type and cache.password == account.password:
+            if cache.platform == account.type and cache.password == account.password and cache.client.logged:
                 return cache.client
             else:
                 self._pool.pop(key)

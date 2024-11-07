@@ -203,7 +203,7 @@ class Account(ModuleManager):
             self.data.username,
             self.data.password,
             platform.IOS
-        ), captchaVerifier = create_validator(self.qq))
+        ))
         return client
 
     def get_android_client(self) -> pcrclient:
@@ -211,7 +211,7 @@ class Account(ModuleManager):
             self.data.username,
             self.data.password,
             platform.Android
-        ), captchaVerifier = create_validator(self.qq))
+        ))
         return client
 
     def generate_info(self):

@@ -12,6 +12,7 @@ from typing import Callable, Coroutine, Any
 from ..module.accountmgr import Account, AccountManager, UserException, instance as usermgr, AccountException
 from ..constants import CACHE_DIR
 from ..util.draw import instance as drawer
+from .validator import validate_dict, ValidateInfo, create_validator, validate_ok_dict
 
 APP_VERSION = "1.1.0"
 
@@ -67,11 +68,25 @@ class HttpServer:
         return wrapper
 
     @staticmethod
+    def wrap_load_with_qid(mgr: AccountManager, qid: str):
+        old_load = mgr.load
+        def new_load(*args, **kwargs):
+            async def post_login():
+                validate_dict[qid].append(ValidateInfo(status="ok"))
+            
+            result = old_load(*args, **kwargs)
+            result.client.session.sdk.post_login = post_login
+            result.client.session.sdk.captchaVerifier = create_validator(qid)
+            return result
+        mgr.load = new_load
+        
+    @staticmethod
     def wrapaccountmgr(readonly = False):
         def wrapper(func: Callable[..., Coroutine[Any, Any, Any]]):
             async def inner(*args, **kwargs):
                 qid: str = current_user.auth_id
                 async with usermgr.load(qid, readonly) as mgr:
+                    HttpServer.wrap_load_with_qid(mgr, qid)
                     return await func(accountmgr = mgr, *args, **kwargs)
             inner.__name__ = func.__name__
             return inner
@@ -351,7 +366,6 @@ class HttpServer:
         @login_required
         @HttpServer.wrapaccountmgr(readonly = True)
         async def query_validate(accountmgr: AccountManager):
-            from ..sdk.validator import validate_dict
             if "text/event-stream" not in request.accept_mimetypes:
                 return "", 400
 
@@ -385,11 +399,9 @@ data: {ret}\n\n'''
         @self.api.route('/validate', methods = ['POST'])
         async def validate(): # TODO think to check login or not
             data = await request.get_json()
-            from ..sdk.validator import validate_ok_dict
             if 'id' not in data:
                 return "incorrect", 403
             id = data['id']
-            from ..sdk.validator import ValidateInfo
             validate_ok_dict[id] = ValidateInfo.from_dict(data)
             return "", 200
 
