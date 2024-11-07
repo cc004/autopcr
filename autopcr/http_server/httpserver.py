@@ -12,7 +12,7 @@ from typing import Callable, Coroutine, Any
 from ..module.accountmgr import Account, AccountManager, UserException, instance as usermgr, AccountException
 from ..constants import CACHE_DIR
 from ..util.draw import instance as drawer
-from .validator import validate_dict, ValidateInfo, create_validator, validate_ok_dict
+from .validator import validate_dict, ValidateInfo, validate_ok_dict, enable_manual_validator
 
 APP_VERSION = "1.1.0"
 
@@ -20,6 +20,7 @@ CACHE_HTTP_DIR = os.path.join(CACHE_DIR, 'http_server')
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 static_path = os.path.join(PATH, 'ClientApp')
+
 
 class HttpServer:
     def __init__(self, host = '0.0.0.0', port = 2, qq_mod = False):
@@ -48,6 +49,9 @@ class HttpServer:
         self.configure_routes()
         self.qq_mod = qq_mod
 
+        enable_manual_validator()
+        
+
     @staticmethod
     def wrapaccount(readonly = False):
         def wrapper(func: Callable[..., Coroutine[Any, Any, Any]]):
@@ -68,25 +72,11 @@ class HttpServer:
         return wrapper
 
     @staticmethod
-    def wrap_load_with_qid(mgr: AccountManager, qid: str):
-        old_load = mgr.load
-        def new_load(*args, **kwargs):
-            async def post_login():
-                validate_dict[qid].append(ValidateInfo(status="ok"))
-            
-            result = old_load(*args, **kwargs)
-            result.client.session.sdk.post_login = post_login
-            result.client.session.sdk.captchaVerifier = create_validator(qid)
-            return result
-        mgr.load = new_load
-        
-    @staticmethod
     def wrapaccountmgr(readonly = False):
         def wrapper(func: Callable[..., Coroutine[Any, Any, Any]]):
             async def inner(*args, **kwargs):
                 qid: str = current_user.auth_id
                 async with usermgr.load(qid, readonly) as mgr:
-                    HttpServer.wrap_load_with_qid(mgr, qid)
                     return await func(accountmgr = mgr, *args, **kwargs)
             inner.__name__ = func.__name__
             return inner
