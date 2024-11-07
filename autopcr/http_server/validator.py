@@ -46,6 +46,9 @@ async def Validator(qq, client: sdkclient):
 
 async def manualValidator(qq, client: sdkclient):
 
+    if not manual_validator_enabled:
+        raise PanicError("manual validator disabled")
+
     print('use manual validator')
 
     cap = await captch()
@@ -77,3 +80,28 @@ async def manualValidator(qq, client: sdkclient):
             break
     return info
 
+manual_validator_enabled = False
+
+def enable_manual_validator():
+    global manual_validator_enabled
+    if manual_validator_enabled:
+        return
+    manual_validator_enabled = True
+
+    from ..module.accountmgr import instance as usermgr
+    usermgr_load_legacy = usermgr.load
+    def usermgr_load(qid: str, readonly=False):
+        result = usermgr_load_legacy(qid, readonly=readonly)
+        accountmgr_load_legacy = result.load
+        def accountmgr_load(account: str = "", readonly=False):
+            result = accountmgr_load_legacy(account=account, readonly=readonly)
+            
+            async def post_login():
+                validate_dict[qid].append(ValidateInfo(status="ok"))
+            result.client.session.sdk.post_login = post_login
+            result.client.session.sdk.captchaVerifier = create_validator(qid)
+
+            return result
+        result.load = accountmgr_load
+        return result
+    usermgr.load = usermgr_load
