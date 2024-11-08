@@ -17,7 +17,6 @@ import hashlib
 from ..db.database import db
 import datetime
 import traceback
-from .validator import create_validator
 from .clientpool import instance as clientpool
 
 class AccountException(Exception):
