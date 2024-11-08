@@ -42,24 +42,34 @@ class travel_quest_sweep(Module):
     def quest_still_round(self, quest: TravelQuestInfo) -> int:
         return quest.total_lap_count - quest.received_count
 
+    def quest_left_time(self, quest: TravelQuestInfo) -> int:
+        now = int(time.time())
+        return max(0, quest.travel_end_time - quest.decrease_time - now)
+
     def get_choice(self, strategy: str) -> int:
+        choice = 0
         if strategy == '赌狗':
-            return 1
+            choice =  1
         elif strategy == '保守':
-            return 2
+            choice =  2
         else:
-            return random.randint(1, 2)
+            choice = random.randint(1, 2)
+        self._log(f"选择{'赌狗' if choice == 1 else '保守'}策略")
+        return choice
 
     async def do_task(self, client: pcrclient):
         travel_quest_equip_event_strategy: str = self.get_config("travel_quest_equip_event_strategy")
         travel_quest_gold_event_strategy: str = self.get_config("travel_quest_gold_event_strategy")
         travel_quest_speed_up_paper_hold: int = self.get_config("travel_quest_speed_up_paper_hold")
+        travel_speed_up_target: Set[int] = {db.get_travel_quest_id_from_candidate(id) for id in self.get_config("travel_speed_up_target")}
         reward: List[InventoryInfo] = []
 
         def get_strategy(event_id: int) -> str:
             if event_id == 4007:
+                self._log("遇到装备事件")
                 return travel_quest_equip_event_strategy
             elif event_id == 4009:
+                self._log("遇到代币事件")
                 return travel_quest_gold_event_strategy
             else:
                 raise ValueError(f"未知可选项事件{event_id}")
@@ -147,17 +157,13 @@ class travel_quest_sweep(Module):
         total_use = max(
                 min(top.remain_daily_decrease_count_ticket, client.data.get_inventory(db.travel_speed_up_paper)) 
                 - travel_quest_speed_up_paper_hold, 0)
+        speed_up_quest = [quest for quest in new_quest_list if quest.travel_quest_id in travel_speed_up_target]
+        team_count = len(speed_up_quest)
         if team_count and total_use: # avoid divide by zero
-            travel_speed_up_target = self.get_config("travel_speed_up_target")
             self._log(f"可使用加速券{total_use}张")
-            speed_up_quest_id: Set[int] = {db.get_travel_quest_id_from_candidate(i) for i in travel_speed_up_target}
-            speed_up_team_count = sum(1 for quest in new_quest_list if quest.travel_quest_id in speed_up_quest_id)
-            quest_use = [total_use // speed_up_team_count if can_use else 0 for can_use in
-                         [quest.travel_quest_id in speed_up_quest_id for quest in new_quest_list]]
-            if (paper_remain := total_use - sum(quest_use)) and speed_up_team_count:
-                for i in random.choices([i for i, v in enumerate(quest_use) if v], k=paper_remain):
-                    quest_use[i] += 1
-            for quest, use in zip(new_quest_list, quest_use):
+            quest_use = [total_use // team_count + (1 if i < total_use % team_count else 0) for i in range(team_count)]
+            speed_up_quest.sort(key=lambda x: self.quest_left_time(x), reverse=True) # large left time first
+            for quest, use in zip(speed_up_quest, quest_use):
                 if use:
                     self._log(f"{db.get_quest_name(quest.travel_quest_id)}使用加速券x{use}")
                     ret = await client.travel_decrease_time(quest.travel_quest_id, quest.travel_id, TravelDecreaseItem(jewel = 0, item = use))
@@ -541,12 +547,12 @@ class travel_round(Module):
                 ticket_to_use = int(math.ceil(delta_time / client.data.settings.travel.decrease_time_by_ticket))
                 if ticket_to_use <= travel_speed_up_paper_threshold:
                     self._log(f"一轮剩余时间{db.format_second(delta_time)}小于使用阈值{travel_speed_up_paper_threshold}小时，加速一轮")
-                    if ticket_to_use > client.data.get_inventory(db.travel_speed_up_paper):
+                    ticket_can_use = client.data.get_inventory(db.travel_speed_up_paper)
+                    if ticket_to_use > ticket_can_use:
+                        self._warn(f"已有加速券{ticket_can_use}<{ticket_to_use}，无法加速")
                         ticket_to_use = 0
-                        self._warn(f"没有足够的加速券，无法加速")
                     if ticket_to_use > top.remain_daily_decrease_count_ticket:
-                        ticket_to_use = 0
-                        self._warn(f"本日使用加速券次数不足，无法加速")
+                        self._warn(f"本日可使用加速券次数{top.remain_daily_decrease_count_ticket}<{ticket_to_use}，无法加速")
                 else:
                     ticket_to_use = 0
                     self._log(f"一轮剩余{db.format_second(delta_time)}大于阈值{travel_speed_up_paper_threshold}小时，直接撤退")
