@@ -2,7 +2,7 @@ from json import loads
 import asyncio, time
 from ..util import aiorequests
 
-async def localValidator(_):
+async def localValidator():
     print('use local validator')
 
     from .bsgamesdk import captch
@@ -38,7 +38,7 @@ async def localValidator(_):
         }
     return info
 
-async def remoteValidator(_):
+async def remoteValidator():
     print('use remote validator')
 
     url = f"https://pcrd.tencentbot.top/geetest_renew"
