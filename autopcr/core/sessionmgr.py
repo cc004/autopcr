@@ -131,7 +131,7 @@ class sessionmgr(Component[apiclient]):
         try:
             return await next.request(request)
         except ApiException as ex:
-            if ex.status == 6002:
+            if ex.result_code == 6002:
                 self._logged = False
                 return await self.request(request, next)
             
