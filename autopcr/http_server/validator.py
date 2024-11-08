@@ -25,15 +25,15 @@ validate_dict: Dict[str, List[ValidateInfo]] = defaultdict(list)
 validate_ok_dict: Dict[str, ValidateInfo] = {}
 
 def create_validator(qq):
-    async def validator(client: sdkclient):
-        return await Validator(qq, client)
+    async def validator():
+        return await Validator(qq)
     return validator
 
-async def Validator(qq, client: sdkclient):
+async def Validator(qq):
     info = None
-    for validator in [remoteValidator, localValidator, lambda x: manualValidator(qq, x)]:
+    for validator in [remoteValidator, localValidator, lambda: manualValidator(qq)]:
         try:
-            info = await validator(client)
+            info = await validator()
             if info:
                 break
         except Exception as e:
@@ -44,7 +44,7 @@ async def Validator(qq, client: sdkclient):
         raise PanicError("验证码验证超时")
     return info
 
-async def manualValidator(qq, client: sdkclient):
+async def manualValidator(qq):
 
     if not manual_validator_enabled:
         raise PanicError("manual validator disabled")
