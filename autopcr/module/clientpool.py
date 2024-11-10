@@ -1,6 +1,6 @@
-from autopcr.core.pcrclient import pcrclient
-from autopcr.core.sdkclient import platform, account
-from autopcr.sdk.sdkclients import create
+from ..core.pcrclient import pcrclient
+from ..core.sdkclient import platform, account
+from ..sdk.sdkclients import create
 from typing import Dict, Tuple
 from ..constants import CLIENT_POOL_SIZE_MAX
 
