@@ -1,6 +1,6 @@
-from autopcr.core.pcrclient import pcrclient
-from autopcr.core.sdkclient import platform, account
-from autopcr.sdk.sdkclients import create
+from ..core.pcrclient import pcrclient
+from ..core.sdkclient import platform, account
+from ..sdk.sdkclients import create
 from typing import Dict, Tuple
 from ..constants import CLIENT_POOL_SIZE_MAX, CLINET_POOL_MAX_AGE
 import time
@@ -33,9 +33,10 @@ class ClientPool:
         cache.client = pcrclient(create(channel, account, *args, **kwargs))
         cache.password = account.password
         cache.platform = account.type
+        cache.last_access = now
 
         if len(self._pool) >= CLIENT_POOL_SIZE_MAX:
-            while True:
+            while self._pool:
                 k, v = next(iter(self._pool.items()))
                 if v.last_access + CLINET_POOL_MAX_AGE < now:
                     self._pool.pop(k)
