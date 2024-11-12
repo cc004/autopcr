@@ -52,7 +52,7 @@ class Account(ModuleManager):
         self._filename = parent.path(account)
         self._parent = parent
         self.readonly = readonly
-        self.id = hashlib.md5(account.encode('utf-8')).hexdigest()
+        self._id = hashlib.md5(account.encode('utf-8')).hexdigest()
 
         if not os.path.exists(self._filename):
             if account == BATCHINFO:
@@ -69,7 +69,7 @@ class Account(ModuleManager):
         self.alias = account
         self.token = f"{self.qq}_{self.alias}"
         super().__init__(self.data.config)
-    
+
     async def __aenter__(self):
         if not self.readonly:
             await self._lck.acquire()
@@ -139,6 +139,10 @@ class Account(ModuleManager):
         except Exception as e:
             traceback.print_exc()
             return None
+
+    @property
+    def id(self) -> str:
+        return self._id
 
     def get_last_daily_clean(self) -> TaskResultInfo:
         daily_result = self.get_daily_result_list()
