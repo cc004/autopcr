@@ -35,17 +35,20 @@ class ClientPool:
         cache.platform = account.type
         cache.last_access = now
 
-        if len(self._pool) >= CLIENT_POOL_SIZE_MAX:
-            while self._pool:
-                k, v = next(iter(self._pool.items()))
-                if v.last_access + CLINET_POOL_MAX_AGE < now:
-                    self._pool.pop(k)
-                else:
-                    break
+        async def on_post_login():
+            if len(self._pool) >= CLIENT_POOL_SIZE_MAX:
+                while self._pool:
+                    k, v = next(iter(self._pool.items()))
+                    if v.last_access + CLINET_POOL_MAX_AGE < now:
+                        self._pool.pop(k)
+                    else:
+                        break
 
-        if len(self._pool) < CLIENT_POOL_SIZE_MAX:
-            self._pool[key] = cache
+            if len(self._pool) < CLIENT_POOL_SIZE_MAX:
+                self._pool[key] = cache
 
+        cache.client.session.sdk.append_post_login(on_post_login)
+        
         return cache.client
 
 
