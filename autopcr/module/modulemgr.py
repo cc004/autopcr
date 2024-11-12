@@ -2,15 +2,15 @@ from dataclasses import dataclass
 
 from dataclasses_json import dataclass_json
 from typing import List, Dict
-from abc import abstractmethod
+from abc import abstractmethod, abstractproperty
 
 from ..model.error import *
 from ..model.enums import *
 from ..db.database import db
 from .modulebase import Module, ModuleResult, eResultStatus
-from autopcr.core.pcrclient import pcrclient
-from 
+from ..core.pcrclient import pcrclient
 import traceback
+import os
 
 @dataclass_json
 @dataclass
@@ -65,6 +65,10 @@ class ModuleResultInfo(ResultInfo):
 
 class ModuleManager:
     _modules: List[type] = []
+
+    @abstractproperty
+    def id(self) -> str:
+        pass
 
     @abstractmethod
     def get_client() -> pcrclient:
