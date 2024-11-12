@@ -440,6 +440,52 @@ class UnitController(Module):
             gap = await self.buy_nvshen_shop(gap)
         return gap
 
+    async def promote(self, target_level: int = 1, target_star: int = 1, target_dear: int = 1, target_promote_rank: int = 1, target_equip_star: List[int] = [-1, -1, -1, -1, -1, -1], target_skill_ub_level: int = 1, target_skill_s1_level: int = 1, target_skill_s2_level: int = 1, target_skill_ex_level: int = 1, target_unique1_level: int = 0):
+        growth_limit = await self.is_growth_unit()
+
+        if self.unit.unit_level < target_level:
+            await self.unit_level_up_aware(target_level, growth_limit)
+
+        if self.unit.promotion_level < target_promote_rank:
+            await self.unit_promotion_up_aware(target_promote_rank, growth_limit)
+
+        for i in range(6):
+            equip = self.unit.equip_slot[i]
+            if equip.id == 999999:
+                continue
+
+            star = target_equip_star[i]
+
+            if star != -1:
+                if not equip.is_slot:
+                    await self.unit_equip_slot_aware(equip.id, i + 1, growth_limit)
+
+                promotion_limit = db.get_equip_max_star(equip.id)
+                if star > promotion_limit:
+                    self._log(f"{i+1}号位装备预设{star}星级超过了最大星级{promotion_limit}，提升至最大星级{promotion_limit}")
+                    star = promotion_limit
+
+                if equip.enhancement_level < star:
+                    await self.unit_equip_enhance(equip.id, i + 1, star, growth_limit is not None and (
+                        self.unit.promotion_level < growth_limit.promotion_level or \
+                        self.unit.promotion_level == growth_limit.promotion_level and getattr(growth_limit, f"equipment_{i}") > star))
+
+        if self.unit.union_burst and self.unit.union_burst[0].skill_level < target_skill_ub_level:
+            await self.unit_skill_up_aware(eSkillLocationCategory.UNION_BURST_SKILL, lambda: self.unit.union_burst[0], target_skill_ub_level, growth_limit)
+
+        if self.unit.main_skill and self.unit.main_skill[0].skill_level < target_skill_s1_level:
+            await self.unit_skill_up_aware(eSkillLocationCategory.MAIN_SKILL_1, lambda: self.unit.main_skill[0], target_skill_s1_level, growth_limit)
+
+        if len(self.unit.main_skill) > 1 and self.unit.main_skill[1].skill_level < target_skill_s2_level:
+            await self.unit_skill_up_aware(eSkillLocationCategory.MAIN_SKILL_2, lambda: self.unit.main_skill[1], target_skill_s2_level, growth_limit)
+
+        if self.unit.ex_skill and self.unit.ex_skill[0].skill_level < target_skill_ex_level:
+            await self.unit_skill_up_aware(eSkillLocationCategory.EX_SKILL_1, lambda: self.unit.ex_skill[0], target_skill_ex_level, growth_limit)
+
+        growth_limit_unique = await self.is_unique_growth_unit()
+        if self.unit.unique_equip_slot and self.unit.unique_equip_slot[0].enhancement_level < target_unique1_level:
+            await self.unit_unique_equip_enhance_aware(target_unique1_level, growth_limit_unique)
+
 
 @description('支持全部角色')
 @name('完成装备强化任务')
@@ -530,7 +576,7 @@ class unit_set_unique_equip_growth(UnitController):
 @booltype("unit_promote_rank_when_fail_to_unique_equip", "自动拉品级", False)
 @booltype("unit_promote_level_when_fail_to_equip_or_skill", "自动拉等级", False)
 @booltype("unit_promote_rank_use_raw_ore", "使用原矿", False)
-@singlechoice("unit_promote_unique_equip_level", "专武等级", 0, lambda : db.unit_unique_equip_level_candidate(1))
+@singlechoice("unit_promote_unique_equip1_level", "专武等级", 0, lambda : db.unit_unique_equip_level_candidate(1))
 @singlechoice("unit_promote_equip_5", "右下装备星级", -1, [-1,0,1,2,3,4,5])
 @singlechoice("unit_promote_equip_4", "左下装备星级", -1, [-1,0,1,2,3,4,5])
 @singlechoice("unit_promote_equip_3", "右中装备星级", -1, [-1,0,1,2,3,4,5])
@@ -548,69 +594,31 @@ class unit_set_unique_equip_growth(UnitController):
 class unit_promote(UnitController):
 
     async def do_task(self, client: pcrclient):
-
         self.client = client
         unit_id, unit_name = self.get_config('unit_promote_unit').split(':')
         self.unit_id = int(unit_id)
 
-        growth_limit = await self.is_growth_unit()
         self.auto_level_up = bool(self.get_config('unit_promote_level_when_fail_to_equip_or_skill'))
         self.auto_rank_up = bool(self.get_config('unit_promote_rank_when_fail_to_unique_equip'))
         self.use_raw_ore = bool(self.get_config('unit_promote_rank_use_raw_ore'))
 
-        # 拉等级
         target_level = int(self.get_config('unit_promote_level'))
-        if self.unit.unit_level < target_level:
-            await self.unit_level_up_aware(target_level, growth_limit)
-
-        # 拉品级
         target_promotion_rank = int(self.get_config('unit_promote_rank'))
-        if self.unit.promotion_level < target_promotion_rank:
-            await self.unit_promotion_up_aware(target_promotion_rank, growth_limit)
-
-        # 拉装备
-        for i in range(6):
-            equip = self.unit.equip_slot[i]
-            if equip.id == 999999:
-                continue
-
-            star = int(self.get_config(f'unit_promote_equip_{i}'))
-            if star != -1:
-                if not equip.is_slot:
-                    await self.unit_equip_slot_aware(equip.id, i + 1, growth_limit)
-                
-                promotion_limit = db.get_equip_max_star(equip.id)
-                if star > promotion_limit:
-                    self._log(f"{i+1}号位装备预设{star}星级超过了最大星级{promotion_limit}，提升至最大星级{promotion_limit}")
-                    star = promotion_limit
-
-                if equip.enhancement_level < star: # 暂时没有星级强化限制
-                    await self.unit_equip_enhance(equip.id, i + 1, star, growth_limit is not None and (
-                        self.unit.promotion_level < growth_limit.promotion_level or \
-                        self.unit.promotion_level == growth_limit.promotion_level and getattr(growth_limit, f"equipment_{i}") > star))
-        
-        # 拉技能
+        target_equip_star = [int(self.get_config(f'unit_promote_equip_{i}')) for i in range(6)]
         target_skill_ub_level = int(self.get_config('unit_promote_skill_ub'))
-        if self.unit.union_burst and self.unit.union_burst[0].skill_level < target_skill_ub_level:
-            await self.unit_skill_up_aware(eSkillLocationCategory.UNION_BURST_SKILL, lambda: self.unit.union_burst[0], target_skill_ub_level, growth_limit)
-
         target_skill_s1_level = int(self.get_config('unit_promote_skill_s1'))
-        if self.unit.main_skill and self.unit.main_skill[0].skill_level < target_skill_s1_level:
-            await self.unit_skill_up_aware(eSkillLocationCategory.MAIN_SKILL_1, lambda: self.unit.main_skill[0], target_skill_s1_level, growth_limit)
-
         target_skill_s2_level = int(self.get_config('unit_promote_skill_s2'))
-        if len(self.unit.main_skill) > 1 and self.unit.main_skill[1].skill_level < target_skill_s2_level:
-            await self.unit_skill_up_aware(eSkillLocationCategory.MAIN_SKILL_2, lambda: self.unit.main_skill[1], target_skill_s2_level, growth_limit)
-
         target_skill_ex_level = int(self.get_config('unit_promote_skill_ex'))
-        if self.unit.ex_skill and self.unit.ex_skill[0].skill_level < target_skill_ex_level:
-            await self.unit_skill_up_aware(eSkillLocationCategory.EX_SKILL_1, lambda: self.unit.ex_skill[0], target_skill_ex_level, growth_limit)
+        target_unique1_level = int(self.get_config('unit_promote_unique_equip1_level'))
 
-
-        growth_limit_unique = await self.is_unique_growth_unit()
-        target_unique_level = int(self.get_config('unit_promote_unique_equip_level'))
-        if self.unit.unique_equip_slot and self.unit.unique_equip_slot[0].enhancement_level < target_unique_level:
-            await self.unit_unique_equip_enhance_aware(target_unique_level, growth_limit_unique)
+        await self.promote(target_level = target_level, 
+                           target_promote_rank = target_promotion_rank, 
+                           target_equip_star = target_equip_star, 
+                           target_skill_ub_level = target_skill_ub_level, 
+                           target_skill_s1_level = target_skill_s1_level, 
+                           target_skill_s2_level = target_skill_s2_level, 
+                           target_skill_ex_level = target_skill_ex_level, 
+                           target_unique1_level = target_unique1_level)
 
 @description('''角色ID	角色名字	角色等级	角色星级	角色好感度	角色Rank	装备等级(左上)	装备等级(右上)	装备等级(左中)	装备等级(右中)	装备等级(左下)	装备等级(右下)	UB技能等级	技能1等级	技能2等级	EX技能等级	专武等级	高级设置
 不会使用专武球，专武升级请认真考虑！
@@ -628,82 +636,39 @@ class unit_promote_batch(UnitController):
         self.use_raw_ore = bool(self.get_config('unit_promote_batch_use_raw_ore'))
 
         for unit_text in unit_promote_texts:
-            '''角色ID	角色名字	角色等级	角色星级	角色好感度	角色Rank	装备等级(左上)	装备等级(右上)	装备等级(左中)	装备等级(右中)	装备等级(左下)	装备等级(右下)	UB技能等级	技能1等级	技能2等级	EX技能等级	专武等级	高级设置'''
             try:
-
                 unit_id, unit_name, target_level, target_star, target_dear, target_rank, \
                     equip_0, equip_1, equip_2, equip_3, equip_4, equip_5, \
-                    ub, s1, s2, ex, unique_level, dear_info = unit_text.split()
+                    ub, s1, s2, ex, unique1_level, dear_info = unit_text.split()
 
                 equip_star = [equip_0, equip_1, equip_2, equip_3, equip_4, equip_5]
 
                 self.unit_id = int(unit_id)
 
-                growth_limit = await self.is_growth_unit()
                 self.auto_level_up = False
                 self.auto_rank_up = False
 
-                # 拉等级
                 target_level = int(target_level)
-                if self.unit.unit_level < target_level:
-                    await self.unit_level_up_aware(target_level, growth_limit)
-
-                # 拉品级
+                target_star = int(target_star)
+                target_dear = int(target_dear)
                 target_promotion_rank = int(target_rank)
-                if self.unit.promotion_level < target_promotion_rank:
-                    await self.unit_promotion_up_aware(target_promotion_rank, growth_limit)
-
-                # 拉装备
-                for i in range(6):
-                    equip = self.unit.equip_slot[i]
-                    if equip.id == 999999:
-                        continue
-
-                    try:
-                        star = int(equip_star[i])
-                    except:
-                        star = -1
-                    
-                    if star != -1:
-                        if not equip.is_slot:
-                            await self.unit_equip_slot_aware(equip.id, i + 1, growth_limit)
-                        
-                        promotion_limit = db.get_equip_max_star(equip.id)
-                        if star > promotion_limit:
-                            self._log(f"{i+1}号位装备预设{star}星级超过了最大星级{promotion_limit}，提升至最大星级{promotion_limit}")
-                            star = promotion_limit
-
-                        if equip.enhancement_level < star:
-                            await self.unit_equip_enhance(equip.id, i + 1, star, growth_limit is not None and (
-                                self.unit.promotion_level < growth_limit.promotion_level or \
-                                self.unit.promotion_level == growth_limit.promotion_level and getattr(growth_limit, f"equipment_{i}") > star))
-                
-                # 拉技能
+                target_equip_star = [int(equip_star[i]) if equip_star[i].isdigit() else -1 for i in range(6)]
                 target_skill_ub_level = int(ub)
-                if self.unit.union_burst and self.unit.union_burst[0].skill_level < target_skill_ub_level:
-                    await self.unit_skill_up_aware(eSkillLocationCategory.UNION_BURST_SKILL, lambda: self.unit.union_burst[0], target_skill_ub_level, growth_limit)
-
                 target_skill_s1_level = int(s1)
-                if self.unit.main_skill and self.unit.main_skill[0].skill_level < target_skill_s1_level:
-                    await self.unit_skill_up_aware(eSkillLocationCategory.MAIN_SKILL_1, lambda: self.unit.main_skill[0], target_skill_s1_level, growth_limit)
-
                 target_skill_s2_level = int(s2)
-                if len(self.unit.main_skill) > 1 and self.unit.main_skill[1].skill_level < target_skill_s2_level:
-                    await self.unit_skill_up_aware(eSkillLocationCategory.MAIN_SKILL_2, lambda: self.unit.main_skill[1], target_skill_s2_level, growth_limit)
-
                 target_skill_ex_level = int(ex)
-                if self.unit.ex_skill and self.unit.ex_skill[0].skill_level < target_skill_ex_level:
-                    await self.unit_skill_up_aware(eSkillLocationCategory.EX_SKILL_1, lambda: self.unit.ex_skill[0], target_skill_ex_level, growth_limit)
+                target_unique1_level = int(unique1_level) if unique1_level.isdigit() else 0
 
-                # 拉专武
-                growth_limit_unique = await self.is_unique_growth_unit()
-                try:
-                    target_unique_level = int(unique_level)
-                except:
-                    target_unique_level = 0
-                if self.unit.unique_equip_slot and self.unit.unique_equip_slot[0].enhancement_level < target_unique_level:
-                    await self.unit_unique_equip_enhance_aware(target_unique_level, growth_limit_unique)
-
+                await self.promote(target_level = target_level,
+                                   target_star = target_star,
+                                   target_dear = target_dear,
+                                   target_promote_rank = target_promotion_rank,
+                                   target_equip_star = target_equip_star,
+                                   target_skill_ub_level = target_skill_ub_level,
+                                   target_skill_s1_level = target_skill_s1_level,
+                                   target_skill_s2_level = target_skill_s2_level,
+                                   target_skill_ex_level = target_skill_ex_level,
+                                   target_unique1_level = target_unique1_level)
 
             except Exception as e:
                 self._warn(str(e))
