@@ -98,7 +98,7 @@ def enable_manual_validator():
             
             async def post_login():
                 validate_dict[qid].append(ValidateInfo(status="ok"))
-            result.client.session.sdk.post_login = post_login
+            result.client.session.sdk.append_post_login(post_login)
             result.client.session.sdk.captchaVerifier = create_validator(qid)
 
             return result

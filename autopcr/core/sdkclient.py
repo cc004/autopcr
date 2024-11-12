@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Tuple
+from typing import Tuple, Coroutine, Any, List, Callable
 from abc import abstractmethod
 from ..sdk.validator import remoteValidator
 from copy import deepcopy
@@ -24,9 +24,6 @@ async def _defaultLogger(msg):
 
 class sdkclient:
     
-    async def _default_post_login(self):
-        pass
-
     def __init__(self, info: account, captchaVerifier=remoteValidator, errlogger=_defaultLogger):
         self.captchaVerifier = captchaVerifier
         self.errlogger = errlogger
@@ -37,7 +34,11 @@ class sdkclient:
         else:
             raise ValueError(f"Invalid platform {info.type}")
         self._account = info
-        self.post_login = self._default_post_login
+        self.post_login_evts: List[Callable[[], Coroutine[Any, Any, None]]] = []
+
+    def append_post_login(self, evt: Callable[[], Coroutine[Any, Any, None]]):
+        self.post_login_evts.append(evt)
+
     '''
     returns: uid, access_key
     '''
@@ -45,8 +46,9 @@ class sdkclient:
     async def login(self) -> Tuple[str, str]: ...
 
     async def invoke_post_login(self):
-        await self.post_login()
-        self.post_login = self._default_post_login
+        for evt in self.post_login_evts:
+            await evt()
+        self.post_login_evts.clear()
     
     async def do_captcha(self):                                
         return await self.captchaVerifier(self)

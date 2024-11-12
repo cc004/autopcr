@@ -6,7 +6,7 @@ from dataclasses_json import dataclass_json
 
 from ..core.pcrclient import pcrclient
 from ..core.sdkclient import account, platform
-from .modulemgr import ModuleManager, TaskResult, ModuleResult, eResultStatus
+from .modulemgr import ModuleManager, TaskResult, ModuleResult, eResultStatus, TaskResultInfo, ModuleResultInfo, ResultInfo
 import os, re, shutil
 from typing import Any, Dict, Iterator, List, Tuple, Union
 from ..constants import CONFIG_PATH, OLD_CONFIG_PATH, RESULT_DIR, BSDK, CHANNEL_OPTION
@@ -23,45 +23,6 @@ class AccountException(Exception):
     pass
 class UserException(Exception):
     pass
-
-@dataclass_json
-@dataclass
-class ResultInfo:
-    alias: str = ""
-    key: str = ""
-    path: str = ""
-    time: str = ""
-    url: str = ""
-    _type: str = ""
-    status: eResultStatus = eResultStatus.SKIP
-
-    def save_result(self, result):
-        with open(self.path, 'w') as f:
-            f.write(result.to_json())
-    def delete_result(self):
-        if os.path.exists(self.path):
-            os.remove(self.path)
-    def get_result(self):
-        raise NotImplementedError
-    def response(self, url_format: str):
-        url = url_format.format(self.alias)
-        return ResultInfo(alias = self.alias, key = self.key, time = self.time, url = url, status = self.status)
-
-@dataclass_json
-@dataclass
-class TaskResultInfo(ResultInfo):
-    _type: str = "daily_result"
-    def get_result(self) -> TaskResult:
-        with open(self.path, 'r') as f:
-            return TaskResult.from_json(f.read())
-
-@dataclass_json
-@dataclass
-class ModuleResultInfo(ResultInfo):
-    _type: str = "single_result"
-    def get_result(self) -> ModuleResult:
-        with open(self.path, 'r') as f:
-            return ModuleResult.from_json(f.read())
 
 @dataclass_json
 @dataclass
@@ -107,7 +68,7 @@ class Account(ModuleManager):
         self.qq = qid
         self.alias = account
         self.token = f"{self.qq}_{self.alias}"
-        super().__init__(self.data.config, self)
+        super().__init__(self.data.config)
     
     async def __aenter__(self):
         if not self.readonly:
