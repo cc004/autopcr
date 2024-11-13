@@ -1,5 +1,5 @@
-from pydantic.class_validators import make_generic_validator
-from pydantic.validators import int_validator
+from pydantic.v1.class_validators import make_generic_validator
+from pydantic.v1.validators import int_validator
 from . import responses, sdkrequests
 from .common import *
 from .requests import *

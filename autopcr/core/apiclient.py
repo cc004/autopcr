@@ -12,7 +12,7 @@ from hashlib import md5
 from Crypto.Cipher import AES
 from base64 import b64encode, b64decode
 from .sdkclient import sdkclient
-from ..constants import refresh_headers, DEBUG_LOG, ERROR_LOG
+from ..constants import update_app_ver, DEBUG_LOG, ERROR_LOG
 
 import json
 from enum import Enum
@@ -163,7 +163,7 @@ class apiclient(Container["apiclient"]):
         if "check/game_start" == request.url and "store_url" in response0['data_headers']:
             version = search(r'_v?([4-9]\.\d\.\d).*?_', response0['data_headers']["store_url"]).group(1)
             self._headers['APP-VER'] = version
-            refresh_headers(version)
+            update_app_ver(version)
             print(f"版本已更新至{version}")
             raise ApiException(f"版本已更新:{version}",
                                response.data.server_error.status,
