@@ -8,7 +8,7 @@ from ..model.error import *
 from ..model.enums import *
 from ..db.database import db
 from .modulebase import Module, ModuleResult, eResultStatus
-from ..core.pcrclient import pcrclient
+from ..core.clientpool import PoolClientWrapper
 import traceback
 import os
 
@@ -71,7 +71,7 @@ class ModuleManager:
         pass
 
     @abstractmethod
-    def get_client() -> pcrclient:
+    def get_client() -> PoolClientWrapper:
         pass
 
     @abstractmethod
@@ -92,6 +92,13 @@ class ModuleManager:
         self.client = self.get_client()
         self._load_config(config)
     
+    async def __aenter__(self):
+        await self.client.__aenter__()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.client.__aexit__(exc_type, exc_val, exc_tb)
+
     def _load_config(self, config):
         try:
             for key, value in config.items():

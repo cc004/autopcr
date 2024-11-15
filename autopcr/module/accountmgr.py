@@ -17,7 +17,8 @@ import hashlib
 from ..db.database import db
 import datetime
 import traceback
-from .clientpool import instance as clientpool
+from ..core.clientpool import instance as clientpool, PoolClientWrapper
+from ..sdk.sdkclients import create
 
 class AccountException(Exception):
     pass
@@ -71,6 +72,7 @@ class Account(ModuleManager):
         super().__init__(self.data.config)
 
     async def __aenter__(self):
+        await super().__aenter__()
         if not self.readonly:
             await self._lck.acquire()
         return self
@@ -80,6 +82,7 @@ class Account(ModuleManager):
             if self.data != self.old_data:
                 await self.save_data()
             self._lck.release()
+        await super().__aexit__(exc_type, exc_val, exc_tb)
 
     async def save_data(self):
         with open(self._filename, 'w') as f:
@@ -159,23 +162,23 @@ class Account(ModuleManager):
         ret = self.data.single_result.get(module, [])
         return ret
 
-    def get_client(self) -> pcrclient:
+    def get_client(self) -> PoolClientWrapper:
         return self.get_android_client()
 
-    def get_ios_client(self) -> pcrclient: # Header TODO
-        client = clientpool.get_client(self.data.channel, account(
+    def get_ios_client(self) -> PoolClientWrapper: # Header TODO
+        client = clientpool.get_client(create(self.data.channel, account(
             self.data.username,
             self.data.password,
             platform.IOS
-        ))
+        )))
         return client
 
-    def get_android_client(self) -> pcrclient:
-        client = clientpool.get_client(self.data.channel, account(
+    def get_android_client(self) -> PoolClientWrapper:
+        client = clientpool.get_client(create(self.data.channel, account(
             self.data.username,
             self.data.password,
             platform.Android
-        ))
+        )))
         return client
 
     def generate_info(self):

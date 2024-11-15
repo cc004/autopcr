@@ -11,15 +11,17 @@ class sessionmgr(Component[apiclient]):
         super().__init__()
         self.cacheDir = os.path.join(CACHE_DIR, 'token')
         self.sdk = sdk
-        self._platform = self.sdk.platform_id
-        self._channel = self.sdk.channel
-        self._account: str = sdk.account
         self._logged = False
         self.auto_relogin = True
         self._sdkaccount = None
         if not os.path.exists(self.cacheDir):
             os.makedirs(self.cacheDir)
-        self.cacheFile = os.path.join(self.cacheDir, hashlib.md5(self._account.encode('utf-8')).hexdigest())
+            
+    @property
+    def cacheFile(self):
+        return os.path.join(self.cacheDir, hashlib.md5(
+            self.sdk.account.encode('utf-8')
+        ).hexdigest())
 
     async def _bililogin(self):
         uid, access_key = await self.sdk.login()
@@ -38,8 +40,8 @@ class sessionmgr(Component[apiclient]):
                         req = ToolSdkLoginRequest(
                             uid=self._sdkaccount['uid'],
                             access_key=self._sdkaccount['access_key'],
-                            platform=str(self._platform),
-                            channel_id=str(self._channel)
+                            platform=str(self.sdk.platform_id),
+                            channel_id=str(self.sdk.channel)
                         )
                         if not (await next.request(req)).is_risk:
                             break
@@ -49,8 +51,8 @@ class sessionmgr(Component[apiclient]):
                                 req = ToolSdkLoginRequest(
                                     uid=self._sdkaccount['uid'],
                                     access_key=self._sdkaccount['access_key'],
-                                    platform=str(self._platform),
-                                    channel_id=str(self._channel),
+                                    platform=str(self.sdk.platform_id),
+                                    channel_id=str(self.sdk.channel),
                                     challenge=captch_done['challenge'],
                                     validate_=captch_done['validate'],
                                     seccode=captch_done['validate']+"|jordan",
@@ -131,10 +133,6 @@ class sessionmgr(Component[apiclient]):
         try:
             return await next.request(request)
         except ApiException as ex:
-            if ex.result_code == 6002:
-                self._logged = False
-                return await self.request(request, next)
-            
             if ex.status == 3 and self.auto_relogin:
                 self._logged = False
             raise
