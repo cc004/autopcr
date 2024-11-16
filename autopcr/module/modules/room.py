@@ -30,7 +30,7 @@ class room_upper_all(Module):
         floors = {item.serial_id: floor + 1 for floor, floor_layout in enumerate(room.room_layout.floor_layout) for item in floor_layout.floor}
 
         for x in room.user_room_item_list:
-            if db.is_room_item_level_upable(client.data.team_level, x):
+            if db.is_room_item_level_upable(client.data.team_level, x, client.time):
                 if x.serial_id not in floors:
                     self._warn(f"{db.get_room_item_name(x.room_item_id)}未放置，无法升级")
                 else:

@@ -839,11 +839,11 @@ class database():
     def is_unique_equip_glow_ball(self, item: ItemType) -> bool:
         return item[0] == eInventoryType.Item and item[1] >= 21950 and item[1] < 22000
 
-    def is_room_item_level_upable(self, team_level: int, item: RoomUserItem) -> bool:
+    def is_room_item_level_upable(self, team_level: int, item: RoomUserItem, now: int) -> bool:
         return (item.room_item_level < self.room_item[item.room_item_id].max_level and 
                 item.room_item_level in self.room_item_detail[item.room_item_id] and
                 team_level >= self.room_item_detail[item.room_item_id][item.room_item_level].lvup_trigger_value and 
-                (item.level_up_end_time is None or item.level_up_end_time < time.time()))
+                (item.level_up_end_time is None or item.level_up_end_time < now))
 
     def is_normal_quest(self, quest_id: int) -> bool:
         return quest_id // 1000000 == 11

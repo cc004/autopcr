@@ -728,7 +728,7 @@ class pcrclient(apiclient):
         req.wait_interval = 3
         resp = await self.request(req)
         times = {msg.message_id : msg.create_time for msg in resp.clan_chat_message if msg.message_type == eClanChatMessageType.DONATION}
-        return (equip for equip in resp.equip_requests if times[equip.message_id] > self.server_time - 28800)
+        return (equip for equip in resp.equip_requests if times[equip.message_id] > self.time - 28800)
     
     async def recover_stamina(self, recover_count: int = 1):
         req = ShopRecoverStaminaRequest()

@@ -46,9 +46,7 @@ class travel_team_view(Module):
         if top.travel_quest_list:
             self._log('当前派遣区域：')
             for quest in top.travel_quest_list:
-                import time
-                now = int(time.time())
-                leave_time = int(quest.travel_end_time - quest.decrease_time - now)
+                leave_time = int(quest.travel_end_time - quest.decrease_time - client.time)
                 self._log(f"{db.get_quest_name(quest.travel_quest_id)} -{db.format_second(leave_time)}")
                 if quest.travel_quest_id in travel_quest_id: travel_quest_id.remove(quest.travel_quest_id)
 
