@@ -70,7 +70,7 @@ class apiclient(Container["apiclient"]):
         
     @property
     def datetime() -> datetime.datetime:
-        return datetime.datetime.fromtimestamp(apiclient.datetime)
+        return datetime.datetime.fromtimestamp(apiclient.time)
         
     @property
     def name(self) -> str:
