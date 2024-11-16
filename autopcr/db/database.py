@@ -17,6 +17,7 @@ class database():
     heart: ItemType = (eInventoryType.Equip, 140000)
     xinsui: ItemType = (eInventoryType.Equip, 140001)
     xingqiubei: ItemType = (eInventoryType.Item, 25001)
+    zmana: ItemType = (eInventoryType.Gold, 94000)
     mana: ItemType = (eInventoryType.Gold, 94002)
     jewel: ItemType = (eInventoryType.Jewel, 91002)
     travel_speed_up_paper: ItemType = (eInventoryType.Item, 23002)
@@ -25,6 +26,12 @@ class database():
     def update(self, dbmgr: dbmgr):
         
         with dbmgr.session() as db:
+
+            self.redeem_unit: Dict[int, Dict[int, RedeemUnit]] = (
+                RedeemUnit.query(db)
+                .group_by(lambda x: x.unit_id)
+                .to_dict(lambda x: x.key, lambda x: x.to_dict(lambda x: x.slot_id, lambda x: x))
+            )
 
             self.dear_story_data: Dict[int, DearStoryDatum] = (
                 DearStoryDatum.query(db)
@@ -1125,6 +1132,9 @@ class database():
                 result[key] += value
 
         return result, mana
+
+    def get_redeem_unit_slot_info(self, unit_id: int, slot_id: int) -> RedeemUnit:
+        return self.redeem_unit[unit_id][slot_id]
 
     def get_promotion_demand_level(self, unit_id: int, traget_rank: int) -> int:
         equips = self.get_rank_promote_equip_demand(unit_id, 1, [False] * 6, traget_rank, [False] * 6)

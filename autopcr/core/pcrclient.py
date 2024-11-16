@@ -50,6 +50,19 @@ class pcrclient(apiclient):
         req.mission_id = mission_id
         return await self.request(req)
 
+    async def unit_unlock_redeem_unit(self, unit_id: int):
+        req = RedeemUnitUnlockRequest()
+        req.unit_id = unit_id
+        return await self.request(req)
+
+    async def unit_register_item(self, unit_id: int, slot_id: int, item: typing.Counter[ItemType], current_register_num: int):
+        req = RedeemUnitRegisterItemRequest()
+        req.unit_id = unit_id
+        req.slot_id = slot_id
+        req.item_list = [RedeemUnitRegisterItemInfo(id=item[1], count=count) for item, count in item.items()]
+        req.current_register_num = current_register_num
+        return await self.request(req)
+
     async def travel_top(self, travel_area_id: int, get_ex_equip_album_flag: int):
         if not self.data.is_quest_cleared(11018001):
             raise SkipError("探险未解锁")

@@ -131,6 +131,7 @@ tool_modules = ModuleList(
     [
         # cook_pudding,
         travel_team_view,
+        redeem_unit_swap,
         unit_promote,
         unit_set_unique_equip_growth,
         missing_unit,

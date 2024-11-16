@@ -54,6 +54,7 @@ class datamgr(Component[apiclient]):
     event_sub_story: Dict[int, EventSubStory] = None
     user_gold_bank_info: UserBankGoldInfo = None
     ex_equips: Dict[int, ExtraEquipInfo] = None
+    user_redeem_unit: Dict[int, RedeemUnitInfo] = None
 
     def __init__(self):
         self.finishedQuest = set()
@@ -62,6 +63,7 @@ class datamgr(Component[apiclient]):
         self.deck_list = {}
         self.ex_equips = {}
         self.campaign_list = []
+        self.user_redeem_unit = {}
 
     lck = Lock()
 
