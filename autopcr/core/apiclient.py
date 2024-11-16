@@ -13,7 +13,7 @@ from Crypto.Cipher import AES
 from base64 import b64encode, b64decode
 from .sdkclient import sdkclient
 from ..constants import refresh_headers, DEBUG_LOG, ERROR_LOG
-import time
+import time, datetime
 import json
 from enum import Enum
 
@@ -65,8 +65,12 @@ class apiclient(Container["apiclient"]):
         self._lck = Lock()
 
     @property
-    def time(self) -> int:
-        return int(time.time() - self._local_time + self._server_time)
+    def time() -> int:
+        return int(time.time() - apiclient._local_time + apiclient._server_time)
+        
+    @property
+    def datetime() -> datetime.datetime:
+        return datetime.datetime.fromtimestamp(apiclient.datetime)
         
     @property
     def name(self) -> str:
@@ -126,7 +130,7 @@ class apiclient(Container["apiclient"]):
                 raise NetworkException
 
             response0 = await resp.content
-            self._local_time = time.time()
+            apiclient._local_time = time.time()
 
             response0 = apiclient._unpack(response0)[0] if request.crypted else loads(response0)
         except:
@@ -153,9 +157,9 @@ class apiclient(Container["apiclient"]):
            # fp.write(json.dumps(json.loads(response.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
 
         if response.data_headers.servertime:
-            self._server_time = response.data_headers.servertime
+            apiclient._server_time = response.data_headers.servertime
         else:
-            self._server_time = self._local_time
+            apiclient._server_time = apiclient._local_time
             
         if response.data_headers.sid:
             t = md5()

@@ -9,6 +9,7 @@ from ...model.custom import ArenaQueryResult, GachaReward, ItemType
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
+from ...core.apiclient import apiclient
 from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
@@ -46,7 +47,7 @@ class travel_team_view(Module):
         if top.travel_quest_list:
             self._log('当前派遣区域：')
             for quest in top.travel_quest_list:
-                leave_time = int(quest.travel_end_time - quest.decrease_time - client.time)
+                leave_time = int(quest.travel_end_time - quest.decrease_time - apiclient.time)
                 self._log(f"{db.get_quest_name(quest.travel_quest_id)} -{db.format_second(leave_time)}")
                 if quest.travel_quest_id in travel_quest_id: travel_quest_id.remove(quest.travel_quest_id)
 
@@ -599,7 +600,7 @@ class ArenaInfo(Module):
         return user_name
 
     async def do_task(self, client: pcrclient):
-        time = db.format_time(datetime.datetime.now())
+        time = db.format_time(apiclient.datetime)
         self._log(f"时间：{time}")
         for page in range(1, 4):
             ranking = await self.get_rank_info(client, 20, page)
@@ -754,7 +755,7 @@ class get_normal_quest_recommand(Module):
         start_rank: int = self.get_config("start_rank")
         like_unit_only: bool = self.get_config("like_unit_only")
 
-        quest_list: List[int] = [id for id, quest in db.normal_quest_data.items() if db.parse_time(quest.start_time) <= datetime.datetime.now()]
+        quest_list: List[int] = [id for id, quest in db.normal_quest_data.items() if db.parse_time(quest.start_time) <= apiclient.datetime]
         require_equip = client.data.get_equip_demand_gap(start_rank = start_rank, like_unit_only = like_unit_only)
         quest_weight = client.data.get_quest_weght(require_equip)
         quest_id = sorted(quest_list, key = lambda x: quest_weight[x], reverse = True)

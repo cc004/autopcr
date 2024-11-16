@@ -9,7 +9,7 @@ from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
 from collections import Counter
-import datetime
+from ...core.apiclient import apiclient
 
 @conditional_execution1("normal_sweep_run_time", ["n庆典"])
 @singlechoice("normal_sweep_strategy", "刷取策略", "刷最缺", ["刷最缺", "均匀刷"])
@@ -61,7 +61,7 @@ class smart_normal_sweep(Module):
         clean_cnt = Counter()
         quest_id = []
         tmp = []
-        quest_list: List[int] = [id for id, quest in db.normal_quest_data.items() if db.parse_time(quest.start_time) <= datetime.datetime.now()]
+        quest_list: List[int] = [id for id, quest in db.normal_quest_data.items() if db.parse_time(quest.start_time) <= apiclient.datetime]
         stop: bool = False
         first: bool = True
 

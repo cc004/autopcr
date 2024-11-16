@@ -369,7 +369,7 @@ class datamgr(Component[apiclient]):
         return self.get_unique_equip_material_demand(1, unit_id, token)
 
     def get_max_quest(self, quests: Dict[int, TrainingQuestDatum], sweep_available = False) -> int:
-        now = datetime.datetime.now()
+        now = apiclient.datetime
         return (
             flow(quests.keys())
             .where(lambda x: now >= db.parse_time(quests[x].start_time) and 
