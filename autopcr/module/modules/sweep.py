@@ -33,7 +33,7 @@ class travel_quest_sweep(Module):
         st = quest.travel_start_time
         ed = quest.travel_end_time
         decrease_time = quest.decrease_time
-        once_time = db.calc_travel_once_time(quest.total_power)
+        once_time = (ed - st) // quest.total_lap_count
         now = int(time.time())
         received_count = quest.received_count
         cnt = (min(now, ed) - st + decrease_time) // once_time - received_count

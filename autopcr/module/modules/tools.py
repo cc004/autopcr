@@ -28,7 +28,7 @@ class travel_team_view(Module):
         travel_team_auto_memory = self.get_config('travel_team_view_auto_memory')
         travel_team_go = self.get_config('travel_team_view_go')
         travel_quest_id_raw: List[str] = self.get_config('travel_team_view_quest_id')
-        travel_quest_id = [db.get_travel_quest_id_from_candidate(x) for x in travel_quest_id_raw]
+        travel_quest_id: List[int] = [db.get_travel_quest_id_from_candidate(x) for x in travel_quest_id_raw]
 
         top = await client.travel_top(max(db.get_open_travel_area()), 1)
         unit_list = top.priority_unit_list
@@ -52,7 +52,7 @@ class travel_team_view(Module):
                 self._log(f"{db.get_quest_name(quest.travel_quest_id)} -{db.format_second(leave_time)}")
                 if quest.travel_quest_id in travel_quest_id: travel_quest_id.remove(quest.travel_quest_id)
 
-        teams_go = 3 - len(top.travel_quest_list)
+        teams_go = client.data.settings.travel.travel_start_max_deck_count - len(top.travel_quest_list)
         if not teams_go:
             raise AbortError("已经派遣了3支队伍")
         if teams_go < len(travel_quest_id):
@@ -103,7 +103,7 @@ class travel_team_view(Module):
         teams_power = [sum(unit_power[unit] for unit in teams[i]) for i in range(teams_go)]
 
         for id, (team, power) in enumerate(zip(teams, teams_power), start=1):
-            time = db.format_second(db.calc_travel_once_time(power))
+            time = db.format_second(db.calc_travel_once_time(travel_quest_id[id - 1], power, client.data.settings.travel.over_power_decrease_time_coefficient))
             self._log(f"第{id}队({time})总战力{power}=" + '+'.join(f"{unit_power[unit]}" for unit in team))
             self._log(' '.join(f"{db.get_unit_name(unit)}" for unit in team))
 
