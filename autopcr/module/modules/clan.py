@@ -1,6 +1,7 @@
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
+from ...core.apiclient import apiclient
 from ...model.error import *
 from ...model.enums import *
 import random
@@ -46,7 +47,7 @@ class clan_equip_request(Module):
         if not clan:
             raise AbortError("未加入公会")
 
-        if clan.latest_request_time and datetime.datetime.now().timestamp() <= clan.latest_request_time + client.data.settings.clan.equipment_request_interval:
+        if clan.latest_request_time and apiclient.time <= clan.latest_request_time + client.data.settings.clan.equipment_request_interval:
             raise SkipError("当前请求尚未结束")
         elif clan.latest_request_time:
             res = await client.equip_get_request(clan.clan.detail.clan_id, 0)

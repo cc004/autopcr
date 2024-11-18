@@ -12,6 +12,7 @@ from .models import *
 from ..util.linq import flow
 from queue import SimpleQueue
 from .constdata import extra_drops
+from ..core.apiclient import apiclient
 
 class database():
     heart: ItemType = (eInventoryType.Equip, 140000)
@@ -839,11 +840,11 @@ class database():
     def is_unique_equip_glow_ball(self, item: ItemType) -> bool:
         return item[0] == eInventoryType.Item and item[1] >= 21950 and item[1] < 22000
 
-    def is_room_item_level_upable(self, team_level: int, item: RoomUserItem) -> bool:
+    def is_room_item_level_upable(self, team_level: int, item: RoomUserItem, now: int) -> bool:
         return (item.room_item_level < self.room_item[item.room_item_id].max_level and 
                 item.room_item_level in self.room_item_detail[item.room_item_id] and
                 team_level >= self.room_item_detail[item.room_item_id][item.room_item_level].lvup_trigger_value and 
-                (item.level_up_end_time is None or item.level_up_end_time < time.time()))
+                (item.level_up_end_time is None or item.level_up_end_time < now))
 
     def is_normal_quest(self, quest_id: int) -> bool:
         return quest_id // 1000000 == 11
@@ -931,7 +932,7 @@ class database():
         return self.campaign_schedule[campaign_id].value
 
     def get_active_hatsune(self) -> List[HatsuneSchedule]:
-        now = datetime.datetime.now()
+        now = apiclient.datetime
         return flow(self.hatsune_schedule.values()) \
                 .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.end_time)) \
                 .to_list()
@@ -941,19 +942,19 @@ class database():
         return [f"{event.event_id}:{db.event_name[event.event_id]}" for event in active_hatsune]
 
     def get_open_hatsune(self) -> List[HatsuneSchedule]:
-        now = datetime.datetime.now()
+        now = apiclient.datetime
         return flow(self.hatsune_schedule.values()) \
                 .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.close_time)) \
                 .to_list()
 
     def get_active_seasonpass(self) -> List[SeasonpassFoundation]:
-        now = datetime.datetime.now()
+        now = apiclient.datetime
         return flow(self.seasonpass_foundation.values()) \
                 .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.limit_time)) \
                 .to_list()
 
     def get_open_seasonpass(self) -> List[SeasonpassFoundation]:
-        now = datetime.datetime.now()
+        now = apiclient.datetime
         return flow(self.seasonpass_foundation.values()) \
                 .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.end_time)) \
                 .to_list()
@@ -981,14 +982,14 @@ class database():
 
     def is_target_time(self, schedule: List[Tuple[datetime.datetime, datetime.datetime]], now: Union[None, datetime.datetime] = None) -> bool:
         if now is None:
-            now = datetime.datetime.now()
+            now = apiclient.datetime
         for start_time, end_time in schedule:
             if now >= start_time and now <= end_time:
                 return True
         return False
 
     def is_campaign(self, campaign: str, now: Union[None, datetime.datetime] = None) -> bool:
-        now = datetime.datetime.now() if now is None else now
+        now = apiclient.datetime if now is None else now
         tomorrow = now + datetime.timedelta(days = 1)
         half_day = datetime.timedelta(hours = 7)
         n3 = (flow(self.campaign_schedule.values())
@@ -1077,13 +1078,13 @@ class database():
         return time
 
     def is_today(self, time: datetime.datetime) -> bool:
-        now = datetime.datetime.now()
+        now = apiclient.datetime
         today = self.get_start_time(time)
         tomorrow = today + datetime.timedelta(days = 1)
         return today <= now and now < tomorrow
 
     def get_today_start_time(self) -> datetime.datetime:
-        return self.get_start_time(datetime.datetime.now())
+        return self.get_start_time(apiclient.datetime)
 
     def get_unique_equip_material_demand(self, unit_id: int, slot_id:int, start_rank:int, target_rank: int) -> typing.Counter[ItemType]: 
         if unit_id not in db.unit_unique_equip[slot_id]:
@@ -1137,7 +1138,7 @@ class database():
         return self.experience_unit[target_level]
 
     def get_cur_gacha(self):
-        now = datetime.datetime.now()
+        now = apiclient.datetime
         return flow(self.gacha_data.values()) \
         .where(lambda x: self.parse_time(x.start_time) <= now and now <= self.parse_time(x.end_time)) \
         .select(lambda x: f"{x.gacha_id}: {x.gacha_name}-{x.pick_up_chara_text}") \
@@ -1221,7 +1222,7 @@ class database():
 
     def last_normal_quest_candidate(self):
         last_start_time = flow(self.normal_quest_data.values()) \
-                .where(lambda x: db.parse_time(x.start_time) <= datetime.datetime.now()) \
+                .where(lambda x: db.parse_time(x.start_time) <= apiclient.datetime) \
                 .max(lambda x: x.start_time).start_time
         return flow(self.normal_quest_data.values()) \
                 .where(lambda x: x.start_time == last_start_time) \

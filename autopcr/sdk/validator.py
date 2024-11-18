@@ -94,10 +94,9 @@ async def localValidator(qq):
 
     if _type == 'click':
         (c, s, args) = gt_obj.get_new_c_s_args(gt, challenge)
-        st = time.time()
+        cor = asyncio.sleep(2)
         w = gt_obj.generate_w(gt_obj.calculate_key(args), gt, challenge, str(c), s, "abcdefghijklmnop")
-        ed = time.time()
-        await asyncio.sleep(max(0, 2 - (ed - st)))
+        await cor
         (msg, validate) = gt_obj.verify(gt, challenge, w)
         info = {
             "challenge": challenge,

@@ -1,6 +1,7 @@
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
+from ...core.apiclient import apiclient
 from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
@@ -44,7 +45,7 @@ class unit_story_reading(Module):
     async def do_task(self, client: pcrclient):
         read_story = set(client.data.read_story_ids)
         read_story.add(0) # no pre story
-        now = datetime.datetime.now()
+        now = apiclient.datetime
         for story in db.unit_story:
             if (
                 story.story_id not in read_story and
@@ -89,7 +90,7 @@ class tower_story_reading(Module):
         read_story = set(client.data.read_story_ids)
         read_story.add(0) # no pre story
         for story in db.tower_story:
-            now = datetime.datetime.now()
+            now = apiclient.datetime
             start_time = db.parse_time(story.start_time)
             if now < start_time:
                 continue
