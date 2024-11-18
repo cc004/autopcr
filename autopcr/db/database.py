@@ -1234,7 +1234,7 @@ class database():
                 .select(lambda x: f"{x.travel_area_id % 10}-{x.travel_quest_id % 10}") \
                 .to_list()
 
-    def get_travel_quest_id_from_candidate(self, candidate: str):
+    def get_travel_quest_id_from_candidate(self, candidate: str) -> int:
         area, quest = candidate.split('-')
         ret = next(x.travel_quest_id for x in self.travel_quest_data.values() if x.travel_area_id % 10 == int(area) and x.travel_quest_id % 10 == int(quest))
         return ret
@@ -1328,7 +1328,11 @@ class database():
         skill_power = self.calc_skill_power(unit_data, coefficient)
         return attribute_power + skill_power
 
-    def calc_travel_once_time(self, power: int) -> int:
-        return max(12 * 60 * 60 - (power - 100000 + 199) // 200 * 3, 10 * 60 * 60)
+    def calc_travel_once_time(self, quest_id: int, power: int, coeff: float = 0.015) -> int:
+        quest = db.travel_quest_data[quest_id]
+        return quest.travel_time - min(
+            quest.travel_time_decrease_limit,
+            int(max(0, power - quest.need_power) * coeff)
+        )
 
 db = database()
