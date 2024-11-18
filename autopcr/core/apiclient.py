@@ -48,6 +48,12 @@ class NetworkException(Exception):
 
 TResponse = TypeVar('TResponse', bound=ResponseBase, covariant=True)
 
+class staticproperty:
+    def __init__(self, func):
+        self.fget = func
+    def __get__(self, instance, owner):
+        return self.fget()
+
 class apiclient(Container["apiclient"]):
     _server_time: int = 0
     _local_time: float = 0.0
@@ -64,11 +70,11 @@ class apiclient(Container["apiclient"]):
         ]
         self._lck = Lock()
 
-    @property
+    @staticproperty
     def time() -> int:
         return int(time.time() - apiclient._local_time + apiclient._server_time)
         
-    @property
+    @staticproperty
     def datetime() -> datetime.datetime:
         return datetime.datetime.fromtimestamp(apiclient.time)
         
