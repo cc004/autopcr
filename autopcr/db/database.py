@@ -756,15 +756,15 @@ class database():
             )
 
             self.ex_rarity_name = {
-                1: '铜装',
-                2: '银装',
-                3: '金装',
-                4: '粉装'
+                1: '铜',
+                2: '银',
+                3: '金',
+                4: '粉'
             }
     def get_inventory_name(self, item: InventoryInfo) -> str:
         try:
             if item.type == eInventoryType.ExtraEquip:
-                return f"{self.ex_rarity_name[self.ex_equipment_data[item.id].rarity]}-" + self.inventory_name[(item.type, item.id)] 
+                return f"{self.ex_rarity_name[self.ex_equipment_data[item.id].rarity]}{item.ex_equip.rank}-" + self.inventory_name[(item.type, item.id)] 
             return self.inventory_name[(item.type, item.id)]
         except:
             return f"未知物品({item.id})"
@@ -774,6 +774,12 @@ class database():
             return self.inventory_name[(item[0], item[1])]
         except:
             return f"未知物品({item[1]})"
+
+    def get_ex_equip_name(self, item: int, rank: int = 0) -> str:
+        try:
+            return f"{self.ex_rarity_name[self.ex_equipment_data[item].rarity]}{rank}-" + self.inventory_name[(eInventoryType.ExtraEquip, item)] 
+        except:
+            return f"未知ex装备({item})"
 
     def get_unit_name(self, unit_id: int) -> str:
         try:

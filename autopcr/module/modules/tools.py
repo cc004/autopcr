@@ -274,6 +274,22 @@ class cook_pudding(Module):
         if is_abort: raise AbortError("")
         if is_skip: raise SkipError("")
 
+@description('看看你的特别装备数量')
+@name('查ex装备')
+@booltype('ex_equip_info_cb_only', '会战', False)
+@default(True)
+class ex_equip_info(Module):
+    async def do_task(self, client: pcrclient):
+        cb_only = self.get_config('ex_equip_info_cb_only')
+        cnt = sorted( 
+                list(Counter(
+                (ex.ex_equipment_id, ex.rank) for ex in client.data.ex_equips.values() 
+                if not cb_only or db.ex_equipment_data[ex.ex_equipment_id].clan_battle_equip_flag).items()),
+                key=lambda x: (db.ex_equipment_data[x[0][0]].rarity, db.ex_equipment_data[x[0][0]].clan_battle_equip_flag, x[0][0], x[0][1]), reverse=True
+                )
+        msg = '\n'.join(f"{db.get_ex_equip_name(id, rank)}x{c}" for (id, rank), c in cnt)
+        self._log(msg)
+
 @description('看看你缺了什么角色')
 @name('查缺角色')
 @default(True)
