@@ -18,6 +18,7 @@ class PreToolSdkLoginRequestHandler(Component[apiclient]):
         if isinstance(request, ToolSdkLoginRequest):
             self._container.uid = request.uid
             self.pool._on_sdk_login(self._container)
+        return await next.request(request)
 
 class SessionErrorHandler(Component[apiclient]):
     def __init__(self, pool: 'ClientPool'):
@@ -30,7 +31,7 @@ class SessionErrorHandler(Component[apiclient]):
         except ApiException as e:
             if e.result_code == 6002 and self.retry < SESSION_ERROR_MAX_RETRY:
                 self.retry += 1
-                self._container.session.clear_session()
+                await self._container.session.clear_session()
                 return await self.request(request, next)
             raise
         finally:
@@ -48,7 +49,7 @@ class PoolClientWrapper(pcrclient):
         self.register(self.data)
         self.register(PreToolSdkLoginRequestHandler(pool))
         self.register(self.session)
-        self.register(SessionErrorHandler())
+        self.register(SessionErrorHandler(pool))
         self.register(mutexhandler())
 
     async def __aenter__(self):
@@ -65,20 +66,21 @@ class ClientCache:
 
 class ClientPool:
     def __init__(self):
-        self.active_uids: Set[str] = set()
+        self.active_uids: Dict[str, int] = dict()
         self._pool: Dict[Tuple[str, str], ClientCache] = dict()
 
     def _on_sdk_login(self, client: PoolClientWrapper):
-        if client.uid in self.active_uids:
+        client_key = id(client)
+        if self.active_uids.get(client.uid, client_key) != client_key:
             raise RuntimeError('用户的另一项请求正在进行中')
-        self.active_uids.add(client.uid)
+        self.active_uids[client.uid] = client_key
 
     def _put_in_pool(self, client: PoolClientWrapper):
         if client.uid not in self.active_uids: # client disposed without being logged in
             return
         if not client.logged: # client session expired and not successfully recovered
             return
-        self.active_uids.remove(client.session)
+        self.active_uids.pop(client.uid)
         
         if len(self._pool) >= CLIENT_POOL_SIZE_MAX:
             now = int(time.time())
@@ -103,10 +105,10 @@ class ClientPool:
             item = self._pool.pop(pool_key)
             # no need to check for last password used, as the client is already logged in, when the session expires, the client will use the new sdk to re-login
             assert item.client.uid not in self.active_uids
-            self.active_uids.add(item.client.uid)
+            self.active_uids[item.client.uid] = id(item.client)
             item.client.session.sdk = sdk
             return item.client
-        return PoolClientWrapper(sdk)
+        return PoolClientWrapper(self, sdk)
         
 
 instance = ClientPool()
