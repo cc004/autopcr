@@ -67,32 +67,28 @@ class ModuleManager:
     _modules: List[type] = []
 
     @abstractproperty
-    def id(self) -> str:
-        pass
+    def id(self) -> str: ...
 
     @abstractmethod
-    def get_client() -> PoolClientWrapper:
-        pass
+    def get_client() -> PoolClientWrapper: ...
 
     @abstractmethod
-    async def save_daily_result(self, resp: TaskResult, status: eResultStatus) -> TaskResultInfo:
-        pass
+    async def save_daily_result(self, resp: TaskResult, status: eResultStatus) -> TaskResultInfo: ...
 
     @abstractmethod
-    async def save_single_result(self, key: str, resp: ModuleResult) -> ModuleResultInfo:
-        pass
+    async def save_single_result(self, key: str, resp: ModuleResult) -> ModuleResultInfo: ...
 
     @abstractmethod
-    def is_clan_battle_forbidden(self) -> bool:
-        pass
+    def is_clan_battle_forbidden(self) -> bool: ...
 
     def __init__(self, config):
         from .modulelistmgr import ModuleListManager
         self.modules_list: ModuleListManager = ModuleListManager(self)
-        self.client = self.get_client()
-        self._load_config(config)
+        self._config = config
     
     async def __aenter__(self):
+        self.client = self.get_client()
+        self._load_config(self._config)
         await self.client.__aenter__()
         return self
 
