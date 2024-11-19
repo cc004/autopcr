@@ -3,6 +3,7 @@ from .apiclient import apiclient, ApiException
 from .sdkclient import sdkclient
 from .datamgr import datamgr
 from .sessionmgr import sessionmgr
+from ..model.error import PanicError
 from .misc import errorhandler, mutexhandler
 from .base import Component, Request, TResponse, RequestHandler
 from ..model.sdkrequests import ToolSdkLoginRequest
@@ -72,7 +73,7 @@ class ClientPool:
     def _on_sdk_login(self, client: PoolClientWrapper):
         client_key = id(client)
         if self.active_uids.get(client.uid, client_key) != client_key:
-            raise RuntimeError('用户的另一项请求正在进行中')
+            raise PanicError('用户的另一项请求正在进行中')
         self.active_uids[client.uid] = client_key
 
     def _put_in_pool(self, client: PoolClientWrapper):
