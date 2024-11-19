@@ -95,12 +95,17 @@ def enable_manual_validator():
         accountmgr_load_legacy = result.load
         def accountmgr_load(account: str = "", readonly=False):
             result = accountmgr_load_legacy(account=account, readonly=readonly)
-            
             async def post_login():
                 validate_dict[qid].append(ValidateInfo(status="ok"))
-            result.client.session.sdk.append_post_login(post_login)
-            result.client.session.sdk.captchaVerifier = create_validator(qid)
-
+            account_aenter_legacy = result.__aenter__
+            async def account_aenter():
+                res = await account_aenter_legacy()
+                if not res.readonly:
+                    res.client.session.sdk.append_post_login(post_login)
+                    res.client.session.sdk.captchaVerifier = create_validator(qid)
+                return res
+            
+            result.__aenter__ = account_aenter
             return result
         result.load = accountmgr_load
         return result

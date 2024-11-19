@@ -83,6 +83,11 @@ class ClientPool:
             return
         self.active_uids.pop(client.uid)
         
+        pool_key = (client.session.sdk.account, type(client.session.sdk).__name__)
+        # remove old client from pool, which session has been overrided by self.
+        # removed here to save one client pool slot.
+        self._pool.pop(pool_key, None) 
+
         if len(self._pool) >= CLIENT_POOL_SIZE_MAX:
             now = int(time.time())
             while self._pool:
@@ -93,7 +98,6 @@ class ClientPool:
                     break
 
         if len(self._pool) < CLIENT_POOL_SIZE_MAX:
-            pool_key = (client.session.sdk.account, type(client.session.sdk).__name__)
             self._pool[pool_key] = ClientCache(client)
 
     '''
@@ -105,7 +109,10 @@ class ClientPool:
         if pool_key in self._pool:
             item = self._pool.pop(pool_key)
             # no need to check for last password used, as the client is already logged in, when the session expires, the client will use the new sdk to re-login
-            assert item.client.uid not in self.active_uids
+            # assert item.client.uid not in self.active_uids
+            # Sessions of any clients in pool which are active should be expired and imply a uid conflict.
+            if item.client.uid in self.active_uids:
+                raise PanicError('用户的另一项请求正在进行中')
             self.active_uids[item.client.uid] = id(item.client)
             item.client.session.sdk = sdk
             return item.client
