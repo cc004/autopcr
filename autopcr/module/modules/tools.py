@@ -35,6 +35,11 @@ class redeem_unit_swap(Module):
             info = client.data.user_redeem_unit.get(unit_id, 
                                                     RedeemUnitInfo(unit_id = unit_id, 
                                                                    slot_info = [RedeemUnitSlotInfo(slot_id = i, register_num = 0) for i in db.redeem_unit[unit_id]]))
+
+            for slot_id in db.redeem_unit[unit_id]:
+                if all(slot_info.slot_id != slot_id for slot_info in info.slot_info):
+                    info.slot_info.append(RedeemUnitSlotInfo(slot_id = slot_id, register_num = 0))
+
             for slot_info in info.slot_info:
                 db_info = db.get_redeem_unit_slot_info(unit_id,slot_info.slot_id)
                 if slot_info.slot_id == 1:
@@ -59,6 +64,14 @@ class redeem_unit_swap(Module):
             id.sort(key=lambda x: (res[x], -gap[item[x]] - res[x]), reverse=True)
             msg = '\n'.join(f"{db.get_inventory_name_san(item[i])}使用{res[i]}片, 剩余盈余{-gap[item[i]] - res[i]}片" for i in id)
             self._log(msg)
+
+            unsatisfied = [db.memory_to_unit[item[i][1]] for i in id if 
+                           res[i] > 0 and 
+                           (db.memory_to_unit[item[i][1]] not in client.data.unit or
+                           client.data.unit[db.memory_to_unit[item[i][1]]].unit_rarity < 5)]
+            if unsatisfied:
+                msg = '以下角色未5星，无法用于兑换：\n' + '\n'.join(db.get_unit_name(i) for i in unsatisfied)
+                raise AbortError(msg)
 
             if do:
                 for slot_info in info.slot_info:
