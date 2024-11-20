@@ -10,8 +10,9 @@ import typing, math
 
 class pcrclient(apiclient):
     def __init__(self, sdk: sdkclient):
-        super().__init__(sdk)
+        self._base_keys = {}
         self._keys = {}
+        super().__init__(sdk)
         self.data = datamgr()
         self.session = sessionmgr(sdk)
         self.register(errorhandler())
@@ -20,7 +21,8 @@ class pcrclient(apiclient):
         self.register(mutexhandler())
     
     def set_config(self, config: dict):
-        self._keys = config
+        self._base_keys = config
+        self._keys = {}
 
     @property
     def name(self) -> str:
@@ -909,13 +911,6 @@ class pcrclient(apiclient):
             (quest in db.tower_quest and self.data.tower_status.cleared_floor_num >= db.tower_quest[quest].floor_num)
         )
 
-    @property
-    def stamina_recover_cnt(self) -> int:
-        return self._keys.get('stamina_recover_times', 0)
-
-    def set_stamina_recover_cnt(self, value: int):
-        self._keys['stamina_recover_times'] = value
-
     async def quest_skip_aware(self, quest: int, times: int, recover: bool = False, is_total: bool = False):
         name = db.get_quest_name(quest)
         if db.is_hatsune_quest(quest):
@@ -1114,32 +1109,42 @@ class pcrclient(apiclient):
         req.from_system_id = from_system_id
         return await self.request(req)
 
-    def set_stamina_consume_not_run(self):
-        self._keys['stamina_consume_not_run'] = True
+    def _get_key(self, key, default=None):
+        return self._keys.get(key, self._base_keys.get(key, default))
+    
+    @property
+    def stamina_recover_cnt(self) -> int:
+        return self._get_key('stamina_recover_times', 0)
 
     def is_stamina_consume_not_run(self):
-        return self._keys.get('stamina_consume_not_run', False)
+        return self._get_key('stamina_consume_not_run', False)
+
+    def is_stamina_get_not_run(self):
+        return self._get_key('stamina_get_not_run', False)
+
+    def is_star_cup_sweep_not_run(self):
+        return self._get_key('star_cup_sweep_not_run', False)
+
+    def is_heart_sweep_not_run(self):
+        return self._get_key('heart_sweep_not_run', False)
+
+    def is_cron_run(self):
+        return self._get_key('cron_run', False)
+
+    def set_stamina_recover_cnt(self, value: int):
+        self._keys['stamina_recover_times'] = value
+
+    def set_stamina_consume_not_run(self):
+        self._keys['stamina_consume_not_run'] = True
 
     def set_stamina_get_not_run(self):
         self._keys['stamina_get_not_run'] = True
 
-    def is_stamina_get_not_run(self):
-        return self._keys.get('stamina_get_not_run', False)
-
     def set_star_cup_sweep_not_run(self):
         self._keys['star_cup_sweep_not_run'] = True
-
-    def is_star_cup_sweep_not_run(self):
-        return self._keys.get('star_cup_sweep_not_run', False)
 
     def set_heart_sweep_not_run(self):
         self._keys['heart_sweep_not_run'] = True
 
-    def is_heart_sweep_not_run(self):
-        return self._keys.get('heart_sweep_not_run', False)
-
     def set_cron_run(self):
         self._keys['cron_run'] = True
-
-    def is_cron_run(self):
-        return self._keys.get('cron_run', False)
