@@ -11,11 +11,12 @@ from typing import Dict, Tuple, Set
 from ..constants import SESSION_ERROR_MAX_RETRY, CLIENT_POOL_SIZE_MAX, CLINET_POOL_MAX_AGE
 import time
 
-class PreToolSdkLoginRequestHandler(Component[apiclient]):
+class PreRequestHandler(Component[apiclient]):
     def __init__(self, pool: 'ClientPool'):
         self.pool = pool
     async def request(self, request: Request[TResponse], next: RequestHandler) -> TResponse:
         assert isinstance(self._container, PoolClientWrapper)
+        self._container.last_access = int(time.time())
         if isinstance(request, ToolSdkLoginRequest):
             self._container.uid = request.uid
             self.pool._on_sdk_login(self._container)
@@ -46,9 +47,10 @@ class PoolClientWrapper(pcrclient):
         self.session = sessionmgr(sdk)
         self.pool = pool
         self.uid: str = None
+        self.last_access = int(time.time())
         self.register(errorhandler())
         self.register(self.data)
-        self.register(PreToolSdkLoginRequestHandler(pool))
+        self.register(PreRequestHandler(pool))
         self.register(self.session)
         self.register(SessionErrorHandler(pool))
         self.register(mutexhandler())
@@ -60,15 +62,10 @@ class PoolClientWrapper(pcrclient):
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         return self.pool._put_in_pool(self)
 
-class ClientCache:
-    def __init__(self, client: PoolClientWrapper):
-        self.client = client
-        self.last_access = int(time.time())
-
 class ClientPool:
     def __init__(self):
         self.active_uids: Dict[str, int] = dict()
-        self._pool: Dict[Tuple[str, str], ClientCache] = dict()
+        self._pool: Dict[Tuple[str, str], PoolClientWrapper] = dict()
 
     def _on_sdk_login(self, client: PoolClientWrapper):
         client_key = id(client)
@@ -98,7 +95,7 @@ class ClientPool:
                     break
 
         if len(self._pool) < CLIENT_POOL_SIZE_MAX:
-            self._pool[pool_key] = ClientCache(client)
+            self._pool[pool_key] = client
 
     '''
     returns a client from the pool if available, otherwise creates a new one
@@ -107,15 +104,15 @@ class ClientPool:
     def get_client(self, sdk: sdkclient) -> PoolClientWrapper:
         pool_key = (sdk.account, type(sdk).__name__)
         if pool_key in self._pool:
-            item = self._pool.pop(pool_key)
+            client = self._pool.pop(pool_key)
             # no need to check for last password used, as the client is already logged in, when the session expires, the client will use the new sdk to re-login
             # assert item.client.uid not in self.active_uids
             # Sessions of any clients in pool which are active should be expired and imply a uid conflict.
-            if item.client.uid in self.active_uids:
+            if client.uid in self.active_uids:
                 raise PanicError('用户的另一项请求正在进行中')
-            self.active_uids[item.client.uid] = id(item.client)
-            item.client.session.sdk = sdk
-            return item.client
+            self.active_uids[client.uid] = id(client)
+            client.session.sdk = sdk
+            return client
         return PoolClientWrapper(self, sdk)
         
 
