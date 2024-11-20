@@ -303,7 +303,7 @@ class HttpServer:
             data = await request.get_json()
             order = data.get("order", "")
             try:
-                await mgr.do_from_key(deepcopy(mgr.client.keys), order, mgr._parent.secret.clan)
+                await mgr.do_from_key(deepcopy(mgr.config), order, mgr._parent.secret.clan)
                 resp = mgr.get_single_result_list(order)
                 resp = [r.response('/daily/api/account/{}' + f'/single_result/{order}/{r.key}') for r in resp]
                 return resp, 200

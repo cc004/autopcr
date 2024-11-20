@@ -81,28 +81,20 @@ class ModuleManager:
     @abstractmethod
     def is_clan_battle_forbidden(self) -> bool: ...
 
-    def __init__(self, config):
+    def __init__(self, config: dict):
         from .modulelistmgr import ModuleListManager
         self.modules_list: ModuleListManager = ModuleListManager(self)
-        self._config = config
+        self.config = config
     
     async def __aenter__(self):
         self.client = self.get_client()
-        self._load_config(self._config)
+        self.client.set_config(self.config)
         await self.client.__aenter__()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.client.__aexit__(exc_type, exc_val, exc_tb)
 
-    def _load_config(self, config):
-        try:
-            for key, value in config.items():
-                self.client.keys[key] = value
-        except:
-            traceback.print_exc()
-            raise
-    
     async def is_cron_run(self, hour: int, minute: int) -> bool:
         for cron in self.modules_list.cron_modules:
             if await cron.is_cron_run(hour, minute):
@@ -112,7 +104,7 @@ class ModuleManager:
             return False
     
     def get_config(self, name, default):
-        return self.client.keys.get(name, default)
+        return self.config.get(name, default)
 
     def generate_modules_info(self, key: str):
         return self.modules_list.generate_info(key)
@@ -121,7 +113,7 @@ class ModuleManager:
         return self.modules_list.generate_tab(clan, batch)
     
     async def do_daily(self, isAdminCall: bool = False) -> "TaskResultInfo":
-        resp = await self.do_task(self.client.keys, self.modules_list.daily_modules, isAdminCall)
+        resp = await self.do_task(self.config, self.modules_list.daily_modules, isAdminCall)
         status = eResultStatus.SUCCESS
         if any(m.status == eResultStatus.WARNING or m.status == eResultStatus.ABORT for m in resp.result.values()):
             status = eResultStatus.WARNING
@@ -145,9 +137,9 @@ class ModuleManager:
             raise PanicError("会战期间禁止执行任务")
 
         client = self.client
-        client.keys["stamina_relative_not_run"] = any(db.is_campaign(campaign) for campaign in client.keys.get("stamina_relative_not_run_campaign_before_one_day", []))
+        self.config["stamina_relative_not_run"] = any(db.is_campaign(campaign) for campaign in self.config.get("stamina_relative_not_run_campaign_before_one_day", []))
 
-        client.keys.update(config)
+        self.config.update(config)
 
         resp: TaskResult = TaskResult(
                 order = [],
