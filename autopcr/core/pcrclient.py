@@ -11,7 +11,7 @@ import typing, math
 class pcrclient(apiclient):
     def __init__(self, sdk: sdkclient):
         super().__init__(sdk)
-        self.keys = {}
+        self._keys = {}
         self.data = datamgr()
         self.session = sessionmgr(sdk)
         self.register(errorhandler())
@@ -19,6 +19,9 @@ class pcrclient(apiclient):
         self.register(self.session)
         self.register(mutexhandler())
     
+    def set_config(self, config: dict):
+        self._keys = config
+
     @property
     def name(self) -> str:
         return self.data.name
@@ -908,10 +911,10 @@ class pcrclient(apiclient):
 
     @property
     def stamina_recover_cnt(self) -> int:
-        return self.keys.get('stamina_recover_times', 0)
+        return self._keys.get('stamina_recover_times', 0)
 
     def set_stamina_recover_cnt(self, value: int):
-        self.keys['stamina_recover_times'] = value
+        self._keys['stamina_recover_times'] = value
 
     async def quest_skip_aware(self, quest: int, times: int, recover: bool = False, is_total: bool = False):
         name = db.get_quest_name(quest)
@@ -1112,31 +1115,31 @@ class pcrclient(apiclient):
         return await self.request(req)
 
     def set_stamina_consume_not_run(self):
-        self.keys['stamina_consume_not_run'] = True
+        self._keys['stamina_consume_not_run'] = True
 
     def is_stamina_consume_not_run(self):
-        return self.keys.get('stamina_consume_not_run', False)
+        return self._keys.get('stamina_consume_not_run', False)
 
     def set_stamina_get_not_run(self):
-        self.keys['stamina_get_not_run'] = True
+        self._keys['stamina_get_not_run'] = True
 
     def is_stamina_get_not_run(self):
-        return self.keys.get('stamina_get_not_run', False)
+        return self._keys.get('stamina_get_not_run', False)
 
     def set_star_cup_sweep_not_run(self):
-        self.keys['star_cup_sweep_not_run'] = True
+        self._keys['star_cup_sweep_not_run'] = True
 
     def is_star_cup_sweep_not_run(self):
-        return self.keys.get('star_cup_sweep_not_run', False)
+        return self._keys.get('star_cup_sweep_not_run', False)
 
     def set_heart_sweep_not_run(self):
-        self.keys['heart_sweep_not_run'] = True
+        self._keys['heart_sweep_not_run'] = True
 
     def is_heart_sweep_not_run(self):
-        return self.keys.get('heart_sweep_not_run', False)
+        return self._keys.get('heart_sweep_not_run', False)
 
     def set_cron_run(self):
-        self.keys['cron_run'] = True
+        self._keys['cron_run'] = True
 
     def is_cron_run(self):
-        return self.keys.get('cron_run', False)
+        return self._keys.get('cron_run', False)

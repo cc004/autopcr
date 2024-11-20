@@ -42,7 +42,7 @@ class SessionErrorHandler(Component[apiclient]):
 class PoolClientWrapper(pcrclient):
     def __init__(self, pool: 'ClientPool', sdk: sdkclient):
         apiclient.__init__(self, sdk)
-        self.keys = {}
+        self._keys = {}
         self.data = datamgr()
         self.session = sessionmgr(sdk)
         self.pool = pool
@@ -56,7 +56,7 @@ class PoolClientWrapper(pcrclient):
         self.register(mutexhandler())
 
     async def __aenter__(self):
-        self.keys.clear()
+        self._keys = {}
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
