@@ -49,8 +49,6 @@ class Account(ModuleManager):
     _account_locks: Dict[str, Lock] = dict()
 
     def __init__(self, parent: 'AccountManager', qid: str, account: str, readonly: bool = False):
-        if not account in parent.account_lock:
-            parent.account_lock[account] = Lock()
         self._filename = parent.path(account)
         self._lck = Account._account_locks.get(self._filename, Lock())
         self._parent = parent
@@ -283,12 +281,6 @@ class AccountManager:
             if self.secret != self.old_secret:
                 self.save_secret()
             self._lck.release()
-
-    @property
-    def account_lock(self) -> Dict[str, Lock]:
-        if not self.qid in self._parent.account_lock:
-            self._parent.account_lock[self.qid] = {}
-        return self._parent.account_lock[self.qid]
 
     def create_account(self, account: str) -> Account:
         if not AccountManager.pathsyntax.fullmatch(account):
