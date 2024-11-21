@@ -50,7 +50,7 @@ class Account(ModuleManager):
 
     def __init__(self, parent: 'AccountManager', qid: str, account: str, readonly: bool = False):
         self._filename = parent.path(account)
-        self._lck = Account._account_locks.get(self._filename, Lock())
+        self._lck = Account._account_locks.setdefault(self._filename, Lock())
         self._parent = parent
         self.readonly = readonly
         self._id = hashlib.md5(account.encode('utf-8')).hexdigest()
@@ -263,7 +263,7 @@ class AccountManager:
         self.root = parent.qid_path(qid)
         self._parent = parent
         self.readonly = readonly
-        self._lck = AccountManager._user_locks.get(self.root, Lock())
+        self._lck = AccountManager._user_locks.setdefault(self.root, Lock())
         
         with open(self.root + '/secret', 'r') as f:
             self.secret: UserData = UserData.from_json(f.read())
