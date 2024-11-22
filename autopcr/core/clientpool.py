@@ -76,7 +76,8 @@ class ClientPool:
         self.active_uids[client.uid] = client_key
 
     def _put_in_pool(self, client: PoolClientWrapper):
-        if client.uid not in self.active_uids: # client disposed without being logged in
+        if self.active_uids.get(client.uid, -1) != client.uid:
+            # client disposed without being activated
             return
         self.active_uids.pop(client.uid)
         if not client.logged: # client session expired and not successfully recovered
@@ -110,9 +111,7 @@ class ClientPool:
             # no need to check for last password used, as the client is already logged in, when the session expires, the client will use the new sdk to re-login
             # assert item.client.uid not in self.active_uids
             # Sessions of any clients in pool which are active should be expired and imply a uid conflict.
-            if client.uid in self.active_uids:
-                raise PanicError('用户的另一项请求正在进行中')
-            self.active_uids[client.uid] = id(client)
+            self._on_sdk_login(client)
             client.session.sdk = sdk
             return client
         return PoolClientWrapper(self, sdk)
