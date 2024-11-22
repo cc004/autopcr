@@ -13,6 +13,7 @@ from ...core.apiclient import apiclient
 
 @conditional_execution1("normal_sweep_run_time", ["n庆典"])
 @singlechoice("normal_sweep_strategy", "刷取策略", "刷最缺", ["刷最缺", "均匀刷"])
+@singlechoice("normal_sweep_quest_scope", "刷取图", "全部", ["全部", "可扫荡", "新开图"])
 @booltype("normal_sweep_equip_ok_to_full", "刷满则考虑所有角色", False)
 @singlechoice("normal_sweep_consider_unit", "起始品级", "所有", ["所有", "最高", "次高", "次次高"])
 @booltype("normal_sweep_consider_unit_fav", "收藏角色", True)
@@ -25,7 +26,7 @@ class smart_normal_sweep(Module):
     async def get_quests(self, quest_list: List[int], strategy: str, gap: typing.Counter[ItemType]) -> List[int]:
         ret = []
         lack = set(item for item, need in gap.items() if need > 0)
-        if not lack or strategy == "刷最缺":
+        if (not lack or strategy == "刷最缺") and quest_list:
             ret.append(quest_list[0])
         elif strategy == "均匀刷":
             uncover = lack
@@ -40,7 +41,7 @@ class smart_normal_sweep(Module):
             raise ValueError(f"未知策略{strategy}")
 
         if not ret:
-            self._log("无需刷取的图，这不太可能")
+            self._log("无需刷取的图！")
         return ret
 
     async def do_task(self, client: pcrclient):
@@ -49,6 +50,7 @@ class smart_normal_sweep(Module):
         rank: str = self.get_config('normal_sweep_consider_unit')
         strategy: str = self.get_config('normal_sweep_strategy')
         full2all: bool = self.get_config('normal_sweep_equip_ok_to_full')
+        quest_scope: str = self.get_config('normal_sweep_quest_scope')
         opt: Dict[Union[int, str], int] = {
             '所有': 1,
             '最高': db.equip_max_rank,
@@ -62,6 +64,14 @@ class smart_normal_sweep(Module):
         quest_id = []
         tmp = []
         quest_list: List[int] = [id for id, quest in db.normal_quest_data.items() if db.parse_time(quest.start_time) <= apiclient.datetime]
+        if quest_scope == "可扫荡":
+            quest_list = [id for id in quest_list if client.data.is_quest_sweepable(id)]
+        elif quest_scope == "新开图":
+            last_normal = set(db.last_normal_quest())
+            quest_list = [id for id in quest_list if id in last_normal]
+        elif quest_scope != "全部":
+            raise ValueError(f"未知刷取图范围{quest_scope}")
+            
         stop: bool = False
         first: bool = True
 

@@ -1,8 +1,8 @@
 from typing import List, Set
 
-from ...util.ilp_solver import dispatch_solver
+from ...util.ilp_solver import dispatch_solver, memory_use_average
 
-from ...model.common import ChangeRarityUnit, DeckListData, GrandArenaHistoryDetailInfo, GrandArenaHistoryInfo, GrandArenaSearchOpponent, ProfileUserInfo, RankingSearchOpponent, TravelDecreaseItem, TravelStartInfo, VersusResult, VersusResultDetail
+from ...model.common import ChangeRarityUnit, DeckListData, GrandArenaHistoryDetailInfo, GrandArenaHistoryInfo, GrandArenaSearchOpponent, ProfileUserInfo, RankingSearchOpponent, RedeemUnitInfo, RedeemUnitSlotInfo, TravelDecreaseItem, TravelStartInfo, VersusResult, VersusResultDetail
 from ...model.responses import PsyTopResponse
 from ...db.models import GachaExchangeLineup
 from ...model.custom import ArenaQueryResult, GachaReward, ItemType
@@ -17,6 +17,89 @@ from ...util.arena import instance as ArenaQuery
 import datetime
 import random
 from collections import Counter
+
+@name('计算兑换角色碎片')
+@default(True)
+@booltype('redeem_unit_swap_do', '开换', False)
+@description('计算兑换对应角色所需的3000碎片的最优使用方案，使得剩余碎片的盈余值的最大值最小')
+class redeem_unit_swap(Module):
+    async def do_task(self, client: pcrclient):
+        do = self.get_config('redeem_unit_swap_do')
+
+        for unit_id in db.redeem_unit:
+            if unit_id in client.data.unit:
+                continue
+            gap = client.data.get_memory_demand_gap()
+            item = [k for k, v in gap.items() if v < 0] 
+            self._log(f"{db.get_unit_name(unit_id)}")
+            use_piece = 0
+            info = client.data.user_redeem_unit.get(unit_id, 
+                                                    RedeemUnitInfo(unit_id = unit_id, 
+                                                                   slot_info = [RedeemUnitSlotInfo(slot_id = i, register_num = 0) for i in db.redeem_unit[unit_id]]))
+
+            for slot_id in db.redeem_unit[unit_id]:
+                if all(slot_info.slot_id != slot_id for slot_info in info.slot_info):
+                    info.slot_info.append(RedeemUnitSlotInfo(slot_id = slot_id, register_num = 0))
+
+            for slot_info in info.slot_info:
+                db_info = db.get_redeem_unit_slot_info(unit_id,slot_info.slot_id)
+                if slot_info.slot_id == 1:
+                    self._log(f"已使用{slot_info.register_num}碎片")
+                    use_piece = int(db_info.consume_num) - slot_info.register_num
+                elif slot_info.slot_id == 2:
+                    self._log(f"已使用{slot_info.register_num}玛那")
+                elif slot_info.slot_id == 3:
+                    if db_info.condition_id not in client.data.unit:
+                        raise AbortError(f"未解锁{db.get_unit_name(db_info.condition_id)}，无法兑换{db.get_unit_name(unit_id)}")
+                elif slot_info.slot_id == 4:
+                    if db_info.condition_id not in client.data.read_story_ids:
+                        raise AbortError(f"未阅读{db_info.condition_id}，无法兑换{db.get_unit_name(unit_id)}")
+                else:
+                    raise ValueError(f"未知的兑换条件{slot_info.slot_id}")
+
+
+            ok, res = memory_use_average([-gap[i] for i in item], use_piece)
+            if not ok:
+                raise AbortError(f"盈余碎片不足{use_piece}片")
+            id: List[int] = list(range(len(item)))
+            id.sort(key=lambda x: (res[x], -gap[item[x]] - res[x]), reverse=True)
+            msg = '\n'.join(f"{db.get_inventory_name_san(item[i])}使用{res[i]}片, 剩余盈余{-gap[item[i]] - res[i]}片" for i in id)
+            self._log(msg)
+
+            unsatisfied = [db.memory_to_unit[item[i][1]] for i in id if 
+                           res[i] > 0 and 
+                           (db.memory_to_unit[item[i][1]] not in client.data.unit or
+                           client.data.unit[db.memory_to_unit[item[i][1]]].unit_rarity < 5)]
+            if unsatisfied:
+                msg = '以下角色未5星，无法用于兑换：\n' + '\n'.join(db.get_unit_name(i) for i in unsatisfied)
+                raise AbortError(msg)
+
+            if do:
+                for slot_info in info.slot_info:
+                    if slot_info.slot_id == 1:
+                        memory_use = Counter({item[i]: res[i] for i in id if res[i] > 0})
+                        if memory_use:
+                            self._log(f"使用了角色碎片")
+                            ret = await client.unit_register_item(unit_id, slot_info.slot_id, memory_use, slot_info.register_num)
+                            slot_info.register_num = ret.register_num
+                    elif slot_info.slot_id == 2:
+                        info = db.get_redeem_unit_slot_info(unit_id,slot_info.slot_id)
+                        total_mana = int(info.consume_num) - slot_info.register_num
+                        if not (await client.prepare_mana(total_mana)):
+                            raise AbortError("玛那不足")
+                        while total_mana > 0:
+                            mana = min(total_mana, client.data.settings.max_once_consume_gold.redeem_unit)
+                            self._log(f"使用了{mana}玛那")
+                            ret = await client.unit_register_item(unit_id, slot_info.slot_id, Counter({(eInventoryType.Gold, info.condition_id): mana}), slot_info.register_num)
+                            slot_info.register_num = ret.register_num
+                            total_mana -= mana
+
+                self._log(f"兑换{db.get_unit_name(unit_id)}")
+                await client.unit_unlock_redeem_unit(unit_id)
+
+        if not self.log:
+            raise SkipError("没有可兑换的角色")
+
 
 @name('计算探险编队')
 @default(True)
@@ -202,6 +285,22 @@ class cook_pudding(Module):
         if is_error: raise ValueError("")
         if is_abort: raise AbortError("")
         if is_skip: raise SkipError("")
+
+@description('看看你的特别装备数量')
+@name('查ex装备')
+@booltype('ex_equip_info_cb_only', '会战', False)
+@default(True)
+class ex_equip_info(Module):
+    async def do_task(self, client: pcrclient):
+        cb_only = self.get_config('ex_equip_info_cb_only')
+        cnt = sorted( 
+                list(Counter(
+                (ex.ex_equipment_id, ex.rank) for ex in client.data.ex_equips.values() 
+                if not cb_only or db.ex_equipment_data[ex.ex_equipment_id].clan_battle_equip_flag).items()),
+                key=lambda x: (db.ex_equipment_data[x[0][0]].rarity, db.ex_equipment_data[x[0][0]].clan_battle_equip_flag, x[0][0], x[0][1]), reverse=True
+                )
+        msg = '\n'.join(f"{db.get_ex_equip_name(id, rank)}x{c}" for (id, rank), c in cnt)
+        self._log(msg)
 
 @description('看看你缺了什么角色')
 @name('查缺角色')

@@ -54,6 +54,7 @@ class datamgr(Component[apiclient]):
     event_sub_story: Dict[int, EventSubStory] = None
     user_gold_bank_info: UserBankGoldInfo = None
     ex_equips: Dict[int, ExtraEquipInfo] = None
+    user_redeem_unit: Dict[int, RedeemUnitInfo] = None
 
     def __init__(self):
         self.finishedQuest = set()
@@ -62,6 +63,7 @@ class datamgr(Component[apiclient]):
         self.deck_list = {}
         self.ex_equips = {}
         self.campaign_list = []
+        self.user_redeem_unit = {}
 
     lck = Lock()
 
@@ -492,6 +494,9 @@ class datamgr(Component[apiclient]):
 
     def is_quest_cleared(self, quest: int) -> bool:
         return quest in self.quest_dict and self.quest_dict[quest].result_type == eMissionStatusType.AlreadyReceive
+
+    def is_quest_sweepable(self, quest: int) -> bool:
+        return quest in self.quest_dict and self.quest_dict[quest].clear_flg == 3
 
     async def request(self, request: Request[TResponse], next: RequestHandler) -> TResponse:
         resp = await next.request(request)

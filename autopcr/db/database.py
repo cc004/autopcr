@@ -18,6 +18,7 @@ class database():
     heart: ItemType = (eInventoryType.Equip, 140000)
     xinsui: ItemType = (eInventoryType.Equip, 140001)
     xingqiubei: ItemType = (eInventoryType.Item, 25001)
+    zmana: ItemType = (eInventoryType.Gold, 94000)
     mana: ItemType = (eInventoryType.Gold, 94002)
     jewel: ItemType = (eInventoryType.Jewel, 91002)
     travel_speed_up_paper: ItemType = (eInventoryType.Item, 23002)
@@ -26,6 +27,12 @@ class database():
     def update(self, dbmgr: dbmgr):
         
         with dbmgr.session() as db:
+
+            self.redeem_unit: Dict[int, Dict[int, RedeemUnit]] = (
+                RedeemUnit.query(db)
+                .group_by(lambda x: x.unit_id)
+                .to_dict(lambda x: x.key, lambda x: x.to_dict(lambda x: x.slot_id, lambda x: x))
+            )
 
             self.dear_story_data: Dict[int, DearStoryDatum] = (
                 DearStoryDatum.query(db)
@@ -750,15 +757,15 @@ class database():
             )
 
             self.ex_rarity_name = {
-                1: '铜装',
-                2: '银装',
-                3: '金装',
-                4: '粉装'
+                1: '铜',
+                2: '银',
+                3: '金',
+                4: '粉'
             }
     def get_inventory_name(self, item: InventoryInfo) -> str:
         try:
             if item.type == eInventoryType.ExtraEquip:
-                return f"{self.ex_rarity_name[self.ex_equipment_data[item.id].rarity]}-" + self.inventory_name[(item.type, item.id)] 
+                return f"{self.ex_rarity_name[self.ex_equipment_data[item.id].rarity]}{item.ex_equip.rank}-" + self.inventory_name[(item.type, item.id)] 
             return self.inventory_name[(item.type, item.id)]
         except:
             return f"未知物品({item.id})"
@@ -768,6 +775,12 @@ class database():
             return self.inventory_name[(item[0], item[1])]
         except:
             return f"未知物品({item[1]})"
+
+    def get_ex_equip_name(self, item: int, rank: int = 0) -> str:
+        try:
+            return f"{self.ex_rarity_name[self.ex_equipment_data[item].rarity]}{rank}-" + self.inventory_name[(eInventoryType.ExtraEquip, item)] 
+        except:
+            return f"未知ex装备({item})"
 
     def get_unit_name(self, unit_id: int) -> str:
         try:
@@ -1127,6 +1140,9 @@ class database():
 
         return result, mana
 
+    def get_redeem_unit_slot_info(self, unit_id: int, slot_id: int) -> RedeemUnit:
+        return self.redeem_unit[unit_id][slot_id]
+
     def get_promotion_demand_level(self, unit_id: int, traget_rank: int) -> int:
         equips = self.get_rank_promote_equip_demand(unit_id, 1, [False] * 6, traget_rank, [False] * 6)
         return max(self.equip_data[id].require_level for (_, id) in equips.keys())
@@ -1220,14 +1236,18 @@ class database():
     def unit_unique_equip_level_candidate(self, equip_slot: int):
         return list(range(0, self.unique_equipment_max_level[equip_slot] + 1))
 
-    def last_normal_quest_candidate(self):
+    def last_normal_quest(self) -> List[int]:
         last_start_time = flow(self.normal_quest_data.values()) \
                 .where(lambda x: db.parse_time(x.start_time) <= apiclient.datetime) \
                 .max(lambda x: x.start_time).start_time
         return flow(self.normal_quest_data.values()) \
                 .where(lambda x: x.start_time == last_start_time) \
-                .select(lambda x: f"{x.quest_id}: {x.quest_name.split(' ')[1]}") \
+                .select(lambda x: x.quest_id) \
                 .to_list()
+
+    def last_normal_quest_candidate(self):
+        quest = self.last_normal_quest()
+        return [f"{x}: {self.quest_name[x].split(' ')[1]}" for x in quest]
 
     def travel_quest_candidate(self):
         return flow(self.travel_quest_data.values()) \
