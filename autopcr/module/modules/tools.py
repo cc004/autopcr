@@ -9,6 +9,7 @@ from ...model.custom import ArenaQueryResult, GachaReward, ItemType
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
+from ...core.apiclient import apiclient
 from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
@@ -111,7 +112,7 @@ class travel_team_view(Module):
         travel_team_auto_memory = self.get_config('travel_team_view_auto_memory')
         travel_team_go = self.get_config('travel_team_view_go')
         travel_quest_id_raw: List[str] = self.get_config('travel_team_view_quest_id')
-        travel_quest_id = [db.get_travel_quest_id_from_candidate(x) for x in travel_quest_id_raw]
+        travel_quest_id: List[int] = [db.get_travel_quest_id_from_candidate(x) for x in travel_quest_id_raw]
 
         top = await client.travel_top(max(db.get_open_travel_area()), 1)
         unit_list = top.priority_unit_list
@@ -129,13 +130,11 @@ class travel_team_view(Module):
         if top.travel_quest_list:
             self._log('当前派遣区域：')
             for quest in top.travel_quest_list:
-                import time
-                now = int(time.time())
-                leave_time = int(quest.travel_end_time - quest.decrease_time - now)
+                leave_time = int(quest.travel_end_time - quest.decrease_time - apiclient.time)
                 self._log(f"{db.get_quest_name(quest.travel_quest_id)} -{db.format_second(leave_time)}")
                 if quest.travel_quest_id in travel_quest_id: travel_quest_id.remove(quest.travel_quest_id)
 
-        teams_go = 3 - len(top.travel_quest_list)
+        teams_go = client.data.settings.travel.travel_start_max_deck_count - len(top.travel_quest_list)
         if not teams_go:
             raise AbortError("已经派遣了3支队伍")
         if teams_go < len(travel_quest_id):
@@ -186,7 +185,7 @@ class travel_team_view(Module):
         teams_power = [sum(unit_power[unit] for unit in teams[i]) for i in range(teams_go)]
 
         for id, (team, power) in enumerate(zip(teams, teams_power), start=1):
-            time = db.format_second(db.calc_travel_once_time(power))
+            time = db.format_second(db.calc_travel_once_time(travel_quest_id[id - 1], power, client.data.settings.travel.over_power_decrease_time_coefficient))
             self._log(f"第{id}队({time})总战力{power}=" + '+'.join(f"{unit_power[unit]}" for unit in team))
             self._log(' '.join(f"{db.get_unit_name(unit)}" for unit in team))
 
@@ -700,7 +699,7 @@ class ArenaInfo(Module):
         return user_name
 
     async def do_task(self, client: pcrclient):
-        time = db.format_time(datetime.datetime.now())
+        time = db.format_time(apiclient.datetime)
         self._log(f"时间：{time}")
         for page in range(1, 4):
             ranking = await self.get_rank_info(client, 20, page)
@@ -855,7 +854,7 @@ class get_normal_quest_recommand(Module):
         start_rank: int = self.get_config("start_rank")
         like_unit_only: bool = self.get_config("like_unit_only")
 
-        quest_list: List[int] = [id for id, quest in db.normal_quest_data.items() if db.parse_time(quest.start_time) <= datetime.datetime.now()]
+        quest_list: List[int] = [id for id, quest in db.normal_quest_data.items() if db.parse_time(quest.start_time) <= apiclient.datetime]
         require_equip = client.data.get_equip_demand_gap(start_rank = start_rank, like_unit_only = like_unit_only)
         quest_weight = client.data.get_quest_weght(require_equip)
         quest_id = sorted(quest_list, key = lambda x: quest_weight[x], reverse = True)

@@ -13,7 +13,7 @@ from Crypto.Cipher import AES
 from base64 import b64encode, b64decode
 from .sdkclient import sdkclient
 from ..constants import refresh_headers, DEBUG_LOG, ERROR_LOG
-
+import time, datetime
 import json
 from enum import Enum
 
@@ -48,8 +48,15 @@ class NetworkException(Exception):
 
 TResponse = TypeVar('TResponse', bound=ResponseBase, covariant=True)
 
+class staticproperty:
+    def __init__(self, func):
+        self.fget = func
+    def __get__(self, instance, owner):
+        return self.fget()
+
 class apiclient(Container["apiclient"]):
-    server_time: int = 0
+    _server_time: int = 0
+    _local_time: float = 0.0
     viewer_id: int = 0
     servers: list = [] #['https://l3-prod-all-gs-gzlj.bilibiligame.net/']
     active_server: int = 0
@@ -63,6 +70,14 @@ class apiclient(Container["apiclient"]):
         ]
         self._lck = Lock()
 
+    @staticproperty
+    def time() -> int:
+        return int(time.time() - apiclient._local_time + apiclient._server_time)
+        
+    @staticproperty
+    def datetime() -> datetime.datetime:
+        return datetime.datetime.fromtimestamp(apiclient.time)
+        
     @property
     def name(self) -> str:
         return 'undefined'
@@ -121,6 +136,7 @@ class apiclient(Container["apiclient"]):
                 raise NetworkException
 
             response0 = await resp.content
+            apiclient._local_time = time.time()
 
             response0 = apiclient._unpack(response0)[0] if request.crypted else loads(response0)
         except:
@@ -147,8 +163,10 @@ class apiclient(Container["apiclient"]):
            # fp.write(json.dumps(json.loads(response.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
 
         if response.data_headers.servertime:
-            self.server_time = response.data_headers.servertime
-
+            apiclient._server_time = response.data_headers.servertime
+        else:
+            apiclient._server_time = apiclient._local_time
+            
         if response.data_headers.sid:
             t = md5()
             t.update((response.data_headers.sid + 'c!SID!n').encode('utf8'))

@@ -9,7 +9,7 @@ from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
 from collections import Counter
-import datetime
+from ...core.apiclient import apiclient
 
 @conditional_execution1("normal_sweep_run_time", ["n庆典"])
 @singlechoice("normal_sweep_strategy", "刷取策略", "刷最缺", ["刷最缺", "均匀刷"])
@@ -63,7 +63,7 @@ class smart_normal_sweep(Module):
         clean_cnt = Counter()
         quest_id = []
         tmp = []
-        quest_list: List[int] = [id for id, quest in db.normal_quest_data.items() if db.parse_time(quest.start_time) <= datetime.datetime.now()]
+        quest_list: List[int] = [id for id, quest in db.normal_quest_data.items() if db.parse_time(quest.start_time) <= apiclient.datetime]
         if quest_scope == "可扫荡":
             quest_list = [id for id in quest_list if client.data.is_quest_sweepable(id)]
         elif quest_scope == "新开图":
@@ -71,7 +71,7 @@ class smart_normal_sweep(Module):
             quest_list = [id for id in quest_list if id in last_normal]
         elif quest_scope != "全部":
             raise ValueError(f"未知刷取图范围{quest_scope}")
-
+            
         stop: bool = False
         first: bool = True
 
