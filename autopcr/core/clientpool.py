@@ -78,9 +78,9 @@ class ClientPool:
     def _put_in_pool(self, client: PoolClientWrapper):
         if client.uid not in self.active_uids: # client disposed without being logged in
             return
+        self.active_uids.pop(client.uid)
         if not client.logged: # client session expired and not successfully recovered
             return
-        self.active_uids.pop(client.uid)
         
         pool_key = (client.session.sdk.account, type(client.session.sdk).__name__)
         # remove old client from pool, which session has been overrided by self.
