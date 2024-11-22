@@ -495,6 +495,9 @@ class datamgr(Component[apiclient]):
     def is_quest_cleared(self, quest: int) -> bool:
         return quest in self.quest_dict and self.quest_dict[quest].result_type == eMissionStatusType.AlreadyReceive
 
+    def is_quest_sweepable(self, quest: int) -> bool:
+        return quest in self.quest_dict and self.quest_dict[quest].clear_flg == 3
+
     async def request(self, request: Request[TResponse], next: RequestHandler) -> TResponse:
         resp = await next.request(request)
         if resp: await resp.update(self, request)

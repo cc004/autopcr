@@ -1235,14 +1235,18 @@ class database():
     def unit_unique_equip_level_candidate(self, equip_slot: int):
         return list(range(0, self.unique_equipment_max_level[equip_slot] + 1))
 
-    def last_normal_quest_candidate(self):
+    def last_normal_quest(self) -> List[int]:
         last_start_time = flow(self.normal_quest_data.values()) \
                 .where(lambda x: db.parse_time(x.start_time) <= datetime.datetime.now()) \
                 .max(lambda x: x.start_time).start_time
         return flow(self.normal_quest_data.values()) \
                 .where(lambda x: x.start_time == last_start_time) \
-                .select(lambda x: f"{x.quest_id}: {x.quest_name.split(' ')[1]}") \
+                .select(lambda x: x.quest_id) \
                 .to_list()
+
+    def last_normal_quest_candidate(self):
+        quest = self.last_normal_quest()
+        return [f"{x}: {self.quest_name[x].split(' ')[1]}" for x in quest]
 
     def travel_quest_candidate(self):
         return flow(self.travel_quest_data.values()) \
