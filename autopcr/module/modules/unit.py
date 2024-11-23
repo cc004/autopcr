@@ -206,7 +206,7 @@ class UnitController(Module):
         else:
             current_enhancement_pt = self.unit.equip_slot[slot_num - 1].enhancement_pt
             pt = db.get_equip_star_pt(equip_id, enhancement_level) - current_enhancement_pt
-            pt_limit = -1 if enhancement_level == 5 else db.get_equip_star_pt(equip_id, enhancement_level + 1) - current_enhancement_pt
+            pt_limit = -1 if enhancement_level == db.get_equip_max_star(equip_id) else db.get_equip_star_pt(equip_id, enhancement_level + 1) - current_enhancement_pt
             cost_stone = self.client.data.get_equip_enhance_stone_demand(pt, pt_limit)
             if not cost_stone:
                 raise AbortError(f"{self.unit_name}{slot_num}位装备{db.get_equip_name(equip_id)}强化至{enhancement_level}星级所需强化石不足，或无法达到其要求")
