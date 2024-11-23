@@ -8,8 +8,15 @@ from .misc import errorhandler, mutexhandler
 from .base import Component, Request, TResponse, RequestHandler
 from ..model.sdkrequests import ToolSdkLoginRequest
 from typing import Dict, Tuple, Set
-from ..constants import SESSION_ERROR_MAX_RETRY, CLIENT_POOL_SIZE_MAX, CLINET_POOL_MAX_AGE
-import time
+from ..constants import SESSION_ERROR_MAX_RETRY, CLIENT_POOL_SIZE_MAX, CLINET_POOL_MAX_AGE, CACHE_DIR
+import time, os, queue
+
+class ComponentWrapper(Component):
+    def __init__(self, component: Component):
+        self.component = component
+    async def request(self, request: Request[TResponse],
+        next: RequestHandler) -> TResponse:
+        return await self.component.request(request, next)
 
 class PreRequestHandler(Component[apiclient]):
     def __init__(self, pool: 'ClientPool'):
@@ -45,12 +52,14 @@ class PoolClientWrapper(pcrclient):
         self._base_keys = {}
         self._keys = {}
         self.data = datamgr()
+        self._data_wrapper = ComponentWrapper(self.data)
         self.session = sessionmgr(sdk)
         self.pool = pool
         self.uid: str = None
+        self.cache = None
         self.last_access = int(time.time())
         self.register(errorhandler())
-        self.register(self.data)
+        self.register(self._data_wrapper)
         self.register(PreRequestHandler(pool))
         self.register(self.session)
         self.register(SessionErrorHandler(pool))
@@ -63,17 +72,45 @@ class PoolClientWrapper(pcrclient):
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         return self.pool._put_in_pool(self)
+    
+    def activate(self):
+        assert self.cache is not None
+        with open(self.cache, 'r') as f:
+            self.data = datamgr.parse_raw(f.read())
+        os.remove(self.cache)
+        self._data_wrapper.component = self.data
+        return self.cache
+
+    def dispose(self):
+        assert self.cache is not None
+        os.remove(self.cache)
+        return self.cache
+
+    def deactivate(self, cache: str):
+        self.cache = cache
+        with open(cache, 'w') as f:
+            f.write(self.data.json())
+        self.data = None
+        self._data_wrapper.component = None
 
 class ClientPool:
     def __init__(self):
         self.active_uids: Dict[str, int] = dict()
         self._pool: Dict[Tuple[str, str], PoolClientWrapper] = dict()
+        self._cache_pool = queue.SimpleQueue(
+            os.path.join(CACHE_DIR, 'pool', f'data_{i}.json') for i in range(CLIENT_POOL_SIZE_MAX)
+        )
+        os.makedirs(os.path.join(CACHE_DIR, 'pool'), exist_ok=True)
 
     def _on_sdk_login(self, client: PoolClientWrapper):
         client_key = id(client)
         if self.active_uids.get(client.uid, client_key) != client_key:
             raise PanicError('用户的另一项请求正在进行中')
         self.active_uids[client.uid] = client_key
+
+    def _try_remove(self, pool_key: Tuple[str, str]):
+        if pool_key in self._pool:
+            self._cache_pool.put(self._pool.pop(pool_key).dispose())
 
     def _put_in_pool(self, client: PoolClientWrapper):
         client_key = id(client)
@@ -87,18 +124,20 @@ class ClientPool:
         pool_key = (client.session.sdk.account, type(client.session.sdk).__name__)
         # remove old client from pool, which session has been overrided by self.
         # removed here to save one client pool slot.
-        self._pool.pop(pool_key, None) 
+        
+        self._try_remove(pool_key)
 
         if len(self._pool) >= CLIENT_POOL_SIZE_MAX:
             now = int(time.time())
             while self._pool:
                 k, v = next(iter(self._pool.items()))
                 if v.last_access + CLINET_POOL_MAX_AGE < now:
-                    self._pool.pop(k)
+                    self._try_remove(k)
                 else:
                     break
 
         if len(self._pool) < CLIENT_POOL_SIZE_MAX:
+            client.deactivate(self._cache_pool.get())
             self._pool[pool_key] = client
 
     '''
@@ -112,6 +151,7 @@ class ClientPool:
             # no need to check for last password used, as the client is already logged in, when the session expires, the client will use the new sdk to re-login
             # assert item.client.uid not in self.active_uids
             # Sessions of any clients in pool which are active should be expired and imply a uid conflict.
+            self._cache_pool.put(client.activate())
             self._on_sdk_login(client)
             client.session.sdk = sdk
             return client

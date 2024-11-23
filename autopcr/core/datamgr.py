@@ -16,11 +16,13 @@ from ..util.linq import flow
 from asyncio import Lock
 
 
-class datamgr(Component[apiclient]):
+_data_lck = Lock()
+
+class datamgr(BaseModel, Component[apiclient]):
     settings: IniSetting = None
     dungeon_avaliable: bool = False
     resident_info: MonthlyGachaInfo = None
-    finishedQuest: Set[int] = None
+    finishedQuest: Set[int] = set()
     jewel: UserJewel = None
     gold: UserGold = None
     uid: int = 0
@@ -38,40 +40,26 @@ class datamgr(Component[apiclient]):
     training_quest_count: TrainingQuestCount = None
     training_quest_max_count: TrainingQuestCount = None
     quest_dict: Dict[int, UserQuestInfo] = None
-    hatsune_quest_dict: Dict[int, Dict[int, HatsuneUserEventQuest]] = None
+    hatsune_quest_dict: Dict[int, Dict[int, HatsuneUserEventQuest]] = {}
     name: str = None
     clan_like_count: int = 0
     user_my_quest: List[UserMyQuest] = None
-    _inventory: Dict[ItemType, int] = None
+    _inventory: Dict[ItemType, int] = {}
     read_story_ids: List[int] = None
     unlock_story_ids: List[int] = None
     event_statuses: List[EventStatus] = None
     tower_status: TowerStatus = None
-    deck_list: Dict[ePartyType, LoadDeckData] = None
-    campaign_list: List[int] = None
+    deck_list: Dict[ePartyType, LoadDeckData] = {}
+    campaign_list: List[int] = []
     gacha_point: Dict[int, GachaPointInfo] = None
     dispatch_units: List[UnitDataForClanMember] = None
     event_sub_story: Dict[int, EventSubStory] = None
     user_gold_bank_info: UserBankGoldInfo = None
-    ex_equips: Dict[int, ExtraEquipInfo] = None
-
-    def __init__(self):
-        self.finishedQuest = set()
-        self.hatsune_quest_dict = {}
-        self._inventory = {}
-        self.deck_list = {}
-        self.ex_equips = {}
-        self.campaign_list = []
-
-    lck = Lock()
-
-    @staticmethod
-    def lock():
-        return datamgr.lck
+    ex_equips: Dict[int, ExtraEquipInfo] = {}
 
     @staticmethod
     async def try_update_database(ver: int):
-        async with datamgr.lock():
+        async with _data_lck:
             if not assetmgr.ver or assetmgr.ver < ver:
                 await assetmgr.init(ver)
             if not dbmgr.ver or dbmgr.ver < assetmgr.ver: 
