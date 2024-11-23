@@ -51,7 +51,7 @@ class PoolClientWrapper(pcrclient):
         apiclient.__init__(self, sdk)
         self._base_keys = {}
         self._keys = {}
-        self.data = datamgr()
+        self.data = datamgr.create()
         self._data_wrapper = ComponentWrapper(self.data)
         self.session = sessionmgr(sdk)
         self.pool = pool

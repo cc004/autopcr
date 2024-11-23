@@ -41,7 +41,7 @@ class datamgr(BaseModel, Component[apiclient]):
     training_quest_max_count: TrainingQuestCount = None
     quest_dict: Dict[int, UserQuestInfo] = None
     hatsune_quest_dict: Dict[int, Dict[int, HatsuneUserEventQuest]] = {}
-    name: str = None
+    user_name: str = None
     clan_like_count: int = 0
     user_my_quest: List[UserMyQuest] = None
     _inventory: Dict[ItemType, int] = {}
@@ -57,6 +57,10 @@ class datamgr(BaseModel, Component[apiclient]):
     user_gold_bank_info: UserBankGoldInfo = None
     ex_equips: Dict[int, ExtraEquipInfo] = {}
 
+    @staticmethod
+    def create() -> 'datamgr':
+        return datamgr.parse_raw(datamgr().json())
+    
     @staticmethod
     async def try_update_database(ver: int):
         async with _data_lck:

@@ -45,8 +45,7 @@ class apiclient(Container["apiclient"]):
         self._lck = Lock()
 
     @property
-    def name(self) -> str:
-        return 'undefined'
+    def user_name(self) -> str: ...
 
     @staticmethod
     def _createkey() -> bytes:
@@ -88,7 +87,7 @@ class apiclient(Container["apiclient"]):
 
     async def _request_internal(self, request: Request[TResponse]) -> TResponse:
         if not request: return None
-        print(f'{self.name} requested {request.__class__.__name__} at /{request.url}')
+        print(f'{self.user_name} requested {request.__class__.__name__} at /{request.url}')
         key = apiclient._createkey()
         request.viewer_id = b64encode(apiclient._encrypt(str(self.viewer_id).encode('utf8'), key)).decode('ascii') if request.crypted else str(self.viewer_id)
 
@@ -113,7 +112,7 @@ class apiclient(Container["apiclient"]):
 
         if DEBUG_LOG:
             with open('req.log', 'a') as fp:
-                fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
+                fp.write(f'{self.user_name} requested {request.__class__.__name__} at /{request.url}\n')
                 fp.write(json.dumps(self._headers, indent=4, ensure_ascii=False) + '\n')
                 fp.write(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
                 fp.write(f'response from {urlroot}\n')
@@ -157,7 +156,7 @@ class apiclient(Container["apiclient"]):
 
             if ERROR_LOG:
                 with open('error.log', 'a') as fp:
-                    fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
+                    fp.write(f'{self.user_name} requested {request.__class__.__name__} at /{request.url}\n')
                     fp.write(json.dumps(self._headers, indent=4, ensure_ascii=False) + '\n')
                     fp.write(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
                     fp.write(f'response from {urlroot}\n')
