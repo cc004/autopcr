@@ -3659,13 +3659,13 @@ class AsmFinishRequest(Request[AsmFinishResponse]):
     answer_list: List[AsmAnswerInfo] = None
     @property
     def url(self) -> str:
-        return ""
+        return "asm/finish"
 class AsmReadQuizStatusRequest(Request[AsmReadQuizStatusResponse]):
     from_system_id: int = None
     asm_id_list: List[int] = None
     @property
     def url(self) -> str:
-        return ""
+        return "asm/read_quiz_status"
 class AsmStartRequest(Request[AsmStartResponse]):
     from_system_id: int = None
     gauge_id: int = None
@@ -3675,12 +3675,12 @@ class AsmStartRequest(Request[AsmStartResponse]):
     asm_type: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "asm/start"
 class AsmTopRequest(Request[AsmTopResponse]):
     from_system_id: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "asm/top"
 class BywayQuestBattleFinishRequest(Request[BywayQuestBattleFinishResponse]):
     quest_id: int = None
     remain_time: int = None
@@ -3691,7 +3691,7 @@ class BywayQuestBattleFinishRequest(Request[BywayQuestBattleFinishResponse]):
     is_friend: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "byway_quest/battle_finish"
 class BywayQuestBattleRetireRequest(Request[BywayQuestBattleRetireResponse]):
     quest_id: int = None
     @property
@@ -3707,31 +3707,31 @@ class BywayQuestBattleStartRequest(Request[BywayQuestBattleStartResponse]):
     auto_start_flg: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "byway_quest/battle_start"
 class BywayQuestDeliveryRequest(Request[BywayQuestDeliveryResponse]):
     quest_id: int = None
     item_list: List[BywayDeliveryItemInfo] = None
     @property
     def url(self) -> str:
-        return ""
+        return "byway_quest/delivery"
 class BywayQuestReplayListRequest(Request[BywayQuestReplayListResponse]):
     quest_id: int = None
     team_level: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "byway_quest/replay_list"
 class BywayQuestReplayRequest(Request[BywayQuestReplayResponse]):
     quest_id: int = None
     enc_key: str = None
     @property
     def url(self) -> str:
-        return ""
+        return "byway_quest/replay"
 class BywayQuestReplayReportRequest(Request[BywayQuestReplayReportResponse]):
     enc_key: str = None
     quest_id: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "byway_quest/replay_report"
 class CaravanCoinShopBuyRequest(Request[CaravanCoinShopBuyResponse]):
     season_id: int = None
     shop_season_id: int = None
@@ -3739,14 +3739,14 @@ class CaravanCoinShopBuyRequest(Request[CaravanCoinShopBuyResponse]):
     current_currency_num: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "caravan/coin_shop_buy"
 class CaravanDiceRollRequest(Request[CaravanDiceRollResponse]):
     season_id: int = None
     current_num: int = None
     roll_num: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "caravan/dice_roll"
 class CaravanDishSellRequest(Request[CaravanDishSellResponse]):
     season_id: int = None
     block_id: int = None
@@ -3754,13 +3754,13 @@ class CaravanDishSellRequest(Request[CaravanDishSellResponse]):
     surplus_dish_list: List[CaravanDishSellData] = None
     @property
     def url(self) -> str:
-        return ""
+        return "caravan/dish_sell"
 class CaravanDishUseRequest(Request[CaravanDishUseResponse]):
     season_id: int = None
     dish_id: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "caravan/dish_use"
 class CaravanGachaBlockExecRequest(Request[CaravanGachaBlockExecResponse]):
     season_id: int = None
     block_id: int = None
@@ -3768,37 +3768,37 @@ class CaravanGachaBlockExecRequest(Request[CaravanGachaBlockExecResponse]):
     current_currency_num: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "caravan/gacha_block_exec"
 class CaravanMinigameCccFinishRequest(Request[CaravanMinigameCccFinishResponse]):
     from_system_id: int = None
     play_id: int = None
     object_list: List[CccFinishItemCountInfo] = None
     @property
     def url(self) -> str:
-        return ""
+        return "caravan_minigame/ccc/finish"
 class CaravanMinigameCccStartRequest(Request[CaravanMinigameCccStartResponse]):
     from_system_id: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "caravan_minigame/ccc/start"
 class CaravanMinigameRetireRequest(Request[CaravanMinigameRetireResponse]):
     from_system_id: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "caravan/minigame_retire"
 class CaravanMoveRequest(Request[CaravanMoveResponse]):
     season_id: int = None
     current_block_id: int = None
     block_id_list: List[int] = None
     @property
     def url(self) -> str:
-        return ""
+        return "caravan/move"
 class CaravanReadRequest(Request[CaravanReadResponse]):
     season_id: int = None
     block_id: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "caravan/read"
 class CaravanShopBlockBuyRequest(Request[CaravanShopBlockBuyResponse]):
     season_id: int = None
     block_id: int = None
@@ -3806,12 +3806,12 @@ class CaravanShopBlockBuyRequest(Request[CaravanShopBlockBuyResponse]):
     current_currency_num: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "caravan/shop_block_buy"
 class CaravanTopRequest(Request[CaravanTopResponse]):
     is_first: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "caravan/top"
 class ColosseumBattleFinishRequest(Request[ColosseumBattleFinishResponse]):
     quest_id: int = None
     user_unit_info: List[ColosseumBattleFinishUnitInfo] = None
@@ -3819,49 +3819,49 @@ class ColosseumBattleFinishRequest(Request[ColosseumBattleFinishResponse]):
     remain_time: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "colosseum/battle_finish"
 class ColosseumBattleRetireRequest(Request[ColosseumBattleRetireResponse]):
     quest_id: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "colosseum/battle_retire"
 class ColosseumBattleStartRequest(Request[ColosseumBattleStartResponse]):
     quest_id: int = None
     token: str = None
     @property
     def url(self) -> str:
-        return ""
+        return "colosseum/battle_start"
 class ColosseumHistoryRequest(Request[ColosseumHistoryResponse]):
     quest_id: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "colosseum/history"
 class ColosseumMissionAcceptRequest(Request[ColosseumMissionAcceptResponse]):
     mission_id: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "colosseum/mission_accept"
 class ColosseumMissionIndexRequest(Request[ColosseumMissionIndexResponse]):
     @property
     def url(self) -> str:
-        return ""
+        return "colosseum/mission_index"
 class ColosseumRankingRequest(Request[ColosseumRankingResponse]):
     schedule_id: int = None
     page: int = None
     is_my_page: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "colosseum/ranking"
 class ColosseumReplayRequest(Request[ColosseumReplayResponse]):
     quest_id: int = None
     log_id: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "colosseum/replay"
 class ColosseumTopRequest(Request[ColosseumTopResponse]):
     @property
     def url(self) -> str:
-        return ""
+        return "colosseum/top"
 class GachaMonthlyIndexRequest(Request[GachaMonthlyIndexResponse]):
     @property
     def url(self) -> str:
@@ -3871,7 +3871,7 @@ class LogConnectionErrorRequest(Request[LogConnectionErrorResponse]):
     error_message: str = None
     @property
     def url(self) -> str:
-        return ""
+        return "log/connection_error"
 class SeasonPassBuyLevelRequest(Request[SeasonPassBuyLevelResponse]):
     season_id: int = None
     current_currency_num: int = None
@@ -3905,32 +3905,32 @@ class ShopBuyBulkRequest(Request[ShopBuyBulkResponse]):
     current_currency_num: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "shop/buy_bulk"
 class SubStoryBmyReadStoryRequest(Request[SubStoryBmyReadStoryResponse]):
     sub_story_id: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "sub_story/bmy/read_story"
 class SubStoryDvsReadStoryRequest(Request[SubStoryDvsReadStoryResponse]):
     sub_story_id: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "sub_story/dvs/read_story"
 class SubStoryWonReadStoryRequest(Request[SubStoryWonReadStoryResponse]):
     sub_story_id_list: List[int] = None
     @property
     def url(self) -> str:
-        return ""
+        return "sub_story/won/read_story"
 class SubStoryWtmReadStoryRequest(Request[SubStoryWtmReadStoryResponse]):
     sub_story_id: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "sub_story/wtm/read_story"
 class SubStoryWtsReadStoryRequest(Request[SubStoryWtsReadStoryResponse]):
     sub_story_id: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "sub_story/wts/read_story"
 class TestBuyMonthlyCardRequest(Request[TestBuyMonthlyCardResponse]):
     jewel_store_id: int = None
     max_free_count_10: int = None
@@ -3947,7 +3947,7 @@ class TravelResultRoundEventRequest(Request[TravelResultRoundEventResponse]):
     select_door_id: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "travel/result_round_event"
 class UniqueEquip2MultiEnhanceRequest(Request[UniqueEquip2MultiEnhanceResponse]):
     unit_id: int = None
     current_enhance_level: int = None
@@ -3960,16 +3960,16 @@ class UnitChangeMultiAutomaticModeRequest(Request[UnitChangeMultiAutomaticModeRe
     setting: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "unit/change_multi_automatic_mode"
 class UnitChangeMultiAutomaticPromotionSettingRequest(Request[UnitChangeMultiAutomaticPromotionSettingResponse]):
     setting: List[int] = None
     @property
     def url(self) -> str:
-        return ""
+        return "unit/change_multi_automatic_promotion_setting"
 class UnitGetMultiAutomaticSettingRequest(Request[UnitGetMultiAutomaticSettingResponse]):
     @property
     def url(self) -> str:
-        return ""
+        return "unit/get_multi_automatic_setting"
 class UnitMultiAutomaticPromotionRequest(Request[UnitMultiAutomaticPromotionResponse]):
     unit_id_list: List[int] = None
     target_promotion_level: int = None
@@ -3978,4 +3978,4 @@ class UnitMultiAutomaticPromotionRequest(Request[UnitMultiAutomaticPromotionResp
     current_gold: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "unit/multi_automatic_promotion"
