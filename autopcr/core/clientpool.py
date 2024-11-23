@@ -113,7 +113,8 @@ class ClientPool:
             self._cache_pool.put(self._pool.pop(pool_key).dispose())
 
     def _put_in_pool(self, client: PoolClientWrapper):
-        if self.active_uids.get(client.uid, -1) != client.uid:
+        client_key = id(client)
+        if self.active_uids.get(client.uid, client_key) != client_key:
             # client disposed without being activated
             return
         self.active_uids.pop(client.uid)
