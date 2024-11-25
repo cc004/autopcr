@@ -265,6 +265,8 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         mgr.team_level = self.user_info.team_level
         mgr.jewel = self.user_jewel
         mgr.gold = self.user_gold
+        if self.user_redeem_unit:
+            mgr.user_redeem_unit = {unit.unit_id: unit for unit in self.user_redeem_unit}
         if self.resident_info:
             mgr.resident_info = self.resident_info
         if self.bank_bought:
@@ -732,6 +734,24 @@ class TravelReceiveTopEventRewardResponse(responses.TravelReceiveTopEventRewardR
             mgr.stamina = self.stamina_info.user_stamina
         for item in self.reward_list:
             mgr.update_inventory(item)
+
+@handles
+class RedeemUnitRegisterItemResponse(responses.RedeemUnitRegisterItemResponse):
+    async def update(self, mgr: datamgr, request):
+        for item in request.item_list:
+            if item.id == db.zmana[1]:
+                mana = min(mgr.gold.gold_id_free, item.count)
+                mgr.gold.gold_id_free -= mana
+                item.count -= mana
+                mgr.gold.gold_id_pay -= item.count
+            else:
+                mgr._inventory[(eInventoryType.Item, item.id)] -= item.count
+
+@handles
+class RedeemUnitUnlockResponse(responses.RedeemUnitUnlockResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.unit_data:
+            mgr.unit[self.unit_data.id] = self.unit_data
 
 # 菜 就别玩
 def custom_dict(self, *args, **kwargs):

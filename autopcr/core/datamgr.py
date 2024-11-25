@@ -56,6 +56,7 @@ class datamgr(BaseModel, Component[apiclient]):
     event_sub_story: Dict[int, EventSubStory] = None
     user_gold_bank_info: UserBankGoldInfo = None
     ex_equips: Dict[int, ExtraEquipInfo] = {}
+    user_redeem_unit: Dict[int, RedeemUnitInfo] = {}
 
     @staticmethod
     def create() -> 'datamgr':
@@ -361,7 +362,7 @@ class datamgr(BaseModel, Component[apiclient]):
         return self.get_unique_equip_material_demand(1, unit_id, token)
 
     def get_max_quest(self, quests: Dict[int, TrainingQuestDatum], sweep_available = False) -> int:
-        now = datetime.datetime.now()
+        now = apiclient.datetime
         return (
             flow(quests.keys())
             .where(lambda x: now >= db.parse_time(quests[x].start_time) and 
@@ -484,6 +485,9 @@ class datamgr(BaseModel, Component[apiclient]):
 
     def is_quest_cleared(self, quest: int) -> bool:
         return quest in self.quest_dict and self.quest_dict[quest].result_type == eMissionStatusType.AlreadyReceive
+
+    def is_quest_sweepable(self, quest: int) -> bool:
+        return quest in self.quest_dict and self.quest_dict[quest].clear_flg == 3
 
     async def request(self, request: Request[TResponse], next: RequestHandler) -> TResponse:
         resp = await next.request(request)

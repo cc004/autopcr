@@ -12,11 +12,13 @@ from .models import *
 from ..util.linq import flow
 from queue import SimpleQueue
 from .constdata import extra_drops
+from ..core.apiclient import apiclient
 
 class database():
     heart: ItemType = (eInventoryType.Equip, 140000)
     xinsui: ItemType = (eInventoryType.Equip, 140001)
     xingqiubei: ItemType = (eInventoryType.Item, 25001)
+    zmana: ItemType = (eInventoryType.Gold, 94000)
     mana: ItemType = (eInventoryType.Gold, 94002)
     jewel: ItemType = (eInventoryType.Jewel, 91002)
     travel_speed_up_paper: ItemType = (eInventoryType.Item, 23002)
@@ -25,6 +27,12 @@ class database():
     def update(self, dbmgr: dbmgr):
         
         with dbmgr.session() as db:
+
+            self.redeem_unit: Dict[int, Dict[int, RedeemUnit]] = (
+                RedeemUnit.query(db)
+                .group_by(lambda x: x.unit_id)
+                .to_dict(lambda x: x.key, lambda x: x.to_dict(lambda x: x.slot_id, lambda x: x))
+            )
 
             self.dear_story_data: Dict[int, DearStoryDatum] = (
                 DearStoryDatum.query(db)
@@ -749,15 +757,15 @@ class database():
             )
 
             self.ex_rarity_name = {
-                1: '铜装',
-                2: '银装',
-                3: '金装',
-                4: '粉装'
+                1: '铜',
+                2: '银',
+                3: '金',
+                4: '粉'
             }
     def get_inventory_name(self, item: InventoryInfo) -> str:
         try:
             if item.type == eInventoryType.ExtraEquip:
-                return f"{self.ex_rarity_name[self.ex_equipment_data[item.id].rarity]}-" + self.inventory_name[(item.type, item.id)] 
+                return f"{self.ex_rarity_name[self.ex_equipment_data[item.id].rarity]}{item.ex_equip.rank}-" + self.inventory_name[(item.type, item.id)] 
             return self.inventory_name[(item.type, item.id)]
         except:
             return f"未知物品({item.id})"
@@ -767,6 +775,12 @@ class database():
             return self.inventory_name[(item[0], item[1])]
         except:
             return f"未知物品({item[1]})"
+
+    def get_ex_equip_name(self, item: int, rank: int = 0) -> str:
+        try:
+            return f"{self.ex_rarity_name[self.ex_equipment_data[item].rarity]}{rank}-" + self.inventory_name[(eInventoryType.ExtraEquip, item)] 
+        except:
+            return f"未知ex装备({item})"
 
     def get_unit_name(self, unit_id: int) -> str:
         try:
@@ -839,11 +853,11 @@ class database():
     def is_unique_equip_glow_ball(self, item: ItemType) -> bool:
         return item[0] == eInventoryType.Item and item[1] >= 21950 and item[1] < 22000
 
-    def is_room_item_level_upable(self, team_level: int, item: RoomUserItem) -> bool:
+    def is_room_item_level_upable(self, team_level: int, item: RoomUserItem, now: int) -> bool:
         return (item.room_item_level < self.room_item[item.room_item_id].max_level and 
                 item.room_item_level in self.room_item_detail[item.room_item_id] and
                 team_level >= self.room_item_detail[item.room_item_id][item.room_item_level].lvup_trigger_value and 
-                (item.level_up_end_time is None or item.level_up_end_time < time.time()))
+                (item.level_up_end_time is None or item.level_up_end_time < now))
 
     def is_normal_quest(self, quest_id: int) -> bool:
         return quest_id // 1000000 == 11
@@ -931,7 +945,7 @@ class database():
         return self.campaign_schedule[campaign_id].value
 
     def get_active_hatsune(self) -> List[HatsuneSchedule]:
-        now = datetime.datetime.now()
+        now = apiclient.datetime
         return flow(self.hatsune_schedule.values()) \
                 .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.end_time)) \
                 .to_list()
@@ -941,19 +955,19 @@ class database():
         return [f"{event.event_id}:{db.event_name[event.event_id]}" for event in active_hatsune]
 
     def get_open_hatsune(self) -> List[HatsuneSchedule]:
-        now = datetime.datetime.now()
+        now = apiclient.datetime
         return flow(self.hatsune_schedule.values()) \
                 .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.close_time)) \
                 .to_list()
 
     def get_active_seasonpass(self) -> List[SeasonpassFoundation]:
-        now = datetime.datetime.now()
+        now = apiclient.datetime
         return flow(self.seasonpass_foundation.values()) \
                 .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.limit_time)) \
                 .to_list()
 
     def get_open_seasonpass(self) -> List[SeasonpassFoundation]:
-        now = datetime.datetime.now()
+        now = apiclient.datetime
         return flow(self.seasonpass_foundation.values()) \
                 .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.end_time)) \
                 .to_list()
@@ -981,14 +995,14 @@ class database():
 
     def is_target_time(self, schedule: List[Tuple[datetime.datetime, datetime.datetime]], now: Union[None, datetime.datetime] = None) -> bool:
         if now is None:
-            now = datetime.datetime.now()
+            now = apiclient.datetime
         for start_time, end_time in schedule:
             if now >= start_time and now <= end_time:
                 return True
         return False
 
     def is_campaign(self, campaign: str, now: Union[None, datetime.datetime] = None) -> bool:
-        now = datetime.datetime.now() if now is None else now
+        now = apiclient.datetime if now is None else now
         tomorrow = now + datetime.timedelta(days = 1)
         half_day = datetime.timedelta(hours = 7)
         n3 = (flow(self.campaign_schedule.values())
@@ -1077,13 +1091,13 @@ class database():
         return time
 
     def is_today(self, time: datetime.datetime) -> bool:
-        now = datetime.datetime.now()
+        now = apiclient.datetime
         today = self.get_start_time(time)
         tomorrow = today + datetime.timedelta(days = 1)
         return today <= now and now < tomorrow
 
     def get_today_start_time(self) -> datetime.datetime:
-        return self.get_start_time(datetime.datetime.now())
+        return self.get_start_time(apiclient.datetime)
 
     def get_unique_equip_material_demand(self, unit_id: int, slot_id:int, start_rank:int, target_rank: int) -> typing.Counter[ItemType]: 
         if unit_id not in db.unit_unique_equip[slot_id]:
@@ -1126,6 +1140,9 @@ class database():
 
         return result, mana
 
+    def get_redeem_unit_slot_info(self, unit_id: int, slot_id: int) -> RedeemUnit:
+        return self.redeem_unit[unit_id][slot_id]
+
     def get_promotion_demand_level(self, unit_id: int, traget_rank: int) -> int:
         equips = self.get_rank_promote_equip_demand(unit_id, 1, [False] * 6, traget_rank, [False] * 6)
         return max(self.equip_data[id].require_level for (_, id) in equips.keys())
@@ -1137,7 +1154,7 @@ class database():
         return self.experience_unit[target_level]
 
     def get_cur_gacha(self):
-        now = datetime.datetime.now()
+        now = apiclient.datetime
         return flow(self.gacha_data.values()) \
         .where(lambda x: self.parse_time(x.start_time) <= now and now <= self.parse_time(x.end_time)) \
         .select(lambda x: f"{x.gacha_id}: {x.gacha_name}-{x.pick_up_chara_text}") \
@@ -1219,21 +1236,25 @@ class database():
     def unit_unique_equip_level_candidate(self, equip_slot: int):
         return list(range(0, self.unique_equipment_max_level[equip_slot] + 1))
 
-    def last_normal_quest_candidate(self):
+    def last_normal_quest(self) -> List[int]:
         last_start_time = flow(self.normal_quest_data.values()) \
-                .where(lambda x: db.parse_time(x.start_time) <= datetime.datetime.now()) \
+                .where(lambda x: db.parse_time(x.start_time) <= apiclient.datetime) \
                 .max(lambda x: x.start_time).start_time
         return flow(self.normal_quest_data.values()) \
                 .where(lambda x: x.start_time == last_start_time) \
-                .select(lambda x: f"{x.quest_id}: {x.quest_name.split(' ')[1]}") \
+                .select(lambda x: x.quest_id) \
                 .to_list()
+
+    def last_normal_quest_candidate(self):
+        quest = self.last_normal_quest()
+        return [f"{x}: {self.quest_name[x].split(' ')[1]}" for x in quest]
 
     def travel_quest_candidate(self):
         return flow(self.travel_quest_data.values()) \
                 .select(lambda x: f"{x.travel_area_id % 10}-{x.travel_quest_id % 10}") \
                 .to_list()
 
-    def get_travel_quest_id_from_candidate(self, candidate: str):
+    def get_travel_quest_id_from_candidate(self, candidate: str) -> int:
         area, quest = candidate.split('-')
         ret = next(x.travel_quest_id for x in self.travel_quest_data.values() if x.travel_area_id % 10 == int(area) and x.travel_quest_id % 10 == int(quest))
         return ret
@@ -1327,7 +1348,11 @@ class database():
         skill_power = self.calc_skill_power(unit_data, coefficient)
         return attribute_power + skill_power
 
-    def calc_travel_once_time(self, power: int) -> int:
-        return max(12 * 60 * 60 - (power - 100000 + 199) // 200 * 3, 10 * 60 * 60)
+    def calc_travel_once_time(self, quest_id: int, power: int, coeff: float = 0.015) -> int:
+        quest = db.travel_quest_data[quest_id]
+        return quest.travel_time - min(
+            quest.travel_time_decrease_limit,
+            int(max(0, power - quest.need_power) * coeff)
+        )
 
 db = database()

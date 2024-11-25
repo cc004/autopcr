@@ -2,6 +2,7 @@ from ...model.custom import GachaReward
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
+from ...core.apiclient import apiclient
 from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
@@ -78,9 +79,9 @@ class free_gacha(Module):
         gacha_list = db.free_gacha_list[schedule.campaign_id]
         start_time = db.parse_time(schedule.start_time)
         end_time = db.parse_time(schedule.end_time)
-        if datetime.datetime.now() >= end_time:
+        if apiclient.datetime >= end_time:
             raise SkipError("免费十连已结束")
-        if datetime.datetime.now() < start_time:
+        if apiclient.datetime < start_time:
             raise SkipError("免费十连尚未开始")
         if res.campaign_info.fg10_exec_cnt == 0:
             raise SkipError("今日份免费十连已使用")
