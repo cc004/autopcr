@@ -13,7 +13,7 @@ class pcrclient(apiclient):
         self._base_keys = {}
         self._keys = {}
         super().__init__(sdk)
-        self.data = datamgr()
+        self.data = datamgr.create()
         self.session = sessionmgr(sdk)
         self.register(errorhandler())
         self.register(self.data)
@@ -25,8 +25,8 @@ class pcrclient(apiclient):
         self._keys = {}
 
     @property
-    def name(self) -> str:
-        return self.data.name
+    def user_name(self) -> str:
+        return self.data.user_name
 
     @property
     def logged(self):
