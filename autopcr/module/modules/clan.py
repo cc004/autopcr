@@ -50,7 +50,7 @@ class clan_equip_request(Module):
         if clan.latest_request_time and apiclient.time <= clan.latest_request_time + client.data.settings.clan.equipment_request_interval:
             raise SkipError("当前请求尚未结束")
         elif clan.latest_request_time:
-            res = await client.equip_get_request(clan.clan.detail.clan_id, 0)
+            res = await client.equip_get_request(0)
             msg = f"收到{db.get_equip_name(res.request.equip_id)}x{res.request.donation_num}：" + ' '.join(f"{user.name}x{user.num}" for user in res.request.history)
             self._log(msg.strip("："))
 

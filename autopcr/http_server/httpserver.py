@@ -12,6 +12,7 @@ from typing import Callable, Coroutine, Any
 from ..module.accountmgr import Account, AccountManager, UserException, instance as usermgr, AccountException
 from ..constants import CACHE_DIR
 from ..util.draw import instance as drawer
+from .validator import validate_dict, ValidateInfo, validate_ok_dict, enable_manual_validator
 
 APP_VERSION = "1.1.1"
 
@@ -19,6 +20,7 @@ CACHE_HTTP_DIR = os.path.join(CACHE_DIR, 'http_server')
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 static_path = os.path.join(PATH, 'ClientApp')
+
 
 class HttpServer:
     def __init__(self, host = '0.0.0.0', port = 2, qq_mod = False):
@@ -46,6 +48,9 @@ class HttpServer:
         self.validate_server = {}
         self.configure_routes()
         self.qq_mod = qq_mod
+
+        enable_manual_validator()
+        
 
     @staticmethod
     def wrapaccount(readonly = False):
@@ -298,7 +303,7 @@ class HttpServer:
             data = await request.get_json()
             order = data.get("order", "")
             try:
-                await mgr.do_from_key(deepcopy(mgr.client.keys), order, mgr._parent.secret.clan)
+                await mgr.do_from_key(deepcopy(mgr.config), order, mgr._parent.secret.clan)
                 resp = mgr.get_single_result_list(order)
                 resp = [r.response('/daily/api/account/{}' + f'/single_result/{order}/{r.key}') for r in resp]
                 return resp, 200
@@ -351,7 +356,6 @@ class HttpServer:
         @login_required
         @HttpServer.wrapaccountmgr(readonly = True)
         async def query_validate(accountmgr: AccountManager):
-            from ..sdk.validator import validate_dict
             if "text/event-stream" not in request.accept_mimetypes:
                 return "", 400
 
@@ -385,11 +389,9 @@ data: {ret}\n\n'''
         @self.api.route('/validate', methods = ['POST'])
         async def validate(): # TODO think to check login or not
             data = await request.get_json()
-            from ..sdk.validator import validate_ok_dict
             if 'id' not in data:
                 return "incorrect", 403
             id = data['id']
-            from ..sdk.validator import ValidateInfo
             validate_ok_dict[id] = ValidateInfo.from_dict(data)
             return "", 200
 
