@@ -70,7 +70,7 @@ class ModuleManager:
     def id(self) -> str: ...
 
     @abstractmethod
-    def get_client() -> PoolClientWrapper: ...
+    async def get_client() -> PoolClientWrapper: ...
 
     @abstractmethod
     async def save_daily_result(self, resp: TaskResult, status: eResultStatus) -> TaskResultInfo: ...
@@ -87,7 +87,7 @@ class ModuleManager:
         self.config = config
     
     async def __aenter__(self):
-        self.client = self.get_client()
+        self.client = await self.get_client()
         self.client.set_config(self.config)
         await self.client.__aenter__()
         return self

@@ -8,8 +8,8 @@ from .misc import errorhandler, mutexhandler
 from .base import Component, Request, TResponse, RequestHandler
 from ..model.sdkrequests import ToolSdkLoginRequest
 from typing import Dict, Tuple, Set
-from ..constants import SESSION_ERROR_MAX_RETRY, CLIENT_POOL_SIZE_MAX, CLINET_POOL_MAX_AGE, CACHE_DIR
-import time, os, queue
+from ..constants import SESSION_ERROR_MAX_RETRY, CLIENT_POOL_SIZE_MAX, CLINET_POOL_MAX_AGE, CACHE_DIR, CLINET_POOL_MAX_CLIENT_ALIVE
+import time, os, queue, asyncio
 
 class ComponentWrapper(Component):
     def __init__(self, component: Component):
@@ -102,6 +102,8 @@ class ClientPool:
         )
         os.makedirs(os.path.join(CACHE_DIR, 'pool'), exist_ok=True)
 
+        self._sema = asyncio.Semaphore(CLINET_POOL_MAX_CLIENT_ALIVE)
+
     def _on_sdk_login(self, client: PoolClientWrapper):
         client_key = id(client)
         if self.active_uids.get(client.uid, client_key) != client_key:
@@ -113,6 +115,7 @@ class ClientPool:
             self._cache_pool.put(self._pool.pop(pool_key).dispose())
 
     def _put_in_pool(self, client: PoolClientWrapper):
+        self._sema.release()
         client_key = id(client)
         if self.active_uids.get(client.uid, client_key) != client_key:
             # client disposed without being activated
@@ -144,7 +147,8 @@ class ClientPool:
     returns a client from the pool if available, otherwise creates a new one
     client.session.sdk is always set to the provided sdk
     '''
-    def get_client(self, sdk: sdkclient) -> PoolClientWrapper:
+    async def get_client(self, sdk: sdkclient) -> PoolClientWrapper:
+        await self._sema.acquire()
         pool_key = (sdk.account, type(sdk).__name__)
         if pool_key in self._pool:
             client = self._pool.pop(pool_key)
