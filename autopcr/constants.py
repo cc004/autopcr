@@ -15,6 +15,9 @@ CONFIG_PATH = os.path.join(CACHE_DIR, './http_server/')
 OLD_CONFIG_PATH = os.path.join(ROOT_DIR, 'autopcr/http_server/config')
 AUTH_KEY = ""
 
+MAX_API_RUNNING = 8
+MAX_CLIENT_ALIVE = 10
+
 # Headers
 DEFAULT_HEADERS = {
     'Accept-Encoding': 'gzip',
