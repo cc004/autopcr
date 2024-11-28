@@ -98,10 +98,15 @@ class ModuleManager:
     async def is_cron_run(self, hour: int, minute: int) -> bool:
         for cron in self.modules_list.cron_modules:
             if await cron.is_cron_run(hour, minute):
-                await cron.update_client(self.client)
                 return True
         else:
             return False
+    
+    async def pre_cron_run(self, hour: int, minute: int):
+        for cron in self.modules_list.cron_modules:
+            if await cron.is_cron_run(hour, minute):
+                await cron.update_client(self.client)
+                return
     
     def get_config(self, name, default):
         return self.config.get(name, default)
