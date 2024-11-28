@@ -63,14 +63,20 @@ async def _run_crons(cur: datetime.datetime):
     for qid in usermgr.qids():
         accountmgr = usermgr.load(qid, readonly=True)
         await accountmgr.__aenter__()
-        accounts_to_run = []
-        for account in accountmgr.accounts():
-            async with accountmgr.load(account, readonly=True) as mgr:
-                if await mgr.is_cron_run(cur.hour, cur.minute):
-                    accounts_to_run.append(account)
+        try:
+            accounts_to_run = []
+            for account in accountmgr.accounts():
+                async with accountmgr.load(account, readonly=True) as mgr:
+                    if await mgr.is_cron_run(cur.hour, cur.minute):
+                        accounts_to_run.append(account)
+            
+            if accounts_to_run:
+                asyncio.get_event_loop().create_task(real_run_cron(accountmgr, accounts_to_run, cur))
+                accountmgr = None
+        finally:
+            if accountmgr:
+                await accountmgr.__aexit__(None, None, None)
         
-        if accounts_to_run:
-            asyncio.get_event_loop().create_task(real_run_cron(accountmgr, accounts_to_run, cur))
 
 def write_cron_log(operation: eCronOperation, cur: datetime.datetime, qid: str, account: str, status: eResultStatus, log: str = ""):
     if not os.path.exists(os.path.dirname(CRONLOG_PATH)):
