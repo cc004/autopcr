@@ -32,6 +32,15 @@ def GetSubStoryReader(sub_story_data: EventSubStory, client: pcrclient) -> Union
         return constructor[sub_story_data.event_id](client)
     return None
 
+@EventId(10106)
+class xeh_substory(SubStoryReader):
+
+    def title(self, sub_story_id: int) -> str:
+        return db.xeh_story_data[sub_story_id].title
+
+    async def read(self, sub_story_id: int):
+        await self.client.read_xeh_story(sub_story_id)
+
 @EventId(10098)
 class lsv_substory(SubStoryReader):
 

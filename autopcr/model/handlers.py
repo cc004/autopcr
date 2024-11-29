@@ -554,6 +554,69 @@ class SubStorySkeConfirmResponse(responses.SubStorySkeConfirmResponse):
                 sub_story.status = eEventSubStoryStatus.UNREAD
 
 @handles
+class SubStoryXehReadStoryResponse(responses.SubStoryXehReadStoryResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_info:
+            for reward in self.reward_info:
+                mgr.update_inventory(reward)
+
+@handles
+class SubStoryDsbReadStoryResponse(responses.SubStoryDsbReadStoryResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_info:
+            for reward in self.reward_info:
+                mgr.update_inventory(reward)
+
+@handles
+class SubStoryLtoReadStoryResponse(responses.SubStoryLtoReadStoryResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_info:
+            for reward in self.reward_info:
+                mgr.update_inventory(reward)
+
+@handles
+class SubStoryMhpReadStoryResponse(responses.SubStoryMhpReadStoryResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_info:
+            for reward in self.reward_info:
+                mgr.update_inventory(reward)
+
+@handles
+class SubStoryMmeReadStoryResponse(responses.SubStoryMmeReadStoryResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_info:
+            for reward in self.reward_info:
+                mgr.update_inventory(reward)
+
+@handles
+class SubStoryNopReadStoryResponse(responses.SubStoryNopReadStoryResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_info:
+            for reward in self.reward_info:
+                mgr.update_inventory(reward)
+
+@handles
+class SubStoryYsnReadStoryResponse(responses.SubStoryYsnReadStoryResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_info:
+            for reward in self.reward_info:
+                mgr.update_inventory(reward)
+
+@handles
+class SubStorySvdReadStoryResponse(responses.SubStorySvdReadStoryResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.special_reward_list:
+            for reward in self.special_reward_list:
+                mgr.update_inventory(reward)
+
+@handles
+class SubStoryLsvReadStoryResponse(responses.SubStoryLsvReadStoryResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.special_reward_list:
+            for reward in self.special_reward_list:
+                mgr.update_inventory(reward)
+
+@handles
 class UnitCraftEquipResponse(responses.UnitCraftEquipResponse):
     async def update(self, mgr: datamgr, request):
         mgr.unit[self.unit_data.id] = self.unit_data
