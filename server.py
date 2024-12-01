@@ -340,10 +340,12 @@ async def clean_daily_all(botev: BotEvent, accmgr: AccountManager):
 
     resps: List[TaskResultInfo] = await asyncio.gather(*task, return_exceptions=True)
     header = ["昵称", "清日常结果", "状态"]
-    content = [
-                [alias[i], daily_result.get_result().get_last_result().log, "#" + daily_result.status] 
-                for i, daily_result in enumerate(resps)
-            ]
+    content = []
+    for i, daily_result in enumerate(resps):
+        if not isinstance(daily_result, Exception):
+            content.append([alias[i], daily_result.get_result().get_last_result().log, "#" + daily_result.status.value])
+        else:
+            content.append([alias[i], str(daily_result), "#" + eResultStatus.ERROR.value])
     img = await drawer.draw(header, content)
 
     msg = outp_b64(img)
