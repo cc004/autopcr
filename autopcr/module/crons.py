@@ -41,7 +41,8 @@ async def _cron(task):
             asyncio.get_event_loop().create_task(task(last))
 
 async def real_run_cron(accountmgr: AccountManager, accounts_to_run, cur):
-    for account in accounts_to_run:
+    async def run_one_account(account):
+        nonlocal cur
         async with accountmgr.load(account) as mgr:
             try:
                 await mgr.pre_cron_run(cur.hour, cur.minute)
@@ -55,12 +56,14 @@ async def real_run_cron(accountmgr: AccountManager, accounts_to_run, cur):
                 traceback.print_exc()
                 write_cron_log(eCronOperation.START, cur,  accountmgr.qid, account, eResultStatus.ERROR, str(e))
     
+    await asyncio.gather(*[run_one_account(account) for account in accounts_to_run])
+    
     await accountmgr.__aexit__(None, None, None)
     
 
 async def _run_crons(cur: datetime.datetime):
     print(f"doing cron check in {cur.hour} {cur.minute}")
-    for qid in usermgr.qids():
+    async def run_one_qid(qid):
         accountmgr = usermgr.load(qid, readonly=True)
         await accountmgr.__aenter__()
         try:
@@ -76,6 +79,8 @@ async def _run_crons(cur: datetime.datetime):
         finally:
             if accountmgr:
                 await accountmgr.__aexit__(None, None, None)
+    
+    await asyncio.gather(*[run_one_qid(qid) for qid in usermgr.qids()])
         
 
 def write_cron_log(operation: eCronOperation, cur: datetime.datetime, qid: str, account: str, status: eResultStatus, log: str = ""):
