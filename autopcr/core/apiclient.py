@@ -5,14 +5,14 @@ from ..model.modelbase import *
 from asyncio import Lock
 from typing import Tuple, TypeVar
 from msgpack import packb, unpackb
-from ..util import aiorequests
+from ..util import aiorequests, freqlimiter
 from random import randint
 from json import loads
 from hashlib import md5
 from Crypto.Cipher import AES
 from base64 import b64encode, b64decode
 from .sdkclient import sdkclient
-from ..constants import refresh_headers, DEBUG_LOG, ERROR_LOG
+from ..constants import refresh_headers, DEBUG_LOG, ERROR_LOG, MAX_API_RUNNING
 import time, datetime
 import json
 from enum import Enum
@@ -100,6 +100,7 @@ class apiclient(Container["apiclient"]):
         else:
             return obj
 
+    @freqlimiter.RunningLimiter(MAX_API_RUNNING)
     async def _request_internal(self, request: Request[TResponse]) -> TResponse:
         if not request: return None
         print(f'{self.user_name} requested {request.__class__.__name__} at /{request.url}')

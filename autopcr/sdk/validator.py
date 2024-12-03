@@ -1,3 +1,6 @@
+from typing import Dict, List
+from ..util import aiorequests, questutils, freqlimiter
+from ..model.error import PanicError
 from json import loads
 import asyncio, time
 from ..util import aiorequests
@@ -37,6 +40,7 @@ async def localValidator():
         }
     return info
 
+@freqlimiter.FreqLimiter(5,30)
 async def remoteValidator():
     print('use remote validator')
 

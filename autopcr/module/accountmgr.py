@@ -162,19 +162,19 @@ class Account(ModuleManager):
         ret = self.data.single_result.get(module, [])
         return ret
 
-    def get_client(self) -> PoolClientWrapper:
-        return self.get_android_client()
+    async def get_client(self) -> PoolClientWrapper:
+        return await self.get_android_client()
 
-    def get_ios_client(self) -> PoolClientWrapper: # Header TODO
-        client = clientpool.get_client(create(self.data.channel, account(
+    async def get_ios_client(self) -> PoolClientWrapper: # Header TODO
+        client = await clientpool.get_client(create(self.data.channel, account(
             self.data.username,
             self.data.password,
             platform.IOS
         )))
         return client
 
-    def get_android_client(self) -> PoolClientWrapper:
-        client = clientpool.get_client(create(self.data.channel, account(
+    async def get_android_client(self) -> PoolClientWrapper:
+        client = await clientpool.get_client(create(self.data.channel, account(
             self.data.username,
             self.data.password,
             platform.Android
