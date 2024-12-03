@@ -1,9 +1,6 @@
-<<<<<<< HEAD
 from typing import Dict, List
 from ..util import aiorequests, questutils, freqlimiter
 from ..model.error import PanicError
-=======
->>>>>>> dev2
 from json import loads
 import asyncio, time
 from ..util import aiorequests
