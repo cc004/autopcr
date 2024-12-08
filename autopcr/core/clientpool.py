@@ -7,9 +7,9 @@ from ..model.error import PanicError
 from .misc import errorhandler, mutexhandler
 from .base import Component, Request, TResponse, RequestHandler
 from ..model.sdkrequests import ToolSdkLoginRequest
-from typing import Dict, Tuple, Set
+from typing import Dict, Tuple
 from ..constants import SESSION_ERROR_MAX_RETRY, CLIENT_POOL_SIZE_MAX, CLINET_POOL_MAX_AGE, CACHE_DIR, CLINET_POOL_MAX_CLIENT_ALIVE
-import time, os, queue, asyncio
+import time, os, queue, asyncio, pickle
 
 class ComponentWrapper(Component):
     def __init__(self, component: Component):
@@ -75,8 +75,8 @@ class PoolClientWrapper(pcrclient):
     
     def activate(self):
         assert self.cache is not None
-        with open(self.cache, 'r') as f:
-            self.data = datamgr.parse_raw(f.read())
+        with open(self.cache, 'rb') as f:
+            self.data = pickle.loads(f.read())
         os.remove(self.cache)
         self._data_wrapper.component = self.data
         return self.cache
@@ -88,8 +88,8 @@ class PoolClientWrapper(pcrclient):
 
     def deactivate(self, cache: str):
         self.cache = cache
-        with open(cache, 'w') as f:
-            f.write(self.data.json())
+        with open(cache, 'wb') as f:
+            f.write(pickle.dumps(self.data))
         self.data = None
         self._data_wrapper.component = None
 
@@ -99,7 +99,7 @@ class ClientPool:
         self._pool: Dict[Tuple[str, str], PoolClientWrapper] = dict()
         self._cache_pool = queue.SimpleQueue()
         for i in range(CLIENT_POOL_SIZE_MAX):
-            self._cache_pool.put(os.path.join(CACHE_DIR, 'pool', f'data_{i}.json'))
+            self._cache_pool.put(os.path.join(CACHE_DIR, 'pool', f'data_{i}.bin'))
         os.makedirs(os.path.join(CACHE_DIR, 'pool'), exist_ok=True)
 
         self._sema = asyncio.Semaphore(CLINET_POOL_MAX_CLIENT_ALIVE)
@@ -123,11 +123,11 @@ class ClientPool:
         self.active_uids.pop(client.uid)
         if not client.logged: # client session expired and not successfully recovered
             return
-        
+
         pool_key = (client.session.sdk.account, type(client.session.sdk).__name__)
         # remove old client from pool, which session has been overrided by self.
         # removed here to save one client pool slot.
-        
+
         self._try_remove(pool_key)
 
         if len(self._pool) >= CLIENT_POOL_SIZE_MAX:
