@@ -97,9 +97,9 @@ class Drawer():
 
         return new_image
     
-    async def img2bytesio(self, img: Image.Image) -> io.BytesIO:
+    async def img2bytesio(self, img: Image.Image, format: str = 'JPEG') -> io.BytesIO:
         img_byte_arr = io.BytesIO()
-        img.save(img_byte_arr, format='JPEG')
+        img.save(img_byte_arr, format=format)
         img_byte_arr.seek(0)
         return img_byte_arr
 

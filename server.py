@@ -44,7 +44,9 @@ sv_help = f"""
 - {prefix}日常报告 [0|1|2|3] 最近四次清日常报告
 - {prefix}定时日志 查看定时运行状态
 - {prefix}查缺角色 查看缺少的限定常驻角色
+- {prefix}查ex装备 [会战] 查看ex装备库存
 - {prefix}查探险编队 根据记忆碎片角色编队战力相当的队伍
+- {prefix}查兑换角色碎片 [开换] 查询兑换特别角色的记忆碎片策略
 - {prefix}查心碎 查询缺口心碎
 - {prefix}查纯净碎片 查询缺口纯净碎片，国服六星+日服二专需求
 - {prefix}查记忆碎片 [可刷取|大师币] 查询缺口记忆碎片，可按地图可刷取或大师币商店过滤
@@ -791,6 +793,32 @@ async def find_missing_unit(botev: BotEvent):
 @register_tool("查探险编队", "travel_team_view")
 async def find_travel_team_view(botev: BotEvent):
     return {}
+
+@register_tool("查ex装备", "ex_equip_info")
+async def ex_equip_info(botev: BotEvent):
+    ex_equip_info_cb_only = False
+    msg = await botev.message()
+    try:
+        ex_equip_info_cb_only = is_args_exist(msg, '会战')
+    except:
+        pass
+    config = {
+        "ex_equip_info_cb_only": ex_equip_info_cb_only
+    }
+    return config
+
+@register_tool("查兑换角色碎片", "redeem_unit_swap")
+async def redeem_unit_swap(botev: BotEvent):
+    really_do = False
+    msg = await botev.message()
+    try:
+        really_do = is_args_exist(msg, '开换')
+    except:
+        pass
+    config = {
+        "redeem_unit_swap_do": really_do
+    }
+    return config
 
 # @register_tool("获取导入", "get_library_import_data")
 # async def get_library_import(botev: BotEvent):

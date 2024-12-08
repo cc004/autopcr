@@ -1,6 +1,7 @@
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
+from ...core.apiclient import apiclient
 from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
@@ -10,7 +11,7 @@ import datetime
 @default(True)
 class tower_cloister_sweep(Module):
     async def do_task(self, client: pcrclient):
-        now = datetime.datetime.now()
+        now = apiclient.datetime
         tower_id = db.get_newest_tower_id()
         schedule = db.tower[tower_id]
         start_time = db.parse_time(schedule.start_time)

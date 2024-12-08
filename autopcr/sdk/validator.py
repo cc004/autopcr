@@ -1,3 +1,6 @@
+from typing import Dict, List
+from ..util import aiorequests, questutils, freqlimiter
+from ..model.error import PanicError
 from json import loads
 import asyncio, time
 from ..util import aiorequests
@@ -26,10 +29,9 @@ async def localValidator():
 
     if _type == 'click':
         (c, s, args) = gt_obj.get_new_c_s_args(gt, challenge)
-        st = time.time()
+        cor = asyncio.sleep(2)
         w = gt_obj.generate_w(gt_obj.calculate_key(args), gt, challenge, str(c), s, "abcdefghijklmnop")
-        ed = time.time()
-        await asyncio.sleep(max(0, 2 - (ed - st)))
+        await cor
         (msg, validate) = gt_obj.verify(gt, challenge, w)
         info = {
             "challenge": challenge,
@@ -38,6 +40,7 @@ async def localValidator():
         }
     return info
 
+@freqlimiter.FreqLimiter(5,30)
 async def remoteValidator():
     print('use remote validator')
 

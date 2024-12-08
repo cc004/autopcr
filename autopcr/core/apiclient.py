@@ -5,15 +5,15 @@ from ..model.modelbase import *
 from asyncio import Lock
 from typing import Tuple, TypeVar
 from msgpack import packb, unpackb
-from ..util import aiorequests
+from ..util import aiorequests, freqlimiter
 from random import randint
 from json import loads
 from hashlib import md5
 from Crypto.Cipher import AES
 from base64 import b64encode, b64decode
 from .sdkclient import sdkclient
-from ..constants import refresh_headers, DEBUG_LOG, ERROR_LOG
-
+from ..constants import refresh_headers, DEBUG_LOG, ERROR_LOG, MAX_API_RUNNING
+import time, datetime
 import json
 from enum import Enum
 
@@ -29,8 +29,15 @@ class NetworkException(Exception):
 
 TResponse = TypeVar('TResponse', bound=ResponseBase, covariant=True)
 
+class staticproperty:
+    def __init__(self, func):
+        self.fget = func
+    def __get__(self, instance, owner):
+        return self.fget()
+
 class apiclient(Container["apiclient"]):
-    server_time: int = 0
+    _server_time: int = 0
+    _local_time: float = 0.0
     viewer_id: int = 0
     servers: list = [] #['https://l3-prod-all-gs-gzlj.bilibiligame.net/']
     active_server: int = 0
@@ -44,9 +51,16 @@ class apiclient(Container["apiclient"]):
         ]
         self._lck = Lock()
 
+    @staticproperty
+    def time() -> int:
+        return int(time.time() - apiclient._local_time + apiclient._server_time)
+        
+    @staticproperty
+    def datetime() -> datetime.datetime:
+        return datetime.datetime.fromtimestamp(apiclient.time)
+        
     @property
-    def name(self) -> str:
-        return 'undefined'
+    def user_name(self) -> str: ...
 
     @staticmethod
     def _createkey() -> bytes:
@@ -86,9 +100,10 @@ class apiclient(Container["apiclient"]):
         else:
             return obj
 
+    @freqlimiter.RunningLimiter(MAX_API_RUNNING)
     async def _request_internal(self, request: Request[TResponse]) -> TResponse:
         if not request: return None
-        print(f'{self.name} requested {request.__class__.__name__} at /{request.url}')
+        print(f'{self.user_name} requested {request.__class__.__name__} at /{request.url}')
         key = apiclient._createkey()
         request.viewer_id = b64encode(apiclient._encrypt(str(self.viewer_id).encode('utf8'), key)).decode('ascii') if request.crypted else str(self.viewer_id)
 
@@ -102,6 +117,7 @@ class apiclient(Container["apiclient"]):
                 raise NetworkException
 
             response0 = await resp.content
+            apiclient._local_time = time.time()
 
             response0 = apiclient._unpack(response0)[0] if request.crypted else loads(response0)
         except:
@@ -113,7 +129,7 @@ class apiclient(Container["apiclient"]):
 
         if DEBUG_LOG:
             with open('req.log', 'a') as fp:
-                fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
+                fp.write(f'{self.user_name} requested {request.__class__.__name__} at /{request.url}\n')
                 fp.write(json.dumps(self._headers, indent=4, ensure_ascii=False) + '\n')
                 fp.write(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
                 fp.write(f'response from {urlroot}\n')
@@ -128,8 +144,10 @@ class apiclient(Container["apiclient"]):
            # fp.write(json.dumps(json.loads(response.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
 
         if response.data_headers.servertime:
-            self.server_time = response.data_headers.servertime
-
+            apiclient._server_time = response.data_headers.servertime
+        else:
+            apiclient._server_time = apiclient._local_time
+            
         if response.data_headers.sid:
             t = md5()
             t.update((response.data_headers.sid + 'c!SID!n').encode('utf8'))
@@ -157,7 +175,7 @@ class apiclient(Container["apiclient"]):
 
             if ERROR_LOG:
                 with open('error.log', 'a') as fp:
-                    fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
+                    fp.write(f'{self.user_name} requested {request.__class__.__name__} at /{request.url}\n')
                     fp.write(json.dumps(self._headers, indent=4, ensure_ascii=False) + '\n')
                     fp.write(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
                     fp.write(f'response from {urlroot}\n')

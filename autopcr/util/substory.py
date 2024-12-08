@@ -1,5 +1,6 @@
 from typing import Union
 from ..core.pcrclient import pcrclient
+from ..core.apiclient import apiclient
 from ..model.common import EventSubStory
 from ..db.database import db
 import datetime
@@ -36,7 +37,7 @@ class lsv_substory(SubStoryReader):
 
     def is_readable(self, sub_story_id: int) -> bool:
         open_time = db.parse_time(db.lsv_story_data[sub_story_id].time_condition)
-        return datetime.datetime.now() >= open_time
+        return apiclient.datetime >= open_time
 
     def title(self, sub_story_id: int) -> str:
         return db.lsv_story_data[sub_story_id].title

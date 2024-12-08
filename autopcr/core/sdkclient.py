@@ -23,7 +23,7 @@ async def _defaultLogger(msg):
     print(msg)
 
 class sdkclient:
-    
+
     def __init__(self, info: account, captchaVerifier=remoteValidator, errlogger=_defaultLogger):
         self.captchaVerifier = captchaVerifier
         self.errlogger = errlogger
@@ -49,10 +49,10 @@ class sdkclient:
         for evt in self.post_login_evts:
             await evt()
         self.post_login_evts.clear()
-    
+
     async def do_captcha(self):                                
         return await self.captchaVerifier(self)
-    
+
     def header(self):
         if self._account.type == platform.Android:
             headers = deepcopy(DEFAULT_HEADERS)
@@ -60,26 +60,26 @@ class sdkclient:
             headers = deepcopy(IOS_HEADERS)
         else:
             raise ValueError(f"Invalid platform {self._account.type}")
-        
+
         headers['RES-KEY'] = self.reskey
         headers['PLATFORM'] = self.platform
         headers['PLATFORM-ID'] = self.platform_id
         headers['CHANNEL-ID'] = self.channel
-        
+
         return headers
 
     @property
     @abstractmethod
     def apiroot(self) -> str: ...
-    
+
     @property
     @abstractmethod
     def platform_id(self) -> str: ...
-    
+
     @property
     def channel(self):
         return '1'
-    
+
     @property
     def account(self):
         return self._account.username
@@ -87,4 +87,3 @@ class sdkclient:
     @property
     @abstractmethod
     def reskey(self) -> str: ...
-    

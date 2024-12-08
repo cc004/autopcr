@@ -2,6 +2,7 @@ from abc import abstractmethod
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
+from ...core.apiclient import apiclient
 from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
@@ -29,11 +30,11 @@ from typing import Set
 @name("探险续航")
 @default(True)
 class travel_quest_sweep(Module):
-    def can_receive_count(self, quest: TravelQuestInfo) -> int:
+    def can_receive_count(self, quest: TravelQuestInfo, now: int) -> int:
         st = quest.travel_start_time
         ed = quest.travel_end_time
         decrease_time = quest.decrease_time
-        once_time = db.calc_travel_once_time(quest.total_power)
+        once_time = (ed - st) // quest.total_lap_count
         now = int(time.time())
         received_count = quest.received_count
         cnt = (min(now, ed) - st + decrease_time) // once_time - received_count
@@ -42,8 +43,7 @@ class travel_quest_sweep(Module):
     def quest_still_round(self, quest: TravelQuestInfo) -> int:
         return quest.total_lap_count - quest.received_count
 
-    def quest_left_time(self, quest: TravelQuestInfo) -> int:
-        now = int(time.time())
+    def quest_left_time(self, quest: TravelQuestInfo, now: int) -> int:
         return max(0, quest.travel_end_time - quest.decrease_time - now)
 
     def get_choice(self, strategy: str) -> int:
@@ -95,7 +95,7 @@ class travel_quest_sweep(Module):
             self._log(f"阅读{len(top.top_event_list)}个特殊事件")
         result_count = {}
         reward2: List[InventoryInfo] = []
-        if any(self.can_receive_count(quest) for quest in top.travel_quest_list):
+        if any(self.can_receive_count(quest, apiclient.time) for quest in top.travel_quest_list):
             result = await client.travel_receive_all()
             secret_travel: List[TravelAppearEventData] = []
             for quest in result.travel_result:
@@ -162,7 +162,7 @@ class travel_quest_sweep(Module):
         if team_count and total_use: # avoid divide by zero
             self._log(f"可使用加速券{total_use}张")
             quest_use = [total_use // team_count + (1 if i < total_use % team_count else 0) for i in range(team_count)]
-            speed_up_quest.sort(key=lambda x: self.quest_left_time(x), reverse=True) # large left time first
+            speed_up_quest.sort(key=lambda x: self.quest_left_time(x, apiclient.time), reverse=True) # large left time first
             for quest, use in zip(speed_up_quest, quest_use):
                 if use:
                     self._log(f"{db.get_quest_name(quest.travel_quest_id)}使用加速券x{use}")
@@ -497,8 +497,7 @@ class starcup1_sweep(starcup_sweep):
 '''.strip())
 @default(True)
 class travel_round(Module):
-    def is_finish_quest(self, quest: TravelQuestInfo) -> bool:
-        now = int(time.time())
+    def is_finish_quest(self, quest: TravelQuestInfo, now: int) -> bool:
         return now >= quest.travel_end_time - quest.decrease_time
 
     def today_targets(self) -> List[int]:
@@ -540,10 +539,10 @@ class travel_round(Module):
             quest_interval = (remove_quest.travel_end_time - remove_quest.travel_start_time) / remove_quest.total_lap_count
             next_loop = next(i for i in range(remove_quest.received_count, remove_quest.total_lap_count + 1) 
                              if i == remove_quest.total_lap_count 
-                             or remove_quest.travel_start_time + i * quest_interval - remove_quest.decrease_time > client.server_time)
+                             or remove_quest.travel_start_time + i * quest_interval - remove_quest.decrease_time > apiclient.time)
 
             if next_loop < remove_quest.total_lap_count:
-                delta_time = int(remove_quest.travel_start_time + next_loop * quest_interval - remove_quest.decrease_time - client.server_time)
+                delta_time = int(remove_quest.travel_start_time + next_loop * quest_interval - remove_quest.decrease_time - apiclient.time)
                 ticket_to_use = int(math.ceil(delta_time / client.data.settings.travel.decrease_time_by_ticket))
                 if ticket_to_use <= travel_speed_up_paper_threshold:
                     self._log(f"一轮剩余时间{db.format_second(delta_time)}小于使用阈值{travel_speed_up_paper_threshold}小时，加速一轮")
@@ -567,7 +566,7 @@ class travel_round(Module):
                     top.remain_daily_decrease_count_ticket = ret.remain_daily_decrease_count_ticket
                     remove_quest.decrease_time += ticket_to_use * client.data.settings.travel.decrease_time_by_ticket
 
-            if self.is_finish_quest(remove_quest):
+            if self.is_finish_quest(remove_quest, apiclient.time):
                 self._log(f"{db.get_quest_name(remove_quest_id)}完成")
                 ret = await client.travel_receive(remove_quest.travel_id)
                 for result in ret.travel_result:

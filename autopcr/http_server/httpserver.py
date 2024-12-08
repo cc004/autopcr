@@ -14,7 +14,7 @@ from ..constants import CACHE_DIR
 from ..util.draw import instance as drawer
 from .validator import validate_dict, ValidateInfo, validate_ok_dict, enable_manual_validator
 
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.1.1"
 
 CACHE_HTTP_DIR = os.path.join(CACHE_DIR, 'http_server')
 
@@ -285,8 +285,8 @@ class HttpServer:
                     return "无结果", 404
                 if resp_text == 'false':
                     img = await drawer.draw_tasks_result(resp)
-                    bytesio = await drawer.img2bytesio(img)
-                    return await send_file(bytesio, mimetype='image/jpg')
+                    bytesio = await drawer.img2bytesio(img, 'webp')
+                    return await send_file(bytesio, mimetype='image/webp')
                 else:
                     return resp.to_json(), 200
             except ValueError as e:
@@ -342,8 +342,8 @@ class HttpServer:
 
                 if resp_text == 'false':
                     img = await drawer.draw_task_result(resp)
-                    bytesio = await drawer.img2bytesio(img)
-                    return await send_file(bytesio, mimetype='image/jpg')
+                    bytesio = await drawer.img2bytesio(img, 'webp')
+                    return await send_file(bytesio, mimetype='image/webp')
                 else:
                     return resp.to_json(), 200
             except ValueError as e:

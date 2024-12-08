@@ -4,6 +4,7 @@ from ...model.common import InventoryInfo
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
+from ...core.apiclient import apiclient
 from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
@@ -321,8 +322,8 @@ class pjjc_daily(Module):
 @default(True)
 class user_info(Module):
     async def do_task(self, client: pcrclient):
-        now = db.format_time(datetime.datetime.now())
-        name = client.data.name
+        now = db.format_time(apiclient.datetime)
+        name = client.data.user_name
         level = client.data.team_level
         stamina = client.data.stamina
         max_stamina = db.team_info[client.data.team_level].max_stamina

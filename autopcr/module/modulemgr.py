@@ -70,7 +70,7 @@ class ModuleManager:
     def id(self) -> str: ...
 
     @abstractmethod
-    def get_client() -> PoolClientWrapper: ...
+    async def get_client() -> PoolClientWrapper: ...
 
     @abstractmethod
     async def save_daily_result(self, resp: TaskResult, status: eResultStatus) -> TaskResultInfo: ...
@@ -87,7 +87,7 @@ class ModuleManager:
         self.config = config
     
     async def __aenter__(self):
-        self.client = self.get_client()
+        self.client = await self.get_client()
         self.client.set_config(self.config)
         await self.client.__aenter__()
         return self
@@ -98,10 +98,15 @@ class ModuleManager:
     async def is_cron_run(self, hour: int, minute: int) -> bool:
         for cron in self.modules_list.cron_modules:
             if await cron.is_cron_run(hour, minute):
-                await cron.update_client(self.client)
                 return True
         else:
             return False
+    
+    async def pre_cron_run(self, hour: int, minute: int):
+        for cron in self.modules_list.cron_modules:
+            if await cron.is_cron_run(hour, minute):
+                await cron.update_client(self.client)
+                return
     
     def get_config(self, name, default):
         return self.config.get(name, default)
