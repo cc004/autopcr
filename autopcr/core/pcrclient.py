@@ -13,13 +13,13 @@ class pcrclient(apiclient):
         self._base_keys = {}
         self._keys = {}
         super().__init__(sdk)
-        self.data = datamgr.create()
+        self.data = datamgr()
         self.session = sessionmgr(sdk)
         self.register(errorhandler())
         self.register(self.data)
         self.register(self.session)
         self.register(mutexhandler())
-    
+
     def set_config(self, config: dict):
         self._base_keys = config
         self._keys = {}

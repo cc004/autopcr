@@ -323,7 +323,7 @@ class pjjc_daily(Module):
 class user_info(Module):
     async def do_task(self, client: pcrclient):
         now = db.format_time(apiclient.datetime)
-        name = client.data.name
+        name = client.data.user_name
         level = client.data.team_level
         stamina = client.data.stamina
         max_stamina = db.team_info[client.data.team_level].max_stamina

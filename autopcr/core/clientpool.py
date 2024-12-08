@@ -51,7 +51,7 @@ class PoolClientWrapper(pcrclient):
         apiclient.__init__(self, sdk)
         self._base_keys = {}
         self._keys = {}
-        self.data = datamgr.create()
+        self.data = datamgr()
         self._data_wrapper = ComponentWrapper(self.data)
         self.session = sessionmgr(sdk)
         self.pool = pool
@@ -97,9 +97,9 @@ class ClientPool:
     def __init__(self):
         self.active_uids: Dict[str, int] = dict()
         self._pool: Dict[Tuple[str, str], PoolClientWrapper] = dict()
-        self._cache_pool = queue.SimpleQueue(
-            os.path.join(CACHE_DIR, 'pool', f'data_{i}.json') for i in range(CLIENT_POOL_SIZE_MAX)
-        )
+        self._cache_pool = queue.SimpleQueue()
+        for i in range(CLIENT_POOL_SIZE_MAX):
+            self._cache_pool.put(os.path.join(CACHE_DIR, 'pool', f'data_{i}.json'))
         os.makedirs(os.path.join(CACHE_DIR, 'pool'), exist_ok=True)
 
         self._sema = asyncio.Semaphore(CLINET_POOL_MAX_CLIENT_ALIVE)

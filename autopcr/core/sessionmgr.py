@@ -16,7 +16,7 @@ class sessionmgr(Component[apiclient]):
         self._sdkaccount = None
         if not os.path.exists(self.cacheDir):
             os.makedirs(self.cacheDir)
-            
+
     @property
     def cacheFile(self):
         return os.path.join(self.cacheDir, hashlib.md5(
@@ -31,7 +31,7 @@ class sessionmgr(Component[apiclient]):
         }
         with open(self.cacheFile, 'w') as fp:
             json.dump(self._sdkaccount, fp)
-    
+
     async def _ensure_token(self, next: RequestHandler):
         try:
             for _ in range(5):

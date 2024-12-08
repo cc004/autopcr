@@ -261,7 +261,7 @@ class MissionAcceptResponse(responses.MissionAcceptResponse):
 class LoadIndexResponse(responses.LoadIndexResponse):
     async def update(self, mgr: datamgr, request):
         mgr.uid = self.user_info.viewer_id
-        mgr.name = self.user_info.user_name
+        mgr.user_name = self.user_info.user_name
         mgr.team_level = self.user_info.team_level
         mgr.jewel = self.user_jewel
         mgr.gold = self.user_gold
@@ -273,7 +273,6 @@ class LoadIndexResponse(responses.LoadIndexResponse):
             mgr.user_gold_bank_info = self.user_gold_bank_info
         mgr.clan_like_count = self.clan_like_count
         mgr.user_my_quest = self.user_my_quest
-        mgr.clear_inventory()
         mgr.cf = self.cf
         if self.item_list:
             for inv in self.item_list:
@@ -301,7 +300,6 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         mgr.tower_status = self.tower_status
         mgr.campaign_list = self.campaign_list
         mgr.dispatch_units = self.dispatch_units
-
 
 @handles
 class HomeIndexResponse(responses.HomeIndexResponse):
@@ -745,7 +743,7 @@ class RedeemUnitRegisterItemResponse(responses.RedeemUnitRegisterItemResponse):
                 item.count -= mana
                 mgr.gold.gold_id_pay -= item.count
             else:
-                mgr._inventory[(eInventoryType.Item, item.id)] -= item.count
+                mgr.inventory[(eInventoryType.Item, item.id)] -= item.count
 
 @handles
 class RedeemUnitUnlockResponse(responses.RedeemUnitUnlockResponse):
