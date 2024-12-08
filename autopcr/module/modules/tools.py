@@ -375,8 +375,8 @@ class gacha_start(Module):
 @default(True)
 class get_clan_support_unit(Module):
     async def do_task(self, client: pcrclient):
-        await client.get_clan_battle_top(client.data.clan, 1, client.data.get_shop_gold(eSystemId.CLAN_BATTLE_SHOP))
-        unit_list = await client.get_clan_battle_support_unit_list(client.data.clan)
+        await client.get_clan_battle_top(1, client.data.get_shop_gold(eSystemId.CLAN_BATTLE_SHOP))
+        unit_list = await client.get_clan_battle_support_unit_list()
         msg = []
         for unit in unit_list.support_unit_list:
             strongest, info = await client.serialize_unit_info(unit.unit_data)
@@ -385,7 +385,7 @@ class get_clan_support_unit(Module):
         for unit in client.data.dispatch_units:
             if unit.position == eClanSupportMemberType.CLAN_BATTLE_SUPPORT_UNIT_1 or unit.position == eClanSupportMemberType.CLAN_BATTLE_SUPPORT_UNIT_2:
                 strongest, info = await client.serialize_unit_info(client.data.unit[unit.unit_id])
-                msg.append((unit.unit_id, strongest, client.name, info))
+                msg.append((unit.unit_id, strongest, client.user_name, info))
 
         msg = sorted(msg, key=lambda x:(x[0], -x[1]))
         for unit_id, strongest, owner_name, unit_info in msg:
