@@ -160,6 +160,7 @@ class hatsune_sub_story_reading(Module):
                 if sub_story.status != eEventSubStoryStatus.READED and reader.is_readable(sub_story.sub_story_id):
                     await reader.read(sub_story.sub_story_id)
                     self._log(f"阅读了{reader.title(sub_story.sub_story_id)}")
+                    sub_story.status = eEventSubStoryStatus.READED
         if not self.log:
             raise SkipError("不存在未阅读的活动子剧情")
         else:
