@@ -7,7 +7,6 @@ from ...db.database import db
 from ...model.enums import *
 from ...util.linq import flow
 from ...util.substory import GetSubStoryReader
-import datetime
 
 @name('阅读公会剧情')
 @default(True)

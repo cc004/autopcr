@@ -10,7 +10,6 @@ from ...db.database import db
 from ...model.enums import *
 from ...util.questutils import *
 import asyncio
-import datetime
 
 @description('仅开启时生效，氪体数优先级n4>n3>h3>vh3>n2>h2>vh2，禅模式指不执行体力相关的功能，仅在清日常生效，单项执行将忽略。庆典包括其倍数')
 @name("全局配置")

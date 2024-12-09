@@ -85,7 +85,8 @@ class TrainingQuestSkipResponse(responses.TrainingQuestSkipResponse):
                 mgr.update_inventory(item)
         mgr.quest_dict[request.quest_id].daily_clear_count = self.daily_clear_count
         mgr.stamina = self.user_info.user_stamina
-
+        if self.quest_challenge_count:
+            mgr.training_quest_count = self.quest_challenge_count
 
 @handles
 class TrainingQuestFinishResponse(responses.TrainingQuestFinishResponse):
