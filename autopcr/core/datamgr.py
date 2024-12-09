@@ -2,11 +2,10 @@ from collections import Counter
 from .base import Component, RequestHandler
 from .apiclient import apiclient
 from ..model.modelbase import *
-from typing import Callable, Coroutine, Any, Set, Dict, Tuple, Union
+from typing import Callable, Set, Dict, Tuple, Union
 import typing
 from ..model.common import *
 from ..model.custom import ItemType
-import datetime
 import json, base64, gzip
 from ..db.assetmgr import instance as assetmgr
 from ..db.dbmgr import instance as dbmgr
@@ -15,12 +14,13 @@ from ..db.models import ItemDatum, TrainingQuestDatum
 from ..util.linq import flow
 from asyncio import Lock
 
+_data_lck = Lock()
 
-class datamgr(Component[apiclient]):
+class datamgr(BaseModel, Component[apiclient]):
     settings: IniSetting = None
     dungeon_avaliable: bool = False
     resident_info: MonthlyGachaInfo = None
-    finishedQuest: Set[int] = None
+    finishedQuest: Set[int] = set()
     jewel: UserJewel = None
     gold: UserGold = None
     uid: int = 0
@@ -38,42 +38,27 @@ class datamgr(Component[apiclient]):
     training_quest_count: TrainingQuestCount = None
     training_quest_max_count: TrainingQuestCount = None
     quest_dict: Dict[int, UserQuestInfo] = None
-    hatsune_quest_dict: Dict[int, Dict[int, HatsuneUserEventQuest]] = None
-    name: str = None
+    hatsune_quest_dict: Dict[int, Dict[int, HatsuneUserEventQuest]] = {}
+    user_name: str = None
     clan_like_count: int = 0
     user_my_quest: List[UserMyQuest] = None
-    _inventory: Dict[ItemType, int] = None
+    inventory: Dict[ItemType, int] = {}
     read_story_ids: List[int] = None
     unlock_story_ids: List[int] = None
     event_statuses: List[EventStatus] = None
     tower_status: TowerStatus = None
-    deck_list: Dict[ePartyType, LoadDeckData] = None
-    campaign_list: List[int] = None
+    deck_list: Dict[ePartyType, LoadDeckData] = {}
+    campaign_list: List[int] = []
     gacha_point: Dict[int, GachaPointInfo] = None
     dispatch_units: List[UnitDataForClanMember] = None
     event_sub_story: Dict[int, EventSubStory] = None
     user_gold_bank_info: UserBankGoldInfo = None
-    ex_equips: Dict[int, ExtraEquipInfo] = None
-    user_redeem_unit: Dict[int, RedeemUnitInfo] = None
-
-    def __init__(self):
-        self.finishedQuest = set()
-        self.hatsune_quest_dict = {}
-        self._inventory = {}
-        self.deck_list = {}
-        self.ex_equips = {}
-        self.campaign_list = []
-        self.user_redeem_unit = {}
-
-    lck = Lock()
-
-    @staticmethod
-    def lock():
-        return datamgr.lck
+    ex_equips: Dict[int, ExtraEquipInfo] = {}
+    user_redeem_unit: Dict[int, RedeemUnitInfo] = {}
 
     @staticmethod
     async def try_update_database(ver: int):
-        async with datamgr.lock():
+        async with _data_lck:
             if not assetmgr.ver or assetmgr.ver < ver:
                 await assetmgr.init(ver)
             if not dbmgr.ver or dbmgr.ver < assetmgr.ver: 
@@ -160,10 +145,6 @@ class datamgr(Component[apiclient]):
             ) \
             and db.is_effective_scope_in_campaign(quest, campaign_id)
         return self.get_campaign_times(func)
-
-    def clear_inventory(self):
-        self._inventory.clear()
-        self.hatsune_quest_dict.clear()
 
     def get_unique_equip_material_demand(self, equip_slot:int, unit_id: int, token: ItemType) -> int:
         start_rank = self.unit[unit_id].unique_equip_slot[0].rank if unit_id in self.unit and self.unit[unit_id].unique_equip_slot else 0
@@ -293,7 +274,7 @@ class datamgr(Component[apiclient]):
         return cnt 
 
     def get_demand_gap(self, required: typing.Counter[ItemType], filter: Callable[[ItemType], bool] = lambda x: True) -> typing.Counter[ItemType]:
-        all = set(self._inventory) | set(required)
+        all = set(self.inventory) | set(required)
         demand = Counter({token: required[token] - self.get_inventory(token) for token in all if filter(token)})
         return demand
 
@@ -425,7 +406,7 @@ class datamgr(Component[apiclient]):
         elif item.type == eInventoryType.ExtraEquip:
             self.ex_equips[item.id] = item.ex_equip
         else:
-            self._inventory[token] = item.stock
+            self.inventory[token] = item.stock
 
     def recover_max_time(self, quest: int) -> int:
         if db.is_normal_quest(quest):
@@ -442,13 +423,13 @@ class datamgr(Component[apiclient]):
             return self.settings.hatsune_recover_challenge_count.recovery_max_count
 
     def filter_inventory(self, filter: Callable) -> List[ItemType]:
-        return [item for item in self._inventory if filter(item) and self._inventory[item] > 0]
+        return [item for item in self.inventory if filter(item) and self.inventory[item] > 0]
 
     def get_inventory(self, item: ItemType) -> int:
-        return self._inventory.get(item, 0)
+        return self.inventory.get(item, 0)
 
     def set_inventory(self, item: ItemType, value: int):
-        self._inventory[item] = value
+        self.inventory[item] = value
 
     def get_shop_gold(self, shop_id: int) -> int:
         if shop_id == eSystemId.NORMAL_SHOP: # 正常商店

@@ -5,43 +5,24 @@ from ..model.modelbase import *
 from asyncio import Lock
 from typing import Tuple, TypeVar
 from msgpack import packb, unpackb
-from ..util import aiorequests
+from ..util import aiorequests, freqlimiter
 from random import randint
 from json import loads
 from hashlib import md5
 from Crypto.Cipher import AES
 from base64 import b64encode, b64decode
 from .sdkclient import sdkclient
-from ..constants import refresh_headers, DEBUG_LOG, ERROR_LOG
+from ..constants import refresh_headers, DEBUG_LOG, ERROR_LOG, MAX_API_RUNNING
 import time, datetime
 import json
 from enum import Enum
-
-class CuteResultCode(Enum):
-    API_RESULT_SUCCESS_CODE = 1
-    RESULT_CODE_MAINTENANCE_COMMON = 101
-    RESULT_CODE_SERVER_ERROR = 102
-    API_RESULT_SESSION_ERROR = 201
-    RESULT_CODE_ACCOUNT_BLOCK_ERROR = 203
-    API_RESULT_VERSION_ERROR = 204
-    RESULT_CODE_PROCESSED_ERROR = 213
-    RESULT_CODE_DMM_ONETIMETOKEN_EXPIRED = 318
-    API_RESULT_APPRES_VERSION_ERROR = 217
-    API_RESULT_REQUEST_DECODE_ERROR = 218
-    API_RESULT_RESPONSE_DECODE_ERROR = 219
-    RESULT_CODE_MAINTENANCE_FROM = 2700
-    RESULT_CODE_MAINTENANCE_TO = 2999
-
 
 class ApiException(Exception):
 
     def __init__(self, message, status, result_code):
         super().__init__(message)
         self.status = status
-        try:
-            self.result_code = CuteResultCode(result_code)
-        except ValueError:
-            self.result_code = result_code
+        self.result_code = result_code
 
 class NetworkException(Exception):
     pass
@@ -79,8 +60,7 @@ class apiclient(Container["apiclient"]):
         return datetime.datetime.fromtimestamp(apiclient.time)
         
     @property
-    def name(self) -> str:
-        return 'undefined'
+    def user_name(self) -> str: ...
 
     @staticmethod
     def _createkey() -> bytes:
@@ -120,9 +100,10 @@ class apiclient(Container["apiclient"]):
         else:
             return obj
 
+    @freqlimiter.RunningLimiter(MAX_API_RUNNING)
     async def _request_internal(self, request: Request[TResponse]) -> TResponse:
         if not request: return None
-        print(f'{self.name} requested {request.__class__.__name__} at /{request.url}')
+        print(f'{self.user_name} requested {request.__class__.__name__} at /{request.url}')
         key = apiclient._createkey()
         request.viewer_id = b64encode(apiclient._encrypt(str(self.viewer_id).encode('utf8'), key)).decode('ascii') if request.crypted else str(self.viewer_id)
 
@@ -148,7 +129,7 @@ class apiclient(Container["apiclient"]):
 
         if DEBUG_LOG:
             with open('req.log', 'a') as fp:
-                fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
+                fp.write(f'{self.user_name} requested {request.__class__.__name__} at /{request.url}\n')
                 fp.write(json.dumps(self._headers, indent=4, ensure_ascii=False) + '\n')
                 fp.write(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
                 fp.write(f'response from {urlroot}\n')
@@ -194,7 +175,7 @@ class apiclient(Container["apiclient"]):
 
             if ERROR_LOG:
                 with open('error.log', 'a') as fp:
-                    fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
+                    fp.write(f'{self.user_name} requested {request.__class__.__name__} at /{request.url}\n')
                     fp.write(json.dumps(self._headers, indent=4, ensure_ascii=False) + '\n')
                     fp.write(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
                     fp.write(f'response from {urlroot}\n')

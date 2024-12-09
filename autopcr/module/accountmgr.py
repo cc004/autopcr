@@ -6,8 +6,7 @@ from dataclasses_json import dataclass_json
 
 from ..core.pcrclient import pcrclient
 from ..core.sdkclient import account, platform
-from .modulemgr import ModuleManager, TaskResult, ModuleResult, eResultStatus
-from ..sdk.sdkclients import create
+from .modulemgr import ModuleManager, TaskResult, ModuleResult, eResultStatus, TaskResultInfo, ModuleResultInfo, ResultInfo
 import os, re, shutil
 from typing import Any, Dict, Iterator, List, Tuple, Union
 from ..constants import CONFIG_PATH, OLD_CONFIG_PATH, RESULT_DIR, BSDK, CHANNEL_OPTION
@@ -18,50 +17,13 @@ import hashlib
 from ..db.database import db
 import datetime
 import traceback
+from ..core.clientpool import instance as clientpool, PoolClientWrapper
+from ..sdk.sdkclients import create
 
 class AccountException(Exception):
     pass
 class UserException(Exception):
     pass
-
-@dataclass_json
-@dataclass
-class ResultInfo:
-    alias: str = ""
-    key: str = ""
-    path: str = ""
-    time: str = ""
-    url: str = ""
-    _type: str = ""
-    status: eResultStatus = eResultStatus.SKIP
-
-    def save_result(self, result):
-        with open(self.path, 'w') as f:
-            f.write(result.to_json())
-    def delete_result(self):
-        if os.path.exists(self.path):
-            os.remove(self.path)
-    def get_result(self):
-        raise NotImplementedError
-    def response(self, url_format: str):
-        url = url_format.format(self.alias)
-        return ResultInfo(alias = self.alias, key = self.key, time = self.time, url = url, status = self.status)
-
-@dataclass_json
-@dataclass
-class TaskResultInfo(ResultInfo):
-    _type: str = "daily_result"
-    def get_result(self) -> TaskResult:
-        with open(self.path, 'r') as f:
-            return TaskResult.from_json(f.read())
-
-@dataclass_json
-@dataclass
-class ModuleResultInfo(ResultInfo):
-    _type: str = "single_result"
-    def get_result(self) -> ModuleResult:
-        with open(self.path, 'r') as f:
-            return ModuleResult.from_json(f.read())
 
 @dataclass_json
 @dataclass
@@ -84,14 +46,14 @@ class UserData:
 BATCHINFO = "BATCH_RUNNER"
 
 class Account(ModuleManager):
+    _account_locks: Dict[str, Lock] = dict()
+
     def __init__(self, parent: 'AccountManager', qid: str, account: str, readonly: bool = False):
-        if not account in parent.account_lock:
-            parent.account_lock[account] = Lock()
-        self._lck = parent.account_lock[account]
         self._filename = parent.path(account)
+        self._lck = Account._account_locks.setdefault(self._filename, Lock())
         self._parent = parent
         self.readonly = readonly
-        self.id = hashlib.md5(account.encode('utf-8')).hexdigest()
+        self._id = hashlib.md5(account.encode('utf-8')).hexdigest()
 
         if not os.path.exists(self._filename):
             if account == BATCHINFO:
@@ -107,15 +69,17 @@ class Account(ModuleManager):
         self.qq = qid
         self.alias = account
         self.token = f"{self.qq}_{self.alias}"
-        super().__init__(self.data.config, self)
-    
+        super().__init__(self.data.config)
+
     async def __aenter__(self):
         if not self.readonly:
             await self._lck.acquire()
+            await super().__aenter__()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if not self.readonly:
+            await super().__aexit__(exc_type, exc_val, exc_tb)
             if self.data != self.old_data:
                 await self.save_data()
             self._lck.release()
@@ -179,6 +143,10 @@ class Account(ModuleManager):
             traceback.print_exc()
             return None
 
+    @property
+    def id(self) -> str:
+        return self._id
+
     def get_last_daily_clean(self) -> TaskResultInfo:
         daily_result = self.get_daily_result_list()
         if daily_result:
@@ -194,21 +162,19 @@ class Account(ModuleManager):
         ret = self.data.single_result.get(module, [])
         return ret
 
-    def get_client(self) -> pcrclient:
-        return self.get_android_client()
+    async def get_client(self) -> PoolClientWrapper:
+        return await self.get_android_client()
 
-    def get_ios_client(self) -> pcrclient: # Header TODO
-        client = pcrclient(create(self.data.channel, account(
-            self.qq,
+    async def get_ios_client(self) -> PoolClientWrapper: # Header TODO
+        client = await clientpool.get_client(create(self.data.channel, account(
             self.data.username,
             self.data.password,
             platform.IOS
         )))
         return client
 
-    def get_android_client(self) -> pcrclient:
-        client = pcrclient(create(self.data.channel, account(
-            self.qq,
+    async def get_android_client(self) -> PoolClientWrapper:
+        client = await clientpool.get_client(create(self.data.channel, account(
             self.data.username,
             self.data.password,
             platform.Android
@@ -290,15 +256,14 @@ class AccountBatch(Account):
 
 class AccountManager:
     pathsyntax = re.compile(r'[^\\\|?*/#]{1,32}')
+    _user_locks: Dict[str, Lock] = dict()
 
     def __init__(self, parent: 'UserManager', qid: str, readonly: bool = False):
-        if not qid in parent.user_lock:
-            parent.user_lock[qid] = Lock()
-        self._lck = parent.user_lock[qid]
         self.qid = qid
-        self.root = parent.qid_path(qid);
+        self.root = parent.qid_path(qid)
         self._parent = parent
         self.readonly = readonly
+        self._lck = AccountManager._user_locks.setdefault(self.root, Lock())
         
         with open(self.root + '/secret', 'r') as f:
             self.secret: UserData = UserData.from_json(f.read())
@@ -316,12 +281,6 @@ class AccountManager:
             if self.secret != self.old_secret:
                 self.save_secret()
             self._lck.release()
-
-    @property
-    def account_lock(self) -> Dict[str, Lock]:
-        if not self.qid in self._parent.account_lock:
-            self._parent.account_lock[self.qid] = {}
-        return self._parent.account_lock[self.qid]
 
     def create_account(self, account: str) -> Account:
         if not AccountManager.pathsyntax.fullmatch(account):
@@ -430,8 +389,6 @@ class UserManager:
 
     def __init__(self, root: str):
         self.root = root
-        self.user_lock: Dict[str, Lock] = {}
-        self.account_lock: Dict[str, Dict[str, Lock]] = {}
         self.clan_battle_forbidden = set()
 
         # 初始不存在root目录，创建一下

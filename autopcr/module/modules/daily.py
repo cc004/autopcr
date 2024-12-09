@@ -10,7 +10,6 @@ from ...db.database import db
 from ...model.enums import *
 from ...util.questutils import *
 import asyncio
-import datetime
 
 @description('仅开启时生效，氪体数优先级n4>n3>h3>vh3>n2>h2>vh2，禅模式指不执行体力相关的功能，仅在清日常生效，单项执行将忽略。庆典包括其倍数')
 @name("全局配置")
@@ -323,7 +322,7 @@ class pjjc_daily(Module):
 class user_info(Module):
     async def do_task(self, client: pcrclient):
         now = db.format_time(apiclient.datetime)
-        name = client.data.name
+        name = client.data.user_name
         level = client.data.team_level
         stamina = client.data.stamina
         max_stamina = db.team_info[client.data.team_level].max_stamina

@@ -108,7 +108,7 @@ class Module:
         self.warn = []
 
         from os.path import join
-        self.cache_path: str = join(CACHE_DIR, "modules", self.key, self._parent.parent.id + ".json")
+        self.cache_path: str = join(CACHE_DIR, "modules", self.key, self._parent.id + ".json")
         self.cache_ready = False
         self._cache = {}
 

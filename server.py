@@ -160,7 +160,7 @@ def wrap_hoshino_event(func):
     return wrapper
 
 async def check_validate(botev: BotEvent, qq: str, cnt: int = 1):
-    from .autopcr.sdk.validator import validate_dict
+    from .autopcr.http_server.validator import validate_dict
     for _ in range(360):
         if qq in validate_dict and validate_dict[qq]:
             validate = validate_dict[qq].pop()

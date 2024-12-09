@@ -5,7 +5,6 @@ from ...core.apiclient import apiclient
 from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
-import datetime
 
 @name('露娜塔回廊扫荡')
 @default(True)
