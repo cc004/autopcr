@@ -14,6 +14,7 @@ class sessionmgr(Component[apiclient]):
         self._logged = False
         self.auto_relogin = True
         self._sdkaccount = None
+        self.session_expire_time = 0
         if not os.path.exists(self.cacheDir):
             os.makedirs(self.cacheDir)
 
@@ -107,7 +108,7 @@ class sessionmgr(Component[apiclient]):
 
                 req = LoadIndexRequest()
                 req.carrier = "OPPO"
-                await next.request(req)
+                self.session_expire_time = (await next.request(req)).daily_reset_time
 
                 req = HomeIndexRequest()
                 req.message_id = 1
@@ -128,6 +129,8 @@ class sessionmgr(Component[apiclient]):
                 pass
 
     async def request(self, request: Request[TResponse], next: RequestHandler) -> TResponse:
+        if self._container.time > self.session_expire_time:
+            await self.clear_session()
         if not self._logged:
             await self._login(next)
         try:

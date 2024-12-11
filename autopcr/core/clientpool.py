@@ -117,7 +117,7 @@ class ClientPool:
     def _put_in_pool(self, client: PoolClientWrapper):
         self._sema.release()
         client_key = id(client)
-        if self.active_uids.get(client.uid, client_key) != client_key:
+        if self.active_uids.get(client.uid, -1) != client_key:
             # client disposed without being activated
             return
         self.active_uids.pop(client.uid)
