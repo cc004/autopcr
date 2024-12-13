@@ -229,7 +229,6 @@ class present_receive(Module):
             present = await client.present_index()
             for present in present.present_info_list:
                 if not is_exclude_stamina or not (present.reward_type == eInventoryType.Stamina and present.reward_id == 93001):
-                    print(present.reward_type, present.reward_id)
                     res = await client.present_receive_all(is_exclude_stamina)
                     if not res.rewards:
                         stop = True

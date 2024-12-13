@@ -264,6 +264,7 @@ unique_equip_2_pure_memory_id = [
         (32036, 1), # mcw
         (32020, 1), # 瓜兔
         (32004, 1), # 瓜炸
+        (32059, 1), # 妈
 ]
 @conditional_execution1("very_hard_sweep_run_time", ["vh庆典"])
 @description('储备专二需求的150碎片，包括' + ','.join(db.get_item_name(item_id) for item_id, _ in unique_equip_2_pure_memory_id))
