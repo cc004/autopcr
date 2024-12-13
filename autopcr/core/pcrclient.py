@@ -38,6 +38,11 @@ class pcrclient(apiclient):
     async def logout(self):
         await self.session.clear_session()
 
+    async def item_recycle_ex(self, consume_ex_serial_id_list: List[int]):
+        req = ItemRecycleExtraEquipRequest()
+        req.consume_ex_serial_id_list = consume_ex_serial_id_list
+        return await self.request(req)
+
     async def season_ticket_new_index(self, season_id: int):
         req = SeasonPassIndexRequest()
         req.season_id = season_id

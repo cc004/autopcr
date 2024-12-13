@@ -404,7 +404,7 @@ class datamgr(BaseModel, Component[apiclient]):
                 self.unit_love_data[unit_id].chara_love = 0
                 self.unit_love_data[unit_id].love_level = 0
         elif item.type == eInventoryType.ExtraEquip:
-            self.ex_equips[item.id] = item.ex_equip
+            self.ex_equips[item.ex_equip.serial_id] = item.ex_equip
         else:
             self.inventory[token] = item.stock
 

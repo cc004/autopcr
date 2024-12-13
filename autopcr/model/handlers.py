@@ -815,6 +815,16 @@ class RedeemUnitUnlockResponse(responses.RedeemUnitUnlockResponse):
         if self.unit_data:
             mgr.unit[self.unit_data.id] = self.unit_data
 
+@handles
+class ItemRecycleExtraEquipResponse(responses.ItemRecycleExtraEquipResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        if request.consume_ex_serial_id_list:
+            for serial_id in request.consume_ex_serial_id_list:
+                mgr.ex_equips.pop(serial_id)
+
 # 菜 就别玩
 def custom_dict(self, *args, **kwargs):
     original_dict = super(TravelStartRequest, self).dict(*args, **kwargs)
