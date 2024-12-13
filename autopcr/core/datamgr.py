@@ -481,6 +481,9 @@ class datamgr(BaseModel, Component[apiclient]):
 
     async def request(self, request: Request[TResponse], next: RequestHandler) -> TResponse:
         resp = await next.request(request)
-        if resp: await resp.update(self, request)
+        if resp:
+            if resp.update_bank_gold is not None:
+                self.user_gold_bank_info.bank_gold = resp.update_bank_gold
+            await resp.update(self, request)
         return resp
 
