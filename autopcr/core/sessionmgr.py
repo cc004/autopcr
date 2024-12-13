@@ -7,19 +7,22 @@ from ..constants import CACHE_DIR
 import hashlib
 
 class sessionmgr(Component[apiclient]):
-    def __init__(self, sdk: sdkclient, *arg, **kwargs):
+    def __init__(self, sdk: sdkclient):
         super().__init__()
         self.cacheDir = os.path.join(CACHE_DIR, 'token')
         self.sdk = sdk
-        self._platform = self.sdk.platform_id
-        self._channel = self.sdk.channel
-        self._account: str = sdk.account
         self._logged = False
         self.auto_relogin = True
         self._sdkaccount = None
+        self.session_expire_time = 0
         if not os.path.exists(self.cacheDir):
             os.makedirs(self.cacheDir)
-        self.cacheFile = os.path.join(self.cacheDir, hashlib.md5(self._account.encode('utf-8')).hexdigest())
+
+    @property
+    def cacheFile(self):
+        return os.path.join(self.cacheDir, hashlib.md5(
+            self.sdk.account.encode('utf-8')
+        ).hexdigest())
 
     async def _bililogin(self):
         uid, access_key = await self.sdk.login()
@@ -29,7 +32,7 @@ class sessionmgr(Component[apiclient]):
         }
         with open(self.cacheFile, 'w') as fp:
             json.dump(self._sdkaccount, fp)
-    
+
     async def _ensure_token(self, next: RequestHandler):
         try:
             for _ in range(5):
@@ -38,8 +41,8 @@ class sessionmgr(Component[apiclient]):
                         req = ToolSdkLoginRequest(
                             uid=self._sdkaccount['uid'],
                             access_key=self._sdkaccount['access_key'],
-                            platform=str(self._platform),
-                            channel_id=str(self._channel)
+                            platform=str(self.sdk.platform_id),
+                            channel_id=str(self.sdk.channel)
                         )
                         if not (await next.request(req)).is_risk:
                             break
@@ -49,8 +52,8 @@ class sessionmgr(Component[apiclient]):
                                 req = ToolSdkLoginRequest(
                                     uid=self._sdkaccount['uid'],
                                     access_key=self._sdkaccount['access_key'],
-                                    platform=str(self._platform),
-                                    channel_id=str(self._channel),
+                                    platform=str(self.sdk.platform_id),
+                                    channel_id=str(self.sdk.channel),
                                     challenge=captch_done['challenge'],
                                     validate_=captch_done['validate'],
                                     seccode=captch_done['validate']+"|jordan",
@@ -72,8 +75,7 @@ class sessionmgr(Component[apiclient]):
         except Exception:
             raise
         finally:
-            from ..sdk.validator import validate_dict, ValidateInfo
-            validate_dict[self.sdk.qq].append(ValidateInfo(status="ok"))
+            await self.sdk.invoke_post_login()
 
     async def _login(self, next: RequestHandler):
         if os.path.exists(self.cacheFile):
@@ -106,7 +108,7 @@ class sessionmgr(Component[apiclient]):
 
                 req = LoadIndexRequest()
                 req.carrier = "OPPO"
-                await next.request(req)
+                self.session_expire_time = (await next.request(req)).daily_reset_time
 
                 req = HomeIndexRequest()
                 req.message_id = 1
@@ -127,6 +129,8 @@ class sessionmgr(Component[apiclient]):
                 pass
 
     async def request(self, request: Request[TResponse], next: RequestHandler) -> TResponse:
+        if self._container.time > self.session_expire_time:
+            await self.clear_session()
         if not self._logged:
             await self._login(next)
         try:

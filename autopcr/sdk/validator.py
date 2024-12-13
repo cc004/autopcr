@@ -1,76 +1,11 @@
 from typing import Dict, List
-from ..util import aiorequests, questutils
+from ..util import aiorequests, questutils, freqlimiter
 from ..model.error import PanicError
 from json import loads
 import asyncio, time
-from dataclasses import dataclass
-from dataclasses_json import dataclass_json
-from collections import defaultdict
+from ..util import aiorequests
 
-@dataclass_json
-@dataclass
-class ValidateInfo:
-    id: str = ""
-    challenge: str = ""
-    gt: str = ""
-    userid: str = ""
-    url: str = ""
-    status: str = ""
-    validate: str = ""
-
-validate_dict: Dict[str, List[ValidateInfo]] = defaultdict(list)
-validate_ok_dict: Dict[str, ValidateInfo] = {}
-
-async def Validator(qq):
-    info = None
-    for validator in [remoteValidator, localValidator, manualValidator]:
-        try:
-            info = await validator(qq)
-            if info:
-                break
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            pass
-    if not info:
-        raise PanicError("验证码验证超时")
-    return info
-
-async def manualValidator(qq):
-    print('use manual validator')
-
-    from .bsgamesdk import captch
-    cap = await captch()
-    challenge = cap['challenge']
-    gt = cap['gt']
-    userid = cap['gt_user_id']
-
-    id = questutils.create_quest_token()
-    url = f"/daily/validate?id={id}&captcha_type=1&challenge={challenge}&gt={gt}&userid={userid}&gs=1"
-    validate_dict[qq].append(ValidateInfo(
-            id=id,
-            challenge=challenge,
-            gt=gt,
-            userid=userid,
-            url=url,
-            status="need validate"
-    ))
-    info = None
-    for _ in range(120):
-        if id not in validate_ok_dict:
-            await asyncio.sleep(1)
-        else:
-            info = {
-                "challenge": validate_ok_dict[id].challenge,
-                "gt_user_id": validate_ok_dict[id].userid,
-                "validate" : validate_ok_dict[id].validate
-            }
-            del validate_ok_dict[id]
-            break
-    return info
-
-
-async def localValidator(qq):
+async def localValidator():
     print('use local validator')
 
     from .bsgamesdk import captch
@@ -105,7 +40,8 @@ async def localValidator(qq):
         }
     return info
 
-async def remoteValidator(qq):
+@freqlimiter.FreqLimiter(5,30)
+async def remoteValidator():
     print('use remote validator')
 
     url = f"https://pcrd.tencentbot.top/geetest_renew"

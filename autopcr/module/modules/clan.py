@@ -4,9 +4,8 @@ from ...core.pcrclient import pcrclient
 from ...core.apiclient import apiclient
 from ...model.error import *
 from ...model.enums import *
-import random
-import datetime
 from ...db.database import db
+import random
 
 @description('在公会中自动随机选择一位成员点赞。')
 @name("公会点赞")
@@ -50,7 +49,7 @@ class clan_equip_request(Module):
         if clan.latest_request_time and apiclient.time <= clan.latest_request_time + client.data.settings.clan.equipment_request_interval:
             raise SkipError("当前请求尚未结束")
         elif clan.latest_request_time:
-            res = await client.equip_get_request(clan.clan.detail.clan_id, 0)
+            res = await client.equip_get_request(0)
             msg = f"收到{db.get_equip_name(res.request.equip_id)}x{res.request.donation_num}：" + ' '.join(f"{user.name}x{user.num}" for user in res.request.history)
             self._log(msg.strip("："))
 

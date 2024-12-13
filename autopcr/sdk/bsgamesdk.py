@@ -86,12 +86,12 @@ def make_captch(gt,challenge,gt_user):
     res = requests.get(url="http://api.ydaaa.com/start_handle",params=data)
     return res
     '''
-async def login(qq, bili_account,bili_pwd, make_captch):
+async def login(bili_account,bili_pwd, make_captch):
     print(f'logging in with acc={bili_account}, pwd = {bili_pwd}')
     login_sta= await login1(bili_account,bili_pwd)
     # if "access_key" not in login_sta:
     if login_sta['code'] == 200000:
-        captch_done=await make_captch(qq)
+        captch_done=await make_captch()
         login_sta=await login2(bili_account,bili_pwd,captch_done["challenge"],captch_done['gt_user_id'],captch_done['validate'])
         return login_sta
     else:

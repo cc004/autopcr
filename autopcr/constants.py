@@ -1,5 +1,10 @@
 import os
 
+CLIENT_POOL_SIZE_MAX = 100
+CLINET_POOL_MAX_AGE = 3600 * 24
+CLINET_POOL_MAX_CLIENT_ALIVE = 10
+SESSION_ERROR_MAX_RETRY = 2
+
 BSDK = '官服'
 QSDK = '渠道服'
 
@@ -14,6 +19,8 @@ DATA_DIR = os.path.join(ROOT_DIR, './data/')
 CONFIG_PATH = os.path.join(CACHE_DIR, './http_server/') 
 OLD_CONFIG_PATH = os.path.join(ROOT_DIR, 'autopcr/http_server/config')
 AUTH_KEY = ""
+
+MAX_API_RUNNING = 8
 
 # Headers
 DEFAULT_HEADERS = {
