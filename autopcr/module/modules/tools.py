@@ -18,6 +18,21 @@ import datetime
 import random
 from collections import Counter
 
+@name('撤下会战助战')
+@default(True)
+@description('拒绝内鬼练度')
+class remove_cb_support(Module):
+    async def do_task(self, client: pcrclient):
+        support_info = await client.support_unit_get_setting()
+        remove = False
+        for support in support_info.clan_support_units:
+            if support.position in [eClanSupportMemberType.CLAN_BATTLE_SUPPORT_UNIT_1, eClanSupportMemberType.CLAN_BATTLE_SUPPORT_UNIT_2]:
+                remove = True
+                self._log(f"移除{db.get_unit_name(support.unit_id)}，已被借{support.clan_support_count}次")
+                await client.support_unit_change_setting(1, support.position, 2, support.unit_id)
+        if not remove:
+            raise SkipError("没有会战助战")
+
 @name('计算兑换角色碎片')
 @default(True)
 @booltype('redeem_unit_swap_do', '开换', False)

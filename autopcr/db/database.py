@@ -477,6 +477,22 @@ class database():
                 .to_dict(lambda x: x.target_level, lambda x: x.cost)
             )
 
+            self.skill_action: Dict[int, SkillAction] = (
+                SkillAction.query(db)
+                .to_dict(lambda x: x.action_id, lambda x: x)
+            )
+
+            self.skill_data: Dict[int, SkillDatum] = (
+                SkillDatum.query(db)
+                .to_dict(lambda x: x.skill_id, lambda x: x)
+            )
+
+            self.unit_skill_data: Dict[int, UnitSkillDatum] = (
+                UnitSkillDatum.query(db)
+                .to_dict(lambda x: x.unit_id, lambda x: x)
+            )
+
+
             self.experience_unit: Dict[int, int] = (
                 ExperienceUnit.query(db)
                 .to_dict(lambda x: x.unit_level, lambda x: x.total_exp)

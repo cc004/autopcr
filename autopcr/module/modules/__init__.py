@@ -132,6 +132,7 @@ tool_modules = ModuleList(
     'tool',
     [
         # cook_pudding,
+        remove_cb_support,
         travel_team_view,
         ex_equip_info,
         redeem_unit_swap,

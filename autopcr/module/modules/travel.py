@@ -14,7 +14,7 @@ import random
 import time
 
 @description('''
-分解对应的EX装备
+分解对应的EX装备，不分解已锁或已装备的EX装备
 '''.strip())
 @multichoice("ex_equip_recycle_category", "稀有度", ['普通铜', '普通银'], ['普通铜', '普通银', '会战银'])
 @name("EX装备分解")
