@@ -14,6 +14,7 @@ class ErrorInfo(BaseModel):
 
 class ResponseBase(BaseModel):
     server_error: ErrorInfo = None
+    update_bank_gold: int = None
     async def update(self, mgr: "datamgr", request): ...
 
 TResponse = TypeVar('TResponse', bound=ResponseBase, covariant=True)
