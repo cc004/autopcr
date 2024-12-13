@@ -134,7 +134,7 @@ class sessionmgr(Component[apiclient]):
         if not self._logged:
             await self._login(next)
         try:
-            await next.request(request)
+            return await next.request(request)
         except ApiException as ex:
             if ex.status == 3 and self.auto_relogin:
                 self._logged = False
