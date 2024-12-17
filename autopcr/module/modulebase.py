@@ -166,6 +166,8 @@ class Module:
             ok, msg = await self.do_check(client)
             if not ok:
                 raise SkipError(msg)
+            elif msg:
+                self._log(msg)
 
             await self.do_task(client)
 

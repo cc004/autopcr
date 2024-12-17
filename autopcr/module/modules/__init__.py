@@ -12,6 +12,7 @@ from .story import *
 from .sweep import *
 from .tower import *
 from .tools import *
+from .travel import *
 from .unit import *
 
 @dataclass
@@ -48,6 +49,7 @@ daily_modules = ModuleList(
         room_accept_all,
         travel_round,
         travel_quest_sweep,
+        ex_equip_recycle,
         explore_exp,
         explore_mana,
         underground_skip,
@@ -130,6 +132,7 @@ tool_modules = ModuleList(
     'tool',
     [
         # cook_pudding,
+        remove_cb_support,
         travel_team_view,
         ex_equip_info,
         redeem_unit_swap,

@@ -8,7 +8,7 @@ from .misc import errorhandler, mutexhandler
 from .base import Component, Request, TResponse, RequestHandler
 from ..model.sdkrequests import ToolSdkLoginRequest
 from typing import Dict, Tuple
-from ..constants import SESSION_ERROR_MAX_RETRY, CLIENT_POOL_SIZE_MAX, CLINET_POOL_MAX_AGE, CACHE_DIR, CLINET_POOL_MAX_CLIENT_ALIVE
+from ..constants import SESSION_ERROR_MAX_RETRY, CLIENT_POOL_SIZE_MAX, CLIENT_POOL_MAX_AGE, CACHE_DIR, CLIENT_POOL_MAX_CLIENT_ALIVE
 import time, os, queue, asyncio, pickle
 
 class ComponentWrapper(Component):
@@ -102,7 +102,7 @@ class ClientPool:
             self._cache_pool.put(os.path.join(CACHE_DIR, 'pool', f'data_{i}.bin'))
         os.makedirs(os.path.join(CACHE_DIR, 'pool'), exist_ok=True)
 
-        self._sema = asyncio.Semaphore(CLINET_POOL_MAX_CLIENT_ALIVE)
+        self._sema = asyncio.Semaphore(CLIENT_POOL_MAX_CLIENT_ALIVE)
 
     def _on_sdk_login(self, client: PoolClientWrapper):
         client_key = id(client)
@@ -134,7 +134,7 @@ class ClientPool:
             now = int(time.time())
             while self._pool:
                 k, v = next(iter(self._pool.items()))
-                if v.last_access + CLINET_POOL_MAX_AGE < now:
+                if v.last_access + CLIENT_POOL_MAX_AGE < now:
                     self._try_remove(k)
                 else:
                     break

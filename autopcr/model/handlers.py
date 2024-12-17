@@ -7,7 +7,6 @@ from ..core.datamgr import datamgr
 from ..db.database import db
 from .enums import eEventSubStoryStatus
 from typing import Optional
-import json as json_module
 
 def handles(cls):
     cls.__base__.update = cls.update
@@ -454,10 +453,8 @@ class SpecialDungeonEnterAreaResponse(responses.SpecialDungeonEnterAreaResponse)
         if self.mission_reward_info:
             for reward in self.mission_reward_info:
                 mgr.update_inventory(reward)
-        # missing update_bank_gold
         if self.user_gold:
             mgr.gold = self.user_gold
-
 
 @handles
 class DungeonResetResponse(responses.DungeonResetResponse):
@@ -469,12 +466,10 @@ class DungeonResetResponse(responses.DungeonResetResponse):
                 mgr.dungeon_avaliable = count.count > 0
                 break
 
-
 @handles
 class DungeonEnterAreaResponse(responses.DungeonEnterAreaResponse):
     async def update(self, mgr: datamgr, request):
         mgr.dungeon_area_id = self.quest_id // 1000
-
 
 @handles
 class CloisterBattleSkipResponse(responses.CloisterBattleSkipResponse):
@@ -493,7 +488,6 @@ class CloisterBattleSkipResponse(responses.CloisterBattleSkipResponse):
         if self.user_gold:
             mgr.gold = self.user_gold
 
-
 @handles
 class ClanLikeResponse(responses.ClanLikeResponse):
     async def update(self, mgr: datamgr, request):
@@ -510,7 +504,6 @@ class ClanInfoResponse(responses.ClanInfoResponse):
 class ClanCreateResponse(responses.ClanCreateResponse):
     async def update(self, mgr: datamgr, request):
         mgr.clan = self.clan_id
-
 
 @handles
 class ArenaTimeRewardAcceptResponse(responses.ArenaTimeRewardAcceptResponse):
@@ -814,6 +807,26 @@ class RedeemUnitUnlockResponse(responses.RedeemUnitUnlockResponse):
     async def update(self, mgr: datamgr, request):
         if self.unit_data:
             mgr.unit[self.unit_data.id] = self.unit_data
+
+@handles
+class ItemRecycleExtraEquipResponse(responses.ItemRecycleExtraEquipResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        if request.consume_ex_serial_id_list:
+            for serial_id in request.consume_ex_serial_id_list:
+                mgr.ex_equips.pop(serial_id)
+
+@handles
+class SupportUnitChangeSettingResponse(responses.SupportUnitChangeSettingResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.support_count_bonus:
+            for bonus in self.support_count_bonus:
+                mgr.update_inventory(bonus)
+        if self.support_time_bonus:
+            for bonus in self.support_time_bonus:
+                mgr.update_inventory(bonus)
 
 # 菜 就别玩
 def custom_dict(self, *args, **kwargs):

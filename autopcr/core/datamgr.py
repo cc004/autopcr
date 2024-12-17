@@ -66,25 +66,25 @@ class datamgr(BaseModel, Component[apiclient]):
                 db.update(dbmgr)
 
     def is_heart_piece_campaign(self) -> bool:
-        return any(db.is_heart_piece_campaign(campaign_id) for campaign_id in self.campaign_list)
+        return self.get_campaign_times(db.is_heart_piece_campaign) > 0
 
     def is_star_cup_campaign(self) -> bool:
-        return any(db.is_star_cup_campaign(campaign_id) for campaign_id in self.campaign_list)
+        return self.get_campaign_times(db.is_star_cup_campaign) > 0
 
     def is_quest_campaign(self) -> bool:
         return self.is_normal_quest_campaign() or self.is_hard_quest_campaign() or self.is_very_hard_quest_campaign()
 
     def is_normal_quest_campaign(self) -> bool:
-        return any(db.is_normal_quest_campaign(campaign_id) for campaign_id in self.campaign_list)
+        return self.get_campaign_times(db.is_normal_quest_campaign) > 0
 
     def is_hard_quest_campaign(self) -> bool:
-        return any(db.is_hard_quest_campaign(campaign_id) for campaign_id in self.campaign_list)
+        return self.get_campaign_times(db.is_hard_quest_campaign) > 0
 
     def is_very_hard_quest_campaign(self) -> bool:
-        return any(db.is_very_hard_quest_campaign(campaign_id) for campaign_id in self.campaign_list)
+        return self.get_campaign_times(db.is_very_hard_quest_campaign) > 0
 
     def is_dungeon_mana_campaign(self) -> bool:
-        return any(db.is_dungeon_mana_campaign(campaign_id) for campaign_id in self.campaign_list)
+        return self.get_campaign_times(db.is_dungeon_mana_campaign) > 0
 
     def is_campaign(self, campaign: str) -> bool:
         campaign_list = {
@@ -106,7 +106,7 @@ class datamgr(BaseModel, Component[apiclient]):
         return campaign_list[campaign]()
 
     def get_campaign_times(self, condition_func) -> int:
-        times = [db.get_campaign_times(campaign_id) for campaign_id in self.campaign_list if condition_func(campaign_id)]
+        times = [db.get_campaign_times(campaign_id) for campaign_id in self.campaign_list if condition_func(campaign_id) and db.is_level_effective_scope_in_campaign(self.team_level, campaign_id)]
         if not times:
             return 0
         times = max(times)
@@ -143,7 +143,7 @@ class datamgr(BaseModel, Component[apiclient]):
             or db.is_shiori_normal_quest(quest) and db.is_shiori_normal_quest_stamina_half_campaign(campaign_id) 
             or db.is_shiori_hard_quest(quest) and db.is_shiori_hard_quest_stamina_half_campaign(campaign_id)
             ) \
-            and db.is_effective_scope_in_campaign(quest, campaign_id)
+            and db.is_quest_effective_scope_in_campaign(quest, campaign_id)
         return self.get_campaign_times(func)
 
     def get_unique_equip_material_demand(self, equip_slot:int, unit_id: int, token: ItemType) -> int:
@@ -404,7 +404,7 @@ class datamgr(BaseModel, Component[apiclient]):
                 self.unit_love_data[unit_id].chara_love = 0
                 self.unit_love_data[unit_id].love_level = 0
         elif item.type == eInventoryType.ExtraEquip:
-            self.ex_equips[item.id] = item.ex_equip
+            self.ex_equips[item.ex_equip.serial_id] = item.ex_equip
         else:
             self.inventory[token] = item.stock
 
