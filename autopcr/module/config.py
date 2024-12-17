@@ -76,10 +76,10 @@ def config_option(key:str, desc: str, default, candidates: Union[list, Callable]
                 if not ok:
                     return False, msg
 
-                ok, msg = await config.do_check(*args, **kwargs)
+                ok, msg2 = await config.do_check(*args, **kwargs)
                 if not ok:
-                    return False, msg
-                return True, ""
+                    return False, msg + msg2
+                return True, msg + msg2
 
             cls.do_check = new_do_check
 

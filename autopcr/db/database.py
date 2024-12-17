@@ -1048,7 +1048,13 @@ class database():
             raise ValueError(f"不支持的庆典查询：{campaign}")
         return campaign_list[campaign]()
 
-    def is_effective_scope_in_campaign(self, quest_id: int, campaign_id: int) -> bool:
+    def is_level_effective_scope_in_campaign(self, level: int, campaign_id: int) -> bool:
+        lv_to = self.campaign_schedule[campaign_id].lv_to
+        if lv_to == -1: return True
+        lv_from = self.campaign_schedule[campaign_id].lv_from
+        return lv_from <= level and level <= lv_to
+
+    def is_quest_effective_scope_in_campaign(self, quest_id: int, campaign_id: int) -> bool:
         beginner_id = self.campaign_schedule[campaign_id].beginner_id
         if beginner_id == 0: return True
         id_from = self.campaign_beginner_data[beginner_id].id_from
