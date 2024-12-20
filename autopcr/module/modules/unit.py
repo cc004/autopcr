@@ -620,7 +620,7 @@ class unit_promote(UnitController):
                            target_skill_ex_level = target_skill_ex_level, 
                            target_unique1_level = target_unique1_level)
 
-@description('''角色ID	角色名字	角色等级	角色星级	角色好感度	角色Rank	装备等级(左上)	装备等级(右上)	装备等级(左中)	装备等级(右中)	装备等级(左下)	装备等级(右下)	UB技能等级	技能1等级	技能2等级	EX技能等级	专武等级	高级设置
+@description('''角色ID	角色名字	角色等级	角色星级	角色好感度	角色Rank	装备等级(左上)	装备等级(右上)	装备等级(左中)	装备等级(右中)	装备等级(左下)	装备等级(右下)	UB技能等级	技能1等级	技能2等级	EX技能等级	专武等级	EX武器	EX武器等级	EX防具	EX防具等级	EX首饰	EX首饰等级	高级设置
 不会使用专武球，专武升级请认真考虑！
 不考虑星级、好感度、高级设置''')
 @name('批量拉角色练度')
@@ -639,7 +639,9 @@ class unit_promote_batch(UnitController):
             try:
                 unit_id, unit_name, target_level, target_star, target_dear, target_rank, \
                     equip_0, equip_1, equip_2, equip_3, equip_4, equip_5, \
-                    ub, s1, s2, ex, unique1_level, dear_info = unit_text.split()
+                    ub, s1, s2, ex, unique1_level, \
+                    ex1_id, ex1_star, ex2_id, ex2_star, ex3_id, ex3_star, \
+                    dear_info = unit_text.split()
 
                 equip_star = [equip_0, equip_1, equip_2, equip_3, equip_4, equip_5]
 
@@ -658,6 +660,12 @@ class unit_promote_batch(UnitController):
                 target_skill_s2_level = int(s2)
                 target_skill_ex_level = int(ex)
                 target_unique1_level = int(unique1_level) if unique1_level.isdigit() else 0
+                target_ex1_id = int(ex1_id)
+                target_ex1_star = int(ex1_star)
+                target_ex2_id = int(ex2_id)
+                target_ex2_star = int(ex2_star)
+                target_ex3_id = int(ex3_id)
+                target_ex3_star = int(ex3_star)
 
                 await self.promote(target_level = target_level,
                                    target_star = target_star,
@@ -698,7 +706,7 @@ class unit_memory_buy(UnitController):
 
 @name('批量购买记忆碎片')
 @booltype("unit_memory_batch_do_buy", "开买", False)
-@description('''角色ID	角色名字	角色等级	角色星级	角色好感度	角色Rank	装备等级(左上)	装备等级(右上)	装备等级(左中)	装备等级(右中)	装备等级(左下)	装备等级(右下)	UB技能等级	技能1等级	技能2等级	EX技能等级	专武等级	高级设置
+@description('''角色ID	角色名字	角色等级	角色星级	角色好感度	角色Rank	装备等级(左上)	装备等级(右上)	装备等级(左中)	装备等级(右中)	装备等级(左下)	装备等级(右下)	UB技能等级	技能1等级	技能2等级	EX技能等级	专武等级	EX武器	EX武器等级	EX防具	EX防具等级	EX首饰	EX首饰等级	高级设置
 购买目标练度所缺的记忆碎片，先考虑大师店，再考虑女神店，其余商店请用对应的商店模块购买！
 仅考虑星级、专武，不考虑界限突破''')
 @default(False)
@@ -715,13 +723,15 @@ class unit_memory_buy_batch(UnitController):
             try:
                 unit_id, unit_name, target_level, target_star, target_dear, target_rank, \
                     equip_0, equip_1, equip_2, equip_3, equip_4, equip_5, \
-                    ub, s1, s2, ex, unique_level, dear_info = unit_text.split()
+                    ub, s1, s2, ex, unique1_level, \
+                    ex1_id, ex1_star, ex2_id, ex2_star, ex3_id, ex3_star, \
+                    dear_info = unit_text.split()
 
                 self.unit_id = int(unit_id)
                 star = int(target_star)
                 exceed_state = False
                 try:
-                    unique_level = int(unique_level)
+                    unique_level = int(unique1_level)
                 except:
                     unique_level = 0
 
