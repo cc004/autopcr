@@ -1049,10 +1049,10 @@ class database():
         return campaign_list[campaign]()
 
     def is_level_effective_scope_in_campaign(self, level: int, campaign_id: int) -> bool:
-        lv_to = self.campaign_schedule[campaign_id].lv_to
-        if lv_to == -1: return True
         lv_from = self.campaign_schedule[campaign_id].lv_from
-        return lv_from <= level and level <= lv_to
+        lv_to = self.campaign_schedule[campaign_id].lv_to
+        return lv_from <= level and \
+                (lv_to == -1 or level <= lv_to)
 
     def is_quest_effective_scope_in_campaign(self, quest_id: int, campaign_id: int) -> bool:
         beginner_id = self.campaign_schedule[campaign_id].beginner_id
