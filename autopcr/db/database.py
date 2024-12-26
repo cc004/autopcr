@@ -588,6 +588,12 @@ class database():
                 .to_dict(lambda x: x.unit_id, lambda x: x)
             )
 
+            self.unit_kana_ids: Dict[str, List[int]] = (
+                UnitDatum.query(db)
+                .group_by(lambda x: x.kana)
+                .to_dict(lambda x: x.key, lambda x: x.select(lambda y: y.unit_id).to_list())
+            )
+
             self.unlock_unit_condition: Dict[int, UnlockUnitCondition] = (
                 UnlockUnitCondition.query(db)
                 .to_dict(lambda x: x.unit_id, lambda x: x)
@@ -598,7 +604,10 @@ class database():
                 .where(lambda x: x.slot_id == 1)
                 .to_dict(lambda x: (eInventoryType.Item, x.material_id), lambda x: x.unit_id)
             )
-            
+            self.unit_to_pure_memory: Dict[int, ItemType] = {
+                value: key for key, value in self.pure_memory_to_unit.items()
+            }
+
             self.six_area: Dict[int, QuestDatum] = (
                 QuestDatum.query(db)
                 .where(lambda x: self.is_very_hard_quest(x.quest_id))

@@ -696,18 +696,22 @@ class get_need_memory(Module):
         msg = '\n'.join([f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片{("(" + msg[item[0]] + ")") if item[0] in msg else ""}' for item in demand])
         self._log(msg)
 
-@description('根据每个角色升六星（国服当前）、满二专（日服当前）所需的纯净碎片减去库存的结果')
+@description('去除六星需求后，专二所需纯净碎片减去库存的结果')
 @name('获取纯净碎片缺口')
 @default(True)
 class get_need_pure_memory(Module):
     async def do_task(self, client: pcrclient):
         from .autosweep import unique_equip_2_pure_memory_id
-        need_list = client.data.get_pure_memory_demand_gap()
-        need_list.update(Counter({(eInventoryType.Item, pure_memory_id): 150 * cnt for pure_memory_id, cnt in unique_equip_2_pure_memory_id}))
-        demand = list(need_list.items())
-        demand = sorted(demand, key=lambda x: x[1], reverse=True)
+        pure_gap = client.data.get_pure_memory_demand_gap()
+        target = Counter()
+        need_list = []
+        for unit in unique_equip_2_pure_memory_id:
+            kana = db.unit_data[unit].kana
+            target[kana] += 150
+            own = -sum(pure_gap[db.unit_to_pure_memory[unit]] if unit in db.unit_to_pure_memory else 0 for unit in db.unit_kana_ids[kana])
+            need_list.append(((eInventoryType.Unit, unit), target[kana] - own))
         msg = {}
-        msg = '\n'.join([f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片' for item in demand])
+        msg = '\n'.join([f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片' for item in need_list])
         self._log(msg)
 
 @description('根据每个角色开专、升级至当前最高专所需的心碎减去库存的结果，大心转换成10心碎')

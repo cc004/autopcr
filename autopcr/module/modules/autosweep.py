@@ -145,7 +145,7 @@ class simple_demand_sweep_base(Module):
                     try:
                         resp = await client.quest_skip_aware(quest.quest_id, max_times, True, True)
                         clean_cnt[quest.quest_id] += max_times
-                        tmp.extend([item for item in resp if (item.type, item.id) == token]) 
+                        tmp.extend(resp) 
                     except SkipError as e:
                         pass
                     except AbortError as e:
@@ -236,46 +236,55 @@ class smart_shiori_sweep(simple_demand_sweep_base):
         return 5
 
 unique_equip_2_pure_memory_id = [
-        (32025, 2), # 水女仆，女仆
-        (32046, 1), # 水猫剑
-        (32048, 1), # 水子龙
-        (32060, 1), # 黑猫
-        (32016, 2), # 暴击弓，水爆
-        (32031, 1), # 万圣忍
-        (32050, 1), # 万圣大眼
-        (32007, 1), # 万圣布丁
-        (32058, 1), # 吃货
-        (32033, 1), # 奶牛
-        (32023, 1), # 圣锤
-        (32042, 1), # 圣千
-        (32021, 1), # 圣铃铛
-        (32049, 2), # 情姐，姐姐
-        (32027, 1), # 情病
-        (32011, 1), # 妹弓
-        (32045, 1), # 江花
-        (32030, 1), # 忍扇
-        (32040, 1), # 生菜
-        (32013, 1), # 七七香
-        (32028, 1), # 水电
-        (32018, 1), # 老师
-        (32043, 1), # 水狼
-        (32017, 1), # 水狗
-        (32010, 1), # 水狐
-        (32036, 1), # mcw
-        (32020, 1), # 瓜兔
-        (32004, 1), # 瓜炸
-        (32059, 1), # 妈
+        107701, # 水女仆
+        107901, # 水猫剑
+        108001, # 水子龙
+        106001, # 黑猫
+        101601, # 暴击弓
+        108101, # 万圣忍
+        108201, # 万圣布丁
+        108301, # 万圣大眼
+        103301, # 奶牛
+        105801, # 吃货
+        108401, # 圣千
+        108501, # 圣铃铛
+        108601, # 圣锤
+        109001, # 情病
+        109101, # 情姐
+        104901, # 姐姐
+        101101, # 妹弓
+        109501, # 江花
+        109601, # 忍扇
+        101301, # 七七香
+        110701, # 生菜
+        110001, # 水暴
+        110101, # 水老师
+        110301, # 水电
+        110401, # 水狼
+        110501, # 水狗
+        110601, # 水壶
+        102501, # 女仆
+        111101, # mcw
+        111301, # 瓜兔
+        111201, # 瓜炸
+        105901, # 妈
 ]
 @conditional_execution1("very_hard_sweep_run_time", ["vh庆典"])
-@description('储备专二需求的150碎片，包括' + ','.join(db.get_item_name(item_id) for item_id, _ in unique_equip_2_pure_memory_id))
+@description('储备专二需求的150碎片，包括' + ','.join(db.get_unit_name(unit_id) for unit_id in unique_equip_2_pure_memory_id))
 @name('专二纯净碎片储备')
 @default(False)
 @tag_stamina_consume
 class mirai_very_hard_sweep(simple_demand_sweep_base):
     async def get_need_list(self, client: pcrclient) -> List[Tuple[ItemType, int]]:
-        need_list = client.data.get_pure_memory_demand_gap()
-        need_list.update(Counter({(eInventoryType.Item, pure_memory_id): 150 * cnt for pure_memory_id, cnt in unique_equip_2_pure_memory_id}))
-        need_list = [(token, need) for token, need in need_list.items() if need > 0]
+        pure_gap = client.data.get_pure_memory_demand_gap()
+        target = Counter()
+        need_list = []
+        for unit in unique_equip_2_pure_memory_id:
+            kana = db.unit_data[unit].kana
+            target[kana] += 150
+            own = -sum(pure_gap[db.unit_to_pure_memory[unit]] if unit in db.unit_to_pure_memory else 0 for unit in db.unit_kana_ids[kana])
+            if own < target[kana]:
+                need_list.append(((0, kana), target[kana] - own))
         if not need_list:
             raise SkipError("所有纯净碎片均已盈余")
         return need_list
@@ -284,7 +293,12 @@ class mirai_very_hard_sweep(simple_demand_sweep_base):
         return lambda x: db.is_unit_pure_memory(x)
 
     def get_need_quest(self, token: ItemType) -> List[QuestDatum]:
-        return db.pure_memory_quest.get(token, [])
+        kana = str(token[1])
+        ret = []
+        for unit in db.unit_kana_ids[kana]:
+            if unit in db.unit_to_pure_memory:
+                ret += db.pure_memory_quest.get(db.unit_to_pure_memory[unit], [])
+        return ret
 
     def get_max_times(self, client: pcrclient, quest_id: int) -> int:
         return 5 if db.is_shiori_quest(quest_id) else 3
