@@ -170,7 +170,7 @@ class apiclient(Container["apiclient"]):
                                )
 
 
-        if response.data.server_error and "维护" not in response.data.server_error.message:
+        if response.data.server_error:
             print(f'pcrclient: /{request.url} api failed={response.data_headers.result_code} {response.data.server_error}')
 
             if ERROR_LOG:
@@ -189,6 +189,9 @@ class apiclient(Container["apiclient"]):
             #   fp.write(json.dumps(self._headers, indent=4, ensure_ascii=False) + '\n')
             #   fp.write(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
             #   fp.write(json.dumps(json.loads(response.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
+
+            if "维护" in response.data.server_error.message:
+                response.data.server_error.message = response.data.maintenance_message
 
             raise ApiException(response.data.server_error.message,
                 response.data.server_error.status,

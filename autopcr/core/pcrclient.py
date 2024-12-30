@@ -14,9 +14,11 @@ class pcrclient(apiclient):
         self._keys = {}
         super().__init__(sdk)
         self.data = datamgr()
+        from .clientpool import ComponentWrapper
+        self._data_wrapper = ComponentWrapper(self.data)
         self.session = sessionmgr(sdk)
         self.register(errorhandler())
-        self.register(self.data)
+        self.register(self._data_wrapper)
         self.register(self.session)
         self.register(mutexhandler())
 
@@ -37,6 +39,8 @@ class pcrclient(apiclient):
 
     async def logout(self):
         await self.session.clear_session()
+        self.data = datamgr()
+        self._data_wrapper.component = self.data
 
     async def support_unit_get_setting(self):
         req = SupportUnitGetSettingRequest()

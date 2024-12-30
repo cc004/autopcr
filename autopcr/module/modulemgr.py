@@ -150,6 +150,14 @@ class ModuleManager:
                 order = [],
                 result = {}
         )
+
+        try:
+            if client.logged:
+                if client.data: client.data.update_stamina_recover()
+                await client.room_start()
+        except Exception as e:
+            traceback.print_exc()
+
         for module in modules:
             resp.order.append(module.key)
             resp.result[module.key] = await module.do_from(client)

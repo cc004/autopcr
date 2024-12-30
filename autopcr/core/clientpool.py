@@ -23,6 +23,8 @@ class PreRequestHandler(Component[apiclient]):
         self.pool = pool
     async def request(self, request: Request[TResponse], next: RequestHandler) -> TResponse:
         assert isinstance(self._container, PoolClientWrapper)
+        if self._container.session.is_session_expired:
+            await self._container.logout()
         self._container.last_access = int(time.time())
         if isinstance(request, ToolSdkLoginRequest):
             self._container.uid = request.uid
@@ -38,9 +40,9 @@ class SessionErrorHandler(Component[apiclient]):
         try:
             return await next.request(request)
         except ApiException as e:
-            if e.result_code == 6002 and self.retry < SESSION_ERROR_MAX_RETRY:
+            if (e.result_code == 6002 or e.result_code == 4) and self.retry < SESSION_ERROR_MAX_RETRY:
                 self.retry += 1
-                await self._container.session.clear_session()
+                await self._container.logout()
                 return await self.request(request, next)
             raise
         finally:
@@ -72,6 +74,11 @@ class PoolClientWrapper(pcrclient):
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         return self.pool._put_in_pool(self)
+
+    async def logout(self):
+        await self.session.clear_session()
+        self.data = datamgr()
+        self._data_wrapper.component = self.data
     
     def activate(self):
         assert self.cache is not None
