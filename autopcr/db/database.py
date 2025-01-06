@@ -692,6 +692,11 @@ class database():
                 .to_dict(lambda x: x.event_id, lambda x: x)
             )
 
+            self.dsb_story_data: Dict[int, DsbStoryDatum] = (
+                DsbStoryDatum.query(db)
+                .to_dict(lambda x: x.sub_story_id, lambda x: x)
+            )
+
             self.xeh_story_data: Dict[int, XehStoryDatum] = (
                 XehStoryDatum.query(db)
                 .to_dict(lambda x: x.sub_story_id, lambda x: x)
