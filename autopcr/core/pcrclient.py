@@ -364,6 +364,10 @@ class pcrclient(apiclient):
         req.item_info = [SendGiftData(item_id=item[1], item_num=cnt, current_item_num=self.data.get_inventory(item)) for item, cnt in cakes.items()]
         return await self.request(req)
 
+    async def gacha_special_fes(self):
+        req = GachaSpecialFesIndexRequest()
+        return await self.request(req)
+
     async def get_gacha_index(self):
         req = GachaIndexRequest()
         return await self.request(req)

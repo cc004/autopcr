@@ -56,6 +56,7 @@ class datamgr(BaseModel, Component[apiclient]):
     user_gold_bank_info: UserBankGoldInfo = None
     ex_equips: Dict[int, ExtraEquipInfo] = {}
     user_redeem_unit: Dict[int, RedeemUnitInfo] = {}
+    return_fes_info_list: List[ReturnFesInfo] = None
 
     @staticmethod
     async def try_update_database(ver: int):

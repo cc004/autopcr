@@ -273,6 +273,8 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         mgr.team_level = self.user_info.team_level
         mgr.jewel = self.user_jewel
         mgr.gold = self.user_gold
+        if self.return_fes_info_list:
+            mgr.return_fes_info_list = self.return_fes_info_list
         if self.user_redeem_unit:
             mgr.user_redeem_unit = {unit.unit_id: unit for unit in self.user_redeem_unit}
         if self.resident_info:
