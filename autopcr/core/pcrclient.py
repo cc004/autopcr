@@ -1089,6 +1089,8 @@ class pcrclient(apiclient):
         return await self.request(req)
 
     async def room_start(self) -> RoomStartResponse:
+        if not self.data.is_quest_cleared(11002001):
+            raise SkipError("小屋未解锁")
         req = RoomStartRequest()
         req.wac_auto_option_flag = 1
         return await self.request(req)
