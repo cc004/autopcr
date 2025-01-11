@@ -678,9 +678,10 @@ class get_library_import_data(Module):
         msg = client.data.get_library_import_data()
         self._log(msg)
 
-@description('根据每个角色拉满星级、开专、升级至当前最高专所需的记忆碎片减去库存的结果')
+@description('注意！大师币会顶号！根据每个角色拉满星级、开专、升级至当前最高专所需的记忆碎片减去库存的结果')
 @singlechoice('memory_demand_consider_unit', '考虑角色', '所有', ['所有', '地图可刷取', '大师币商店'])
 @name('获取记忆碎片缺口')
+@notlogin(check_data = True)
 @default(True)
 class get_need_memory(Module):
     async def do_task(self, client: pcrclient):
