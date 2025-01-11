@@ -250,7 +250,7 @@ class AccountBatch(Account):
         if resps:
             ret_list = [x.get_result() for x in resps]
             ret = ret_list[0]
-            ret.log = '\n'.join(f"{name}: {x.log}" for name, x in zip(alias, ret_list))
+            ret.log = '\n'.join(f"==={name}===\n{x.log}" for name, x in zip(alias, ret_list))
             ret.status = eResultStatus.ERROR if any(x.status == eResultStatus.ERROR for x in ret_list) else eResultStatus.WARNING if any(x.status == eResultStatus.WARNING for x in ret_list) else eResultStatus.SUCCESS
             all = await self.save_single_result(key, ret)
             resps = [all] + resps

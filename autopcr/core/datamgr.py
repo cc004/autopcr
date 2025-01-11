@@ -57,6 +57,7 @@ class datamgr(BaseModel, Component[apiclient]):
     ex_equips: Dict[int, ExtraEquipInfo] = {}
     user_redeem_unit: Dict[int, RedeemUnitInfo] = {}
     return_fes_info_list: List[ReturnFesInfo] = None
+    data_time: int = 0
 
     @staticmethod
     async def try_update_database(ver: int):
@@ -493,5 +494,6 @@ class datamgr(BaseModel, Component[apiclient]):
             if resp.update_bank_gold is not None:
                 self.user_gold_bank_info.bank_gold = resp.update_bank_gold
             await resp.update(self, request)
+        self.data_time = apiclient.time
         return resp
 

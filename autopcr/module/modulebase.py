@@ -9,6 +9,8 @@ import traceback
 from ..constants import CACHE_DIR
 from .config import Config, _wrap_init
 from enum import Enum
+from datetime import datetime
+from ..db.database import db
 
 def default(val):
     return lambda cls:_wrap_init(cls, lambda self: setattr(self, 'default', val))
@@ -27,6 +29,7 @@ def notrunnable(cls):
 
 def notlogin(check_data = False):
     def setter(self):
+        self.tags.append("不登录")
         self.need_login = False
         old_do_check = self.do_check
         async def new_do_check(client: pcrclient) -> Tuple[bool, str]:
@@ -34,9 +37,15 @@ def notlogin(check_data = False):
             if not ok: 
                 return ok, msg
             if check_data and not client.data_ready:
-                return False, '需要登录，当前未登录'
+                return False, '无缓存，请登录'
             return True, ''
         self.do_check = new_do_check
+        old_do_task = self.do_task
+        async def new_do_task(client: pcrclient):
+            self._log(f"[{db.format_time(datetime.fromtimestamp(client.data.data_time))}]")
+            await old_do_task(client)
+        self.do_task = new_do_task
+
 
     return lambda cls: _wrap_init(cls, setter)
 
