@@ -330,7 +330,7 @@ class UnitController(Module):
 
 @description('支持全部角色')
 @name('完成装备强化任务')
-@singlechoice("equip_enhance_up_unit", "强化角色", "100101:日和莉", [f"{unit}:{db.unit_data[unit].unit_name}" for unit in db.unlock_unit_condition])
+@unitchoice("equip_enhance_up_unit", "强化角色")
 @default(False)
 class unit_equip_enhance_up(UnitController):
     async def do_task(self, client: pcrclient):
@@ -367,7 +367,7 @@ class unit_equip_enhance_up(UnitController):
 
 @description('支持全部角色')
 @name('完成技能升级任务')
-@singlechoice("level_up_unit", "强化角色", "100101:日和莉", [f"{unit}:{db.unit_data[unit].unit_name}" for unit in db.unlock_unit_condition])
+@unitchoice("level_up_unit", "强化角色")
 @default(False)
 class unit_skill_level_up(UnitController):
     async def do_task(self, client: pcrclient):
@@ -402,7 +402,7 @@ class unit_skill_level_up(UnitController):
 
 @description('仅支持设置未装备专武的角色，优先使用低专武球')
 @name('设置专武球')
-@singlechoice("unit_set_unique_equip_growth_id", "装备角色", "100101:日和莉", [f"{unit}:{db.unit_data[unit].unit_name}" for unit in db.unlock_unit_condition])
+@unitchoice("unit_set_unique_equip_growth_id", "装备角色")
 @default(False)
 class unit_set_unique_equip_growth(UnitController):
 
@@ -429,7 +429,7 @@ class unit_set_unique_equip_growth(UnitController):
 @singlechoice("unit_promote_skill_ub", "ub等级", 1, db.unit_level_candidate)
 @singlechoice("unit_promote_rank", "品级", 1, db.unit_rank_candidate)
 @singlechoice("unit_promote_level", "等级", 1, db.unit_level_candidate)
-@singlechoice("unit_promote_unit", "拉取角色", "100101:日和莉", [f"{unit}:{db.unit_data[unit].unit_name}" for unit in db.unlock_unit_condition])
+@unitchoice("unit_promote_unit", "拉取角色")
 @default(False)
 class unit_promote(UnitController):
 
