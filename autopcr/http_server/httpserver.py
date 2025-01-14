@@ -14,7 +14,7 @@ from ..constants import CACHE_DIR
 from ..util.draw import instance as drawer
 from .validator import validate_dict, ValidateInfo, validate_ok_dict, enable_manual_validator
 
-APP_VERSION = "1.1.1"
+APP_VERSION = "1.2.0"
 
 CACHE_HTTP_DIR = os.path.join(CACHE_DIR, 'http_server')
 
