@@ -1036,12 +1036,12 @@ class database():
                 return True
         return False
 
-    def is_campaign(self, campaign: str, now: Union[None, datetime.datetime] = None) -> bool:
+    def is_campaign(self, campaign: str, now: Union[None, datetime.datetime] = None, level: int = 999) -> bool:
         now = apiclient.datetime if now is None else now
         tomorrow = now + datetime.timedelta(days = 1)
         half_day = datetime.timedelta(hours = 7)
         n3 = (flow(self.campaign_schedule.values())
-                .where(lambda x: self.is_normal_quest_campaign(x.id) and x.value >= 3000)
+                .where(lambda x: self.is_normal_quest_campaign(x.id) and x.value >= 3000 and self.is_level_effective_scope_in_campaign(level, x.id))
                 .select(lambda x: (db.parse_time(x.start_time), db.parse_time(x.end_time)))
                 .to_list()
               )

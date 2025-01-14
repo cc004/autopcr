@@ -25,7 +25,6 @@ import asyncio
 @conditional_not_execution("force_stop_heart_sweep", [], desc="不刷心碎庆典", check=False)
 @conditional_not_execution("force_stop_star_cup_sweep", [], desc="不刷星球杯庆典", check=False)
 @conditional_execution2('stamina_relative_not_run_campaign_before_one_day', [], desc='禅模式', check=False)
-@notrunnable
 class global_config(Module):
     async def do_task(self, client: pcrclient): # stamina TODO
         if client.is_cron_run():
