@@ -68,7 +68,12 @@ class main_story_reading(Module):
     async def do_task(self, client: pcrclient):
         read_story = set(client.data.read_story_ids)
         read_story.add(0) # no pre story
+        now = apiclient.datetime
         for story in db.main_story:
+            start_time = db.parse_time(story.start_time)
+            if now < start_time:
+                self._log(f"剧情{story.title}解锁时间为{story.start_time}，无法观看\n")
+                break
             if story.story_id not in read_story and story.pre_story_id in read_story:
                 if not await client.unlock_quest_id(story.unlock_quest_id):
                     self._log(f"区域{story.unlock_quest_id}未通关，无法观看{story.title}\n")
