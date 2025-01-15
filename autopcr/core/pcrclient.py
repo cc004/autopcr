@@ -14,9 +14,11 @@ class pcrclient(apiclient):
         self._keys = {}
         super().__init__(sdk)
         self.data = datamgr()
+        from .clientpool import ComponentWrapper
+        self._data_wrapper = ComponentWrapper(self.data)
         self.session = sessionmgr(sdk)
         self.register(errorhandler())
-        self.register(self.data)
+        self.register(self._data_wrapper)
         self.register(self.session)
         self.register(mutexhandler())
 
@@ -37,6 +39,8 @@ class pcrclient(apiclient):
 
     async def logout(self):
         await self.session.clear_session()
+        self.data = datamgr()
+        self._data_wrapper.component = self.data
 
     async def support_unit_get_setting(self):
         req = SupportUnitGetSettingRequest()
@@ -360,6 +364,10 @@ class pcrclient(apiclient):
         req.item_info = [SendGiftData(item_id=item[1], item_num=cnt, current_item_num=self.data.get_inventory(item)) for item, cnt in cakes.items()]
         return await self.request(req)
 
+    async def gacha_special_fes(self):
+        req = GachaSpecialFesIndexRequest()
+        return await self.request(req)
+
     async def get_gacha_index(self):
         req = GachaIndexRequest()
         return await self.request(req)
@@ -405,6 +413,8 @@ class pcrclient(apiclient):
                 prize_memory = sorted(prize_memory, key = lambda x: -piece_demand.get(x, 0))
             item_id = prize_memory[0]
             await self.gacha_select_prize(prizegacha_id, item_id[1])
+        if target_gacha.select_pickup_slot_num == 0:
+            raise AbortError("未选择up角色")
 
         if target_gacha.exchange_id in self.data.gacha_point and  \
         self.data.gacha_point[target_gacha.exchange_id].current_point >= self.data.gacha_point[target_gacha.exchange_id].max_point:
@@ -949,7 +959,7 @@ class pcrclient(apiclient):
         return (
             (quest == 0) or
             (quest in self.data.quest_dict and self.data.quest_dict[quest].clear_flg > 0) or 
-            (quest in db.tower_quest and self.data.tower_status.cleared_floor_num >= db.tower_quest[quest].floor_num)
+            (quest in db.tower_quest and self.data.tower_status and self.data.tower_status.cleared_floor_num >= db.tower_quest[quest].floor_num)
         )
 
     async def quest_skip_aware(self, quest: int, times: int, recover: bool = False, is_total: bool = False):
@@ -1081,6 +1091,8 @@ class pcrclient(apiclient):
         return await self.request(req)
 
     async def room_start(self) -> RoomStartResponse:
+        if not self.data.is_quest_cleared(11002001):
+            raise SkipError("小屋未解锁")
         req = RoomStartRequest()
         req.wac_auto_option_flag = 1
         return await self.request(req)

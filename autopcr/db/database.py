@@ -588,6 +588,12 @@ class database():
                 .to_dict(lambda x: x.unit_id, lambda x: x)
             )
 
+            self.unit_kana_ids: Dict[str, List[int]] = (
+                UnitDatum.query(db)
+                .group_by(lambda x: x.kana)
+                .to_dict(lambda x: x.key, lambda x: x.select(lambda y: y.unit_id).to_list())
+            )
+
             self.unlock_unit_condition: Dict[int, UnlockUnitCondition] = (
                 UnlockUnitCondition.query(db)
                 .to_dict(lambda x: x.unit_id, lambda x: x)
@@ -598,7 +604,10 @@ class database():
                 .where(lambda x: x.slot_id == 1)
                 .to_dict(lambda x: (eInventoryType.Item, x.material_id), lambda x: x.unit_id)
             )
-            
+            self.unit_to_pure_memory: Dict[int, ItemType] = {
+                value: key for key, value in self.pure_memory_to_unit.items()
+            }
+
             self.six_area: Dict[int, QuestDatum] = (
                 QuestDatum.query(db)
                 .where(lambda x: self.is_very_hard_quest(x.quest_id))
@@ -1027,12 +1036,12 @@ class database():
                 return True
         return False
 
-    def is_campaign(self, campaign: str, now: Union[None, datetime.datetime] = None) -> bool:
+    def is_campaign(self, campaign: str, now: Union[None, datetime.datetime] = None, level: int = 999) -> bool:
         now = apiclient.datetime if now is None else now
         tomorrow = now + datetime.timedelta(days = 1)
         half_day = datetime.timedelta(hours = 7)
         n3 = (flow(self.campaign_schedule.values())
-                .where(lambda x: self.is_normal_quest_campaign(x.id) and x.value >= 3000)
+                .where(lambda x: self.is_normal_quest_campaign(x.id) and x.value >= 3000 and self.is_level_effective_scope_in_campaign(level, x.id))
                 .select(lambda x: (db.parse_time(x.start_time), db.parse_time(x.end_time)))
                 .to_list()
               )

@@ -3,7 +3,7 @@ from typing import List, Set
 from ...util.ilp_solver import memory_use_average
 
 from ...model.common import ChangeRarityUnit, DeckListData, GrandArenaHistoryDetailInfo, GrandArenaHistoryInfo, GrandArenaSearchOpponent, ProfileUserInfo, RankingSearchOpponent, RedeemUnitInfo, RedeemUnitSlotInfo, VersusResult, VersusResultDetail
-from ...model.responses import PsyTopResponse
+from ...model.responses import GachaIndexResponse, PsyTopResponse
 from ...db.models import GachaExchangeLineup
 from ...model.custom import ArenaQueryResult, GachaReward, ItemType
 from ..modulebase import *
@@ -245,7 +245,14 @@ class gacha_start(Module):
             raise ValueError("配置格式不正确")
         gacha_id = int(self.get_config('pool_id').split(':')[0])
         single_ticket = self.get_config('single_ticket')
-        resp = await client.get_gacha_index()
+        real_exchange_id = 0
+        if gacha_id == 120001:
+            if not client.data.return_fes_info_list or all(item.end_time <= client.time for item in client.data.return_fes_info_list):
+                raise AbortError("没有回归池开放")
+            resp = await client.gacha_special_fes()
+            real_exchange_id = db.gacha_data[client.data.return_fes_info_list[0].original_gacha_id].exchange_id
+        else:
+            resp = await client.get_gacha_index()
         for gacha in resp.gacha_info:
             if gacha.id == gacha_id:
                 target_gacha = gacha
@@ -263,11 +270,11 @@ class gacha_start(Module):
                 if single_ticket:
                     reward += await client.exec_gacha_aware(target_gacha, 1, eGachaDrawType.Ticket, client.data.get_inventory(db.gacha_single_ticket), 0)
                 else:
-                    if resp.campaign_info and resp.campaign_info.fg10_exec_cnt:
+                    if isinstance(resp, GachaIndexResponse) and resp.campaign_info and resp.campaign_info.fg10_exec_cnt:
                         raise AbortError("当前可免费十连，请先自行抽取")
                     reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Payment, client.data.jewel.free_jewel + client.data.jewel.jewel, 0)
                 cnt += 1
-                if not always or self.can_stop(reward.new_unit, db.gacha_exchange_chara[target_gacha.exchange_id]) :
+                if not always or self.can_stop(reward.new_unit, db.gacha_exchange_chara[target_gacha.exchange_id if not real_exchange_id else real_exchange_id]):
                     break
         except:
             raise 
@@ -696,18 +703,22 @@ class get_need_memory(Module):
         msg = '\n'.join([f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片{("(" + msg[item[0]] + ")") if item[0] in msg else ""}' for item in demand])
         self._log(msg)
 
-@description('根据每个角色升六星（国服当前）、满二专（日服当前）所需的纯净碎片减去库存的结果')
+@description('去除六星需求后，专二所需纯净碎片减去库存的结果')
 @name('获取纯净碎片缺口')
 @default(True)
 class get_need_pure_memory(Module):
     async def do_task(self, client: pcrclient):
         from .autosweep import unique_equip_2_pure_memory_id
-        need_list = client.data.get_pure_memory_demand_gap()
-        need_list.update(Counter({(eInventoryType.Item, pure_memory_id): 150 * cnt for pure_memory_id, cnt in unique_equip_2_pure_memory_id}))
-        demand = list(need_list.items())
-        demand = sorted(demand, key=lambda x: x[1], reverse=True)
+        pure_gap = client.data.get_pure_memory_demand_gap()
+        target = Counter()
+        need_list = []
+        for unit in unique_equip_2_pure_memory_id:
+            kana = db.unit_data[unit].kana
+            target[kana] += 150
+            own = -sum(pure_gap[db.unit_to_pure_memory[unit]] if unit in db.unit_to_pure_memory else 0 for unit in db.unit_kana_ids[kana])
+            need_list.append(((eInventoryType.Unit, unit), target[kana] - own))
         msg = {}
-        msg = '\n'.join([f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片' for item in demand])
+        msg = '\n'.join([f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片' for item in need_list])
         self._log(msg)
 
 @description('根据每个角色开专、升级至当前最高专所需的心碎减去库存的结果，大心转换成10心碎')

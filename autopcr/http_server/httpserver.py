@@ -14,7 +14,7 @@ from ..constants import CACHE_DIR
 from ..util.draw import instance as drawer
 from .validator import validate_dict, ValidateInfo, validate_ok_dict, enable_manual_validator
 
-APP_VERSION = "1.1.1"
+APP_VERSION = "1.2.0"
 
 CACHE_HTTP_DIR = os.path.join(CACHE_DIR, 'http_server')
 
@@ -57,14 +57,8 @@ class HttpServer:
         def wrapper(func: Callable[..., Coroutine[Any, Any, Any]]):
             async def inner(accountmgr: AccountManager, acc: str, *args, **kwargs):
                 if acc:
-                    try:
-                        async with accountmgr.load(acc, readonly) as mgr:
-                            return await func(mgr, *args, **kwargs)
-                    except AccountException as e:
-                        return str(e), 400
-                    except Exception as e:
-                        traceback.print_exc()
-                        return "服务器发生错误", 500
+                    async with accountmgr.load(acc, readonly) as mgr:
+                        return await func(mgr, *args, **kwargs)
                 else: 
                     return "Please specify an account", 400
             inner.__name__ = func.__name__
@@ -100,6 +94,20 @@ class HttpServer:
         async def redirect_to_login(*_: Exception):
             return "未登录，请登录", 401
 
+        @self.api.errorhandler(ValueError)
+        async def handle_value_error(e):
+            return str(e), 400
+
+        @self.api.errorhandler(AccountException)
+        async def handle_account_exception(e):
+            traceback.print_exc()
+            return str(e), 400
+
+        @self.api.errorhandler(Exception)
+        async def handle_general_exception(e):
+            traceback.print_exc()
+            return "服务器发生错误", 500
+
         @self.api.route('/account', methods = ['GET'])
         @login_required
         @HttpServer.wrapaccountmgr(readonly = True)
@@ -120,84 +128,54 @@ class HttpServer:
         @login_required
         @HttpServer.wrapaccountmgr()
         async def create_account(accountmgr: AccountManager):
-            try:
-                data = await request.get_json()
-                acc = data.get("alias", "")
-                accountmgr.create_account(acc.strip())
-                return "创建账号成功", 200
-            except AccountException as e:
-                return str(e), 400
-            except Exception as e:
-                traceback.print_exc()
-                return "服务器发生错误", 500
+            data = await request.get_json()
+            acc = data.get("alias", "")
+            accountmgr.create_account(acc.strip())
+            return "创建账号成功", 200
 
         @self.api.route('/account/import', methods = ["POST"])
         @login_required
         @HttpServer.wrapaccountmgr()
         async def create_accounts(accountmgr: AccountManager):
-            try:
-                file = await request.files
-                if 'file' not in file:
-                    return "请选择文件", 400
-                file = file['file']
-                if file.filename.split('.')[-1] != 'tsv':
-                    return "文件格式错误", 400
-                data = file.read().decode()
-                ok, msg = await accountmgr.create_accounts_from_tsv(data)
-                return msg, 200 if ok else 400
-            except ValueError as e:
-                return str(e), 400
-            except Exception as e:
-                traceback.print_exc()
-                return "服务器发生错误", 500
+            file = await request.files
+            if 'file' not in file:
+                return "请选择文件", 400
+            file = file['file']
+            if file.filename.split('.')[-1] != 'tsv':
+                return "文件格式错误", 400
+            data = file.read().decode()
+            ok, msg = await accountmgr.create_accounts_from_tsv(data)
+            return msg, 200 if ok else 400
 
         @self.api.route('/', methods = ["DELETE"])
         @login_required
         @HttpServer.wrapaccountmgr()
         async def delete_qq(accountmgr: AccountManager):
-            try:
-                accountmgr.delete_mgr()
-                logout_user()
-                return "删除QQ成功", 200
-            except AccountException as e:
-                return str(e), 400
-            except Exception as e:
-                traceback.print_exc()
-                return "服务器发生错误", 500
+            accountmgr.delete_mgr()
+            logout_user()
+            return "删除QQ成功", 200
 
         @self.api.route('/account', methods = ["DELETE"])
         @login_required
         @HttpServer.wrapaccountmgr()
         async def delete_account(accountmgr: AccountManager):
-            try:
-                accountmgr.delete_all_accounts()
-                return "删除账号成功", 200
-            except AccountException as e:
-                return str(e), 400
-            except Exception as e:
-                traceback.print_exc()
-                return "服务器发生错误", 500
+            accountmgr.delete_all_accounts()
+            return "删除账号成功", 200
 
         @self.api.route('/account/sync', methods = ["POST"])
         @login_required
         @HttpServer.wrapaccountmgr()
         async def sync_account_config(accountmgr: AccountManager):
-            try:
-                data = await request.get_json()
-                acc = data.get("alias", "")
-                if acc not in accountmgr.accounts():
-                    return "账号不存在", 400
-                async with accountmgr.load(acc) as mgr:
-                    for ano in accountmgr.accounts():
-                        if ano != acc:
-                            async with accountmgr.load(ano) as other:
-                                other.data.config = mgr.data.config
-                return "配置同步成功", 200
-            except AccountException as e:
-                return str(e), 400
-            except Exception as e:
-                traceback.print_exc()
-                return "服务器发生错误", 500
+            data = await request.get_json()
+            acc = data.get("alias", "")
+            if acc not in accountmgr.accounts():
+                return "账号不存在", 400
+            async with accountmgr.load(acc) as mgr:
+                for ano in accountmgr.accounts():
+                    if ano != acc:
+                        async with accountmgr.load(ano) as other:
+                            other.data.config = mgr.data.config
+            return "配置同步成功", 200
 
         @self.api.route('/account/<string:acc>', methods = ['GET'])
         @login_required
@@ -249,51 +227,33 @@ class HttpServer:
         @HttpServer.wrapaccountmgr(readonly=True)
         @HttpServer.wrapaccount()
         async def do_daily(mgr: Account):
-            try:
-                await mgr.do_daily(mgr._parent.secret.clan)
-                return mgr.generate_result_info(), 200
-            except ValueError as e:
-                return str(e), 400
-            except Exception as e:
-                traceback.print_exc()
-                return "服务器发生错误", 500
+            await mgr.do_daily(mgr._parent.secret.clan)
+            return mgr.generate_result_info(), 200
 
         @self.api.route('/account/<string:acc>/daily_result', methods = ['GET'])
         @login_required
         @HttpServer.wrapaccountmgr(readonly = True)
         @HttpServer.wrapaccount(readonly= True)
         async def daily_result_list(mgr: Account):
-            try:
-                resp = mgr.get_daily_result_list()
-                resp = [r.response('/daily/api/account/{}' + '/daily_result/' + str(r.key)) for r in resp]
-                return resp, 200
-            except ValueError as e:
-                return str(e), 400
-            except Exception as e:
-                traceback.print_exc()
-                return "服务器发生错误", 500
+            resp = mgr.get_daily_result_list()
+            resp = [r.response('/daily/api/account/{}' + '/daily_result/' + str(r.key)) for r in resp]
+            return resp, 200
 
         @self.api.route('/account/<string:acc>/daily_result/<string:key>', methods = ['GET'])
         @login_required
         @HttpServer.wrapaccountmgr(readonly = True)
         @HttpServer.wrapaccount(readonly= True)
         async def daily_result(mgr: Account, key: str):
-            try:
-                resp_text = request.args.get('text', 'false').lower()
-                resp = await mgr.get_daily_result_from_key(key)
-                if not resp:
-                    return "无结果", 404
-                if resp_text == 'false':
-                    img = await drawer.draw_tasks_result(resp)
-                    bytesio = await drawer.img2bytesio(img, 'webp')
-                    return await send_file(bytesio, mimetype='image/webp')
-                else:
-                    return resp.to_json(), 200
-            except ValueError as e:
-                return str(e), 400
-            except Exception as e:
-                traceback.print_exc()
-                return "服务器发生错误", 500
+            resp_text = request.args.get('text', 'false').lower()
+            resp = await mgr.get_daily_result_from_key(key)
+            if not resp:
+                return "无结果", 404
+            if resp_text == 'false':
+                img = await drawer.draw_tasks_result(resp)
+                bytesio = await drawer.img2bytesio(img, 'webp')
+                return await send_file(bytesio, mimetype='image/webp')
+            else:
+                return resp.to_json(), 200
 
         @self.api.route('/account/<string:acc>/do_single', methods = ['POST'])
         @login_required
@@ -302,32 +262,19 @@ class HttpServer:
         async def do_single(mgr: Account):
             data = await request.get_json()
             order = data.get("order", "")
-            try:
-                await mgr.do_from_key(deepcopy(mgr.config), order, mgr._parent.secret.clan)
-                resp = mgr.get_single_result_list(order)
-                resp = [r.response('/daily/api/account/{}' + f'/single_result/{order}/{r.key}') for r in resp]
-                return resp, 200
-            except ValueError as e:
-                traceback.print_exc()
-                return str(e), 400
-            except Exception as e:
-                traceback.print_exc()
-                return "服务器发生错误", 500
+            await mgr.do_from_key(deepcopy(mgr.config), order, mgr._parent.secret.clan)
+            resp = mgr.get_single_result_list(order)
+            resp = [r.response('/daily/api/account/{}' + f'/single_result/{order}/{r.key}') for r in resp]
+            return resp, 200
 
         @self.api.route('/account/<string:acc>/single_result/<string:order>', methods = ['GET'])
         @login_required
         @HttpServer.wrapaccountmgr(readonly = True)
         @HttpServer.wrapaccount(readonly= True)
         async def single_result_list(mgr: Account, order: str):
-            try:
-                resp = mgr.get_single_result_list(order)
-                resp = [r.response('/daily/api/account/{}' + f'/single_result/{order}/{r.key}') for r in resp]
-                return resp, 200
-            except ValueError as e:
-                return str(e), 400
-            except Exception as e:
-                traceback.print_exc()
-                return "服务器发生错误", 500
+            resp = mgr.get_single_result_list(order)
+            resp = [r.response('/daily/api/account/{}' + f'/single_result/{order}/{r.key}') for r in resp]
+            return resp, 200
 
         @self.api.route('/account/<string:acc>/single_result/<string:order>/<string:key>', methods = ['GET'])
         @login_required
@@ -335,22 +282,16 @@ class HttpServer:
         @HttpServer.wrapaccount(readonly= True)
         async def single_result(mgr: Account, order: str, key: str):
             resp_text = request.args.get('text', 'false').lower()
-            try:
-                resp = await mgr.get_single_result_from_key(order, key)
-                if not resp:
-                    return "无结果", 404
+            resp = await mgr.get_single_result_from_key(order, key)
+            if not resp:
+                return "无结果", 404
 
-                if resp_text == 'false':
-                    img = await drawer.draw_task_result(resp)
-                    bytesio = await drawer.img2bytesio(img, 'webp')
-                    return await send_file(bytesio, mimetype='image/webp')
-                else:
-                    return resp.to_json(), 200
-            except ValueError as e:
-                return str(e), 400
-            except Exception as e:
-                traceback.print_exc()
-                return "服务器发生错误", 500
+            if resp_text == 'false':
+                img = await drawer.draw_task_result(resp)
+                bytesio = await drawer.img2bytesio(img, 'webp')
+                return await send_file(bytesio, mimetype='image/webp')
+            else:
+                return resp.to_json(), 200
 
         @self.api.route('/query_validate', methods = ['GET'])
         @login_required
@@ -424,15 +365,9 @@ data: {ret}\n\n'''
                 from ...server import is_valid_qq
                 if not await is_valid_qq(qq):
                     return "无效的QQ", 400
-            try:
-                usermgr.create(str(qq), str(password))
-                login_user(AuthUser(qq))
-                return "欢迎回来，" + qq, 200
-            except UserException as e:
-                return str(e), 400
-            except Exception as e:
-                traceback.print_exc()
-                return "服务器发生错误", 500
+            usermgr.create(str(qq), str(password))
+            login_user(AuthUser(qq))
+            return "欢迎回来，" + qq, 200
 
         @self.api.route('/logout', methods = ['POST'])
         @login_required

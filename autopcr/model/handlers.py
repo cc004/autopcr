@@ -67,6 +67,7 @@ class ShioriQuestSkipResponse(responses.ShioriQuestSkipResponse):
             mgr.team_level = self.level_info.team.start_level
         if self.user_info:
             mgr.stamina = self.user_info.user_stamina
+            mgr.stamina_full_recovery_time = self.user_info.stamina_full_recovery_time
         mgr.quest_dict[request.quest_id].daily_clear_count = self.daily_clear_count
 
 @handles
@@ -84,6 +85,7 @@ class TrainingQuestSkipResponse(responses.TrainingQuestSkipResponse):
                 mgr.update_inventory(item)
         mgr.quest_dict[request.quest_id].daily_clear_count = self.daily_clear_count
         mgr.stamina = self.user_info.user_stamina
+        mgr.stamina_full_recovery_time = self.user_info.stamina_full_recovery_time
         if self.quest_challenge_count:
             mgr.training_quest_count = self.quest_challenge_count
 
@@ -117,6 +119,7 @@ class ShopRecoverStaminaResponse(responses.ShopRecoverStaminaResponse):
     async def update(self, mgr: datamgr, request):
         mgr.jewel = self.user_jewel
         mgr.stamina = self.user_info.user_stamina
+        mgr.stamina_full_recovery_time = self.user_info.stamina_full_recovery_time
         mgr.recover_stamina_exec_count = self.recover_stamina.exec_count
 
 
@@ -147,6 +150,7 @@ class RoomReceiveItemAllResponse(responses.RoomReceiveItemAllResponse):
     async def update(self, mgr: datamgr, request):
         if self.stamina_info:
             mgr.stamina = self.stamina_info.user_stamina
+            mgr.stamina_full_recovery_time = self.stamina_info.stamina_full_recovery_time
         if self.reward_list:
             for item in self.reward_list:
                 mgr.update_inventory(item)
@@ -194,6 +198,7 @@ class QuestSkipResponse(responses.QuestSkipResponse):
         mgr.quest_dict[request.quest_id].daily_clear_count = self.daily_clear_count
         if self.user_info:
             mgr.stamina = self.user_info.user_stamina
+            mgr.stamina_full_recovery_time = self.user_info.stamina_full_recovery_time
         if self.user_gold:
             mgr.gold = self.user_gold
         if self.level_info:
@@ -220,6 +225,7 @@ class QuestSkipMultipleResponse(responses.QuestSkipMultipleResponse):
                 mgr.update_inventory(item)
         if self.user_info:
             mgr.stamina = self.user_info.user_stamina
+            mgr.stamina_full_recovery_time = self.user_info.stamina_full_recovery_time
         if self.user_gold:
             mgr.gold = self.user_gold
 
@@ -238,6 +244,7 @@ class PresentReceiveAllResponse(responses.PresentReceiveAllResponse):
                 mgr.update_inventory(item)
         if self.stamina_info:
             mgr.stamina = self.stamina_info.user_stamina
+            mgr.stamina_full_recovery_time = self.stamina_info.stamina_full_recovery_time
 
 
 @handles
@@ -253,6 +260,7 @@ class MissionAcceptResponse(responses.MissionAcceptResponse):
                 mgr.update_inventory(item)
         if self.stamina_info:
             mgr.stamina = self.stamina_info.user_stamina
+            mgr.stamina_full_recovery_time = self.stamina_info.stamina_full_recovery_time
         if self.team_level:
             mgr.team_level = self.team_level
 
@@ -265,6 +273,8 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         mgr.team_level = self.user_info.team_level
         mgr.jewel = self.user_jewel
         mgr.gold = self.user_gold
+        if self.return_fes_info_list:
+            mgr.return_fes_info_list = self.return_fes_info_list
         if self.user_redeem_unit:
             mgr.user_redeem_unit = {unit.unit_id: unit for unit in self.user_redeem_unit}
         if self.resident_info:
@@ -292,6 +302,7 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         mgr.gacha_point = {gacha.exchange_id: gacha for gacha in self.gacha_point_info_list} if self.gacha_point_info_list else {}
         mgr.event_sub_story = {sub_story.event_id: sub_story for sub_story in self.event_sub_story} if self.event_sub_story else {}
         mgr.stamina = self.user_info.user_stamina
+        mgr.stamina_full_recovery_time = self.user_info.stamina_full_recovery_time
         mgr.settings = self.ini_setting
         mgr.recover_stamina_exec_count = self.shop.recover_stamina.exec_count
         mgr.read_story_ids = self.read_story_ids
@@ -342,6 +353,7 @@ class HatsuneQuestSkipResponse(responses.HatsuneQuestSkipResponse):
                 mgr.update_inventory(item)
         mgr.hatsune_quest_dict[request.event_id][request.quest_id].daily_clear_count = self.daily_clear_count
         mgr.stamina = self.user_info.user_stamina
+        mgr.stamina_full_recovery_time = self.user_info.stamina_full_recovery_time
 
         if self.user_gold:
             mgr.gold = self.user_gold
@@ -361,6 +373,7 @@ class HatsuneMissionAcceptResponse(responses.HatsuneMissionAcceptResponse):
 
         if self.stamina_info:
             mgr.stamina = self.stamina_info.user_stamina
+            mgr.stamina_full_recovery_time = self.stamina_info.stamina_full_recovery_time
 
 
 @handles
@@ -492,6 +505,7 @@ class CloisterBattleSkipResponse(responses.CloisterBattleSkipResponse):
 class ClanLikeResponse(responses.ClanLikeResponse):
     async def update(self, mgr: datamgr, request):
         mgr.stamina = self.stamina_info.user_stamina
+        mgr.stamina_full_recovery_time = self.stamina_info.stamina_full_recovery_time
         mgr.clan_like_count = 1
 
 @handles
@@ -787,6 +801,7 @@ class TravelReceiveTopEventRewardResponse(responses.TravelReceiveTopEventRewardR
             mgr.jewel = self.user_jewel
         if self.stamina_info:
             mgr.stamina = self.stamina_info.user_stamina
+            mgr.stamina_full_recovery_time = self.stamina_info.stamina_full_recovery_time
         for item in self.reward_list:
             mgr.update_inventory(item)
 

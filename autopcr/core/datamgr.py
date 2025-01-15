@@ -18,6 +18,7 @@ _data_lck = Lock()
 
 class datamgr(BaseModel, Component[apiclient]):
     settings: IniSetting = None
+    stamina_full_recovery_time: int = 0
     dungeon_avaliable: bool = False
     resident_info: MonthlyGachaInfo = None
     finishedQuest: Set[int] = set()
@@ -55,6 +56,7 @@ class datamgr(BaseModel, Component[apiclient]):
     user_gold_bank_info: UserBankGoldInfo = None
     ex_equips: Dict[int, ExtraEquipInfo] = {}
     user_redeem_unit: Dict[int, RedeemUnitInfo] = {}
+    return_fes_info_list: List[ReturnFesInfo] = None
 
     @staticmethod
     async def try_update_database(ver: int):
@@ -64,6 +66,12 @@ class datamgr(BaseModel, Component[apiclient]):
             if not dbmgr.ver or dbmgr.ver < assetmgr.ver: 
                 await dbmgr.update_db(assetmgr)
                 db.update(dbmgr)
+
+    def update_stamina_recover(self):
+        max_stamina = db.team_info[self.team_level].max_stamina
+        now = apiclient.time
+        remain = max(0, self.stamina_full_recovery_time - now + self.settings.quest.recovery_time - 1) // self.settings.quest.recovery_time
+        self.stamina = max_stamina - remain
 
     def is_heart_piece_campaign(self) -> bool:
         return self.get_campaign_times(db.is_heart_piece_campaign) > 0

@@ -91,8 +91,6 @@ class sessionmgr(Component[apiclient]):
                     self._container.active_server = 0
                 manifest = await next.request(SourceIniGetMaintenanceStatusRequest())
                 self._container._headers['MANIFEST-VER'] = manifest.required_manifest_ver
-                if manifest.maintenance_message:
-                    raise PanicError(manifest.maintenance_message)
                 
                 await self._ensure_token(next)
                 
@@ -125,12 +123,16 @@ class sessionmgr(Component[apiclient]):
 
                 self._logged = True
                 break
-            except ApiException:
+            except ApiException as e:
+                if "维护" in str(e):
+                    raise PanicError(str(e))
                 pass
 
+    @property
+    def is_session_expired(self):
+        return self._container.time >= self.session_expire_time
+
     async def request(self, request: Request[TResponse], next: RequestHandler) -> TResponse:
-        if self._container.time > self.session_expire_time:
-            await self.clear_session()
         if not self._logged:
             await self._login(next)
         try:
