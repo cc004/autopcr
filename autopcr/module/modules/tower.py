@@ -12,7 +12,7 @@ class tower_cloister_sweep(Module):
     async def do_task(self, client: pcrclient):
         now = apiclient.datetime
         tower_id = db.get_newest_tower_id()
-        schedule = db.tower[tower_id]
+        schedule = db.tower_schedule[tower_id]
         start_time = db.parse_time(schedule.start_time)
         end_time = db.parse_time(schedule.end_time)
         if now < start_time:

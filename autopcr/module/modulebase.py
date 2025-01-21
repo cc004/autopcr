@@ -40,11 +40,12 @@ def notlogin(check_data = False):
                 return False, '无缓存，请登录'
             return True, ''
         self.do_check = new_do_check
-        old_do_task = self.do_task
-        async def new_do_task(client: pcrclient):
-            self._log(f"[{db.format_time(datetime.fromtimestamp(client.data.data_time))}]")
-            await old_do_task(client)
-        self.do_task = new_do_task
+        if check_data:
+            old_do_task = self.do_task
+            async def new_do_task(client: pcrclient):
+                self._log(f"[{db.format_time(datetime.fromtimestamp(client.data.data_time))}]")
+                await old_do_task(client)
+            self.do_task = new_do_task
 
 
     return lambda cls: _wrap_init(cls, setter)

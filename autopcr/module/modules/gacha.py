@@ -76,7 +76,7 @@ class free_gacha(Module):
         if res.campaign_info is None:
             raise SkipError("免费十连已结束")
         schedule = db.campaign_gacha[res.campaign_info.campaign_id]
-        gacha_list = db.free_gacha_list[schedule.campaign_id]
+        gacha_list = db.campaign_free_gacha_data[schedule.campaign_id]
         start_time = db.parse_time(schedule.start_time)
         end_time = db.parse_time(schedule.end_time)
         if apiclient.datetime >= end_time:

@@ -615,7 +615,12 @@ class database():
                 .to_dict(lambda x: x.quest_id, lambda x: x)
             )
 
-            self.tower: Dict[int, TowerSchedule] = (
+            self.login_bonus_data: Dict[int, LoginBonusDatum] = (
+                LoginBonusDatum.query(db)
+                .to_dict(lambda x: x.login_bonus_id, lambda x: x)
+            )
+
+            self.tower_schedule: Dict[int, TowerSchedule] = (
                 TowerSchedule.query(db)
                 .to_dict(lambda x: x.tower_schedule_id, lambda x: x)
             )
@@ -630,8 +635,13 @@ class database():
                 .group_by(lambda x: x.exchange_id)
                 .to_dict(lambda x: x.key, lambda x: x.to_list())
             )
+
+            self.campaign_free_gacha: Dict[int, CampaignFreegacha] = (
+                CampaignFreegacha.query(db)
+                .to_dict(lambda x: x.campaign_id, lambda x: x)
+            )
             
-            self.free_gacha_list: Dict[int, List[CampaignFreegachaDatum]] = (
+            self.campaign_free_gacha_data: Dict[int, List[CampaignFreegachaDatum]] = (
                 CampaignFreegachaDatum.query(db)
                 .group_by(lambda x: x.campaign_id)
                 .to_dict(lambda x: x.key, lambda x: x.to_list())
@@ -1038,7 +1048,7 @@ class database():
         return ret
 
     def get_newest_tower_id(self) -> int:
-        return max(self.tower, key = lambda x: self.tower[x].start_time)
+        return max(self.tower_schedule, key = lambda x: self.tower_schedule[x].start_time)
 
     def max_total_love(self, rarity: int) -> Tuple[int, int]:
         love_info: Tuple[int, int] = (0, 0)

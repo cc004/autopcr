@@ -286,8 +286,8 @@ def wrap_batch(func):
         command = msg[0] if msg else ""
 
         if command.startswith("群"):
-            if not await botev.is_super_admin():
-                await botev.finish("仅超级管理员可以操作群帐号")
+            if not await botev.is_admin():
+                await botev.finish("仅管理员可以操作群帐号")
             async def new_qq():
                 return "g" + str(await botev.group_id())
             botev.target_qq = new_qq
@@ -881,6 +881,10 @@ async def redeem_unit_swap(botev: BotEvent):
         "redeem_unit_swap_do": really_do
     }
     return config
+
+@register_tool("半月刊", "half_schedule")
+async def half_schedule(botev: BotEvent):
+    return {}
 
 # @register_tool("获取导入", "get_library_import_data")
 # async def get_library_import(botev: BotEvent):
