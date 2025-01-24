@@ -25,6 +25,15 @@ python3 _httpserver_test.py
 
 渠道服需要自抓`uid`和`access_key`，作为用户名和密码。
 
+## 配置
+
+| 环境变量                          | 描述            | 默认值（留空则表示必填）     |
+|-------------------------------|---------------|------------------|
+| AUTOPCR_SERVER_PORT           | 自定义服务器启动端口    | 13200            |
+| AUTOPCR_SERVER_DEBUG_LOG      | 是否输出 Debug 日志 | False            |
+| AUTOPCR_SERVER_ALLOW_REGISTER | 是否允许注册        | True             |
+| AUTOPCR_SERVER_SUPERUSER      | 设置无条件拥有管理员的用户 | （可选，设置为登录使用的 QQ） |
+
 ## Credits
 - aiorequests 来自 [HoshinoBot](https://github.com/Ice-Cirno/HoshinoBot)
 - 图片绘制改自 [convert2img](https://github.com/SonderXiaoming/convert2img)

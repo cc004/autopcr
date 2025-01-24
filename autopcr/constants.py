@@ -1,5 +1,7 @@
 import os
 
+SERVER_PORT = int(os.getenv("AUTOPCR_SERVER_PORT", "13200"))
+
 CLIENT_POOL_SIZE_MAX = 100
 CLIENT_POOL_MAX_AGE = 3600 * 24
 CLIENT_POOL_MAX_CLIENT_ALIVE = 10
@@ -10,7 +12,7 @@ QSDK = '渠道服'
 
 CHANNEL_OPTION = [BSDK, QSDK]
 
-DEBUG_LOG = False
+DEBUG_LOG = bool(os.getenv("AUTOPCR_SERVER_DEBUG_LOG", "False"))
 ERROR_LOG = True
 ROOT_DIR = os.path.join(os.path.dirname(__file__), '..')
 CACHE_DIR = os.path.join(ROOT_DIR, './cache/')
@@ -20,6 +22,9 @@ CONFIG_PATH = os.path.join(CACHE_DIR, './http_server/')
 OLD_CONFIG_PATH = os.path.join(ROOT_DIR, 'autopcr/http_server/config')
 
 MAX_API_RUNNING = 8
+
+ALLOW_REGISTER = bool(os.getenv("AUTOPCR_SERVER_ALLOW_REGISTER", "True"))
+SUPERUSER = str(os.getenv("AUTOPCR_SERVER_SUPERUSER", ""))
 
 # Headers
 DEFAULT_HEADERS = {

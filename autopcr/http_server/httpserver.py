@@ -9,8 +9,10 @@ from quart_compress import Compress
 import secrets, os, io
 from typing import Callable, Coroutine, Any
 
-from ..module.accountmgr import Account, AccountManager, UserException, instance as usermgr, AccountException
-from ..constants import CACHE_DIR
+from werkzeug.exceptions import Forbidden
+
+from ..module.accountmgr import Account, AccountManager, instance as usermgr, AccountException, UserData
+from ..constants import CACHE_DIR, ALLOW_REGISTER, SUPERUSER
 from ..util.draw import instance as drawer
 from .validator import validate_dict, ValidateInfo, validate_ok_dict, enable_manual_validator
 
@@ -75,7 +77,26 @@ class HttpServer:
             inner.__name__ = func.__name__
             return inner
         return wrapper
-    
+
+    @staticmethod
+    def admin_required():
+        def wrapper(func: Callable[..., Coroutine[Any, Any, Any]]):
+            async def inner(*args, **kwargs):
+                if not await current_user.is_authenticated:
+                    raise Unauthorized()
+                if SUPERUSER == current_user.auth_id:
+                    admin = True
+                else:
+                    async with usermgr.load(current_user.auth_id, True) as mgr:
+                        admin = mgr.secret.admin
+                if admin:
+                    return await func(*args, **kwargs)
+                else:
+                    raise Forbidden()
+            inner.__name__ = func.__name__
+            return inner
+        return wrapper
+
     def configure_routes(self):
 
         @self.api_limit.before_request
@@ -94,6 +115,10 @@ class HttpServer:
         async def redirect_to_login(*_: Exception):
             return "未登录，请登录", 401
 
+        @self.api.errorhandler(Forbidden)
+        async def limited(*_: Exception):
+            return "无权使用此接口", 403
+
         @self.api.errorhandler(ValueError)
         async def handle_value_error(e):
             return str(e), 400
@@ -107,6 +132,12 @@ class HttpServer:
         async def handle_general_exception(e):
             traceback.print_exc()
             return "服务器发生错误", 500
+
+        @self.api.route('/role', methods = ["GET"])
+        @login_required
+        @HttpServer.wrapaccountmgr(readonly = True)
+        async def get_role(accountmgr: AccountManager):
+            return await accountmgr.generate_role(), 200
 
         @self.api.route('/account', methods = ['GET'])
         @login_required
@@ -293,6 +324,60 @@ class HttpServer:
             else:
                 return resp.to_json(), 200
 
+        @self.api.route('/user', methods = ['GET'])
+        @HttpServer.admin_required()
+        async def get_users():
+            qids = list(usermgr.qids())
+            results = []
+            for qid in qids:
+                async with usermgr.load(qid, readonly=True) as mgr:
+                    result = {
+                        "qq": qid,
+                        "admin": mgr.secret.admin or SUPERUSER == current_user.auth_id,
+                        "clan": mgr.secret.clan,
+                        "disabled": mgr.secret.disabled,
+                        "account_count": mgr.account_count(),
+                    }
+                results.append(result)
+            return results, 200
+
+        @self.api.route('/user/<string:qid>', methods = ['POST'])
+        @HttpServer.admin_required()
+        async def create_user(qid: str):
+            data = await request.get_data()
+            userdata = UserData.from_json(data)
+            async with usermgr.create(qid, userdata.admin) as mgr:
+                mgr.secret = userdata
+                mgr.save_secret()
+            return "创建用户成功", 200
+
+        @self.api.route('/user/<string:qid>', methods = ['PUT'])
+        @HttpServer.admin_required()
+        async def set_user(qid: str):
+            data = await request.get_json()
+            async with usermgr.load(qid, readonly=True) as mgr:
+                if 'admin' in data:
+                    if current_user.auth_id == qid and not data['admin']:
+                        return "无法取消自己的管理权限", 403
+                    mgr.secret.admin = data['admin']
+                if 'disabled' in data:
+                    if current_user.auth_id == qid and data['disabled']:
+                        return "无法禁用自己", 403
+                    mgr.secret.admin = data['disabled']
+                if 'password' in data:
+                    mgr.secret.password = data['password']
+                if 'clan' in data:
+                    mgr.secret.clan = data['clan']
+                mgr.save_secret()
+            return "更新用户信息成功", 200
+
+        @self.api.route('/user/<string:qid>', methods = ['DELETE'])
+        @HttpServer.admin_required()
+        async def pust_user_pwd(qid: str):
+            async with usermgr.load(qid, readonly=True) as mgr:
+                mgr.delete()
+            return "删除用户成功", 200
+
         @self.api.route('/query_validate', methods = ['GET'])
         @login_required
         @HttpServer.wrapaccountmgr(readonly = True)
@@ -356,6 +441,9 @@ data: {ret}\n\n'''
         @self.api_limit.route('/register', methods = ['POST'])
         @rate_limit(1, timedelta(minutes=1))
         async def register():
+            if not ALLOW_REGISTER:
+                return "当前禁止注册，请联系管理员", 400
+
             data = await request.get_json()
             qq = data.get('qq', "")
             password = data.get('password', "")

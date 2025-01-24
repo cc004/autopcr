@@ -3,13 +3,14 @@
 import asyncio
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
+from quart_auth import current_user
 
 from ..core.pcrclient import pcrclient
 from ..core.sdkclient import account, platform
 from .modulemgr import ModuleManager, TaskResult, ModuleResult, eResultStatus, TaskResultInfo, ModuleResultInfo, ResultInfo
 import os, re, shutil
 from typing import Any, Dict, Iterator, List, Tuple, Union
-from ..constants import CONFIG_PATH, OLD_CONFIG_PATH, RESULT_DIR, BSDK, CHANNEL_OPTION
+from ..constants import CONFIG_PATH, OLD_CONFIG_PATH, RESULT_DIR, BSDK, CHANNEL_OPTION, SUPERUSER
 from asyncio import Lock
 import json
 from copy import deepcopy
@@ -42,6 +43,8 @@ class UserData:
     password: str = ""
     default_account: str = ""
     clan: bool = False
+    admin: bool = False
+    disabled: bool = False
 
 BATCHINFO = "BATCH_RUNNER"
 
@@ -341,6 +344,14 @@ class AccountManager:
             if fn.endswith('.json') and not fn.startswith(BATCHINFO):
                 yield fn[:-5]
 
+    def account_count(self) -> int:
+        account_files = os.listdir(self.root)
+        count = 0
+        for fn in account_files:
+            if fn.endswith('.json') and not fn.startswith(BATCHINFO):
+                count += 1
+        return count
+
     async def create_accounts_from_tsv(self, tsv: str) -> Tuple[bool, str]:
         acc = []
         ok = True
@@ -382,6 +393,11 @@ class AccountManager:
             'default_account': self.default_account,
             'accounts': accounts,
             'clan': self.secret.clan
+        }
+
+    async def generate_role(self):
+        return {
+            'admin': self.secret.admin or SUPERUSER == current_user.auth_id
         }
 
 class UserManager:
