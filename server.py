@@ -256,10 +256,9 @@ def wrap_account(func):
 
         alias = msg[0] if msg else ""
 
-        if alias == '所有' or accmgr.qid.startswith('g'):
+        if alias == '所有':
             alias = BATCHINFO
-            if not accmgr.qid.startswith('g'):
-                del msg[0]
+            del msg[0]
         elif alias not in accmgr.accounts():
             alias = accmgr.default_account
         else:
@@ -280,7 +279,7 @@ def wrap_account(func):
     wrapper.__name__ = func.__name__
     return wrapper
 
-def wrap_batch(func):
+def wrap_group(func):
     async def wrapper(botev: BotEvent, *args, **kwargs):
         msg = await botev.message()
         command = msg[0] if msg else ""
@@ -589,7 +588,7 @@ async def config_clear_daily(botev: BotEvent):
 
 @sv.on_prefix(f"{prefix}")
 @wrap_hoshino_event
-@wrap_batch
+@wrap_group
 @wrap_tool
 @wrap_accountmgr
 @wrap_account

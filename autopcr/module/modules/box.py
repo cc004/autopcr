@@ -72,7 +72,7 @@ class search_box(Module):
                 unit_story = [story.story_id for story in db.unit_story if story.story_group_id == unit_id]
                 total_storys = len(unit_story)
                 read_storys = len([story for story in unit_story if story in read_story])
-                love.append(f"{unit_name}♡{love_level}({read_storys}/{total_storys})")
+                love.append(f"{unit_name}好感{love_level}({read_storys}/{total_storys})")
             info.append("\n" + ";".join(i for i in love))
 
         self._log(" ".join(str(i) for i in info))
