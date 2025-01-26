@@ -374,14 +374,13 @@ class HttpServer:
                 raise PermissionLimitedException()
             async with usermgr.create(qid, userdata.admin) as mgr:
                 mgr.secret = userdata
-                mgr.save_secret()
             return "创建用户成功", 200
 
         @self.api.route('/user/<string:qid>', methods = ['PUT'])
         @HttpServer.admin_required()
         async def set_user(qid: str):
             data = await request.get_json()
-            async with usermgr.load(qid, readonly=True) as mgr:
+            async with usermgr.load(qid) as mgr:
                 if mgr.is_admin() and current_user.auth_id != SUPERUSER:
                     # 仅超管可更改管理员
                     raise PermissionLimitedException()
@@ -400,7 +399,6 @@ class HttpServer:
                     mgr.secret.password = data['password']
                 if 'clan' in data:
                     mgr.secret.clan = data['clan']
-                mgr.save_secret()
             return "更新用户信息成功", 200
 
         @self.api.route('/user/<string:qid>', methods = ['DELETE'])

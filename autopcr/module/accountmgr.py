@@ -445,7 +445,7 @@ class UserManager:
         try:
             if qid not in self.qids():
                 return False
-            return not self.load(qid).secret.disabled
+            return not self.load(qid, readonly=True).secret.disabled
         except Exception as e:
             traceback.print_exc()
             return False
