@@ -350,12 +350,7 @@ class AccountManager:
                 yield fn[:-5]
 
     def account_count(self) -> int:
-        account_files = os.listdir(self.root)
-        count = 0
-        for fn in account_files:
-            if fn.endswith('.json') and not fn.startswith(BATCHINFO):
-                count += 1
-        return count
+        return sum(1 for _ in self.accounts())
 
     async def create_accounts_from_tsv(self, tsv: str) -> Tuple[bool, str]:
         acc = []
