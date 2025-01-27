@@ -1,7 +1,7 @@
-import traceback
 from .base import Component, RequestHandler
 from .apiclient import apiclient, ApiException, NetworkException
 from ..model.modelbase import *
+from ..model.error import *
 from traceback import print_exc
 from asyncio import Lock
 
@@ -15,7 +15,9 @@ class errorhandler(Component[apiclient]):
                 if retry_cnt <= 0:
                     raise
                 retry_cnt -= 1
-            except ApiException:
+            except ApiException as e:
+                if "维护" in str(e):
+                    raise PanicError(str(e))
                 raise
             except Exception:
                 print_exc()

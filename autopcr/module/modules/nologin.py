@@ -17,7 +17,7 @@ class ISchedule(ABC):
 
     @property
     def enabled(self) -> bool:
-        return db.parse_time(self.start_time) > datetime.now()
+        return not self.end_time.startswith("2099") and db.parse_time(self.end_time) > datetime.now()
 
     def get_description(self) -> str:
         return self.description
@@ -27,7 +27,6 @@ class SeasonpassFoundation(ISchedule):
         super().__init__(*args, **kwargs)
         self.name = name
 
-    @property
     def get_description(self) -> str:
         return self.name
 

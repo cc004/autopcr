@@ -493,6 +493,16 @@ class pcrclient(apiclient):
         await self.story_check(story_id)
         return await self.story_view(story_id)
 
+    async def put_mme_piece(self, sub_story_id: int):
+        req = SubStoryMmePutPieceRequest()
+        req.sub_story_id = sub_story_id
+        return await self.request(req)
+
+    async def read_mme_story(self, sub_story_id: int):
+        req = SubStoryMmeReadStoryRequest()
+        req.sub_story_id = sub_story_id
+        return await self.request(req)
+
     async def read_xeh_story(self, sub_story_id: int):
         req = SubStoryXehReadStoryRequest()
         req.sub_story_id = sub_story_id

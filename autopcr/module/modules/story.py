@@ -161,10 +161,14 @@ class hatsune_sub_story_reading(Module):
             if any(sub_story.status == eEventSubStoryStatus.ADDED for sub_story in sub_storys.sub_story_info_list):
                 await reader.confirm()
             for sub_story in sub_storys.sub_story_info_list:
-                if sub_story.status != eEventSubStoryStatus.READED and reader.is_readable(sub_story.sub_story_id):
+                if sub_story.status == eEventSubStoryStatus.UNREAD and reader.is_readable(sub_story.sub_story_id):
                     await reader.read(sub_story.sub_story_id)
                     self._log(f"阅读了{reader.title(sub_story.sub_story_id)}")
                     sub_story.status = eEventSubStoryStatus.READED
+                if sub_story.status == eEventSubStoryStatus.READED and reader.is_puzzle_piece(sub_story.sub_story_id):
+                    await reader.place_piece(sub_story.sub_story_id)
+                    self._log(f"放置了{reader.title(sub_story.sub_story_id)}碎片")
+                    sub_story.status = eEventSubStoryStatus.PUZZLE_PLACED
         if not self.log:
             raise SkipError("不存在未阅读的活动子剧情")
         else:

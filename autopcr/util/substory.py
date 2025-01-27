@@ -19,9 +19,12 @@ class SubStoryReader:
 
     def is_readable(self, sub_story_id: int) -> bool:
         return True # it seems to be readable when it appear in the substory list
+    def is_puzzle_piece(self, sub_story_id: int) -> bool:
+        return False
 
     def title(self, sub_story_id: int) -> str: ...
     async def read(self, sub_story_id: int): ...
+    async def place_piece(self, sub_story_id: int): ...
     async def confirm(self): ...
 
     def __init__(self, client: pcrclient):
@@ -31,6 +34,24 @@ def GetSubStoryReader(sub_story_data: EventSubStory, client: pcrclient) -> Union
     if sub_story_data.event_id in constructor:
         return constructor[sub_story_data.event_id](client)
     return None
+
+@EventId(10110)
+@EventId(10111)
+class mme_substory(SubStoryReader):
+
+    def title(self, sub_story_id: int) -> str:
+        return db.mme_story_data[sub_story_id].title
+
+    def is_puzzle_piece(self, sub_story_id: int) -> bool:
+        return db.mme_story_data[sub_story_id].is_puzzle_piece == 1
+
+    async def read(self, sub_story_id: int):
+        if db.mme_story_data[sub_story_id].original_event_id == 10110:
+            await self.client.story_check(sub_story_id)
+        await self.client.read_mme_story(sub_story_id)
+
+    async def place_piece(self, sub_story_id: int):
+        await self.client.put_mme_piece(sub_story_id)
 
 @EventId(10108)
 class dsb_substory(SubStoryReader):

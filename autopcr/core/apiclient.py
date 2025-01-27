@@ -191,7 +191,10 @@ class apiclient(Container["apiclient"]):
             #   fp.write(json.dumps(json.loads(response.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
 
             if "维护" in response.data.server_error.message:
-                response.data.server_error.message = response.data.maintenance_message
+                try:
+                    response.data.server_error.message = response.data.maintenance_message
+                except:
+                    pass
 
             raise ApiException(response.data.server_error.message,
                 response.data.server_error.status,
