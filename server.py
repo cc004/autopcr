@@ -1,7 +1,7 @@
 from collections import Counter
-from typing import Any, Callable, Coroutine, Dict, List, Tuple
+from typing import Any, Callable, Coroutine, Dict, List, Tuple, Union
 
-from .autopcr.module.accountmgr import BATCHINFO, TaskResultInfo
+from .autopcr.module.accountmgr import BATCHINFO, AccountBatch, TaskResultInfo
 from .autopcr.module.modulebase import eResultStatus
 from .autopcr.util.draw_table import outp_b64
 from .autopcr.http_server.httpserver import HttpServer
@@ -21,6 +21,8 @@ from quart_auth import QuartAuth
 from quart_rate_limiter import RateLimiter
 from quart_compress import Compress
 import secrets
+from .autopcr.util.pcr_data import get_id_from_name
+import traceback
 
 address = None  # 填你的公网IP或域名，不填则会自动尝试获取
 useHttps = False
@@ -43,6 +45,7 @@ sv_help = f"""
 - {prefix}日常记录 查看清日常状态
 - {prefix}日常报告 [0|1|2|3] 最近四次清日常报告
 - {prefix}定时日志 查看定时运行状态
+- {prefix}查角色 [昵称] 查看角色练度
 - {prefix}查缺角色 查看缺少的限定常驻角色
 - {prefix}查ex装备 [会战] 查看ex装备库存
 - {prefix}查探险编队 根据记忆碎片角色编队战力相当的队伍
@@ -101,6 +104,7 @@ class BotEvent:
     async def finish(self, msg: str): ...
     async def send(self, msg: str): ...
     async def target_qq(self) -> str: ...
+    async def group_id(self) -> str: ...
     async def send_qq(self) -> str: ...
     async def message(self) -> List[str]: ...
     async def is_admin(self) -> bool: ...
@@ -152,6 +156,9 @@ class HoshinoEvent(BotEvent):
 
     async def is_super_admin(self) -> bool:
         return priv.check_priv(self.ev, priv.SU)
+
+    async def group_id(self) -> str:
+        return str(self.ev.group_id)
 
 def wrap_hoshino_event(func):
     async def wrapper(bot: HoshinoBot, ev: CQEvent, *args, **kwargs):
@@ -250,9 +257,8 @@ def wrap_account(func):
         alias = msg[0] if msg else ""
 
         if alias == '所有':
-            pass
-            # alias = BATCHINFO
-            # del msg[0]
+            alias = BATCHINFO
+            del msg[0]
         elif alias not in accmgr.accounts():
             alias = accmgr.default_account
         else:
@@ -273,14 +279,38 @@ def wrap_account(func):
     wrapper.__name__ = func.__name__
     return wrapper
 
+def wrap_group(func):
+    async def wrapper(botev: BotEvent, *args, **kwargs):
+        msg = await botev.message()
+        command = msg[0] if msg else ""
+
+        if command.startswith("群"):
+            if not await botev.is_admin():
+                await botev.finish("仅管理员可以操作群帐号")
+            async def new_qq():
+                return "g" + str(await botev.group_id())
+            botev.target_qq = new_qq
+            msg[0] = msg[0].lstrip("群")
+
+        await func(botev = botev, *args, **kwargs)
+
+    wrapper.__name__ = func.__name__
+    return wrapper
+
 def wrap_tool(func):
     async def wrapper(botev: BotEvent, *args, **kwargs):
         msg = await botev.message()
         tool = msg[0] if msg else ""
 
-        if tool not in tool_info:
+        for tool_name in tool_info:
+            if tool.startswith(tool_name):
+                tool = tool_name
+                msg[0] = msg[0].lstrip(tool_name)
+                if not msg[0]:
+                    del msg[0]
+                break
+        else:
             await botev.finish(f"未找到工具【{tool}】")
-        del msg[0]
 
         tool = tool_info[tool]
 
@@ -558,12 +588,13 @@ async def config_clear_daily(botev: BotEvent):
 
 @sv.on_prefix(f"{prefix}")
 @wrap_hoshino_event
+@wrap_group
 @wrap_tool
 @wrap_accountmgr
 @wrap_account
 @wrap_config
 @check_final_args_be_empty
-async def tool_used(botev: BotEvent, tool: ToolInfo, config: Dict[str, str], acc: Account):
+async def tool_used(botev: BotEvent, tool: ToolInfo, config: Dict[str, str], acc: Union[AccountBatch, Account]):
     alias = escape(acc.alias)
     try:
         loop = asyncio.get_event_loop()
@@ -571,12 +602,15 @@ async def tool_used(botev: BotEvent, tool: ToolInfo, config: Dict[str, str], acc
 
         is_admin_call = await botev.is_admin()
         resp = await acc.do_from_key(config, tool.key, is_admin_call)
+        if isinstance(resp, List):
+            resp = resp[0]
         resp = resp.get_result()
         img = await drawer.draw_task_result(resp)
         msg = f"{alias}"
         msg += outp_b64(img)
         await botev.send(msg)
     except Exception as e:
+        traceback.print_exc()
         await botev.send(f'{alias}: {e}')
 
 @sv.on_fullmatch(f"{prefix}卡池")
@@ -792,6 +826,31 @@ async def pjjc_shuffle_team(botev: BotEvent):
 async def find_missing_unit(botev: BotEvent):
     return {}
 
+@register_tool("查box", "search_box")
+async def search_box(botev: BotEvent):
+    msg = await botev.message()
+    unit = None
+    unit_name = ""
+    try:
+        unit_name = msg[0]
+        unit = get_id_from_name(unit_name)
+        del msg[0]
+    except:
+        pass
+
+    if unit:
+        unit = unit * 100 + 1;
+        unit_name = db.get_unit_name(unit)
+        return {
+            "search_box_id": f"{unit}:{unit_name}"
+        }
+    else:
+        await botev.finish(f"未知昵称{unit_name}")
+
+@register_tool("刷新box", "refresh_box")
+async def refresh_box(botev: BotEvent):
+    return {}
+
 @register_tool("查探险编队", "travel_team_view")
 async def find_travel_team_view(botev: BotEvent):
     return {}
@@ -821,6 +880,10 @@ async def redeem_unit_swap(botev: BotEvent):
         "redeem_unit_swap_do": really_do
     }
     return config
+
+@register_tool("半月刊", "half_schedule")
+async def half_schedule(botev: BotEvent):
+    return {}
 
 # @register_tool("获取导入", "get_library_import_data")
 # async def get_library_import(botev: BotEvent):

@@ -220,7 +220,7 @@ class AccountBatch(Account):
     def __init__(self, parent: 'AccountManager', qid: str, accounts: str = BATCHINFO, readonly: bool = False):
         super().__init__(parent, qid, accounts, readonly)
         # self.enable_account = set([x for x in self.data.batch_accounts]) & set(self._parent.accounts())
-        self.enable_account = set(self._parent.accounts())
+        self.enable_account = sorted(list(set(self._parent.accounts())))
 
     def generate_info(self):
         accounts = list(self.enable_account)
@@ -246,6 +246,14 @@ class AccountBatch(Account):
             task.append(loop.create_task(do_from_key_pre(acc)))
 
         resps = await asyncio.gather(*task, return_exceptions=True)
+
+        if resps:
+            ret_list = [x.get_result() for x in resps]
+            ret = ret_list[0]
+            ret.log = '\n'.join(f"==={name}===\n{x.log}" for name, x in zip(alias, ret_list))
+            ret.status = eResultStatus.ERROR if any(x.status == eResultStatus.ERROR for x in ret_list) else eResultStatus.WARNING if any(x.status == eResultStatus.WARNING for x in ret_list) else eResultStatus.SUCCESS
+            all = await self.save_single_result(key, ret)
+            resps = [all] + resps
         self.data.single_result[key] = resps
         return resps
 

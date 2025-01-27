@@ -196,6 +196,7 @@ class cook_pudding(Module):
 @description('看看你的特别装备数量')
 @name('查ex装备')
 @booltype('ex_equip_info_cb_only', '会战', False)
+@notlogin(check_data = True)
 @default(True)
 class ex_equip_info(Module):
     async def do_task(self, client: pcrclient):
@@ -211,6 +212,7 @@ class ex_equip_info(Module):
 
 @description('看看你缺了什么角色')
 @name('查缺角色')
+@notlogin(check_data = True)
 @default(True)
 class missing_unit(Module):
     async def do_task(self, client: pcrclient):
@@ -672,15 +674,17 @@ class pjjc_shuffle_team(Module):
 @description('获得可导入到兰德索尔图书馆的账号数据')
 @name('兰德索尔图书馆导入数据')
 @default(True)
+@notlogin(check_data = True)
 @text_result
 class get_library_import_data(Module):
     async def do_task(self, client: pcrclient):
         msg = client.data.get_library_import_data()
         self._log(msg)
 
-@description('根据每个角色拉满星级、开专、升级至当前最高专所需的记忆碎片减去库存的结果')
+@description('注意！大师币会顶号！根据每个角色拉满星级、开专、升级至当前最高专所需的记忆碎片减去库存的结果')
 @singlechoice('memory_demand_consider_unit', '考虑角色', '所有', ['所有', '地图可刷取', '大师币商店'])
 @name('获取记忆碎片缺口')
+@notlogin(check_data = True)
 @default(True)
 class get_need_memory(Module):
     async def do_task(self, client: pcrclient):
@@ -705,6 +709,7 @@ class get_need_memory(Module):
 
 @description('去除六星需求后，专二所需纯净碎片减去库存的结果')
 @name('获取纯净碎片缺口')
+@notlogin(check_data = True)
 @default(True)
 class get_need_pure_memory(Module):
     async def do_task(self, client: pcrclient):
@@ -723,6 +728,7 @@ class get_need_pure_memory(Module):
 
 @description('根据每个角色开专、升级至当前最高专所需的心碎减去库存的结果，大心转换成10心碎')
 @name('获取心碎缺口')
+@notlogin(check_data = True)
 @default(True)
 class get_need_xinsui(Module):
     async def do_task(self, client: pcrclient):
@@ -749,6 +755,7 @@ class get_need_xinsui(Module):
 @booltype("like_unit_only", "收藏角色", False)
 @description('统计指定角色拉满品级所需的装备减去库存的结果，不考虑仓库中的大件装备')
 @name('获取装备缺口')
+@notlogin(check_data = True)
 @default(True)
 class get_need_equip(Module):
     async def do_task(self, client: pcrclient):
@@ -766,6 +773,7 @@ class get_need_equip(Module):
 @booltype("like_unit_only", "收藏角色", False)
 @description('根据装备缺口计算刷图优先级，越前的优先度越高')
 @name('刷图推荐')
+@notlogin(check_data = True)
 @default(True)
 class get_normal_quest_recommand(Module):
     async def do_task(self, client: pcrclient):

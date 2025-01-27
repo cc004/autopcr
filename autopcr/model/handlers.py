@@ -316,7 +316,8 @@ class LoadIndexResponse(responses.LoadIndexResponse):
 class HomeIndexResponse(responses.HomeIndexResponse):
     async def update(self, mgr: datamgr, request):
         mgr.finishedQuest = set([q.quest_id for q in self.quest_list if q.result_type > 0 and q.clear_flg == 3] if self.quest_list else [] + [q.quest_id for q in self.shiori_quest_info.quest_list if q.result_type > 0 and q.clear_flg == 3] if self.shiori_quest_info and self.shiori_quest_info.quest_list else [])
-        mgr.clan = self.user_clan.clan_id
+        if self.user_clan:
+            mgr.clan = self.user_clan.clan_id
         mgr.donation_num = self.user_clan.donation_num
         mgr.dungeon_area_id = self.dungeon_info.enter_area_id
         mgr.training_quest_count = self.training_quest_count

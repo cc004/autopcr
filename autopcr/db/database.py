@@ -588,15 +588,16 @@ class database():
                 .to_dict(lambda x: x.unit_id, lambda x: x)
             )
 
-            self.unit_kana_ids: Dict[str, List[int]] = (
-                UnitDatum.query(db)
-                .group_by(lambda x: x.kana)
-                .to_dict(lambda x: x.key, lambda x: x.select(lambda y: y.unit_id).to_list())
-            )
-
             self.unlock_unit_condition: Dict[int, UnlockUnitCondition] = (
                 UnlockUnitCondition.query(db)
                 .to_dict(lambda x: x.unit_id, lambda x: x)
+            )
+
+            self.unit_kana_ids: Dict[str, List[int]] = (
+                UnitDatum.query(db)
+                .where(lambda x: x.unit_id in self.unlock_unit_condition)
+                .group_by(lambda x: x.kana)
+                .to_dict(lambda x: x.key, lambda x: x.select(lambda y: y.unit_id).to_list())
             )
 
             self.pure_memory_to_unit: Dict[ItemType, int] = (
@@ -614,7 +615,12 @@ class database():
                 .to_dict(lambda x: x.quest_id, lambda x: x)
             )
 
-            self.tower: Dict[int, TowerSchedule] = (
+            self.login_bonus_data: Dict[int, LoginBonusDatum] = (
+                LoginBonusDatum.query(db)
+                .to_dict(lambda x: x.login_bonus_id, lambda x: x)
+            )
+
+            self.tower_schedule: Dict[int, TowerSchedule] = (
                 TowerSchedule.query(db)
                 .to_dict(lambda x: x.tower_schedule_id, lambda x: x)
             )
@@ -629,8 +635,13 @@ class database():
                 .group_by(lambda x: x.exchange_id)
                 .to_dict(lambda x: x.key, lambda x: x.to_list())
             )
+
+            self.campaign_free_gacha: Dict[int, CampaignFreegacha] = (
+                CampaignFreegacha.query(db)
+                .to_dict(lambda x: x.campaign_id, lambda x: x)
+            )
             
-            self.free_gacha_list: Dict[int, List[CampaignFreegachaDatum]] = (
+            self.campaign_free_gacha_data: Dict[int, List[CampaignFreegachaDatum]] = (
                 CampaignFreegachaDatum.query(db)
                 .group_by(lambda x: x.campaign_id)
                 .to_dict(lambda x: x.key, lambda x: x.to_list())
@@ -765,6 +776,12 @@ class database():
                 ex.category: ex.ex_equipment_id for ex in self.ex_equipment_data.values() if ex.clan_battle_equip_flag == 1 and ex.rarity == 3
             }
 
+            self.ex_equipment_enhance_data: Dict[int, Dict[int, ExEquipmentEnhanceDatum]] = (
+                ExEquipmentEnhanceDatum.query(db)
+                .group_by(lambda x: x.rarity)
+                .to_dict(lambda x: x.key, lambda x: x.to_dict(lambda x: x.enhance_level, lambda x: x))
+            )
+
             self.ex_event_data: Dict[int, TravelExEventDatum] = (
                 TravelExEventDatum.query(db)
                 .to_dict(lambda x: x.still_id, lambda x: x)
@@ -797,10 +814,22 @@ class database():
                 3: '金',
                 4: '粉'
             }
+    def get_ex_equip_star_from_pt(self, id: int, pt: int) -> int:
+        rarity = self.get_ex_equip_rarity(id)
+        history_star = [star for star, enhancement_data in self.ex_equipment_enhance_data[rarity].items() if enhancement_data.total_point <= pt]
+        star = max([0] + history_star)
+        return star
+
+    def get_ex_equip_rarity(self, id: int) -> int:
+        return self.ex_equipment_data[id].rarity
+
+    def get_ex_equip_rarity_name(self, id: int) -> str:
+        return self.ex_rarity_name[self.get_ex_equip_rarity(id)]
+
     def get_inventory_name(self, item: InventoryInfo) -> str:
         try:
             if item.type == eInventoryType.ExtraEquip:
-                return f"{self.ex_rarity_name[self.ex_equipment_data[item.id].rarity]}{item.ex_equip.rank}-" + self.inventory_name[(item.type, item.id)] 
+                return f"{self.get_ex_equip_rarity_name(item.id)}{item.ex_equip.rank}-" + self.inventory_name[(item.type, item.id)] 
             return self.inventory_name[(item.type, item.id)]
         except:
             return f"未知物品({item.id})"
@@ -1019,7 +1048,7 @@ class database():
         return ret
 
     def get_newest_tower_id(self) -> int:
-        return max(self.tower, key = lambda x: self.tower[x].start_time)
+        return max(self.tower_schedule, key = lambda x: self.tower_schedule[x].start_time)
 
     def max_total_love(self, rarity: int) -> Tuple[int, int]:
         love_info: Tuple[int, int] = (0, 0)

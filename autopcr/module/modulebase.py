@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
-from ..core.pcrclient import pcrclient
+from ..core.pcrclient import eLoginStatus, pcrclient
 from ..model.error import *
 from ..model.enums import *
 from typing import Dict, List, Tuple
@@ -9,6 +9,8 @@ import traceback
 from ..constants import CACHE_DIR
 from .config import Config, _wrap_init
 from enum import Enum
+from datetime import datetime
+from ..db.database import db
 
 def default(val):
     return lambda cls:_wrap_init(cls, lambda self: setattr(self, 'default', val))
@@ -24,6 +26,29 @@ def notimplemented(cls):
 
 def notrunnable(cls):
     return _wrap_init(cls, lambda self: setattr(self, 'runnable', False))
+
+def notlogin(check_data = False):
+    def setter(self):
+        self.tags.append("不登录")
+        self.need_login = False
+        old_do_check = self.do_check
+        async def new_do_check(client: pcrclient) -> Tuple[bool, str]:
+            ok, msg = await old_do_check(client)
+            if not ok: 
+                return ok, msg
+            if check_data and not client.data_ready:
+                return False, '无缓存，请登录'
+            return True, ''
+        self.do_check = new_do_check
+        if check_data:
+            old_do_task = self.do_task
+            async def new_do_task(client: pcrclient):
+                self._log(f"[{db.format_time(datetime.fromtimestamp(client.data.data_time))}]")
+                await old_do_task(client)
+            self.do_task = new_do_task
+
+
+    return lambda cls: _wrap_init(cls, setter)
 
 def tag_stamina_consume(cls):
     def setter(self):
@@ -102,10 +127,12 @@ class Module:
         self.description: str = self.name
         self.config: Dict[str, Config] = {}
         self.implmented = True
+        self.need_login = True
         from .modulemgr import ModuleManager
         self._parent: ModuleManager = parent
         self.log = []
         self.warn = []
+        self.is_warn = False
 
         from os.path import join
         self.cache_path: str = join(CACHE_DIR, "modules", self.key, self._parent.id + ".json")
@@ -160,8 +187,12 @@ class Module:
             self.log.clear()
             self.warn.clear()
 
-            if not client.logged:
-                await client.login()
+            if self.need_login:
+                if client.logged == eLoginStatus.NOT_LOGGED:
+                    await client.login()
+                elif client.need_refresh:
+                    if client.data: client.data.update_stamina_recover()
+                    await client.refresh()
 
             ok, msg = await self.do_check(client)
             if not ok:
@@ -171,7 +202,7 @@ class Module:
 
             await self.do_task(client)
 
-            if self.warn:
+            if self.is_warn:
                 result.status = eResultStatus.WARNING
             else:
                 result.status = eResultStatus.SUCCESS
@@ -189,9 +220,7 @@ class Module:
             result.log = str(e)
             result.status = eResultStatus.ERROR
         finally:
-            result.log = ('\n'.join(self.warn + 
-                                    (['----'] if self.warn and self.log else []) +
-                                    self.log) + "\n" + result.log).strip() or "ok"
+            result.log = ('\n'.join(self.log) + "\n" + result.log).strip() or "ok"
 
         return result
 
@@ -251,8 +280,8 @@ class Module:
         self.log.append(msg)
 
     def _warn(self, msg: str):
-        self.log.append(msg)
-        self.warn.append(msg)
+        self.is_warn = True
+        self.log.append("! " + msg)
 
     def _abort(self, msg: str = ""):
         raise AbortError(msg)

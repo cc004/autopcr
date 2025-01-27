@@ -1,6 +1,8 @@
 from dataclasses import field
 from typing import Any
 from .autosweep import *
+from .box import *
+from .nologin import *
 from .clan import *
 from .cron import *
 from .daily import *
@@ -132,6 +134,9 @@ tool_modules = ModuleList(
     'tool',
     [
         # cook_pudding,
+        half_schedule,
+        search_box,
+        refresh_box,
         remove_cb_support,
         travel_team_view,
         ex_equip_info,

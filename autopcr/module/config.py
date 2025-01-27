@@ -117,6 +117,11 @@ def texttype(key:str, desc: str, default):
         return config_option(key=key, desc=desc, default=default, config_type='text')(cls)
     return decorator
 
+def unitchoice(key: str, desc: str):
+    def decorator(cls):
+        return config_option(key=key, desc=desc, default="100101:日和莉", candidates=[f"{unit}:{db.unit_data[unit].unit_name}" for unit in db.unlock_unit_condition], config_type='single')(cls)
+    return decorator
+
 def conditional_execution1(key: str, default, desc: str = "执行条件", check: bool = True): # need login
     async def do_check(self, client: pcrclient) -> Tuple[bool, str]:
         run_time = self.get_value()

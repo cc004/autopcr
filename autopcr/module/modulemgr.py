@@ -139,7 +139,16 @@ class ModuleManager:
 
     async def do_task(self, config: dict, modules: List[Module], isAdminCall: bool = False) -> TaskResult:
         if db.is_clan_battle_time() and self.is_clan_battle_forbidden() and not isAdminCall:
-            raise PanicError("会战期间禁止执行任务")
+            key = 'clan_battle' if not modules else modules[0].key
+            return TaskResult(
+                order = [key],
+                result = {
+                    key: ModuleResult(
+                        status = eResultStatus.PANIC,
+                        log = "会战期间禁止执行任务"
+                    )
+                }
+            )
 
         client = self.client
         self.config["stamina_relative_not_run"] = any(db.is_campaign(campaign) for campaign in self.config.get("stamina_relative_not_run_campaign_before_one_day", []))
@@ -150,13 +159,6 @@ class ModuleManager:
                 order = [],
                 result = {}
         )
-
-        try:
-            if client.logged:
-                if client.data: client.data.update_stamina_recover()
-                await client.room_start()
-        except Exception as e:
-            traceback.print_exc()
 
         for module in modules:
             resp.order.append(module.key)
