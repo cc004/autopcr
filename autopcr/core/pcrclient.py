@@ -658,6 +658,14 @@ class pcrclient(apiclient):
         req.target_viewer_id = user
         return await self.request(req)
 
+    async def shiori_mission_receive(self, event_id: int):
+        req = ShioriMissionAcceptRequest()
+        req.event_id = event_id
+        req.type = 2
+        req.id = 0
+        req.buy_id = 0
+        return await self.request(req)
+
     async def get_shiori_top(self):
         req = ShioriTopRequest()
         return await self.request(req)
