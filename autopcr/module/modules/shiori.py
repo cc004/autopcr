@@ -34,7 +34,7 @@ class shiori_mission_check(Module):
                 self.save_cache(f"shiori-check-{event_id}", 1)
                 continue
 
-            self._log(f"【{event_id} {db.event_name[event_id]}】")
+            self._log(f"{event_id}:{db.event_name[event_id]}：")
 
             if any(
                 m.mission_status == eMissionStatusType.EnableReceive
