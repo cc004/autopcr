@@ -9,6 +9,7 @@ from .daily import *
 from .gacha import *
 from .hatsune import *
 from .room import *
+from .shiori import *
 from .shop import *
 from .story import *
 from .sweep import *
@@ -101,6 +102,7 @@ daily_modules = ModuleList(
         
         clan_equip_request,
         love_up,
+        shiori_mission_check,
         main_story_reading,
         tower_story_reading,
         hatsune_story_reading,

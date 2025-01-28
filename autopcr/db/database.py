@@ -819,6 +819,13 @@ class database():
                 3: '金',
                 4: '粉'
             }
+
+            self.shiori_event_quests: Dict[int, dict[int, ShioriQuest]] = (
+                ShioriQuest.query(db)
+                .group_by(lambda x: x.event_id)
+                .to_dict(lambda x: x.key, lambda x: x.to_dict(lambda x: x.quest_id, lambda x: x))
+            )
+
     def get_ex_equip_star_from_pt(self, id: int, pt: int) -> int:
         rarity = self.get_ex_equip_rarity(id)
         history_star = [star for star, enhancement_data in self.ex_equipment_enhance_data[rarity].items() if enhancement_data.total_point <= pt]
