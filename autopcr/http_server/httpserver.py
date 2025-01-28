@@ -15,7 +15,7 @@ from quart_rate_limiter import RateLimiter, rate_limit, RateLimitExceeded
 from .validator import validate_dict, ValidateInfo, validate_ok_dict, enable_manual_validator
 from ..constants import CACHE_DIR, ALLOW_REGISTER, SUPERUSER
 from ..module.accountmgr import Account, AccountManager, instance as usermgr, AccountException, UserData, \
-    PermissionLimitedException, UserDisabledException
+    PermissionLimitedException, UserDisabledException, UserException
 from ..util.draw import instance as drawer
 
 APP_VERSION = "1.2.0"
@@ -101,8 +101,6 @@ class HttpServer:
     def admin_required():
         def wrapper(func: Callable[..., Coroutine[Any, Any, Any]]):
             async def inner(*args, **kwargs):
-                if not await current_user.is_authenticated:
-                    raise Unauthorized()
                 if SUPERUSER == current_user.auth_id:
                     admin = True
                 else:
@@ -141,6 +139,10 @@ class HttpServer:
         @self.api.errorhandler(UserDisabledException)
         async def disabled(*_: Exception):
             return "用户被禁用，请联系管理员", 403
+
+        @self.api.errorhandler(UserException)
+        async def handle_user_exception(e):
+            return str(e), 400
 
         @self.api.errorhandler(ValueError)
         async def handle_value_error(e):
@@ -348,6 +350,7 @@ class HttpServer:
                 return resp.to_json(), 200
 
         @self.api.route('/user', methods = ['GET'])
+        @HttpServer.login_required()
         @HttpServer.admin_required()
         async def get_users():
             qids = list(usermgr.qids())
@@ -365,6 +368,7 @@ class HttpServer:
             return results, 200
 
         @self.api.route('/user/<string:qid>', methods = ['POST'])
+        @HttpServer.login_required()
         @HttpServer.admin_required()
         async def create_user(qid: str):
             data = await request.get_data()
@@ -377,6 +381,7 @@ class HttpServer:
             return "创建用户成功", 200
 
         @self.api.route('/user/<string:qid>', methods = ['PUT'])
+        @HttpServer.login_required()
         @HttpServer.admin_required()
         async def set_user(qid: str):
             data = await request.get_json()
@@ -402,6 +407,7 @@ class HttpServer:
             return "更新用户信息成功", 200
 
         @self.api.route('/user/<string:qid>', methods = ['DELETE'])
+        @HttpServer.login_required()
         @HttpServer.admin_required()
         async def delete_user(qid: str):
             if qid == current_user.auth_id:
