@@ -51,3 +51,6 @@ class shiori_mission_check(Module):
                     self._warn(f"关卡 {db.quest_name[quest_id]} 尚未通关")
                 elif top_quests[quest_id].clear_flg != 3:
                     self._warn(f"关卡 {db.quest_name[quest_id]} 尚未取得3星")
+
+        if not self.log:
+            raise SkipError("所有已通关外传的任务奖励均已领取")
