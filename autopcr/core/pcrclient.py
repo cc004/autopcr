@@ -667,6 +667,8 @@ class pcrclient(apiclient):
         return await self.request(req)
 
     async def get_shiori_top(self):
+        if not self.data.is_quest_cleared(11003002):
+            raise SkipError("未解锁外传")
         req = ShioriTopRequest()
         return await self.request(req)
 
