@@ -36,11 +36,9 @@ class shiori_mission_check(Module):
 
             self._log(f"{event_id}:{db.event_name[event_id]}：")
 
-            if any(
-                m.mission_status == eMissionStatusType.EnableReceive
-                for m in event_top.missions
-            ):
-                resp = await client.shiori_mission_receive(event_id)
+            types = set(x.mission_id // 10000000 - 5 for x in event_top.missions if x.mission_status == eMissionStatusType.EnableReceive)
+            for type in types:
+                resp = await client.shiori_mission_receive(event_id, type)
                 self._log(
                     f"领取了任务奖励，获得了:\n"
                     + await client.serlize_reward(resp.rewards)
