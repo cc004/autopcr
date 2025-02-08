@@ -149,6 +149,7 @@ class LoginBonusDatum(ISchedule):
 class half_schedule(Module):
     schedules = [
         (db.clan_battle_period, lambda x: ClanBattlePeriod(x.start_time, x.end_time, "公会战")),
+        (db.clan_battle_period, lambda x: ClanBattlePeriod(x.result_start, x.result_end, "公会战排名公示")),
         (db.secret_dungeon_schedule, lambda x: SecretDungeonSchedule(x.start_time, x.end_time, "特别地下城")),
         (db.seasonpass_foundation, lambda x: SeasonpassFoundation(x.name, x.start_time, x.end_time, "季卡")),
         (db.gacha_data, lambda x: GachaDatum(x.gacha_id, x.exchange_id, x.start_time, x.end_time, "扭蛋")),
@@ -167,9 +168,13 @@ class half_schedule(Module):
                 if schedule.enabled:
                     schedules[(db.format_date(db.parse_time(schedule.start_time)), db.format_date(db.parse_time(schedule.end_time)))].append(schedule.get_description())
         times = sorted(schedules.keys())
+        mirai = False
         for time in times:
             st = time[0]
             ed = time[1]
+            if not mirai and db.parse_time(st) > datetime.now():
+                mirai = True
+                self._log("===未来日程===")
             self._log(f"{st} - {ed}")
             for msg in schedules[time]:
                 self._log(f"    {msg}")
