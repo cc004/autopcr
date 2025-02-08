@@ -368,7 +368,7 @@ class HttpServer:
         @HttpServer.login_required()
         @HttpServer.admin_required()
         async def get_users():
-            qids = list(usermgr.qids())
+            qids = sorted(list(usermgr.qids()))
             results = []
             for qid in qids:
                 async with usermgr.load(qid, readonly=True) as mgr:
