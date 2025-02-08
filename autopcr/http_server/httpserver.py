@@ -32,7 +32,7 @@ class HttpServer:
         self.web = Blueprint('web', __name__, static_folder=static_path)
 
         # version check & rate limit
-        self.api_limit = Blueprint('api_limit', __name__, url_prefix = "/api")
+        self.api_limit = Blueprint('api_limit', __name__, url_prefix = "/")
         self.api = Blueprint('api', __name__, url_prefix = "/api")
 
         self.app = Blueprint('app', __name__, url_prefix = "/daily")
@@ -45,7 +45,7 @@ class HttpServer:
 
         self.app.register_blueprint(self.web)
         self.app.register_blueprint(self.api)
-        self.app.register_blueprint(self.api_limit)
+        self.api.register_blueprint(self.api_limit)
 
         self.host = host
         self.port = port

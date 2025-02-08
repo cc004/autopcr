@@ -12,7 +12,7 @@ QSDK = '渠道服'
 
 CHANNEL_OPTION = [BSDK, QSDK]
 
-DEBUG_LOG = bool(os.getenv("AUTOPCR_SERVER_DEBUG_LOG", "False"))
+DEBUG_LOG = bool(os.getenv("AUTOPCR_SERVER_DEBUG_LOG", False))
 ERROR_LOG = True
 ROOT_DIR = os.path.join(os.path.dirname(__file__), '..')
 CACHE_DIR = os.path.join(ROOT_DIR, './cache/')
@@ -23,8 +23,8 @@ OLD_CONFIG_PATH = os.path.join(ROOT_DIR, 'autopcr/http_server/config')
 CLAN_BATTLE_FORBID_PATH = os.path.join(CONFIG_PATH, 'clan_battle_forbidden.txt')
 MAX_API_RUNNING = 8
 
-ALLOW_REGISTER = bool(os.getenv("AUTOPCR_SERVER_ALLOW_REGISTER", "True"))
-SUPERUSER = str(os.getenv("AUTOPCR_SERVER_SUPERUSER"))
+ALLOW_REGISTER = bool(os.getenv("AUTOPCR_SERVER_ALLOW_REGISTER", False))
+SUPERUSER = str(os.getenv("AUTOPCR_SERVER_SUPERUSER", ""))
 
 # Headers
 DEFAULT_HEADERS = {
