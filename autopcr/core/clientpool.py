@@ -98,8 +98,9 @@ class PoolClientWrapper(pcrclient):
         os.remove(self.cache)
 
     def deactivate(self):
-        with open(self.cache, 'wb') as f:
-            f.write(pickle.dumps(self.data))
+        if self.data_ready:
+            with open(self.cache, 'wb') as f:
+                f.write(pickle.dumps(self.data))
         self.data = datamgr()
         self._data_wrapper.component = self.data
         self.data_ready = False
