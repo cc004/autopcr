@@ -20,11 +20,11 @@ RESULT_DIR = os.path.join(ROOT_DIR, './result/')
 DATA_DIR = os.path.join(ROOT_DIR, './data/')
 CONFIG_PATH = os.path.join(CACHE_DIR, './http_server/') 
 OLD_CONFIG_PATH = os.path.join(ROOT_DIR, 'autopcr/http_server/config')
-
+CLAN_BATTLE_FORBID_PATH = os.path.join(CONFIG_PATH, 'clan_battle_forbidden.txt')
 MAX_API_RUNNING = 8
 
 ALLOW_REGISTER = bool(os.getenv("AUTOPCR_SERVER_ALLOW_REGISTER", "True"))
-SUPERUSER = str(os.getenv("AUTOPCR_SERVER_SUPERUSER", ""))
+SUPERUSER = str(os.getenv("AUTOPCR_SERVER_SUPERUSER"))
 
 # Headers
 DEFAULT_HEADERS = {

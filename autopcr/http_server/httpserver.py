@@ -18,7 +18,7 @@ from ..module.accountmgr import Account, AccountManager, instance as usermgr, Ac
     PermissionLimitedException, UserDisabledException, UserException
 from ..util.draw import instance as drawer
 
-APP_VERSION = "1.2.0"
+APP_VERSION = "1.3.0"
 
 CACHE_HTTP_DIR = os.path.join(CACHE_DIR, 'http_server')
 
@@ -157,6 +157,21 @@ class HttpServer:
         async def handle_general_exception(e):
             traceback.print_exc()
             return "服务器发生错误", 500
+
+        @self.api.route('/clan_forbid', methods = ["GET"])
+        @HttpServer.login_required()
+        @HttpServer.admin_required()
+        async def get_clan_forbid():
+            accs = usermgr.get_clan_battle_forbidden()
+            return '\n'.join(accs), 200
+
+        @self.api.route('/clan_forbid', methods = ["PUT"])
+        @HttpServer.login_required()
+        @HttpServer.admin_required()
+        async def put_clan_forbid():
+            data = (await request.get_json())['accs'].split('\n')
+            usermgr.set_clan_battle_forbidden(data)
+            return f'设置成功，禁止了{len(data)}个账号', 200
 
         @self.api.route('/role', methods = ["GET"])
         @HttpServer.login_required()
