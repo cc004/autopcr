@@ -1,4 +1,5 @@
 import os
+from distutils.util import strtobool
 
 SERVER_PORT = int(os.getenv("AUTOPCR_SERVER_PORT", "13200"))
 
@@ -6,14 +7,19 @@ CLIENT_POOL_SIZE_MAX = 100
 CLIENT_POOL_MAX_AGE = 3600 * 24
 CLIENT_POOL_MAX_CLIENT_ALIVE = 10
 SESSION_ERROR_MAX_RETRY = 2
+MAX_API_RUNNING = 8
 
 BSDK = '官服'
 QSDK = '渠道服'
 
 CHANNEL_OPTION = [BSDK, QSDK]
 
-DEBUG_LOG = bool(os.getenv("AUTOPCR_SERVER_DEBUG_LOG", False))
+DEBUG_LOG = strtobool(os.getenv("AUTOPCR_SERVER_DEBUG_LOG", "false"))
 ERROR_LOG = True
+
+ALLOW_REGISTER = strtobool(os.getenv("AUTOPCR_SERVER_ALLOW_REGISTER", 'true'))
+SUPERUSER = str(os.getenv("AUTOPCR_SERVER_SUPERUSER", ""))
+
 ROOT_DIR = os.path.join(os.path.dirname(__file__), '..')
 CACHE_DIR = os.path.join(ROOT_DIR, './cache/')
 RESULT_DIR = os.path.join(ROOT_DIR, './result/')
@@ -21,10 +27,6 @@ DATA_DIR = os.path.join(ROOT_DIR, './data/')
 CONFIG_PATH = os.path.join(CACHE_DIR, './http_server/') 
 OLD_CONFIG_PATH = os.path.join(ROOT_DIR, 'autopcr/http_server/config')
 CLAN_BATTLE_FORBID_PATH = os.path.join(CONFIG_PATH, 'clan_battle_forbidden.txt')
-MAX_API_RUNNING = 8
-
-ALLOW_REGISTER = bool(os.getenv("AUTOPCR_SERVER_ALLOW_REGISTER", False))
-SUPERUSER = str(os.getenv("AUTOPCR_SERVER_SUPERUSER", ""))
 
 # Headers
 DEFAULT_HEADERS = {
