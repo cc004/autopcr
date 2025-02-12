@@ -23,12 +23,19 @@ class PreRequestHandler(Component[apiclient]):
         self.pool = pool
     async def request(self, request: Request[TResponse], next: RequestHandler) -> TResponse:
         assert isinstance(self._container, PoolClientWrapper)
-        if self._container.session.is_session_expired:
-            await self._container.logout()
         self._container.last_access = int(time.time())
         if isinstance(request, ToolSdkLoginRequest):
             self._container.uid = request.uid
             self.pool._on_sdk_login(self._container)
+        return await next.request(request)
+
+class PreSessionHandler(Component[apiclient]):
+    def __init__(self, pool: 'ClientPool'):
+        self.pool = pool
+    async def request(self, request: Request[TResponse], next: RequestHandler) -> TResponse:
+        assert isinstance(self._container, PoolClientWrapper)
+        if self._container.session.is_session_expired:
+            await self._container.logout()
         return await next.request(request)
 
 class SessionErrorHandler(Component[apiclient]):
@@ -64,6 +71,7 @@ class PoolClientWrapper(pcrclient):
         self.register(self._data_wrapper)
         self.register(PreRequestHandler(pool))
         self.register(self.session)
+        self.register(PreSessionHandler(pool))
         self.register(SessionErrorHandler(pool))
         self.register(mutexhandler())
 
