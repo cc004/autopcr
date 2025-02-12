@@ -3,13 +3,15 @@
 import asyncio
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
+from quart_auth import current_user
+from werkzeug.exceptions import Forbidden
 
 from ..core.pcrclient import pcrclient
 from ..core.sdkclient import account, platform
 from .modulemgr import ModuleManager, TaskResult, ModuleResult, eResultStatus, TaskResultInfo, ModuleResultInfo, ResultInfo
 import os, re, shutil
 from typing import Any, Dict, Iterator, List, Tuple, Union
-from ..constants import CONFIG_PATH, OLD_CONFIG_PATH, RESULT_DIR, BSDK, CHANNEL_OPTION
+from ..constants import CONFIG_PATH, OLD_CONFIG_PATH, RESULT_DIR, BSDK, CHANNEL_OPTION, SUPERUSER
 from asyncio import Lock
 import json
 from copy import deepcopy
@@ -23,6 +25,10 @@ from ..sdk.sdkclients import create
 class AccountException(Exception):
     pass
 class UserException(Exception):
+    pass
+class PermissionLimitedException(Forbidden):
+    pass
+class UserDisabledException(Forbidden):
     pass
 
 @dataclass_json
@@ -42,6 +48,8 @@ class UserData:
     password: str = ""
     default_account: str = ""
     clan: bool = False
+    admin: bool = False
+    disabled: bool = False
 
 BATCHINFO = "BATCH_RUNNER"
 
@@ -349,6 +357,9 @@ class AccountManager:
             if fn.endswith('.json') and not fn.startswith(BATCHINFO):
                 yield fn[:-5]
 
+    def account_count(self) -> int:
+        return sum(1 for _ in self.accounts())
+
     async def create_accounts_from_tsv(self, tsv: str) -> Tuple[bool, str]:
         acc = []
         ok = True
@@ -392,6 +403,19 @@ class AccountManager:
             'clan': self.secret.clan
         }
 
+    async def generate_role(self):
+        return {
+            'admin': self.is_admin(),
+            'super_user': self.is_super_user()
+        }
+
+    def is_admin(self):
+        return self.secret.admin or self.is_super_user()
+
+    def is_super_user(self):
+        return SUPERUSER == self.qid
+
+
 class UserManager:
     pathsyntax = re.compile(r'g?\d{5,12}')
 
@@ -416,6 +440,15 @@ class UserManager:
             if qid not in self.qids():
                 return False
             return self.load(qid).validate_password(password)
+        except Exception as e:
+            traceback.print_exc()
+            return False
+
+    def check_enabled(self, qid: str) -> bool:
+        try:
+            if qid not in self.qids():
+                return False
+            return not self.load(qid, readonly=True).secret.disabled
         except Exception as e:
             traceback.print_exc()
             return False

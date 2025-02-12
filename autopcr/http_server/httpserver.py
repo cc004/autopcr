@@ -1,18 +1,22 @@
+import os
+import secrets
+import traceback
 from copy import deepcopy
 from datetime import timedelta
-import traceback
-import quart, asyncio
-from quart import request, Blueprint, send_file, send_from_directory
-from quart_rate_limiter import RateLimiter, rate_limit, RateLimitExceeded
-from quart_auth import AuthUser, QuartAuth, Unauthorized, current_user, login_required, login_user, logout_user
-from quart_compress import Compress
-import secrets, os, io
 from typing import Callable, Coroutine, Any
 
-from ..module.accountmgr import Account, AccountManager, UserException, instance as usermgr, AccountException
-from ..constants import CACHE_DIR
-from ..util.draw import instance as drawer
+import asyncio
+import quart
+from quart import request, Blueprint, send_file, send_from_directory
+from quart_auth import AuthUser, QuartAuth, Unauthorized, current_user, login_user, logout_user, login_required
+from quart_compress import Compress
+from quart_rate_limiter import RateLimiter, rate_limit, RateLimitExceeded
+
 from .validator import validate_dict, ValidateInfo, validate_ok_dict, enable_manual_validator
+from ..constants import CACHE_DIR, ALLOW_REGISTER, SUPERUSER
+from ..module.accountmgr import Account, AccountManager, instance as usermgr, AccountException, UserData, \
+    PermissionLimitedException, UserDisabledException, UserException
+from ..util.draw import instance as drawer
 
 APP_VERSION = "1.2.0"
 
@@ -75,7 +79,41 @@ class HttpServer:
             inner.__name__ = func.__name__
             return inner
         return wrapper
-    
+
+    @staticmethod
+    def login_required():
+        def wrapper(func: Callable[..., Coroutine[Any, Any, Any]]):
+            async def inner(*args, **kwargs):
+                if not await current_user.is_authenticated:
+                    raise Unauthorized()
+                else:
+                    async with usermgr.load(current_user.auth_id, True) as mgr:
+                        disabled = mgr.secret.disabled
+                if not disabled:
+                    return await func(*args, **kwargs)
+                else:
+                    raise UserDisabledException()
+            inner.__name__ = func.__name__
+            return inner
+        return wrapper
+
+    @staticmethod
+    def admin_required():
+        def wrapper(func: Callable[..., Coroutine[Any, Any, Any]]):
+            async def inner(*args, **kwargs):
+                if SUPERUSER == current_user.auth_id:
+                    admin = True
+                else:
+                    async with usermgr.load(current_user.auth_id, True) as mgr:
+                        admin = mgr.secret.admin
+                if admin:
+                    return await func(*args, **kwargs)
+                else:
+                    raise PermissionLimitedException()
+            inner.__name__ = func.__name__
+            return inner
+        return wrapper
+
     def configure_routes(self):
 
         @self.api_limit.before_request
@@ -94,6 +132,18 @@ class HttpServer:
         async def redirect_to_login(*_: Exception):
             return "未登录，请登录", 401
 
+        @self.api.errorhandler(PermissionLimitedException)
+        async def limited(*_: Exception):
+            return "无权使用此接口", 403
+
+        @self.api.errorhandler(UserDisabledException)
+        async def disabled(*_: Exception):
+            return "用户被禁用，请联系管理员", 403
+
+        @self.api.errorhandler(UserException)
+        async def handle_user_exception(e):
+            return str(e), 400
+
         @self.api.errorhandler(ValueError)
         async def handle_value_error(e):
             return str(e), 400
@@ -108,14 +158,20 @@ class HttpServer:
             traceback.print_exc()
             return "服务器发生错误", 500
 
+        @self.api.route('/role', methods = ["GET"])
+        @HttpServer.login_required()
+        @HttpServer.wrapaccountmgr(readonly = True)
+        async def get_role(accountmgr: AccountManager):
+            return await accountmgr.generate_role(), 200
+
         @self.api.route('/account', methods = ['GET'])
-        @login_required
+        @HttpServer.login_required()
         @HttpServer.wrapaccountmgr(readonly = True)
         async def get_info(accountmgr: AccountManager):
             return await accountmgr.generate_info(), 200
 
         @self.api.route('/account', methods = ["PUT"])
-        @login_required
+        @HttpServer.login_required()
         @HttpServer.wrapaccountmgr()
         async def put_info(accountmgr: AccountManager):
             data = await request.get_json()
@@ -125,7 +181,7 @@ class HttpServer:
             return "保存成功", 200
 
         @self.api.route('/account', methods = ["POST"])
-        @login_required
+        @HttpServer.login_required()
         @HttpServer.wrapaccountmgr()
         async def create_account(accountmgr: AccountManager):
             data = await request.get_json()
@@ -134,7 +190,7 @@ class HttpServer:
             return "创建账号成功", 200
 
         @self.api.route('/account/import', methods = ["POST"])
-        @login_required
+        @HttpServer.login_required()
         @HttpServer.wrapaccountmgr()
         async def create_accounts(accountmgr: AccountManager):
             file = await request.files
@@ -148,7 +204,7 @@ class HttpServer:
             return msg, 200 if ok else 400
 
         @self.api.route('/', methods = ["DELETE"])
-        @login_required
+        @HttpServer.login_required()
         @HttpServer.wrapaccountmgr()
         async def delete_qq(accountmgr: AccountManager):
             accountmgr.delete_mgr()
@@ -156,14 +212,14 @@ class HttpServer:
             return "删除QQ成功", 200
 
         @self.api.route('/account', methods = ["DELETE"])
-        @login_required
+        @HttpServer.login_required()
         @HttpServer.wrapaccountmgr()
         async def delete_account(accountmgr: AccountManager):
             accountmgr.delete_all_accounts()
             return "删除账号成功", 200
 
         @self.api.route('/account/sync', methods = ["POST"])
-        @login_required
+        @HttpServer.login_required()
         @HttpServer.wrapaccountmgr()
         async def sync_account_config(accountmgr: AccountManager):
             data = await request.get_json()
@@ -178,14 +234,14 @@ class HttpServer:
             return "配置同步成功", 200
 
         @self.api.route('/account/<string:acc>', methods = ['GET'])
-        @login_required
+        @HttpServer.login_required()
         @HttpServer.wrapaccountmgr(readonly = True)
         @HttpServer.wrapaccount(readonly=True)
         async def get_account(account: Account):
             return account.generate_info(), 200
 
         @self.api.route('/account/<string:acc>', methods = ["PUT", "DELETE"])
-        @login_required
+        @HttpServer.login_required()
         @HttpServer.wrapaccountmgr()
         @HttpServer.wrapaccount()
         async def update_account(account: Account):
@@ -207,14 +263,14 @@ class HttpServer:
                 return "", 404
 
         @self.api.route('/account/<string:acc>/<string:modules_key>', methods = ['GET'])
-        @login_required
+        @HttpServer.login_required()
         @HttpServer.wrapaccountmgr(readonly = True)
         @HttpServer.wrapaccount(readonly= True)
         async def get_modules_config(mgr: Account, modules_key: str):
             return mgr.generate_modules_info(modules_key)
 
         @self.api.route('/account/<string:acc>/config', methods = ['PUT'])
-        @login_required
+        @HttpServer.login_required()
         @HttpServer.wrapaccountmgr(readonly = True)
         @HttpServer.wrapaccount()
         async def put_config(mgr: Account):
@@ -223,7 +279,7 @@ class HttpServer:
             return "配置保存成功", 200
 
         @self.api.route('/account/<string:acc>/do_daily', methods = ['POST'])
-        @login_required
+        @HttpServer.login_required()
         @HttpServer.wrapaccountmgr(readonly=True)
         @HttpServer.wrapaccount()
         async def do_daily(mgr: Account):
@@ -231,7 +287,7 @@ class HttpServer:
             return mgr.generate_result_info(), 200
 
         @self.api.route('/account/<string:acc>/daily_result', methods = ['GET'])
-        @login_required
+        @HttpServer.login_required()
         @HttpServer.wrapaccountmgr(readonly = True)
         @HttpServer.wrapaccount(readonly= True)
         async def daily_result_list(mgr: Account):
@@ -240,7 +296,7 @@ class HttpServer:
             return resp, 200
 
         @self.api.route('/account/<string:acc>/daily_result/<string:key>', methods = ['GET'])
-        @login_required
+        @HttpServer.login_required()
         @HttpServer.wrapaccountmgr(readonly = True)
         @HttpServer.wrapaccount(readonly= True)
         async def daily_result(mgr: Account, key: str):
@@ -256,7 +312,7 @@ class HttpServer:
                 return resp.to_json(), 200
 
         @self.api.route('/account/<string:acc>/do_single', methods = ['POST'])
-        @login_required
+        @HttpServer.login_required()
         @HttpServer.wrapaccountmgr(readonly=True)
         @HttpServer.wrapaccount()
         async def do_single(mgr: Account):
@@ -268,7 +324,7 @@ class HttpServer:
             return resp, 200
 
         @self.api.route('/account/<string:acc>/single_result/<string:order>', methods = ['GET'])
-        @login_required
+        @HttpServer.login_required()
         @HttpServer.wrapaccountmgr(readonly = True)
         @HttpServer.wrapaccount(readonly= True)
         async def single_result_list(mgr: Account, order: str):
@@ -277,7 +333,7 @@ class HttpServer:
             return resp, 200
 
         @self.api.route('/account/<string:acc>/single_result/<string:order>/<string:key>', methods = ['GET'])
-        @login_required
+        @HttpServer.login_required()
         @HttpServer.wrapaccountmgr(readonly = True)
         @HttpServer.wrapaccount(readonly= True)
         async def single_result(mgr: Account, order: str, key: str):
@@ -293,8 +349,76 @@ class HttpServer:
             else:
                 return resp.to_json(), 200
 
+        @self.api.route('/user', methods = ['GET'])
+        @HttpServer.login_required()
+        @HttpServer.admin_required()
+        async def get_users():
+            qids = list(usermgr.qids())
+            results = []
+            for qid in qids:
+                async with usermgr.load(qid, readonly=True) as mgr:
+                    result = {
+                        "qq": qid,
+                        "admin": mgr.is_admin(),
+                        "clan": mgr.secret.clan,
+                        "disabled": mgr.secret.disabled,
+                        "account_count": mgr.account_count(),
+                    }
+                results.append(result)
+            return results, 200
+
+        @self.api.route('/user/<string:qid>', methods = ['POST'])
+        @HttpServer.login_required()
+        @HttpServer.admin_required()
+        async def create_user(qid: str):
+            data = await request.get_data()
+            userdata = UserData.from_json(data)
+            if userdata.admin and current_user.auth_id != SUPERUSER:
+                # 仅超管可创建管理员
+                raise PermissionLimitedException()
+            async with usermgr.create(qid, userdata.admin) as mgr:
+                mgr.secret = userdata
+            return "创建用户成功", 200
+
+        @self.api.route('/user/<string:qid>', methods = ['PUT'])
+        @HttpServer.login_required()
+        @HttpServer.admin_required()
+        async def set_user(qid: str):
+            data = await request.get_json()
+            async with usermgr.load(qid) as mgr:
+                if mgr.is_admin() and current_user.auth_id != SUPERUSER:
+                    # 仅超管可更改管理员
+                    raise PermissionLimitedException()
+                if 'admin' in data:
+                    if current_user.auth_id != SUPERUSER:
+                        # 仅超管可添加管理员
+                        raise PermissionLimitedException()
+                    if current_user.auth_id == qid and not data['admin']:
+                        return "无法取消自己的管理权限", 403
+                    mgr.secret.admin = data['admin']
+                if 'disabled' in data:
+                    if current_user.auth_id == qid and data['disabled']:
+                        return "无法禁用自己", 403
+                    mgr.secret.disabled = data['disabled']
+                if 'password' in data:
+                    mgr.secret.password = data['password']
+                if 'clan' in data:
+                    mgr.secret.clan = data['clan']
+            return "更新用户信息成功", 200
+
+        @self.api.route('/user/<string:qid>', methods = ['DELETE'])
+        @HttpServer.login_required()
+        @HttpServer.admin_required()
+        async def delete_user(qid: str):
+            if qid == current_user.auth_id:
+                return "无法删除自己", 403
+            if qid == SUPERUSER:
+                return "不可删除超级管理员", 403
+            usermgr.delete(qid)
+            return "删除用户成功", 200
+
         @self.api.route('/query_validate', methods = ['GET'])
-        @login_required
+        @HttpServer.login_required()
         @HttpServer.wrapaccountmgr(readonly = True)
         async def query_validate(accountmgr: AccountManager):
             if "text/event-stream" not in request.accept_mimetypes:
@@ -346,16 +470,19 @@ data: {ret}\n\n'''
 
             if not qq or not password:
                 return "请输入QQ和密码", 400
-            ok = usermgr.validate_password(str(qq), str(password))
-            if ok:
-                login_user(AuthUser(qq))
-                return "欢迎回来，" + qq, 200
-            else:
+            if not usermgr.validate_password(str(qq), str(password)):
                 return "无效的QQ或密码", 400
+            if not usermgr.check_enabled(str(qq)):
+                return "用户被禁用，请联系管理员", 403
+            login_user(AuthUser(qq))
+            return "欢迎回来，" + qq, 200
 
         @self.api_limit.route('/register', methods = ['POST'])
         @rate_limit(1, timedelta(minutes=1))
         async def register():
+            if not ALLOW_REGISTER:
+                return "当前禁止注册，请联系管理员", 400
+
             data = await request.get_json()
             qq = data.get('qq', "")
             password = data.get('password', "")
