@@ -11,7 +11,7 @@ from ..core.sdkclient import account, platform
 from .modulemgr import ModuleManager, TaskResult, ModuleResult, eResultStatus, TaskResultInfo, ModuleResultInfo, ResultInfo
 import os, re, shutil
 from typing import Any, Dict, Iterator, List, Tuple, Union
-from ..constants import CONFIG_PATH, OLD_CONFIG_PATH, RESULT_DIR, BSDK, CHANNEL_OPTION, SUPERUSER
+from ..constants import CLAN_BATTLE_FORBID_PATH, CONFIG_PATH, OLD_CONFIG_PATH, RESULT_DIR, BSDK, CHANNEL_OPTION, SUPERUSER
 from asyncio import Lock
 import json
 from copy import deepcopy
@@ -210,6 +210,7 @@ class Account(ModuleManager):
         ret = {
             'name': self.alias,
             'daily_clean_time': self.get_last_daily_clean().to_dict(),
+            'clan_forbid': self.is_clan_battle_forbidden() and not self._parent.secret.clan and not self._parent.is_admin()
             }
         return ret
 
@@ -315,6 +316,9 @@ class AccountManager:
         if account not in self.accounts():
             raise AccountException('账号不存在')
         self.secret.default_account = account
+
+    def set_password(self, password: str):
+        self.secret.password = password
 
     def validate_password(self, password: str) -> bool:
         return self.secret.password == password
@@ -425,15 +429,24 @@ class UserManager:
 
         # 初始不存在root目录，创建一下
         os.makedirs(self.root, exist_ok=True)
+        self.load_clan_battle_forbidden()
 
-    def is_clan_battle_forbidden(self, username: str) -> bool:
-        if os.path.exists(os.path.join(CONFIG_PATH, 'clan_battle_forbidden.txt')):
-            with open(os.path.join(CONFIG_PATH, 'clan_battle_forbidden.txt'), 'r') as f:
+    def load_clan_battle_forbidden(self):
+        if os.path.exists(CLAN_BATTLE_FORBID_PATH):
+            with open(CLAN_BATTLE_FORBID_PATH, "r") as f:
                 data = f.read().splitlines()
                 self.clan_battle_forbidden = set([x.strip().lower() for x in data])
-            return username in self.clan_battle_forbidden
-        else:
-            return False
+
+    def is_clan_battle_forbidden(self, username: str) -> bool:
+        return username in self.clan_battle_forbidden
+
+    def get_clan_battle_forbidden(self) -> List[str]:
+        return list(self.clan_battle_forbidden)
+
+    def set_clan_battle_forbidden(self, accs: List[str]):
+        with open(CLAN_BATTLE_FORBID_PATH, "w") as f:
+            f.write('\n'.join(accs))
+        self.load_clan_battle_forbidden()
 
     def validate_password(self, qid: str, password: str) -> bool:
         try:

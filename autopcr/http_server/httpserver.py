@@ -18,7 +18,7 @@ from ..module.accountmgr import Account, AccountManager, instance as usermgr, Ac
     PermissionLimitedException, UserDisabledException, UserException
 from ..util.draw import instance as drawer
 
-APP_VERSION = "1.2.0"
+APP_VERSION = "1.3.0"
 
 CACHE_HTTP_DIR = os.path.join(CACHE_DIR, 'http_server')
 
@@ -32,7 +32,7 @@ class HttpServer:
         self.web = Blueprint('web', __name__, static_folder=static_path)
 
         # version check & rate limit
-        self.api_limit = Blueprint('api_limit', __name__, url_prefix = "/api")
+        self.api_limit = Blueprint('api_limit', __name__, url_prefix = "/")
         self.api = Blueprint('api', __name__, url_prefix = "/api")
 
         self.app = Blueprint('app', __name__, url_prefix = "/daily")
@@ -45,7 +45,7 @@ class HttpServer:
 
         self.app.register_blueprint(self.web)
         self.app.register_blueprint(self.api)
-        self.app.register_blueprint(self.api_limit)
+        self.api.register_blueprint(self.api_limit)
 
         self.host = host
         self.port = port
@@ -158,6 +158,21 @@ class HttpServer:
             traceback.print_exc()
             return "服务器发生错误", 500
 
+        @self.api.route('/clan_forbid', methods = ["GET"])
+        @HttpServer.login_required()
+        @HttpServer.admin_required()
+        async def get_clan_forbid():
+            accs = usermgr.get_clan_battle_forbidden()
+            return '\n'.join(accs), 200
+
+        @self.api.route('/clan_forbid', methods = ["PUT"])
+        @HttpServer.login_required()
+        @HttpServer.admin_required()
+        async def put_clan_forbid():
+            data = (await request.get_json())['accs'].split('\n')
+            usermgr.set_clan_battle_forbidden(data)
+            return f'设置成功，禁止了{len(data)}个账号', 200
+
         @self.api.route('/role', methods = ["GET"])
         @HttpServer.login_required()
         @HttpServer.wrapaccountmgr(readonly = True)
@@ -178,6 +193,9 @@ class HttpServer:
             default_accont = data.get('default_account', '')
             if default_accont:
                 accountmgr.set_default_account(default_accont)
+            password = data.get('password', '')
+            if password:
+                accountmgr.set_password(password)
             return "保存成功", 200
 
         @self.api.route('/account', methods = ["POST"])
@@ -353,7 +371,7 @@ class HttpServer:
         @HttpServer.login_required()
         @HttpServer.admin_required()
         async def get_users():
-            qids = list(usermgr.qids())
+            qids = sorted(list(usermgr.qids()))
             results = []
             for qid in qids:
                 async with usermgr.load(qid, readonly=True) as mgr:
