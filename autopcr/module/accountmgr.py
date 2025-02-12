@@ -317,6 +317,9 @@ class AccountManager:
             raise AccountException('账号不存在')
         self.secret.default_account = account
 
+    def set_password(self, password: str):
+        self.secret.password = password
+
     def validate_password(self, password: str) -> bool:
         return self.secret.password == password
 

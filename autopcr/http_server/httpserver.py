@@ -193,6 +193,9 @@ class HttpServer:
             default_accont = data.get('default_account', '')
             if default_accont:
                 accountmgr.set_default_account(default_accont)
+            password = data.get('password', '')
+            if password:
+                accountmgr.set_password(password)
             return "保存成功", 200
 
         @self.api.route('/account', methods = ["POST"])
