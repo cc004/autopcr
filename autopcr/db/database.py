@@ -441,6 +441,11 @@ class database():
                 .to_dict(lambda x: x.tower_quest_id, lambda x: x)
             )
 
+            self.tdf_schedule: Dict[int, TdfSchedule] = (
+                TdfSchedule.query(db)
+                .to_dict(lambda x: x.schedule_id, lambda x: x)
+            )
+
             self.event_story_data: Dict[int, EventStoryDatum] = (
                 EventStoryDatum.query(db)
                 .to_dict(lambda x: x.story_group_id, lambda x: x)
