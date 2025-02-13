@@ -93,35 +93,30 @@ class chara_fortune(Module):
         res = await client.draw_chara_fortune()
         self._log(f"赛马第{client.data.cf.rank}名，获得了宝石x{res.reward_list[0].received}")
 
-@description('开始时领取任务奖励')
-@name("领取每日任务奖励1")
-@default(True)
-@tag_stamina_get
-class mission_receive_first(Module):
+class mission_receive(Module):
     async def do_task(self, client: pcrclient):
-        resp = await client.mission_index()
-        for mission in resp.missions:
-            if db.is_daily_mission(mission.mission_id) and mission.mission_status == eMissionStatusType.EnableReceive:
-                resp = await client.mission_receive()
+        missions = await client.mission_index()
+        for type_id, condifion in zip([1, 2, 4], [db.is_daily_mission, db.is_stationary_mission, db.is_emblem_mission]): # 我也不知道为什么是1 2 4
+            if any(1 for mission in missions.missions if condifion(mission.mission_id) and mission.mission_status == eMissionStatusType.EnableReceive):
+                resp = await client.mission_receive(type_id)
                 reward = await client.serlize_reward(resp.rewards)
                 self._log("领取了任务奖励，获得了:\n" + reward)
-                return
-        raise SkipError("没有可领取的任务奖励")
+        if not self.log:
+            raise SkipError("没有可领取的任务奖励")
+
+@description('开始时领取任务奖励')
+@name("领取任务奖励1")
+@default(True)
+@tag_stamina_get
+class mission_receive_first(mission_receive):
+    pass
 
 @description('结束时领取任务奖励')
-@name("领取每日任务奖励2")
+@name("领取任务奖励2")
 @default(True)
 @tag_stamina_get
-class mission_receive_last(Module):
-    async def do_task(self, client: pcrclient):
-        resp = await client.mission_index()
-        for mission in resp.missions:
-            if db.is_daily_mission(mission.mission_id) and mission.mission_status == eMissionStatusType.EnableReceive:
-                resp = await client.mission_receive()
-                reward = await client.serlize_reward(resp.rewards)
-                self._log("领取了任务奖励，获得了:\n" + reward)
-                return
-        raise SkipError("没有可领取的任务奖励")
+class mission_receive_last(mission_receive):
+    pass
 
 @description('')
 @name("领取女神祭任务")
