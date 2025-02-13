@@ -44,7 +44,7 @@ class GachaDatum(ISchedule):
 
     @property
     def enabled(self) -> bool:
-        return super().enabled and self.gacha_id / 10000 > 2
+        return super().enabled and self.gacha_id // 10000 > 2
 
     def get_description(self) -> str:
         if self.exchange_id != 0:
@@ -113,6 +113,15 @@ class CampaignSchedule(ISchedule):
 
 class CampaignFreegacha(ISchedule):
     description = "免费十连"
+    def __init__(self, campaign_id: int, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.campaign_id = campaign_id
+
+    def get_description(self) -> str:
+        gachas = []
+        for gacha in db.campaign_free_gacha_data[self.campaign_id]:
+            gachas.append(db.gacha_data[gacha.gacha_id].pick_up_chara_text)
+        return f"{self.description}\n" + '\n'.join(gachas)
 
 class HatsuneSchedule(ISchedule):
     def __init__(self, event_id: int, *args, **kwargs):
@@ -125,6 +134,9 @@ class HatsuneSchedule(ISchedule):
 
 class TowerSchedule(ISchedule):
     description = "露娜塔"
+
+class TdfSchedule(ISchedule):
+    description = "次元断层"
 
 class CharaFortuneSchedule(ISchedule):
     def __init__(self, name: str, *args, **kwargs):
@@ -154,9 +166,10 @@ class half_schedule(Module):
         (db.seasonpass_foundation, lambda x: SeasonpassFoundation(x.name, x.start_time, x.end_time, "季卡")),
         (db.gacha_data, lambda x: GachaDatum(x.gacha_id, x.exchange_id, x.start_time, x.end_time, "扭蛋")),
         (db.campaign_schedule, lambda x: CampaignSchedule(x.campaign_category, x.value, x.start_time, x.end_time, "庆典")),
-        (db.campaign_free_gacha, lambda x: CampaignFreegacha(x.start_time, x.end_time, "免费十连")),
+        (db.campaign_free_gacha, lambda x: CampaignFreegacha(x.campaign_id, x.start_time, x.end_time, "免费十连")),
         (db.hatsune_schedule, lambda x: HatsuneSchedule(x.event_id, x.start_time, x.end_time, "活动")),
         (db.tower_schedule, lambda x: TowerSchedule(x.start_time, x.end_time, "露娜塔")),
+        (db.tdf_schedule, lambda x: TdfSchedule(x.start_time, x.end_time, "次元断层")),
         (db.chara_fortune_schedule, lambda x: CharaFortuneSchedule(x.name, x.start_time, x.end_time, "赛马")),
         (db.login_bonus_data, lambda x: LoginBonusDatum(x.name, x.start_time, x.end_time, "登录奖励")),
     ]
@@ -174,7 +187,7 @@ class half_schedule(Module):
             ed = time[1]
             if not mirai and db.parse_time(st) > datetime.now():
                 mirai = True
-                self._log("===未来日程===")
+                self._log("\n====未来日程====")
             self._log(f"{st} - {ed}")
             for msg in schedules[time]:
                 self._log(f"    {msg}")
