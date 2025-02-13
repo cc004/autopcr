@@ -60,6 +60,7 @@ daily_modules = ModuleList(
         tower_cloister_sweep,
         smart_very_hard_sweep,
         jjc_reward,
+        xinsui6_sweep,
         xinsui5_sweep,
         xinsui4_sweep,
         xinsui3_sweep,
