@@ -190,8 +190,8 @@ class Module:
             if self.need_login:
                 if client.logged == eLoginStatus.NOT_LOGGED:
                     await client.login()
-                elif client.need_refresh:
-                    if client.data: client.data.update_stamina_recover()
+                elif client.logged == eLoginStatus.NEED_REFRESH:
+                    client.data.update_stamina_recover()
                     await client.refresh()
 
             ok, msg = await self.do_check(client)
