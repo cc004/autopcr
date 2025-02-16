@@ -100,7 +100,7 @@ class underground_skip(Module):
                            if db.is_unit_memory((reward.type, reward.id)) 
                            or db.xinsui == (reward.type, reward.id)
                            or db.xingqiubei == (reward.type, reward.id)]
-                result = await client.serlize_reward(rewards)
+                result = await client.serialize_reward_summary(rewards)
                 self._log(f"扫荡了【{dungeon_name(id)}】,获得了:\n{result}")
                 return reward_list.rest_challenge_count[0].count
             else:
@@ -179,11 +179,8 @@ class special_underground_skip(Module):
 
             req = await client.enter_special_dungeon(id)
             reward_list = req.skip_result_list if req.skip_result_list else []
-            rewards = [reward for reward_item in reward_list for reward in reward_item.reward_list 
-                       if db.is_unit_memory((reward.type, reward.id)) 
-                       or db.xinsui == (reward.type, reward.id)
-                       or db.xingqiubei == (reward.type, reward.id)]
-            result = await client.serlize_reward(rewards)
+            rewards = [reward for reward_item in reward_list for reward in reward_item.reward_list]
+            result = await client.serialize_reward_summary(rewards)
             self._log(f"进入了【{dungeon_name(id)}】,获得了:\n{result}")
 
         rest = infos.rest_challenge_count[0].count
@@ -235,7 +232,7 @@ class investigate_sweep(Module):
             if str(e).endswith("体力不足"):
                 raise SkipError(str(e))
             raise e
-        msg = await client.serlize_reward(result, self.target_item())
+        msg = await client.serialize_reward_summary(result)
         self._log(f"重置{times // 5 - 1}次，获得了{msg}")
 
 class xinsui_sweep(investigate_sweep):

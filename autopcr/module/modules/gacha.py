@@ -26,7 +26,7 @@ class normal_gacha(Module):
         memory = [i for i in resp.reward_info_list if db.is_unit_memory((i.type, i.id))]
         msg = "10件装备"
         if memory:
-            msg = await client.serlize_reward(memory) + f"\n{10 - len(memory)}件装备"
+            msg = await client.serialize_reward_summary(memory) + f"\n{10 - len(memory)}件装备"
         self._log(msg)
 
 @description('每日免费一抽')

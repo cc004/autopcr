@@ -54,7 +54,7 @@ class ex_equip_recycle(Module):
         if cnt:
             msg = "分解了" + ' '.join(f"{category}x{cnt}" for category, cnt in cnt.items())
             self._log(msg)
-            msg = "获得了:\n" + (await client.serlize_reward(rewards)).strip('无')
+            msg = "获得了:\n" + (await client.serialize_reward_summary(rewards)).strip('无')
             self._log(msg)
         else:
             raise SkipError("没有可分解的装备")
@@ -137,14 +137,13 @@ class travel_quest_sweep(Module):
                     self._warn(f"处理特殊事件{top_event.top_event_id}失败:{e}")
             self._log(f"阅读{len(top.top_event_list)}个特殊事件")
         result_count = {}
-        reward2: List[InventoryInfo] = []
         if any(self.can_receive_count(quest, apiclient.time) for quest in top.travel_quest_list):
             result = await client.travel_receive_all()
             secret_travel: List[TravelAppearEventData] = []
             for quest in result.travel_result:
-                reward2.extend(quest.reward_list)
+                reward.extend(quest.reward_list)
                 for event in quest.appear_event_list or []:
-                    reward2.extend(event.reward_list)
+                    reward.extend(event.reward_list)
                     secret_travel.append(event)
 
             result_count = Counter([quest.travel_quest_id for quest in result.travel_result])
@@ -154,11 +153,9 @@ class travel_quest_sweep(Module):
                 msg = '触发了秘密探险：' + ' '.join(db.ex_event_data[event.still_id].title for event in secret_travel)
                 self._log(msg)
 
-        if reward or reward2:
+        if reward:
             self._log(f"获得了:")
-            msg = (await client.serlize_reward(reward)).strip('无')
-            if msg: self._log(msg)
-            msg = (await client.serlize_reward(reward2, filter=lambda x: db.is_ex_equip(x) or db.is_unit_memory(x))).strip('无')
+            msg = (await client.serialize_reward_summary(reward)).strip('无')
             if msg: self._log(msg)
             self._log("")
 
@@ -321,7 +318,7 @@ class travel_round(Module):
 
         if reward:
             self._log(f"获得了:")
-            msg = (await client.serlize_reward(reward, filter=lambda x: db.is_ex_equip(x) or db.is_unit_memory(x)))
+            msg = (await client.serialize_reward_summary(reward))
             if msg: self._log(msg)
             self._log("")
 
