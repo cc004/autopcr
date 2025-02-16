@@ -110,7 +110,7 @@ class shop_buyer(Module):
             raise SkipError("无对应商品购买")
         else:
             self._log(f"花费了{cost_gold}货币，重置了{shop_content.reset_count - old_reset_cnt}次，购买了:")
-            msg = await client.serlize_reward(result)
+            msg = await client.serialize_reward_summary(result)
             self._log(msg)
 
 @singlechoice('shop_buy_exp_count_limit', "经验药水储备", 999000, [1000, 10000, 100000, 500000, 999000])

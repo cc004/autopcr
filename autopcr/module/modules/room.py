@@ -16,7 +16,7 @@ class room_accept_all(Module):
         for x in room.user_room_item_list:
             if x.item_count:
                 res = await client.room_accept_all()
-                msg = await client.serlize_reward(res.reward_list)
+                msg = await client.serialize_reward_summary(res.reward_list)
                 self._log(msg)
                 return
         raise SkipError('没有可收取的家园物品。')
@@ -78,7 +78,7 @@ class room_like_back(Module):
                 else:
                     raise(e)
 
-        result = await client.serlize_reward(result)
+        result = await client.serialize_reward_summary(result)
         self._log(f"为【{'|'.join(like_user)}】点赞，获得了:\n" + result)
 
 @description('一键发情所有角色')

@@ -187,7 +187,7 @@ class hatsune_mission_accept_base(Module):
                     is_skip = False
                     for type in types:
                         res = await client.hatsune_mission_receive(event.event_id, type)
-                        reward = await client.serlize_reward(res.rewards)
+                        reward = await client.serialize_reward_summary(res.rewards)
                         self._log(f"领取了任务奖励，获得了:\n" + reward)
             except SkipError as e:
                 self._log(f"{str(e)}")
