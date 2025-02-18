@@ -41,7 +41,7 @@ class shiori_mission_check(Module):
                 resp = await client.shiori_mission_receive(event_id, type)
                 self._log(
                     f"领取了任务奖励，获得了:\n"
-                    + await client.serlize_reward(resp.rewards)
+                    + await client.serialize_reward_summary(resp.rewards)
                 )
 
             for quest_id in event_quests:

@@ -40,6 +40,8 @@ class smart_normal_sweep(Module):
         else:
             raise ValueError(f"未知策略{strategy}")
 
+        if not ret and quest_list:
+            ret.append(quest_list[0])
         if not ret:
             self._log("无需刷取的图！")
         return ret
@@ -94,6 +96,7 @@ class smart_normal_sweep(Module):
                     quest_weight = client.data.get_quest_weght(gap)
                     quest_id = sorted(quest_list, key = lambda x: quest_weight[x], reverse = True)
                     target_quest = await self.get_quests(quest_id, strategy, gap)
+                    if not target_quest: break
 
                 for target_id in target_quest:
                     try:
@@ -120,7 +123,7 @@ class smart_normal_sweep(Module):
                 self._log(msg)
                 self._log("---------")
             if tmp:
-                self._log(await client.serlize_reward(tmp, filter=lambda x: db.is_equip(x)))
+                self._log(await client.serialize_reward_summary(tmp))
 
 
 class simple_demand_sweep_base(Module):
@@ -128,8 +131,6 @@ class simple_demand_sweep_base(Module):
     async def get_need_list(self, client: pcrclient) -> List[Tuple[ItemType, int]]: ...
     def get_need_quest(self, token: ItemType) -> List[QuestDatum]: ...
     def get_max_times(self, client: pcrclient, quest_id: int) -> int: ...
-    def filter_reward_func(self) -> Callable[[ItemType], bool]:
-        return lambda x: True
 
     async def do_task(self, client: pcrclient):
 
@@ -169,7 +170,7 @@ class simple_demand_sweep_base(Module):
                 self._log(msg)
                 self._log("---------")
             if tmp:
-                self._log(await client.serlize_reward(tmp, filter=self.filter_reward_func()))
+                self._log(await client.serialize_reward_summary(tmp))
             if not self.log:
                 self._log("需刷取的图均无次数")
                 raise SkipError()
@@ -197,9 +198,6 @@ class smart_hard_sweep(simple_demand_sweep_base):
 
         return need_list
 
-    def filter_reward_func(self) -> Callable[[ItemType], bool]:
-        return lambda x: db.is_unit_memory(x)
-
     def get_need_quest(self, token: ItemType) -> List[QuestDatum]:
         return db.memory_hard_quest.get(token, [])
 
@@ -225,9 +223,6 @@ class smart_shiori_sweep(simple_demand_sweep_base):
             x[1] * reverse))
 
         return need_list
-
-    def filter_reward_func(self) -> Callable[[ItemType], bool]:
-        return lambda x: db.is_unit_memory(x)
 
     def get_need_quest(self, token: ItemType) -> List[ShioriQuest]:
         return db.memory_shiori_quest.get(token, [])
@@ -291,9 +286,6 @@ class mirai_very_hard_sweep(simple_demand_sweep_base):
             raise SkipError("所有纯净碎片均已盈余")
         return need_list
 
-    def filter_reward_func(self) -> Callable[[ItemType], bool]:
-        return lambda x: db.is_unit_pure_memory(x)
-
     def get_need_quest(self, token: ItemType) -> List[QuestDatum]:
         kana = str(token[1])
         ret = []
@@ -321,9 +313,6 @@ class smart_very_hard_sweep(simple_demand_sweep_base):
             raise SkipError("所有纯净碎片均已盈余")
 
         return need_list
-
-    def filter_reward_func(self) -> Callable[[ItemType], bool]:
-        return lambda x: db.is_unit_pure_memory(x)
 
     def get_need_quest(self, token: ItemType) -> List[QuestDatum]:
         return db.pure_memory_quest.get(token, [])
@@ -378,7 +367,7 @@ class DIY_sweep(Module):
                 self._log(msg)
                 self._log("---------")
         if result:
-            self._log(await client.serlize_reward(result))
+            self._log(await client.serialize_reward_summary(result))
 
 @description('''
 首先按次数逐一刷取名字为start的图

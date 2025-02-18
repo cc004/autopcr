@@ -318,19 +318,25 @@ class HomeIndexResponse(responses.HomeIndexResponse):
         mgr.finishedQuest = set([q.quest_id for q in self.quest_list if q.result_type > 0 and q.clear_flg == 3] if self.quest_list else [] + [q.quest_id for q in self.shiori_quest_info.quest_list if q.result_type > 0 and q.clear_flg == 3] if self.shiori_quest_info and self.shiori_quest_info.quest_list else [])
         if self.user_clan:
             mgr.clan = self.user_clan.clan_id
-        mgr.donation_num = self.user_clan.donation_num
-        mgr.dungeon_area_id = self.dungeon_info.enter_area_id
-        mgr.training_quest_count = self.training_quest_count
-        mgr.training_quest_max_count = self.training_quest_max_count
-        mgr.quest_dict = {q.quest_id: q for q in self.quest_list}
+        if self.user_clan and self.user_clan.donation_num:
+            mgr.donation_num = self.user_clan.donation_num
+        if self.dungeon_info:
+            mgr.dungeon_area_id = self.dungeon_info.enter_area_id
+            if self.dungeon_info.rest_challenge_count:
+                for count in self.dungeon_info.rest_challenge_count:
+                    mgr.dungeon_avaliable = count.count > 0
+                    break
+        if self.training_quest_count:
+            mgr.training_quest_count = self.training_quest_count
+        if self.training_quest_max_count:
+            mgr.training_quest_max_count = self.training_quest_max_count
+        if self.quest_list:
+            mgr.quest_dict = {q.quest_id: q for q in self.quest_list}
+        if self.missions:
+            mgr.missions = self.missions
         shiori_dict = {q.quest_id: q for q in self.shiori_quest_info.quest_list} if self.shiori_quest_info and self.shiori_quest_info.quest_list else {}
-        mgr.missions = self.missions
         mgr.quest_dict.update(shiori_dict)
 
-        if self.dungeon_info.rest_challenge_count:
-            for count in self.dungeon_info.rest_challenge_count:
-                mgr.dungeon_avaliable = count.count > 0
-                break
 
 
 @handles
