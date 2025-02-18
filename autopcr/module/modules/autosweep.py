@@ -40,6 +40,8 @@ class smart_normal_sweep(Module):
         else:
             raise ValueError(f"未知策略{strategy}")
 
+        if not ret and quest_list:
+            ret.append(quest_list[0])
         if not ret:
             self._log("无需刷取的图！")
         return ret
@@ -94,6 +96,7 @@ class smart_normal_sweep(Module):
                     quest_weight = client.data.get_quest_weght(gap)
                     quest_id = sorted(quest_list, key = lambda x: quest_weight[x], reverse = True)
                     target_quest = await self.get_quests(quest_id, strategy, gap)
+                    if not target_quest: break
 
                 for target_id in target_quest:
                     try:
