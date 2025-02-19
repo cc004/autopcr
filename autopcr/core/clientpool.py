@@ -91,6 +91,7 @@ class PoolClientWrapper(pcrclient):
         await self.session.clear_session()
         self.need_refresh = False
         self.data_ready = False
+        self.deactivate()
 
     def activate(self):
         try:
@@ -164,6 +165,7 @@ class ClientPool:
         if pool_key in self._pool:
             client = self._pool.pop(pool_key)
             self._on_sdk_login(client)
+            client.need_refresh = True
             client.session.sdk = sdk
         else:
             client = PoolClientWrapper(self, sdk)

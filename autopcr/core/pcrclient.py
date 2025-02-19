@@ -7,6 +7,7 @@ from .datamgr import datamgr
 from ..db.database import db
 from typing import Callable, Tuple, Union
 import typing, math
+from collections import Counter
 
 class eLoginStatus(Enum):
     LOGGED = 1
@@ -898,11 +899,42 @@ class pcrclient(apiclient):
         if gacha.prize_rarity:
             res += ' '.join([f"{db.get_gacha_prize_name(gacha_id, i)}" + f"x{cnt}" for i, cnt in gacha.prize_rarity.items()]) + '\n'
 
-        res += await self.serlize_reward(gacha.reward_list)
+        res += await self.serialize_reward_summary(gacha.reward_list)
 
         return res
-    
-    async def serlize_reward(self, reward_list: List[InventoryInfo], target: Union[ItemType, None] = None, filter: Union[None, Callable[[ItemType],bool]] = None):
+
+    async def serialize_reward_summary(self, reward_list: List[InventoryInfo]):
+        summary_condition = [
+            (db.is_equip, lambda x: "装备"),
+            (db.is_equip_upper, lambda x: "强化石"),
+            (db.is_equip_raw_ore, lambda x: "原矿"),
+            (db.is_exp_upper, lambda x: "经验药水"),
+            (db.is_ex_equip, lambda reward: db.get_ex_equip_rarity_name(reward.id)),
+        ]
+        summary = Counter()
+        rewards = Counter()
+        for reward in reward_list:
+            item = (reward.type, reward.id)
+            for cond, name in summary_condition:
+                if cond(item):
+                    summary[name(reward)] += reward.count
+                    break
+            else:
+                rewards[item] += reward.count
+        result = []
+        for key, value in sorted(summary.items(), key = lambda x: x[1], reverse = True):
+            result.append(f"{key}x{value}")
+        if result:
+            result = [' '.join(result)]
+        for key, value in sorted(rewards.items(), key = lambda x: x[1], reverse = True):
+            try:
+                name = db.get_inventory_name_san(key)
+            except:
+                name = f"未知物品({key})"
+            result.append(f"{name}x{value}({self.data.get_inventory(key)})")
+        return '\n'.join(result) if result else "无"
+
+    async def serlize_reward(self, reward_list: List[InventoryInfo], target: Union[ItemType, None] = None, filter: Union[None, Callable[[ItemType],bool]] = None): # 无用 
         rewards = {}
         for reward in reward_list:
             if target and (reward.type == target[0] and reward.id == target[1]) or filter and filter((reward.type, reward.id)) or not target and not filter:

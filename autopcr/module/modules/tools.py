@@ -766,6 +766,8 @@ class get_need_equip(Module):
 
         demand = sorted(demand, key=lambda x: x[1], reverse=True)
 
+        demand = filter(lambda item: item[1] > -100, demand)
+
         msg = '\n'.join([f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片' for item in demand])
         self._log(msg)
 
@@ -785,13 +787,15 @@ class get_normal_quest_recommand(Module):
         quest_weight = client.data.get_quest_weght(require_equip)
         quest_id = sorted(quest_list, key = lambda x: quest_weight[x], reverse = True)
         tot = []
-        for i in range(10):
+        for i in range(5):
             id = quest_id[i]
             name = db.get_quest_name(id)
             tokens: List[ItemType] = [i for i in db.normal_quest_rewards[id]]
             msg = f"{name}:\n" + '\n'.join([
                 (f'{db.get_inventory_name_san(token)}: {"缺少" if require_equip[token] > 0 else "盈余"}{abs(require_equip[token])}片')
-                for token in tokens])
+                for token in tokens
+                if require_equip[token] > -100
+                ])
             tot.append(msg.strip())
 
         msg = '\n--------\n'.join(tot)

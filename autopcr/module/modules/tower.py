@@ -28,7 +28,7 @@ class tower_cloister_sweep(Module):
             result = []
             for rewards in res.quest_result_list:
                 result.extend(rewards.reward_list)
-            result = await client.serlize_reward(result, db.xinsui)
+            result = await client.serialize_reward_summary(result)
             self._log(f"扫荡了{times}次，获得了:\n" + result)
         else:
             raise SkipError("回廊已扫荡")
