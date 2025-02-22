@@ -5,6 +5,7 @@ from random import choice, sample, choices
 
 from ..model.custom import PLACEHOLDER, ArenaQueryType, ArenaQueryUnit, ArenaRegion, ArenaQueryResult, ArenaQueryResponse
 from . import aiorequests, pcrdapi
+from ..util.logger import instance as logger
 
 try:
     from hoshino.modules.priconne.arena.arena import curpath as CACHE_DIR
@@ -20,7 +21,7 @@ class ArenaQuery:
     querylock = asyncio.Lock()
 
     def __init__(self):
-        print(f"using cache {self.timepath}")
+        logger.info(f"using cache {self.timepath}")
         if not exists(self.timepath):
             from os import makedirs
             from os.path import dirname
@@ -183,11 +184,11 @@ class ArenaQuery:
         for other_region in query_seq:
             other_key = self.key(defen, other_region)
             if self.is_exist_result(other_key):
-                print(f'存在它服({other_region})缓存，作为降级备用')
+                logger.debug(f'存在它服({other_region})缓存，作为降级备用')
                 result = self.load_result(other_key)
                 break
         else:
-            print(f'不存在它服缓存')
+            logger.debug(f'不存在它服缓存')
         return result
 
     async def get_attack(self, available_unit: Set[int], defen: List[int], region : ArenaRegion = ArenaRegion.CN) -> List[ArenaQueryResult]:
@@ -203,17 +204,17 @@ class ArenaQuery:
             key = self.key(defen, region)
 
             if self.is_recent_buffer(key):
-                print(f'存在本服({region})近缓存，直接使用')
+                logger.debug(f'存在本服({region})近缓存，直接使用')
                 result = self.load_result(key)
             else:
                 degrade_result = self.load_result(key) if self.is_exist_result(key) else await self.get_other_region_result(defen, region)
                 result = await self.query(defen, region)
                 if not result:
                     if degrade_result:
-                        print(f'使用缓存')
+                        logger.debug(f'使用缓存')
                         result = degrade_result
                     else:
-                        print(f'查询近似解')
+                        logger.debug(f'查询近似解')
                         result = await self.get_approximate_attack(defen, region)
 
         result = [team for team in result if all(unit.id in available_unit for unit in team.atk)]

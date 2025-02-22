@@ -10,9 +10,9 @@ import typing, math
 from collections import Counter
 
 class eLoginStatus(Enum):
+    NOT_LOGGED = 0
     LOGGED = 1
-    NOT_LOGGED = 2
-    NEED_REFRESH = 3
+    NEED_REFRESH = 2
 
 class pcrclient(apiclient):
     def __init__(self, sdk: sdkclient):

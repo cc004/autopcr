@@ -1,8 +1,9 @@
+import os
 from ..constants import CACHE_DIR
 from .assetmgr import assetmgr
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-import os
+from ..util.logger import instance as logger
 
 class dbmgr:
     def __init__(self):
@@ -17,7 +18,7 @@ class dbmgr:
             data = await mgr.db()
             with open(self._dbpath, 'wb') as f:
                 f.write(data)
-            print(f'db version {ver} updated')
+            logger.info(f'db version {ver} updated')
         self._engine = create_engine(f'sqlite:///{self._dbpath}')
         self.ver = ver
     

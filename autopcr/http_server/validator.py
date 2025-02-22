@@ -1,14 +1,13 @@
 from typing import Dict, List
 from ..util import questutils
 from ..model.error import PanicError
-from json import loads
-import asyncio, time
+import asyncio
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 from collections import defaultdict
 from ..sdk.validator import remoteValidator, localValidator
-from ..core.sdkclient import sdkclient
 from ..sdk.bsgamesdk import captch
+from ..util.logger import instance as logger
 
 @dataclass_json
 @dataclass
@@ -37,9 +36,7 @@ async def Validator(qq):
             if info:
                 break
         except Exception as e:
-            import traceback
-            traceback.print_exc()
-            pass
+            logger.exception(e)
     if not info:
         raise PanicError("验证码验证超时")
     return info
@@ -49,7 +46,7 @@ async def manualValidator(qq):
     if not manual_validator_enabled:
         raise PanicError("manual validator disabled")
 
-    print('use manual validator')
+    logger.info('use manual validator')
 
     cap = await captch()
     challenge = cap['challenge']

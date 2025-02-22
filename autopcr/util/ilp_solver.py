@@ -26,7 +26,6 @@ def ilp_solver(ub: List[int], target: int, limit: int, effect: List[int]) -> Tup
     prob.solve(PULP_CBC_CMD(msg=False))
     result = {v.name: int(v.varValue) for v in prob.variables()}
     ret = [result[str(effect[i])] for i in range(n)]
-    print(LpStatus[prob.status])
     return prob.status == LpStatusOptimal, ret
 
 def dispatch_solver(start: List[int], candidate: List[int], lb: List[int], choose: int) -> Tuple[bool, List[int]]:
@@ -65,7 +64,6 @@ def dispatch_solver(start: List[int], candidate: List[int], lb: List[int], choos
     prob.solve(PULP_CBC_CMD(msg=False, gapAbs = 200))
     result = {v.name: int(v.varValue) for v in prob.variables()}
     ret = [next(i for i in range(n) if result[vname(j, i)] == 1) for j in range(m)]
-    print(LpStatus[prob.status])
     return prob.status == LpStatusOptimal, ret
 
 def memory_use_average(items: List[int], target_cnt: int) -> Tuple[bool, List[int]]:
@@ -90,7 +88,6 @@ def memory_use_average(items: List[int], target_cnt: int) -> Tuple[bool, List[in
     prob.solve(PULP_CBC_CMD(msg=False))
     result = {v.name: int(v.varValue) for v in prob.variables()}
     ret = [result[f"x_{i}"] for i in range(n)]
-    print(LpStatus[prob.status])
     return prob.status == LpStatusOptimal, ret
 
 def memory_use_average_binary_search(items: List[int], target_cnt: int) -> Tuple[bool, List[int]]:

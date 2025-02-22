@@ -4,6 +4,7 @@ from abc import abstractmethod
 from ..sdk.validator import remoteValidator
 from copy import deepcopy
 from ..constants import DEFAULT_HEADERS, IOS_HEADERS
+from ..util.logger import instance as logger
 
 class platform(Enum):
     Android = 0,
@@ -19,14 +20,11 @@ class account:
         self.password = pwd
         self.type = type
 
-async def _defaultLogger(msg):
-    print(msg)
-
 class sdkclient:
 
-    def __init__(self, info: account, captchaVerifier=remoteValidator, errlogger=_defaultLogger):
+    def __init__(self, info: account, captchaVerifier=remoteValidator, logger=logger):
         self.captchaVerifier = captchaVerifier
-        self.errlogger = errlogger
+        self.logger = logger
         if info.type == platform.Android:
             self.platform = '2'
         elif info.type == platform.IOS:

@@ -10,6 +10,7 @@ from ..model.sdkrequests import ToolSdkLoginRequest
 from typing import Dict, Tuple
 from ..constants import SESSION_ERROR_MAX_RETRY, CLIENT_POOL_SIZE_MAX, CLIENT_POOL_MAX_AGE, CACHE_DIR, CLIENT_POOL_MAX_CLIENT_ALIVE
 import time, os, asyncio, pickle
+from ..util.logger import instance as logger
 
 class ComponentWrapper(Component):
     def __init__(self, component: Component):
@@ -103,6 +104,7 @@ class PoolClientWrapper(pcrclient):
                 with open(self.cache, 'rb') as f:
                     self.data = pickle.loads(f.read())
                     self._data_wrapper.component = self.data
+                logger.debug("Client %s data loaded", self.data.uid)
         except:
             self.dispose()
 
@@ -113,6 +115,7 @@ class PoolClientWrapper(pcrclient):
         if self.data.ready:
             with open(self.cache, 'wb') as f:
                 f.write(pickle.dumps(self.data))
+            logger.debug("Client %s data saved", self.data.uid)
         self.data = datamgr()
         self._data_wrapper.component = self.data
 
@@ -134,15 +137,14 @@ class ClientPool:
         self._sema.release()
         client_key = id(client)
         if self.active_uids.get(client.uid, -1) != client_key:
-            # client disposed without being activated
+            logger.debug("Client key mismatch, discard client %s", client.uid)
             return
         self.active_uids.pop(client.uid)
-        if not client.logged: # client session expired and not successfully recovered
+        if client.logged == eLoginStatus.NOT_LOGGED: 
+            logger.debug("Client %s session expired", client.uid)
             return
 
         pool_key = (client.session.sdk.account, type(client.session.sdk).__name__)
-        # remove old client from pool, which session has been overrided by self.
-        # removed here to save one client pool slot.
 
         if len(self._pool) >= CLIENT_POOL_SIZE_MAX:
             now = int(time.time())
@@ -153,6 +155,7 @@ class ClientPool:
                 else:
                     break
 
+        logger.debug("Put client %s back to pool", client.uid)
         client.deactivate()
         if len(self._pool) < CLIENT_POOL_SIZE_MAX:
             self._pool[pool_key] = client

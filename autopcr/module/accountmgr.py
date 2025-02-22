@@ -3,10 +3,8 @@
 import asyncio
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
-from quart_auth import current_user
 from werkzeug.exceptions import Forbidden
 
-from ..core.pcrclient import pcrclient
 from ..core.sdkclient import account, platform
 from .modulemgr import ModuleManager, TaskResult, ModuleResult, eResultStatus, TaskResultInfo, ModuleResultInfo, ResultInfo
 import os, re, shutil
@@ -21,6 +19,7 @@ import datetime
 import traceback
 from ..core.clientpool import instance as clientpool, PoolClientWrapper
 from ..sdk.sdkclients import create
+from ..util.logger import instance as logger
 
 class AccountException(Exception):
     pass
@@ -81,6 +80,7 @@ class Account(ModuleManager):
 
     async def __aenter__(self):
         if not self.readonly:
+            logger.debug(f"Acquire lock {self._filename}")
             await self._lck.acquire()
             await super().__aenter__()
         return self
@@ -91,6 +91,7 @@ class Account(ModuleManager):
             if self.data != self.old_data:
                 await self.save_data()
             self._lck.release()
+            logger.debug(f"Release lock {self._filename}")
 
     async def save_data(self):
         with open(self._filename, 'w') as f:
@@ -125,14 +126,14 @@ class Account(ModuleManager):
         try:
             return self.data.daily_result[id].get_result()
         except Exception as e:
-            traceback.print_exc()
+            logger.exception(e)
             return None
 
     async def get_single_result_from_id(self, module, id: int = 0) -> Union[None, ModuleResult]:
         try:
             return self.data.single_result[module][id].get_result()
         except Exception as e:
-            traceback.print_exc()
+            logger.exception(e)
             return None
 
     async def get_daily_result_from_key(self, key: str) -> Union[None, TaskResult]:
@@ -140,7 +141,7 @@ class Account(ModuleManager):
             result = next(filter(lambda x: x.key == key, self.data.daily_result))
             return result.get_result()
         except Exception as e:
-            traceback.print_exc()
+            logger.exception(e)
             return None
 
     async def get_single_result_from_key(self, module, key: str) -> Union[None, ModuleResult]:
@@ -148,7 +149,7 @@ class Account(ModuleManager):
             result = next(filter(lambda x: x.key == key, self.data.single_result[module]))
             return result.get_result()
         except Exception as e:
-            traceback.print_exc()
+            logger.exception(e)
             return None
 
     @property
@@ -454,7 +455,7 @@ class UserManager:
                 return False
             return self.load(qid).validate_password(password)
         except Exception as e:
-            traceback.print_exc()
+            logger.exception(e)
             return False
 
     def check_enabled(self, qid: str) -> bool:
@@ -463,7 +464,7 @@ class UserManager:
                 return False
             return not self.load(qid, readonly=True).secret.disabled
         except Exception as e:
-            traceback.print_exc()
+            logger.exception(e)
             return False
 
     def qid_path(self, qid: str) -> str:
@@ -478,6 +479,7 @@ class UserManager:
         with open(self.qid_path(qid) + '/secret', 'w') as f:
             f.write(UserData(password=password).to_json())
         self.shift_old_accounts(qid)
+        logger.info(f"Create user {qid}")
         return AccountManager(self, qid)
 
     def shift_old_accounts(self, qid: str):

@@ -12,9 +12,9 @@ class bsdkclient(sdkclient):
                 self.captchaVerifier
             )
             if resp['code'] == 0:
-                await self.errlogger("geetest or captcha succeed")
+                self.logger.info("geetest or captcha succeed")
                 break
-            await self.errlogger(resp['message'])
+            self.logger.error(resp['message'])
             raise PanicError(resp['message'])
 
         return resp['uid'], resp['access_key']

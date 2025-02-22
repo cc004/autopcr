@@ -11,6 +11,7 @@ from .config import Config, _wrap_init
 from enum import Enum
 from datetime import datetime
 from ..db.database import db
+from ..util.logger import instance as logger
 
 def default(val):
     return lambda cls:_wrap_init(cls, lambda self: setattr(self, 'default', val))
@@ -188,7 +189,7 @@ class Module:
             self.warn.clear()
 
             if self.need_login:
-                if client.logged == eLoginStatus.NOT_LOGGED:
+                if client.logged == eLoginStatus.NOT_LOGGED or not client.data.ready:
                     await client.login()
                 elif client.logged == eLoginStatus.NEED_REFRESH:
                     client.data.update_stamina_recover()
@@ -216,7 +217,7 @@ class Module:
             result.log = str(e)
             result.status = eResultStatus.PANIC
         except Exception as e:
-            traceback.print_exc()
+            logger.exception(e)
             result.log = str(e)
             result.status = eResultStatus.ERROR
         finally:

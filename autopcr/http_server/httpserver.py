@@ -1,6 +1,5 @@
 import os
 import secrets
-import traceback
 from copy import deepcopy
 from datetime import timedelta
 from typing import Callable, Coroutine, Any
@@ -17,6 +16,7 @@ from ..constants import CACHE_DIR, ALLOW_REGISTER, SUPERUSER
 from ..module.accountmgr import Account, AccountManager, instance as usermgr, AccountException, UserData, \
     PermissionLimitedException, UserDisabledException, UserException
 from ..util.draw import instance as drawer
+from ..util.logger import instance as logger
 
 APP_VERSION = "1.3.0"
 
@@ -53,8 +53,15 @@ class HttpServer:
         self.configure_routes()
         self.qq_mod = qq_mod
 
+        self.app.after_request(self.log_request_info)
+
         enable_manual_validator()
-        
+
+    def log_request_info(self, response):
+        logger.info(
+            f"{request.method} {request.url} - {response.status_code} - {request.remote_addr}"
+        )
+        return response
 
     @staticmethod
     def wrapaccount(readonly = False):
@@ -142,20 +149,22 @@ class HttpServer:
 
         @self.api.errorhandler(UserException)
         async def handle_user_exception(e):
+            logger.exception(e)
             return str(e), 400
 
         @self.api.errorhandler(ValueError)
         async def handle_value_error(e):
+            logger.exception(e)
             return str(e), 400
 
         @self.api.errorhandler(AccountException)
         async def handle_account_exception(e):
-            traceback.print_exc()
+            logger.exception(e)
             return str(e), 400
 
         @self.api.errorhandler(Exception)
         async def handle_general_exception(e):
-            traceback.print_exc()
+            logger.exception(e)
             return "服务器发生错误", 500
 
         @self.api.route('/clan_forbid', methods = ["GET"])
@@ -533,6 +542,4 @@ data: {ret}\n\n'''
 
     def run_forever(self, loop):
         self.quart.register_blueprint(self.app)
-        for rule in self.quart.url_map.iter_rules():
-            print(f"{rule.rule}\t{', '.join(rule.methods)}")
         self.quart.run(host=self.host, port=self.port, loop=loop)
