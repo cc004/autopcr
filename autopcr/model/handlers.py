@@ -337,6 +337,7 @@ class HomeIndexResponse(responses.HomeIndexResponse):
         shiori_dict = {q.quest_id: q for q in self.shiori_quest_info.quest_list} if self.shiori_quest_info and self.shiori_quest_info.quest_list else {}
         mgr.quest_dict.update(shiori_dict)
 
+        mgr.ready = True
 
 
 @handles
