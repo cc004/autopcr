@@ -1,0 +1,77 @@
+name: Build And Push Docker Image
+
+on:
+  push:
+    branches:
+      - 'main'
+    tags:
+      - 'v*'
+
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-24.04-arm
+
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set time zone
+        uses: szenius/set-timezone@v1.1
+        with:
+          timezoneLinux: "Asia/Shanghai"
+          timezoneMacos: "Asia/Shanghai"
+          timezoneWindows: "China Standard Time"
+
+      # # 如果有 dockerhub 账户，可以在github的secrets中配置下面两个，然后取消下面注释的这几行，并在meta步骤的images增加一行 ${{ github.repository }}
+      - name: Login to DockerHub
+        if: vars.DOCKERHUB_IMAGE_NAME != ''  # 条件式登录
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            name=ghcr.io/${{ github.repository }},enable=true
+            name=${{ vars.DOCKERHUB_IMAGE_NAME }},enable=${{ vars.DOCKERHUB_IMAGE_NAME != '' }}
+          # generate Docker tags based on the following events/attributes
+          #   nightly, master, pr-2, 1.2.3, 1.2, 1
+          tags: |
+            type=match,pattern=^v(\d{8}-\d+)$,group=1
+            type=match,pattern=^v(\d{8})-\d+$,group=1
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/') }}
+            type=raw,value=ci-{{commit_date 'YYYYMMDD-HHmmss' tz='Asia/Shanghai'}}-{{sha}},enable=${{ github.ref == 'refs/heads/main' && !startsWith(github.ref, 'refs/tags/') }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
