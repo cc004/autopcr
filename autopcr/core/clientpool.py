@@ -1,4 +1,4 @@
-from .pcrclient import pcrclient
+from .pcrclient import pcrclient, eLoginStatus
 from .apiclient import apiclient, ApiException
 from .sdkclient import sdkclient
 from .datamgr import datamgr
@@ -10,6 +10,7 @@ from ..model.sdkrequests import ToolSdkLoginRequest
 from typing import Dict, Tuple
 from ..constants import SESSION_ERROR_MAX_RETRY, CLIENT_POOL_SIZE_MAX, CLIENT_POOL_MAX_AGE, CACHE_DIR, CLIENT_POOL_MAX_CLIENT_ALIVE
 import time, os, asyncio, pickle
+from ..util.logger import instance as logger
 
 class ComponentWrapper(Component):
     def __init__(self, component: Component):
@@ -62,7 +63,7 @@ class PoolClientWrapper(pcrclient):
         self._keys = {}
         self.data = datamgr()
         self._data_wrapper = ComponentWrapper(self.data)
-        self.data_ready = False
+        self.need_refresh = False
         self.session = sessionmgr(sdk)
         self.pool = pool
         self.uid: str = None
@@ -74,6 +75,12 @@ class PoolClientWrapper(pcrclient):
         self.register(PreSessionHandler(pool))
         self.register(SessionErrorHandler(pool))
         self.register(mutexhandler())
+
+    @property
+    def logged(self) -> eLoginStatus:
+        if not self.session._logged: return eLoginStatus.NOT_LOGGED
+        elif self.need_refresh: return eLoginStatus.NEED_REFRESH
+        else: return eLoginStatus.LOGGED
 
     @property
     def cache(self):
@@ -88,9 +95,7 @@ class PoolClientWrapper(pcrclient):
         return self.pool._put_in_pool(self)
 
     async def logout(self):
-        await self.session.clear_session()
-        self.need_refresh = False
-        self.data_ready = False
+        await super().logout()
         self.deactivate()
 
     def activate(self):
@@ -99,7 +104,7 @@ class PoolClientWrapper(pcrclient):
                 with open(self.cache, 'rb') as f:
                     self.data = pickle.loads(f.read())
                     self._data_wrapper.component = self.data
-                self.data_ready = True
+                logger.debug("Client %s data loaded", self.data.uid)
         except:
             self.dispose()
 
@@ -107,12 +112,12 @@ class PoolClientWrapper(pcrclient):
         os.remove(self.cache)
 
     def deactivate(self):
-        if self.data_ready:
+        if self.data.ready:
             with open(self.cache, 'wb') as f:
                 f.write(pickle.dumps(self.data))
+            logger.debug("Client %s data saved", self.data.uid)
         self.data = datamgr()
         self._data_wrapper.component = self.data
-        self.data_ready = False
 
 class ClientPool:
     def __init__(self):
@@ -132,15 +137,14 @@ class ClientPool:
         self._sema.release()
         client_key = id(client)
         if self.active_uids.get(client.uid, -1) != client_key:
-            # client disposed without being activated
+            logger.debug("Client key mismatch, discard client %s", client.uid)
             return
         self.active_uids.pop(client.uid)
-        if not client.logged: # client session expired and not successfully recovered
+        if client.logged == eLoginStatus.NOT_LOGGED: 
+            logger.debug("Client %s session expired", client.uid)
             return
 
         pool_key = (client.session.sdk.account, type(client.session.sdk).__name__)
-        # remove old client from pool, which session has been overrided by self.
-        # removed here to save one client pool slot.
 
         if len(self._pool) >= CLIENT_POOL_SIZE_MAX:
             now = int(time.time())
@@ -151,6 +155,7 @@ class ClientPool:
                 else:
                     break
 
+        logger.debug("Put client %s back to pool", client.uid)
         client.deactivate()
         if len(self._pool) < CLIENT_POOL_SIZE_MAX:
             self._pool[pool_key] = client

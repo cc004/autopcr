@@ -1,12 +1,11 @@
-from typing import Dict, List
-from ..util import aiorequests, questutils, freqlimiter
-from ..model.error import PanicError
+from ..util import aiorequests, freqlimiter
 from json import loads
-import asyncio, time
+import asyncio
 from ..util import aiorequests
+from ..util.logger import instance as logger
 
 async def localValidator():
-    print('use local validator')
+    logger.info('use local validator')
 
     from .bsgamesdk import captch
     cap = await captch()
@@ -42,7 +41,7 @@ async def localValidator():
 
 @freqlimiter.FreqLimiter(5,30)
 async def remoteValidator():
-    print('use remote validator')
+    logger.info('use remote validator')
 
     url = f"https://pcrd.tencentbot.top/geetest_renew"
     header = {"Content-Type": "application/json", "User-Agent": "autopcr/1.0.0"}
@@ -63,7 +62,7 @@ async def remoteValidator():
             res.raise_for_status()
             res = await res.content
             res = loads(res)
-            print(res)
+            logger.info(res)
             if "queue_num" in res:
                 nu = res["queue_num"]
                 if nu >= 35: raise Exception("Captcha failed")
@@ -71,9 +70,8 @@ async def remoteValidator():
                 msg.append(f"queue_num={nu}")
                 tim = min(int(nu), 3) * 10
                 msg.append(f"sleep={tim}")
-                print(f"farm:\n" + "\n".join(msg))
                 msg = []
-                print(f'farm: {uuid} in queue, sleep {tim} seconds')
+                logger.info(f'farm: {uuid} in queue, sleep {tim} seconds')
                 await asyncio.sleep(tim)
                 if tim >= 40: ccnt += 2
             else:

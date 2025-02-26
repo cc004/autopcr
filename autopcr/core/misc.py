@@ -2,8 +2,8 @@ from .base import Component, RequestHandler
 from .apiclient import apiclient, ApiException, NetworkException
 from ..model.modelbase import *
 from ..model.error import *
-from traceback import print_exc
 from asyncio import Lock
+from ..util.logger import instance as logger
 
 class errorhandler(Component[apiclient]):
     async def request(self, request: Request[TResponse], next: RequestHandler) -> TResponse:
@@ -20,7 +20,7 @@ class errorhandler(Component[apiclient]):
                     raise PanicError(str(e))
                 raise
             except Exception:
-                print_exc()
+                logger.exception("Unhandled exception in request handler")
                 raise
 
 class mutexhandler(Component[apiclient]):

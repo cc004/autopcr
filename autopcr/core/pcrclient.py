@@ -10,23 +10,19 @@ import typing, math
 from collections import Counter
 
 class eLoginStatus(Enum):
+    NOT_LOGGED = 0
     LOGGED = 1
-    NOT_LOGGED = 2
-    NEED_REFRESH = 3
+    NEED_REFRESH = 2
 
 class pcrclient(apiclient):
     def __init__(self, sdk: sdkclient):
         self._base_keys = {}
         self._keys = {}
-        self.need_refresh = False
         super().__init__(sdk)
         self.data = datamgr()
-        self.data_ready = False
-        from .clientpool import ComponentWrapper
-        self._data_wrapper = ComponentWrapper(self.data)
         self.session = sessionmgr(sdk)
         self.register(errorhandler())
-        self.register(self._data_wrapper)
+        self.register(self.data)
         self.register(self.session)
         self.register(mutexhandler())
 
@@ -45,19 +41,14 @@ class pcrclient(apiclient):
     @property
     def logged(self) -> eLoginStatus:
         if not self.session._logged: return eLoginStatus.NOT_LOGGED
-        elif self.need_refresh: return eLoginStatus.NEED_REFRESH
         else: return eLoginStatus.LOGGED
 
     async def login(self):
-        self.data = datamgr()
-        self._data_wrapper.component = self.data
         await self.request(None)
-        self.data_ready = True
 
     async def logout(self):
         await self.session.clear_session()
         self.need_refresh = False
-        self.data_ready = False
 
     async def support_unit_get_setting(self):
         req = SupportUnitGetSettingRequest()

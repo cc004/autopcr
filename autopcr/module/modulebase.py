@@ -11,6 +11,7 @@ from .config import Config, _wrap_init
 from enum import Enum
 from datetime import datetime
 from ..db.database import db
+from ..util.logger import instance as logger
 
 def default(val):
     return lambda cls:_wrap_init(cls, lambda self: setattr(self, 'default', val))
@@ -36,7 +37,7 @@ def notlogin(check_data = False):
             ok, msg = await old_do_check(client)
             if not ok: 
                 return ok, msg
-            if check_data and not client.data_ready:
+            if check_data and not client.data.ready:
                 return False, '无缓存，请登录'
             return True, ''
         self.do_check = new_do_check
@@ -188,7 +189,7 @@ class Module:
             self.warn.clear()
 
             if self.need_login:
-                if client.logged == eLoginStatus.NOT_LOGGED:
+                if client.logged == eLoginStatus.NOT_LOGGED or not client.data.ready:
                     await client.login()
                 elif client.logged == eLoginStatus.NEED_REFRESH:
                     client.data.update_stamina_recover()
@@ -216,7 +217,7 @@ class Module:
             result.log = str(e)
             result.status = eResultStatus.PANIC
         except Exception as e:
-            traceback.print_exc()
+            logger.exception(e)
             result.log = str(e)
             result.status = eResultStatus.ERROR
         finally:

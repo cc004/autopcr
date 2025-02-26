@@ -71,23 +71,7 @@ async def captch():
     data=json.loads(modolcaptch)
     data=setsign(data)
     return await sendpost(bililogin+"api/client/start_captcha",data)
-    '''
-def make_captch(gt,challenge,gt_user):
-    data={}
-    data['username']=""
-    data['appkey']=""
-    data['gt']=gt
-    data['challenge']=challenge
-    capurl=f"https://game.bilibili.com/sdk/geetest/?captcha_type=1&challenge={challenge}&gt={gt}&userid={gt_user}&gs=1"
-    print(capurl)
-    data['referer']=urllib.parse.quote(capurl)
-    data['handle_method']="three_on"
-    print(data)
-    res = requests.get(url="http://api.ydaaa.com/start_handle",params=data)
-    return res
-    '''
 async def login(bili_account,bili_pwd, make_captch):
-    print(f'logging in with acc={bili_account}, pwd = {bili_pwd}')
     login_sta= await login1(bili_account,bili_pwd)
     # if "access_key" not in login_sta:
     if login_sta['code'] == 200000:
@@ -96,11 +80,3 @@ async def login(bili_account,bili_pwd, make_captch):
         return login_sta
     else:
         return login_sta
-'''
-def getcap():
-    cap=captch()
-    print(cap.text)
-    cap=json.loads(cap.text)
-    capurl=f"https://help.tencentbot.top/geetest/?captcha_type=1&challenge={cap['challenge']}&gt={cap['gt']}&userid={cap['gt_user_id']}&gs=1"
-    return capurl
-'''

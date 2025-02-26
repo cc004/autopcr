@@ -17,6 +17,7 @@ from asyncio import Lock
 _data_lck = Lock()
 
 class datamgr(BaseModel, Component[apiclient]):
+    ready: bool = False
     settings: IniSetting = None
     stamina_full_recovery_time: int = 0
     dungeon_avaliable: bool = False
