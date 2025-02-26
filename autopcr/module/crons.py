@@ -2,7 +2,6 @@ import asyncio
 from dataclasses import dataclass
 import datetime
 from enum import Enum
-import traceback
 
 from dataclasses_json import dataclass_json
 
@@ -11,6 +10,7 @@ from ..module.accountmgr import instance as usermgr, AccountManager
 from ..db.database import db
 from ..constants import CACHE_DIR
 import os
+from ..util.logger import instance as logger
 
 CRONLOG_PATH = os.path.join(CACHE_DIR, "http_server", "cron_log.txt")
 
@@ -52,8 +52,7 @@ async def real_run_cron(accountmgr: AccountManager, accounts_to_run, cur):
                 cur = datetime.datetime.now()
                 write_cron_log(eCronOperation.FINISH, cur,  accountmgr.qid, account, status)
             except Exception as e:
-                print(f"error in cron job {accountmgr.qid} {account}")
-                traceback.print_exc()
+                logger.exception(f"error in cron job {accountmgr.qid} {account}: {e}")
                 write_cron_log(eCronOperation.START, cur,  accountmgr.qid, account, eResultStatus.ERROR, str(e))
     
     await asyncio.gather(*[run_one_account(account) for account in accounts_to_run])
@@ -62,7 +61,7 @@ async def real_run_cron(accountmgr: AccountManager, accounts_to_run, cur):
     
 
 async def _run_crons(cur: datetime.datetime):
-    print(f"doing cron check in {cur.hour} {cur.minute}")
+    logger.info(f"doing cron check in {cur.hour} {cur.minute}")
     async def run_one_qid(qid):
         accountmgr = usermgr.load(qid, readonly=True)
         await accountmgr.__aenter__()

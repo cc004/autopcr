@@ -129,7 +129,7 @@ class sessionmgr(Component[apiclient]):
 
     @property
     def is_session_expired(self):
-        return self._container.time >= self.session_expire_time
+        return self._logged and self._container.time >= self.session_expire_time
 
     async def request(self, request: Request[TResponse], next: RequestHandler) -> TResponse:
         if not self._logged:

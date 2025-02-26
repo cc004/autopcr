@@ -12,10 +12,10 @@ from hashlib import md5
 from Crypto.Cipher import AES
 from base64 import b64encode, b64decode
 from .sdkclient import sdkclient
-from ..constants import refresh_headers, DEBUG_LOG, ERROR_LOG, MAX_API_RUNNING
+from ..constants import refresh_headers, DEBUG_LOG, MAX_API_RUNNING
 import time, datetime
 import json
-from enum import Enum
+from ..util.logger import instance as logger
 
 class ApiException(Exception):
 
@@ -103,7 +103,7 @@ class apiclient(Container["apiclient"]):
     @freqlimiter.RunningLimiter(MAX_API_RUNNING)
     async def _request_internal(self, request: Request[TResponse]) -> TResponse:
         if not request: return None
-        print(f'{self.user_name} requested {request.__class__.__name__} at /{request.url}')
+        logger.info(f'{self.user_name} requested {request.__class__.__name__} at /{request.url}')
         key = apiclient._createkey()
         request.viewer_id = b64encode(apiclient._encrypt(str(self.viewer_id).encode('utf8'), key)).decode('ascii') if request.crypted else str(self.viewer_id)
 
@@ -163,7 +163,7 @@ class apiclient(Container["apiclient"]):
             version = search(r'_v?([4-9]\.\d\.\d).*?_', response0['data_headers']["store_url"]).group(1)
             self._headers['APP-VER'] = version
             refresh_headers(version)
-            print(f"版本已更新至{version}")
+            logger.info(f"版本已更新至{version}")
             raise ApiException(f"版本已更新:{version}",
                                response.data.server_error.status,
                                response.data_headers.result_code
@@ -171,24 +171,15 @@ class apiclient(Container["apiclient"]):
 
 
         if response.data.server_error:
-            print(f'pcrclient: /{request.url} api failed={response.data_headers.result_code} {response.data.server_error}')
-
-            if ERROR_LOG:
-                with open('error.log', 'a') as fp:
-                    fp.write(f'{self.user_name} requested {request.__class__.__name__} at /{request.url}\n')
-                    fp.write(json.dumps(self._headers, indent=4, ensure_ascii=False) + '\n')
-                    fp.write(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
-                    fp.write(f'response from {urlroot}\n')
-                    fp.write(json.dumps(dict(resp.headers), indent=4, ensure_ascii=False) + '\n')
-                    fp.write(json.dumps(response0, indent=4, ensure_ascii=False) + '\n')
+            logger.error(f'pcrclient: /{request.url} api failed={response.data_headers.result_code} {response.data.server_error}')
+            logger.error(f'{self.user_name} requested {request.__class__.__name__} at /{request.url}\n')
+            logger.error(json.dumps(self._headers, indent=4, ensure_ascii=False) + '\n')
+            logger.error(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
+            logger.error(f'response from {urlroot}\n')
+            logger.error(json.dumps(dict(resp.headers), indent=4, ensure_ascii=False) + '\n')
+            logger.error(json.dumps(response0, indent=4, ensure_ascii=False) + '\n')
 
             self.active_server = (self.active_server + 1) % len(self.servers)
-            
-            #with open('error.log', 'a') as fp:
-            #   fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
-            #   fp.write(json.dumps(self._headers, indent=4, ensure_ascii=False) + '\n')
-            #   fp.write(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
-            #   fp.write(json.dumps(json.loads(response.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
 
             if "维护" in response.data.server_error.message:
                 try:

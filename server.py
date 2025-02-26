@@ -23,6 +23,7 @@ from quart_compress import Compress
 import secrets
 from .autopcr.util.pcr_data import get_id_from_name
 import traceback
+from .autopcr.util.logger import instance as logger
 
 address = None  # 填你的公网IP或域名，不填则会自动尝试获取
 useHttps = False
@@ -363,7 +364,7 @@ async def clean_daily_all(botev: BotEvent, accmgr: AccountManager):
         alias_str = ','.join(alias)
         await botev.send(f"开始为{alias_str}清理日常")
     except Exception as e:  
-        print(e)
+        logger.exception(e)
 
     loop = asyncio.get_event_loop()
     loop.create_task(check_validate(botev, accmgr.qid, len(alias)))
@@ -454,7 +455,7 @@ async def clean_daily_from(botev: BotEvent, acc: Account):
     try:
         await botev.send(f"开始为{alias}清理日常")
     except Exception as e:  
-        print(e)
+        logger.exception(e)
 
     try:
         is_admin_call = await botev.is_admin()
@@ -610,7 +611,7 @@ async def tool_used(botev: BotEvent, tool: ToolInfo, config: Dict[str, str], acc
         msg += outp_b64(img)
         await botev.send(msg)
     except Exception as e:
-        traceback.print_exc()
+        logger.exception(e)
         await botev.send(f'{alias}: {e}')
 
 @sv.on_fullmatch(f"{prefix}卡池")
