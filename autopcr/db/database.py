@@ -82,9 +82,9 @@ class database():
                 .to_dict(lambda x: x.quest_id, lambda x:
                     flow(x.get_wave_group_ids())
                     .where(lambda y: y != 0)
-                    .select_many(lambda y: self.wave_groups[y].get_drop_reward_ids())
+                    .select_many(lambda y: self.wave_groups[y].get_drop_reward_ids() if y in self.wave_groups else [])
                     .where(lambda y: y != 0)
-                    .select_many(lambda y: self.reward_groups[y].get_rewards())
+                    .select_many(lambda y: self.reward_groups[y].get_rewards() if y in self.reward_groups else [])
                     .where(lambda y: y != 0 and y.reward_item[0] == eInventoryType.Equip)
                     .select(lambda y: Counter({y.reward_item: y.reward_num * y.odds / 100.0}))
                     .sum(seed=Counter()) + 
