@@ -59,6 +59,6 @@ RUN python3 _download_web.py || (echo "Failed to download web file" && exit 1)
 
 EXPOSE 13200
 
-VOLUME ["/app/result", "/app/cache"]
+VOLUME ["/app/result", "/app/cache", "/app/log"]
 
 CMD ["python3", "_httpserver_test.py"]
