@@ -195,8 +195,13 @@ class travel_quest_sweep(Module):
             new_quest_list.extend(ret.travel_quest_list)
 
         total_use = max(
-                min(top.remain_daily_decrease_count_ticket, client.data.get_inventory(db.travel_speed_up_paper)) 
-                - travel_quest_speed_up_paper_hold, 0)
+            min(
+                top.remain_daily_decrease_count_ticket,
+                client.data.get_inventory(db.travel_speed_up_paper)
+                - travel_quest_speed_up_paper_hold,
+            ),
+            0,
+        )
         speed_up_quest = [quest for quest in new_quest_list if quest.travel_quest_id in travel_speed_up_target]
         team_count = len(speed_up_quest)
         if team_count and total_use: # avoid divide by zero
@@ -433,5 +438,3 @@ class travel_team_view(Module):
             msg = '\n'.join(f"派遣第{id}队到{db.get_quest_name(quest.travel_quest_id)}x{quest.total_lap_count}" for id, quest in enumerate(start_travel_quest_list, start = 1))
             self._log(msg)
             await client.travel_start(start_travel_quest_list, [], [], action_type)
-
-
