@@ -285,6 +285,7 @@ class travel_round(Module):
                         ticket_to_use = 0
                     if ticket_to_use > top.remain_daily_decrease_count_ticket:
                         self._warn(f"本日可使用加速券次数{top.remain_daily_decrease_count_ticket}<{ticket_to_use}，无法加速")
+                        ticket_to_use = 0
                 else:
                     ticket_to_use = 0
                     self._log(f"一轮剩余{db.format_second(delta_time)}大于阈值{travel_speed_up_paper_threshold}小时，直接撤退")
