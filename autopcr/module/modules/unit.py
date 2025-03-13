@@ -434,10 +434,9 @@ class UnitController(Module):
         return gap
 
     async def buy_memory(self, gap: int):
-        if gap > 0:
-            gap = await self.buy_master_shop(gap)
-        if gap > 0:
-            gap = await self.buy_nvshen_shop(gap)
+        for buy_shop in [self.buy_master_shop, self.buy_nvshen_shop]:
+            if gap > 0:
+                gap = await buy_shop(gap)
         return gap
 
     async def promote(self, target_level: int = 1, target_star: int = 1, target_dear: int = 1, target_promote_rank: int = 1, target_equip_star: List[int] = [-1, -1, -1, -1, -1, -1], target_skill_ub_level: int = 1, target_skill_s1_level: int = 1, target_skill_s2_level: int = 1, target_skill_ex_level: int = 1, target_unique1_level: int = 0):
@@ -553,7 +552,6 @@ class unit_skill_level_up(UnitController):
                         stop = True
                         break
                 except AbortError as e:
-                    traceback.print_exc()
                     continue
             else:
                 self._log(f"所有技能均等于角色等级{self.unit.unit_level}级，需提升角色等级")
@@ -622,7 +620,7 @@ class unit_promote(UnitController):
 
 @description('''角色ID	角色名字	角色等级	角色星级	角色好感度	角色Rank	装备等级(左上)	装备等级(右上)	装备等级(左中)	装备等级(右中)	装备等级(左下)	装备等级(右下)	UB技能等级	技能1等级	技能2等级	EX技能等级	专武等级	EX武器	EX武器等级	EX防具	EX防具等级	EX首饰	EX首饰等级	高级设置
 不会使用专武球，专武升级请认真考虑！
-不考虑星级、好感度、高级设置''')
+不考虑星级、好感度、EX武器、高级设置''')
 @name('批量拉角色练度')
 @texttype("unit_promote_text", "目标练度", "")
 @booltype("unit_promote_batch_use_raw_ore", "使用原矿", False)
@@ -680,7 +678,6 @@ class unit_promote_batch(UnitController):
 
             except Exception as e:
                 self._warn(str(e))
-                traceback.print_exc()
                 continue
 
 @name('购买记忆碎片')
@@ -688,7 +685,7 @@ class unit_promote_batch(UnitController):
 @booltype("unit_memory_unit_exceed_state", "界限突破", False)
 @singlechoice("unit_memory_unique_equip_level", "专武等级", 0, lambda : db.unit_unique_equip_level_candidate(1))
 @singlechoice("unit_memory_unit_star", "星级", 1, [1,2,3,4,5,6])
-@singlechoice("unit_memory_buy_unit", "角色", "100101:日和莉", [f"{unit}:{db.unit_data[unit].unit_name}" for unit in db.unlock_unit_condition])
+@unitchoice("unit_memory_buy_unit", "角色")
 @default(False)
 @description('购买目标练度所缺的记忆碎片，先考虑大师店，再考虑女神店，其余商店请用对应的商店模块购买！')
 class unit_memory_buy(UnitController):
@@ -746,7 +743,6 @@ class unit_memory_buy_batch(UnitController):
 
             except Exception as e:
                 self._warn(str(e))
-                traceback.print_exc()
                 continue
 
         if summary:
