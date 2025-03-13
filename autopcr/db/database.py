@@ -1455,4 +1455,7 @@ class database():
             int(max(0, power - quest.need_power) * coeff)
         )
 
+    def unlock_unit_condition_candidate(self):
+        return self.unlock_unit_condition
+
 db = database()
