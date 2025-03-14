@@ -131,6 +131,9 @@ class ShopBuyResponse(responses.ShopBuyResponse):
         if self.item_data:
             for item in self.item_data:
                 mgr.update_inventory(item)
+        if self.purchase_list:
+            for item in self.purchase_list:
+                mgr.update_inventory(item)
         if self.user_jewel:
             mgr.jewel = self.user_jewel
 
@@ -140,10 +143,24 @@ class ShopBuyMultipleResponse(responses.ShopBuyMultipleResponse):
     async def update(self, mgr: datamgr, request):
         if self.user_gold:
             mgr.gold = self.user_gold
+        if self.purchase_list:
+            for item in self.purchase_list:
+                mgr.update_inventory(item)
         if self.item_data:
             for item in self.item_data:
                 mgr.update_inventory(item)
 
+@handles
+class ShopBuyBulkResponse(responses.ShopBuyBulkResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        if self.purchase_list:
+            for item in self.purchase_list:
+                mgr.update_inventory(item)
+        if self.item_data:
+            for item in self.item_data:
+                mgr.update_inventory(item)
 
 @handles
 class RoomReceiveItemAllResponse(responses.RoomReceiveItemAllResponse):
