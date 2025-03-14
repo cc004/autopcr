@@ -179,6 +179,9 @@ class pcrclient(apiclient):
         req.tab_name = tab_name
         return await self.request(req)
 
+    async def clear_my_party(self, tab_number: int, party_number: int):
+        return await self.set_my_party(tab_number, party_number, 0, f"队伍{party_number}", [], [])
+
     async def set_my_party(self, tab_number: int, party_number: int, party_label_type: int, party_name: str, units: List[int], change_rarity_unit_list: List[ChangeRarityUnit]):
         req = SetMyPartyRequest()
         req.tab_number = tab_number
@@ -579,7 +582,23 @@ class pcrclient(apiclient):
         req = ShopItemListRequest()
         return await self.request(req)
 
-    async def shop_buy_item(self, shop_id, bought_list):
+    async def shop_buy(self, shop_id: int, slot_id: int, number: int, total_price: int):
+        req = ShopBuyRequest()
+        req.system_id = shop_id
+        req.slot_id = slot_id
+        req.number = number
+        req.current_currency_num = self.data.get_shop_gold(shop_id)
+        req.total_price = total_price
+        return await self.request(req)
+
+    async def shop_buy_bulk(self, shop_id, bought: typing.Counter[int]): 
+        req = ShopBuyBulkRequest()
+        req.system_id = shop_id
+        req.buy_item_list = [BuyBulkBuyItemList(slot_id = item, count = cnt) for item, cnt in bought.items()]
+        req.current_currency_num = self.data.get_shop_gold(shop_id)
+        return await self.request(req)
+
+    async def shop_buy_item(self, shop_id, bought_list: List[int]):
         req = ShopBuyMultipleRequest()
         req.system_id = shop_id
         req.slot_ids = bought_list
@@ -927,7 +946,7 @@ class pcrclient(apiclient):
 
     async def serlize_reward(self, reward_list: List[InventoryInfo], target: Union[ItemType, None] = None, filter: Union[None, Callable[[ItemType],bool]] = None): # 无用 
         rewards = {}
-        for reward in reward_list:
+        for reward in reward_list or []:
             if target and (reward.type == target[0] and reward.id == target[1]) or filter and filter((reward.type, reward.id)) or not target and not filter:
                 if (reward.id, reward.type) not in rewards:
                     rewards[(reward.id, reward.type)] = [reward.count, reward.stock, reward]

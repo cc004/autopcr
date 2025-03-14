@@ -801,6 +801,29 @@ class get_normal_quest_recommand(Module):
         msg = '\n--------\n'.join(tot)
         self._log(msg)
 
+@description('从指定面板的指定队开始清除指定数量的编队')
+@inttype("clear_team_num", "队伍数", 1, [i for i in range(1, 11)])
+@inttype("clear_party_start_num", "初始队伍", 1, [i for i in range(1, 11)])
+@inttype("clear_tab_start_num", "初始面板", 1, [i for i in range(1, 7)])
+@name('清除编队')
+class clear_my_party(Module):
+    async def do_task(self, client: pcrclient):
+        number: int = self.get_config('clear_team_num')
+        tab_number: int = self.get_config('clear_tab_start_num')
+        party_number: int = self.get_config('clear_party_start_num') - 1
+        for _ in range(number):
+
+            party_number += 1
+            if party_number == 11:
+                tab_number += 1
+                party_number = 1
+                if tab_number >= 6:
+                    raise AbortError("队伍数量超过上限")
+
+            self._log(f"清除了{tab_number}面板{party_number}队伍")
+            await client.clear_my_party(tab_number, party_number)
+
+
 
 @description('从指定面板的指定队开始设置。6行重复，标题+5行角色ID	角色名字	角色等级	角色星级')
 @texttype("set_my_party_text", "队伍阵容", "")
@@ -822,7 +845,7 @@ class set_my_party(Module):
                 if tab_number >= 6:
                     raise AbortError("队伍数量超过上限")
 
-            title = party[i] + "记得借人"
+            title = party[i].strip() + "记得借人"
             unit_list = [u.split('\t') for u in party[i + 1 : i + 1 + 5]]
 
             own_unit = [u for u in unit_list if int(u[0]) in client.data.unit]

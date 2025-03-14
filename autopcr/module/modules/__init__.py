@@ -115,11 +115,37 @@ daily_modules = ModuleList(
     ]
 )
 
+planning_modules = ModuleList(
+    '规划',
+    'planning',
+    [
+        get_library_import_data,
+        get_need_equip,
+        get_normal_quest_recommand,
+        get_need_memory,
+        get_need_pure_memory,
+        get_need_xinsui,
+    ]
+)
+
+
+unit_modules = ModuleList(
+    '角色',
+    'unit',
+    [
+        missing_unit,
+        unit_promote,
+        unit_memory_buy,
+        unit_set_unique_equip_growth,
+    ]
+)
+
 clan_modules = ModuleList(
     '公会',
     'clan',
     [
         unit_promote_batch,
+        unit_memory_buy_batch,
         set_my_party,
     ]
 )
@@ -140,20 +166,12 @@ tool_modules = ModuleList(
         half_schedule,
         search_box,
         refresh_box,
-        remove_cb_support,
-        travel_team_view,
         ex_equip_info,
-        redeem_unit_swap,
-        unit_promote,
-        unit_set_unique_equip_growth,
-        missing_unit,
-        get_need_equip,
-        get_normal_quest_recommand,
-        get_need_memory,
-        get_need_pure_memory,
-        get_need_xinsui,
+        travel_team_view,
         get_clan_support_unit,
-        get_library_import_data,
+        clear_my_party,
+        remove_cb_support,
+        redeem_unit_swap,
         jjc_back,
         pjjc_back,
         jjc_info,
