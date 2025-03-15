@@ -102,8 +102,10 @@ class PoolClientWrapper(pcrclient):
         try:
             if os.path.exists(self.cache):
                 with open(self.cache, 'rb') as f:
-                    self.data = pickle.loads(f.read())
-                    self._data_wrapper.component = self.data
+                    tmp = pickle.loads(f.read())
+                    if tmp.version == self.data.version:
+                        self.data = tmp
+                        self._data_wrapper.component = self.data
                 logger.debug("Client %s data loaded", self.data.uid)
         except:
             self.dispose()
