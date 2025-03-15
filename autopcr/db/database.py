@@ -423,6 +423,9 @@ class database():
             self.main_story: List[StoryDetail] = (
                 StoryDetail.query(db)
                 .where(lambda x: x.story_id >= 2000000 and x.story_id < 3000000)
+                .concat(
+                    BywayStoryDetail.query(db)
+                )
                 .to_list()
             )
 
