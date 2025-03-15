@@ -1037,6 +1037,7 @@ class pcrclient(apiclient):
         return (
             (quest == 0) or
             (quest in self.data.quest_dict and self.data.quest_dict[quest].clear_flg > 0) or 
+            (quest in self.data.cleared_byway_quest_id_set) or
             (quest in db.tower_quest and self.data.tower_status and self.data.tower_status.cleared_floor_num >= db.tower_quest[quest].floor_num)
         )
 
