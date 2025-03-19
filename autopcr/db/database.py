@@ -1,4 +1,3 @@
-import time
 from typing import List, Dict, Set, Tuple, Union
 import typing
 from ..model.enums import eCampaignCategory
@@ -1509,5 +1508,9 @@ class database():
 
     def unlock_unit_condition_candidate(self):
         return self.unlock_unit_condition
+
+import os, time
+os.environ['TZ'] = 'Asia/Shanghai'
+time.tzset() 
 
 db = database()
