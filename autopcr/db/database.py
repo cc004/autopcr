@@ -1,4 +1,3 @@
-import time
 from typing import List, Dict, Set, Tuple, Union
 import typing
 from ..model.enums import eCampaignCategory
@@ -423,6 +422,9 @@ class database():
             self.main_story: List[StoryDetail] = (
                 StoryDetail.query(db)
                 .where(lambda x: x.story_id >= 2000000 and x.story_id < 3000000)
+                .concat(
+                    BywayStoryDetail.query(db)
+                )
                 .to_list()
             )
 
@@ -1506,5 +1508,9 @@ class database():
 
     def unlock_unit_condition_candidate(self):
         return self.unlock_unit_condition
+
+import os, time
+os.environ['TZ'] = 'Asia/Shanghai'
+time.tzset() 
 
 db = database()

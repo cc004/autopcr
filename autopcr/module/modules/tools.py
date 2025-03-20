@@ -16,6 +16,7 @@ from ...model.enums import *
 from ...util.arena import instance as ArenaQuery
 import datetime
 import random
+import itertools
 from collections import Counter
 
 @name('撤下会战助战')
@@ -648,20 +649,25 @@ class pjjc_info(ArenaInfo):
     async def get_rank_info(self, client: pcrclient, num: int, page: int) -> List[GrandArenaSearchOpponent]:
         return (await client.grand_arena_rank(num, page)).ranking
 
-@description('将pjjc防守阵容随机错排')
-@name('pjjc换防')
-class pjjc_shuffle_team(Module):
+class ShuffleTeam(Module):
+    def team_cnt(self) -> int: ...
+    def deck_num(self, num: int) -> ePartyType: ...
+
+    def shuffle_candidate(self) -> List[List[int]]:
+        teams = [list(x) for x in itertools.permutations(range(self.team_cnt()))]
+        teams = [x for x in teams if all(x[i] != i for i in range(self.team_cnt()))]
+        return teams
+
     async def do_task(self, client: pcrclient):
-        ids = random.choice([ [1, 2, 0], [2, 0, 1] ])
+        ids = random.choice(self.shuffle_candidate())
         deck_list: List[DeckListData] = []
-        cnt = 3
-        for i in range(cnt):
-            deck_number = getattr(ePartyType, f"GRAND_ARENA_DEF_{i + 1}")
+        for i in range(self.team_cnt()):
+            deck_number = self.deck_num(i)
             units = client.data.deck_list[deck_number]
             units_id = [getattr(units, f"unit_id_{i + 1}") for i in range(5)]
 
             deck = DeckListData()
-            deck_number = getattr(ePartyType, f"GRAND_ARENA_DEF_{ids[i] + 1}")
+            deck_number = self.deck_num(ids[i])
             deck.deck_number = deck_number
             deck.unit_list = units_id
             deck_list.append(deck)
@@ -670,6 +676,18 @@ class pjjc_shuffle_team(Module):
         self._log('\n'.join([f"{i} -> {j}" for i, j in enumerate(ids)]))
         await client.deck_update_list(deck_list)
 
+class PJJCShuffleTeam(ShuffleTeam):
+    def team_cnt(self) -> int: return 3
+
+@description('将pjjc进攻阵容随机错排')
+@name('pjjc换攻')
+class pjjc_atk_shuffle_team(PJJCShuffleTeam):
+    def deck_num(self, num: int) -> ePartyType: return getattr(ePartyType, f"GRAND_ARENA_{num + 1}")
+
+@description('将pjjc防守阵容随机错排')
+@name('pjjc换防')
+class pjjc_def_shuffle_team(PJJCShuffleTeam):
+    def deck_num(self, num: int) -> ePartyType: return getattr(ePartyType, f"GRAND_ARENA_DEF_{num + 1}")
 
 @description('获得可导入到兰德索尔图书馆的账号数据')
 @name('兰德索尔图书馆导入数据')
