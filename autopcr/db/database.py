@@ -1511,6 +1511,10 @@ class database():
 
 import os, time
 os.environ['TZ'] = 'Asia/Shanghai'
-time.tzset() 
+
+# 防止Windows不支持tzset()
+if hasattr(time, 'tzset'):
+    # On Unix systems, tzset() updates the local time settings
+    time.tzset()
 
 db = database()
