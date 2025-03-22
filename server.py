@@ -819,8 +819,12 @@ async def quest_recommand(botev: BotEvent):
     return config
 
 
-@register_tool("pjjc换防", "pjjc_shuffle_team")
-async def pjjc_shuffle_team(botev: BotEvent):
+@register_tool("pjjc换防", "pjjc_def_shuffle_team")
+async def pjjc_def_shuffle_team(botev: BotEvent):
+    return {}
+
+@register_tool("pjjc换攻", "pjjc_atk_shuffle_team")
+async def pjjc_atk_shuffle_team(botev: BotEvent):
     return {}
 
 @register_tool("查缺角色", "missing_unit")

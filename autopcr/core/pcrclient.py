@@ -158,6 +158,9 @@ class pcrclient(apiclient):
         req.unit_id_list = unit_id_list
         return await self.request(req)
 
+    async def is_deck_empty(self, deck_number: ePartyType):
+        return all(getattr(self.data.deck_list[deck_number], f"unit_id_{i}") == 0 for i in range(1, 6))
+
     async def deck_update(self, deck_number: int, units: List[int]):
         req = DeckUpdateRequest()
         req.deck_number = deck_number
@@ -1037,6 +1040,7 @@ class pcrclient(apiclient):
         return (
             (quest == 0) or
             (quest in self.data.quest_dict and self.data.quest_dict[quest].clear_flg > 0) or 
+            (quest in self.data.cleared_byway_quest_id_set) or
             (quest in db.tower_quest and self.data.tower_status and self.data.tower_status.cleared_floor_num >= db.tower_quest[quest].floor_num)
         )
 

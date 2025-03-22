@@ -85,6 +85,8 @@ class underground_skip(Module):
         async def do_enter(now_id = None):
             id = get_cleared_max_dungeon_id() if not now_id else now_id
             if id > 0:
+                if not client.is_deck_empty(ePartyType.DUNGEON):
+                    await client.deck_update(ePartyType.DUNGEON, [0, 0, 0, 0, 0])
                 await client.enter_dungeon(id)
                 self._log(f"已进入【{dungeon_name(id)}】")
             else:
@@ -127,7 +129,7 @@ class underground_skip(Module):
 
         if secret_dungeon_stop and db.is_secret_dungeon_time():
             raise SkipError("今日里地下城活动，不扫荡普通地下城")
-                        
+
         if rest:
             if not_max_stop and get_max_dungeon_id() != get_cleared_max_dungeon_id():
                 raise AbortError(f"最高级地下城【{dungeon_name(get_max_dungeon_id())}】未通关，不扫荡\n如欲扫荡已通关的，请关闭【非最高不扫荡】")
@@ -175,7 +177,8 @@ class special_underground_skip(Module):
                 raise AbortError(f"【{dungeon_name(id)}】未讨伐，无法进入特别地下城")
 
             await special_dungeon_info(refresh=True)
-            await client.deck_update(ePartyType.DUNGEON, [0, 0, 0, 0, 0])
+            if not client.is_deck_empty(ePartyType.DUNGEON):
+                await client.deck_update(ePartyType.DUNGEON, [0, 0, 0, 0, 0])
 
             req = await client.enter_special_dungeon(id)
             reward_list = req.skip_result_list if req.skip_result_list else []
