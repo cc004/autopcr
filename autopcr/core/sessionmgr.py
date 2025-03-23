@@ -4,6 +4,7 @@ from .sdkclient import sdkclient
 import json, os, random
 from ..model.models import *
 from ..constants import CACHE_DIR
+from ..util.logger import instance as logger
 import hashlib
 
 class sessionmgr(Component[apiclient]):
@@ -71,8 +72,9 @@ class sessionmgr(Component[apiclient]):
                 await self._bililogin()
             else:
                 raise PanicError("登录失败")
-        except Exception:
-            raise
+        except Exception as e:
+            logger.exception(e)
+            raise PanicError(f"登录出错: {e}")
         finally:
             await self.sdk.invoke_post_login()
 
