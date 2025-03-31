@@ -133,6 +133,7 @@ class ePartyType(IntEnum):
     COLOSSEUM_EXTRA_1 = 50
     COLOSSEUM_EXTRA_2 = 51
     COLOSSEUM_EXTRA_3 = 52
+    HATSUNE_EX_PLUS = 53
 
 class eClanRole(IntEnum):
     MEMBER = 0
@@ -343,6 +344,8 @@ class eSystemId(IntEnum):
     BYWAY_QUEST = 126
     COLOSSEUM = 127
     CARAVAN = 128
+    STORY_BOOKMARK = 802
+    HATSUNE_EX_PLUS_BOSS = 6013
     SEASON_PASS = 90001
     MONTHLY_GACHA = 90002
     CARAVAN_MILE_SHOP = 990001
@@ -466,6 +469,7 @@ class eGachaDrawType(IntEnum):
     SpFesCmapaign10Shot = 10
     SpFesDiscount10Shot = 11
     INVALID_VALUE = -1
+    Temp_Ticket_10 = 9003
     Monthly_Free_Single = 9005
     Monthly_Free_Multi = 9006
 
