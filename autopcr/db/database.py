@@ -1509,12 +1509,4 @@ class database():
     def unlock_unit_condition_candidate(self):
         return self.unlock_unit_condition
 
-import os, time
-os.environ['TZ'] = 'Asia/Shanghai'
-
-# 防止Windows不支持tzset()
-if hasattr(time, 'tzset'):
-    # On Unix systems, tzset() updates the local time settings
-    time.tzset()
-
 db = database()
