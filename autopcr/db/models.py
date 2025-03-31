@@ -32,14 +32,37 @@ class AilmentDatum(Base):
     ailment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     ailment_action: Mapped[int] = mapped_column(Integer)
     ailment_detail_1: Mapped[int] = mapped_column(Integer)
-    ailment_name: Mapped[str] = mapped_column(Text)
+    _760c9cb243e3777bbfd48b82961efc56e4aacb44d7bd8d98f624eb808665991f: Mapped[str] = mapped_column('760c9cb243e3777bbfd48b82961efc56e4aacb44d7bd8d98f624eb808665991f', Text)
+
+
+class AisSetting(Base):
+    __tablename__ = 'ais_setting'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    first_op_sub_story_id: Mapped[int] = mapped_column(Integer)
+    first_op_release_condition_story_id: Mapped[int] = mapped_column(Integer)
+    later_op_sub_story_id: Mapped[int] = mapped_column(Integer)
+    later_op_release_condition_quest_id: Mapped[int] = mapped_column(Integer)
+    later_op_release_condition_boss_id: Mapped[int] = mapped_column(Integer)
+    last_sub_story_id: Mapped[int] = mapped_column(Integer)
+
+
+class AisStoryDatum(Base):
+    __tablename__ = 'ais_story_data'
+
+    sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    original_event_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    unlock_condition_sub_story_id: Mapped[int] = mapped_column(Integer)
+    read_condition_story_id: Mapped[int] = mapped_column(Integer)
+    read_condition_sub_story_id: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_count: Mapped[int] = mapped_column(Integer)
 
 
 class AlbumProductionList(Base):
     __tablename__ = 'album_production_list'
-    __table_args__ = (
-        Index('album_production_list_0_unit_id', 'unit_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     unit_id: Mapped[int] = mapped_column(Integer)
@@ -50,9 +73,6 @@ class AlbumProductionList(Base):
 
 class AlbumVoiceList(Base):
     __tablename__ = 'album_voice_list'
-    __table_args__ = (
-        Index('album_voice_list_0_unit_id', 'unit_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     unit_id: Mapped[int] = mapped_column(Integer)
@@ -85,10 +105,6 @@ class AppIcon(Base):
 
 class ArcadeDescription(Base):
     __tablename__ = 'arcade_description'
-    __table_args__ = (
-        Index('arcade_description_0_arcade_id', 'arcade_id'),
-        Index('arcade_description_0_arcade_id_1_type', 'arcade_id', 'type')
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     arcade_id: Mapped[int] = mapped_column(Integer)
@@ -115,9 +131,6 @@ class ArcadeList(Base):
 
 class ArcadeStoryList(Base):
     __tablename__ = 'arcade_story_list'
-    __table_args__ = (
-        Index('arcade_story_list_0_arcade_id', 'arcade_id'),
-    )
 
     story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     arcade_id: Mapped[int] = mapped_column(Integer)
@@ -215,6 +228,40 @@ class ArenaMaxSeasonRankReward(Base):
     reward_num_5: Mapped[int] = mapped_column(Integer)
 
 
+class AsbDramaScript(Base):
+    __tablename__ = 'asb_drama_script'
+
+    command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    drama_id: Mapped[int] = mapped_column(Integer)
+    command_type: Mapped[int] = mapped_column(Integer)
+    param_01: Mapped[str] = mapped_column(Text)
+    param_02: Mapped[str] = mapped_column(Text)
+    param_03: Mapped[str] = mapped_column(Text)
+    param_04: Mapped[str] = mapped_column(Text)
+    param_05: Mapped[str] = mapped_column(Text)
+    param_06: Mapped[str] = mapped_column(Text)
+    param_07: Mapped[str] = mapped_column(Text)
+    param_08: Mapped[str] = mapped_column(Text)
+
+
+class AsbStoryDatum(Base):
+    __tablename__ = 'asb_story_data'
+
+    sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    original_event_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    contents_type: Mapped[int] = mapped_column(Integer)
+    page_num: Mapped[int] = mapped_column(Integer)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    condition_boss_id: Mapped[int] = mapped_column(Integer)
+    condition_sub_story_id: Mapped[int] = mapped_column(Integer)
+    read_condition_time: Mapped[str] = mapped_column(Text)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_count: Mapped[int] = mapped_column(Integer)
+    emblem_id: Mapped[int] = mapped_column(Integer)
+
+
 class Asm4ChoiceDatum(Base):
     __tablename__ = 'asm_4_choice_data'
 
@@ -232,9 +279,6 @@ class Asm4ChoiceDatum(Base):
 
 class AsmArchiveCompletionReward(Base):
     __tablename__ = 'asm_archive_completion_reward'
-    __table_args__ = (
-        Index('asm_archive_completion_reward_0_emblem_id', 'emblem_id'),
-    )
 
     archive_num: Mapped[int] = mapped_column(Integer, primary_key=True)
     completion_detail: Mapped[str] = mapped_column(Text)
@@ -243,11 +287,6 @@ class AsmArchiveCompletionReward(Base):
 
 class AsmDatum(Base):
     __tablename__ = 'asm_data'
-    __table_args__ = (
-        Index('asm_data_0_difficulty', 'difficulty'),
-        Index('asm_data_0_genre_id', 'genre_id'),
-        Index('asm_data_0_genre_id_1_difficulty', 'genre_id', 'difficulty')
-    )
 
     asm_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     genre_id: Mapped[int] = mapped_column(Integer)
@@ -296,10 +335,6 @@ class AsmManyAnswersDatum(Base):
 
 class AsmMemoryGauge(Base):
     __tablename__ = 'asm_memory_gauge'
-    __table_args__ = (
-        Index('asm_memory_gauge_0_gauge_id', 'gauge_id'),
-        Index('asm_memory_gauge_0_unlock_story_id', 'unlock_story_id')
-    )
 
     gauge_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     trigger_score: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -312,9 +347,6 @@ class AsmMemoryGauge(Base):
 
 class AsmReactionDatum(Base):
     __tablename__ = 'asm_reaction_data'
-    __table_args__ = (
-        Index('asm_reaction_data_0_unit_id_1_reaction_type', 'unit_id', 'reaction_type'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     unit_id: Mapped[int] = mapped_column(Integer)
@@ -393,9 +425,6 @@ class BirthdayLoginBonusDatum(Base):
 
 class BirthdayLoginBonusDetail(Base):
     __tablename__ = 'birthday_login_bonus_detail'
-    __table_args__ = (
-        Index('birthday_login_bonus_detail_0_login_bonus_id', 'login_bonus_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     login_bonus_id: Mapped[int] = mapped_column(Integer)
@@ -406,9 +435,6 @@ class BirthdayLoginBonusDetail(Base):
 
 class BirthdayLoginBonusDramaScript(Base):
     __tablename__ = 'birthday_login_bonus_drama_script'
-    __table_args__ = (
-        Index('birthday_login_bonus_drama_script_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -425,9 +451,6 @@ class BirthdayLoginBonusDramaScript(Base):
 
 class BmyNaviComment(Base):
     __tablename__ = 'bmy_navi_comment'
-    __table_args__ = (
-        Index('bmy_navi_comment_0_where_type', 'where_type'),
-    )
 
     comment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     where_type: Mapped[int] = mapped_column(Integer)
@@ -443,9 +466,6 @@ class BmyNaviComment(Base):
 
 class BmyStoryDatum(Base):
     __tablename__ = 'bmy_story_data'
-    __table_args__ = (
-        Index('bmy_story_data_0_original_event_id', 'original_event_id'),
-    )
 
     sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     original_event_id: Mapped[int] = mapped_column(Integer)
@@ -500,9 +520,6 @@ class BywayBattleQuestDatum(Base):
 
 class BywayDeliveryQuestDatum(Base):
     __tablename__ = 'byway_delivery_quest_data'
-    __table_args__ = (
-        Index('byway_delivery_quest_data_0_quest_id', 'quest_id'),
-    )
 
     quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     slot_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -513,9 +530,6 @@ class BywayDeliveryQuestDatum(Base):
 
 class BywayQuestDatum(Base):
     __tablename__ = 'byway_quest_data'
-    __table_args__ = (
-        Index('byway_quest_data_0_area_id', 'area_id'),
-    )
 
     quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     byway_quest_type: Mapped[int] = mapped_column(Integer)
@@ -545,10 +559,6 @@ class BywayQuestDatum(Base):
 
 class BywayStoryDetail(Base):
     __tablename__ = 'byway_story_detail'
-    __table_args__ = (
-        Index('byway_story_detail_0_pre_story_id', 'pre_story_id'),
-        Index('byway_story_detail_0_unlock_quest_id', 'unlock_quest_id')
-    )
 
     story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     story_type: Mapped[int] = mapped_column(Integer)
@@ -558,6 +568,7 @@ class BywayStoryDetail(Base):
     pre_story_id: Mapped[int] = mapped_column(Integer)
     unlock_quest_id: Mapped[int] = mapped_column(Integer)
     lock_all_text: Mapped[int] = mapped_column(Integer)
+    can_bookmark: Mapped[int] = mapped_column(Integer)
     reward_type_1: Mapped[int] = mapped_column(Integer)
     reward_id_1: Mapped[int] = mapped_column(Integer)
     reward_value_1: Mapped[int] = mapped_column(Integer)
@@ -589,8 +600,8 @@ class CampaignFreegacha(Base):
     start_time: Mapped[str] = mapped_column(Text)
     end_time: Mapped[str] = mapped_column(Text)
     stock_10_flag: Mapped[int] = mapped_column(Integer)
-    relation_id: Mapped[int] = mapped_column(Integer)
-    relation_count: Mapped[int] = mapped_column(Integer)
+    _3a64499252a3513c4cbfa42757ed104864e7b4594a06facfaf3a11d432ca96a3: Mapped[int] = mapped_column('3a64499252a3513c4cbfa42757ed104864e7b4594a06facfaf3a11d432ca96a3', Integer)
+    c7268ece545ee37f8904e4571c509340e98e7bc726d560c4146089766e1c5084: Mapped[int] = mapped_column(Integer)
 
 
 class CampaignFreegachaDatum(Base):
@@ -624,9 +635,6 @@ class CampaignLevelDatum(Base):
 
 class CampaignMissionCategory(Base):
     __tablename__ = 'campaign_mission_category'
-    __table_args__ = (
-        Index('campaign_mission_category_0_campaign_id_1_type', 'campaign_id', 'type'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     campaign_id: Mapped[int] = mapped_column(Integer)
@@ -637,10 +645,6 @@ class CampaignMissionCategory(Base):
 
 class CampaignMissionDatum(Base):
     __tablename__ = 'campaign_mission_data'
-    __table_args__ = (
-        Index('campaign_mission_data_0_campaign_id', 'campaign_id'),
-        Index('campaign_mission_data_0_campaign_id_1_type', 'campaign_id', 'type')
-    )
 
     mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     campaign_id: Mapped[int] = mapped_column(Integer)
@@ -673,9 +677,6 @@ class CampaignMissionDatum(Base):
 
 class CampaignMissionRewardDatum(Base):
     __tablename__ = 'campaign_mission_reward_data'
-    __table_args__ = (
-        Index('campaign_mission_reward_data_0_campaign_mission_reward_id', 'campaign_mission_reward_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     campaign_mission_reward_id: Mapped[int] = mapped_column(Integer)
@@ -714,20 +715,29 @@ class CampaignSchedule(Base):
 
 class CampaignShioriGroup(Base):
     __tablename__ = 'campaign_shiori_group'
-    __table_args__ = (
-        Index('campaign_shiori_group_0_shiori_group_id', 'shiori_group_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     shiori_group_id: Mapped[int] = mapped_column(Integer)
     event_id: Mapped[int] = mapped_column(Integer)
 
 
+class CaravanBuddy(Base):
+    __tablename__ = 'caravan_buddy'
+
+    buddy_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    name: Mapped[str] = mapped_column(Text)
+    description: Mapped[str] = mapped_column(Text)
+    effect_description1: Mapped[str] = mapped_column(Text)
+    effect_description2: Mapped[str] = mapped_column(Text)
+    effect_type: Mapped[int] = mapped_column(Integer)
+    effect_value_1: Mapped[int] = mapped_column(Integer)
+    effect_value_2: Mapped[int] = mapped_column(Integer)
+    effect_turn: Mapped[int] = mapped_column(Integer)
+
+
 class CaravanBuffDisp(Base):
     __tablename__ = 'caravan_buff_disp'
-    __table_args__ = (
-        Index('caravan_buff_disp_0_type_1_effect_id', 'type', 'effect_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     type: Mapped[int] = mapped_column(Integer)
@@ -741,9 +751,6 @@ class CaravanBuffDisp(Base):
 
 class CaravanCoinShopLineup(Base):
     __tablename__ = 'caravan_coin_shop_lineup'
-    __table_args__ = (
-        Index('caravan_coin_shop_lineup_0_season_id', 'season_id'),
-    )
 
     season_id: Mapped[int] = mapped_column(Integer)
     slot_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -753,6 +760,13 @@ class CaravanCoinShopLineup(Base):
     currency_id: Mapped[int] = mapped_column(Integer)
     price: Mapped[int] = mapped_column(Integer)
     stock: Mapped[int] = mapped_column(Integer)
+
+
+class CaravanDicePattern(Base):
+    __tablename__ = 'caravan_dice_pattern'
+
+    dice_odds: Mapped[int] = mapped_column(Integer, primary_key=True)
+    pattern: Mapped[int] = mapped_column(Integer)
 
 
 class CaravanDiceRewardPeriod(Base):
@@ -806,9 +820,6 @@ class CaravanDishTurnEffect(Base):
 
 class CaravanDrama(Base):
     __tablename__ = 'caravan_drama'
-    __table_args__ = (
-        Index('caravan_drama_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -825,10 +836,6 @@ class CaravanDrama(Base):
 
 class CaravanEffectSetting(Base):
     __tablename__ = 'caravan_effect_setting'
-    __table_args__ = (
-        Index('caravan_effect_setting_0_scene_type', 'scene_type'),
-        Index('caravan_effect_setting_0_scene_type_1_effect_type', 'scene_type', 'effect_type')
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     scene_type: Mapped[int] = mapped_column(Integer)
@@ -841,7 +848,7 @@ class CaravanEventEffect(Base):
     __tablename__ = 'caravan_event_effect'
 
     event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    description: Mapped[str] = mapped_column(Text)
+    _6432219f9578ab1b27c56f7e9697bc5f92fa29153b95e04fddc39a9beca0a341: Mapped[str] = mapped_column('6432219f9578ab1b27c56f7e9697bc5f92fa29153b95e04fddc39a9beca0a341', Text)
     effect_type: Mapped[int] = mapped_column(Integer)
     effect_value: Mapped[int] = mapped_column(Integer)
     effect_turn: Mapped[int] = mapped_column(Integer)
@@ -872,9 +879,6 @@ class CaravanGachaBlockLineup(Base):
 
 class CaravanGoalBonus(Base):
     __tablename__ = 'caravan_goal_bonus'
-    __table_args__ = (
-        Index('caravan_goal_bonus_0_season_id', 'season_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     season_id: Mapped[int] = mapped_column(Integer)
@@ -889,9 +893,6 @@ class CaravanGoalBonus(Base):
 
 class CaravanMap(Base):
     __tablename__ = 'caravan_map'
-    __table_args__ = (
-        Index('caravan_map_0_season_id', 'season_id'),
-    )
 
     block_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     season_id: Mapped[int] = mapped_column(Integer)
@@ -901,6 +902,11 @@ class CaravanMap(Base):
     next_4: Mapped[int] = mapped_column(Integer)
     type: Mapped[int] = mapped_column(Integer)
     reference_id: Mapped[int] = mapped_column(Integer)
+    pre_1: Mapped[int] = mapped_column(Integer)
+    pre_2: Mapped[int] = mapped_column(Integer)
+    pre_3: Mapped[int] = mapped_column(Integer)
+    pre_4: Mapped[int] = mapped_column(Integer)
+    distance_to_goal: Mapped[int] = mapped_column(Integer)
 
 
 class CaravanMapLayout(Base):
@@ -913,9 +919,6 @@ class CaravanMapLayout(Base):
 
 class CaravanMapObject(Base):
     __tablename__ = 'caravan_map_object'
-    __table_args__ = (
-        Index('caravan_map_object_0_season_id', 'season_id'),
-    )
 
     object_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     season_id: Mapped[int] = mapped_column(Integer)
@@ -934,9 +937,6 @@ class CaravanMileBlockReward(Base):
 
 class CaravanNaviComment(Base):
     __tablename__ = 'caravan_navi_comment'
-    __table_args__ = (
-        Index('caravan_navi_comment_0_season_id', 'season_id'),
-    )
 
     comment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     where_type: Mapped[int] = mapped_column(Integer)
@@ -954,11 +954,44 @@ class CaravanNaviComment(Base):
     description: Mapped[Optional[str]] = mapped_column(Text)
 
 
+class CaravanRival(Base):
+    __tablename__ = 'caravan_rival'
+
+    rival_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(Text)
+    dice_odds: Mapped[int] = mapped_column(Integer)
+    unit_id_1: Mapped[int] = mapped_column(Integer)
+    unit_id_2: Mapped[int] = mapped_column(Integer)
+    unit_id_3: Mapped[int] = mapped_column(Integer)
+    bgm_sheet_id: Mapped[str] = mapped_column(Text)
+    bgm_que_id: Mapped[str] = mapped_column(Text)
+
+
+class CaravanRivalBonus(Base):
+    __tablename__ = 'caravan_rival_bonus'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    season_id: Mapped[int] = mapped_column(Integer)
+    level: Mapped[int] = mapped_column(Integer)
+    bonus_label: Mapped[int] = mapped_column(Integer)
+    distance_from: Mapped[int] = mapped_column(Integer)
+    distance_to: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_count: Mapped[int] = mapped_column(Integer)
+    label_text: Mapped[str] = mapped_column(Text)
+
+
+class CaravanRivalMinigameList(Base):
+    __tablename__ = 'caravan_rival_minigame_list'
+
+    rival_minigame_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    rival_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+
+
 class CaravanSchedule(Base):
     __tablename__ = 'caravan_schedule'
-    __table_args__ = (
-        Index('caravan_schedule_0_coin_id', 'coin_id'),
-    )
 
     season_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     start_block_id: Mapped[int] = mapped_column(Integer)
@@ -981,10 +1014,6 @@ class CaravanShopBlockRank(Base):
 
 class CaravanSoundSetting(Base):
     __tablename__ = 'caravan_sound_setting'
-    __table_args__ = (
-        Index('caravan_sound_setting_0_scene_type', 'scene_type'),
-        Index('caravan_sound_setting_0_scene_type_1_effect_type', 'scene_type', 'effect_type')
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     scene_type: Mapped[int] = mapped_column(Integer)
@@ -996,9 +1025,6 @@ class CaravanSoundSetting(Base):
 
 class CaravanTreasure(Base):
     __tablename__ = 'caravan_treasure'
-    __table_args__ = (
-        Index('caravan_treasure_0_rarity_1_appraise_flag', 'rarity', 'appraise_flag'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(Text)
@@ -1019,15 +1045,18 @@ class CaravanTreasureBlockRank(Base):
 
 class CaravanTreasureBlockReal(Base):
     __tablename__ = 'caravan_treasure_block_real'
-    __table_args__ = (
-        Index('caravan_treasure_block_real_0_odds_id', 'odds_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     odds_id: Mapped[int] = mapped_column(Integer)
     reward_type: Mapped[int] = mapped_column(Integer)
     reward_id: Mapped[int] = mapped_column(Integer)
     reward_count: Mapped[int] = mapped_column(Integer)
+
+
+class CccBsScenarioList(Base):
+    __tablename__ = 'ccc_bs_scenario_list'
+
+    ccc_scenario_id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
 
 class CccChara(Base):
@@ -1039,22 +1068,45 @@ class CccChara(Base):
     end_time: Mapped[float] = mapped_column(Float)
 
 
+class CccCharaDatum(Base):
+    __tablename__ = 'ccc_chara_data'
+
+    ccc_chara_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    start_time: Mapped[str] = mapped_column(Text)
+    end_time: Mapped[str] = mapped_column(Text)
+
+
+class CccDropGroupDatum(Base):
+    __tablename__ = 'ccc_drop_group_data'
+
+    drop_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    object_id_1: Mapped[int] = mapped_column(Integer)
+    object_num_1: Mapped[int] = mapped_column(Integer)
+    drop_type_1: Mapped[int] = mapped_column(Integer)
+    object_id_2: Mapped[int] = mapped_column(Integer)
+    object_num_2: Mapped[int] = mapped_column(Integer)
+    drop_type_2: Mapped[int] = mapped_column(Integer)
+    object_id_3: Mapped[int] = mapped_column(Integer)
+    object_num_3: Mapped[int] = mapped_column(Integer)
+    drop_type_3: Mapped[int] = mapped_column(Integer)
+
+
 class CccObject(Base):
     __tablename__ = 'ccc_object'
 
     ccc_object_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    resource_id: Mapped[int] = mapped_column(Integer)
     is_report: Mapped[int] = mapped_column(Integer)
     ccc_object_type: Mapped[int] = mapped_column(Integer)
     fall_speed: Mapped[int] = mapped_column(Integer)
     absorb_frame: Mapped[int] = mapped_column(Integer)
     value_1: Mapped[int] = mapped_column(Integer)
+    value_2: Mapped[int] = mapped_column(Integer)
 
 
 class CccScenario(Base):
     __tablename__ = 'ccc_scenario'
-    __table_args__ = (
-        Index('ccc_scenario_0_ccc_scenario_id', 'ccc_scenario_id'),
-    )
 
     idx: Mapped[int] = mapped_column(Integer, primary_key=True)
     ccc_scenario_id: Mapped[int] = mapped_column(Integer)
@@ -1079,9 +1131,6 @@ class CggCompletionDatum(Base):
 
 class CggCompletionRewardDatum(Base):
     __tablename__ = 'cgg_completion_reward_data'
-    __table_args__ = (
-        Index('cgg_completion_reward_data_0_completion_id', 'completion_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     completion_id: Mapped[int] = mapped_column(Integer)
@@ -1092,9 +1141,6 @@ class CggCompletionRewardDatum(Base):
 
 class CggDrama(Base):
     __tablename__ = 'cgg_drama'
-    __table_args__ = (
-        Index('cgg_drama_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -1111,9 +1157,6 @@ class CggDrama(Base):
 
 class CggGachaInfo(Base):
     __tablename__ = 'cgg_gacha_info'
-    __table_args__ = (
-        Index('cgg_gacha_info_0_cgg_id', 'cgg_id'),
-    )
 
     gacha_type: Mapped[int] = mapped_column(Integer, primary_key=True)
     cgg_id: Mapped[int] = mapped_column(Integer)
@@ -1125,9 +1168,6 @@ class CggGachaInfo(Base):
 
 class CggGachaLineup(Base):
     __tablename__ = 'cgg_gacha_lineup'
-    __table_args__ = (
-        Index('cgg_gacha_lineup_0_gacha_type', 'gacha_type'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     gacha_type: Mapped[int] = mapped_column(Integer)
@@ -1141,9 +1181,9 @@ class CggGameSettings(Base):
 
     cgg_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     goods_shelf_id: Mapped[int] = mapped_column(Integer)
-    first_goods_shelf_reward_num: Mapped[int] = mapped_column(Integer)
+    a2c9a9c120a81cca2d24deb393029276d97977e4e9d153014bc0a7ac6f4e0801: Mapped[int] = mapped_column(Integer)
     cgg_gacha_currency_id: Mapped[int] = mapped_column(Integer)
-    first_currency_reward_num: Mapped[int] = mapped_column(Integer)
+    _1845e3d8d4e42fefda930e6e55995f94e55f3735796e2d93c8bb1e95a2166e92: Mapped[int] = mapped_column('1845e3d8d4e42fefda930e6e55995f94e55f3735796e2d93c8bb1e95a2166e92', Integer)
     exchange_luppi_rate: Mapped[int] = mapped_column(Integer)
     max_gacha_exchange_count: Mapped[int] = mapped_column(Integer)
     max_goods_count: Mapped[int] = mapped_column(Integer)
@@ -1163,9 +1203,6 @@ class CggGoodsDatum(Base):
 
 class CharaETicketDatum(Base):
     __tablename__ = 'chara_e_ticket_data'
-    __table_args__ = (
-        Index('chara_e_ticket_data_0_jewel_store_id', 'jewel_store_id', unique=True),
-    )
 
     ticket_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     start_time: Mapped[str] = mapped_column(Text)
@@ -1337,9 +1374,6 @@ class ClanBattle2BossDatum(Base):
 
 class ClanBattle2MapDatum(Base):
     __tablename__ = 'clan_battle_2_map_data'
-    __table_args__ = (
-        Index('clan_battle_2_map_data_0_clan_battle_id', 'clan_battle_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     clan_battle_id: Mapped[int] = mapped_column(Integer)
@@ -1353,7 +1387,7 @@ class ClanBattle2MapDatum(Base):
     boss_id_4: Mapped[int] = mapped_column(Integer)
     boss_id_5: Mapped[int] = mapped_column(Integer)
     aura_effect: Mapped[int] = mapped_column(Integer)
-    rsl_unlock_lap: Mapped[int] = mapped_column(Integer)
+    b85cf2a4cc214978c276e702984c3dca690885a6fa356e1fd523f751c357e084: Mapped[int] = mapped_column(Integer)
     phase: Mapped[int] = mapped_column(Integer)
     wave_group_id_1: Mapped[int] = mapped_column(Integer)
     wave_group_id_2: Mapped[int] = mapped_column(Integer)
@@ -1425,9 +1459,6 @@ class ClanBattleBattleMissionDatum(Base):
 
 class ClanBattleBossDamageRank(Base):
     __tablename__ = 'clan_battle_boss_damage_rank'
-    __table_args__ = (
-        Index('clan_battle_boss_damage_rank_0_damage_rank_id', 'damage_rank_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer)
     damage_rank_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -1495,9 +1526,6 @@ class ClanBattleLastAttackReward(Base):
 
 class ClanBattleOddsDatum(Base):
     __tablename__ = 'clan_battle_odds_data'
-    __table_args__ = (
-        Index('clan_battle_odds_data_0_odds_group_id', 'odds_group_id'),
-    )
 
     odds_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     team_level_from: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -1545,9 +1573,6 @@ class ClanBattleParamAdjust(Base):
 
 class ClanBattlePeriod(Base):
     __tablename__ = 'clan_battle_period'
-    __table_args__ = (
-        Index('clan_battle_period_0_clan_battle_id', 'clan_battle_id'),
-    )
 
     clan_battle_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     period: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -1625,9 +1650,6 @@ class ClanBattlePeriodRankReward(Base):
 
 class ClanBattleRecommendDatum(Base):
     __tablename__ = 'clan_battle_recommend_data'
-    __table_args__ = (
-        Index('clan_battle_recommend_data_0_recommend_group', 'recommend_group'),
-    )
 
     level_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     recommend_group: Mapped[int] = mapped_column(Integer)
@@ -1687,9 +1709,6 @@ class ClanBattleSBossFixReward(Base):
 
 class ClanBattleSMapDatum(Base):
     __tablename__ = 'clan_battle_s_map_data'
-    __table_args__ = (
-        Index('clan_battle_s_map_data_0_clan_battle_id', 'clan_battle_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     clan_battle_id: Mapped[int] = mapped_column(Integer)
@@ -1708,7 +1727,7 @@ class ClanBattleSMapDatum(Base):
     extra_battle_flag4: Mapped[int] = mapped_column(Integer)
     extra_battle_flag5: Mapped[int] = mapped_column(Integer)
     aura_effect: Mapped[int] = mapped_column(Integer)
-    rsl_unlock_lap: Mapped[int] = mapped_column(Integer)
+    b088c8e211150b9f414306903d41cc772a221cc1fd78d118def49af9c8a3a446: Mapped[int] = mapped_column(Integer)
     phase: Mapped[int] = mapped_column(Integer)
     wave_group_id_1: Mapped[int] = mapped_column(Integer)
     wave_group_id_2: Mapped[int] = mapped_column(Integer)
@@ -1779,16 +1798,13 @@ class ClanBattleSchedule(Base):
     resource_id: Mapped[int] = mapped_column(Integer)
     start_time: Mapped[str] = mapped_column(Text)
     end_time: Mapped[str] = mapped_column(Text)
-    mode_change_start_time: Mapped[str] = mapped_column(Text)
-    mode_change_end_time: Mapped[str] = mapped_column(Text)
-    mode_change_remind_time: Mapped[str] = mapped_column(Text)
+    a37d3a340fe662d4147392da376de255cb91e968f92e273961e07df06b53b535: Mapped[str] = mapped_column(Text)
+    c241d9c35575f999ab9495f46b7b11a23e6432858150c8974f353c86f454a922: Mapped[str] = mapped_column(Text)
+    _98bf615e18d24a727576eebc6d26e9d34e527132bea89621d8da851b64b14072: Mapped[str] = mapped_column('98bf615e18d24a727576eebc6d26e9d34e527132bea89621d8da851b64b14072', Text)
 
 
 class ClanBattleTrainingDatum(Base):
     __tablename__ = 'clan_battle_training_data'
-    __table_args__ = (
-        Index('clan_battle_training_data_0_training_id', 'training_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     training_id: Mapped[int] = mapped_column(Integer)
@@ -1799,9 +1815,6 @@ class ClanBattleTrainingDatum(Base):
 
 class ClanBattleTrainingSchedule(Base):
     __tablename__ = 'clan_battle_training_schedule'
-    __table_args__ = (
-        Index('clan_battle_training_schedule_0_clan_battle_id', 'clan_battle_id'),
-    )
 
     training_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     clan_battle_id: Mapped[int] = mapped_column(Integer)
@@ -1849,9 +1862,6 @@ class ClanprofileContent(Base):
 
 class ColosseumEnhanceDatum(Base):
     __tablename__ = 'colosseum_enhance_data'
-    __table_args__ = (
-        Index('colosseum_enhance_data_0_enhance_id', 'enhance_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     enhance_id: Mapped[int] = mapped_column(Integer)
@@ -1871,9 +1881,6 @@ class ColosseumEnhanceDatum(Base):
 
 class ColosseumMissionDatum(Base):
     __tablename__ = 'colosseum_mission_data'
-    __table_args__ = (
-        Index('colosseum_mission_data_0_schedule_id_1_difficulty', 'schedule_id', 'difficulty'),
-    )
 
     schedule_id: Mapped[int] = mapped_column(Integer)
     mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -1888,9 +1895,6 @@ class ColosseumMissionDatum(Base):
 
 class ColosseumMissionRewardDatum(Base):
     __tablename__ = 'colosseum_mission_reward_data'
-    __table_args__ = (
-        Index('colosseum_mission_reward_data_0_mission_reward_id', 'mission_reward_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     mission_reward_id: Mapped[int] = mapped_column(Integer)
@@ -1930,8 +1934,8 @@ class ColosseumScheduleDatum(Base):
     count_start_time: Mapped[str] = mapped_column(Text)
     end_time: Mapped[str] = mapped_column(Text)
     close_time: Mapped[str] = mapped_column(Text)
-    calc_start: Mapped[str] = mapped_column(Text)
-    result_start: Mapped[str] = mapped_column(Text)
+    de62a8a9d3d70ec02c533da10e972c15f15f9b53b10135524a9ac9ce0390e5c7: Mapped[str] = mapped_column(Text)
+    a0eede0529d72aab45a9f1959ab6cb91189b9c67b5b745db80b668237fcd476e: Mapped[str] = mapped_column(Text)
 
 
 class ColosseumScore(Base):
@@ -2052,9 +2056,6 @@ class CooperationQuestDatum(Base):
 
 class CustomMypage(Base):
     __tablename__ = 'custom_mypage'
-    __table_args__ = (
-        Index('custom_mypage_0_still_group_id', 'still_group_id'),
-    )
 
     still_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     group_id: Mapped[int] = mapped_column(Integer)
@@ -2096,9 +2097,6 @@ class DailyMissionDatum(Base):
 
 class DearChara(Base):
     __tablename__ = 'dear_chara'
-    __table_args__ = (
-        Index('dear_chara_0_event_id', 'event_id'),
-    )
 
     event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     chara_index: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -2115,9 +2113,6 @@ class DearChara(Base):
 
 class DearReward(Base):
     __tablename__ = 'dear_reward'
-    __table_args__ = (
-        Index('dear_reward_0_event_id_1_chara_index', 'event_id', 'chara_index'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     event_id: Mapped[int] = mapped_column(Integer)
@@ -2153,9 +2148,6 @@ class DearSetting(Base):
 
 class DearStoryDatum(Base):
     __tablename__ = 'dear_story_data'
-    __table_args__ = (
-        Index('dear_story_data_0_value', 'value'),
-    )
 
     story_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     story_type: Mapped[int] = mapped_column(Integer)
@@ -2169,10 +2161,6 @@ class DearStoryDatum(Base):
 
 class DearStoryDetail(Base):
     __tablename__ = 'dear_story_detail'
-    __table_args__ = (
-        Index('dear_story_detail_0_story_group_id', 'story_group_id'),
-        Index('dear_story_detail_0_story_group_id_1_chara_index', 'story_group_id', 'chara_index')
-    )
 
     story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     story_group_id: Mapped[int] = mapped_column(Integer)
@@ -2204,9 +2192,6 @@ class DearStoryDetail(Base):
 
 class DefineSpskill(Base):
     __tablename__ = 'define_spskill'
-    __table_args__ = (
-        Index('define_spskill_0_sp_skill_id', 'sp_skill_id'),
-    )
 
     link_skill_slot: Mapped[int] = mapped_column(Integer, primary_key=True)
     sp_skill_id: Mapped[int] = mapped_column(Integer)
@@ -2223,9 +2208,6 @@ class DodgeTpRecovery(Base):
 
 class DsbDramaScript(Base):
     __tablename__ = 'dsb_drama_script'
-    __table_args__ = (
-        Index('dsb_drama_script_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -2242,9 +2224,6 @@ class DsbDramaScript(Base):
 
 class DsbStoryDatum(Base):
     __tablename__ = 'dsb_story_data'
-    __table_args__ = (
-        Index('dsb_story_data_0_original_event_id', 'original_event_id'),
-    )
 
     sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     original_event_id: Mapped[int] = mapped_column(Integer)
@@ -2298,29 +2277,25 @@ class DungeonAreaDatum(Base):
     quest_position_x: Mapped[int] = mapped_column(Integer)
     quest_position_y: Mapped[int] = mapped_column(Integer)
     icon_id: Mapped[int] = mapped_column(Integer)
-    coin_item_id: Mapped[int] = mapped_column(Integer)
-    enemy_image_1: Mapped[int] = mapped_column(Integer)
-    enemy_image_2: Mapped[int] = mapped_column(Integer)
-    enemy_image_3: Mapped[int] = mapped_column(Integer)
-    enemy_image_4: Mapped[int] = mapped_column(Integer)
-    enemy_image_5: Mapped[int] = mapped_column(Integer)
-    view_reward_id_1: Mapped[int] = mapped_column(Integer)
-    view_reward_id_2: Mapped[int] = mapped_column(Integer)
-    view_reward_id_3: Mapped[int] = mapped_column(Integer)
-    view_reward_id_4: Mapped[int] = mapped_column(Integer)
-    view_reward_id_5: Mapped[int] = mapped_column(Integer)
+    _772bad40b2195f2ac6b761e4f89384f656e2bc5a1c925068e27a4951b336948d: Mapped[int] = mapped_column('772bad40b2195f2ac6b761e4f89384f656e2bc5a1c925068e27a4951b336948d', Integer)
+    b75d348f016e5fa1ec247c348619a01f68affc3b0550574e8d640ae98e9f74e9: Mapped[int] = mapped_column(Integer)
+    _53b3934ed2058cb51421b9ec87e9083c566eecfd2f9ae3e2ba91e645d2c3c350: Mapped[int] = mapped_column('53b3934ed2058cb51421b9ec87e9083c566eecfd2f9ae3e2ba91e645d2c3c350', Integer)
+    e585e1e10985a4d61b9040f95511f7471a7150530c658da852f15aa555fc4acc: Mapped[int] = mapped_column(Integer)
+    _76690757bfc3437e611020930ed815ec709fad6b11d1660e5aec166153070c54: Mapped[int] = mapped_column('76690757bfc3437e611020930ed815ec709fad6b11d1660e5aec166153070c54', Integer)
+    c84c84a07e42ee60059c0907b87f538e3b4384b67cf2a5847a4f261135840b12: Mapped[int] = mapped_column(Integer)
+    _7fe25621f885a62f575868427b0419f6f8ce9ec1cdeb68c3fce97cfe9e20f395: Mapped[int] = mapped_column('7fe25621f885a62f575868427b0419f6f8ce9ec1cdeb68c3fce97cfe9e20f395', Integer)
+    abc395e1a5b9ca61b4cd960917e94a08944925b053abcd77b3fc14f8da800a79: Mapped[int] = mapped_column(Integer)
+    d8d4d25445c3fd34abbac46e899526f1fdaadfd418e22f278f010b942ea350c9: Mapped[int] = mapped_column(Integer)
+    _48c386ac01cff557eff19a5d89840b3ce7c807b9e38d61621b6f0e9a33cbeeb2: Mapped[int] = mapped_column('48c386ac01cff557eff19a5d89840b3ce7c807b9e38d61621b6f0e9a33cbeeb2', Integer)
+    c263eeea2d9dfd8654300d96683356e56d8bb99f50329056307d331b7e46d3a5: Mapped[int] = mapped_column(Integer)
     recovery_hp_rate: Mapped[int] = mapped_column(Integer)
     recovery_tp_rate: Mapped[int] = mapped_column(Integer)
-    start_time: Mapped[str] = mapped_column(Text)
-    end_time: Mapped[str] = mapped_column(Text)
+    a2237ff345e1526121f23949496b5a45b02e2d1320e34270bf89c4f5a33d62cf: Mapped[str] = mapped_column(Text)
+    _383ad1deede8a20a0614044cfb2d8246fc49a3cb87e17728e2b83051a1e38838: Mapped[str] = mapped_column('383ad1deede8a20a0614044cfb2d8246fc49a3cb87e17728e2b83051a1e38838', Text)
 
 
 class DungeonPatternBattle(Base):
     __tablename__ = 'dungeon_pattern_battle'
-    __table_args__ = (
-        Index('dungeon_pattern_battle_0_quest_id', 'quest_id'),
-        Index('dungeon_pattern_battle_0_quest_id_1_pattern', 'quest_id', 'pattern', unique=True)
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     quest_id: Mapped[int] = mapped_column(Integer)
@@ -2344,10 +2319,6 @@ class DungeonPatternBattle(Base):
 
 class DungeonQuestDatum(Base):
     __tablename__ = 'dungeon_quest_data'
-    __table_args__ = (
-        Index('dungeon_quest_data_0_dungeon_area_id', 'dungeon_area_id'),
-        Index('dungeon_quest_data_0_dungeon_area_id_1_floor_num', 'dungeon_area_id', 'floor_num', unique=True)
-    )
 
     quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     dungeon_area_id: Mapped[int] = mapped_column(Integer)
@@ -2355,7 +2326,7 @@ class DungeonQuestDatum(Base):
     quest_type: Mapped[int] = mapped_column(Integer)
     wave_group_id: Mapped[int] = mapped_column(Integer)
     limit_time: Mapped[int] = mapped_column(Integer)
-    matching_coefficient: Mapped[float] = mapped_column(Float)
+    fa8c1660ccb2df9f7714b7841f6e6d88daae998a1d8a28f6e8e0bb803f979023: Mapped[float] = mapped_column(Float)
     parts_hp_save_flag: Mapped[int] = mapped_column(Integer)
     energy_reset_flag: Mapped[int] = mapped_column(Integer)
     emax: Mapped[int] = mapped_column(Integer)
@@ -2365,9 +2336,9 @@ class DungeonQuestDatum(Base):
     reward_image_4: Mapped[int] = mapped_column(Integer)
     reward_image_5: Mapped[int] = mapped_column(Integer)
     reward_image_6: Mapped[int] = mapped_column(Integer)
-    reward_coin: Mapped[int] = mapped_column(Integer)
+    _6feb2487bd68df5f29b2499dcfb27f42c8c69571bd4ac874de2d2c19bea200fe: Mapped[int] = mapped_column('6feb2487bd68df5f29b2499dcfb27f42c8c69571bd4ac874de2d2c19bea200fe', Integer)
     chest_id: Mapped[int] = mapped_column(Integer)
-    odds_group_id: Mapped[int] = mapped_column(Integer)
+    _3f61eaac9a9e6528d0fde628e4b03fbb70cc276abc3508c3768c2e94ea43772d: Mapped[int] = mapped_column('3f61eaac9a9e6528d0fde628e4b03fbb70cc276abc3508c3768c2e94ea43772d', Integer)
     background: Mapped[int] = mapped_column(Integer)
     dungeon_quest_detail_bg_id: Mapped[int] = mapped_column(Integer)
     dungeon_quest_detail_bg_position: Mapped[int] = mapped_column(Integer)
@@ -2394,10 +2365,6 @@ class DungeonSkipDatum(Base):
 
 class DungeonSpecialBattle(Base):
     __tablename__ = 'dungeon_special_battle'
-    __table_args__ = (
-        Index('dungeon_special_battle_0_quest_id', 'quest_id'),
-        Index('dungeon_special_battle_0_quest_id_1_mode', 'quest_id', 'mode', unique=True)
-    )
 
     special_battle_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     quest_id: Mapped[int] = mapped_column(Integer)
@@ -2419,8 +2386,6 @@ class DungeonSpecialEnemySetting(Base):
     __tablename__ = 'dungeon_special_enemy_setting'
     __table_args__ = (
         UniqueConstraint('special_battle_id', 'disp_order'),
-        Index('dungeon_special_enemy_setting_0_special_battle_id', 'special_battle_id'),
-        Index('dungeon_special_enemy_setting_0_special_battle_id_1_enemy_identify', 'special_battle_id', 'enemy_identify', unique=True)
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -2435,10 +2400,6 @@ class DungeonSpecialEnemySetting(Base):
 
 class DvsStoryDatum(Base):
     __tablename__ = 'dvs_story_data'
-    __table_args__ = (
-        Index('dvs_story_data_0_dvs_story_type', 'dvs_story_type'),
-        Index('dvs_story_data_0_original_event_id', 'original_event_id')
-    )
 
     sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     original_event_id: Mapped[int] = mapped_column(Integer)
@@ -2447,7 +2408,7 @@ class DvsStoryDatum(Base):
     detail_title: Mapped[str] = mapped_column(Text)
     detail_description: Mapped[str] = mapped_column(Text)
     dvs_story_type: Mapped[int] = mapped_column(Integer)
-    is_last: Mapped[int] = mapped_column(Integer)
+    _2479ee29a87aa1a46657d26aaac31007018239a4a68cd790d5740b2dae6bac7e: Mapped[int] = mapped_column('2479ee29a87aa1a46657d26aaac31007018239a4a68cd790d5740b2dae6bac7e', Integer)
     condition_quest_id: Mapped[int] = mapped_column(Integer)
     reward_type_1: Mapped[int] = mapped_column(Integer)
     reward_id_1: Mapped[int] = mapped_column(Integer)
@@ -2508,10 +2469,6 @@ class EmblemMissionDatum(Base):
 
 class EmblemMissionRewardDatum(Base):
     __tablename__ = 'emblem_mission_reward_data'
-    __table_args__ = (
-        Index('emblem_mission_reward_data_0_mission_reward_id', 'mission_reward_id'),
-        Index('emblem_mission_reward_data_0_reward_id', 'reward_id')
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     mission_reward_id: Mapped[int] = mapped_column(Integer)
@@ -2538,7 +2495,7 @@ class EnemyMParts(Base):
     __tablename__ = 'enemy_m_parts'
 
     enemy_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(Text)
+    _2871669de0c81b9fb035a5d07cbef3b5d66f730e08bdccec68be09931b66f8c8: Mapped[str] = mapped_column('2871669de0c81b9fb035a5d07cbef3b5d66f730e08bdccec68be09931b66f8c8', Text)
     child_enemy_parameter_1: Mapped[int] = mapped_column(Integer)
     child_enemy_parameter_2: Mapped[int] = mapped_column(Integer)
     child_enemy_parameter_3: Mapped[int] = mapped_column(Integer)
@@ -2660,9 +2617,6 @@ class EquipmentCraft(Base):
 
 class EquipmentDatum(Base):
     __tablename__ = 'equipment_data'
-    __table_args__ = (
-        Index('equipment_data_0_original_equipment_id', 'original_equipment_id'),
-    )
 
     equipment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     equipment_name: Mapped[str] = mapped_column(Text)
@@ -2719,9 +2673,9 @@ class EquipmentEnhanceRate(Base):
     __tablename__ = 'equipment_enhance_rate'
 
     equipment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    equipment_name: Mapped[str] = mapped_column(Text)
-    description: Mapped[str] = mapped_column(Text)
-    promotion_level: Mapped[int] = mapped_column(Integer)
+    _6eb82ef66dd64fd4498162e732de1bab26174a9dab3c43bc77dd2e2c5a68ae17: Mapped[str] = mapped_column('6eb82ef66dd64fd4498162e732de1bab26174a9dab3c43bc77dd2e2c5a68ae17', Text)
+    b4097c4f503f2dc647b86b00d333e5440b2297afcee86a760afc1ef791753cb8: Mapped[str] = mapped_column(Text)
+    ef2b36299663dcd6edc3e1c1bf47f5aa679b49b8dd7c95a020ae8af7adb1ac4e: Mapped[int] = mapped_column(Integer)
     hp: Mapped[float] = mapped_column(Float)
     atk: Mapped[float] = mapped_column(Float)
     magic_str: Mapped[float] = mapped_column(Float)
@@ -2883,9 +2837,6 @@ class EventEnemyRewardGroup(Base):
 
 class EventGachaDatum(Base):
     __tablename__ = 'event_gacha_data'
-    __table_args__ = (
-        Index('event_gacha_data_0_event_id', 'event_id'),
-    )
 
     gacha_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     event_id: Mapped[int] = mapped_column(Integer)
@@ -2898,9 +2849,6 @@ class EventGachaDatum(Base):
 
 class EventIntroduction(Base):
     __tablename__ = 'event_introduction'
-    __table_args__ = (
-        Index('event_introduction_0_event_id', 'event_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     event_id: Mapped[int] = mapped_column(Integer)
@@ -2950,9 +2898,6 @@ class EventNaviCommentCondition(Base):
 
 class EventReminder(Base):
     __tablename__ = 'event_reminder'
-    __table_args__ = (
-        Index('event_reminder_0_event_id', 'event_id'),
-    )
 
     reminder_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     event_id: Mapped[int] = mapped_column(Integer)
@@ -2969,9 +2914,6 @@ class EventReminder(Base):
 
 class EventReminderCondition(Base):
     __tablename__ = 'event_reminder_condition'
-    __table_args__ = (
-        Index('event_reminder_condition_0_reminder_id', 'reminder_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     reminder_id: Mapped[int] = mapped_column(Integer)
@@ -2984,45 +2926,45 @@ class EventRevivalSeriesWaveGroupDatum(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     wave_group_id: Mapped[int] = mapped_column(Integer)
-    difficulty: Mapped[int] = mapped_column(Integer)
-    wave: Mapped[int] = mapped_column(Integer)
-    match_lv_min: Mapped[int] = mapped_column(Integer)
-    match_lv_max: Mapped[int] = mapped_column(Integer)
+    _91cb551a67dc7797db88d57956fea94676e9cff18266bcf8eb625851c023d4d8: Mapped[int] = mapped_column('91cb551a67dc7797db88d57956fea94676e9cff18266bcf8eb625851c023d4d8', Integer)
+    _857ab048fe838223751bdaf87cba1968f31a615bc4bd9b7160a5220ae1bdc212: Mapped[int] = mapped_column('857ab048fe838223751bdaf87cba1968f31a615bc4bd9b7160a5220ae1bdc212', Integer)
+    a0eedaeb11af3b056ce4d29730104799209603c37d570f36b9ebe8c1e2c4b6ae: Mapped[int] = mapped_column(Integer)
+    _67b9eb34051085d992302cfb9aa03016e3b79fba66c298344b33dc350fd572a8: Mapped[int] = mapped_column('67b9eb34051085d992302cfb9aa03016e3b79fba66c298344b33dc350fd572a8', Integer)
     enemy_id_1: Mapped[int] = mapped_column(Integer)
     enemy_id_2: Mapped[int] = mapped_column(Integer)
     enemy_id_3: Mapped[int] = mapped_column(Integer)
     enemy_id_4: Mapped[int] = mapped_column(Integer)
     enemy_id_5: Mapped[int] = mapped_column(Integer)
-    drop_gold_1: Mapped[int] = mapped_column(Integer)
-    reward_group_id_1: Mapped[int] = mapped_column(Integer)
+    _24f9b3fcccb166d79bdc78edc481c5cb118873723b73007944cb11f004c45adf: Mapped[int] = mapped_column('24f9b3fcccb166d79bdc78edc481c5cb118873723b73007944cb11f004c45adf', Integer)
+    _80dd316dc46f1f4edc4a9f895b36f90f844c3521c48c5da937819332ea491df7: Mapped[int] = mapped_column('80dd316dc46f1f4edc4a9f895b36f90f844c3521c48c5da937819332ea491df7', Integer)
     disp_reward_type_1: Mapped[int] = mapped_column(Integer)
     disp_reward_id_1: Mapped[int] = mapped_column(Integer)
-    reward_lot_count_1: Mapped[int] = mapped_column(Integer)
-    reward_odds_1: Mapped[int] = mapped_column(Integer)
-    drop_gold_2: Mapped[int] = mapped_column(Integer)
-    reward_group_id_2: Mapped[int] = mapped_column(Integer)
+    f32f1463f55eb05e2be72fac8b582e413b7440c7d1dccc450686119887d540cf: Mapped[int] = mapped_column(Integer)
+    ae5cacd56d35fbca4726a1e3f683dcfa73af4a6c4d4e1223567f935e7dcbf3f0: Mapped[int] = mapped_column(Integer)
+    deda392cbea4d99218f3559efa09351103f788815cbc812216a4e6509cdb6827: Mapped[int] = mapped_column(Integer)
+    b95387cb3ebbb283470dea6bfc67e7ed3f8c5169847852d4eeacd7a417fc8538: Mapped[int] = mapped_column(Integer)
     disp_reward_type_2: Mapped[int] = mapped_column(Integer)
     disp_reward_id_2: Mapped[int] = mapped_column(Integer)
-    reward_lot_count_2: Mapped[int] = mapped_column(Integer)
-    reward_odds_2: Mapped[int] = mapped_column(Integer)
-    drop_gold_3: Mapped[int] = mapped_column(Integer)
-    reward_group_id_3: Mapped[int] = mapped_column(Integer)
+    ade3668f3addd9ed33b05c973fe080e019c20ebae1d38c6e07404cd6e0dc47fe: Mapped[int] = mapped_column(Integer)
+    _58faa28211ab032719246f141820e4a82e3cd883e2ab68802984db84c49b86ac: Mapped[int] = mapped_column('58faa28211ab032719246f141820e4a82e3cd883e2ab68802984db84c49b86ac', Integer)
+    _184bf38b170914e7db6780858b47dbe0ee0942350c0c36c2231e8d4c5720493e: Mapped[int] = mapped_column('184bf38b170914e7db6780858b47dbe0ee0942350c0c36c2231e8d4c5720493e', Integer)
+    _38efecfc22b1f8d99e648ac6db6b21edce5795db3200bbf7edf592310b7e6f24: Mapped[int] = mapped_column('38efecfc22b1f8d99e648ac6db6b21edce5795db3200bbf7edf592310b7e6f24', Integer)
     disp_reward_type_3: Mapped[int] = mapped_column(Integer)
     disp_reward_id_3: Mapped[int] = mapped_column(Integer)
-    reward_lot_count_3: Mapped[int] = mapped_column(Integer)
-    reward_odds_3: Mapped[int] = mapped_column(Integer)
-    drop_gold_4: Mapped[int] = mapped_column(Integer)
-    reward_group_id_4: Mapped[int] = mapped_column(Integer)
+    _57f419c86a49011b6568ee0ad01ed30f65ad7d274efad6aafe17392353d75d47: Mapped[int] = mapped_column('57f419c86a49011b6568ee0ad01ed30f65ad7d274efad6aafe17392353d75d47', Integer)
+    d1c553f4a5768da9fd39fb36d8c4b1b33707726b9eb32279fbe33f2fa7a60b49: Mapped[int] = mapped_column(Integer)
+    _9b9aa9d776994f53460b443a3feb32ace33ed9a20d3317aa1655beb9b9ffaea6: Mapped[int] = mapped_column('9b9aa9d776994f53460b443a3feb32ace33ed9a20d3317aa1655beb9b9ffaea6', Integer)
+    _0876e22d65af886bb195394af71d738e780f954d15946b71c994af6e50b14ede: Mapped[int] = mapped_column('0876e22d65af886bb195394af71d738e780f954d15946b71c994af6e50b14ede', Integer)
     disp_reward_type_4: Mapped[int] = mapped_column(Integer)
     disp_reward_id_4: Mapped[int] = mapped_column(Integer)
-    reward_lot_count_4: Mapped[int] = mapped_column(Integer)
-    reward_odds_4: Mapped[int] = mapped_column(Integer)
-    drop_gold_5: Mapped[int] = mapped_column(Integer)
-    reward_group_id_5: Mapped[int] = mapped_column(Integer)
+    _1fcbe455b96e4bf9748d77c33f37393c054bd87a45228cd7354d8e01bf46a3b5: Mapped[int] = mapped_column('1fcbe455b96e4bf9748d77c33f37393c054bd87a45228cd7354d8e01bf46a3b5', Integer)
+    _7c9fb1c36538427026925154eea96923c99a7b5a0fa83e1cad8591b8d51c3502: Mapped[int] = mapped_column('7c9fb1c36538427026925154eea96923c99a7b5a0fa83e1cad8591b8d51c3502', Integer)
+    _29bfd813923bc2f2de473c302f887077fb801e3566b260ed488f6f90a42a234b: Mapped[int] = mapped_column('29bfd813923bc2f2de473c302f887077fb801e3566b260ed488f6f90a42a234b', Integer)
+    ab23bbafd92a7f7f55848868cf989c840a0d4fb8f9e0c87db1f8e06d649b60ae: Mapped[int] = mapped_column(Integer)
     disp_reward_type_5: Mapped[int] = mapped_column(Integer)
     disp_reward_id_5: Mapped[int] = mapped_column(Integer)
-    reward_lot_count_5: Mapped[int] = mapped_column(Integer)
-    reward_odds_5: Mapped[int] = mapped_column(Integer)
+    _12e1b293bf16ab15933dde84141ae1551cbdf09195d8dbb192cf43125a65bb20: Mapped[int] = mapped_column('12e1b293bf16ab15933dde84141ae1551cbdf09195d8dbb192cf43125a65bb20', Integer)
+    a44cef4cdfa359d96a88723a24f7fb73037db7c1a43a6858764e4db45f28a5ff: Mapped[int] = mapped_column(Integer)
 
 
 class EventRevivalWaveGroupDatum(Base):
@@ -3030,45 +2972,45 @@ class EventRevivalWaveGroupDatum(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     wave_group_id: Mapped[int] = mapped_column(Integer)
-    difficulty: Mapped[int] = mapped_column(Integer)
-    wave: Mapped[int] = mapped_column(Integer)
-    match_lv_min: Mapped[int] = mapped_column(Integer)
-    match_lv_max: Mapped[int] = mapped_column(Integer)
+    _7e68255090d1fd28cabe385f8bd75b9ddb36246be6d1b6c831d6841a678ae53f: Mapped[int] = mapped_column('7e68255090d1fd28cabe385f8bd75b9ddb36246be6d1b6c831d6841a678ae53f', Integer)
+    _28adf3d470d399a89c8f58d40fc7c404c89b096a5b85803e304db2662347fd31: Mapped[int] = mapped_column('28adf3d470d399a89c8f58d40fc7c404c89b096a5b85803e304db2662347fd31', Integer)
+    fbd6f35f7606a75f81990b5ee589b81aa3a455cc81d8df11e3993b44505bc508: Mapped[int] = mapped_column(Integer)
+    cd3b326d8960ad636f5a77a7860da0f22d7098eda6a575570d6b1a08d507e41b: Mapped[int] = mapped_column(Integer)
     enemy_id_1: Mapped[int] = mapped_column(Integer)
     enemy_id_2: Mapped[int] = mapped_column(Integer)
     enemy_id_3: Mapped[int] = mapped_column(Integer)
     enemy_id_4: Mapped[int] = mapped_column(Integer)
     enemy_id_5: Mapped[int] = mapped_column(Integer)
-    drop_gold_1: Mapped[int] = mapped_column(Integer)
-    reward_group_id_1: Mapped[int] = mapped_column(Integer)
+    _09a5e5a19e834252753002bd00adab85644acea19f13afcbf4da401c40b6674b: Mapped[int] = mapped_column('09a5e5a19e834252753002bd00adab85644acea19f13afcbf4da401c40b6674b', Integer)
+    _29964022da6c4c6811d23335d0b75295548d2e03ae94c8517d4e9d99b95e46a4: Mapped[int] = mapped_column('29964022da6c4c6811d23335d0b75295548d2e03ae94c8517d4e9d99b95e46a4', Integer)
     disp_reward_type_1: Mapped[int] = mapped_column(Integer)
     disp_reward_id_1: Mapped[int] = mapped_column(Integer)
-    reward_lot_count_1: Mapped[int] = mapped_column(Integer)
-    reward_odds_1: Mapped[int] = mapped_column(Integer)
-    drop_gold_2: Mapped[int] = mapped_column(Integer)
-    reward_group_id_2: Mapped[int] = mapped_column(Integer)
+    abe507df3181355f4ed76f54fff8f2d93f8b387e00e492661248f23352a655df: Mapped[int] = mapped_column(Integer)
+    _2f18bca328a4f7a4662298abfe8808a54f06d50fe5e9c594b5846e3eecd27e84: Mapped[int] = mapped_column('2f18bca328a4f7a4662298abfe8808a54f06d50fe5e9c594b5846e3eecd27e84', Integer)
+    _338e5e1eb04d8ac18d6499e36e5ad81602cffe20ba70f85773b7e7ce67a3dbd8: Mapped[int] = mapped_column('338e5e1eb04d8ac18d6499e36e5ad81602cffe20ba70f85773b7e7ce67a3dbd8', Integer)
+    ad1961172f54bd49735eaef2e3b380d1ca4ff7c9e78fb7d5e89844835c49f1e9: Mapped[int] = mapped_column(Integer)
     disp_reward_type_2: Mapped[int] = mapped_column(Integer)
     disp_reward_id_2: Mapped[int] = mapped_column(Integer)
-    reward_lot_count_2: Mapped[int] = mapped_column(Integer)
-    reward_odds_2: Mapped[int] = mapped_column(Integer)
-    drop_gold_3: Mapped[int] = mapped_column(Integer)
-    reward_group_id_3: Mapped[int] = mapped_column(Integer)
+    f0345c2e6f5db56b6acb2e7573eeff8cda06e1599f6401426f0739e70847ca75: Mapped[int] = mapped_column(Integer)
+    _56b57293759ad803da320fafc3bfaf8a0ea39f89452c1b6f08554e259d0cbf9f: Mapped[int] = mapped_column('56b57293759ad803da320fafc3bfaf8a0ea39f89452c1b6f08554e259d0cbf9f', Integer)
+    _84396614330e3d9a58e4f3d0c58017fddc8b0874f9d719accc5c7955bb54b6cd: Mapped[int] = mapped_column('84396614330e3d9a58e4f3d0c58017fddc8b0874f9d719accc5c7955bb54b6cd', Integer)
+    b980eca3c7ca28587d4fdee12e77c39a418634336618569a6170ea083128b7d4: Mapped[int] = mapped_column(Integer)
     disp_reward_type_3: Mapped[int] = mapped_column(Integer)
     disp_reward_id_3: Mapped[int] = mapped_column(Integer)
-    reward_lot_count_3: Mapped[int] = mapped_column(Integer)
-    reward_odds_3: Mapped[int] = mapped_column(Integer)
-    drop_gold_4: Mapped[int] = mapped_column(Integer)
-    reward_group_id_4: Mapped[int] = mapped_column(Integer)
+    _9205819f02ec3aefb7eae8422300d568fe4b4bb3057401b56e61b0c4fd795f79: Mapped[int] = mapped_column('9205819f02ec3aefb7eae8422300d568fe4b4bb3057401b56e61b0c4fd795f79', Integer)
+    _46c762e9b5f8004b6063daaad12074aff7d4785dbb5532b2d293e08320aa8583: Mapped[int] = mapped_column('46c762e9b5f8004b6063daaad12074aff7d4785dbb5532b2d293e08320aa8583', Integer)
+    _8965e657c3f381b8d9996c335ef0e7e864d6dfaf45c25948d8b5afa3171cd2d0: Mapped[int] = mapped_column('8965e657c3f381b8d9996c335ef0e7e864d6dfaf45c25948d8b5afa3171cd2d0', Integer)
+    eae7080c34ab175d61c57da1573f9f6d6e308daf32e5d75352b775a872e02fd0: Mapped[int] = mapped_column(Integer)
     disp_reward_type_4: Mapped[int] = mapped_column(Integer)
     disp_reward_id_4: Mapped[int] = mapped_column(Integer)
-    reward_lot_count_4: Mapped[int] = mapped_column(Integer)
-    reward_odds_4: Mapped[int] = mapped_column(Integer)
-    drop_gold_5: Mapped[int] = mapped_column(Integer)
-    reward_group_id_5: Mapped[int] = mapped_column(Integer)
+    fdf3eb7263f8561227c912a31f008604cee092aa18a4c6d3f4590c3226d76048: Mapped[int] = mapped_column(Integer)
+    a301ba8cd433812209d5c777b249c9763f315865892bd3d66b4ebbae870ea6a6: Mapped[int] = mapped_column(Integer)
+    _9678ecb04fa6d2eab8c34e911b369267f17699557fc1d46c8c17eb42120b5285: Mapped[int] = mapped_column('9678ecb04fa6d2eab8c34e911b369267f17699557fc1d46c8c17eb42120b5285', Integer)
+    _4f8b373771d7f52ca0e9da634d994a96aab051dd6d3ea76a2b4e5f4b88a28d4c: Mapped[int] = mapped_column('4f8b373771d7f52ca0e9da634d994a96aab051dd6d3ea76a2b4e5f4b88a28d4c', Integer)
     disp_reward_type_5: Mapped[int] = mapped_column(Integer)
     disp_reward_id_5: Mapped[int] = mapped_column(Integer)
-    reward_lot_count_5: Mapped[int] = mapped_column(Integer)
-    reward_odds_5: Mapped[int] = mapped_column(Integer)
+    _681650ce5ba0247e57928bc630e42f592d99ea064aab6a66e032f1644d7c9cfe: Mapped[int] = mapped_column('681650ce5ba0247e57928bc630e42f592d99ea064aab6a66e032f1644d7c9cfe', Integer)
+    _1416b729cdc9c34b8a919c68d111271d2981c3a84db57d3cc7fca94df6efb170: Mapped[int] = mapped_column('1416b729cdc9c34b8a919c68d111271d2981c3a84db57d3cc7fca94df6efb170', Integer)
 
 
 class EventSeriesWaveGroupDatum(Base):
@@ -3076,52 +3018,49 @@ class EventSeriesWaveGroupDatum(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     wave_group_id: Mapped[int] = mapped_column(Integer)
-    difficulty: Mapped[int] = mapped_column(Integer)
-    wave: Mapped[int] = mapped_column(Integer)
-    match_lv_min: Mapped[int] = mapped_column(Integer)
-    match_lv_max: Mapped[int] = mapped_column(Integer)
+    _6faac35d2b42209e91355deaaadb1d2128d3a0175498902b933dc871071844c2: Mapped[int] = mapped_column('6faac35d2b42209e91355deaaadb1d2128d3a0175498902b933dc871071844c2', Integer)
+    a18f1de895d39a0ae6c5b7642b12f4590a9a0054264d288baac83bbe9675f8f1: Mapped[int] = mapped_column(Integer)
+    b7b36683f0bda838e6cb55e14ec8d96573b97e746ddf8f344c087cb7404516d2: Mapped[int] = mapped_column(Integer)
+    c1516c9991feff10e045cc767163ae41b8ef046493510a30826f13cfacc3308f: Mapped[int] = mapped_column(Integer)
     enemy_id_1: Mapped[int] = mapped_column(Integer)
     enemy_id_2: Mapped[int] = mapped_column(Integer)
     enemy_id_3: Mapped[int] = mapped_column(Integer)
     enemy_id_4: Mapped[int] = mapped_column(Integer)
     enemy_id_5: Mapped[int] = mapped_column(Integer)
-    drop_gold_1: Mapped[int] = mapped_column(Integer)
-    reward_group_id_1: Mapped[int] = mapped_column(Integer)
+    _9fb4a74ffd60afff6b6227408a1ae56ecd58462504aadec088495c9e7c65db43: Mapped[int] = mapped_column('9fb4a74ffd60afff6b6227408a1ae56ecd58462504aadec088495c9e7c65db43', Integer)
+    _25aaf09e70dab532e13801b2fb5b84a9f31b5002426f4cf2fa8436273ae7638c: Mapped[int] = mapped_column('25aaf09e70dab532e13801b2fb5b84a9f31b5002426f4cf2fa8436273ae7638c', Integer)
     disp_reward_type_1: Mapped[int] = mapped_column(Integer)
     disp_reward_id_1: Mapped[int] = mapped_column(Integer)
-    reward_lot_count_1: Mapped[int] = mapped_column(Integer)
-    reward_odds_1: Mapped[int] = mapped_column(Integer)
-    drop_gold_2: Mapped[int] = mapped_column(Integer)
-    reward_group_id_2: Mapped[int] = mapped_column(Integer)
+    _7a0e80b6a6a525ab2aa7816a837f2de6a45824168053241d27de2cf3a894c88f: Mapped[int] = mapped_column('7a0e80b6a6a525ab2aa7816a837f2de6a45824168053241d27de2cf3a894c88f', Integer)
+    _854474bba103411444f5b2377c7235c573f9bb25d7e2f76ab44447cd52d7ba89: Mapped[int] = mapped_column('854474bba103411444f5b2377c7235c573f9bb25d7e2f76ab44447cd52d7ba89', Integer)
+    _4333f36b27e02a844743f721030af880276220afb95eecde086845cd15ad879f: Mapped[int] = mapped_column('4333f36b27e02a844743f721030af880276220afb95eecde086845cd15ad879f', Integer)
+    _3bed9f0df21bce7e22ca4e1d2dd87b9c08a6a2cd71790c8f833cf0f75f866638: Mapped[int] = mapped_column('3bed9f0df21bce7e22ca4e1d2dd87b9c08a6a2cd71790c8f833cf0f75f866638', Integer)
     disp_reward_type_2: Mapped[int] = mapped_column(Integer)
     disp_reward_id_2: Mapped[int] = mapped_column(Integer)
-    reward_lot_count_2: Mapped[int] = mapped_column(Integer)
-    reward_odds_2: Mapped[int] = mapped_column(Integer)
-    drop_gold_3: Mapped[int] = mapped_column(Integer)
-    reward_group_id_3: Mapped[int] = mapped_column(Integer)
+    bc87a23632c6db57b97098dd3fcb91132b510b509885ff30a358274bc1b5e1c5: Mapped[int] = mapped_column(Integer)
+    dc1828506fff984f10f178681ae7cfa2ac6cb4ec906f05ebf484b77d711259b4: Mapped[int] = mapped_column(Integer)
+    _28e12b6e6cb128735111281f9cf7b0c8a23396ba853d19b5ce9e85c0896f18a5: Mapped[int] = mapped_column('28e12b6e6cb128735111281f9cf7b0c8a23396ba853d19b5ce9e85c0896f18a5', Integer)
+    _410f8c13ed36b71801d62b84657b384cfefc1f11e6c3d9dc193c5ca2640bda10: Mapped[int] = mapped_column('410f8c13ed36b71801d62b84657b384cfefc1f11e6c3d9dc193c5ca2640bda10', Integer)
     disp_reward_type_3: Mapped[int] = mapped_column(Integer)
     disp_reward_id_3: Mapped[int] = mapped_column(Integer)
-    reward_lot_count_3: Mapped[int] = mapped_column(Integer)
-    reward_odds_3: Mapped[int] = mapped_column(Integer)
-    drop_gold_4: Mapped[int] = mapped_column(Integer)
-    reward_group_id_4: Mapped[int] = mapped_column(Integer)
+    _7252543e0fe18261579847187ee832ebb8f4063d72ff4fa97581c510ca82848b: Mapped[int] = mapped_column('7252543e0fe18261579847187ee832ebb8f4063d72ff4fa97581c510ca82848b', Integer)
+    a90cfff2ce45c3892eeeaa7b58778d05ad15f672b680f927067a5ee3ccce7b0c: Mapped[int] = mapped_column(Integer)
+    _8fcb4d8bfe27fc6977ba1f17ca8e7f657ba291ed0994acb8baac261e01d1c6a9: Mapped[int] = mapped_column('8fcb4d8bfe27fc6977ba1f17ca8e7f657ba291ed0994acb8baac261e01d1c6a9', Integer)
+    _0b64ba2a678cc1ff40c6ade135da6b0e423a799a0c4f39f78c4ef32c928ac074: Mapped[int] = mapped_column('0b64ba2a678cc1ff40c6ade135da6b0e423a799a0c4f39f78c4ef32c928ac074', Integer)
     disp_reward_type_4: Mapped[int] = mapped_column(Integer)
     disp_reward_id_4: Mapped[int] = mapped_column(Integer)
-    reward_lot_count_4: Mapped[int] = mapped_column(Integer)
-    reward_odds_4: Mapped[int] = mapped_column(Integer)
-    drop_gold_5: Mapped[int] = mapped_column(Integer)
-    reward_group_id_5: Mapped[int] = mapped_column(Integer)
+    acea8fcde35065bca1ddfae0d4e31c2ddd24c4fc01d607ec2f2b3b69069b3b3b: Mapped[int] = mapped_column(Integer)
+    b413d7f220313b43a83f0335a08c607ee2962e5e61e6815e12bb303e6bde8b17: Mapped[int] = mapped_column(Integer)
+    b1383fbfce44054134dea4bea9c789cce4d9fb4af68f614117aed8ada4bf132b: Mapped[int] = mapped_column(Integer)
+    _6343b925930cf1ba7650dcd18208267b51962195422c1aef7ea7612fb5b88da6: Mapped[int] = mapped_column('6343b925930cf1ba7650dcd18208267b51962195422c1aef7ea7612fb5b88da6', Integer)
     disp_reward_type_5: Mapped[int] = mapped_column(Integer)
     disp_reward_id_5: Mapped[int] = mapped_column(Integer)
-    reward_lot_count_5: Mapped[int] = mapped_column(Integer)
-    reward_odds_5: Mapped[int] = mapped_column(Integer)
+    _10bd97cd9993c7dc3d2decf886ab8a80a7498c326b99f627f9ad2dc8380e4be1: Mapped[int] = mapped_column('10bd97cd9993c7dc3d2decf886ab8a80a7498c326b99f627f9ad2dc8380e4be1', Integer)
+    _5cffc491e844eb625ea5cab523ab35c6a397857b6f7508e4a8286a1033f1ad55: Mapped[int] = mapped_column('5cffc491e844eb625ea5cab523ab35c6a397857b6f7508e4a8286a1033f1ad55', Integer)
 
 
 class EventStoryDatum(Base):
     __tablename__ = 'event_story_data'
-    __table_args__ = (
-        Index('event_story_data_0_value', 'value'),
-    )
 
     story_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     story_type: Mapped[int] = mapped_column(Integer)
@@ -3135,9 +3074,6 @@ class EventStoryDatum(Base):
 
 class EventStoryDetail(Base):
     __tablename__ = 'event_story_detail'
-    __table_args__ = (
-        Index('event_story_detail_0_story_group_id', 'story_group_id'),
-    )
 
     story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     story_group_id: Mapped[int] = mapped_column(Integer)
@@ -3152,6 +3088,7 @@ class EventStoryDetail(Base):
     unlock_quest_id: Mapped[int] = mapped_column(Integer)
     story_quest_id: Mapped[int] = mapped_column(Integer)
     lock_all_text: Mapped[int] = mapped_column(Integer)
+    can_bookmark: Mapped[int] = mapped_column(Integer)
     reward_type_1: Mapped[int] = mapped_column(Integer)
     reward_id_1: Mapped[int] = mapped_column(Integer)
     reward_value_1: Mapped[int] = mapped_column(Integer)
@@ -3167,9 +3104,6 @@ class EventStoryDetail(Base):
 
 class EventTopAdv(Base):
     __tablename__ = 'event_top_adv'
-    __table_args__ = (
-        Index('event_top_adv_0_event_id_1_type', 'event_id', 'type'),
-    )
 
     event_top_adv_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     event_id: Mapped[int] = mapped_column(Integer)
@@ -3294,9 +3228,6 @@ class ExEquipmentDatum(Base):
 
 class ExEquipmentEnhanceDatum(Base):
     __tablename__ = 'ex_equipment_enhance_data'
-    __table_args__ = (
-        Index('ex_equipment_enhance_data_0_rarity', 'rarity'),
-    )
 
     rarity: Mapped[int] = mapped_column(Integer, primary_key=True)
     enhance_level: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -3325,12 +3256,33 @@ class ExEquipmentRecycleReward(Base):
 
 class ExEquipmentRestrictionUnit(Base):
     __tablename__ = 'ex_equipment_restriction_unit'
-    __table_args__ = (
-        Index('ex_equipment_restriction_unit_0_restriction_id', 'restriction_id'),
-    )
 
     restriction_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+
+class ExPlus(Base):
+    __tablename__ = 'ex_plus'
+
+    event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    mode: Mapped[int] = mapped_column(Integer, primary_key=True)
+    recommended_level: Mapped[int] = mapped_column(Integer)
+    purpose_type: Mapped[int] = mapped_column(Integer)
+    purpose_count: Mapped[int] = mapped_column(Integer)
+    trigger_hp: Mapped[int] = mapped_column(Integer)
+    story_id_mode_start: Mapped[int] = mapped_column(Integer)
+    story_id_mode_end: Mapped[int] = mapped_column(Integer)
+    wave_group_id: Mapped[int] = mapped_column(Integer)
+    unnecessary_defeat_chara: Mapped[int] = mapped_column(Integer)
+    story_start_second: Mapped[float] = mapped_column(Float)
+    action_start_second: Mapped[float] = mapped_column(Float)
+    hp_gauge_color_flag: Mapped[int] = mapped_column(Integer)
+    start_idle_trigger: Mapped[int] = mapped_column(Integer)
+    appear_time: Mapped[float] = mapped_column(Float)
+    detail_boss_bg_size: Mapped[float] = mapped_column(Float)
+    detail_boss_bg_height: Mapped[float] = mapped_column(Float)
+    detail_boss_motion: Mapped[str] = mapped_column(Text)
+    is_hide_boss: Mapped[int] = mapped_column(Integer)
 
 
 class ExceedLevelStage(Base):
@@ -3345,9 +3297,6 @@ class ExceedLevelStage(Base):
 
 class ExceedLevelUnit(Base):
     __tablename__ = 'exceed_level_unit'
-    __table_args__ = (
-        Index('exceed_level_unit_0_unit_id', 'unit_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer)
     unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -3393,6 +3342,42 @@ class ExperienceUnit(Base):
     total_exp: Mapped[int] = mapped_column(Integer)
 
 
+class ExtraEffectDatum(Base):
+    __tablename__ = 'extra_effect_data'
+
+    extra_effect_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    content_type: Mapped[int] = mapped_column(Integer)
+    target_value_1: Mapped[int] = mapped_column(Integer)
+    target_value_2: Mapped[int] = mapped_column(Integer)
+    set_id: Mapped[int] = mapped_column(Integer)
+    exec_timing_1: Mapped[int] = mapped_column(Integer)
+    exec_timing_2: Mapped[int] = mapped_column(Integer)
+    exec_timing_3: Mapped[int] = mapped_column(Integer)
+    exec_timing_4: Mapped[int] = mapped_column(Integer)
+    exec_timing_5: Mapped[int] = mapped_column(Integer)
+    enemy_id_1: Mapped[int] = mapped_column(Integer)
+    enemy_id_2: Mapped[int] = mapped_column(Integer)
+    enemy_id_3: Mapped[int] = mapped_column(Integer)
+    enemy_id_4: Mapped[int] = mapped_column(Integer)
+    enemy_id_5: Mapped[int] = mapped_column(Integer)
+
+
+class ExtraEffectTargetRange(Base):
+    __tablename__ = 'extra_effect_target_range'
+
+    target_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    set_id: Mapped[int] = mapped_column(Integer)
+    group_id: Mapped[int] = mapped_column(Integer)
+
+
+class ExtraEffectUnitGroup(Base):
+    __tablename__ = 'extra_effect_unit_group'
+
+    target_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    group_id: Mapped[int] = mapped_column(Integer)
+    unit_id: Mapped[int] = mapped_column(Integer)
+
+
 class FbsSchedule(Base):
     __tablename__ = 'fbs_schedule'
 
@@ -3404,9 +3389,6 @@ class FbsSchedule(Base):
 
 class FixLineupGroupSet(Base):
     __tablename__ = 'fix_lineup_group_set'
-    __table_args__ = (
-        Index('fix_lineup_group_set_0_team_level_from_1_team_level_to', 'team_level_from', 'team_level_to'),
-    )
 
     lineup_group_set_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     team_level_from: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -3540,128 +3522,128 @@ class FixLineupGroupSetDatum(Base):
     lineup_group_set_id: Mapped[int] = mapped_column(Integer)
     team_level_from: Mapped[int] = mapped_column(Integer)
     team_level_to: Mapped[int] = mapped_column(Integer)
-    box_count_from: Mapped[int] = mapped_column(Integer)
-    box_count_to: Mapped[int] = mapped_column(Integer)
-    reward_type_1: Mapped[int] = mapped_column(Integer)
+    a7072d4062c755f987907bd4600f3ef0087d4e142f52651eba59d33de4cb8621: Mapped[int] = mapped_column(Integer)
+    _52230f511fe69a4f9a9ad17e7699602e24f1d077d60f545b283d8147d59ce3cb: Mapped[int] = mapped_column('52230f511fe69a4f9a9ad17e7699602e24f1d077d60f545b283d8147d59ce3cb', Integer)
+    _7f4d4168c2e1d716ebb3736c699e4aaefc958c6dbae70cfa98a8d1946683bbe6: Mapped[int] = mapped_column('7f4d4168c2e1d716ebb3736c699e4aaefc958c6dbae70cfa98a8d1946683bbe6', Integer)
     reward_id_1: Mapped[int] = mapped_column(Integer)
-    reward_count_1: Mapped[int] = mapped_column(Integer)
-    price_type_1: Mapped[int] = mapped_column(Integer)
-    currency_id_1: Mapped[int] = mapped_column(Integer)
-    price_1: Mapped[int] = mapped_column(Integer)
-    reward_type_2: Mapped[int] = mapped_column(Integer)
+    a3308bfdd255cf309d99c657f12153e076874e5a6255d4a87a5fbc1611eaa1ac: Mapped[int] = mapped_column(Integer)
+    b45cc4ebc338466130eca178014080469dce6bbbfb5354910f7c90ff7ca8a342: Mapped[int] = mapped_column(Integer)
+    _2cbb1904c66cfbb57284c90bb89067041feee1ee412cecb339d35ce401f89beb: Mapped[int] = mapped_column('2cbb1904c66cfbb57284c90bb89067041feee1ee412cecb339d35ce401f89beb', Integer)
+    _75e3bd5ac53ce641291ab801cccbe419483627542f67e91ce7b205d26306d9a7: Mapped[int] = mapped_column('75e3bd5ac53ce641291ab801cccbe419483627542f67e91ce7b205d26306d9a7', Integer)
+    e86b0f3884bcd94f19751cb52864725fb8885ea7866ac74e5ec4be123ecf0e47: Mapped[int] = mapped_column(Integer)
     reward_id_2: Mapped[int] = mapped_column(Integer)
-    reward_count_2: Mapped[int] = mapped_column(Integer)
-    price_type_2: Mapped[int] = mapped_column(Integer)
-    currency_id_2: Mapped[int] = mapped_column(Integer)
-    price_2: Mapped[int] = mapped_column(Integer)
-    reward_type_3: Mapped[int] = mapped_column(Integer)
+    _0ef298e1962e778bf467a091cdfc87a14981deadc1453151254e65cf7ae61eb6: Mapped[int] = mapped_column('0ef298e1962e778bf467a091cdfc87a14981deadc1453151254e65cf7ae61eb6', Integer)
+    a8b8f07c5bc0f4391111fd670142814423f2f32c9947d046b78b2df889693060: Mapped[int] = mapped_column(Integer)
+    _2b9ebdee26eca313523ac1e2292f449f40e5f0a082f290a62c0824eeba498ae1: Mapped[int] = mapped_column('2b9ebdee26eca313523ac1e2292f449f40e5f0a082f290a62c0824eeba498ae1', Integer)
+    _379ed002344ef74af6c47880031e5a1e2207a00ed6cb0a9f3e9443e9e56e443b: Mapped[int] = mapped_column('379ed002344ef74af6c47880031e5a1e2207a00ed6cb0a9f3e9443e9e56e443b', Integer)
+    d464ec7502a4ecafa3cbbbf5a566075a2c16981b085e15981785e2d3aaea678e: Mapped[int] = mapped_column(Integer)
     reward_id_3: Mapped[int] = mapped_column(Integer)
-    reward_count_3: Mapped[int] = mapped_column(Integer)
-    price_type_3: Mapped[int] = mapped_column(Integer)
-    currency_id_3: Mapped[int] = mapped_column(Integer)
-    price_3: Mapped[int] = mapped_column(Integer)
-    reward_type_4: Mapped[int] = mapped_column(Integer)
+    e568e4bcc07537aa0eca1e461e719fb8217bb09de03f53304a8a621ea79de0ce: Mapped[int] = mapped_column(Integer)
+    _2a340f7a704cce568ef64a4f26b66444ce92ac449cf9693c4908c748537db589: Mapped[int] = mapped_column('2a340f7a704cce568ef64a4f26b66444ce92ac449cf9693c4908c748537db589', Integer)
+    fd0993a1fce2699b0e195abeff59c07aa13ff300f5fd6fe4a7820fe4046b3030: Mapped[int] = mapped_column(Integer)
+    _780f654807112a555a9670a73814c0312d0ea4360c590ed8ddf478300f9bf00c: Mapped[int] = mapped_column('780f654807112a555a9670a73814c0312d0ea4360c590ed8ddf478300f9bf00c', Integer)
+    _7aa67977d1f13b57afa5fd6a39a3a09d19d6a4ded513f2a4a96caddddb9f9ad5: Mapped[int] = mapped_column('7aa67977d1f13b57afa5fd6a39a3a09d19d6a4ded513f2a4a96caddddb9f9ad5', Integer)
     reward_id_4: Mapped[int] = mapped_column(Integer)
-    reward_count_4: Mapped[int] = mapped_column(Integer)
-    price_type_4: Mapped[int] = mapped_column(Integer)
-    currency_id_4: Mapped[int] = mapped_column(Integer)
-    price_4: Mapped[int] = mapped_column(Integer)
-    reward_type_5: Mapped[int] = mapped_column(Integer)
+    _778959c80c43cdaf8bff711216711375c5aafed8fb942c86d399c3513aa8c89d: Mapped[int] = mapped_column('778959c80c43cdaf8bff711216711375c5aafed8fb942c86d399c3513aa8c89d', Integer)
+    _678a354f39de2ca7a10f442a62bbb4c42930f628af9116c0ad38d7eff87a2e7e: Mapped[int] = mapped_column('678a354f39de2ca7a10f442a62bbb4c42930f628af9116c0ad38d7eff87a2e7e', Integer)
+    d24e33b07c00e507fa0d22afc4d8173a263a3a8bfe104053b4c3f2fd0b070ff0: Mapped[int] = mapped_column(Integer)
+    a9f8839ec979053360114752293f3e1021d09f0009f8f0f0ba68d4366c231355: Mapped[int] = mapped_column(Integer)
+    _99dab7e9f7ebbdea6553ef8f636eacb816ae45d94c0638557ade0d71bf3adf22: Mapped[int] = mapped_column('99dab7e9f7ebbdea6553ef8f636eacb816ae45d94c0638557ade0d71bf3adf22', Integer)
     reward_id_5: Mapped[int] = mapped_column(Integer)
-    reward_count_5: Mapped[int] = mapped_column(Integer)
-    price_type_5: Mapped[int] = mapped_column(Integer)
-    currency_id_5: Mapped[int] = mapped_column(Integer)
-    price_5: Mapped[int] = mapped_column(Integer)
-    reward_type_6: Mapped[int] = mapped_column(Integer)
+    _461c3885ce0d57cc0b08fe515d6920bcfdf59caf23466628f868e2bdbf31f555: Mapped[int] = mapped_column('461c3885ce0d57cc0b08fe515d6920bcfdf59caf23466628f868e2bdbf31f555', Integer)
+    d91751db33ac743bb712f5b748e971b37b00a8287c3c3f40ac003b469597393c: Mapped[int] = mapped_column(Integer)
+    _662909eece59f4c78481795824bd69017ac9d5be8c449705942689902cc89959: Mapped[int] = mapped_column('662909eece59f4c78481795824bd69017ac9d5be8c449705942689902cc89959', Integer)
+    _23960b00f3aa888c2ac717941a25e60ca417bda3291277638d84fee9311a836b: Mapped[int] = mapped_column('23960b00f3aa888c2ac717941a25e60ca417bda3291277638d84fee9311a836b', Integer)
+    _32117e822075b5582467445fd57137d53cbd5831c99b72de75565b5798a0e90a: Mapped[int] = mapped_column('32117e822075b5582467445fd57137d53cbd5831c99b72de75565b5798a0e90a', Integer)
     reward_id_6: Mapped[int] = mapped_column(Integer)
-    reward_count_6: Mapped[int] = mapped_column(Integer)
-    price_type_6: Mapped[int] = mapped_column(Integer)
-    currency_id_6: Mapped[int] = mapped_column(Integer)
-    price_6: Mapped[int] = mapped_column(Integer)
-    reward_type_7: Mapped[int] = mapped_column(Integer)
+    _069b5cb6a65e3da5929e876bd9d24b2d95eadc39d7194a13058987d3ef99c7ef: Mapped[int] = mapped_column('069b5cb6a65e3da5929e876bd9d24b2d95eadc39d7194a13058987d3ef99c7ef', Integer)
+    _4a0056d65db7a9d2aa1dbc1ee8ba6d21528eea15471b2a8bfdb7674727f63cd3: Mapped[int] = mapped_column('4a0056d65db7a9d2aa1dbc1ee8ba6d21528eea15471b2a8bfdb7674727f63cd3', Integer)
+    _77179dcab1daa21132a4b6e672a80d40c00e289603ff5e9fd89e9cfefc611866: Mapped[int] = mapped_column('77179dcab1daa21132a4b6e672a80d40c00e289603ff5e9fd89e9cfefc611866', Integer)
+    d9c8ae462ddba9eee15badfdad639079881d863d15f486756fb821acde9a3db5: Mapped[int] = mapped_column(Integer)
+    b8342e06a3e71c0c465294c0348e0109ae6057ed7b7271b79418981bee3e820c: Mapped[int] = mapped_column(Integer)
     reward_id_7: Mapped[int] = mapped_column(Integer)
-    reward_count_7: Mapped[int] = mapped_column(Integer)
-    price_type_7: Mapped[int] = mapped_column(Integer)
-    currency_id_7: Mapped[int] = mapped_column(Integer)
-    price_7: Mapped[int] = mapped_column(Integer)
-    reward_type_8: Mapped[int] = mapped_column(Integer)
+    _8d15fed9f613cd71d66c7f05f42bb0bbfaf563dcf89886c422b26a44130ddba9: Mapped[int] = mapped_column('8d15fed9f613cd71d66c7f05f42bb0bbfaf563dcf89886c422b26a44130ddba9', Integer)
+    _8a3caf5c1189351ca9bf5c6576c965630d9d6514514a722679a680ba270a4021: Mapped[int] = mapped_column('8a3caf5c1189351ca9bf5c6576c965630d9d6514514a722679a680ba270a4021', Integer)
+    _7d1fc622cb9c412ce04b4b5ba746ab39a376b6def328418dfca27f2ae3c82b3f: Mapped[int] = mapped_column('7d1fc622cb9c412ce04b4b5ba746ab39a376b6def328418dfca27f2ae3c82b3f', Integer)
+    adc9e6d1af4f11685aced907ddf484270f4f477b956b4916685db6da7e13b0f3: Mapped[int] = mapped_column(Integer)
+    bd837c236ac801bdfd73d4676bc7b508d5c11592200484d4021077a71267a048: Mapped[int] = mapped_column(Integer)
     reward_id_8: Mapped[int] = mapped_column(Integer)
-    reward_count_8: Mapped[int] = mapped_column(Integer)
-    price_type_8: Mapped[int] = mapped_column(Integer)
-    currency_id_8: Mapped[int] = mapped_column(Integer)
-    price_8: Mapped[int] = mapped_column(Integer)
-    reward_type_9: Mapped[int] = mapped_column(Integer)
+    _7cc79599a633f5b6dda27d2a87a5fd6800cdba95bda188237bb7b0b7c48019a4: Mapped[int] = mapped_column('7cc79599a633f5b6dda27d2a87a5fd6800cdba95bda188237bb7b0b7c48019a4', Integer)
+    f430b8666e19dd73182fff6cdb5ce17aeb121eae4c4744036429f5ee404b370a: Mapped[int] = mapped_column(Integer)
+    _42695f6eec74176d530829faa7276f3a24c93cb609fce595c3014b5a897c425a: Mapped[int] = mapped_column('42695f6eec74176d530829faa7276f3a24c93cb609fce595c3014b5a897c425a', Integer)
+    _96d487d50337b0f7dd4638eec66e2d0dd641c9eb39c721c9fadee6a9f0579f60: Mapped[int] = mapped_column('96d487d50337b0f7dd4638eec66e2d0dd641c9eb39c721c9fadee6a9f0579f60', Integer)
+    _8914227971204332793f2cc2ba7e4a608d6bd5aa1529106f1b084363270e3e19: Mapped[int] = mapped_column('8914227971204332793f2cc2ba7e4a608d6bd5aa1529106f1b084363270e3e19', Integer)
     reward_id_9: Mapped[int] = mapped_column(Integer)
-    reward_count_9: Mapped[int] = mapped_column(Integer)
-    price_type_9: Mapped[int] = mapped_column(Integer)
-    currency_id_9: Mapped[int] = mapped_column(Integer)
-    price_9: Mapped[int] = mapped_column(Integer)
-    reward_type_10: Mapped[int] = mapped_column(Integer)
+    e38b6d9f5e7a35d042468f148a72f567f5f4d808b9c3d436b4ec1e5b5deebec0: Mapped[int] = mapped_column(Integer)
+    cce5655af8a39e069610586f3f82b76f3e2ef73c8f0f80c8f2ed1afbb614ed6b: Mapped[int] = mapped_column(Integer)
+    _1a09ece650c0851ad9bbe25bb10b0ae599be3d81c5bb7ce775e6e30e519cb60c: Mapped[int] = mapped_column('1a09ece650c0851ad9bbe25bb10b0ae599be3d81c5bb7ce775e6e30e519cb60c', Integer)
+    _8929263c5458934ba7ad0395af41f2f4960771b2a39df56f60c6fdb4ece3c7b6: Mapped[int] = mapped_column('8929263c5458934ba7ad0395af41f2f4960771b2a39df56f60c6fdb4ece3c7b6', Integer)
+    _2faafbe64c397036249492c3c2bdcc7239d690702af240e9ad6ac83a38706628: Mapped[int] = mapped_column('2faafbe64c397036249492c3c2bdcc7239d690702af240e9ad6ac83a38706628', Integer)
     reward_id_10: Mapped[int] = mapped_column(Integer)
-    reward_count_10: Mapped[int] = mapped_column(Integer)
-    price_type_10: Mapped[int] = mapped_column(Integer)
-    currency_id_10: Mapped[int] = mapped_column(Integer)
-    price_10: Mapped[int] = mapped_column(Integer)
-    reward_type_11: Mapped[int] = mapped_column(Integer)
+    ccae1b630ab7088c966c0fad28c0505960f10d41bff04c74d2cb8c7cb17c53b6: Mapped[int] = mapped_column(Integer)
+    cd94e9ce2aaaae73f5faf7a686c35d18d436c1252ac6309d1a8ae8cdea0c0fe6: Mapped[int] = mapped_column(Integer)
+    _84829b2d43ec240b0366d8feeb83d85bcbeb5a5ee5bce5e3d2ebbed2da733c09: Mapped[int] = mapped_column('84829b2d43ec240b0366d8feeb83d85bcbeb5a5ee5bce5e3d2ebbed2da733c09', Integer)
+    _1871e1c0b3760ae5d84df74660da0ae9ad00e38a8fa00448531535170f8b08fc: Mapped[int] = mapped_column('1871e1c0b3760ae5d84df74660da0ae9ad00e38a8fa00448531535170f8b08fc', Integer)
+    _72f925906c87b04df15dcb057e2dcb67e0e9d8477311079fec758e651eebc0cd: Mapped[int] = mapped_column('72f925906c87b04df15dcb057e2dcb67e0e9d8477311079fec758e651eebc0cd', Integer)
     reward_id_11: Mapped[int] = mapped_column(Integer)
-    reward_count_11: Mapped[int] = mapped_column(Integer)
-    price_type_11: Mapped[int] = mapped_column(Integer)
-    currency_id_11: Mapped[int] = mapped_column(Integer)
-    price_11: Mapped[int] = mapped_column(Integer)
-    reward_type_12: Mapped[int] = mapped_column(Integer)
+    _5b389396896f9ebbe35455ad25ad29a8f065ec0b18a20249aad98174c2cc6b92: Mapped[int] = mapped_column('5b389396896f9ebbe35455ad25ad29a8f065ec0b18a20249aad98174c2cc6b92', Integer)
+    f48b57a0fe90502aab04a0af40613f508b4a2ac0c480d4d4c4d7a2cf3c8399a4: Mapped[int] = mapped_column(Integer)
+    _0f632aa0f8b2b5cab5472e7c8a58f6187a3c5cee58c6bd135581353e12f975e7: Mapped[int] = mapped_column('0f632aa0f8b2b5cab5472e7c8a58f6187a3c5cee58c6bd135581353e12f975e7', Integer)
+    a19c317481597824c85e7a4619aac13e3b78ca834bbefcb86606a8eb0660aac7: Mapped[int] = mapped_column(Integer)
+    _293bc417f042692f2c20ac1445ea18bf702cf3c4955ad77667e5c68ff9976fdd: Mapped[int] = mapped_column('293bc417f042692f2c20ac1445ea18bf702cf3c4955ad77667e5c68ff9976fdd', Integer)
     reward_id_12: Mapped[int] = mapped_column(Integer)
-    reward_count_12: Mapped[int] = mapped_column(Integer)
-    price_type_12: Mapped[int] = mapped_column(Integer)
-    currency_id_12: Mapped[int] = mapped_column(Integer)
-    price_12: Mapped[int] = mapped_column(Integer)
-    reward_type_13: Mapped[int] = mapped_column(Integer)
+    _2773533a4dc20f8a98b5b66d5d2f68b1915fb6c9418a56b75d3ea2ddb413ea6a: Mapped[int] = mapped_column('2773533a4dc20f8a98b5b66d5d2f68b1915fb6c9418a56b75d3ea2ddb413ea6a', Integer)
+    d7ca1cb722cc485f4e609587ef8d939acaf167c9903cc71ac882b617673d7f85: Mapped[int] = mapped_column(Integer)
+    _2efe35208becf2b4e59279960261239e285dbd7569d631bf4bea1f9e1bd67a0e: Mapped[int] = mapped_column('2efe35208becf2b4e59279960261239e285dbd7569d631bf4bea1f9e1bd67a0e', Integer)
+    _7edc51d71a85080a106d788d6bc5705607e4bf956d936f7d918348471ef71e8e: Mapped[int] = mapped_column('7edc51d71a85080a106d788d6bc5705607e4bf956d936f7d918348471ef71e8e', Integer)
+    _7575bbf8cadd9aa04df065cd0f332acbe35f9225e598ab3fffdee9c33a7df8f4: Mapped[int] = mapped_column('7575bbf8cadd9aa04df065cd0f332acbe35f9225e598ab3fffdee9c33a7df8f4', Integer)
     reward_id_13: Mapped[int] = mapped_column(Integer)
-    reward_count_13: Mapped[int] = mapped_column(Integer)
-    price_type_13: Mapped[int] = mapped_column(Integer)
-    currency_id_13: Mapped[int] = mapped_column(Integer)
-    price_13: Mapped[int] = mapped_column(Integer)
-    reward_type_14: Mapped[int] = mapped_column(Integer)
+    _3fbfbe928ea82f40255abd183d84f37c7c968fbbcf301eaff88f7699d130238e: Mapped[int] = mapped_column('3fbfbe928ea82f40255abd183d84f37c7c968fbbcf301eaff88f7699d130238e', Integer)
+    _2305cdc9511efaacff75208a140db806942126a76b9ab55de671dfba5d560416: Mapped[int] = mapped_column('2305cdc9511efaacff75208a140db806942126a76b9ab55de671dfba5d560416', Integer)
+    _4ece74ba09db1ffd13c4e5e11460da2169d73e8af129d390f9085be725b9e370: Mapped[int] = mapped_column('4ece74ba09db1ffd13c4e5e11460da2169d73e8af129d390f9085be725b9e370', Integer)
+    _3db72b674f662881f6698fb72a2dacc9e350083e6a38a3ab853a12a984f4f5c0: Mapped[int] = mapped_column('3db72b674f662881f6698fb72a2dacc9e350083e6a38a3ab853a12a984f4f5c0', Integer)
+    f340dfd31c60c1fc043524418183198311dd1c837235d6f135cd4a2146d30965: Mapped[int] = mapped_column(Integer)
     reward_id_14: Mapped[int] = mapped_column(Integer)
-    reward_count_14: Mapped[int] = mapped_column(Integer)
-    price_type_14: Mapped[int] = mapped_column(Integer)
-    currency_id_14: Mapped[int] = mapped_column(Integer)
-    price_14: Mapped[int] = mapped_column(Integer)
-    reward_type_15: Mapped[int] = mapped_column(Integer)
+    b174202501f4d65cce4326c4c7908966297c0a963a8415dac4218d5870c83de8: Mapped[int] = mapped_column(Integer)
+    _6f95889e6f6b3e3943ea2bc75e56dff338abc2eaf4b3a6f89046ab3b14356031: Mapped[int] = mapped_column('6f95889e6f6b3e3943ea2bc75e56dff338abc2eaf4b3a6f89046ab3b14356031', Integer)
+    d9948fce8bfab0d6f8b71c6ab9daf75aa937e5d28e0a9d41d28b42ad5b738f85: Mapped[int] = mapped_column(Integer)
+    b357686905a533a45dfd10198ed541be0335fed39aa29b0da1ef25d5769a2c95: Mapped[int] = mapped_column(Integer)
+    a73d9b16a6b45d59d3e1da4218b8e1752a978037ff27f3364deb1135a7d7b84e: Mapped[int] = mapped_column(Integer)
     reward_id_15: Mapped[int] = mapped_column(Integer)
-    reward_count_15: Mapped[int] = mapped_column(Integer)
-    price_type_15: Mapped[int] = mapped_column(Integer)
-    currency_id_15: Mapped[int] = mapped_column(Integer)
-    price_15: Mapped[int] = mapped_column(Integer)
-    reward_type_16: Mapped[int] = mapped_column(Integer)
+    _06e4f25ca2e7adee8803f15c5452c7adc574b6c6d3c96c46a50d666386e1a26d: Mapped[int] = mapped_column('06e4f25ca2e7adee8803f15c5452c7adc574b6c6d3c96c46a50d666386e1a26d', Integer)
+    _4fe79cbb759249f5b4a18c0542ae85d03227c0491028b353b1759284441f0634: Mapped[int] = mapped_column('4fe79cbb759249f5b4a18c0542ae85d03227c0491028b353b1759284441f0634', Integer)
+    _5d69801bf8dd3478ab42a387eaed8e6a12215d094697cdee5e89db147bf32c52: Mapped[int] = mapped_column('5d69801bf8dd3478ab42a387eaed8e6a12215d094697cdee5e89db147bf32c52', Integer)
+    _35c59fa489b40441e7350173b9290bb52b33bf4fabeb836adafd67be7f13d6c4: Mapped[int] = mapped_column('35c59fa489b40441e7350173b9290bb52b33bf4fabeb836adafd67be7f13d6c4', Integer)
+    _6886695137964f876b15cc5bda1fba99029642e8b92974ecbb752cc5c062116d: Mapped[int] = mapped_column('6886695137964f876b15cc5bda1fba99029642e8b92974ecbb752cc5c062116d', Integer)
     reward_id_16: Mapped[int] = mapped_column(Integer)
-    reward_count_16: Mapped[int] = mapped_column(Integer)
-    price_type_16: Mapped[int] = mapped_column(Integer)
-    currency_id_16: Mapped[int] = mapped_column(Integer)
-    price_16: Mapped[int] = mapped_column(Integer)
-    reward_type_17: Mapped[int] = mapped_column(Integer)
+    _2429166d43e4e6a38922297ab3ab24008450ab3bd99064e959a643cb7cfbbc2b: Mapped[int] = mapped_column('2429166d43e4e6a38922297ab3ab24008450ab3bd99064e959a643cb7cfbbc2b', Integer)
+    _3038d06979a4410cd2fbc93f1b8e7de221f29d2d869fa2afa8a010c5743ea34f: Mapped[int] = mapped_column('3038d06979a4410cd2fbc93f1b8e7de221f29d2d869fa2afa8a010c5743ea34f', Integer)
+    f1cd543bee40dba014a755d9de0fed23acddde218b658abdf2160ae4348ff1eb: Mapped[int] = mapped_column(Integer)
+    ba9c2de7f104e233ece48030d1e09c8b83424933001637ac485ed6868c042762: Mapped[int] = mapped_column(Integer)
+    _2bf94331351c0ad24bfcc2dc4bd2ce52cd337544873b4260a7803973c70a4402: Mapped[int] = mapped_column('2bf94331351c0ad24bfcc2dc4bd2ce52cd337544873b4260a7803973c70a4402', Integer)
     reward_id_17: Mapped[int] = mapped_column(Integer)
-    reward_count_17: Mapped[int] = mapped_column(Integer)
-    price_type_17: Mapped[int] = mapped_column(Integer)
-    currency_id_17: Mapped[int] = mapped_column(Integer)
-    price_17: Mapped[int] = mapped_column(Integer)
-    reward_type_18: Mapped[int] = mapped_column(Integer)
+    a66597610807094ac8dbfd37d011aa8141a5851f5fc06a405fb02e94d69fc6f8: Mapped[int] = mapped_column(Integer)
+    _956ad1606d921281b2b20eb8870129ec0864ff2073bc5e395c91c3cc5ebda1dc: Mapped[int] = mapped_column('956ad1606d921281b2b20eb8870129ec0864ff2073bc5e395c91c3cc5ebda1dc', Integer)
+    _520e6338a824100b362a7c50eda5e7e12dbac8fb83bb6bd832a328ac8097ae5e: Mapped[int] = mapped_column('520e6338a824100b362a7c50eda5e7e12dbac8fb83bb6bd832a328ac8097ae5e', Integer)
+    c7431e2e7e8144d1c4ef89a477fca0bf83d654568fa490f8edf8802903b6c2bd: Mapped[int] = mapped_column(Integer)
+    _02bcf31fdb244860bad99f40897afd7b4b8923222f3f271a229ae37fb8758bc3: Mapped[int] = mapped_column('02bcf31fdb244860bad99f40897afd7b4b8923222f3f271a229ae37fb8758bc3', Integer)
     reward_id_18: Mapped[int] = mapped_column(Integer)
-    reward_count_18: Mapped[int] = mapped_column(Integer)
-    price_type_18: Mapped[int] = mapped_column(Integer)
-    currency_id_18: Mapped[int] = mapped_column(Integer)
-    price_18: Mapped[int] = mapped_column(Integer)
-    reward_type_19: Mapped[int] = mapped_column(Integer)
+    _8933c5d0b0b2edf7a821ff7039e442acf3f143275db8da070f6c1fdd622759cb: Mapped[int] = mapped_column('8933c5d0b0b2edf7a821ff7039e442acf3f143275db8da070f6c1fdd622759cb', Integer)
+    _0f344914afd4c25c1569c885071b86821e0f953b4602347fa8f7c8a02d44129b: Mapped[int] = mapped_column('0f344914afd4c25c1569c885071b86821e0f953b4602347fa8f7c8a02d44129b', Integer)
+    cf33cb4f3504f2214339d5639026390d658e7e23b66d6c0a031c2d908b747543: Mapped[int] = mapped_column(Integer)
+    _5d4d708cc11d9e1fab27a11544c31c5a8650714f708ba033142aed971385ee22: Mapped[int] = mapped_column('5d4d708cc11d9e1fab27a11544c31c5a8650714f708ba033142aed971385ee22', Integer)
+    _06db4652e888bbe2a35501611c9cb7b927a435b4fa003cf083a6f735ae573edb: Mapped[int] = mapped_column('06db4652e888bbe2a35501611c9cb7b927a435b4fa003cf083a6f735ae573edb', Integer)
     reward_id_19: Mapped[int] = mapped_column(Integer)
-    reward_count_19: Mapped[int] = mapped_column(Integer)
-    price_type_19: Mapped[int] = mapped_column(Integer)
-    currency_id_19: Mapped[int] = mapped_column(Integer)
-    price_19: Mapped[int] = mapped_column(Integer)
-    reward_type_20: Mapped[int] = mapped_column(Integer)
+    _47bc5343a23c3ba1ca004668f99972724261ec510aa531a03b11a9a5b000f5a2: Mapped[int] = mapped_column('47bc5343a23c3ba1ca004668f99972724261ec510aa531a03b11a9a5b000f5a2', Integer)
+    _09b3a9c66ccf13f1abae37ef26674343d7b1654b76ad19dd8aa0548be36e7305: Mapped[int] = mapped_column('09b3a9c66ccf13f1abae37ef26674343d7b1654b76ad19dd8aa0548be36e7305', Integer)
+    b0d798a7961601b7dc5799617a6a1e296c72b1ea85ea07d85c01706170860f0c: Mapped[int] = mapped_column(Integer)
+    _04bf12ef77adb0bd45260b1bd0e47f049dfe75cf57a47dc683ed632f8a33e1e2: Mapped[int] = mapped_column('04bf12ef77adb0bd45260b1bd0e47f049dfe75cf57a47dc683ed632f8a33e1e2', Integer)
+    _6bb6405f3398ce6a3d976cb640c127d4fe95202217b507add28a2cf98940607d: Mapped[int] = mapped_column('6bb6405f3398ce6a3d976cb640c127d4fe95202217b507add28a2cf98940607d', Integer)
     reward_id_20: Mapped[int] = mapped_column(Integer)
-    reward_count_20: Mapped[int] = mapped_column(Integer)
-    price_type_20: Mapped[int] = mapped_column(Integer)
-    currency_id_20: Mapped[int] = mapped_column(Integer)
-    price_20: Mapped[int] = mapped_column(Integer)
+    d93b806850bb384ab3460e474454de754761e8a54394499c5792205961fd0e50: Mapped[int] = mapped_column(Integer)
+    _82ca1e9fb845dd570fa99599ea2d82283e04ecbb3b31c98afda5f947bd5a9e38: Mapped[int] = mapped_column('82ca1e9fb845dd570fa99599ea2d82283e04ecbb3b31c98afda5f947bd5a9e38', Integer)
+    _93d82d35569c4ff9661bead3bf1173e7d636476741722f7ac201a630fabf47f8: Mapped[int] = mapped_column('93d82d35569c4ff9661bead3bf1173e7d636476741722f7ac201a630fabf47f8', Integer)
+    _8fd95b699f4d4cd4bb653c3f0637eef8d45f8850a5cef5d8a9c0270dcf0f2486: Mapped[int] = mapped_column('8fd95b699f4d4cd4bb653c3f0637eef8d45f8850a5cef5d8a9c0270dcf0f2486', Integer)
 
 
 class FkeHappeningList(Base):
@@ -3696,9 +3678,6 @@ class FkeReward(Base):
 
 class GachaDatum(Base):
     __tablename__ = 'gacha_data'
-    __table_args__ = (
-        Index('gacha_data_0_exchange_id', 'exchange_id'),
-    )
 
     gacha_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     gacha_name: Mapped[str] = mapped_column(Text)
@@ -3706,7 +3685,9 @@ class GachaDatum(Base):
     description: Mapped[str] = mapped_column(Text)
     description_2: Mapped[str] = mapped_column(Text)
     description_sp: Mapped[str] = mapped_column(Text)
-    parallel_id: Mapped[int] = mapped_column(Integer)
+    tab_name: Mapped[str] = mapped_column(Text)
+    title_id: Mapped[int] = mapped_column(Integer)
+    _72fbdd7c98a98ceb80a8e09179e525c5f8f42f8fc39e39ad25cb18a77bfb04c8: Mapped[int] = mapped_column('72fbdd7c98a98ceb80a8e09179e525c5f8f42f8fc39e39ad25cb18a77bfb04c8', Integer)
     pickup_badge: Mapped[int] = mapped_column(Integer)
     gacha_detail: Mapped[int] = mapped_column(Integer)
     gacha_cost_type: Mapped[int] = mapped_column(Integer)
@@ -3715,50 +3696,43 @@ class GachaDatum(Base):
     free_gacha_interval_time: Mapped[int] = mapped_column(Integer)
     free_gacha_count: Mapped[int] = mapped_column(Integer)
     discount_price: Mapped[int] = mapped_column(Integer)
-    gacha_odds: Mapped[str] = mapped_column(Text)
-    gacha_odds_star2: Mapped[str] = mapped_column(Text)
+    _66ef8c63942f398c94b983ac87a4de9557326b08b28117d94bbe9c94ebe6689d: Mapped[str] = mapped_column('66ef8c63942f398c94b983ac87a4de9557326b08b28117d94bbe9c94ebe6689d', Text)
+    _90525889c75bb41dba956a78a2e1a24d400ab5cb034419d380183ee182ceab8a: Mapped[str] = mapped_column('90525889c75bb41dba956a78a2e1a24d400ab5cb034419d380183ee182ceab8a', Text)
     gacha_type: Mapped[int] = mapped_column(Integer)
     movie_id: Mapped[int] = mapped_column(Integer)
     start_time: Mapped[str] = mapped_column(Text)
     end_time: Mapped[str] = mapped_column(Text)
     ticket_id: Mapped[int] = mapped_column(Integer)
-    special_id: Mapped[int] = mapped_column(Integer)
+    _7e58f2ece02ecb82720082d35d66776d3df8d8764fe1852d0d2fdb77cb475dad: Mapped[int] = mapped_column('7e58f2ece02ecb82720082d35d66776d3df8d8764fe1852d0d2fdb77cb475dad', Integer)
     exchange_id: Mapped[int] = mapped_column(Integer)
     ticket_id_10: Mapped[int] = mapped_column(Integer)
-    rarity_odds: Mapped[str] = mapped_column(Text)
-    chara_odds_star1: Mapped[str] = mapped_column(Text)
-    chara_odds_star2: Mapped[str] = mapped_column(Text)
-    chara_odds_star3: Mapped[str] = mapped_column(Text)
-    gacha10_special_odds_star1: Mapped[str] = mapped_column(Text)
-    gacha10_special_odds_star2: Mapped[str] = mapped_column(Text)
-    gacha10_special_odds_star3: Mapped[str] = mapped_column(Text)
+    fe9f63f3a78cdd85cc77172278f3ff2a961711ad18cf18255739206aee0a82be: Mapped[str] = mapped_column(Text)
+    _0f6ee94768991bbf83368d85db839424010430559ebde0692b33a14c51803f27: Mapped[str] = mapped_column('0f6ee94768991bbf83368d85db839424010430559ebde0692b33a14c51803f27', Text)
+    bec6286113e78aa8991d684bdd7a9827ca6cbc86935f39cf5837124cd337aaea: Mapped[str] = mapped_column(Text)
+    _90389271c198450fbccae87f366662cc8be6f3200b5cbaab2dc872ecce4d5617: Mapped[str] = mapped_column('90389271c198450fbccae87f366662cc8be6f3200b5cbaab2dc872ecce4d5617', Text)
+    _9fb02bbe4206a1ae3a4d68abb9b3a43945adaeea5c2b18112452dd8bb7eb5508: Mapped[str] = mapped_column('9fb02bbe4206a1ae3a4d68abb9b3a43945adaeea5c2b18112452dd8bb7eb5508', Text)
+    _8559a9283fdc0dcca03129b91b58bf0fd5c688655d51005ebedf63bb37377b8c: Mapped[str] = mapped_column('8559a9283fdc0dcca03129b91b58bf0fd5c688655d51005ebedf63bb37377b8c', Text)
+    _681af04fe23130ec14d6b99a21edee6852ea32331a79d22b5fd4b285ca2bc57b: Mapped[str] = mapped_column('681af04fe23130ec14d6b99a21edee6852ea32331a79d22b5fd4b285ca2bc57b', Text)
     prizegacha_id: Mapped[int] = mapped_column(Integer)
-    gacha_bonus_id: Mapped[int] = mapped_column(Integer)
+    _964a72b4195304de3d8e11e2634ff5a0e6d663289999342f51375aba5ff06818: Mapped[int] = mapped_column('964a72b4195304de3d8e11e2634ff5a0e6d663289999342f51375aba5ff06818', Integer)
     gacha_times_limit10: Mapped[int] = mapped_column(Integer)
     pickup_id: Mapped[int] = mapped_column(Integer)
 
 
 class GachaExchangeLineup(Base):
     __tablename__ = 'gacha_exchange_lineup'
-    __table_args__ = (
-        Index('gacha_exchange_lineup_0_exchange_id', 'exchange_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     exchange_id: Mapped[int] = mapped_column(Integer)
     unit_id: Mapped[int] = mapped_column(Integer)
     rarity: Mapped[int] = mapped_column(Integer)
-    gacha_bonus_id: Mapped[int] = mapped_column(Integer)
+    _081829d577eb976ca897885bdd458244bcfe4c3a9d026140ed04562d8fb7cb78: Mapped[int] = mapped_column('081829d577eb976ca897885bdd458244bcfe4c3a9d026140ed04562d8fb7cb78', Integer)
     start_time: Mapped[str] = mapped_column(Text)
     end_time: Mapped[str] = mapped_column(Text)
 
 
 class GachaPickup(Base):
     __tablename__ = 'gacha_pickup'
-    __table_args__ = (
-        Index('gacha_pickup_0_id', 'id'),
-        Index('gacha_pickup_0_id_1_reward_id', 'id', 'reward_id')
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     priority: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -3801,36 +3775,36 @@ class GlossaryDetail(Base):
 class GoldsetDatum(Base):
     __tablename__ = 'goldset_data'
 
-    id: Mapped[int] = mapped_column(Integer)
+    _1903299b1bd54b15e23b5dff7cc20ad6a6d4a78c269c90380ba0446d06bbe6cd: Mapped[int] = mapped_column('1903299b1bd54b15e23b5dff7cc20ad6a6d4a78c269c90380ba0446d06bbe6cd', Integer)
     buy_count: Mapped[int] = mapped_column(Integer, primary_key=True)
     use_jewel_count: Mapped[int] = mapped_column(Integer)
     get_gold_count: Mapped[int] = mapped_column(Integer)
-    goldset_odds_1: Mapped[int] = mapped_column(Integer)
-    goldset_odds_2: Mapped[int] = mapped_column(Integer)
-    goldset_odds_3: Mapped[int] = mapped_column(Integer)
-    additional_gold_min_rate: Mapped[int] = mapped_column(Integer)
-    additional_gold_max_rate: Mapped[int] = mapped_column(Integer)
+    b5e4c72d4b0af61a1257df361a9317491cb99ba7382c1ad9294013b2b9d766fc: Mapped[int] = mapped_column(Integer)
+    a4b600a06beab5d3a373fd926212f7fdde4ec126dcae37b1ed1b178d41b78a3f: Mapped[int] = mapped_column(Integer)
+    _11246b1e2133401b49d27b054498c001ed85630d1d946f9990af7b7545ad675a: Mapped[int] = mapped_column('11246b1e2133401b49d27b054498c001ed85630d1d946f9990af7b7545ad675a', Integer)
+    c28db2a0242e99a77012ffeb6f2852a8846874cd36fd78abd8945c3a2f4f48f8: Mapped[int] = mapped_column(Integer)
+    c5cff933df879586b3332d39f3cc8242626aeec097933032ead2dc4acfffc6e5: Mapped[int] = mapped_column(Integer)
 
 
 class GoldsetData2(Base):
     __tablename__ = 'goldset_data_2'
 
-    id: Mapped[int] = mapped_column(Integer)
+    _981ea293815cc3f92754d829c66c932ff297b582b73c9c2a282aefc0d5590079: Mapped[int] = mapped_column('981ea293815cc3f92754d829c66c932ff297b582b73c9c2a282aefc0d5590079', Integer)
     buy_count: Mapped[int] = mapped_column(Integer, primary_key=True)
     use_jewel_count: Mapped[int] = mapped_column(Integer)
     get_gold_count: Mapped[int] = mapped_column(Integer)
-    goldset_odds_1: Mapped[int] = mapped_column(Integer)
-    goldset_odds_2: Mapped[int] = mapped_column(Integer)
-    goldset_odds_3: Mapped[int] = mapped_column(Integer)
-    additional_gold_min_rate: Mapped[int] = mapped_column(Integer)
-    additional_gold_max_rate: Mapped[int] = mapped_column(Integer)
+    _541a011fe485926eb7316b3d1bf8ebb5379af20d31a7c959496f4808a31170cf: Mapped[int] = mapped_column('541a011fe485926eb7316b3d1bf8ebb5379af20d31a7c959496f4808a31170cf', Integer)
+    bb7d97b37dbe264d050ddc09a2776f7a6ba83bac698996f2a0a9d55d6db591df: Mapped[int] = mapped_column(Integer)
+    _621ce71e4f5d236bfbec56eefaa459705588a003869431f7c01b7e1998ff797a: Mapped[int] = mapped_column('621ce71e4f5d236bfbec56eefaa459705588a003869431f7c01b7e1998ff797a', Integer)
+    d057b82abf1fce0a598bf1db0b5d6f10d5a3c51faf89f0e7123f40b4826e1a78: Mapped[int] = mapped_column(Integer)
+    _4e5557dc6368b60fdb123f05a79e5923324082eb9cffdaf4dceb978c2c02bc63: Mapped[int] = mapped_column('4e5557dc6368b60fdb123f05a79e5923324082eb9cffdaf4dceb978c2c02bc63', Integer)
     training_quest_count: Mapped[int] = mapped_column(Integer)
 
 
 class GoldsetDataTeamlevel(Base):
     __tablename__ = 'goldset_data_teamlevel'
 
-    id: Mapped[int] = mapped_column(Integer)
+    _6643549019c359cb840d82052bccacac14527f10ae7f7de51cc960ea5fa59896: Mapped[int] = mapped_column('6643549019c359cb840d82052bccacac14527f10ae7f7de51cc960ea5fa59896', Integer)
     team_level: Mapped[int] = mapped_column(Integer, primary_key=True)
     initial_get_gold_count: Mapped[int] = mapped_column(Integer)
 
@@ -3957,9 +3931,6 @@ class GrowthParameterUnique(Base):
 
 class GrowthRestrictionUnit(Base):
     __tablename__ = 'growth_restriction_unit'
-    __table_args__ = (
-        Index('growth_restriction_unit_0_growth_id', 'growth_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     growth_id: Mapped[int] = mapped_column(Integer)
@@ -4062,9 +4033,6 @@ class HatsuneBgChange(Base):
 
 class HatsuneBgChangeDatum(Base):
     __tablename__ = 'hatsune_bg_change_data'
-    __table_args__ = (
-        Index('hatsune_bg_change_data_0_target_type_1_area_id', 'target_type', 'area_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     area_id: Mapped[int] = mapped_column(Integer)
@@ -4076,11 +4044,6 @@ class HatsuneBgChangeDatum(Base):
 
 class HatsuneBoss(Base):
     __tablename__ = 'hatsune_boss'
-    __table_args__ = (
-        Index('hatsune_boss_0_event_id', 'event_id'),
-        Index('hatsune_boss_0_event_id_1_difficulty', 'event_id', 'difficulty'),
-        Index('hatsune_boss_0_wave_group_id_1', 'wave_group_id_1')
-    )
 
     boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     event_id: Mapped[int] = mapped_column(Integer)
@@ -4113,10 +4076,10 @@ class HatsuneBoss(Base):
     detail_bg_position: Mapped[int] = mapped_column(Integer)
     detail_boss_bg_size: Mapped[float] = mapped_column(Float)
     detail_boss_bg_height: Mapped[float] = mapped_column(Float)
-    reward_gold_coefficient: Mapped[str] = mapped_column(Text)
-    reward_gold_limit: Mapped[int] = mapped_column(Integer)
-    start_time: Mapped[str] = mapped_column(Text)
-    end_time: Mapped[str] = mapped_column(Text)
+    _2c4c2973b7d269913c77e1241eeb560987bc6e0c9a7b4a852cba40250f867ae9: Mapped[str] = mapped_column('2c4c2973b7d269913c77e1241eeb560987bc6e0c9a7b4a852cba40250f867ae9', Text)
+    _3604d692497b8e791d972db1a1e342b4edb590e94b420857f8a0b0e1c00ec146: Mapped[int] = mapped_column('3604d692497b8e791d972db1a1e342b4edb590e94b420857f8a0b0e1c00ec146', Integer)
+    _7cd45ed96f0962b91d5f8e67288d4c6ef2b28dd9419bbb2a038420f033c36913: Mapped[str] = mapped_column('7cd45ed96f0962b91d5f8e67288d4c6ef2b28dd9419bbb2a038420f033c36913', Text)
+    _69cfdcd13472afa580cd38f86cc224590d7895814ebd3f837a9742d4abdbb616: Mapped[str] = mapped_column('69cfdcd13472afa580cd38f86cc224590d7895814ebd3f837a9742d4abdbb616', Text)
     map_position_x: Mapped[float] = mapped_column(Float)
     map_position_y: Mapped[float] = mapped_column(Float)
     map_size: Mapped[float] = mapped_column(Float)
@@ -4140,19 +4103,16 @@ class HatsuneBossCondition(Base):
     condition_quest_id_2: Mapped[int] = mapped_column(Integer)
     condition_boss_id_1: Mapped[int] = mapped_column(Integer)
     condition_boss_id_2: Mapped[int] = mapped_column(Integer)
-    condition_gacha_step: Mapped[int] = mapped_column(Integer)
-    force_unlock_time: Mapped[str] = mapped_column(Text)
-    release_quest_id_1: Mapped[int] = mapped_column(Integer)
-    release_quest_id_2: Mapped[int] = mapped_column(Integer)
-    release_boss_id_1: Mapped[int] = mapped_column(Integer)
-    release_boss_id_2: Mapped[int] = mapped_column(Integer)
+    _50ad7e4b4689ed2b5490c4b9eda10d4d6fd1ce174cb0d1b14eac58a97a716b55: Mapped[int] = mapped_column('50ad7e4b4689ed2b5490c4b9eda10d4d6fd1ce174cb0d1b14eac58a97a716b55', Integer)
+    _1532f0f9387f13a7eafdf7533d0771dff0ee3af3debbb972bdf4bafb64aefdc2: Mapped[str] = mapped_column('1532f0f9387f13a7eafdf7533d0771dff0ee3af3debbb972bdf4bafb64aefdc2', Text)
+    _525531a3d4f00cea89cfbaf5df4113c566a6b508d24ed0eaa439b225a6508dbd: Mapped[int] = mapped_column('525531a3d4f00cea89cfbaf5df4113c566a6b508d24ed0eaa439b225a6508dbd', Integer)
+    _8cac668f855117c6c438e21899e2dc9bea7cc4495d2a16cee2c8d9ba1987d357: Mapped[int] = mapped_column('8cac668f855117c6c438e21899e2dc9bea7cc4495d2a16cee2c8d9ba1987d357', Integer)
+    ea21f30829b7daedeef874ac02a13a501905f7b1d4dd251654f89b13a64f9ddf: Mapped[int] = mapped_column(Integer)
+    _3ac0d6c06e0a78a2b9c4aa909d9aa139fccad63314b4b2b7e625ed9a618c4bda: Mapped[int] = mapped_column('3ac0d6c06e0a78a2b9c4aa909d9aa139fccad63314b4b2b7e625ed9a618c4bda', Integer)
 
 
 class HatsuneBossEnemySetting(Base):
     __tablename__ = 'hatsune_boss_enemy_setting'
-    __table_args__ = (
-        Index('hatsune_boss_enemy_setting_0_boss_id_1_event_id', 'boss_id', 'event_id'),
-    )
 
     boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     enemy_identify: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -4168,6 +4128,17 @@ class HatsuneBossEnemySetting(Base):
     map_offset_y: Mapped[int] = mapped_column(Integer)
     map_scale: Mapped[float] = mapped_column(Float)
     map_depth: Mapped[int] = mapped_column(Integer)
+
+
+class HatsuneBossExtraEffect(Base):
+    __tablename__ = 'hatsune_boss_extra_effect'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    boss_id: Mapped[int] = mapped_column(Integer)
+    unit_id: Mapped[int] = mapped_column(Integer)
+    icon_id: Mapped[int] = mapped_column(Integer)
+    detail: Mapped[str] = mapped_column(Text)
+    start_time: Mapped[str] = mapped_column(Text)
 
 
 class HatsuneDailyMissionDatum(Base):
@@ -4191,9 +4162,6 @@ class HatsuneDailyMissionDatum(Base):
 
 class HatsuneDescription(Base):
     __tablename__ = 'hatsune_description'
-    __table_args__ = (
-        Index('hatsune_description_0_event_id_1_type', 'event_id', 'type'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     event_id: Mapped[int] = mapped_column(Integer)
@@ -4203,9 +4171,6 @@ class HatsuneDescription(Base):
 
 class HatsuneDiaryDatum(Base):
     __tablename__ = 'hatsune_diary_data'
-    __table_args__ = (
-        Index('hatsune_diary_data_0_contents_type', 'contents_type'),
-    )
 
     diary_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     contents_type: Mapped[int] = mapped_column(Integer)
@@ -4219,9 +4184,6 @@ class HatsuneDiaryDatum(Base):
 
 class HatsuneDiaryLetterScript(Base):
     __tablename__ = 'hatsune_diary_letter_script'
-    __table_args__ = (
-        Index('hatsune_diary_letter_script_0_diary_id', 'diary_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     diary_id: Mapped[int] = mapped_column(Integer)
@@ -4239,9 +4201,6 @@ class HatsuneDiaryLetterScript(Base):
 
 class HatsuneDiaryScript(Base):
     __tablename__ = 'hatsune_diary_script'
-    __table_args__ = (
-        Index('hatsune_diary_script_0_diary_id', 'diary_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     diary_id: Mapped[int] = mapped_column(Integer)
@@ -4265,9 +4224,6 @@ class HatsuneDiarySetting(Base):
 
 class HatsuneEmblemMission(Base):
     __tablename__ = 'hatsune_emblem_mission'
-    __table_args__ = (
-        Index('hatsune_emblem_mission_0_event_id', 'event_id'),
-    )
 
     mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     disp_group: Mapped[int] = mapped_column(Integer)
@@ -4288,10 +4244,6 @@ class HatsuneEmblemMission(Base):
 
 class HatsuneEmblemMissionReward(Base):
     __tablename__ = 'hatsune_emblem_mission_reward'
-    __table_args__ = (
-        Index('hatsune_emblem_mission_reward_0_mission_reward_id', 'mission_reward_id'),
-        Index('hatsune_emblem_mission_reward_0_reward_id', 'reward_id')
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     mission_reward_id: Mapped[int] = mapped_column(Integer)
@@ -4299,6 +4251,13 @@ class HatsuneEmblemMissionReward(Base):
     reward_id: Mapped[int] = mapped_column(Integer)
     reward_num: Mapped[int] = mapped_column(Integer)
     icon_type: Mapped[int] = mapped_column(Integer)
+
+
+class HatsuneExPlusSetting(Base):
+    __tablename__ = 'hatsune_ex_plus_setting'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    limit_challenge_count: Mapped[int] = mapped_column(Integer)
 
 
 class HatsuneItem(Base):
@@ -4341,9 +4300,6 @@ class HatsuneMap(Base):
 
 class HatsuneMapEvent(Base):
     __tablename__ = 'hatsune_map_event'
-    __table_args__ = (
-        Index('hatsune_map_event_0_target_event_id', 'target_event_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     target_event_id: Mapped[int] = mapped_column(Integer)
@@ -4355,9 +4311,6 @@ class HatsuneMapEvent(Base):
 
 class HatsuneMissionRewardDatum(Base):
     __tablename__ = 'hatsune_mission_reward_data'
-    __table_args__ = (
-        Index('hatsune_mission_reward_data_0_mission_reward_id', 'mission_reward_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     mission_reward_id: Mapped[int] = mapped_column(Integer)
@@ -4368,10 +4321,6 @@ class HatsuneMissionRewardDatum(Base):
 
 class HatsuneMultiRouteParameter(Base):
     __tablename__ = 'hatsune_multi_route_parameter'
-    __table_args__ = (
-        Index('hatsune_multi_route_parameter_0_quest_id', 'quest_id'),
-        Index('hatsune_multi_route_parameter_0_type', 'type')
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     quest_id: Mapped[int] = mapped_column(Integer)
@@ -4384,9 +4333,6 @@ class HatsuneMultiRouteParameter(Base):
 
 class HatsunePresent(Base):
     __tablename__ = 'hatsune_present'
-    __table_args__ = (
-        Index('hatsune_present_0_event_id', 'event_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     event_id: Mapped[int] = mapped_column(Integer)
@@ -4415,9 +4361,6 @@ class HatsunePresent(Base):
 
 class HatsuneQuest(Base):
     __tablename__ = 'hatsune_quest'
-    __table_args__ = (
-        Index('hatsune_quest_0_event_id', 'event_id'),
-    )
 
     quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     event_id: Mapped[int] = mapped_column(Integer)
@@ -4460,15 +4403,12 @@ class HatsuneQuest(Base):
     story_id_waveend_3: Mapped[int] = mapped_column(Integer)
     quest_detail_bg_id: Mapped[int] = mapped_column(Integer)
     quest_detail_bg_position: Mapped[int] = mapped_column(Integer)
-    start_time: Mapped[str] = mapped_column(Text)
-    end_time: Mapped[str] = mapped_column(Text)
+    _2117c46558ec76feda55c3de59349e4b3d9c4b15b2b15de38f45f68048a4736e: Mapped[str] = mapped_column('2117c46558ec76feda55c3de59349e4b3d9c4b15b2b15de38f45f68048a4736e', Text)
+    _3ac58e6009cbd5917498464978f86802a6e63e5f4c339d09fca17d0b46ef7a07: Mapped[str] = mapped_column('3ac58e6009cbd5917498464978f86802a6e63e5f4c339d09fca17d0b46ef7a07', Text)
 
 
 class HatsuneQuestArea(Base):
     __tablename__ = 'hatsune_quest_area'
-    __table_args__ = (
-        Index('hatsune_quest_area_0_event_id', 'event_id'),
-    )
 
     area_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     event_id: Mapped[int] = mapped_column(Integer)
@@ -4476,8 +4416,8 @@ class HatsuneQuestArea(Base):
     map_type: Mapped[int] = mapped_column(Integer)
     sheet_id: Mapped[str] = mapped_column(Text)
     que_id: Mapped[str] = mapped_column(Text)
-    start_time: Mapped[str] = mapped_column(Text)
-    end_time: Mapped[str] = mapped_column(Text)
+    d378c4707ef9e760873a278b6e0bd671eade8737d6a426b5b33085003e034768: Mapped[str] = mapped_column(Text)
+    b5b3a648e2f06bd721881281397bd2c7eb5bef8e4eeb022007e125f72ff4ad5b: Mapped[str] = mapped_column(Text)
     area_disp: Mapped[int] = mapped_column(Integer)
     map_id: Mapped[int] = mapped_column(Integer)
     scroll_width: Mapped[int] = mapped_column(Integer)
@@ -4490,9 +4430,6 @@ class HatsuneQuestArea(Base):
 
 class HatsuneQuestCondition(Base):
     __tablename__ = 'hatsune_quest_condition'
-    __table_args__ = (
-        Index('hatsune_quest_condition_0_event_id', 'event_id'),
-    )
 
     quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     event_id: Mapped[int] = mapped_column(Integer)
@@ -4509,10 +4446,6 @@ class HatsuneQuestCondition(Base):
 
 class HatsuneQuiz(Base):
     __tablename__ = 'hatsune_quiz'
-    __table_args__ = (
-        Index('hatsune_quiz_0_event_id', 'event_id'),
-        Index('hatsune_quiz_0_event_id_1_release_quest_id', 'event_id', 'release_quest_id')
-    )
 
     event_id: Mapped[int] = mapped_column(Integer)
     quiz_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -4538,9 +4471,6 @@ class HatsuneQuiz(Base):
 
 class HatsuneQuizCondition(Base):
     __tablename__ = 'hatsune_quiz_condition'
-    __table_args__ = (
-        Index('hatsune_quiz_condition_0_event_id_1_quiz_id', 'event_id', 'quiz_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     event_id: Mapped[int] = mapped_column(Integer)
@@ -4585,10 +4515,6 @@ class HatsuneRelayDatum(Base):
 
 class HatsuneSchedule(Base):
     __tablename__ = 'hatsune_schedule'
-    __table_args__ = (
-        Index('hatsune_schedule_0_original_event_id', 'original_event_id'),
-        Index('hatsune_schedule_0_series_event_id', 'series_event_id')
-    )
 
     event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     teaser_time: Mapped[str] = mapped_column(Text)
@@ -4618,10 +4544,6 @@ class HatsuneSeriesGachaReference(Base):
 
 class HatsuneSpecialBattle(Base):
     __tablename__ = 'hatsune_special_battle'
-    __table_args__ = (
-        Index('hatsune_special_battle_0_event_id', 'event_id'),
-        Index('hatsune_special_battle_0_wave_group_id', 'wave_group_id')
-    )
 
     event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     mode: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -4686,9 +4608,6 @@ class HatsuneSpecialMissionDatum(Base):
 
 class HatsuneStationaryMissionDatum(Base):
     __tablename__ = 'hatsune_stationary_mission_data'
-    __table_args__ = (
-        Index('hatsune_stationary_mission_data_0_event_id', 'event_id'),
-    )
 
     stationary_mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     disp_group: Mapped[int] = mapped_column(Integer)
@@ -4708,9 +4627,6 @@ class HatsuneStationaryMissionDatum(Base):
 
 class HatsuneUnlockStoryCondition(Base):
     __tablename__ = 'hatsune_unlock_story_condition'
-    __table_args__ = (
-        Index('hatsune_unlock_story_condition_0_event_id', 'event_id'),
-    )
 
     story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     event_id: Mapped[int] = mapped_column(Integer)
@@ -4724,10 +4640,6 @@ class HatsuneUnlockStoryCondition(Base):
 
 class HatsuneUnlockUnitCondition(Base):
     __tablename__ = 'hatsune_unlock_unit_condition'
-    __table_args__ = (
-        Index('hatsune_unlock_unit_condition_0_condition_mission_id', 'condition_mission_id'),
-        Index('hatsune_unlock_unit_condition_0_unit_id_1_event_id', 'unit_id', 'event_id')
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     unit_id: Mapped[int] = mapped_column(Integer)
@@ -4765,10 +4677,6 @@ class ItemDatum(Base):
 
 class ItemETicketDatum(Base):
     __tablename__ = 'item_e_ticket_data'
-    __table_args__ = (
-        Index('item_e_ticket_data_0_exchange_number', 'exchange_number'),
-        Index('item_e_ticket_data_0_ticket_id', 'ticket_id')
-    )
 
     ticket_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     exchange_number: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -4857,9 +4765,6 @@ class KaiserQuestDatum(Base):
 
 class KaiserRestrictionGroup(Base):
     __tablename__ = 'kaiser_restriction_group'
-    __table_args__ = (
-        Index('kaiser_restriction_group_0_restriction_group_id', 'restriction_group_id'),
-    )
 
     restriction_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -4954,10 +4859,6 @@ class LegionAddTimesDatum(Base):
 
 class LegionBattleBonus(Base):
     __tablename__ = 'legion_battle_bonus'
-    __table_args__ = (
-        Index('legion_battle_bonus_0_type', 'type'),
-        Index('legion_battle_bonus_0_type_1_legion_boss_id', 'type', 'legion_boss_id')
-    )
 
     legion_battle_bonus_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     type: Mapped[int] = mapped_column(Integer)
@@ -5002,9 +4903,6 @@ class LegionEffect(Base):
 
 class LegionEffectiveUnit(Base):
     __tablename__ = 'legion_effective_unit'
-    __table_args__ = (
-        Index('legion_effective_unit_0_legion_boss_id', 'legion_boss_id'),
-    )
 
     legion_boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -5042,9 +4940,6 @@ class LegionMissionCategoryDatum(Base):
 
 class LegionMissionDatum(Base):
     __tablename__ = 'legion_mission_data'
-    __table_args__ = (
-        Index('legion_mission_data_0_category_id', 'category_id'),
-    )
 
     legion_mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     category_id: Mapped[int] = mapped_column(Integer)
@@ -5061,9 +4956,6 @@ class LegionMissionDatum(Base):
 
 class LegionMissionRewardDatum(Base):
     __tablename__ = 'legion_mission_reward_data'
-    __table_args__ = (
-        Index('legion_mission_reward_data_0_mission_reward_id', 'mission_reward_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     mission_reward_id: Mapped[int] = mapped_column(Integer)
@@ -5074,9 +4966,6 @@ class LegionMissionRewardDatum(Base):
 
 class LegionQuestDatum(Base):
     __tablename__ = 'legion_quest_data'
-    __table_args__ = (
-        Index('legion_quest_data_0_map_type', 'map_type'),
-    )
 
     legion_boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(Text)
@@ -5147,9 +5036,6 @@ class LegionSpecialBattle(Base):
 
 class LoginBonusAdv(Base):
     __tablename__ = 'login_bonus_adv'
-    __table_args__ = (
-        Index('login_bonus_adv_0_login_bonus_id', 'login_bonus_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     login_bonus_id: Mapped[int] = mapped_column(Integer)
@@ -5178,9 +5064,6 @@ class LoginBonusDatum(Base):
 
 class LoginBonusDetail(Base):
     __tablename__ = 'login_bonus_detail'
-    __table_args__ = (
-        Index('login_bonus_detail_0_login_bonus_id_1_count', 'login_bonus_id', 'count'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     login_bonus_id: Mapped[int] = mapped_column(Integer)
@@ -5197,9 +5080,6 @@ class LoginBonusDetail(Base):
 
 class LoginBonusMessageDatum(Base):
     __tablename__ = 'login_bonus_message_data'
-    __table_args__ = (
-        Index('login_bonus_message_data_0_login_bonus_id', 'login_bonus_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     login_bonus_id: Mapped[int] = mapped_column(Integer)
@@ -5226,9 +5106,6 @@ class LoveChara(Base):
 
 class LoveRankup(Base):
     __tablename__ = 'love_rankup'
-    __table_args__ = (
-        Index('love_rankup_0_unit_id', 'unit_id'),
-    )
 
     unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     love_rank: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -5237,9 +5114,6 @@ class LoveRankup(Base):
 
 class LsvDramaScript(Base):
     __tablename__ = 'lsv_drama_script'
-    __table_args__ = (
-        Index('lsv_drama_script_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -5256,9 +5130,6 @@ class LsvDramaScript(Base):
 
 class LsvStoryDatum(Base):
     __tablename__ = 'lsv_story_data'
-    __table_args__ = (
-        Index('lsv_story_data_0_original_event_id', 'original_event_id'),
-    )
 
     sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     original_event_id: Mapped[int] = mapped_column(Integer)
@@ -5271,9 +5142,6 @@ class LsvStoryDatum(Base):
 
 class LsvStoryScript(Base):
     __tablename__ = 'lsv_story_script'
-    __table_args__ = (
-        Index('lsv_story_script_0_story_id', 'story_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     story_id: Mapped[int] = mapped_column(Integer)
@@ -5291,9 +5159,6 @@ class LsvStoryScript(Base):
 
 class LtoLetterScript(Base):
     __tablename__ = 'lto_letter_script'
-    __table_args__ = (
-        Index('lto_letter_script_0_letter_id', 'letter_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     letter_id: Mapped[int] = mapped_column(Integer)
@@ -5311,9 +5176,6 @@ class LtoLetterScript(Base):
 
 class LtoStoryDatum(Base):
     __tablename__ = 'lto_story_data'
-    __table_args__ = (
-        Index('lto_story_data_0_event_id', 'event_id'),
-    )
 
     sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     event_id: Mapped[int] = mapped_column(Integer)
@@ -5326,9 +5188,6 @@ class LtoStoryDatum(Base):
 
 class Metamorphose(Base):
     __tablename__ = 'metamorphose'
-    __table_args__ = (
-        Index('metamorphose_0_type_id', 'type_id'),
-    )
 
     type_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     condition_value: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -5337,9 +5196,6 @@ class Metamorphose(Base):
 
 class MhpDramaScript(Base):
     __tablename__ = 'mhp_drama_script'
-    __table_args__ = (
-        Index('mhp_drama_script_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -5356,10 +5212,6 @@ class MhpDramaScript(Base):
 
 class MhpStoryDatum(Base):
     __tablename__ = 'mhp_story_data'
-    __table_args__ = (
-        Index('mhp_story_data_0_original_event_id', 'original_event_id'),
-        Index('mhp_story_data_0_unit_id', 'unit_id')
-    )
 
     sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     original_event_id: Mapped[int] = mapped_column(Integer)
@@ -5377,9 +5229,6 @@ class MhpStoryDatum(Base):
 
 class Minigame(Base):
     __tablename__ = 'minigame'
-    __table_args__ = (
-        Index('minigame_0_event_id', 'event_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer)
     minigame_scheme_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -5456,9 +5305,6 @@ class MissionCategoryIcon(Base):
 
 class MissionRewardDatum(Base):
     __tablename__ = 'mission_reward_data'
-    __table_args__ = (
-        Index('mission_reward_data_0_mission_reward_id', 'mission_reward_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     mission_reward_id: Mapped[int] = mapped_column(Integer)
@@ -5473,9 +5319,6 @@ class MissionRewardDatum(Base):
 
 class MmeStoryDatum(Base):
     __tablename__ = 'mme_story_data'
-    __table_args__ = (
-        Index('mme_story_data_0_original_event_id', 'original_event_id'),
-    )
 
     sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     original_event_id: Mapped[int] = mapped_column(Integer)
@@ -5491,9 +5334,6 @@ class MmeStoryDatum(Base):
 
 class Movie(Base):
     __tablename__ = 'movie'
-    __table_args__ = (
-        Index('movie_0_story_id', 'story_id'),
-    )
 
     movie_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     story_group_id: Mapped[int] = mapped_column(Integer)
@@ -5537,9 +5377,6 @@ class MusicList(Base):
 
 class MypageFrame(Base):
     __tablename__ = 'mypage_frame'
-    __table_args__ = (
-        Index('mypage_frame_0_group_id', 'group_id'),
-    )
 
     frame_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     group_id: Mapped[int] = mapped_column(Integer)
@@ -5580,9 +5417,6 @@ class NaviComment(Base):
 
 class NopDramaDatum(Base):
     __tablename__ = 'nop_drama_data'
-    __table_args__ = (
-        Index('nop_drama_data_0_stage_id', 'stage_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     stage_id: Mapped[int] = mapped_column(Integer)
@@ -5604,9 +5438,6 @@ class NopDramaDatum(Base):
 
 class NopDramaScript(Base):
     __tablename__ = 'nop_drama_script'
-    __table_args__ = (
-        Index('nop_drama_script_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -5623,13 +5454,32 @@ class NopDramaScript(Base):
 
 class NotifDatum(Base):
     __tablename__ = 'notif_data'
-    __table_args__ = (
-        Index('notif_data_0_unit_id', 'unit_id'),
-    )
 
     unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     notif_type: Mapped[int] = mapped_column(Integer, primary_key=True)
     comment: Mapped[str] = mapped_column(Text)
+
+
+class NydSetting(Base):
+    __tablename__ = 'nyd_setting'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    condition_boss_id: Mapped[int] = mapped_column(Integer)
+    complete_emblem_id: Mapped[int] = mapped_column(Integer)
+
+
+class NydStoryDatum(Base):
+    __tablename__ = 'nyd_story_data'
+
+    sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    original_event_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    is_first: Mapped[int] = mapped_column(Integer)
+    nyd_story_type: Mapped[int] = mapped_column(Integer)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_count: Mapped[int] = mapped_column(Integer)
 
 
 class NyxDramaDatum(Base):
@@ -5645,9 +5495,6 @@ class NyxDramaDatum(Base):
 
 class NyxDramaScript(Base):
     __tablename__ = 'nyx_drama_script'
-    __table_args__ = (
-        Index('nyx_drama_script_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -5673,10 +5520,6 @@ class NyxPhaseDatum(Base):
 
 class NyxStoryDatum(Base):
     __tablename__ = 'nyx_story_data'
-    __table_args__ = (
-        Index('nyx_story_data_0_story_phase', 'story_phase'),
-        Index('nyx_story_data_0_story_seq', 'story_seq')
-    )
 
     story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     story_seq: Mapped[int] = mapped_column(Integer)
@@ -5692,9 +5535,6 @@ class NyxStoryDatum(Base):
 
 class NyxStoryScript(Base):
     __tablename__ = 'nyx_story_script'
-    __table_args__ = (
-        Index('nyx_story_script_0_story_id', 'story_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     story_id: Mapped[int] = mapped_column(Integer)
@@ -5722,9 +5562,6 @@ class OddsNameDatum(Base):
 
 class OmpDrama(Base):
     __tablename__ = 'omp_drama'
-    __table_args__ = (
-        Index('omp_drama_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -5741,15 +5578,11 @@ class OmpDrama(Base):
 
 class OmpStoryDatum(Base):
     __tablename__ = 'omp_story_data'
-    __table_args__ = (
-        Index('omp_story_data_0_event_id', 'event_id'),
-        Index('omp_story_data_0_story_seq', 'story_seq')
-    )
 
     omp_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     event_id: Mapped[int] = mapped_column(Integer)
-    condition_quest_id: Mapped[int] = mapped_column(Integer)
-    condition_boss_id: Mapped[int] = mapped_column(Integer)
+    a145d7dcfa99b599b8c67bf6f6b1e7f49619be578aa228ee0112dec512fbad68: Mapped[int] = mapped_column(Integer)
+    cf88f3987820d0d8e2f4bdd3890b17bd612ca6914ed0d4369a1ae6ca995ca5b2: Mapped[int] = mapped_column(Integer)
     story_seq: Mapped[int] = mapped_column(Integer)
     is_readable_on_result: Mapped[int] = mapped_column(Integer)
     reward_type: Mapped[int] = mapped_column(Integer)
@@ -5788,9 +5621,6 @@ class PctGamingMotion(Base):
 
 class PctItempoint(Base):
     __tablename__ = 'pct_itempoint'
-    __table_args__ = (
-        Index('pct_itempoint_0_item_id', 'item_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     item_id: Mapped[int] = mapped_column(Integer)
@@ -5799,9 +5629,6 @@ class PctItempoint(Base):
 
 class PctResult(Base):
     __tablename__ = 'pct_result'
-    __table_args__ = (
-        Index('pct_result_0_character_id', 'character_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     character_id: Mapped[int] = mapped_column(Integer)
@@ -5816,9 +5643,6 @@ class PctResult(Base):
 
 class PctReward(Base):
     __tablename__ = 'pct_reward'
-    __table_args__ = (
-        Index('pct_reward_0_pct_point_type', 'pct_point_type'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     pct_point_type: Mapped[int] = mapped_column(Integer)
@@ -5893,9 +5717,6 @@ class PkbBatterCondition(Base):
 
 class PkbDrama(Base):
     __tablename__ = 'pkb_drama'
-    __table_args__ = (
-        Index('pkb_drama_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -5941,9 +5762,6 @@ class PkbNaviComment(Base):
 
 class PkbPitcherBallType(Base):
     __tablename__ = 'pkb_pitcher_ball_type'
-    __table_args__ = (
-        Index('pkb_pitcher_ball_type_0_pitcher_id', 'pitcher_id'),
-    )
 
     pitcher_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     ball_type: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -6005,19 +5823,26 @@ class PrizegachaDatum(Base):
     prize_memory_id_18: Mapped[int] = mapped_column(Integer)
     prize_memory_id_19: Mapped[int] = mapped_column(Integer)
     prize_memory_id_20: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_21: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_22: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_23: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_24: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_25: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_26: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_27: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_28: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_29: Mapped[int] = mapped_column(Integer)
+    prize_memory_id_30: Mapped[int] = mapped_column(Integer)
     gacha_prize1: Mapped[int] = mapped_column(Integer)
     gacha_prize10: Mapped[int] = mapped_column(Integer)
-    prize_fixed_compensation: Mapped[int] = mapped_column(Integer)
-    prize_fixed_compensation_quantity: Mapped[int] = mapped_column(Integer)
-    rarity_odds: Mapped[int] = mapped_column(Integer)
+    ec6cdf318c9ee20a2f84da307b80bf7a53369c657dfbbc548044fd957a2b9481: Mapped[int] = mapped_column(Integer)
+    _68d5e3247a4a880b558ff8540b939077f7ad9d17e178f07f2a5ffe8bd8c5fb28: Mapped[int] = mapped_column('68d5e3247a4a880b558ff8540b939077f7ad9d17e178f07f2a5ffe8bd8c5fb28', Integer)
+    _56075f91d7e9448b2fae22060c8b66e302e640bbb6cd8de9aef01399e188adee: Mapped[int] = mapped_column('56075f91d7e9448b2fae22060c8b66e302e640bbb6cd8de9aef01399e188adee', Integer)
     disp_prize_fixed_compensation: Mapped[int] = mapped_column(Integer)
 
 
 class PrizegachaSpDatum(Base):
     __tablename__ = 'prizegacha_sp_data'
-    __table_args__ = (
-        Index('prizegacha_sp_data_0_gacha_id', 'gacha_id'),
-    )
 
     gacha_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     rarity: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -6045,9 +5870,6 @@ class ProfileFrame(Base):
 
 class PromotionBonus(Base):
     __tablename__ = 'promotion_bonus'
-    __table_args__ = (
-        Index('promotion_bonus_0_unit_id', 'unit_id'),
-    )
 
     unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     promotion_level: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -6092,9 +5914,6 @@ class PsyDrama(Base):
 
 class PsyDramaScript(Base):
     __tablename__ = 'psy_drama_script'
-    __table_args__ = (
-        Index('psy_drama_script_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -6156,9 +5975,6 @@ class QuestAnnihilation(Base):
 
 class QuestAreaDatum(Base):
     __tablename__ = 'quest_area_data'
-    __table_args__ = (
-        Index('quest_area_data_0_map_type', 'map_type'),
-    )
 
     area_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     area_name: Mapped[str] = mapped_column(Text)
@@ -6188,9 +6004,6 @@ class QuestConditionDatum(Base):
 
 class QuestDatum(Base):
     __tablename__ = 'quest_data'
-    __table_args__ = (
-        Index('quest_data_0_area_id', 'area_id'),
-    )
 
     quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     area_id: Mapped[int] = mapped_column(Integer)
@@ -6240,7 +6053,7 @@ class QuestDatum(Base):
     quest_detail_bg_position: Mapped[int] = mapped_column(Integer)
     start_time: Mapped[str] = mapped_column(Text)
     end_time: Mapped[str] = mapped_column(Text)
-    lv_reward_flag: Mapped[int] = mapped_column(Integer)
+    af627221b1a9eac517db9881993a21891d1a2fc5e32bd672b127e8ae48cbc65b: Mapped[int] = mapped_column(Integer)
     add_treasure_num: Mapped[int] = mapped_column(Integer)
 
 
@@ -6276,9 +6089,6 @@ class QuestRewardDatum(Base):
 
 class Rarity6QuestDatum(Base):
     __tablename__ = 'rarity_6_quest_data'
-    __table_args__ = (
-        Index('rarity_6_quest_data_0_rarity_6_quest_id', 'rarity_6_quest_id'),
-    )
 
     rarity_6_quest_id: Mapped[int] = mapped_column(Integer)
     unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -6334,9 +6144,6 @@ class RedeemStaticPriceGroup(Base):
 
 class RedeemUnit(Base):
     __tablename__ = 'redeem_unit'
-    __table_args__ = (
-        Index('redeem_unit_0_unit_id', 'unit_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     unit_id: Mapped[int] = mapped_column(Integer)
@@ -6521,9 +6328,6 @@ class RoomChatInfo(Base):
 
 class RoomChatScenario(Base):
     __tablename__ = 'room_chat_scenario'
-    __table_args__ = (
-        Index('room_chat_scenario_0_id', 'id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     scenario_idx: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -6571,10 +6375,6 @@ class RoomEmotionIcon(Base):
 
 class RoomExclusiveCondition(Base):
     __tablename__ = 'room_exclusive_condition'
-    __table_args__ = (
-        Index('room_exclusive_condition_0_room_item_id', 'room_item_id'),
-        Index('room_exclusive_condition_0_unit_id', 'unit_id')
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     unit_id: Mapped[int] = mapped_column(Integer)
@@ -6617,10 +6417,6 @@ class RoomItemAnnouncement(Base):
 
 class RoomItemDetail(Base):
     __tablename__ = 'room_item_detail'
-    __table_args__ = (
-        Index('room_item_detail_0_lvup_trigger_type_1_lvup_trigger_id', 'lvup_trigger_type', 'lvup_trigger_id'),
-        Index('room_item_detail_0_lvup_trigger_type_2_1_lvup_trigger_id_2', 'lvup_trigger_type_2', 'lvup_trigger_id_2')
-    )
 
     room_item_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     level: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -6632,7 +6428,7 @@ class RoomItemDetail(Base):
     lvup_trigger_id_2: Mapped[int] = mapped_column(Integer)
     lvup_trigger_value_2: Mapped[int] = mapped_column(Integer)
     lvup_item1_type: Mapped[int] = mapped_column(Integer)
-    lvup_item1_id: Mapped[int] = mapped_column(Integer)
+    _273145448f498d5299b1ed7396ec69972d314e3f24b945bc6543477d188cea2d: Mapped[int] = mapped_column('273145448f498d5299b1ed7396ec69972d314e3f24b945bc6543477d188cea2d', Integer)
     lvup_item1_num: Mapped[int] = mapped_column(Integer)
     lvup_time: Mapped[int] = mapped_column(Integer)
 
@@ -6676,9 +6472,6 @@ class RoomSkinColor(Base):
 
 class RoomUnitComments(Base):
     __tablename__ = 'room_unit_comments'
-    __table_args__ = (
-        Index('room_unit_comments_0_unit_id', 'unit_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer)
     unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -6706,10 +6499,6 @@ class SdNaviComment(Base):
 
 class SeasonPack(Base):
     __tablename__ = 'season_pack'
-    __table_args__ = (
-        Index('season_pack_0_mission_id', 'mission_id'),
-        Index('season_pack_0_pack_type', 'pack_type')
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     mission_id: Mapped[int] = mapped_column(Integer)
@@ -6724,7 +6513,7 @@ class SeasonPack(Base):
     system_id_1: Mapped[int] = mapped_column(Integer)
     add_num_1: Mapped[int] = mapped_column(Integer)
     item_record_id: Mapped[int] = mapped_column(Integer)
-    condition_flg: Mapped[int] = mapped_column(Integer)
+    eb9f2a500ec476dcae332e764d80c4c642a42267bb19d188263d6962d193d7f6: Mapped[int] = mapped_column(Integer)
     reward_rate_1: Mapped[int] = mapped_column(Integer)
     pack_type: Mapped[int] = mapped_column(Integer)
 
@@ -6764,7 +6553,7 @@ class SeasonpassLevelReward(Base):
     charge_reward_type_2: Mapped[int] = mapped_column(Integer)
     charge_reward_id_2: Mapped[int] = mapped_column(Integer)
     charge_reward_num_2: Mapped[int] = mapped_column(Integer)
-    event_id: Mapped[int] = mapped_column(Integer)
+    event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
 
 
 class SeasonpassMissionDatum(Base):
@@ -6791,9 +6580,6 @@ class SeasonpassMissionDatum(Base):
 
 class SeasonpassMissionRewardDatum(Base):
     __tablename__ = 'seasonpass_mission_reward_data'
-    __table_args__ = (
-        Index('seasonpass_mission_reward_data_0_mission_reward_id', 'mission_reward_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     mission_reward_id: Mapped[int] = mapped_column(Integer)
@@ -6824,10 +6610,6 @@ class SecretDungeonEmblemMission(Base):
 
 class SecretDungeonEmblemReward(Base):
     __tablename__ = 'secret_dungeon_emblem_reward'
-    __table_args__ = (
-        Index('secret_dungeon_emblem_reward_0_mission_reward_id', 'mission_reward_id'),
-        Index('secret_dungeon_emblem_reward_0_reward_id', 'reward_id')
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     mission_reward_id: Mapped[int] = mapped_column(Integer)
@@ -6847,9 +6629,6 @@ class SecretDungeonEnemyInfo(Base):
 
 class SecretDungeonFloorReward(Base):
     __tablename__ = 'secret_dungeon_floor_reward'
-    __table_args__ = (
-        Index('secret_dungeon_floor_reward_0_dungeon_area_id', 'dungeon_area_id'),
-    )
 
     dungeon_area_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     clear_count: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -6874,10 +6653,6 @@ class SecretDungeonFloorReward(Base):
 
 class SecretDungeonFloorSetting(Base):
     __tablename__ = 'secret_dungeon_floor_setting'
-    __table_args__ = (
-        Index('secret_dungeon_floor_setting_0_quest_id', 'quest_id'),
-        Index('secret_dungeon_floor_setting_0_quest_id_1_mode', 'quest_id', 'mode')
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     quest_id: Mapped[int] = mapped_column(Integer)
@@ -6892,10 +6667,6 @@ class SecretDungeonFloorSetting(Base):
 
 class SecretDungeonQuestDatum(Base):
     __tablename__ = 'secret_dungeon_quest_data'
-    __table_args__ = (
-        Index('secret_dungeon_quest_data_0_dungeon_area_id_1_difficulty', 'dungeon_area_id', 'difficulty'),
-        Index('secret_dungeon_quest_data_0_dungeon_area_id_1_floor_num', 'dungeon_area_id', 'floor_num')
-    )
 
     quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     dungeon_area_id: Mapped[int] = mapped_column(Integer)
@@ -6915,10 +6686,10 @@ class SecretDungeonQuestDatum(Base):
     reward_image_5: Mapped[int] = mapped_column(Integer)
     reward_image_6: Mapped[int] = mapped_column(Integer)
     clear_reward_group: Mapped[int] = mapped_column(Integer)
-    reward_coin: Mapped[int] = mapped_column(Integer)
-    reward_csc: Mapped[int] = mapped_column(Integer)
+    _4143c6a3249ae3852a35b9c1e9e33d8ecc84b08c1c2f046fbf10306828bd8c38: Mapped[int] = mapped_column('4143c6a3249ae3852a35b9c1e9e33d8ecc84b08c1c2f046fbf10306828bd8c38', Integer)
+    _332be3d2825d7bffe32fb73acb20fdb500b7a5f8f47d94a6749b9974b9396d18: Mapped[int] = mapped_column('332be3d2825d7bffe32fb73acb20fdb500b7a5f8f47d94a6749b9974b9396d18', Integer)
     chest_id: Mapped[int] = mapped_column(Integer)
-    odds_group_id: Mapped[int] = mapped_column(Integer)
+    _28e77d7dc8e61510065c776cf3b0cd35c5db6abb2172b137e633333168936827: Mapped[int] = mapped_column('28e77d7dc8e61510065c776cf3b0cd35c5db6abb2172b137e633333168936827', Integer)
     background: Mapped[int] = mapped_column(Integer)
     dungeon_quest_detail_bg_id: Mapped[int] = mapped_column(Integer)
     dungeon_quest_detail_bg_position: Mapped[int] = mapped_column(Integer)
@@ -7106,9 +6877,6 @@ class SekaiSchedule(Base):
 
 class SekaiTopDatum(Base):
     __tablename__ = 'sekai_top_data'
-    __table_args__ = (
-        Index('sekai_top_data_0_sekai_id', 'sekai_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     sekai_id: Mapped[int] = mapped_column(Integer)
@@ -7132,9 +6900,6 @@ class SekaiTopDatum(Base):
 
 class SekaiTopStoryDatum(Base):
     __tablename__ = 'sekai_top_story_data'
-    __table_args__ = (
-        Index('sekai_top_story_data_0_sekai_id', 'sekai_id'),
-    )
 
     sekai_id: Mapped[int] = mapped_column(Integer)
     story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -7161,7 +6926,7 @@ class SerialCodeDatum(Base):
     start_time: Mapped[str] = mapped_column(Text)
     end_time: Mapped[str] = mapped_column(Text)
     limit_num: Mapped[int] = mapped_column(Integer)
-    count_share_id: Mapped[int] = mapped_column(Integer)
+    _9332309e1d07153d0b394b93d945067bf7e05c6b1a0d87fbe74df86d76b6da44: Mapped[int] = mapped_column('9332309e1d07153d0b394b93d945067bf7e05c6b1a0d87fbe74df86d76b6da44', Integer)
 
 
 class SerialGroupDatum(Base):
@@ -7218,11 +6983,6 @@ class ShioriBattleMissionDatum(Base):
 
 class ShioriBoss(Base):
     __tablename__ = 'shiori_boss'
-    __table_args__ = (
-        Index('shiori_boss_0_event_id', 'event_id'),
-        Index('shiori_boss_0_event_id_1_difficulty', 'event_id', 'difficulty'),
-        Index('shiori_boss_0_wave_group_id_1', 'wave_group_id_1')
-    )
 
     boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     event_id: Mapped[int] = mapped_column(Integer)
@@ -7267,15 +7027,12 @@ class ShioriBossCondition(Base):
     event_id: Mapped[int] = mapped_column(Integer)
     condition_quest_id: Mapped[int] = mapped_column(Integer)
     condition_boss_id: Mapped[int] = mapped_column(Integer)
-    release_quest_id: Mapped[int] = mapped_column(Integer)
-    release_boss_id: Mapped[int] = mapped_column(Integer)
+    b28847cf2586a95c850d113ddec4d8537da6f8fa1a2e89c36ed0951892150133: Mapped[int] = mapped_column(Integer)
+    d2985af7ba8ffb4844fc4b8690268375141acfad135be1808da7218d2620fac1: Mapped[int] = mapped_column(Integer)
 
 
 class ShioriDescription(Base):
     __tablename__ = 'shiori_description'
-    __table_args__ = (
-        Index('shiori_description_0_type', 'type'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     type: Mapped[int] = mapped_column(Integer)
@@ -7329,10 +7086,6 @@ class ShioriEnemyParameter(Base):
 
 class ShioriEventList(Base):
     __tablename__ = 'shiori_event_list'
-    __table_args__ = (
-        Index('shiori_event_list_0_original_event_id', 'original_event_id'),
-        Index('shiori_event_list_0_series_event_id', 'series_event_id')
-    )
 
     event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     start_time: Mapped[str] = mapped_column(Text)
@@ -7359,9 +7112,6 @@ class ShioriItem(Base):
 
 class ShioriMissionRewardDatum(Base):
     __tablename__ = 'shiori_mission_reward_data'
-    __table_args__ = (
-        Index('shiori_mission_reward_data_0_mission_reward_id', 'mission_reward_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     mission_reward_id: Mapped[int] = mapped_column(Integer)
@@ -7372,10 +7122,6 @@ class ShioriMissionRewardDatum(Base):
 
 class ShioriQuest(Base):
     __tablename__ = 'shiori_quest'
-    __table_args__ = (
-        Index('shiori_quest_0_drop_reward_id', 'drop_reward_id'),
-        Index('shiori_quest_0_event_id', 'event_id')
-    )
 
     quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     event_id: Mapped[int] = mapped_column(Integer)
@@ -7425,9 +7171,6 @@ class ShioriQuest(Base):
 
 class ShioriQuestArea(Base):
     __tablename__ = 'shiori_quest_area'
-    __table_args__ = (
-        Index('shiori_quest_area_0_event_id', 'event_id'),
-    )
 
     area_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     event_id: Mapped[int] = mapped_column(Integer)
@@ -7478,10 +7221,6 @@ class ShioriStationaryMissionDatum(Base):
 
 class ShioriUnlockUnitCondition(Base):
     __tablename__ = 'shiori_unlock_unit_condition'
-    __table_args__ = (
-        Index('shiori_unlock_unit_condition_0_condition_mission_id', 'condition_mission_id'),
-        Index('shiori_unlock_unit_condition_0_unit_id_1_event_id', 'unit_id', 'event_id')
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     unit_id: Mapped[int] = mapped_column(Integer)
@@ -7581,9 +7320,6 @@ class SjrCourse(Base):
 
 class SjrDramaScript(Base):
     __tablename__ = 'sjr_drama_script'
-    __table_args__ = (
-        Index('sjr_drama_script_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -7638,9 +7374,6 @@ class SjrNameLater(Base):
 
 class SjrNpcActionOdds(Base):
     __tablename__ = 'sjr_npc_action_odds'
-    __table_args__ = (
-        Index('sjr_npc_action_odds_0_action_odds_id', 'action_odds_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     action_odds_id: Mapped[int] = mapped_column(Integer)
@@ -7680,9 +7413,6 @@ class SjrProperFeature(Base):
 
 class SjrRail(Base):
     __tablename__ = 'sjr_rail'
-    __table_args__ = (
-        Index('sjr_rail_0_rail_id', 'rail_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     rail_id: Mapped[int] = mapped_column(Integer)
@@ -7743,9 +7473,6 @@ class SjrUbDatum(Base):
 
 class SkeStoryDatum(Base):
     __tablename__ = 'ske_story_data'
-    __table_args__ = (
-        Index('ske_story_data_0_original_event_id', 'original_event_id'),
-    )
 
     sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     original_event_id: Mapped[int] = mapped_column(Integer)
@@ -7757,9 +7484,6 @@ class SkeStoryDatum(Base):
 
 class SkeStoryScript(Base):
     __tablename__ = 'ske_story_script'
-    __table_args__ = (
-        Index('ske_story_script_0_story_id', 'story_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     story_id: Mapped[int] = mapped_column(Integer)
@@ -7865,9 +7589,6 @@ class SkipMonsterDatum(Base):
 
 class SpBattleVoice(Base):
     __tablename__ = 'sp_battle_voice'
-    __table_args__ = (
-        Index('sp_battle_voice_0_unit_id', 'unit_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -7957,10 +7678,6 @@ class SpaceSchedule(Base):
 
 class SpaceTopDatum(Base):
     __tablename__ = 'space_top_data'
-    __table_args__ = (
-        Index('space_top_data_0_space_id', 'space_id'),
-        Index('space_top_data_0_story_id', 'story_id')
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     space_id: Mapped[int] = mapped_column(Integer)
@@ -7984,9 +7701,6 @@ class SpecialStill(Base):
 
 class SpecialStoryBanner(Base):
     __tablename__ = 'special_story_banner'
-    __table_args__ = (
-        Index('special_story_banner_0_story_group_id', 'story_group_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     story_group_id: Mapped[int] = mapped_column(Integer)
@@ -8013,9 +7727,6 @@ class SpecialfesBanner(Base):
 
 class SpotDramaScriptDatum(Base):
     __tablename__ = 'spot_drama_script_data'
-    __table_args__ = (
-        Index('spot_drama_script_data_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -8047,9 +7758,6 @@ class SpskillLvInitializeDatum(Base):
 
 class SreAddTimesDatum(Base):
     __tablename__ = 'sre_add_times_data'
-    __table_args__ = (
-        Index('sre_add_times_data_0_sre_id', 'sre_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     sre_id: Mapped[int] = mapped_column(Integer)
@@ -8059,12 +7767,6 @@ class SreAddTimesDatum(Base):
 
 class SreBattleBonus(Base):
     __tablename__ = 'sre_battle_bonus'
-    __table_args__ = (
-        Index('sre_battle_bonus_0_sre_id_1_sre_boss_id', 'sre_id', 'sre_boss_id'),
-        Index('sre_battle_bonus_0_sre_id_1_type', 'sre_id', 'type'),
-        Index('sre_battle_bonus_0_type', 'type'),
-        Index('sre_battle_bonus_0_type_1_sre_boss_id', 'type', 'sre_boss_id')
-    )
 
     sre_battle_bonus_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     type: Mapped[int] = mapped_column(Integer)
@@ -8093,10 +7795,6 @@ class SreBattleBonusEffect(Base):
 
 class SreBossDatum(Base):
     __tablename__ = 'sre_boss_data'
-    __table_args__ = (
-        Index('sre_boss_data_0_sre_id', 'sre_id'),
-        Index('sre_boss_data_0_sre_id_1_phase', 'sre_id', 'phase')
-    )
 
     sre_boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     sre_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -8167,9 +7865,6 @@ class SreEffect(Base):
 
 class SreEffectiveUnit(Base):
     __tablename__ = 'sre_effective_unit'
-    __table_args__ = (
-        Index('sre_effective_unit_0_sre_boss_id_1_sre_id', 'sre_boss_id', 'sre_id'),
-    )
 
     sre_boss_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     sre_id: Mapped[int] = mapped_column(Integer)
@@ -8257,10 +7952,6 @@ class SreMissionCategoryDatum(Base):
 
 class SreMissionDatum(Base):
     __tablename__ = 'sre_mission_data'
-    __table_args__ = (
-        Index('sre_mission_data_0_sre_id', 'sre_id'),
-        Index('sre_mission_data_0_sre_id_1_category_id', 'sre_id', 'category_id')
-    )
 
     sre_mission_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     sre_id: Mapped[int] = mapped_column(Integer)
@@ -8278,9 +7969,6 @@ class SreMissionDatum(Base):
 
 class SreMissionRewardDatum(Base):
     __tablename__ = 'sre_mission_reward_data'
-    __table_args__ = (
-        Index('sre_mission_reward_data_0_mission_reward_id', 'mission_reward_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     mission_reward_id: Mapped[int] = mapped_column(Integer)
@@ -8318,9 +8006,6 @@ class SreSchedule(Base):
 
 class SreWaveGroupDatum(Base):
     __tablename__ = 'sre_wave_group_data'
-    __table_args__ = (
-        Index('sre_wave_group_data_0_wave_group_id', 'wave_group_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     wave_group_id: Mapped[int] = mapped_column(Integer)
@@ -8359,10 +8044,6 @@ class SrtAction(Base):
 
 class SrtPanel(Base):
     __tablename__ = 'srt_panel'
-    __table_args__ = (
-        Index('srt_panel_0_panel_id', 'panel_id'),
-        Index('srt_panel_0_version', 'version')
-    )
 
     reading_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     reading: Mapped[str] = mapped_column(Text)
@@ -8406,18 +8087,15 @@ class SrtScore(Base):
     coefficient_read_type_3: Mapped[int] = mapped_column(Integer)
     coefficient_count_priconne_panel: Mapped[int] = mapped_column(Integer)
     coefficient_fever: Mapped[int] = mapped_column(Integer)
-    constant_turn_bonus: Mapped[int] = mapped_column(Integer)
-    coefficient_turn_bonus: Mapped[int] = mapped_column(Integer)
-    coefficient_avg_answer_time: Mapped[int] = mapped_column(Integer)
-    constant_wrong_num: Mapped[int] = mapped_column(Integer)
-    coefficient_wrong_num: Mapped[int] = mapped_column(Integer)
+    ab051262aee45410b04731058d10a635d50dfaab6b7aa68782f45b8cbf8168dc: Mapped[int] = mapped_column(Integer)
+    _9325b33689047ad78ca93971aff4d70b1669eeaa21edfc735e09851cce54e448: Mapped[int] = mapped_column('9325b33689047ad78ca93971aff4d70b1669eeaa21edfc735e09851cce54e448', Integer)
+    _2f2744e639fde84ac7bfd127a3965ae0c808856a5a2f7d465f961acc5e1baf35: Mapped[int] = mapped_column('2f2744e639fde84ac7bfd127a3965ae0c808856a5a2f7d465f961acc5e1baf35', Integer)
+    _4e7a70dac389aafa9b394e2291755420d181043cf25cc6c537b033fff33f753e: Mapped[int] = mapped_column('4e7a70dac389aafa9b394e2291755420d181043cf25cc6c537b033fff33f753e', Integer)
+    _377b639c39596722407ec42d7c8fe3783341ff5d6fb3300697932eeaa9b3d611: Mapped[int] = mapped_column('377b639c39596722407ec42d7c8fe3783341ff5d6fb3300697932eeaa9b3d611', Integer)
 
 
 class SrtTopTalk(Base):
     __tablename__ = 'srt_top_talk'
-    __table_args__ = (
-        Index('srt_top_talk_0_talk_id', 'talk_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     talk_id: Mapped[int] = mapped_column(Integer)
@@ -8430,10 +8108,6 @@ class SrtTopTalk(Base):
 
 class SspStoryDatum(Base):
     __tablename__ = 'ssp_story_data'
-    __table_args__ = (
-        Index('ssp_story_data_0_contents_type', 'contents_type'),
-        Index('ssp_story_data_0_original_event_id', 'original_event_id')
-    )
 
     sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     original_event_id: Mapped[int] = mapped_column(Integer)
@@ -8485,10 +8159,6 @@ class StationaryMissionDatum(Base):
 
 class Still(Base):
     __tablename__ = 'still'
-    __table_args__ = (
-        Index('still_0_still_group_id', 'still_group_id'),
-        Index('still_0_story_id', 'story_id')
-    )
 
     still_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     story_group_id: Mapped[int] = mapped_column(Integer)
@@ -8552,9 +8222,6 @@ class StoryDatum(Base):
 
 class StoryDetail(Base):
     __tablename__ = 'story_detail'
-    __table_args__ = (
-        Index('story_detail_0_unlock_quest_id', 'unlock_quest_id'),
-    )
 
     story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     story_group_id: Mapped[int] = mapped_column(Integer)
@@ -8571,6 +8238,7 @@ class StoryDetail(Base):
     unlock_quest_id: Mapped[int] = mapped_column(Integer)
     story_quest_id: Mapped[int] = mapped_column(Integer)
     lock_all_text: Mapped[int] = mapped_column(Integer)
+    can_bookmark: Mapped[int] = mapped_column(Integer)
     reward_type_1: Mapped[int] = mapped_column(Integer)
     reward_id_1: Mapped[int] = mapped_column(Integer)
     reward_value_1: Mapped[int] = mapped_column(Integer)
@@ -8592,15 +8260,15 @@ class StoryQuestDatum(Base):
     quest_name: Mapped[str] = mapped_column(Text)
     limit_time: Mapped[int] = mapped_column(Integer)
     background_1: Mapped[int] = mapped_column(Integer)
-    wave_group_id_1: Mapped[int] = mapped_column(Integer)
+    _714000a5a303f8bcb2143206c8fb5bacfc70b2194b18892e0404a027f825c0ce: Mapped[int] = mapped_column('714000a5a303f8bcb2143206c8fb5bacfc70b2194b18892e0404a027f825c0ce', Integer)
     wave_bgm_sheet_id_1: Mapped[str] = mapped_column(Text)
     wave_bgm_que_id_1: Mapped[str] = mapped_column(Text)
     background_2: Mapped[int] = mapped_column(Integer)
-    wave_group_id_2: Mapped[int] = mapped_column(Integer)
+    d4c10192cfa3df5a7f10fdc043ce014df8d2e29758022a2449e6884edfcff587: Mapped[int] = mapped_column(Integer)
     wave_bgm_sheet_id_2: Mapped[str] = mapped_column(Text)
     wave_bgm_que_id_2: Mapped[str] = mapped_column(Text)
     background_3: Mapped[int] = mapped_column(Integer)
-    wave_group_id_3: Mapped[int] = mapped_column(Integer)
+    ca5b1bcb1c9a88e530bd50068925fe78697ada3a6a71fe5ee01a73f3d0c9d0d8: Mapped[int] = mapped_column(Integer)
     wave_bgm_sheet_id_3: Mapped[str] = mapped_column(Text)
     wave_bgm_que_id_3: Mapped[str] = mapped_column(Text)
     guest_unit_1: Mapped[int] = mapped_column(Integer)
@@ -8612,9 +8280,6 @@ class StoryQuestDatum(Base):
 
 class SvdDramaScript(Base):
     __tablename__ = 'svd_drama_script'
-    __table_args__ = (
-        Index('svd_drama_script_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -8631,9 +8296,6 @@ class SvdDramaScript(Base):
 
 class SvdStoryDatum(Base):
     __tablename__ = 'svd_story_data'
-    __table_args__ = (
-        Index('svd_story_data_0_original_event_id', 'original_event_id'),
-    )
 
     sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     original_event_id: Mapped[int] = mapped_column(Integer)
@@ -8646,9 +8308,6 @@ class SvdStoryDatum(Base):
 
 class SvdStoryScript(Base):
     __tablename__ = 'svd_story_script'
-    __table_args__ = (
-        Index('svd_story_script_0_story_id', 'story_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     story_id: Mapped[int] = mapped_column(Integer)
@@ -8700,9 +8359,6 @@ class TaqDatum(Base):
 
 class TaqDramaScript(Base):
     __tablename__ = 'taq_drama_script'
-    __table_args__ = (
-        Index('taq_drama_script_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -8819,9 +8475,6 @@ class TaqUnit(Base):
 
 class TdfBattleEffect(Base):
     __tablename__ = 'tdf_battle_effect'
-    __table_args__ = (
-        Index('tdf_battle_effect_0_quest_id', 'quest_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     quest_id: Mapped[int] = mapped_column(Integer)
@@ -8950,11 +8603,11 @@ class TicketGachaDatum(Base):
     ticket_id: Mapped[int] = mapped_column(Integer)
     gacha_times: Mapped[int] = mapped_column(Integer)
     gacha_detail: Mapped[int] = mapped_column(Integer)
-    guarantee_rarity: Mapped[str] = mapped_column(Text)
-    rarity_odds: Mapped[str] = mapped_column(Text)
-    chara_odds_star1: Mapped[str] = mapped_column(Text)
-    chara_odds_star2: Mapped[str] = mapped_column(Text)
-    chara_odds_star3: Mapped[str] = mapped_column(Text)
+    _5a4bd5a32984c842810a7229828ebc49917d2c7702c962923c0cd5b14fd7aa58: Mapped[str] = mapped_column('5a4bd5a32984c842810a7229828ebc49917d2c7702c962923c0cd5b14fd7aa58', Text)
+    _6664c040775d90690cd12e6b9a09c467f1baee80d988701d79d98ebd6d36971d: Mapped[str] = mapped_column('6664c040775d90690cd12e6b9a09c467f1baee80d988701d79d98ebd6d36971d', Text)
+    ec1634c4a54360cf7be0394f5fff142c6341db3b36c8bbb677c51733c84e4f0c: Mapped[str] = mapped_column(Text)
+    _689f0a1ea1c7a42cbfa5acb0651ff543113eaa245f2a6f94a8765e6b8bbdcc51: Mapped[str] = mapped_column('689f0a1ea1c7a42cbfa5acb0651ff543113eaa245f2a6f94a8765e6b8bbdcc51', Text)
+    _2e5ead8a61746da40bc18831122284870c3144d0158ee34982c4bc9166587747: Mapped[str] = mapped_column('2e5ead8a61746da40bc18831122284870c3144d0158ee34982c4bc9166587747', Text)
     staging_type: Mapped[int] = mapped_column(Integer)
 
 
@@ -8969,9 +8622,6 @@ class Tips(Base):
 
 class TmeMapDatum(Base):
     __tablename__ = 'tme_map_data'
-    __table_args__ = (
-        Index('tme_map_data_0_event_id', 'event_id'),
-    )
 
     tme_object_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     event_id: Mapped[int] = mapped_column(Integer)
@@ -9112,16 +8762,13 @@ class TowerEnemyParameter(Base):
 
 class TowerExQuestDatum(Base):
     __tablename__ = 'tower_ex_quest_data'
-    __table_args__ = (
-        Index('tower_ex_quest_data_0_floor_num', 'floor_num'),
-    )
 
     tower_ex_quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     tower_area_id: Mapped[int] = mapped_column(Integer)
     floor_num: Mapped[int] = mapped_column(Integer)
     stamina: Mapped[int] = mapped_column(Integer)
     stamina_start: Mapped[int] = mapped_column(Integer)
-    team_exp: Mapped[int] = mapped_column(Integer)
+    _334801301ae2ee74a225115d2adcf7fb2dec33d48d9c998ca31fc7ba4c563daf: Mapped[int] = mapped_column('334801301ae2ee74a225115d2adcf7fb2dec33d48d9c998ca31fc7ba4c563daf', Integer)
     limit_time: Mapped[int] = mapped_column(Integer)
     reward_image_1: Mapped[int] = mapped_column(Integer)
     reward_count_1: Mapped[int] = mapped_column(Integer)
@@ -9162,9 +8809,6 @@ class TowerExQuestDatum(Base):
 
 class TowerQuestDatum(Base):
     __tablename__ = 'tower_quest_data'
-    __table_args__ = (
-        Index('tower_quest_data_0_floor_num', 'floor_num'),
-    )
 
     tower_quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     tower_area_id: Mapped[int] = mapped_column(Integer)
@@ -9175,7 +8819,7 @@ class TowerQuestDatum(Base):
     boss_floor_flg: Mapped[int] = mapped_column(Integer)
     stamina: Mapped[int] = mapped_column(Integer)
     stamina_start: Mapped[int] = mapped_column(Integer)
-    team_exp: Mapped[int] = mapped_column(Integer)
+    bf70f6f550aad58dfbd745b12897728e9d0270085107420aaa75bd14c5ffe631: Mapped[int] = mapped_column(Integer)
     limit_time: Mapped[int] = mapped_column(Integer)
     recovery_hp_rate: Mapped[int] = mapped_column(Integer)
     recovery_tp_rate: Mapped[int] = mapped_column(Integer)
@@ -9266,40 +8910,34 @@ class TowerQuestFixRewardGroup(Base):
 
 class TowerQuestOddsGroup(Base):
     __tablename__ = 'tower_quest_odds_group'
-    __table_args__ = (
-        Index('tower_quest_odds_group_0_odds_group_id', 'odds_group_id'),
-    )
 
     odds_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     team_level_from: Mapped[int] = mapped_column(Integer, primary_key=True)
     team_level_to: Mapped[int] = mapped_column(Integer, primary_key=True)
     treasure_type_1: Mapped[int] = mapped_column(Integer)
-    odds_csv_1: Mapped[str] = mapped_column(Text)
+    be12884e6eea999a34f376ab22cb5666033dc3df51bbd1163b6b2b7b716986fe: Mapped[str] = mapped_column(Text)
     treasure_type_2: Mapped[int] = mapped_column(Integer)
-    odds_csv_2: Mapped[str] = mapped_column(Text)
+    fdb7c0cab293d102cb4924641fcde2e7f3a1f682f499f2086164f3e623a0b6f0: Mapped[str] = mapped_column(Text)
     treasure_type_3: Mapped[int] = mapped_column(Integer)
-    odds_csv_3: Mapped[str] = mapped_column(Text)
+    _4b7239fbfb3a60d237c42790596fc1ab840c394fb3777fcfc8b2c98f51243271: Mapped[str] = mapped_column('4b7239fbfb3a60d237c42790596fc1ab840c394fb3777fcfc8b2c98f51243271', Text)
     treasure_type_4: Mapped[int] = mapped_column(Integer)
-    odds_csv_4: Mapped[str] = mapped_column(Text)
+    _5a63307069fd6337f6646cf718c14354fe45f6194a69f3b05a961d4177cdbfba: Mapped[str] = mapped_column('5a63307069fd6337f6646cf718c14354fe45f6194a69f3b05a961d4177cdbfba', Text)
     treasure_type_5: Mapped[int] = mapped_column(Integer)
-    odds_csv_5: Mapped[str] = mapped_column(Text)
+    _98dbaa0a18bb1aa97f76d993762aa6361e4962533a9a378b6e2a4232fa3e44d2: Mapped[str] = mapped_column('98dbaa0a18bb1aa97f76d993762aa6361e4962533a9a378b6e2a4232fa3e44d2', Text)
     treasure_type_6: Mapped[int] = mapped_column(Integer)
-    odds_csv_6: Mapped[str] = mapped_column(Text)
+    e6609b44e785c314c0839091afc371a636e83aeeaacbf23503d927873b343d24: Mapped[str] = mapped_column(Text)
     treasure_type_7: Mapped[int] = mapped_column(Integer)
-    odds_csv_7: Mapped[str] = mapped_column(Text)
+    e8c1967df7eb688fa7dfe25c3702f7200ea561086b120c134b21de5530db7f95: Mapped[str] = mapped_column(Text)
     treasure_type_8: Mapped[int] = mapped_column(Integer)
-    odds_csv_8: Mapped[str] = mapped_column(Text)
+    _4f897858672b174df0bf291380494f9db3b3685d63d9504c95ace17f98e87931: Mapped[str] = mapped_column('4f897858672b174df0bf291380494f9db3b3685d63d9504c95ace17f98e87931', Text)
     treasure_type_9: Mapped[int] = mapped_column(Integer)
-    odds_csv_9: Mapped[str] = mapped_column(Text)
+    f2950b3bf46219f89bb04094c77a9a700d6dcc9d72173be7d9669518fd33aab4: Mapped[str] = mapped_column(Text)
     treasure_type_10: Mapped[int] = mapped_column(Integer)
-    odds_csv_10: Mapped[str] = mapped_column(Text)
+    _4db46ee4be3e054fde2e67db725e3df6e75817dcb533d224e3c57d96dd1c9584: Mapped[str] = mapped_column('4db46ee4be3e054fde2e67db725e3df6e75817dcb533d224e3c57d96dd1c9584', Text)
 
 
 class TowerSchedule(Base):
     __tablename__ = 'tower_schedule'
-    __table_args__ = (
-        Index('tower_schedule_0_opening_story_id', 'opening_story_id'),
-    )
 
     tower_schedule_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     max_tower_area_id: Mapped[int] = mapped_column(Integer)
@@ -9338,6 +8976,7 @@ class TowerStoryDetail(Base):
     unlock_quest_id: Mapped[int] = mapped_column(Integer)
     story_quest_id: Mapped[int] = mapped_column(Integer)
     lock_all_text: Mapped[int] = mapped_column(Integer)
+    can_bookmark: Mapped[int] = mapped_column(Integer)
     reward_type_1: Mapped[int] = mapped_column(Integer)
     reward_id_1: Mapped[int] = mapped_column(Integer)
     reward_value_1: Mapped[int] = mapped_column(Integer)
@@ -9420,7 +9059,7 @@ class TravelAreaDatum(Base):
 
     travel_area_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     travel_area_name: Mapped[str] = mapped_column(Text)
-    condition_team_lv: Mapped[int] = mapped_column(Integer)
+    _3ed177daf85109fddcd06c8634bff380a15a03aa1266ad099e041135ed09e309: Mapped[int] = mapped_column('3ed177daf85109fddcd06c8634bff380a15a03aa1266ad099e041135ed09e309', Integer)
     bg_id: Mapped[int] = mapped_column(Integer)
     top_icon_id: Mapped[int] = mapped_column(Integer)
     top_icon_x: Mapped[int] = mapped_column(Integer)
@@ -9446,9 +9085,6 @@ class TravelExEventDatum(Base):
 
 class TravelExEventDrama(Base):
     __tablename__ = 'travel_ex_event_drama'
-    __table_args__ = (
-        Index('travel_ex_event_drama_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -9465,9 +9101,6 @@ class TravelExEventDrama(Base):
 
 class TravelQuestDatum(Base):
     __tablename__ = 'travel_quest_data'
-    __table_args__ = (
-        Index('travel_quest_data_0_travel_area_id', 'travel_area_id'),
-    )
 
     travel_quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     travel_area_id: Mapped[int] = mapped_column(Integer)
@@ -9498,9 +9131,6 @@ class TravelQuestResult(Base):
 
 class TravelQuestResultGroup(Base):
     __tablename__ = 'travel_quest_result_group'
-    __table_args__ = (
-        Index('travel_quest_result_group_0_situation_group_id', 'situation_group_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     situation_group_id: Mapped[int] = mapped_column(Integer)
@@ -9509,10 +9139,6 @@ class TravelQuestResultGroup(Base):
 
 class TravelQuestSubReward(Base):
     __tablename__ = 'travel_quest_sub_reward'
-    __table_args__ = (
-        Index('travel_quest_sub_reward_0_reward_id', 'reward_id'),
-        Index('travel_quest_sub_reward_0_travel_quest_id', 'travel_quest_id')
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     travel_quest_id: Mapped[int] = mapped_column(Integer)
@@ -9523,9 +9149,6 @@ class TravelQuestSubReward(Base):
 
 class TravelResultExceptUnitGroup(Base):
     __tablename__ = 'travel_result_except_unit_group'
-    __table_args__ = (
-        Index('travel_result_except_unit_group_0_except_unit_group_id', 'except_unit_group_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     except_unit_group_id: Mapped[int] = mapped_column(Integer)
@@ -9548,9 +9171,6 @@ class TravelRoundEventDatum(Base):
 
 class TravelRoundEventDrama(Base):
     __tablename__ = 'travel_round_event_drama'
-    __table_args__ = (
-        Index('travel_round_event_drama_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -9567,9 +9187,6 @@ class TravelRoundEventDrama(Base):
 
 class TravelStartDrama(Base):
     __tablename__ = 'travel_start_drama'
-    __table_args__ = (
-        Index('travel_start_drama_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -9586,12 +9203,9 @@ class TravelStartDrama(Base):
 
 class TravelTopEventDatum(Base):
     __tablename__ = 'travel_top_event_data'
-    __table_args__ = (
-        Index('travel_top_event_data_0_top_event_id', 'top_event_id'),
-    )
 
     top_event_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    event_group: Mapped[int] = mapped_column(Integer)
+    f4eb1b09bf0ca37828f5fb73bb46879f56e770d54e3f1cf3349101194d856c62: Mapped[int] = mapped_column(Integer)
     drama_type: Mapped[int] = mapped_column(Integer)
     pattern: Mapped[int] = mapped_column(Integer, primary_key=True)
     zoom_offset_x: Mapped[int] = mapped_column(Integer)
@@ -9603,15 +9217,12 @@ class TravelTopEventDatum(Base):
     branch_id_3: Mapped[int] = mapped_column(Integer)
     branch_id_4: Mapped[int] = mapped_column(Integer)
     branch_id_5: Mapped[int] = mapped_column(Integer)
-    chest_id: Mapped[int] = mapped_column(Integer)
+    _37a55c23cfa5fb5195535d450a206169692b25c4737c071809bcf8fde14c758e: Mapped[int] = mapped_column('37a55c23cfa5fb5195535d450a206169692b25c4737c071809bcf8fde14c758e', Integer)
     top_icon_type: Mapped[int] = mapped_column(Integer)
 
 
 class TravelTopEventDrama(Base):
     __tablename__ = 'travel_top_event_drama'
-    __table_args__ = (
-        Index('travel_top_event_drama_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -9630,10 +9241,10 @@ class TravelTopEventPosDetail(Base):
     __tablename__ = 'travel_top_event_pos_detail'
 
     pos_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    pos_group_id: Mapped[int] = mapped_column(Integer)
+    fc44846adaad86b0bb56918e0b809c3b6b3a39295371b6dac966575f2ec96b9f: Mapped[int] = mapped_column(Integer)
     pos_x: Mapped[int] = mapped_column(Integer)
     pos_y: Mapped[int] = mapped_column(Integer)
-    all_pos_flag: Mapped[int] = mapped_column(Integer)
+    _0f97121e2bddd2a55d105118bffb95419d31d79f4a5aaedce9af71e2a33bdb46: Mapped[int] = mapped_column('0f97121e2bddd2a55d105118bffb95419d31d79f4a5aaedce9af71e2a33bdb46', Integer)
 
 
 class TrialBattleCategory(Base):
@@ -9651,9 +9262,6 @@ class TrialBattleCategory(Base):
 
 class TrialBattleDatum(Base):
     __tablename__ = 'trial_battle_data'
-    __table_args__ = (
-        Index('trial_battle_data_0_category_id', 'category_id'),
-    )
 
     quest_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     category_id: Mapped[int] = mapped_column(Integer)
@@ -9687,9 +9295,6 @@ class TrialBattleMissionDatum(Base):
 
 class TrialBattleMissionReward(Base):
     __tablename__ = 'trial_battle_mission_reward'
-    __table_args__ = (
-        Index('trial_battle_mission_reward_0_mission_reward_id', 'mission_reward_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     mission_reward_id: Mapped[int] = mapped_column(Integer)
@@ -9721,9 +9326,6 @@ class TrialBattleRewardDatum(Base):
 
 class TtkDrama(Base):
     __tablename__ = 'ttk_drama'
-    __table_args__ = (
-        Index('ttk_drama_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -9768,9 +9370,6 @@ class TtkNaviComment(Base):
 
 class TtkReward(Base):
     __tablename__ = 'ttk_reward'
-    __table_args__ = (
-        Index('ttk_reward_0_ttk_score', 'ttk_score'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     ttk_score: Mapped[int] = mapped_column(Integer)
@@ -9804,9 +9403,6 @@ class TtkScore(Base):
 
 class TtkStory(Base):
     __tablename__ = 'ttk_story'
-    __table_args__ = (
-        Index('ttk_story_0_ttk_score', 'ttk_score'),
-    )
 
     ttk_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     ttk_score: Mapped[int] = mapped_column(Integer)
@@ -9815,9 +9411,6 @@ class TtkStory(Base):
 
 class TtkStoryScript(Base):
     __tablename__ = 'ttk_story_script'
-    __table_args__ = (
-        Index('ttk_story_script_0_story_id', 'story_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     story_id: Mapped[int] = mapped_column(Integer)
@@ -9835,9 +9428,6 @@ class TtkStoryScript(Base):
 
 class TtkWeapon(Base):
     __tablename__ = 'ttk_weapon'
-    __table_args__ = (
-        Index('ttk_weapon_0_ttk_score', 'ttk_score'),
-    )
 
     ttk_weapon_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     ttk_score: Mapped[int] = mapped_column(Integer)
@@ -9874,9 +9464,6 @@ class UbAutoDefine(Base):
 
 class UekBoss(Base):
     __tablename__ = 'uek_boss'
-    __table_args__ = (
-        Index('uek_boss_0_enemy_id', 'enemy_id'),
-    )
 
     area: Mapped[int] = mapped_column(Integer, primary_key=True)
     quest_name: Mapped[str] = mapped_column(Text)
@@ -9910,9 +9497,6 @@ class UekBoss(Base):
 
 class UekDrama(Base):
     __tablename__ = 'uek_drama'
-    __table_args__ = (
-        Index('uek_drama_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -9961,9 +9545,6 @@ class UekMission(Base):
 
 class UekSpineAnimLink(Base):
     __tablename__ = 'uek_spine_anim_link'
-    __table_args__ = (
-        Index('uek_spine_anim_link_0_anim_num', 'anim_num'),
-    )
 
     spine_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     anim_num: Mapped[int] = mapped_column(Integer)
@@ -9971,10 +9552,6 @@ class UekSpineAnimLink(Base):
 
 class UniqueEquipConsumeGroup(Base):
     __tablename__ = 'unique_equip_consume_group'
-    __table_args__ = (
-        Index('unique_equip_consume_group_0_group_id', 'group_id'),
-        Index('unique_equip_consume_group_0_item_id', 'item_id', unique=True)
-    )
 
     group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     index_in_group: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -9983,9 +9560,6 @@ class UniqueEquipConsumeGroup(Base):
 
 class UniqueEquipCraftEnhance(Base):
     __tablename__ = 'unique_equip_craft_enhance'
-    __table_args__ = (
-        Index('unique_equip_craft_enhance_0_consume_group_id', 'consume_group_id'),
-    )
 
     equipment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     consume_group_id: Mapped[int] = mapped_column(Integer)
@@ -9993,9 +9567,6 @@ class UniqueEquipCraftEnhance(Base):
 
 class UniqueEquipEnhanceRate(Base):
     __tablename__ = 'unique_equip_enhance_rate'
-    __table_args__ = (
-        Index('unique_equip_enhance_rate_0_equipment_id', 'equipment_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     equipment_id: Mapped[int] = mapped_column(Integer)
@@ -10022,9 +9593,6 @@ class UniqueEquipEnhanceRate(Base):
 
 class UniqueEquipmentBonus(Base):
     __tablename__ = 'unique_equipment_bonus'
-    __table_args__ = (
-        Index('unique_equipment_bonus_0_equipment_id', 'equipment_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     equipment_id: Mapped[int] = mapped_column(Integer)
@@ -10132,9 +9700,9 @@ class UniqueEquipmentEnhanceRate(Base):
     __tablename__ = 'unique_equipment_enhance_rate'
 
     equipment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    equipment_name: Mapped[str] = mapped_column(Text)
-    description: Mapped[str] = mapped_column(Text)
-    promotion_level: Mapped[int] = mapped_column(Integer)
+    f098976cf592392561b59ced0fa200ed28ed25b44b48874f5b5fa2c65b41a534: Mapped[str] = mapped_column(Text)
+    _69f1dedc075748e046e8ebf87d940e9d98bcb4baadcab32a92466145a623268e: Mapped[str] = mapped_column('69f1dedc075748e046e8ebf87d940e9d98bcb4baadcab32a92466145a623268e', Text)
+    d1dcda56a74d26d46ac66d2cb84877057879752b9bca52032f0827209d7a91c3: Mapped[int] = mapped_column(Integer)
     hp: Mapped[float] = mapped_column(Float)
     atk: Mapped[float] = mapped_column(Float)
     magic_str: Mapped[float] = mapped_column(Float)
@@ -10156,9 +9724,6 @@ class UniqueEquipmentEnhanceRate(Base):
 
 class UniqueEquipmentRankup(Base):
     __tablename__ = 'unique_equipment_rankup'
-    __table_args__ = (
-        Index('unique_equipment_rankup_0_equip_id', 'equip_id'),
-    )
 
     equip_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     unique_equip_rank: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -10247,10 +9812,6 @@ class UnitClipSetting(Base):
 
 class UnitComments(Base):
     __tablename__ = 'unit_comments'
-    __table_args__ = (
-        Index('unit_comments_0_unit_id', 'unit_id'),
-        Index('unit_comments_0_unit_id_1_use_type', 'unit_id', 'use_type')
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     unit_id: Mapped[int] = mapped_column(Integer)
@@ -10272,9 +9833,6 @@ class UnitComments(Base):
 
 class UnitConversion(Base):
     __tablename__ = 'unit_conversion'
-    __table_args__ = (
-        Index('unit_conversion_0_unit_id', 'unit_id', unique=True),
-    )
 
     original_unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     unit_id: Mapped[int] = mapped_column(Integer)
@@ -10282,9 +9840,6 @@ class UnitConversion(Base):
 
 class UnitDatum(Base):
     __tablename__ = 'unit_data'
-    __table_args__ = (
-        Index('unit_data_0_original_unit_id', 'original_unit_id'),
-    )
 
     unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     unit_name: Mapped[str] = mapped_column(Text)
@@ -10341,9 +9896,6 @@ class UnitExEquipmentSlot(Base):
 
 class UnitIntroduction(Base):
     __tablename__ = 'unit_introduction'
-    __table_args__ = (
-        Index('unit_introduction_0_gacha_id', 'gacha_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     gacha_id: Mapped[int] = mapped_column(Integer)
@@ -10451,9 +10003,6 @@ class UnitProfile(Base):
 
 class UnitPromotion(Base):
     __tablename__ = 'unit_promotion'
-    __table_args__ = (
-        Index('unit_promotion_0_unit_id', 'unit_id'),
-    )
 
     unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     promotion_level: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -10491,10 +10040,6 @@ class UnitPromotionStatus(Base):
 
 class UnitRarity(Base):
     __tablename__ = 'unit_rarity'
-    __table_args__ = (
-        Index('unit_rarity_0_unit_id', 'unit_id'),
-        Index('unit_rarity_0_unit_material_id', 'unit_material_id')
-    )
 
     unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     rarity: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -10577,10 +10122,6 @@ class UnitSkillDatum(Base):
 
 class UnitSkillDataRf(Base):
     __tablename__ = 'unit_skill_data_rf'
-    __table_args__ = (
-        Index('unit_skill_data_rf_0_rf_skill_id', 'rf_skill_id'),
-        Index('unit_skill_data_rf_0_skill_id', 'skill_id')
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     skill_id: Mapped[int] = mapped_column(Integer)
@@ -10631,9 +10172,6 @@ class UnitUniqueEquip(Base):
 
 class UnitUniqueEquipment(Base):
     __tablename__ = 'unit_unique_equipment'
-    __table_args__ = (
-        Index('unit_unique_equipment_0_unit_id', 'unit_id'),
-    )
 
     unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     equip_slot: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -10642,12 +10180,6 @@ class UnitUniqueEquipment(Base):
 
 class UnlockRarity6(Base):
     __tablename__ = 'unlock_rarity_6'
-    __table_args__ = (
-        Index('unlock_rarity_6_0_material_id', 'material_id'),
-        Index('unlock_rarity_6_0_unit_id', 'unit_id'),
-        Index('unlock_rarity_6_0_unit_id_1_slot_id', 'unit_id', 'slot_id'),
-        Index('unlock_rarity_6_0_unit_id_1_unlock_level', 'unit_id', 'unlock_level')
-    )
 
     unit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     slot_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -10788,9 +10320,6 @@ class VoteUnit(Base):
 
 class WacBirthdayDramaScript(Base):
     __tablename__ = 'wac_birthday_drama_script'
-    __table_args__ = (
-        Index('wac_birthday_drama_script_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -10807,9 +10336,6 @@ class WacBirthdayDramaScript(Base):
 
 class WacDatum(Base):
     __tablename__ = 'wac_data'
-    __table_args__ = (
-        Index('wac_data_0_mural_group_id', 'mural_group_id'),
-    )
 
     wac_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     date_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -10830,9 +10356,6 @@ class WacDatum(Base):
 
 class WacDramaScript(Base):
     __tablename__ = 'wac_drama_script'
-    __table_args__ = (
-        Index('wac_drama_script_0_drama_id', 'drama_id'),
-    )
 
     command_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     drama_id: Mapped[int] = mapped_column(Integer)
@@ -10860,9 +10383,6 @@ class WacMuralBgDatum(Base):
 
 class WacMuralDatum(Base):
     __tablename__ = 'wac_mural_data'
-    __table_args__ = (
-        Index('wac_mural_data_0_mural_group_id', 'mural_group_id'),
-    )
 
     mural_group_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     date_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -10884,10 +10404,6 @@ class WacPresentStillDatum(Base):
 
 class WacUnitSearchDatum(Base):
     __tablename__ = 'wac_unit_search_data'
-    __table_args__ = (
-        Index('wac_unit_search_data_0_unit_id', 'unit_id'),
-        Index('wac_unit_search_data_0_unit_search_id', 'unit_search_id')
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     unit_search_id: Mapped[int] = mapped_column(Integer)
@@ -10896,9 +10412,6 @@ class WacUnitSearchDatum(Base):
 
 class WaveGroupDatum(Base):
     __tablename__ = 'wave_group_data'
-    __table_args__ = (
-        Index('wave_group_data_0_wave_group_id', 'wave_group_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     wave_group_id: Mapped[int] = mapped_column(Integer)
@@ -10924,11 +10437,6 @@ class WaveGroupDatum(Base):
 
 class WonStoryDatum(Base):
     __tablename__ = 'won_story_data'
-    __table_args__ = (
-        Index('won_story_data_0_note_id', 'note_id'),
-        Index('won_story_data_0_original_event_id', 'original_event_id'),
-        Index('won_story_data_0_unit_id_1_is_last', 'unit_id', 'is_last')
-    )
 
     sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     original_event_id: Mapped[int] = mapped_column(Integer)
@@ -10945,9 +10453,6 @@ class WonStoryDatum(Base):
 
 class WonStoryScript(Base):
     __tablename__ = 'won_story_script'
-    __table_args__ = (
-        Index('won_story_script_0_story_id', 'story_id'),
-    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     story_id: Mapped[int] = mapped_column(Integer)
@@ -10965,9 +10470,6 @@ class WonStoryScript(Base):
 
 class Worldmap(Base):
     __tablename__ = 'worldmap'
-    __table_args__ = (
-        Index('worldmap_0_map_type', 'map_type'),
-    )
 
     course_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(Text)
@@ -10983,9 +10485,6 @@ class Worldmap(Base):
 
 class WtmStoryDatum(Base):
     __tablename__ = 'wtm_story_data'
-    __table_args__ = (
-        Index('wtm_story_data_0_original_event_id', 'original_event_id'),
-    )
 
     sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     original_event_id: Mapped[int] = mapped_column(Integer)
@@ -11002,9 +10501,6 @@ class WtmStoryDatum(Base):
 
 class WtsNaviComment(Base):
     __tablename__ = 'wts_navi_comment'
-    __table_args__ = (
-        Index('wts_navi_comment_0_where_type', 'where_type'),
-    )
 
     comment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     where_type: Mapped[int] = mapped_column(Integer)
@@ -11020,9 +10516,6 @@ class WtsNaviComment(Base):
 
 class WtsStoryDatum(Base):
     __tablename__ = 'wts_story_data'
-    __table_args__ = (
-        Index('wts_story_data_0_original_event_id', 'original_event_id'),
-    )
 
     sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     repeat_story_id: Mapped[int] = mapped_column(Integer)
@@ -11034,11 +10527,26 @@ class WtsStoryDatum(Base):
     reward_count: Mapped[int] = mapped_column(Integer)
 
 
+class XacStoryDatum(Base):
+    __tablename__ = 'xac_story_data'
+
+    sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    original_event_id: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(Text)
+    sub_title: Mapped[str] = mapped_column(Text)
+    condition_quest_id: Mapped[int] = mapped_column(Integer)
+    condition_time: Mapped[str] = mapped_column(Text)
+    condition_sub_story_id: Mapped[int] = mapped_column(Integer)
+    day: Mapped[int] = mapped_column(Integer)
+    balloon_pos_x: Mapped[float] = mapped_column(Float)
+    balloon_pos_y: Mapped[float] = mapped_column(Float)
+    reward_type: Mapped[int] = mapped_column(Integer)
+    reward_id: Mapped[int] = mapped_column(Integer)
+    reward_count: Mapped[int] = mapped_column(Integer)
+
+
 class XehStoryDatum(Base):
     __tablename__ = 'xeh_story_data'
-    __table_args__ = (
-        Index('xeh_story_data_0_original_event_id', 'original_event_id'),
-    )
 
     sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     original_event_id: Mapped[int] = mapped_column(Integer)
@@ -11050,9 +10558,6 @@ class XehStoryDatum(Base):
 
 class YsnStoryDatum(Base):
     __tablename__ = 'ysn_story_data'
-    __table_args__ = (
-        Index('ysn_story_data_0_original_event_id', 'original_event_id'),
-    )
 
     sub_story_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     original_event_id: Mapped[int] = mapped_column(Integer)
