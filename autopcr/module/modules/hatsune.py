@@ -55,14 +55,62 @@ class hatsune_h_sweep(Module):
         if is_abort: raise AbortError("")
         if is_skip: raise SkipError("")
 
-@multichoice("hatsune_hboss_strategy", "扫荡策略", ["保留今日vh", "保留未来vh","保留sp"], ["保留今日vh", "保留未来vh","保留sp"])
+@name('扫荡活动vh本boss')
+@default(True)
+class hatsune_vhboss_sweep(Module):
+    async def do_task(self, client: pcrclient):
+        is_error = False
+        is_abort = False
+        is_skip = True
+        event_active = False
+        for event in db.get_active_hatsune():
+            event_active = True
+            event_name = db.event_name[event.event_id]
+            self._log(f"{event.event_id}:{event_name}：")
+
+            resp = await client.get_hatsune_top(event.event_id)
+            ticket = resp.boss_ticket_info.stock
+
+            times = 1
+            hboss_id = event.event_id * 100 + 2
+            vhboss_id = event.event_id * 100 + 3
+            spboss_id = event.event_id * 100 + 4
+
+            boss_info = {boss.boss_id: boss for boss in resp.boss_battle_info}
+
+            try: 
+                if not boss_info[vhboss_id].is_unlocked:
+                    raise AbortError(f"vh本boss未解锁")
+                if not boss_info[vhboss_id].kill_num:
+                    raise AbortError(f"vh本boss未首通")
+                if boss_info[spboss_id].daily_kill_count or not boss_info[spboss_id].remain_time:
+                    raise SkipError(f"今日vh本boss已扫荡")
+                # TODO check not able to sweep
+                if times <= 0:
+                    raise SkipError(f"当前{ticket}张，boss券不足")
+                resp = await client.hatsune_boss_skip(event.event_id, vhboss_id, times, ticket)
+                is_skip = False
+                self._log(f"当前{ticket}张，vh本boss扫荡{times}次")
+            except SkipError as e:
+                self._log(f"{str(e)}")
+            except AbortError as e:
+                is_abort = True
+                self._log(f"{str(e)}")
+            except Exception as e: 
+                is_error = True
+                self._log(f"{str(e)}")
+        if not event_active: raise SkipError("当前无进行中的活动")
+        if is_error: raise ValueError("")
+        if is_abort: raise AbortError("")
+        if is_skip: raise SkipError("")
+
+@multichoice("hatsune_hboss_strategy", "扫荡策略", ["保留未来vh","保留sp"], ["保留未来vh","保留sp"])
 @description('vh保留30，sp保留90，若无通关则会保留')
 @name('扫荡活动h本boss')
 @default(True)
 class hatsune_hboss_sweep(Module):
     async def do_task(self, client: pcrclient):
         strategy: List[str] = self.get_config('hatsune_hboss_strategy')
-        today_vh: bool = "保留今日vh" in strategy
         future_vh: bool = "保留未来vh" in strategy
         today_sp: bool = "保留sp" in strategy
         is_error = False
@@ -92,9 +140,6 @@ class hatsune_hboss_sweep(Module):
                 if today_sp and not boss_info[spboss_id].kill_num:
                     self._log("sp未通关，保留90张")
                     times -= 3
-                if today_vh and not boss_info[vhboss_id].daily_kill_count:
-                    self._log("今日vh未通关，保留30张")
-                    times -= 1
                 if future_vh:
                     left_day = (db.get_start_time(db.parse_time(event.end_time)) - db.get_today_start_time()).days 
                     self._log(f"距离活动结束还有{left_day}天，保留{left_day * 30}张")

@@ -80,6 +80,7 @@ daily_modules = ModuleList(
 
         all_in_hatsune,
 
+        hatsune_vhboss_sweep,
         hatsune_hboss_sweep,
         hatsune_mission_accept1,
         hatsune_gacha_exchange,
