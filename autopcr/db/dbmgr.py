@@ -1,4 +1,6 @@
 import os, json
+
+from typing import List
 from ..constants import CACHE_DIR, DATA_DIR
 from .assetmgr import assetmgr
 from sqlalchemy import create_engine, text
@@ -37,7 +39,7 @@ class dbmgr:
         return [row[1] for row in result]
 
     @staticmethod
-    def exec_transaction(session: Session, commands: list[str]) -> bool:
+    def exec_transaction(session: Session, commands: List[str]) -> bool:
         try:
             for cmd in commands:
                 session.execute(text(cmd))
