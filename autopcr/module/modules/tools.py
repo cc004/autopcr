@@ -652,6 +652,8 @@ class pjjc_info(ArenaInfo):
 class ShuffleTeam(Module):
     def team_cnt(self) -> int: ...
     def deck_num(self, num: int) -> ePartyType: ...
+    async def check_limit(self, client: pcrclient): 
+        pass
 
     def shuffle_candidate(self) -> List[List[int]]:
         teams = [list(x) for x in itertools.permutations(range(self.team_cnt()))]
@@ -672,6 +674,7 @@ class ShuffleTeam(Module):
             deck.unit_list = units_id
             deck_list.append(deck)
 
+        await self.check_limit(client)
         deck_list.sort(key=lambda x: x.deck_number)
         self._log('\n'.join([f"{i} -> {j}" for i, j in enumerate(ids)]))
         await client.deck_update_list(deck_list)
@@ -688,6 +691,17 @@ class pjjc_atk_shuffle_team(PJJCShuffleTeam):
 @name('pjjc换防')
 class pjjc_def_shuffle_team(PJJCShuffleTeam):
     def deck_num(self, num: int) -> ePartyType: return getattr(ePartyType, f"GRAND_ARENA_DEF_{num + 1}")
+    async def check_limit(self, client: pcrclient):
+        info = await client.get_grand_arena_info()
+        limit_info = info.update_deck_times_limit
+        if limit_info.round_times == limit_info.round_max_limited_times:
+            ok_time = db.format_time(db.parse_time(limit_info.round_end_time))
+            raise AbortError(f"已达到换防次数上限{limit_info.round_max_limited_times}，请于{ok_time}后再试")
+        if limit_info.daily_times == limit_info.daily_max_limited_times:
+            raise AbortError(f"已达到换防次数上限{limit_info.daily_max_limited_times}，请于明日再试")
+        msg = f"{db.format_time(db.parse_time(limit_info.round_end_time))}刷新" if limit_info.round_times else ""
+        self._log(f'''本轮换防次数{limit_info.round_times}/{limit_info.round_max_limited_times}，{msg}
+今日换防次数{limit_info.daily_times}/{limit_info.daily_max_limited_times}''')
 
 @description('获得可导入到兰德索尔图书馆的账号数据')
 @name('兰德索尔图书馆导入数据')

@@ -1187,10 +1187,15 @@ class database():
         assert len(schedule) == 1
         return schedule[0]
 
-    def parse_time(self, time: str) -> datetime.datetime:
+    def parse_time(self, time: Union[int, str]) -> datetime.datetime:
+        try:
+            return datetime.datetime.fromtimestamp(int(time))
+        except:
+            pass
+
         for timeformat in ['%Y/%m/%d %H:%M:%S', '%Y/%m/%d %H:%M', '%Y/%m/%d', '%Y-%m-%dT%H:%M:%S.%fZ', '%Y-%m-%dT%H:%M:%SZ', '%Y%m%d%H%M%S']:
             try:
-                return datetime.datetime.strptime(time, timeformat)
+                return datetime.datetime.strptime(str(time), timeformat)
             except:
                 pass
         raise ValueError(f"无法解析时间：{time}")
