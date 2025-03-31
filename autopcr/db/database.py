@@ -186,6 +186,11 @@ class database():
                 equip_slot: max(self.unique_equip_rank[equip_slot].keys()) for equip_slot in self.unique_equip_rank
             }
 
+            self.hatsune_boss: Dict[int, HatsuneBoss] = (
+                HatsuneBoss.query(db)
+                .to_dict(lambda x: x.boss_id, lambda x: x)
+            )
+
             self.hatsune_schedule: Dict[int, HatsuneSchedule] = (
                 HatsuneSchedule.query(db)
                 .to_dict(lambda x: x.event_id, lambda x: x)
@@ -416,6 +421,12 @@ class database():
             self.guild_story: List[StoryDetail] = (
                 StoryDetail.query(db)
                 .where(lambda x: x.story_id >= 3000000 and x.story_id < 4000000)
+                .to_list()
+            )
+
+            self.birthday_story: List[StoryDetail] = (
+                StoryDetail.query(db)
+                .where(lambda x: x.story_id >= 4010000 and x.story_id < 4020000)
                 .to_list()
             )
 
@@ -732,6 +743,11 @@ class database():
             self.hatsune_item: Dict[int, HatsuneItem] = (
                 HatsuneItem.query(db)
                 .to_dict(lambda x: x.event_id, lambda x: x)
+            )
+
+            self.won_story_data: Dict[int, WonStoryDatum] = (
+                WonStoryDatum.query(db)
+                .to_dict(lambda x: x.sub_story_id, lambda x: x)
             )
 
             self.mme_story_data: Dict[int, MmeStoryDatum] = (
@@ -1116,12 +1132,12 @@ class database():
         tomorrow = now + datetime.timedelta(days = 1)
         half_day = datetime.timedelta(hours = 7)
         n3 = (flow(self.campaign_schedule.values())
-                .where(lambda x: self.is_normal_quest_campaign(x.id) and x.value >= 3000 and self.is_level_effective_scope_in_campaign(level, x.id))
+                .where(lambda x: self.is_normal_quest_campaign(x.id) and x.value >= 6000 and self.is_level_effective_scope_in_campaign(level, x.id)) # TODO change 3000 when stop speed up
                 .select(lambda x: (db.parse_time(x.start_time), db.parse_time(x.end_time)))
                 .to_list()
               )
         h3 = (flow(self.campaign_schedule.values())
-                .where(lambda x: self.is_hard_quest_campaign(x.id) and x.value >= 3000)
+                .where(lambda x: self.is_hard_quest_campaign(x.id) and x.value >= 6000) # TODO change 3000 when stop speed up
                 .select(lambda x: (db.parse_time(x.start_time), db.parse_time(x.end_time)))
                 .to_list()
              )
@@ -1171,10 +1187,15 @@ class database():
         assert len(schedule) == 1
         return schedule[0]
 
-    def parse_time(self, time: str) -> datetime.datetime:
+    def parse_time(self, time: Union[int, str]) -> datetime.datetime:
+        try:
+            return datetime.datetime.fromtimestamp(int(time))
+        except:
+            pass
+
         for timeformat in ['%Y/%m/%d %H:%M:%S', '%Y/%m/%d %H:%M', '%Y/%m/%d', '%Y-%m-%dT%H:%M:%S.%fZ', '%Y-%m-%dT%H:%M:%SZ', '%Y%m%d%H%M%S']:
             try:
-                return datetime.datetime.strptime(time, timeformat)
+                return datetime.datetime.strptime(str(time), timeformat)
             except:
                 pass
         raise ValueError(f"无法解析时间：{time}")
@@ -1508,13 +1529,5 @@ class database():
 
     def unlock_unit_condition_candidate(self):
         return self.unlock_unit_condition
-
-import os, time
-os.environ['TZ'] = 'Asia/Shanghai'
-
-# 防止Windows不支持tzset()
-if hasattr(time, 'tzset'):
-    # On Unix systems, tzset() updates the local time settings
-    time.tzset()
 
 db = database()

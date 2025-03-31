@@ -78,25 +78,25 @@ class datamgr(BaseModel, Component[apiclient]):
         self.stamina = max_stamina - remain
 
     def is_heart_piece_campaign(self) -> bool:
-        return self.get_campaign_times(db.is_heart_piece_campaign) > 0
+        return self.get_heart_piece_campaign_times() > 1
 
     def is_star_cup_campaign(self) -> bool:
-        return self.get_campaign_times(db.is_star_cup_campaign) > 0
+        return self.get_star_cup_campaign_times() > 1
 
     def is_quest_campaign(self) -> bool:
         return self.is_normal_quest_campaign() or self.is_hard_quest_campaign() or self.is_very_hard_quest_campaign()
 
     def is_normal_quest_campaign(self) -> bool:
-        return self.get_campaign_times(db.is_normal_quest_campaign) > 0
+        return self.get_normal_quest_campaign_times() > 1
 
     def is_hard_quest_campaign(self) -> bool:
-        return self.get_campaign_times(db.is_hard_quest_campaign) > 0
+        return self.get_hard_quest_campaign_times() > 1
 
     def is_very_hard_quest_campaign(self) -> bool:
-        return self.get_campaign_times(db.is_very_hard_quest_campaign) > 0
+        return self.get_very_hard_quest_campaign_times() > 1
 
     def is_dungeon_mana_campaign(self) -> bool:
-        return self.get_campaign_times(db.is_dungeon_mana_campaign) > 0
+        return self.get_dungeon_mana_campaign_times() > 1
 
     def is_campaign(self, campaign: str) -> bool:
         campaign_list = {
@@ -122,7 +122,7 @@ class datamgr(BaseModel, Component[apiclient]):
         if not times:
             return 0
         times = max(times)
-        return int(times)
+        return int(times) // 2 # TODO delete // 2 when stop speed up
 
     def get_heart_piece_campaign_times(self) -> int:
         return self.get_campaign_times(db.is_heart_piece_campaign) // 1000

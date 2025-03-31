@@ -942,6 +942,7 @@ class GachaParameter(BaseModel):
     select_pickup_slot_num: int = None
     priority_list: List[int] = None
     original_gacha_id: int = None
+    remain_exec_count: int = None
 class CampaignGachaInfo(BaseModel):
     campaign_id: int = None
     fg1_exec_cnt: int = None
@@ -986,6 +987,11 @@ class GrandArenaInfo(BaseModel):
     group: int = None
     group_moving_release_time: int = None
     already_suspend: int = None
+    round_max_limited_times: int = None
+    daily_max_limited_times: int = None
+    round_times: int = None
+    round_end_time: int = None
+    daily_times: int = None
 class GrandArenaDeck(BaseModel):
     first: List[UnitDataForView] = None
     second: List[UnitDataForView] = None
@@ -1558,6 +1564,8 @@ class CaravanSetting(BaseModel):
     limit_caravan_dish_by_type: int = None
 class MultiRankUnitLimitSetting(BaseModel):
     multi_rank_unit_limit: int = None
+class StoryBookmarkIniSetting(BaseModel):
+    story_bookmark_limit_count: int = None
 class IniSetting(BaseModel):
     equipment_enhance: EquipStrSetting = None
     quest: QuestSetting = None
@@ -1599,6 +1607,7 @@ class IniSetting(BaseModel):
     sfd: SpecialFesDiscountIniSetting = None
     caravan: CaravanSetting = None
     multi_rank_unit_limit: MultiRankUnitLimitSetting = None
+    story_bookmark: StoryBookmarkIniSetting = None
 class LoginBonusData(BaseModel):
     campaign_id: int = None
     total_count: int = None
@@ -2517,6 +2526,12 @@ class VoteRanking(BaseModel):
     rarity_1: List[VoteRank] = None
     rarity_2: List[VoteRank] = None
     rarity_3: List[VoteRank] = None
+class ArenaDefendInfo(BaseModel):
+    round_max_limited_times: int = None
+    daily_max_limited_times: int = None
+    round_times: int = None
+    round_end_time: int = None
+    daily_times: int = None
 class AsmAnswerInfo(BaseModel):
     wave_no: int = None
     asm_id: int = None
@@ -2554,6 +2569,17 @@ class BywayDeliveryItemInfo(BaseModel):
     slot_id: int = None
     condition_id: int = None
     consume_num: int = None
+class RivalInfo(BaseModel):
+    rival_id: int = None
+    block_id: int = None
+    skip_count: int = None
+    minigame_id: int = None
+    minigame_start_count: int = None
+    minigame_retire_reward: List[InventoryInfo] = None
+    spots: int = None
+    after_block_id: int = None
+    next_rival_id: int = None
+    rate: int = None
 class CaravanDishSellData(BaseModel):
     id: int = None
     current_num: int = None
@@ -2601,6 +2627,11 @@ class CaravanTopGoalReward(BaseModel):
     lottery_result_list: List[InventoryInfo] = None
     treasure_appraisal_list: List[CaravanTreasureAppraisalData] = None
     reset_treasure_list: List[CaravanResetTreasureData] = None
+class CaravanBuddyListInfoData(BaseModel):
+    buddy_id: int = None
+    turn: int = None
+    exec_count: int = None
+    is_appear: bool = None
 class ColosseumBattleFinishUnitInfo(BaseModel):
     damage: int = None
     unit_id: int = None
@@ -2641,6 +2672,13 @@ class MonthlyFreeGachaInfo(BaseModel):
     fg1_last_exec_time: int = None
     fg10_exec_cnt: int = None
     fg10_last_exec_time: int = None
+class ExPlusInfo(BaseModel):
+    enemy_unit: List[UnitHpInfo] = None
+    enemy_point: int = None
+    mode: int = None
+class HatsuneQuestBulkSkipInfo(BaseModel):
+    skip_count: int = None
+    skip_list: List[int] = None
 class BeginnerCharaExchangeTicketProductData(BaseModel):
     csv_data_id: int = None
     beginner_id: int = None
@@ -2662,6 +2700,16 @@ class SeasonPassData(BaseModel):
     weekly_point: int = None
     missions: List[UserMissionInfo] = None
     received_rewards: List[int] = None
+class StoryBookmarkInfo(BaseModel):
+    command_index: int = None
+    tag_number_list: List[int] = None
+class StoryBookmark(BaseModel):
+    story_id: int = None
+    bookmark_info: StoryBookmarkInfo = None
+    StoryGroupId: int = None
+class GuaranteeGachaCounter(BaseModel):
+    gacha_id: int = None
+    remain_exec_count: int = None
 class BannerLinkedPackList(BaseModel):
     id: int = None
     remaining_count: int = None
@@ -2673,6 +2721,9 @@ class MonthlyGachaInfo(BaseModel):
     exchange_num: int = None
     max_exchange_num: int = None
     gacha_point_info: GachaPointInfo = None
+class RenameAvailableTimes(BaseModel):
+    user_name: int = None
+    user_comment: int = None
 class ExchangeRewards(BaseModel):
     id: int = None
     type: int = None
