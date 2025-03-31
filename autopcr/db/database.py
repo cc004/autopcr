@@ -419,6 +419,12 @@ class database():
                 .to_list()
             )
 
+            self.birthday_story: List[StoryDetail] = (
+                StoryDetail.query(db)
+                .where(lambda x: x.story_id >= 4010000 and x.story_id < 4020000)
+                .to_list()
+            )
+
             self.main_story: List[StoryDetail] = (
                 StoryDetail.query(db)
                 .where(lambda x: x.story_id >= 2000000 and x.story_id < 3000000)

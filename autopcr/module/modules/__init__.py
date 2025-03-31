@@ -111,6 +111,7 @@ daily_modules = ModuleList(
         hatsune_sub_story_reading,
         guild_story_reading,
         unit_story_reading,
+        birthday_story_reading,
         room_upper_all,
         user_info,
     ]
