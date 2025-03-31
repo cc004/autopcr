@@ -38,6 +38,7 @@ class guild_story_reading(Module):
         client.data.read_story_ids = list(read_story)
         self._log(f"共{len(self.log)}篇")
 
+@description('除了法吉他')
 @name('阅读角色剧情')
 @default(False)
 class unit_story_reading(Module):
@@ -46,6 +47,8 @@ class unit_story_reading(Module):
         read_story.add(0) # no pre story
         now = apiclient.datetime
         for story in db.unit_story:
+            if story.story_group_id == 1255:  # 忽略魔姬剧情
+                continue
             if (
                 story.story_id not in read_story and
                 (story.pre_story_id in read_story or now >= db.parse_time(story.force_unlock_time)) and
