@@ -186,6 +186,11 @@ class database():
                 equip_slot: max(self.unique_equip_rank[equip_slot].keys()) for equip_slot in self.unique_equip_rank
             }
 
+            self.hatsune_boss: Dict[int, HatsuneBoss] = (
+                HatsuneBoss.query(db)
+                .to_dict(lambda x: x.boss_id, lambda x: x)
+            )
+
             self.hatsune_schedule: Dict[int, HatsuneSchedule] = (
                 HatsuneSchedule.query(db)
                 .to_dict(lambda x: x.event_id, lambda x: x)

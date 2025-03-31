@@ -71,10 +71,8 @@ class hatsune_vhboss_sweep(Module):
             resp = await client.get_hatsune_top(event.event_id)
             ticket = resp.boss_ticket_info.stock
 
-            times = 1
-            hboss_id = event.event_id * 100 + 2
             vhboss_id = event.event_id * 100 + 3
-            spboss_id = event.event_id * 100 + 4
+            times = min(1, ticket // db.hatsune_boss[vhboss_id].use_ticket_num)
 
             boss_info = {boss.boss_id: boss for boss in resp.boss_battle_info}
 
@@ -83,11 +81,13 @@ class hatsune_vhboss_sweep(Module):
                     raise AbortError(f"vh本boss未解锁")
                 if not boss_info[vhboss_id].kill_num:
                     raise AbortError(f"vh本boss未首通")
-                if boss_info[spboss_id].daily_kill_count or not boss_info[spboss_id].remain_time:
+                if boss_info[vhboss_id].daily_kill_count:
                     raise SkipError(f"今日vh本boss已扫荡")
-                # TODO check not able to sweep
                 if times <= 0:
-                    raise SkipError(f"当前{ticket}张，boss券不足")
+                    raise AbortError(f"当前{ticket}张，boss券不足")
+
+                if boss_info[vhboss_id].oneblow_kill_count < db.hatsune_boss[vhboss_id].oneblow_count_of_skip_condition:
+                    raise AbortError(f"vh本boss一刀击杀次数{boss_info[vhboss_id].oneblow_kill_count}<{db.hatsune_boss[vhboss_id].oneblow_count_of_skip_condition}，无法扫荡")
                 resp = await client.hatsune_boss_skip(event.event_id, vhboss_id, times, ticket)
                 is_skip = False
                 self._log(f"当前{ticket}张，vh本boss扫荡{times}次")
@@ -125,10 +125,9 @@ class hatsune_hboss_sweep(Module):
             resp = await client.get_hatsune_top(event.event_id)
             ticket = resp.boss_ticket_info.stock
 
-            times = ticket // 30
             hboss_id = event.event_id * 100 + 2
-            vhboss_id = event.event_id * 100 + 3
             spboss_id = event.event_id * 100 + 4
+            times = ticket // db.hatsune_boss[hboss_id].use_ticket_num
 
             boss_info = {boss.boss_id: boss for boss in resp.boss_battle_info}
 
@@ -141,12 +140,15 @@ class hatsune_hboss_sweep(Module):
                     self._log("sp未通关，保留90张")
                     times -= 3
                 if future_vh:
-                    left_day = (db.get_start_time(db.parse_time(event.end_time)) - db.get_today_start_time()).days 
+                    left_day = (db.get_start_time(db.parse_time(event.end_time)) - db.get_today_start_time()).days
                     self._log(f"距离活动结束还有{left_day}天，保留{left_day * 30}张")
                     times -= left_day
 
                 if times <= 0:
                     raise SkipError(f"当前{ticket}张，boss券不足")
+
+                if boss_info[hboss_id].oneblow_kill_count < db.hatsune_boss[hboss_id].oneblow_count_of_skip_condition:
+                    raise AbortError(f"vh本boss一刀击杀次数{boss_info[hboss_id].oneblow_kill_count}<{db.hatsune_boss[hboss_id].oneblow_count_of_skip_condition}，无法扫荡")
                 resp = await client.hatsune_boss_skip(event.event_id, hboss_id, times, ticket)
                 is_skip = False
                 self._log(f"当前{ticket}张，h本boss扫荡{times}次")
