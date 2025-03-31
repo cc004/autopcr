@@ -34,12 +34,12 @@ class normal_gacha(Module):
 @default(True)
 class monthly_gacha(Module):
     async def do_task(self, client: pcrclient):
-        if not client.data.resident_info:
+        if not client.data.resident_info or apiclient.datetime > db.parse_time(client.data.resident_info.end_time):
             raise SkipError("未购买凭证月卡")
         resp = await client.get_gacha_resident_index()
         if len(resp.gacha_info) != 1:
             raise ValueError("怎么有多个凭证扭蛋可以同时抽取？")
-        end_time = datetime.datetime.fromtimestamp(client.data.resident_info.end_time)
+        end_time = db.parse_time(client.data.resident_info.end_time)
         if db.is_today(end_time):
             self._warn("今日凭证扭蛋最后一天")
         point_info = client.data.resident_info.gacha_point_info
