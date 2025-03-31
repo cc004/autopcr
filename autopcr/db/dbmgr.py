@@ -1,4 +1,5 @@
 import os, json
+from typing import List
 from ..constants import CACHE_DIR, DATA_DIR
 from .assetmgr import assetmgr
 from sqlalchemy import create_engine, text
@@ -27,17 +28,17 @@ class dbmgr:
         return Session(self._engine)
 
     @staticmethod
-    def get_create_table(session, table_name):
+    def get_create_table(session: Session, table_name: str):
         result = session.execute(text(f"SELECT sql FROM sqlite_master WHERE type='table' AND name='{table_name}'")).fetchone()
         return result[0] if result else None
 
     @staticmethod
-    def get_table_columns(session, table_name):
+    def get_table_columns(session: Session, table_name: str):
         result = session.execute(text(f"PRAGMA table_info({table_name})")).fetchall()
         return [row[1] for row in result]
 
     @staticmethod
-    def exec_transaction(session: Session, commands: list[str]) -> bool:
+    def exec_transaction(session: Session, commands: List[str]) -> bool:
         try:
             for cmd in commands:
                 session.execute(text(cmd))
