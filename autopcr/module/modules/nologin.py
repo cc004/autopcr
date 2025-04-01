@@ -44,7 +44,7 @@ class GachaDatum(ISchedule):
 
     @property
     def enabled(self) -> bool:
-        return super().enabled and self.gacha_id // 10000 > 2
+        return super().enabled and self.gacha_id // 10000 > 2 and self.gacha_id // 10000 < 10
 
     def get_description(self) -> str:
         if self.exchange_id != 0:

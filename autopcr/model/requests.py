@@ -3740,6 +3740,13 @@ class CaravanCoinShopBuyRequest(Request[CaravanCoinShopBuyResponse]):
     @property
     def url(self) -> str:
         return "caravan/coin_shop_buy"
+class CaravanDiceRerollRequest(Request[CaravanDiceRerollResponse]):
+    season_id: int = None
+    current_count: int = None
+    roll_num: int = None
+    @property
+    def url(self) -> str:
+        return "caravan/dice_reroll"
 class CaravanDiceRollRequest(Request[CaravanDiceRollResponse]):
     season_id: int = None
     current_num: int = None
@@ -3769,20 +3776,29 @@ class CaravanGachaBlockExecRequest(Request[CaravanGachaBlockExecResponse]):
     @property
     def url(self) -> str:
         return "caravan/gacha_block_exec"
+class CaravanMinigameCccBsFinishRequest(Request[CaravanMinigameCccBsFinishResponse]):
+    season_id: int = None
+    play_id: int = None
+    object_list: List[CccFinishItemCountInfo] = None
+    @property
+    def url(self) -> str:
+        return "caravan_minigame/ccc_bs/finish"
+class CaravanMinigameCccBsStartRequest(Request[CaravanMinigameCccBsStartResponse]):
+    season_id: int = None
+    @property
+    def url(self) -> str:
+        return "caravan_minigame/ccc_bs/start"
 class CaravanMinigameCccFinishRequest(Request[CaravanMinigameCccFinishResponse]):
-    from_system_id: int = None
     play_id: int = None
     object_list: List[CccFinishItemCountInfo] = None
     @property
     def url(self) -> str:
         return "caravan_minigame/ccc/finish"
 class CaravanMinigameCccStartRequest(Request[CaravanMinigameCccStartResponse]):
-    from_system_id: int = None
     @property
     def url(self) -> str:
         return "caravan_minigame/ccc/start"
 class CaravanMinigameRetireRequest(Request[CaravanMinigameRetireResponse]):
-    from_system_id: int = None
     @property
     def url(self) -> str:
         return "caravan/minigame_retire"
@@ -3793,12 +3809,23 @@ class CaravanMoveRequest(Request[CaravanMoveResponse]):
     @property
     def url(self) -> str:
         return "caravan/move"
+class CaravanProgressTurnRequest(Request[CaravanProgressTurnResponse]):
+    season_id: int = None
+    turn: int = None
+    @property
+    def url(self) -> str:
+        return "caravan/progress_turn"
 class CaravanReadRequest(Request[CaravanReadResponse]):
     season_id: int = None
     block_id: int = None
     @property
     def url(self) -> str:
         return "caravan/read"
+class CaravanRivalMinigameRetireRequest(Request[CaravanRivalMinigameRetireResponse]):
+    season_id: int = None
+    @property
+    def url(self) -> str:
+        return "caravan/rival_minigame_retire"
 class CaravanShopBlockBuyRequest(Request[CaravanShopBlockBuyResponse]):
     season_id: int = None
     block_id: int = None
@@ -3807,6 +3834,12 @@ class CaravanShopBlockBuyRequest(Request[CaravanShopBlockBuyResponse]):
     @property
     def url(self) -> str:
         return "caravan/shop_block_buy"
+class CaravanSpotsChoiceRequest(Request[CaravanSpotsChoiceResponse]):
+    season_id: int = None
+    choice: int = None
+    @property
+    def url(self) -> str:
+        return "caravan/spots_choice"
 class CaravanTopRequest(Request[CaravanTopResponse]):
     is_first: int = None
     @property
@@ -3866,9 +3899,74 @@ class GachaMonthlyIndexRequest(Request[GachaMonthlyIndexResponse]):
     @property
     def url(self) -> str:
         return "gacha/resident"
+class GetValidFriendSupportUnitListRequest(Request[GetValidFriendSupportUnitListResponse]):
+    @property
+    def url(self) -> str:
+        return ""
+class HatsuneExPlusFinishRequest(Request[HatsuneExPlusFinishResponse]):
+    event_id: int = None
+    boss_id: int = None
+    user_unit: HatsuneBossBattleFinishUnit = None
+    enemy_damage_list: List[EventEnemyDamageInfo] = None
+    remain_time: int = None
+    mode: int = None
+    enemy_info: List[EventEnemyInfo] = None
+    manual_flags: int = None
+    @property
+    def url(self) -> str:
+        return ""
+class HatsuneExPlusHistoryRequest(Request[HatsuneExPlusHistoryResponse]):
+    event_id: int = None
+    appear_num: int = None
+    page: int = None
+    @property
+    def url(self) -> str:
+        return ""
+class HatsuneExPlusResetRequest(Request[HatsuneExPlusResetResponse]):
+    event_id: int = None
+    boss_id: int = None
+    appear_num: int = None
+    @property
+    def url(self) -> str:
+        return ""
+class HatsuneExPlusRetireRequest(Request[HatsuneExPlusRetireResponse]):
+    event_id: int = None
+    boss_id: int = None
+    manual_flags: int = None
+    @property
+    def url(self) -> str:
+        return ""
+class HatsuneExPlusStartRequest(Request[HatsuneExPlusStartResponse]):
+    boss_id: int = None
+    event_id: int = None
+    mode: int = None
+    owner_viewer_id: int = None
+    support_unit_id: int = None
+    is_friend: int = None
+    support_battle_rarity: int = None
+    @property
+    def url(self) -> str:
+        return ""
+class HatsuneQuestSkipMultipleRequest(Request[HatsuneQuestSkipMultipleResponse]):
+    event_id: int = None
+    normal_skip_list: List[QuestSkipInfo] = None
+    hard_skip_list: List[QuestSkipInfo] = None
+    current_ticket_num: int = None
+    @property
+    def url(self) -> str:
+        return ""
+class HatsuneUpdateSkipQuestListRequest(Request[HatsuneUpdateSkipQuestListResponse]):
+    event_id: int = None
+    skip_count: int = None
+    skip_list: List[int] = None
+    @property
+    def url(self) -> str:
+        return ""
 class LogConnectionErrorRequest(Request[LogConnectionErrorResponse]):
     api_name: str = None
     error_message: str = None
+    exception_message: str = None
+    exception_stack_trace: str = None
     @property
     def url(self) -> str:
         return "log/connection_error"
@@ -3906,6 +4004,31 @@ class ShopBuyBulkRequest(Request[ShopBuyBulkResponse]):
     @property
     def url(self) -> str:
         return "shop/buy_bulk"
+class StoryDeleteBookmarkRequest(Request[StoryDeleteBookmarkResponse]):
+    story_id_list: List[int] = None
+    @property
+    def url(self) -> str:
+        return "story/delete_bookmark"
+class StoryRegisterBookmarkRequest(Request[StoryRegisterBookmarkResponse]):
+    story_id: int = None
+    bookmark_info: StoryBookmarkInfo = None
+    @property
+    def url(self) -> str:
+        return "story/register_bookmark"
+class SubStoryAisConfirmRequest(Request[SubStoryAisConfirmResponse]):
+    @property
+    def url(self) -> str:
+        return "sub_story/ais/confirm"
+class SubStoryAisReadStoryRequest(Request[SubStoryAisReadStoryResponse]):
+    sub_story_id: int = None
+    @property
+    def url(self) -> str:
+        return "sub_story/ais/read_story"
+class SubStoryAsbReadStoryRequest(Request[SubStoryAsbReadStoryResponse]):
+    sub_story_id: int = None
+    @property
+    def url(self) -> str:
+        return "sub_story/asb/read_story"
 class SubStoryBmyReadStoryRequest(Request[SubStoryBmyReadStoryResponse]):
     sub_story_id: int = None
     @property
@@ -3916,6 +4039,11 @@ class SubStoryDvsReadStoryRequest(Request[SubStoryDvsReadStoryResponse]):
     @property
     def url(self) -> str:
         return "sub_story/dvs/read_story"
+class SubStoryNydReadStoryRequest(Request[SubStoryNydReadStoryResponse]):
+    sub_story_id: int = None
+    @property
+    def url(self) -> str:
+        return "sub_story/nyd/read_story"
 class SubStoryWonReadStoryRequest(Request[SubStoryWonReadStoryResponse]):
     sub_story_id_list: List[int] = None
     @property
@@ -3931,6 +4059,11 @@ class SubStoryWtsReadStoryRequest(Request[SubStoryWtsReadStoryResponse]):
     @property
     def url(self) -> str:
         return "sub_story/wts/read_story"
+class SubStoryXacReadStoryRequest(Request[SubStoryXacReadStoryResponse]):
+    sub_story_id: int = None
+    @property
+    def url(self) -> str:
+        return "sub_story/xac/read_story"
 class TestBuyMonthlyCardRequest(Request[TestBuyMonthlyCardResponse]):
     jewel_store_id: int = None
     max_free_count_10: int = None

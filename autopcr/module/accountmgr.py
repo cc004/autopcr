@@ -78,12 +78,15 @@ class Account(ModuleManager):
         self.token = f"{self.qq}_{self.alias}"
         super().__init__(self.data.config)
 
-    async def __aenter__(self):
+    async def _do_aenter(self):
         if not self.readonly:
             logger.debug(f"Acquire lock {self._filename}")
             await self._lck.acquire()
             await super().__aenter__()
         return self
+
+    async def __aenter__(self):
+        return await self._do_aenter()
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if not self.readonly:

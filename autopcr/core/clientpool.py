@@ -52,6 +52,8 @@ class SessionErrorHandler(Component[apiclient]):
                 self.retry += 1
                 await self._container.logout()
                 return await self.request(request, next)
+            if "回到标题界面" in str(e):
+                await self._container.logout()
             raise
         finally:
             self.retry = 0

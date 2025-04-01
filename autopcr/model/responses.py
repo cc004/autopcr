@@ -48,6 +48,7 @@ class ArenaInfoResponse(ResponseBase):
     reward_info: InventoryInfo = None
     reward_hour_num: int = None
     is_time_reward_max: bool = None
+    update_deck_times_limit: ArenaDefendInfo = None
 class ArenaIntervalCancelResponse(ResponseBase):
     arena_info: ArenaInfo = None
     user_jewel: UserJewel = None
@@ -408,9 +409,17 @@ class DailyTaskSaveRewardsResponse(ResponseBase):
 class DailyTaskTopResponse(ResponseBase):
     task_list: List[DailyTaskData] = None
 class DeckUpdateListResponse(ResponseBase):
-    pass
+    round_max_limited_times: int = None
+    daily_max_limited_times: int = None
+    round_times: int = None
+    round_end_time: int = None
+    daily_times: int = None
 class DeckUpdateResponse(ResponseBase):
-    pass
+    round_max_limited_times: int = None
+    daily_max_limited_times: int = None
+    round_times: int = None
+    round_end_time: int = None
+    daily_times: int = None
 class DimensionFaultBattleFinishResponse(ResponseBase):
     reward_list: List[InventoryInfo] = None
     user_gold: UserGold = None
@@ -704,6 +713,7 @@ class GrandArenaInfoResponse(ResponseBase):
     reward_info: InventoryInfo = None
     reward_hour_num: int = None
     is_time_reward_max: bool = None
+    update_deck_times_limit: ArenaDefendInfo = None
 class GrandArenaMoveGroupResponse(ResponseBase):
     grand_arena_info: GrandArenaInfo = None
 class GrandArenaRankingResponse(ResponseBase):
@@ -871,6 +881,7 @@ class HatsuneQuestTopResponse(ResponseBase):
     bosses: List[HatsuneEventBossStatus] = None
     boss_battle_info: List[HatsuneEventBossStatus] = None
     boss_enemy_info: List[HatsuneEventBossEnemyInfo] = None
+    multi_skip_setting: HatsuneQuestBulkSkipInfo = None
 class HatsuneQuizAnswerResponse(ResponseBase):
     is_correct: int = None
     unlock_quest_list: List[int] = None
@@ -949,6 +960,8 @@ class HatsuneTopResponse(ResponseBase):
     bosses: List[HatsuneEventBossStatus] = None
     boss_battle_info: List[HatsuneEventBossStatus] = None
     boss_enemy_info: List[HatsuneEventBossEnemyInfo] = None
+    ex_plus_info: ExPlusInfo = None
+    ex_plus_ranking: List[EventSpecialBattleExRankingInfo] = None
 class HomeIndexResponse(ResponseBase):
     unread_message_list: UnreadMessageList = None
     missions: List[UserMissionInfo] = None
@@ -992,6 +1005,7 @@ class HomeIndexResponse(ResponseBase):
     season_ticket: SeasonPassData = None
     custom_season_pack_alert: List[int] = None
     custom_season_pack_end_time: List[int] = None
+    story_bookmark: List[StoryBookmark] = None
 class ItemETicketExchangeResponse(ResponseBase):
     reward_list: List[InventoryInfo] = None
     item_data: List[InventoryInfo] = None
@@ -1233,11 +1247,13 @@ class LoadIndexResponse(ResponseBase):
     sdgl: int = None
     sdgl_start: int = None
     sdgl_end: int = None
+    guarantee_gacha_counter_list: List[GuaranteeGachaCounter] = None
     evmb: int = None
     banner_linked_pack_list: List[BannerLinkedPackList] = None
     adc: int = None
     receive_caravan_dice_count: int = None
     drc: int = None
+    hsm: int = None
     resident_info: MonthlyGachaInfo = None
 class LoadNextDayIndexResponse(ResponseBase):
     daily_reset_time: int = None
@@ -1279,6 +1295,8 @@ class LoadNextDayIndexResponse(ResponseBase):
     adc: int = None
     receive_caravan_dice_count: int = None
     drc: int = None
+    hsm: int = None
+    guarantee_gacha_counter_list: List[GuaranteeGachaCounter] = None
     resident_info: MonthlyGachaInfo = None
 class MirokuBattleFinishResponse(ResponseBase):
     damage_result: int = None
@@ -1425,6 +1443,7 @@ class ProfileGetResponse(ResponseBase):
     clan_battle_id: int = None
     clan_battle_mode: int = None
     clan_battle_own_score: int = None
+    rename_available_times: RenameAvailableTimes = None
 class ProfileMakerGetClanProfileResponse(ResponseBase):
     profile: ClanProfileCardSetting = None
     clan: ClanProfileCardClanInfo = None
@@ -2114,6 +2133,7 @@ class StoryViewingResponse(ResponseBase):
     unlock_story_ids: List[int] = None
     event_id: int = None
     unlocked_sub_story_list: List[int] = None
+    unlock_sub_story_info_list: List[EventSubStoryInfo] = None
 class SubStoryDsbReadStoryResponse(ResponseBase):
     reward_info: List[InventoryInfo] = None
     add_present_count: int = None
@@ -2686,8 +2706,18 @@ class CaravanCoinShopBuyResponse(ResponseBase):
     purchase_list: List[InventoryInfo] = None
     item_data: List[InventoryInfo] = None
     add_present_count: int = None
+class CaravanDiceRerollResponse(ResponseBase):
+    spots_list: List[int] = None
+    spots_choices_1: int = None
+    spots_choices_2: int = None
+    buddy_spots: int = None
 class CaravanDiceRollResponse(ResponseBase):
     spots_list: List[int] = None
+    spots_choices_1: int = None
+    spots_choices_2: int = None
+    buddy_spots: int = None
+    rival_info: RivalInfo = None
+    buddy_reward_list: List[InventoryInfo] = None
 class CaravanDishSellResponse(ResponseBase):
     reward_list: List[InventoryInfo] = None
 class CaravanDishUseResponse(ResponseBase):
@@ -2702,12 +2732,22 @@ class CaravanGachaBlockExecResponse(ResponseBase):
     surplus_dish_list: List[CaravanDishData] = None
     rank_list: List[int] = None
     add_present_count: int = None
+class CaravanMinigameCccBsFinishResponse(ResponseBase):
+    total_score_base: int = None
+    total_score_corrected: int = None
+    reward_list: List[InventoryInfo] = None
+    rival_info: RivalInfo = None
+class CaravanMinigameCccBsStartResponse(ResponseBase):
+    play_id: int = None
+    ccc_chara_id: int = None
+    ccc_scenario_id: int = None
 class CaravanMinigameCccFinishResponse(ResponseBase):
     total_score_base: int = None
     total_score_corrected: int = None
     apply_event_id_list: List[int] = None
     reward_list: List[InventoryInfo] = None
     add_present_count: int = None
+    rival_info: RivalInfo = None
 class CaravanMinigameCccStartResponse(ResponseBase):
     play_id: int = None
     ccc_scenario_id: int = None
@@ -2715,8 +2755,8 @@ class CaravanMinigameCccStartResponse(ResponseBase):
 class CaravanMinigameRetireResponse(ResponseBase):
     minigame_retire_reward: List[InventoryInfo] = None
     add_present_count: int = None
+    rival_info: RivalInfo = None
 class CaravanMoveResponse(ResponseBase):
-    turn: int = None
     reward_list: List[InventoryInfo] = None
     surplus_dish_list: List[CaravanDishData] = None
     event_id: int = None
@@ -2730,11 +2770,24 @@ class CaravanMoveResponse(ResponseBase):
     treasure_reward_list: List[InventoryInfo] = None
     add_present_count: int = None
     minigame_id: int = None
+    rival_info: RivalInfo = None
+    action_bit_flag: int = None
+class CaravanProgressTurnResponse(ResponseBase):
+    turn: int = None
+    buddy_id: int = None
+    buddy_reward_list: List[InventoryInfo] = None
+    shop_block_lineup_list: List[CaravanShopBlockLineup] = None
+    rival_info: RivalInfo = None
+    surplus_dish_list: List[CaravanDishData] = None
 class CaravanReadResponse(ResponseBase):
     pass
+class CaravanRivalMinigameRetireResponse(ResponseBase):
+    rival_info: RivalInfo = None
 class CaravanShopBlockBuyResponse(ResponseBase):
     purchase_list: List[InventoryInfo] = None
     add_present_count: int = None
+class CaravanSpotsChoiceResponse(ResponseBase):
+    pass
 class CaravanTopResponse(ResponseBase):
     season_id: int = None
     turn: int = None
@@ -2757,6 +2810,11 @@ class CaravanTopResponse(ResponseBase):
     suspended_minigame_id: int = None
     minigame_retire_reward: List[InventoryInfo] = None
     init_reward_list: List[InventoryInfo] = None
+    rival_info: RivalInfo = None
+    buddy_info: CaravanBuddyListInfoData = None
+    buddy_reward_list: List[InventoryInfo] = None
+    spots_choices_1: int = None
+    spots_choices_2: int = None
 class ColosseumBattleFinishResponse(ResponseBase):
     score: ColosseumScore = None
 class ColosseumBattleRetireResponse(ResponseBase):
@@ -2792,6 +2850,45 @@ class GachaMonthlyIndexResponse(ResponseBase):
     exchange_num: int = None
     max_exchange_num: int = None
     free_gacha_info: MonthlyFreeGachaInfo = None
+class GetValidFriendSupportUnitListResponse(ResponseBase):
+    friend_support_unit_list: List[SupportUnitStatus] = None
+    general_support_unit_list: List[SupportUnitStatus] = None
+class HatsuneExPlusFinishResponse(ResponseBase):
+    result_type: int = None
+    first_clear_rewards: List[InventoryInfo] = None
+    chat_battle_log_flag: int = None
+    add_present_count: int = None
+    user_gold: UserGold = None
+class HatsuneExPlusHistoryResponse(ResponseBase):
+    total_attack_count: int = None
+    clear_time: int = None
+    history: List[EventSpecialBattleExHistory] = None
+class HatsuneExPlusResetResponse(ResponseBase):
+    ex_plus_info: ExPlusInfo = None
+class HatsuneExPlusRetireResponse(ResponseBase):
+    pass
+class HatsuneExPlusStartResponse(ResponseBase):
+    battle_log_id: int = None
+    enemy_info: List[EventEnemyInfo] = None
+class HatsuneQuestSkipMultipleResponse(ResponseBase):
+    level_info: LevelInfo = None
+    user_info: UserStaminaInfo = None
+    flag_exchange_team_exp: bool = None
+    quest_result_list: List[QuestResultList] = None
+    bonus_reward_list: List[InventoryInfo] = None
+    user_gold: UserGold = None
+    add_present_count: int = None
+    upper_limit_flag: bool = None
+    item_list: List[InventoryInfo] = None
+    limited_shop_list: List[LimitedShop] = None
+    daily_shop: DailyShop = None
+    clan_point: ClanPoint = None
+    caravan_dice_point: int = None
+    state_exchange_stamina: eExchangeStaminaState = None
+    new_dear_story_id_list: List[int] = None
+    new_sub_story_info_list: List[EventSubStoryInfo] = None
+class HatsuneUpdateSkipQuestListResponse(ResponseBase):
+    pass
 class LogConnectionErrorResponse(ResponseBase):
     pass
 class SeasonPassBuyLevelResponse(ResponseBase):
@@ -2828,6 +2925,20 @@ class ShopBuyBulkResponse(ResponseBase):
     purchase_list: List[InventoryInfo] = None
     item_data: List[InventoryInfo] = None
     user_gold: UserGold = None
+class StoryDeleteBookmarkResponse(ResponseBase):
+    pass
+class StoryRegisterBookmarkResponse(ResponseBase):
+    pass
+class SubStoryAisConfirmResponse(ResponseBase):
+    pass
+class SubStoryAisReadStoryResponse(ResponseBase):
+    unlock_sub_story_info_list: List[EventSubStoryInfo] = None
+    reward_info: List[InventoryInfo] = None
+    add_present_count: int = None
+class SubStoryAsbReadStoryResponse(ResponseBase):
+    reward_info: List[InventoryInfo] = None
+    special_reward_list: List[InventoryInfo] = None
+    add_present_count: int = None
 class SubStoryBmyReadStoryResponse(ResponseBase):
     reward_info: List[InventoryInfo] = None
     special_reward_list: List[InventoryInfo] = None
@@ -2835,6 +2946,10 @@ class SubStoryBmyReadStoryResponse(ResponseBase):
 class SubStoryDvsReadStoryResponse(ResponseBase):
     reward_info: List[InventoryInfo] = None
     add_present_count: int = None
+class SubStoryNydReadStoryResponse(ResponseBase):
+    reward_info: List[InventoryInfo] = None
+    add_present_count: int = None
+    special_reward_list: List[InventoryInfo] = None
 class SubStoryWonReadStoryResponse(ResponseBase):
     reward_info: List[InventoryInfo] = None
     new_sub_story_info_list: List[EventSubStoryInfo] = None
@@ -2844,6 +2959,10 @@ class SubStoryWtmReadStoryResponse(ResponseBase):
     special_reward_list: List[InventoryInfo] = None
     add_present_count: int = None
 class SubStoryWtsReadStoryResponse(ResponseBase):
+    reward_info: List[InventoryInfo] = None
+    add_present_count: int = None
+class SubStoryXacReadStoryResponse(ResponseBase):
+    new_sub_story_info_list: List[EventSubStoryInfo] = None
     reward_info: List[InventoryInfo] = None
     add_present_count: int = None
 class TestBuyMonthlyCardResponse(ResponseBase):

@@ -38,6 +38,32 @@ class guild_story_reading(Module):
         client.data.read_story_ids = list(read_story)
         self._log(f"共{len(self.log)}篇")
 
+@name('阅读生日剧情')
+@default(True)
+class birthday_story_reading(Module):
+
+    async def do_task(self, client: pcrclient):
+        read_story = set(client.data.read_story_ids)
+        read_story.add(0) # no pre story
+        for story in db.birthday_story:
+            start_time = db.parse_time(story.start_time)
+            now = apiclient.datetime
+            if now < start_time:
+                continue
+            if (
+                story.story_id not in read_story and
+                story.pre_story_id in read_story
+                ):
+                await client.read_story(story.story_id)
+                read_story.add(story.story_id)
+                self._log(f"阅读了{story.title if story.title else story.sub_title}")
+
+        if not self.log:
+            raise SkipError("不存在未阅读的生日剧情")
+        client.data.read_story_ids = list(read_story)
+        self._log(f"共{len(self.log)}篇")
+
+@description('除了法吉他')
 @name('阅读角色剧情')
 @default(False)
 class unit_story_reading(Module):
@@ -46,6 +72,8 @@ class unit_story_reading(Module):
         read_story.add(0) # no pre story
         now = apiclient.datetime
         for story in db.unit_story:
+            if story.story_group_id == 1255:  # 忽略魔姬剧情
+                continue
             if (
                 story.story_id not in read_story and
                 (story.pre_story_id in read_story or now >= db.parse_time(story.force_unlock_time)) and
