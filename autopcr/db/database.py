@@ -1530,4 +1530,15 @@ class database():
     def unlock_unit_condition_candidate(self):
         return self.unlock_unit_condition
 
+    def free_gacha_ids_candidate(self):
+        free_gacha_campaigns = flow(self.campaign_free_gacha.values()) \
+            .where(lambda x: apiclient.datetime < self.parse_time(x.end_time)) \
+            .select(lambda x: x.campaign_id) \
+            .to_list()
+        if not free_gacha_campaigns:
+            return []
+        free_gacha_campaign = min(free_gacha_campaigns)
+        return [gacha.gacha_id for gacha in self.campaign_free_gacha_data[free_gacha_campaign]]
+
+
 db = database()
