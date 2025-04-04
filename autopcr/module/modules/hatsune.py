@@ -148,7 +148,7 @@ class hatsune_hboss_sweep(Module):
                     raise SkipError(f"当前{ticket}张，boss券不足")
 
                 if boss_info[hboss_id].oneblow_kill_count < db.hatsune_boss[hboss_id].oneblow_count_of_skip_condition:
-                    raise AbortError(f"vh本boss一刀击杀次数{boss_info[hboss_id].oneblow_kill_count}<{db.hatsune_boss[hboss_id].oneblow_count_of_skip_condition}，无法扫荡")
+                    raise AbortError(f"h本boss一刀击杀次数{boss_info[hboss_id].oneblow_kill_count}<{db.hatsune_boss[hboss_id].oneblow_count_of_skip_condition}，无法扫荡")
                 resp = await client.hatsune_boss_skip(event.event_id, hboss_id, times, ticket)
                 is_skip = False
                 self._log(f"当前{ticket}张，h本boss扫荡{times}次")
