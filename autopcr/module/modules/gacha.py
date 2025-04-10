@@ -119,7 +119,7 @@ class free_gacha(Module):
 
         gacha_reward: GachaReward = GachaReward()
 
-        self._log(f"抽取卡池：{db.gacha_data[target_gacha.id].name}")
+        self._log(f"抽取卡池：{db.gacha_data[target_gacha.id].gacha_name}")
 
         while cnt > 0:
             gacha_reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Campaign10Shot, cnt, res.campaign_info.campaign_id, free_gacha_auto_select_pickup)

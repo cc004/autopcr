@@ -896,12 +896,12 @@ async def free_gacha(botev: BotEvent):
     msg = await botev.message()
     gacha_id = 0
     try:
-        gacha_id = msg[0]
+        gacha_id = int(msg[0])
         del msg[0]
     except:
         pass
     config = {
-        "free_gacha_select_ids": [int(gacha_id)],
+        "free_gacha_select_ids": [gacha_id],
         "today_end_gacha_no_do": False,
     }
     return config

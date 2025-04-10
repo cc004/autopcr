@@ -1266,7 +1266,7 @@ class database():
     }
 
     @lazy_property
-    def shiori_event_quests(self) -> Dict[int, dict[int, ShioriQuest]]:
+    def shiori_event_quests(self) -> Dict[int, Dict[int, ShioriQuest]]:
         with self.dbmgr.session() as db:
             return (
                 ShioriQuest.query(db)
