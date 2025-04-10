@@ -984,6 +984,17 @@ class database():
             )
 
     @lazy_property
+    def gacha_pickup(self) -> Dict[int, Dict[int, GachaPickup]]:
+        with self.dbmgr.session() as db:
+            return (
+                GachaPickup.query(db)
+                .group_by(lambda x: x.id)
+                .to_dict(lambda x: x.key, lambda x: x.to_dict(
+                    lambda x: x.priority, lambda x: x
+                ))
+            )
+
+    @lazy_property
     def prizegacha_data(self) -> Dict[int, PrizegachaDatum]:
         with self.dbmgr.session() as db:
             return (
@@ -1692,6 +1703,13 @@ class database():
         now = apiclient.datetime
         return flow(self.gacha_data.values()) \
         .where(lambda x: self.parse_time(x.start_time) <= now and now <= self.parse_time(x.end_time)) \
+        .select(lambda x: f"{x.gacha_id}: {x.gacha_name}-{x.pick_up_chara_text}") \
+        .to_list()
+
+    def get_mirai_gacha(self):
+        now = apiclient.datetime
+        return flow(self.gacha_data.values()) \
+        .where(lambda x: now <= self.parse_time(x.end_time)) \
         .select(lambda x: f"{x.gacha_id}: {x.gacha_name}-{x.pick_up_chara_text}") \
         .to_list()
 
