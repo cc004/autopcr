@@ -425,6 +425,9 @@ class pcrclient(apiclient):
         if draw_type == eGachaDrawType.Ticket and current_cost_num < 1:
             raise AbortError(f"单抽券{current_cost_num}不足")
 
+        if draw_type == eGachaDrawType.Temp_Ticket_10 and current_cost_num < 1:
+            raise AbortError(f"限定十连券{current_cost_num}不足")
+
         if target_gacha.selected_item_id == 0:
             prizegacha_id = db.gacha_data[target_gacha.id].prizegacha_id
             prize_memory = list(db.prizegacha_data[prizegacha_id].get_prize_memory_id())
@@ -460,6 +463,9 @@ class pcrclient(apiclient):
                 self.data.jewel.jewel -= tot
         elif draw_type == eGachaDrawType.Ticket:
             self.data.set_inventory(db.gacha_single_ticket, current_cost_num - 1)
+        elif draw_type == eGachaDrawType.Temp_Ticket_10:
+            ticket = next((eInventoryType.Item, temp_ticket) for temp_ticket in db.get_gacha_temp_ticket() if self.data.get_inventory((eInventoryType.Item, temp_ticket)))
+            self.data.set_inventory(ticket, current_cost_num - 1)
 
         resp = await self.exec_gacha(target_gacha.id, gacha_times, target_gacha.exchange_id, draw_type, current_cost_num, campaign_id)
 

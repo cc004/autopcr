@@ -232,10 +232,11 @@ class missing_unit(Module):
                 self._log(f"==常驻角色==" )
                 self._log('\n'.join(db.get_unit_name(id) for id in resident_unit))
 
-@description('警告！真抽！抽到出指NEW出保底角色，或达天井停下来，如果已有保底角色，就不会NEW！意味着就是一井！')
+@description('警告！真抽！\n抽到出指NEW出保底角色，或达天井停下来，如果已有保底角色，就不会NEW！意味着就是一井！\n智能pickup指当前pickup角色为已拥有角色时会自动切换成未拥有的角色。\n附奖池自动选择缺口最多的碎片，pickup池未选满角色自动选择未拥有角色，有多个则按角色编号大到小选取\n先免费十连->限定十连券->钻石')
 @name('抽卡')
 @booltype("single_ticket", "用单抽券", False)
 @singlechoice("pool_id", "池子", "", db.get_cur_gacha)
+@booltype('gacha_start_auto_select_pickup', "智能pickup", True)
 @booltype("cc_until_get", "抽到出", False)
 @default(True)
 class gacha_start(Module):
@@ -268,14 +269,23 @@ class gacha_start(Module):
         reward = GachaReward()
         always = self.get_config('cc_until_get')
         cnt = 0
+        temp_tickets = [(eInventoryType.Item, id) for id in db.get_gacha_temp_ticket()]
+        gacha_start_auto_select_pickup: bool = self.get_config('gacha_start_auto_select_pickup')
         try:
             while True:
                 if single_ticket:
                     reward += await client.exec_gacha_aware(target_gacha, 1, eGachaDrawType.Ticket, client.data.get_inventory(db.gacha_single_ticket), 0)
                 else:
-                    if isinstance(resp, GachaIndexResponse) and resp.campaign_info and resp.campaign_info.fg10_exec_cnt:
-                        raise AbortError("当前可免费十连，请先自行抽取")
-                    reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Payment, client.data.jewel.free_jewel + client.data.jewel.jewel, 0)
+                    if isinstance(resp, GachaIndexResponse) and resp.campaign_info and resp.campaign_info.fg10_exec_cnt and target_gacha.id in db.campaign_free_gacha_data[resp.campaign_info.campaign_id]:
+                        reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Campaign10Shot, cnt, resp.campaign_info.campaign_id, gacha_start_auto_select_pickup)
+                        resp.campaign_info.campaign_id -= 1
+                    elif any(client.data.get_inventory(temp_ticket) > 0 for temp_ticket in temp_tickets):
+                        # find first ticket
+                        ticket = next((temp_ticket for temp_ticket in temp_tickets if client.data.get_inventory(temp_ticket)))
+                        num = client.data.get_inventory(ticket)
+                        reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Temp_Ticket_10, num, 0, gacha_start_auto_select_pickup)
+                    else:
+                        reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Payment, client.data.jewel.free_jewel + client.data.jewel.jewel, 0, gacha_start_auto_select_pickup)
                 cnt += 1
                 if not always or self.can_stop(reward.new_unit, db.gacha_exchange_chara[target_gacha.exchange_id if not real_exchange_id else real_exchange_id]):
                     break

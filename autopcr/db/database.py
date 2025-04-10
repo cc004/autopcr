@@ -1066,6 +1066,15 @@ class database():
             )
 
     @lazy_property
+    def gacha_temp_ticket(self) -> List[ItemDatum]:
+        with self.dbmgr.session() as db:
+            return (
+                ItemDatum.query(db)
+                .where(lambda x: x.item_id >= 1024000 and x.item_id < 1025000)
+                .to_list()
+            )
+
+    @lazy_property
     def quest_to_event(self) -> Dict[int, HatsuneQuest]:
         with self.dbmgr.session() as db:
             return (
@@ -1699,14 +1708,21 @@ class database():
     def get_level_up_total_exp(self, target_level: int) -> int:
         return self.experience_unit[target_level]
 
-    def get_cur_gacha(self):
+    def get_gacha_temp_ticket(self) -> List[int]:
+        now = apiclient.datetime
+        return flow(self.gacha_temp_ticket) \
+            .where(lambda x: self.parse_time(x.start_time) <= now and now <= self.parse_time(x.end_time)) \
+            .select(lambda x: x.item_id) \
+            .to_list()
+
+    def get_cur_gacha(self) -> List[str]:
         now = apiclient.datetime
         return flow(self.gacha_data.values()) \
         .where(lambda x: self.parse_time(x.start_time) <= now and now <= self.parse_time(x.end_time)) \
         .select(lambda x: f"{x.gacha_id}: {x.gacha_name}-{x.pick_up_chara_text}") \
         .to_list()
 
-    def get_mirai_gacha(self):
+    def get_mirai_gacha(self) -> List[str]:
         now = apiclient.datetime
         return flow(self.gacha_data.values()) \
         .where(lambda x: now <= self.parse_time(x.end_time)) \
@@ -1724,41 +1740,41 @@ class database():
         promote_level = self.get_equip_promotion(equip_id)
         return self.equip_promotion_to_raw_ore[promote_level] if promote_level in self.equip_promotion_to_raw_ore else (eInventoryType.Equip, equip_id)
 
-    def get_equip_promotion(self, equip_id: int):
+    def get_equip_promotion(self, equip_id: int) -> int:
         return self.equip_data[equip_id].promotion_level
 
-    def get_equip_max_star(self, equip_id: int):
+    def get_equip_max_star(self, equip_id: int) -> int:
         return max(self.equipment_enhance_data[self.equip_data[equip_id].promotion_level].keys()) if self.equip_data[equip_id].promotion_level in self.equipment_enhance_data else 0
 
-    def get_equip_star_pt(self, equip_id: int, star: int):
+    def get_equip_star_pt(self, equip_id: int, star: int) -> int:
         equip = self.equip_data[equip_id]
         return self.equipment_enhance_data[equip.promotion_level][star].total_point
 
-    def get_equip_star_from_pt(self, equip_id: int, enhancement_pt: int):
+    def get_equip_star_from_pt(self, equip_id: int, enhancement_pt: int) -> int:
         equip = self.equip_data[equip_id]
         history_star = [star for star, enhancement_data in self.equipment_enhance_data[equip.promotion_level].items() if enhancement_data.total_point <= enhancement_pt]
         star = max([0] + history_star)
         return star
 
-    def get_unique_equip_level_from_pt(self, equip_slot: int, enhancement_pt: int):
+    def get_unique_equip_level_from_pt(self, equip_slot: int, enhancement_pt: int) -> int:
         histort_level = [star for star, enhancement_data in self.unique_equipment_enhance_data[equip_slot].items() if enhancement_data.total_point <= enhancement_pt]
         level = max([1] + histort_level)
         return level
 
-    def get_unique_equip_max_level_from_rank(self, equip_slot: int, rank: int):
+    def get_unique_equip_max_level_from_rank(self, equip_slot: int, rank: int) -> int:
         return self.unique_equip_rank[equip_slot][rank].enhance_level
 
-    def get_unique_equip_rank_from_level(self, equip_slot: int, level: int):
+    def get_unique_equip_rank_from_level(self, equip_slot: int, level: int) -> int:
         rank = self.unique_equipment_enhance_data[equip_slot][level].rank if level in self.unique_equipment_enhance_data[equip_slot] else 1
         return rank
 
-    def get_unique_equip_rank_required_level(self, slot_id: int, unit_id: int, rank: int):
+    def get_unique_equip_rank_required_level(self, slot_id: int, unit_id: int, rank: int) -> int:
         rank -= 1 # db是从当前rank升下一级的花费限制，因此升到rank的限制来自于rank-1
         equip_id = db.unit_unique_equip[slot_id][unit_id].equip_id
         level = self.unique_equipment_rank_up[equip_id][rank].unit_level if rank > 0 else 1
         return level
 
-    def get_unique_equip_pt_from_level(self, equip_slot: int, level: int):
+    def get_unique_equip_pt_from_level(self, equip_slot: int, level: int) -> int:
         pt = self.unique_equipment_enhance_data[equip_slot][level].total_point if level in self.unique_equipment_enhance_data[equip_slot] else 0
         return pt
 
@@ -1785,7 +1801,7 @@ class database():
         return item
 
 
-    def deck_sort_unit(self, units: List[int]):
+    def deck_sort_unit(self, units: List[int]) -> List[int]:
         return sorted(units, key=lambda x: self.unit_data[x].search_area_width if x in self.unit_data else 9999)
 
     def is_stamina_type(self, type_id: int) -> bool:
@@ -1810,13 +1826,13 @@ class database():
     def is_secret_dungeon_id(self, dungeon_id: int) -> bool:
         return dungeon_id // 1000 == 32
 
-    def unit_rank_candidate(self):
+    def unit_rank_candidate(self) -> List[int]:
         return list(range(1, self.equip_max_rank + 1))
 
-    def unit_level_candidate(self):
+    def unit_level_candidate(self) -> List[int]:
         return list(range(1, self.team_max_level + 1 + 10))
 
-    def unit_unique_equip_level_candidate(self, equip_slot: int):
+    def unit_unique_equip_level_candidate(self, equip_slot: int) -> List[int]:
         return list(range(0, self.unique_equipment_max_level[equip_slot] + 1))
 
     def last_normal_quest(self) -> List[int]:
@@ -1828,11 +1844,11 @@ class database():
                 .select(lambda x: x.quest_id) \
                 .to_list()
 
-    def last_normal_quest_candidate(self):
+    def last_normal_quest_candidate(self) -> List[str]:
         quest = self.last_normal_quest()
         return [f"{x}: {self.quest_name[x].split(' ')[1]}" for x in quest]
 
-    def travel_quest_candidate(self):
+    def travel_quest_candidate(self) -> List[str]:
         return flow(self.travel_quest_data.values()) \
                 .select(lambda x: f"{x.travel_area_id % 10}-{x.travel_quest_id % 10}") \
                 .to_list()
