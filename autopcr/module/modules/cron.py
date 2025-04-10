@@ -11,8 +11,8 @@ class CronModule(Module):
     async def is_cron_condition(self) -> bool: ...
 
     async def is_cron_time(self, nhour: int, nminute: int) -> bool:
-        time = self.get_cron_time()
-        hour, minute = time.split(":")
+        time_args = self.get_cron_time().split(":")
+        hour, minute = time_args[0], time_args[1]
         return nhour == int(hour) and nminute == int(minute)
 
     async def update_client(self, client: pcrclient):
