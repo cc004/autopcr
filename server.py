@@ -58,6 +58,7 @@ sv_help = f"""
 - {prefix}刷图推荐 [<rank>] [fav] 查询缺口装备的刷图推荐，格式同上
 - {prefix}公会支援 查询公会支援角色配置
 - {prefix}卡池 查看当前卡池
+- {prefix}免费十连 <卡池id> 卡池id来自【{prefix}卡池】
 - {prefix}来发十连 <卡池id> [抽到出] [单抽券] [开抽] 赛博抽卡，谨慎使用。卡池id来自【{prefix}卡池】，[抽到出]表示抽到出货或达天井，[单抽券]表示仅用厕纸，[开抽]表示确认抽卡。已有up也可再次触发。
 """.strip()
 
@@ -617,7 +618,7 @@ async def tool_used(botev: BotEvent, tool: ToolInfo, config: Dict[str, str], acc
 @sv.on_fullmatch(f"{prefix}卡池")
 @wrap_hoshino_event
 async def gacha_current(botev: BotEvent):
-    msg = '\n'.join(db.get_cur_gacha())
+    msg = '\n'.join(db.get_mirai_gacha())
     await botev.finish(msg)
 
 def is_args_exist(msg: List[str], key: str):
@@ -889,6 +890,21 @@ async def redeem_unit_swap(botev: BotEvent):
 @register_tool("半月刊", "half_schedule")
 async def half_schedule(botev: BotEvent):
     return {}
+
+@register_tool("免费十连", "free_gacha")
+async def free_gacha(botev: BotEvent):
+    msg = await botev.message()
+    gacha_id = 0
+    try:
+        gacha_id = int(msg[0])
+        del msg[0]
+    except:
+        pass
+    config = {
+        "free_gacha_select_ids": [gacha_id],
+        "today_end_gacha_no_do": False,
+    }
+    return config
 
 # @register_tool("获取导入", "get_library_import_data")
 # async def get_library_import(botev: BotEvent):

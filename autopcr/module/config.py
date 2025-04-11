@@ -9,7 +9,7 @@ from ..db.database import db
 class Config():
     key: str
     desc: str
-    _default: Union[int, str, list]
+    _default: Union[int, str, list, Callable]
     _candidates: Union[list, Callable]
     config_type: str
     _parent: "Module"
@@ -25,7 +25,9 @@ class Config():
 
     @property
     def default(self):
-        if isinstance(self._candidates, list):
+        if isinstance(self._default, Callable):
+            return self._default()
+        elif isinstance(self._candidates, list):
             return self._default
         else:
             candidates = self._candidates()
