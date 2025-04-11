@@ -41,3 +41,8 @@ python3 _httpserver_test.py
 - ~~前端html来自 [autopcr_web](https://github.com/cca2878/autopcr_web)~~
 - ~~前端html来自 [AutoPCR_Archived](https://github.com/watermellye/AutoPCR_Archived)~~
 - ~~模型生成来自 [PcrotoGen](https://github.com/cc004/PcrotoGen)~~
+
+## Github Action（打包镜像仅适用于HTTP服务器模式）
+打包镜像默认推送到[ghcr](https://ghcr.io),如需推送到[dockerhub](https://hub.docker.com)需要执行以下步骤
+- 添加变量`DOKCKERHUB_IMAGE_NAME`用于推送到dockerhub镜像名称,例如autopcr/autopcr
+- 添加机密`DOCKERHUB_USERNAME`和`DOCKERHUB_TOKEN`用于推送到dockerhub的身份验证
