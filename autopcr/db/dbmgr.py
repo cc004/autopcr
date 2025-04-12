@@ -48,8 +48,6 @@ class dbmgr:
             logger.error(f"Transaction failed: {e}")
             session.rollback()
             return False
-        finally:
-            session.close()
 
     def unhash(self):
         rainbow_json = os.path.join(DATA_DIR, 'rainbow.json')

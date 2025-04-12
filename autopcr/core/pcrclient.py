@@ -396,6 +396,12 @@ class pcrclient(apiclient):
         req.item_id = item_id
         return await self.request(req)
 
+    async def gacha_select_pickup(self, gacha_id: int, priority_list: List[int]):
+        req = GachaSelectPickupRequest()
+        req.gacha_id = gacha_id
+        req.priority_list = priority_list
+        return await self.request(req)
+
     async def draw_from_bank(self, current_bank_gold: int, draw_gold: int):
         req = ShopWithdrawGoldFromBankRequest()
         req.current_bank_gold = current_bank_gold
@@ -411,13 +417,16 @@ class pcrclient(apiclient):
         else:
             return False
 
-    async def exec_gacha_aware(self, target_gacha: GachaParameter, gacha_times: int, draw_type: eGachaDrawType, current_cost_num: int, campaign_id: int) -> GachaReward:
+    async def exec_gacha_aware(self, target_gacha: GachaParameter, gacha_times: int, draw_type: eGachaDrawType, current_cost_num: int, campaign_id: int, auto_select_pickup: bool = True) -> GachaReward:
 
         if draw_type == eGachaDrawType.Payment and current_cost_num < 1500:
             raise AbortError(f"宝石{current_cost_num}不足1500")
 
         if draw_type == eGachaDrawType.Ticket and current_cost_num < 1:
             raise AbortError(f"单抽券{current_cost_num}不足")
+
+        if draw_type == eGachaDrawType.Temp_Ticket_10 and current_cost_num < 1:
+            raise AbortError(f"限定十连券{current_cost_num}不足")
 
         if target_gacha.selected_item_id == 0:
             prizegacha_id = db.gacha_data[target_gacha.id].prizegacha_id
@@ -427,8 +436,17 @@ class pcrclient(apiclient):
                 prize_memory = sorted(prize_memory, key = lambda x: -piece_demand.get(x, 0))
             item_id = prize_memory[0]
             await self.gacha_select_prize(prizegacha_id, item_id[1])
-        if target_gacha.select_pickup_slot_num == 0:
-            raise AbortError("未选择up角色")
+        if target_gacha.select_pickup_slot_num is not None:
+            pickup_id = db.gacha_data[target_gacha.id].pickup_id
+            if target_gacha.select_pickup_slot_num == len(target_gacha.priority_list) and all(db.gacha_pickup[pickup_id][u].reward_id not in self.data.unit for u in target_gacha.priority_list):
+                pass
+            elif auto_select_pickup or target_gacha.select_pickup_slot_num > len(target_gacha.priority_list):
+                pickup_units = [u for u in db.gacha_pickup[pickup_id].values()]
+                pickup_units.sort(key = lambda x: (x.reward_id not in self.data.unit, x.reward_id), reverse = True)
+                pickup_units = pickup_units[:target_gacha.select_pickup_slot_num]
+                pickup_units = [u.priority for u in pickup_units]
+                if set(pickup_units) != set(target_gacha.priority_list):
+                    await self.gacha_select_pickup(target_gacha.id, pickup_units)
 
         if target_gacha.exchange_id in self.data.gacha_point and  \
         self.data.gacha_point[target_gacha.exchange_id].current_point >= self.data.gacha_point[target_gacha.exchange_id].max_point:
@@ -445,6 +463,9 @@ class pcrclient(apiclient):
                 self.data.jewel.jewel -= tot
         elif draw_type == eGachaDrawType.Ticket:
             self.data.set_inventory(db.gacha_single_ticket, current_cost_num - 1)
+        elif draw_type == eGachaDrawType.Temp_Ticket_10:
+            ticket = next((eInventoryType.Item, temp_ticket) for temp_ticket in db.get_gacha_temp_ticket() if self.data.get_inventory((eInventoryType.Item, temp_ticket)))
+            self.data.set_inventory(ticket, current_cost_num - 1)
 
         resp = await self.exec_gacha(target_gacha.id, gacha_times, target_gacha.exchange_id, draw_type, current_cost_num, campaign_id)
 

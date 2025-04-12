@@ -170,7 +170,7 @@ class apiclient(Container["apiclient"]):
                                )
 
 
-        if response.data.server_error:
+        if response.data and response.data.server_error:
             logger.error(f'pcrclient: /{request.url} api failed={response.data_headers.result_code} {response.data.server_error}')
             logger.error(f'{self.user_name} requested {request.__class__.__name__} at /{request.url}\n')
             logger.error(json.dumps(self._headers, indent=4, ensure_ascii=False) + '\n')

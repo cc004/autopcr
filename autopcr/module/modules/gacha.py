@@ -66,15 +66,19 @@ class monthly_gacha(Module):
             self._log(f"当前pt为{point}")
 
 
-@description('有免费十连时自动抽取，附奖池自动选择缺口最多的碎片')
+@description('有免费十连时自动抽取，附奖池自动选择缺口最多的碎片，多卡池可抽取则选择编号大的。卡池编号名字可于“危险”栏查看。智能pickup指当抽出pickup角色后自动切换未拥有的pickup角色，有多个则选角色编号大的。未选够pickup角色会自动选。')
 @name('免费十连')
 @booltype('today_end_gacha_no_do', "当日切卡池前不抽取", True)
+@booltype('free_gacha_auto_select_pickup', "智能pickup", True)
+@multichoice('free_gacha_select_ids', "抽取卡池", db.free_gacha_ids_candidate, db.free_gacha_ids_candidate)
 @default(False)
 class free_gacha(Module):
     async def do_task(self, client: pcrclient):
         res = await client.get_gacha_index()
         if res.campaign_info is None:
             raise SkipError("免费十连已结束")
+        free_gacha_select_ids: List[str] = self.get_config("free_gacha_select_ids")
+        free_gacha_auto_select_pickup: bool = self.get_config("free_gacha_auto_select_pickup")
         schedule = db.campaign_gacha[res.campaign_info.campaign_id]
         gacha_list = db.campaign_free_gacha_data[schedule.campaign_id]
         start_time = db.parse_time(schedule.start_time)
@@ -101,7 +105,10 @@ class free_gacha(Module):
             msg += "不自动抽取\n请自行决定是否抽取"
             raise SkipError(msg)
 
-        target_gacha_id = max(open_free_gacha_ids)
+        select_open_free_gacha_ids = open_free_gacha_ids & set(int(i) for i in free_gacha_select_ids)
+        if not select_open_free_gacha_ids:
+            raise AbortError(f"没有可抽取的卡池，请重新配置")
+        target_gacha_id = max(select_open_free_gacha_ids)
         
         for gacha_info in res.gacha_info:
             if gacha_info.id == target_gacha_id:
@@ -112,8 +119,10 @@ class free_gacha(Module):
 
         gacha_reward: GachaReward = GachaReward()
 
+        self._log(f"抽取卡池：{db.gacha_data[target_gacha.id].gacha_name}")
+
         while cnt > 0:
-            gacha_reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Campaign10Shot, cnt, res.campaign_info.campaign_id)
+            gacha_reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Campaign10Shot, cnt, res.campaign_info.campaign_id, free_gacha_auto_select_pickup)
             cnt -= 1
 
         self._log(await client.serlize_gacha_reward(gacha_reward, target_gacha.id))
