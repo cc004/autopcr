@@ -621,8 +621,22 @@ class SubStoryMmeReadStoryResponse(responses.SubStoryMmeReadStoryResponse):
             for reward in self.reward_info:
                 mgr.update_inventory(reward)
 
+
+class SubStoryWonReadStoryResponse(responses.SubStoryWonReadStoryResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_info:
+            for reward in self.reward_info:
+                mgr.update_inventory(reward)
 @handles
 class SubStoryNopReadStoryResponse(responses.SubStoryNopReadStoryResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_info:
+            for reward in self.reward_info:
+                mgr.update_inventory(reward)
+
+
+@handles
+class SubStoryDvsReadStoryResponse(responses.SubStoryDvsReadStoryResponse):
     async def update(self, mgr: datamgr, request):
         if self.reward_info:
             for reward in self.reward_info:
@@ -641,6 +655,7 @@ class SubStorySvdReadStoryResponse(responses.SubStorySvdReadStoryResponse):
         if self.special_reward_list:
             for reward in self.special_reward_list:
                 mgr.update_inventory(reward)
+
 
 @handles
 class SubStoryLsvReadStoryResponse(responses.SubStoryLsvReadStoryResponse):

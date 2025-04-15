@@ -35,6 +35,15 @@ def GetSubStoryReader(sub_story_data: EventSubStory, client: pcrclient) -> Union
         return constructor[sub_story_data.event_id](client)
     return None
 
+@EventId(10118)
+class dvs_substory(SubStoryReader):
+
+    def title(self, sub_story_id: int) -> str:
+        return db.dvs_story_data[sub_story_id].title
+
+    async def read(self, sub_story_id: int):
+        await self.client.read_dvs_story(sub_story_id)
+
 @EventId(10116)
 class won_substory(SubStoryReader):
 

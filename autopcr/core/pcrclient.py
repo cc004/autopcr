@@ -569,6 +569,11 @@ class pcrclient(apiclient):
         req.sub_story_id = sub_story_id
         await self.request(req)
 
+    async def read_dvs_story(self, sub_story_id: int):
+        req = SubStoryDvsReadStoryRequest()
+        req.sub_story_id = sub_story_id
+        await self.request(req)
+
     async def read_won_story(self, sub_story_id: int):
         req = SubStoryWonReadStoryRequest()
         req.sub_story_id_list = [sub_story_id]
