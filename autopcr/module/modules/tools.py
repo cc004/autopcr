@@ -1080,7 +1080,7 @@ class get_need_pure_memory_excel(Module):
         # 输出下载链接
         self._log(f"下载链接: 在浏览器地址的域名或端口号后拼接/daily{download_url}")
         
-@description('从缓存中查询角色练度，不会登录！任意登录或者刷新box可以更新缓存')
+@description('从缓存中查询角色练度，不会登录！任意登录或者刷新box可以更新缓存，包含uid、钻石、母猪石、心碎、星球杯等数据！')
 @name('获取box练度excel')
 @notlogin(check_data=True)
 @default(True)
@@ -1372,7 +1372,7 @@ class get_box_excel(Module):
                     cell.border = thin_border
                     cell.alignment = Alignment(horizontal='center')
 
-@description('从缓存中查询角色练度，不会登录！任意登录或者刷新box可以更新缓存')
+@description('从缓存中查询角色练度，不会登录！任意登录或者刷新box可以更新缓存，提示：执行完需手动刷数据(切换标签栏比较快)！')
 @name('获取box练度表格')
 @notlogin(check_data=True)
 @default(True)
