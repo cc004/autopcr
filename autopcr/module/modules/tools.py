@@ -1076,10 +1076,9 @@ class get_need_pure_memory_excel(Module):
         
         # 保存Excel文件
         wb.save(excel_path)
-        self._log(f"Excel文件已生成：{excel_path}")
         
         # 输出下载链接
-        self._log(f"下载链接: 在浏览器地址的域名或端口号后拼接/daily{download_url}'>下载Excel文件")
+        self._log(f"下载链接: 在浏览器地址的域名或端口号后拼接/daily{download_url}")
         
 @description('从缓存中查询角色练度，不会登录！任意登录或者刷新box可以更新缓存')
 @name('获取box练度excel')
@@ -1126,10 +1125,9 @@ class get_box_excel(Module):
         
         # 保存Excel文件
         wb.save(excel_path)
-        self._log(f"Excel文件已生成：{excel_path}")
         
         # 输出下载链接
-        self._log(f"下载链接: 在浏览器地址的域名或端口号后拼接/daily{download_url}'>下载Excel文件")
+        self._log(f"下载链接: 在浏览器地址的域名或端口号后拼接/daily{download_url}")
     
     def _parse_filter_units(self, filter_units):
         """解析过滤角色列表"""
@@ -1168,7 +1166,6 @@ class get_box_excel(Module):
                 # 检查是否已有该用户的数据
                 for row in range(3, ws.max_row + 1):
                     if ws.cell(row=row, column=2).value == user_name:
-                        self._log(f"用户 {user_name} 已存在，创建新的工作簿")
                         return Workbook()
                 
                 return wb
