@@ -301,6 +301,7 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         mgr.clan_like_count = self.clan_like_count
         mgr.user_my_quest = self.user_my_quest
         mgr.cf = self.cf
+        mgr.inventory = {}
         if self.item_list:
             for inv in self.item_list:
                 mgr.update_inventory(inv)
