@@ -14,7 +14,7 @@ from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
 from ...util.arena import instance as ArenaQuery
-import datetime
+from datetime import datetime
 import random
 import os
 import os.path as path 
