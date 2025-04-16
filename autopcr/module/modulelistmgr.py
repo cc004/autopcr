@@ -1,5 +1,5 @@
 from typing import Dict, List, Callable, Any
-from .modules import cron_modules, daily_modules, clan_modules, danger_modules, tool_modules, ModuleList, Module, CronModule, planning_modules, unit_modules
+from .modules import table_modules, cron_modules, daily_modules, clan_modules, danger_modules, tool_modules, ModuleList, Module, CronModule, planning_modules, unit_modules
 from .modulemgr import ModuleManager
 
 class ModuleListManager:
@@ -12,6 +12,7 @@ class ModuleListManager:
         tool_modules.key: tool_modules,
         unit_modules.key: unit_modules,
         planning_modules.key: planning_modules,
+        table_modules.key: table_modules,
     }
     name_to_modules: Dict[str, Callable] = {m.__name__: m for ml in modules.values() for m in ml.modules}
 
@@ -45,7 +46,7 @@ class ModuleListManager:
 
     def generate_tab(self, clan: bool = False, batch: bool = False):
         if clan:
-            modules = [daily_modules, tool_modules, planning_modules, unit_modules, clan_modules]
+            modules = [daily_modules, tool_modules, planning_modules, unit_modules, clan_modules, table_modules]
         elif batch:
             modules = [daily_modules, tool_modules, planning_modules, unit_modules, danger_modules]
         else:

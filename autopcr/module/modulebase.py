@@ -245,6 +245,16 @@ class Module:
         else:
             default = self.config[key].default
         value = self._parent.get_config(key, default)
+        # 处理 unitlist 类型
+        if key in self.config and self.config[key].config_type == "unitlist":
+            # 如果值为空或None，返回空字符串
+            if value is None or value == "":
+                return ""
+            # 如果值是列表，转换为逗号分隔的字符串
+            if isinstance(value, list):
+                return ','.join(map(str, value))
+            # 确保字符串格式
+            return str(value)
         if key in self.config and self.config[key].config_type == "multi":
             if not isinstance(value, list):
                 value = default

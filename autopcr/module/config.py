@@ -155,3 +155,63 @@ def conditional_not_execution(key: str, default, desc: str = "不执行条件", 
 
     return multichoice(key=key, desc=desc, default=default, candidates=["n2", "n3", "n4及以上", "h2", "h3及以上", "vh2", "vh3及以上"], do_check = do_check, check = check)
 
+def unitlist(key: str, desc: str, default=None):
+    """
+    角色列表选择器，用于选择多个角色
+    """
+    def decorator(cls):
+        all_units = list(db.unlock_unit_condition_candidate())
+        # 确保默认值是数组格式
+        if default is None:
+            default_value = []
+        elif isinstance(default, list):
+            default_value = default
+        else:
+            # 如果传入的是字符串，尝试转换为数组
+            try:
+                default_value = default.split(',') if default else []
+            except:
+                default_value = []
+        
+        # 添加获取配置值的包装方法，确保始终返回列表
+        old_get_config = cls.get_config
+        def new_get_config(self, config_key, *args, **kwargs):
+            value = old_get_config(self, config_key, *args, **kwargs)
+            # 只处理当前key的值
+            if config_key == key:
+                # 确保返回的是列表类型
+                if value is None:
+                    return []
+                elif isinstance(value, list):
+                    return value
+                elif isinstance(value, str) and value:
+                    try:
+                        # 尝试将字符串转换为列表
+                        return value.split(',')
+                    except:
+                        return [value]
+                else:
+                    # 其他类型（如整数）转换为单元素列表
+                    return [value]
+            return value
+        
+        cls.get_config = new_get_config
+        
+        return config_option(
+            key=key, 
+            desc=desc, 
+            default=default_value,  # 使用数组格式的默认值
+            candidates=[f"{unit}:{db.unit_data[unit].unit_name}" for unit in db.unlock_unit_condition_candidate()],
+            config_type='unitlist'
+        )(cls)
+    return decorator
+
+# 添加 tabletype 装饰器
+def tabletype(key: str, desc: str, default: list = None):
+    """表格类型配置，用于存储和显示表格数据"""
+    if default is None:
+        default = []
+    def decorator(cls):
+        # 使用与其他装饰器相同的方式添加配置
+        return config_option(key=key, desc=desc, default=default, candidates=[], config_type='table')(cls)
+    return decorator
