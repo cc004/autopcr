@@ -436,6 +436,7 @@ class pcrclient(apiclient):
                 prize_memory = sorted(prize_memory, key = lambda x: -piece_demand.get(x, 0))
             item_id = prize_memory[0]
             await self.gacha_select_prize(prizegacha_id, item_id[1])
+            target_gacha.selected_item_id = item_id[1]
         if target_gacha.select_pickup_slot_num is not None:
             pickup_id = db.gacha_data[target_gacha.id].pickup_id
             if target_gacha.select_pickup_slot_num == len(target_gacha.priority_list) and all(db.gacha_pickup[pickup_id][u].reward_id not in self.data.unit for u in target_gacha.priority_list):
@@ -447,6 +448,7 @@ class pcrclient(apiclient):
                 pickup_units = [u.priority for u in pickup_units]
                 if set(pickup_units) != set(target_gacha.priority_list):
                     await self.gacha_select_pickup(target_gacha.id, pickup_units)
+                    target_gacha.priority_list = pickup_units
 
         if target_gacha.exchange_id in self.data.gacha_point and  \
         self.data.gacha_point[target_gacha.exchange_id].current_point >= self.data.gacha_point[target_gacha.exchange_id].max_point:
@@ -564,6 +566,11 @@ class pcrclient(apiclient):
 
     async def read_ske_story(self, sub_story_id: int):
         req = SubStorySkeReadStoryRequest()
+        req.sub_story_id = sub_story_id
+        await self.request(req)
+
+    async def read_dvs_story(self, sub_story_id: int):
+        req = SubStoryDvsReadStoryRequest()
         req.sub_story_id = sub_story_id
         await self.request(req)
 
