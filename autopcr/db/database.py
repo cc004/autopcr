@@ -16,6 +16,62 @@ from typing import TypeVar, Generic
 
 T = TypeVar("T")
 
+class LazyWrapper:
+    def __init__(self, instance, fetch_func):
+        self._instance = instance
+        self._fetch_func = fetch_func
+
+    def _value(self):
+        return self._fetch_func(self._instance)
+
+    def __getattr__(self, name):
+        return getattr(self._value(), name)
+
+    def __getitem__(self, key):
+        return self._value()[key]
+
+    def __iter__(self):
+        return iter(self._value())
+
+    def __repr__(self):
+        return repr(self._value())
+
+    def __str__(self):
+        return str(self._value())
+
+    def __int__(self):
+        return int(self._value())
+
+    def __float__(self):
+        return float(self._value())
+
+    def __add__(self, other):
+        return self._value() + other
+
+    def __radd__(self, other):
+        return other + self._value()
+
+    def __sub__(self, other):
+        return self._value() - other
+
+    def __rsub__(self, other):
+        return other - self._value()
+
+    def __eq__(self, other):
+        return self._value() == other
+
+    def __lt__(self, other):
+        return self._value() < other
+
+    def __le__(self, other):
+        return self._value() <= other
+
+    def __len__(self):
+        return len(self._value())
+
+    def __contains__(self, item):
+        return item in self._value()
+
 class lazy_property(Generic[T]):
     def __init__(self, func):
         self.func = func
@@ -30,17 +86,21 @@ class lazy_property(Generic[T]):
         dbmgr = getattr(instance, "dbmgr", None)
         if dbmgr is None:
             raise ValueError("数据库未初始化完成，请稍等片刻")
-        current_version = dbmgr.ver
-        cached = getattr(instance, self.attr_name, None)
-        cached_version = getattr(instance, self.version_attr, None)
 
-        if cached is None or current_version != cached_version:
-            value = self.func(instance)  # 现在函数里自己处理 db
-            setattr(instance, self.attr_name, value)
-            setattr(instance, self.version_attr, current_version)
-            return value
+        def _fetch(inst):
+            current_version = dbmgr.ver
+            cached = getattr(inst, self.attr_name, None)
+            cached_version = getattr(inst, self.version_attr, None)
 
-        return cached
+            if cached is None or current_version != cached_version:
+                value = self.func(inst)
+                setattr(inst, self.attr_name, value)
+                setattr(inst, self.version_attr, current_version)
+                return value
+
+            return cached
+
+        return LazyWrapper(instance, _fetch)
 
 class database():
     heart: ItemType = (eInventoryType.Equip, 140000)
@@ -1855,16 +1915,6 @@ class database():
     def last_normal_quest_candidate(self) -> List[str]:
         quest = self.last_normal_quest()
         return [f"{x}: {self.quest_name[x].split(' ')[1]}" for x in quest]
-
-    def travel_quest_candidate(self) -> List[str]:
-        return flow(self.travel_quest_data.values()) \
-                .select(lambda x: f"{x.travel_area_id % 10}-{x.travel_quest_id % 10}") \
-                .to_list()
-
-    def get_travel_quest_id_from_candidate(self, candidate: str) -> int:
-        area, quest = candidate.split('-')
-        ret = next(x.travel_quest_id for x in self.travel_quest_data.values() if x.travel_area_id % 10 == int(area) and x.travel_quest_id % 10 == int(quest))
-        return ret
 
     def get_gacha_prize_name(self, gacha_id: int, prize_rarity: int) -> str:
         if gacha_id in self.prizegacha_sp_data:

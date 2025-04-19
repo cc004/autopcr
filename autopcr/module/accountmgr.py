@@ -232,8 +232,8 @@ class Account(ModuleManager):
 class AccountBatch(Account):
     def __init__(self, parent: 'AccountManager', qid: str, accounts: str = BATCHINFO, readonly: bool = False):
         super().__init__(parent, qid, accounts, readonly)
-        # self.enable_account = set([x for x in self.data.batch_accounts]) & set(self._parent.accounts())
-        self.enable_account = sorted(list(set(self._parent.accounts())))
+        self.enable_account = set([x for x in self.data.batch_accounts]) & set(self._parent.accounts())
+        # self.enable_account = sorted(list(set(self._parent.accounts())))
 
     def generate_info(self):
         accounts = list(self.enable_account)
