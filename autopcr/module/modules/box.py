@@ -19,7 +19,7 @@ class refresh_box(Module):
 @unitchoice("search_box_id", "角色")
 class search_box(Module):
     async def do_task(self, client: pcrclient):
-        unit_id, unit_name = self.get_config('search_box_id').split(':')
+        unit_id = self.get_config('search_box_id')
         unit = int(unit_id)
         unit_name = db.get_unit_name(unit)
 

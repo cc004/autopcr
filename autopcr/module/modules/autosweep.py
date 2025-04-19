@@ -411,12 +411,12 @@ class smart_sweep(DIY_sweep):
 '''.strip())
 @name("刷最新n图")
 @conditional_execution1("last_normal_quest_run_time", ['n庆典'])
-@multichoice("last_normal_quests_sweep", '刷取关卡', [], db.last_normal_quest_candidate)
+@LastNormalQuestConfig("last_normal_quests_sweep", "刷取关卡", [])
 @default(False)
 @tag_stamina_consume
 class last_normal_quest_sweep(DIY_sweep):
     async def get_loop_quest(self, client: pcrclient) -> List[Tuple[int, int]]:
-        last_sweep_quests: List[str] = self.get_config('last_normal_quests_sweep')
+        last_sweep_quests: List[int] = self.get_config('last_normal_quests_sweep')
         last_sweep_quests_count: int = 3
-        quest: List[Tuple[int, int]] = [(int(id.split(':')[0]), last_sweep_quests_count) for id in last_sweep_quests]
+        quest: List[Tuple[int, int]] = [(id, last_sweep_quests_count) for id in last_sweep_quests]
         return quest

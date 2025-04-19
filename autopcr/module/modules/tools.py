@@ -1084,7 +1084,7 @@ class get_need_pure_memory_excel(Module):
 @name('获取box练度excel')
 @notlogin(check_data=True)
 @default(True)
-@unitlist("filter_units", "要导出的角色", [])
+@unitlist("filter_units", "要导出的角色")
 class get_box_excel(Module):
     async def do_task(self, client: pcrclient):
         # 获取用户信息
@@ -1377,7 +1377,7 @@ class get_box_excel(Module):
 @notlogin(check_data=True)
 @default(True)
 @tabletype("box_data", "角色练度数据", [])  # 存储表格数据
-@unitlist("box_unit", "要显示的角色", [])  # 修改为默认空数组
+@unitlist("box_unit", "要显示的角色") # 修改为默认空数组
 class get_box_table(Module):
     async def do_task(self, client: pcrclient):
         # 获取用户名和UID
