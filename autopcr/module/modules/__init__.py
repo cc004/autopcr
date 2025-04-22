@@ -127,8 +127,6 @@ planning_modules = ModuleList(
         get_need_memory,
         get_need_pure_memory,
         get_need_xinsui,
-        get_need_pure_memory_excel,
-        get_box_excel
     ]
 )
 
@@ -151,6 +149,8 @@ clan_modules = ModuleList(
         unit_promote_batch,
         unit_memory_buy_batch,
         set_my_party,
+        get_box_table,
+        get_box_excel,
     ]
 )
 
@@ -182,13 +182,5 @@ tool_modules = ModuleList(
         pjjc_info,
         pjjc_def_shuffle_team,
         pjjc_atk_shuffle_team,
-    ]
-)
-
-table_modules = ModuleList(
-    '表格',
-    'table',
-    [
-        get_box_table,
     ]
 )

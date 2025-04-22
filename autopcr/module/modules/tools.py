@@ -14,6 +14,7 @@ from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
 from ...util.arena import instance as ArenaQuery
+import time
 from datetime import datetime
 import random
 import os
@@ -22,7 +23,6 @@ import itertools
 from collections import Counter
 from .autosweep import unique_equip_2_pure_memory_id
 from ...http_server.httpserver import static_path
-# 导入excel需要的库
 import openpyxl
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
@@ -930,158 +930,15 @@ class set_my_party(Module):
 # 添加一个通用的Excel处理函数
 def prepare_excel_file(static_dir, file_name):
     """准备Excel文件路径和URL"""
-    # 确保静态目录存在
     os.makedirs(static_dir, exist_ok=True)
-    
-    # 构建文件路径
     excel_path = os.path.join(static_dir, file_name)
-    
-    # 生成下载URL
     url_prefix = '/assets/excel'
     download_url = f"{url_prefix}/{file_name}"
-    
     return excel_path, download_url
 
-@description('去除六星需求后，专二所需纯净碎片减去库存的结果')
-@name('获取纯净碎片缺口excel')
-@notlogin(check_data=True)
-@default(True)
-class get_need_pure_memory_excel(Module):
-    async def do_task(self, client: pcrclient):
-        # 计算纯净碎片需求
-        pure_gap = client.data.get_pure_memory_demand_gap()
-        target = Counter()
-        need_list = []
-        for unit in unique_equip_2_pure_memory_id:
-            kana = db.unit_data[unit].kana
-            target[kana] += 150
-            own = -sum(pure_gap[db.unit_to_pure_memory[unit]] if unit in db.unit_to_pure_memory else 0 for unit in db.unit_kana_ids[kana])
-            need_list.append(((eInventoryType.Unit, unit), target[kana] - own))
         
-        # 准备Excel文件
-        static_dir = os.path.join(static_path, 'assets', 'excel')
-        file_name = "pure_memory_gap.xlsx"
-        excel_path, download_url = prepare_excel_file(static_dir, file_name)
-        
-        # 检查文件是否存在
-        file_exists = os.path.exists(excel_path)
-
-        # 创建数据字典
-        data_dict = {}
-        for unit_name, gap in need_list:
-            unit_name = db.get_unit_name(unit_name[1])
-            status = f'-{gap}' if gap > 0 else '溢出'
-            data_dict[unit_name] = status
-
-        # 用户名
-        user_name = client.data.user_name
-        
-        # 创建或加载工作簿
-        wb = openpyxl.Workbook() if not file_exists else None
-        existing_data = {}
-        header = ['角色名']
-        
-        # 如果文件存在，尝试读取现有数据
-        if file_exists:
-            try:
-                existing_wb = openpyxl.load_workbook(excel_path)
-                existing_ws = existing_wb.active
-                
-                # 获取表头
-                header = [cell.value for cell in existing_ws[1]]
-                
-                # 检查用户是否已存在
-                if user_name in header:
-                    # 如果用户已存在，使用新的工作簿
-                    self._log(f"用户 {user_name} 已存在，创建新的工作簿")
-                    wb = openpyxl.Workbook()
-                    header = ['角色名']
-                else:
-                    # 复制现有数据
-                    wb = existing_wb
-                    # 获取现有数据
-                    for row in range(2, existing_ws.max_row + 1):
-                        unit_name = existing_ws.cell(row=row, column=1).value
-                        if unit_name:
-                            existing_data[unit_name] = [existing_ws.cell(row=row, column=col).value 
-                                                       for col in range(2, existing_ws.max_column + 1)]
-            except Exception as e:
-                self._log(f"读取现有Excel文件时出错: {e}")
-                wb = openpyxl.Workbook()
-                header = ['角色名']
-        else:
-            wb = openpyxl.Workbook()
-        
-        ws = wb.active
-        
-        # 确保表头包含角色名
-        if not header or header[0] != '角色名':
-            header = ['角色名']
-            ws.cell(row=1, column=1, value='角色名')
-        
-        # 检查并更新列名
-        user_col_index = header.index(user_name) if user_name in header else len(header)
-        if user_name not in header:
-            header.append(user_name)
-            
-        # 更新表头
-        for col, title in enumerate(header, 1):
-            cell = ws.cell(row=1, column=col, value=title)
-            cell.font = Font(bold=True)
-            cell.alignment = Alignment(horizontal='center')
-            cell.fill = PatternFill(start_color="DDDDDD", end_color="DDDDDD", fill_type="solid")
-        
-        # 更新数据行
-        row_index = 2
-        for unit_name in data_dict.keys():
-            # 检查单元格是否为合并单元格
-            cell = ws.cell(row=row_index, column=1)
-            if isinstance(cell, openpyxl.cell.cell.MergedCell):
-                # 找到该单元格所在的合并区域
-                for merged_range in ws.merged_cells.ranges:
-                    if cell.coordinate in merged_range:
-                        # 获取合并区域的左上角单元格
-                        min_row, min_col, max_row, max_col = merged_range.bounds
-                        ws.cell(row=min_row, column=min_col, value=unit_name)
-                        break
-            else:
-                # 正常单元格，直接设置值
-                ws.cell(row=row_index, column=1, value=unit_name)
-            
-            # 更新现有数据
-            if unit_name in existing_data:
-                for col, value in enumerate(existing_data[unit_name], 2):
-                    if col < user_col_index + 1:
-                        cell = ws.cell(row=row_index, column=col)
-                        if not isinstance(cell, openpyxl.cell.cell.MergedCell):
-                            cell.value = value
-            
-            # 写入当前用户的数据
-            status_value = data_dict[unit_name]
-            cell = ws.cell(row=row_index, column=user_col_index + 1)
-            if not isinstance(cell, openpyxl.cell.cell.MergedCell):
-                cell.value = status_value
-                
-                # 设置单元格样式
-                if status_value.startswith('-'):
-                    cell.fill = PatternFill(start_color="FFCCCC", end_color="FFCCCC", fill_type="solid")
-                else:
-                    cell.fill = PatternFill(start_color="CCFFCC", end_color="CCFFCC", fill_type="solid")
-            
-            row_index += 1
-        
-        # 调整列宽
-        for col in range(1, len(header) + 1):
-            ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 15
-        
-        # 保存Excel文件
-        wb.save(excel_path)
-        
-        # 输出下载链接
-        self._log(f"下载链接: 在浏览器地址的域名或端口号后拼接/daily{download_url}")
-        
-@description('从缓存中查询角色练度，不会登录！任意登录或者刷新box可以更新缓存，包含uid、钻石、母猪石、心碎、星球杯等数据！')
-@name('获取box练度excel')
+@description('包含uid、钻石、母猪石、心碎、星球杯等数据，不建议角色全部导出，角色越多需要的时间越多！')
+@name('导出box练度excel')
 @notlogin(check_data=True)
 @default(True)
 @unitlist("filter_units", "要导出的角色")
@@ -1103,7 +960,9 @@ class get_box_excel(Module):
         
         # 准备Excel文件
         static_dir = os.path.join(static_path, 'assets', 'excel')
-        file_name = "box_info.xlsx"
+        # 添加时间戳到文件名
+        timestamp = int(datetime.now().timestamp())
+        file_name = f"box_info_{timestamp}.xlsx"
         excel_path, download_url = prepare_excel_file(static_dir, file_name)
         
         # 创建或加载工作簿
@@ -1127,7 +986,8 @@ class get_box_excel(Module):
         wb.save(excel_path)
         
         # 输出下载链接
-        self._log(f"下载链接: 在浏览器地址的域名或端口号后拼接/daily{download_url}")
+        download_url = f"{download_url}?t={int(time.time())}"
+        self._log(f"下载链接: {download_url}")
     
     def _parse_filter_units(self, filter_units):
         """解析过滤角色列表"""
@@ -1372,12 +1232,12 @@ class get_box_excel(Module):
                     cell.border = thin_border
                     cell.alignment = Alignment(horizontal='center')
 
-@description('从缓存中查询角色练度，不会登录！任意登录或者刷新box可以更新缓存，提示：执行完需手动刷数据(切换标签栏比较快)！')
-@name('获取box练度表格')
+@description('从缓存中查询角色练度，不会登录！任意登录或者刷新box可以更新缓存')
+@name('查box（多选）')
 @notlogin(check_data=True)
 @default(True)
-@tabletype("box_data", "角色练度数据", [])  # 存储表格数据
 @unitlist("box_unit", "要显示的角色") # 修改为默认空数组
+@multichoice("box_user_info", "要显示的用户信息", [], ["UID", "数据时间", "钻石", "母猪石", "星球杯", "心碎"])
 class get_box_table(Module):
     async def do_task(self, client: pcrclient):
         # 获取用户名和UID
@@ -1386,6 +1246,9 @@ class get_box_table(Module):
         
         # 获取过滤角色列表
         filter_units = self.get_config('box_unit')
+        
+        # 获取要显示的信息列
+        user_info = self.get_config('box_user_info')
         
         # 确保filter_units是数组格式
         if isinstance(filter_units, str):
@@ -1426,27 +1289,26 @@ class get_box_table(Module):
         if not filtered_units:
             raise AbortError("没有找到符合条件的角色")
         
-        # 获取当前存储的表格数据
-        try:
-            box_data = self.get_config('box_data')
-            if not isinstance(box_data, list):
-                box_data = []
-        except (KeyError, AttributeError):
-            # 如果配置不存在或获取失败，使用空列表
-            self._log("未找到现有的表格数据，将创建新的数据")
-            box_data = []
-        
         # 创建用户数据
         user_data = {
             "user_name": user_name,
-            "uid": user_id,
-            "data_time": db.format_time(datetime.fromtimestamp(client.data.data_time)),
-            "jewel": client.data.jewel.free_jewel,
-            "mother_stone": client.data.get_inventory((eInventoryType.Item, 90005)),
-            "star_cup": client.data.get_inventory(db.xingqiubei),
-            "heart_fragment": client.data.get_inventory(db.xinsui),
+            "user_info": user_info,  # 添加要显示的信息列配置
             "units": []
         }
+        
+        # 根据选择的信息列添加对应数据
+        if "UID" in user_info:
+            user_data["uid"] = user_id
+        if "数据时间" in user_info:
+            user_data["data_time"] = db.format_time(datetime.fromtimestamp(client.data.data_time))
+        if "钻石" in user_info:
+            user_data["jewel"] = client.data.jewel.free_jewel
+        if "母猪石" in user_info:
+            user_data["mother_stone"] = client.data.get_inventory((eInventoryType.Item, 90005))
+        if "星球杯" in user_info:
+            user_data["star_cup"] = client.data.get_inventory(db.xingqiubei)
+        if "心碎" in user_info:
+            user_data["heart_fragment"] = client.data.get_inventory(db.xinsui)
         
         # 添加角色数据 - 只添加当前选择的角色
         for unit_id in filtered_units:
@@ -1508,66 +1370,26 @@ class get_box_table(Module):
             
             user_data["units"].append(unit_data)
         
-        # 更新用户数据 - 替换现有用户数据或添加新用户
-        user_exists = False
-        for i, data in enumerate(box_data):
-            if data.get("uid") == user_id:
-                # 重要修改：保留用户基本信息，但完全替换units数组
-                box_data[i]["user_name"] = user_data["user_name"]
-                box_data[i]["data_time"] = user_data["data_time"]
-                box_data[i]["jewel"] = user_data["jewel"]
-                box_data[i]["mother_stone"] = user_data["mother_stone"]
-                box_data[i]["star_cup"] = user_data["star_cup"]
-                box_data[i]["heart_fragment"] = user_data["heart_fragment"]
-                box_data[i]["units"] = user_data["units"]  # 完全替换units数组，确保只包含当前选择的角色
-                user_exists = True
-                break
+        # 将数据输出到日志中，使用JSON格式以便于后续处理
+        import json
+        self._log(f"用户信息: {user_name}")
+        if "UID" in user_info:
+            self._log(f"UID: {user_id}")
+        if "数据时间" in user_info:
+            self._log(f"数据时间: {user_data.get('data_time', '')}")
+        if "钻石" in user_info:
+            self._log(f"钻石: {user_data.get('jewel', '')}")
+        if "母猪石" in user_info:
+            self._log(f"母猪石: {user_data.get('mother_stone', '')}")
+        if "星球杯" in user_info:
+            self._log(f"星球杯: {user_data.get('star_cup', '')}")
+        if "心碎" in user_info:
+            self._log(f"心碎: {user_data.get('heart_fragment', '')}")
+        self._log(f"角色数量: {len(user_data['units'])}")
         
-        if not user_exists:
-            box_data.append(user_data)
+        # 输出完整的JSON数据到日志，方便后续表格渲染
+        self._log("BOX_DATA_START")  # 标记数据开始
+        self._log(json.dumps(user_data, ensure_ascii=False))
+        self._log("BOX_DATA_END")    # 标记数据结束
         
-        # # 保存数据 - 修改这里，使用正确的方法保存配置
-        # try:
-        #     # 尝试使用 Module 类中可能存在的方法
-        #     if hasattr(self, 'set_config'):
-        #         self.set_config('box_data', box_data)
-        #     else:
-        #         # 如果没有 set_config 方法，尝试直接修改配置
-        #         from autopcr.module.modulebase import Module
-        #         if hasattr(Module, 'config') and 'box_data' in self.config:
-        #             self.config['box_data'].value = box_data
-        #         else:
-        #             # 如果以上方法都不可行，记录错误但继续执行
-        #             self._log("警告：无法保存表格数据，配置可能不会持久化")
-        # except Exception as e:
-        #     self._log(f"保存配置时出错: {e}")
-        #     # 继续执行，不中断流程
-        
-        self._log(f"已更新用户 {user_name} (UID: {user_id}) 的角色练度数据")
-        self._log(f"总计更新了{len(filtered_units)}个角色的练度信息")
-        
-        # 构建表格数据，包含所有账号
-        table_data = []
-        for idx, account in enumerate(box_data):
-            # 为每个账号创建一行数据
-            account_row = {
-                "序号": idx + 1,
-                "用户名": account["user_name"],
-                "UID": account["uid"],
-                "数据时间": account["data_time"],
-                "钻石": account["jewel"],
-                "母猪石": account["mother_stone"],
-                "星球杯": account["star_cup"],
-                "心碎": account["heart_fragment"],
-                "角色数量": len(account["units"]),
-                # 可以根据需要添加更多字段
-            }
-            table_data.append(account_row)
-        
-        # 返回包含所有账号的表格数据
-        return {
-            "message": f"已更新用户 {user_name} 的角色练度数据，请在前端页面查看",
-            "accounts_table": table_data,  # 账号基本信息表格
-            "all_data": box_data,          # 所有原始数据，包含角色详情
-            "current_uid": user_id          # 当前用户的UID
-        }
+        self._log(f"已输出用户 {user_name} 的角色练度数据")

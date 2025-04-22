@@ -262,16 +262,6 @@ class UnitListConfig(UnitConfigMixin, MultiChoiceConfig):
     def __init__(self, key: str, desc: str):
         super().__init__(key, desc, [], db.unlock_unit_condition)
 
-class TableConfig(Config):
-    @property
-    def config_type(self):
-        return 'table'
-    
-    def process_value(self, value):
-        if value is None:
-            return []
-        return value
-
 class ConditionalExecutionMixin:
     """Mixin for conditional execution configs."""
     async def check_campaigns(self, campaign_list, client_data):
