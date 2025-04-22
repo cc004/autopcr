@@ -104,7 +104,7 @@ class travel_quest_sweep(Module):
         travel_quest_equip_event_strategy: str = self.get_config("travel_quest_equip_event_strategy")
         travel_quest_gold_event_strategy: str = self.get_config("travel_quest_gold_event_strategy")
         travel_quest_speed_up_paper_hold: int = self.get_config("travel_quest_speed_up_paper_hold")
-        travel_speed_up_target: Set[int] = {self.get_config("travel_speed_up_target")}
+        travel_speed_up_target: Set[int] = set(self.get_config("travel_speed_up_target"))
         reward: List[InventoryInfo] = []
 
         def get_strategy(event_id: int) -> str:
