@@ -275,8 +275,6 @@ class ConditionalExecution1Config(ConditionalExecutionMixin, MultiChoiceConfig):
         self.check_enabled = check
     
     async def do_check(self, client: pcrclient) -> Tuple[bool, str]:
-        if not self.check_enabled:
-            return True, ""
             
         run_time = self.get_value()
         hit = await self.check_campaigns(run_time, client.data)
@@ -309,8 +307,6 @@ class ConditionalExecution2Config(ConditionalExecutionMixin, MultiChoiceConfig):
         self.check_enabled = check
     
     async def do_check(self) -> Tuple[bool, str]:
-        if not self.check_enabled:
-            return True, ""
             
         run_time = self.get_value()
         hit = [campaign for campaign in run_time if db.is_campaign(campaign)]
