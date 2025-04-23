@@ -941,7 +941,7 @@ def prepare_excel_file(static_dir, file_name):
 @name('导出box练度excel')
 @notlogin(check_data=True)
 @default(True)
-@unitlist("filter_units", "要导出的角色")
+@unitlist("export_units", "要导出的角色")
 class get_box_excel(Module):
     async def do_task(self, client: pcrclient):
         # 获取用户信息
@@ -949,11 +949,11 @@ class get_box_excel(Module):
         user_id = client.data.uid
         
         # 处理过滤角色列表
-        filter_units = self.get_config('filter_units')
-        filter_units = self._parse_filter_units(filter_units)
+        export_units = self.get_config('export_units')
+        export_units = self._parse_export_units(export_units)
         
         # 筛选角色
-        filtered_units = self._get_filtered_units(client, filter_units)
+        filtered_units = self._get_filtered_units(client, export_units)
         
         if not filtered_units:
             raise AbortError("没有找到符合条件的角色")
@@ -961,7 +961,7 @@ class get_box_excel(Module):
         # 准备Excel文件
         static_dir = os.path.join(static_path, 'assets', 'excel')
         # 添加时间戳到文件名
-        timestamp = int(datetime.now().timestamp())
+        timestamp = int(datetime.now().timestamp()) // 300 * 300  # 按5分钟取整
         file_name = f"box_info_{timestamp}.xlsx"
         excel_path, download_url = prepare_excel_file(static_dir, file_name)
         
@@ -989,27 +989,27 @@ class get_box_excel(Module):
         download_url = f"{download_url}?t={int(time.time())}"
         self._log(f"下载链接: {download_url}")
     
-    def _parse_filter_units(self, filter_units):
+    def _parse_export_units(self, export_units):
         """解析过滤角色列表"""
-        if isinstance(filter_units, str):
+        if isinstance(export_units, str):
             try:
                 import json
                 try:
-                    return json.loads(filter_units)
+                    return json.loads(export_units)
                 except json.JSONDecodeError:
-                    return [int(unit_id.strip()) for unit_id in filter_units.split(',') if unit_id.strip()]
+                    return [int(unit_id.strip()) for unit_id in export_units.split(',') if unit_id.strip()]
             except Exception as e:
                 self._log(f"解析过滤角色列表出错: {e}")
-                return [int(unit_id.strip()) for unit_id in filter_units.split(',') if unit_id.strip()]
-        elif isinstance(filter_units, list):
-            return [int(unit_id) if isinstance(unit_id, str) else unit_id for unit_id in filter_units]
+                return [int(unit_id.strip()) for unit_id in export_units.split(',') if unit_id.strip()]
+        elif isinstance(export_units, list):
+            return [int(unit_id) if isinstance(unit_id, str) else unit_id for unit_id in export_units]
         else:
             return []
     
-    def _get_filtered_units(self, client, filter_units):
+    def _get_filtered_units(self, client, export_units):
         """获取过滤后的角色列表"""
-        if filter_units:
-            filtered_units = filter_units.copy()
+        if export_units:
+            filtered_units = export_units.copy()
             self._log(f"使用筛选角色列表，共{len(filtered_units)}个角色")
         else:
             filtered_units = list(client.data.unit.keys())
@@ -1245,38 +1245,38 @@ class get_box_table(Module):
         user_id = client.data.uid
         
         # 获取过滤角色列表
-        filter_units = self.get_config('box_unit')
+        box_unit = self.get_config('box_unit')
         
         # 获取要显示的信息列
         user_info = self.get_config('box_user_info')
         
-        # 确保filter_units是数组格式
-        if isinstance(filter_units, str):
+        # 确保box_unit是数组格式
+        if isinstance(box_unit, str):
             try:
                 # 尝试解析JSON格式的数组
                 import json
                 try:
-                    filter_units = json.loads(filter_units)
+                    box_unit = json.loads(box_unit)
                 except json.JSONDecodeError:
                     # 如果不是JSON，尝试按逗号分割
-                    filter_units = [int(unit_id.strip()) for unit_id in filter_units.split(',') if unit_id.strip()]
+                    box_unit = [int(unit_id.strip()) for unit_id in box_unit.split(',') if unit_id.strip()]
             except Exception as e:
                 self._log(f"解析过滤角色列表出错: {e}")
-                filter_units = [int(unit_id.strip()) for unit_id in filter_units.split(',') if unit_id.strip()]
-        elif isinstance(filter_units, list):
+                box_unit = [int(unit_id.strip()) for unit_id in box_unit.split(',') if unit_id.strip()]
+        elif isinstance(box_unit, list):
             # 如果已经是列表，确保所有元素都是整数
-            filter_units = [int(unit_id) if isinstance(unit_id, str) else unit_id for unit_id in filter_units]
+            box_unit = [int(unit_id) if isinstance(unit_id, str) else unit_id for unit_id in box_unit]
         else:
             # 其他情况，设为空列表
-            filter_units = []
+            box_unit = []
         
         # 筛选角色
-        if filter_units:
-            # 使用filter_units中的所有角色
-            if isinstance(filter_units, list):
-                filtered_units = filter_units.copy()
-            elif isinstance(filter_units, int):
-                filtered_units = [filter_units]
+        if box_unit:
+            # 使用box_unit中的所有角色
+            if isinstance(box_unit, list):
+                filtered_units = box_unit.copy()
+            elif isinstance(box_unit, int):
+                filtered_units = [box_unit]
             else:
                 # 确保有一个默认值
                 filtered_units = []
