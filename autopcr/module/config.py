@@ -322,9 +322,7 @@ class ConditionalNotExecutionConfig(ConditionalExecutionMixin, MultiChoiceConfig
         self.check_enabled = check
     
     async def do_check(self, client: pcrclient) -> Tuple[bool, str]:
-        if not self.check_enabled:
-            return True, ""
-            
+
         run_time = self.get_value()
         hit = await self.check_campaigns(run_time, client.data)
         
