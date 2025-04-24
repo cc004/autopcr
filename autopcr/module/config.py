@@ -97,8 +97,7 @@ class Config:
         else:
             processed = self.process_value(raw_config)
             validated = self.validate_value(processed)
-            return validated or self.default
-
+            return validated if validated is not None else self.default
     def get_raw_value(self):
         """Get the current value from the parent module."""
         return self._parent._get_raw_config(self.key)
