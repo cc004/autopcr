@@ -6,12 +6,12 @@ from ...model.enums import *
 from ...db.database import db
 
 class CronModule(Module):
-    def get_cron_time(self) -> List[int]: ...
+    def get_cron_time(self) -> str: ...
 
     async def is_cron_condition(self) -> bool: ...
 
     async def is_cron_time(self, nhour: int, nminute: int) -> bool:
-        time_args = self.get_cron_time()
+        time_args = self.get_cron_time().split(":")
         hour, minute = time_args[0], time_args[1]
         return nhour == int(hour) and nminute == int(minute)
 
@@ -41,7 +41,7 @@ class NormalCronModule(CronModule):
 @default(False)
 @notrunnable
 class cron1(NormalCronModule):
-    def get_cron_time(self) -> List[int]:
+    def get_cron_time(self) -> str:
         return self.get_config("time_cron1")
     def get_clanbattle_run_status(self) -> bool:
         return self.get_config("clanbattle_run_cron1")
@@ -53,7 +53,7 @@ class cron1(NormalCronModule):
 @default(False)
 @notrunnable
 class cron2(NormalCronModule):
-    def get_cron_time(self) -> List[int]:
+    def get_cron_time(self) -> str:
         return self.get_config("time_cron2")
     def get_clanbattle_run_status(self) -> bool:
         return self.get_config("clanbattle_run_cron2")
@@ -66,7 +66,7 @@ class cron2(NormalCronModule):
 @default(False)
 @notrunnable
 class cron3(NormalCronModule):
-    def get_cron_time(self) -> List[int]:
+    def get_cron_time(self) -> str:
         return self.get_config("time_cron3")
     def get_clanbattle_run_status(self) -> bool:
         return self.get_config("clanbattle_run_cron3")
@@ -78,7 +78,7 @@ class cron3(NormalCronModule):
 @default(False)
 @notrunnable
 class cron4(NormalCronModule):
-    def get_cron_time(self) -> List[int]:
+    def get_cron_time(self) -> str:
         return self.get_config("time_cron4")
     def get_clanbattle_run_status(self) -> bool:
         return self.get_config("clanbattle_run_cron4")
@@ -90,7 +90,7 @@ class cron4(NormalCronModule):
 @conditional_execution2('run_condition_cron5', [], desc='执行庆典', check=False)
 @notrunnable
 class cron5(CronModule):
-    def get_cron_time(self) -> List[int]:
+    def get_cron_time(self) -> str:
         return self.get_config("time_cron5")
 
     async def is_cron_condition(self) -> bool:
@@ -109,7 +109,7 @@ class cron5(CronModule):
 @conditional_execution2('run_condition_cron6', [], desc='执行庆典', check=False)
 @notrunnable
 class cron6(CronModule):
-    def get_cron_time(self) -> List[int]:
+    def get_cron_time(self) -> str:
         return self.get_config("time_cron6")
 
     async def is_cron_condition(self) -> bool:

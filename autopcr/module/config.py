@@ -5,7 +5,13 @@ from dataclasses_json import dataclass_json
 from ..core import pcrclient
 from ..db.database import db
 from ..util.pcr_data import CHARA_NAME
+import os
+import json
+from ..constants import DATA_DIR
 
+nickname_path = os.path.join(DATA_DIR, 'nickname.json')
+with open(nickname_path, 'r', encoding='utf-8') as f:
+    CHARA_NICKNAME = json.load(f)
 def _wrap_init(cls, setter):
     old = cls.__init__
     def __init__(self, *args, **kwargs):
@@ -22,6 +28,7 @@ class Candidate:
     value: Any
     display: str
     tags: Optional[List[str]] = None
+    nickname: Optional[str] = None
 
     def __post_init__(self):
         if self.tags is None:
@@ -61,14 +68,20 @@ class Config:
     def candidate_tag(self):
         """Get the display names for the available candidates."""
         return {}
-
+    @property
+    def candidate_nickname(self):
+        return {
+            str(unit_id * 100 + 1): CHARA_NICKNAME.get(str(unit_id * 100 + 1), None)
+            for unit_id in CHARA_NAME.keys()
+    }
     @property
     def candidates_json(self):
         """Get the available candidates for this configuration."""
         return [Candidate(
                     value = c, 
                     display = str(self.candidate_display.get(str(c), c)),
-                    tags = self.candidate_tag.get(str(c), [])
+                    tags = self.candidate_tag.get(str(c), []),
+                    nickname = self.candidate_nickname.get(str(c), None)
                 ) for c in self.candidates]
     
     @property
@@ -243,6 +256,13 @@ class UnitConfigMixin:
             str(unit_id * 100 + 1): unit_data
             for unit_id, unit_data in CHARA_NAME.items()
         }
+        
+    @property
+    def candidate_nickname(self):
+        return {
+            str(unit_id * 100 + 1): CHARA_NICKNAME.get(str(unit_id * 100 + 1), None)
+            for unit_id in CHARA_NAME.keys()
+        }
 
 class UnitChoiceConfig(UnitConfigMixin, SingleChoiceConfig):
     def __init__(self, key: str, desc: str):
@@ -313,6 +333,23 @@ class ConditionalExecution2Config(ConditionalExecutionMixin, MultiChoiceConfig):
         if hit:
             return True, "今日" + ','.join(hit) + "，执行"
         return False, "今日不符合执行条件"
+    
+    def wrap_init(self, cls: Type):
+        super().wrap_init(cls)
+        if self.check_enabled and hasattr(cls, 'do_check'):
+            old_do_check = cls.do_check
+
+            async def new_do_check(*args, **kwargs):
+                ok, msg = await old_do_check(*args, **kwargs)
+                if not ok:
+                    return False, msg
+
+                ok, msg2 = await self.do_check(*args, **kwargs)
+                if not ok:
+                    return False, msg + msg2
+                return True, msg + msg2
+
+            cls.do_check = new_do_check
 
 
 class ConditionalNotExecutionConfig(ConditionalExecutionMixin, MultiChoiceConfig):
@@ -321,13 +358,29 @@ class ConditionalNotExecutionConfig(ConditionalExecutionMixin, MultiChoiceConfig
         self.check_enabled = check
     
     async def do_check(self, client: pcrclient) -> Tuple[bool, str]:
-
         run_time = self.get_value()
         hit = await self.check_campaigns(run_time, client.data)
         
         if hit:
             return False, "今日" + ','.join(hit) + "，不执行"
         return True, ""
+        
+    def wrap_init(self, cls: Type):
+        super().wrap_init(cls)
+        if self.check_enabled and hasattr(cls, 'do_check'):
+            old_do_check = cls.do_check
+
+            async def new_do_check(*args, **kwargs):
+                ok, msg = await old_do_check(*args, **kwargs)
+                if not ok:
+                    return False, msg
+
+                ok, msg2 = await self.do_check(*args, **kwargs)
+                if not ok:
+                    return False, msg + msg2
+                return True, msg + msg2
+
+            cls.do_check = new_do_check
 
 class TravelQuestConfig(MultiChoiceConfig):
     """Configuration for travel quests."""

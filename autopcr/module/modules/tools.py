@@ -19,13 +19,12 @@ from datetime import datetime
 import random
 import os
 import os.path as path 
+import json
 import itertools
 from collections import Counter
 from .autosweep import unique_equip_2_pure_memory_id
 from ...http_server.httpserver import static_path
-import openpyxl
-from openpyxl import Workbook, load_workbook
-from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+from ...constants import DATA_DIR
 
 @name('撤下会战助战')
 @default(True)
@@ -927,30 +926,112 @@ class set_my_party(Module):
                 await client.set_my_party(tab_number, party_number, 4, title, unit_list, change_rarity_list)
                 self._log(f"设置了{title}")
 
-# 添加一个通用的Excel处理函数
-def prepare_excel_file(static_dir, file_name):
-    """准备Excel文件路径和URL"""
-    os.makedirs(static_dir, exist_ok=True)
-    excel_path = os.path.join(static_dir, file_name)
-    url_prefix = '/assets/excel'
-    download_url = f"{url_prefix}/{file_name}"
-    return excel_path, download_url
+class BoxDataExportBase(Module):
+    async def _prepare_user_data(self, client: pcrclient):
+        """准备用户基本信息"""
+        return {
+            "user_name": client.data.user_name,
+            "user_id": client.data.uid,
+            "jewel": client.data.jewel.free_jewel,
+            "mother_stone": client.data.get_inventory((eInventoryType.Item, 90005)),
+            "star_cup": client.data.get_inventory(db.xingqiubei),
+            "heart_fragment": client.data.get_inventory(db.xinsui),
+            "data_time": db.format_time(datetime.fromtimestamp(client.data.data_time))
+        }
+    
+    def _parse_unit_list(self, unit_list):
+        """解析角色列表，统一处理字符串和列表格式"""
+        if isinstance(unit_list, str):
+            try:
+                try:
+                    return json.loads(unit_list)
+                except json.JSONDecodeError:
+                    return [int(unit_id.strip()) for unit_id in unit_list.split(',') if unit_id.strip()]
+            except Exception as e:
+                self._log(f"解析角色列表出错: {e}")
+                return [int(unit_id.strip()) for unit_id in unit_list.split(',') if unit_id.strip()]
+        elif isinstance(unit_list, list):
+            return [int(unit_id) if isinstance(unit_id, str) else unit_id for unit_id in unit_list]
+        else:
+            return []
+    
+    def _get_filtered_units(self, client: pcrclient, unit_list):
+        """获取过滤后的角色列表"""
+        if unit_list:
+            filtered_units = unit_list.copy()
+            self._log(f"使用筛选角色列表，共{len(filtered_units)}个角色")
+        else:
+            filtered_units = list(client.data.unit.keys())
+            self._log(f"使用所有角色，共{len(filtered_units)}个角色")
+        return filtered_units
+    
+    def _get_unit_name(self, unit_id):
+        """获取角色名称，优先使用昵称"""
+        # 加载昵称文件
+        try:
+            nickname_json = os.path.join(DATA_DIR, 'nickname.json')
+            if os.path.exists(nickname_json):
+                with open(nickname_json, 'r', encoding='utf-8') as f:
+                    nicknames = json.load(f)
 
+                unit_id_str = str(unit_id)
+                if unit_id_str in nicknames:
+                    return nicknames[unit_id_str]
+        except Exception as e:
+            self._log(f"加载昵称文件出错: {e}")
         
-@description('包含uid、钻石、母猪石、心碎、星球杯等数据，不建议角色全部导出，角色越多需要的时间越多！')
+        # 如果没有找到昵称或出错，使用默认名称
+        return db.get_unit_name(unit_id)
+    
+    def _get_unit_data(self, client: pcrclient, unit_id: int):
+        """获取单个角色的详细数据"""
+        unit_data = {
+            "unit_id": unit_id,
+            "unit_name": self._get_unit_name(unit_id),  # 使用自定义的方法获取角色名
+            "owned": unit_id in client.data.unit
+        }
+        
+        if unit_id in client.data.unit:
+            unitinfo = client.data.unit[unit_id]
+            unit_data.update({
+                "rarity": unitinfo.unit_rarity,
+                "level": unitinfo.unit_level,
+                "rank": unitinfo.promotion_level,
+                "equip": "".join("-" if not slot.is_slot else str(slot.enhancement_level) for slot in unitinfo.equip_slot),
+                "ub": unitinfo.union_burst[0].skill_level if unitinfo.union_burst else 0,
+                "sk1": unitinfo.main_skill[0].skill_level if unitinfo.main_skill else 0,
+                "sk2": unitinfo.main_skill[1].skill_level if len(unitinfo.main_skill) > 1 else 0,
+                "ex": unitinfo.ex_skill[0].skill_level if unitinfo.ex_skill else 0,
+                "unique_equip": 0 if not unitinfo.unique_equip_slot else 0 if not unitinfo.unique_equip_slot[0].is_slot else unitinfo.unique_equip_slot[0].enhancement_level
+            })
+            
+            # 碎片数量
+            memory_count = 0
+            for memory_id, memory_unit_id in db.memory_to_unit.items():
+                if memory_unit_id == unit_id:
+                    memory_count = client.data.get_inventory((eInventoryType.Item, memory_id))
+                    break
+            unit_data["memory"] = memory_count
+            
+            # 金碎数量
+            pure_memory_count = 0
+            for pure_memory_item, pure_memory_unit_id in db.pure_memory_to_unit.items():
+                if pure_memory_unit_id == unit_id:
+                    pure_memory_count = client.data.get_inventory(pure_memory_item)
+                    break
+            unit_data["pure_memory"] = pure_memory_count
+        
+        return unit_data
+@description('包含uid、钻石、母猪石、心碎、星球杯等数据，不建议角色全部导出')
 @name('导出box练度excel')
 @notlogin(check_data=True)
 @default(True)
 @unitlist("export_units", "要导出的角色")
-class get_box_excel(Module):
+class get_box_excel(BoxDataExportBase):
     async def do_task(self, client: pcrclient):
-        # 获取用户信息
-        user_name = client.data.user_name
-        user_id = client.data.uid
-        
         # 处理过滤角色列表
         export_units = self.get_config('export_units')
-        export_units = self._parse_export_units(export_units)
+        export_units = self._parse_unit_list(export_units)
         
         # 筛选角色
         filtered_units = self._get_filtered_units(client, export_units)
@@ -958,423 +1039,75 @@ class get_box_excel(Module):
         if not filtered_units:
             raise AbortError("没有找到符合条件的角色")
         
-        # 准备Excel文件
-        static_dir = os.path.join(static_path, 'assets', 'excel')
-        # 添加时间戳到文件名
-        timestamp = int(datetime.now().timestamp()) // 300 * 300  # 按5分钟取整
-        file_name = f"box_info_{timestamp}.xlsx"
-        excel_path, download_url = prepare_excel_file(static_dir, file_name)
-        
-        # 创建或加载工作簿
-        wb = self._prepare_workbook(excel_path, user_name)
-        ws = wb.active
-        ws.title = "角色练度"
-        
-        # 初始化表头
-        self._initialize_headers(ws)
-        
-        # 添加用户基本信息
-        current_row = self._add_user_info(ws, client)
+        # 准备数据
+        excel_data = {
+            "user_info": await self._prepare_user_data(client),
+            "units": []
+        }
         
         # 添加角色信息
-        self._add_character_info(ws, client, filtered_units, current_row)
-        
-        # 调整样式
-        self._adjust_styles(ws)
-        
-        # 保存Excel文件
-        wb.save(excel_path)
-        
-        # 输出下载链接
-        download_url = f"{download_url}?t={int(time.time())}"
-        self._log(f"下载链接: {download_url}")
-    
-    def _parse_export_units(self, export_units):
-        """解析过滤角色列表"""
-        if isinstance(export_units, str):
-            try:
-                import json
-                try:
-                    return json.loads(export_units)
-                except json.JSONDecodeError:
-                    return [int(unit_id.strip()) for unit_id in export_units.split(',') if unit_id.strip()]
-            except Exception as e:
-                self._log(f"解析过滤角色列表出错: {e}")
-                return [int(unit_id.strip()) for unit_id in export_units.split(',') if unit_id.strip()]
-        elif isinstance(export_units, list):
-            return [int(unit_id) if isinstance(unit_id, str) else unit_id for unit_id in export_units]
-        else:
-            return []
-    
-    def _get_filtered_units(self, client, export_units):
-        """获取过滤后的角色列表"""
-        if export_units:
-            filtered_units = export_units.copy()
-            self._log(f"使用筛选角色列表，共{len(filtered_units)}个角色")
-        else:
-            filtered_units = list(client.data.unit.keys())
-            self._log(f"使用所有角色，共{len(filtered_units)}个角色")
-        return filtered_units
-    
-    def _prepare_workbook(self, excel_path, user_name):
-        """准备工作簿"""
-        if os.path.exists(excel_path):
-            try:
-                wb = load_workbook(excel_path)
-                ws = wb.active
-                
-                # 检查是否已有该用户的数据
-                for row in range(3, ws.max_row + 1):
-                    if ws.cell(row=row, column=2).value == user_name:
-                        return Workbook()
-                
-                return wb
-            except Exception as e:
-                self._warn(f"读取Excel文件出错: {str(e)}")
-                return Workbook()
-        else:
-            return Workbook()
-    
-    def _initialize_headers(self, ws):
-        """初始化表头"""
-        if ws.max_column < 9:
-            headers_row1 = ["序号", "用户名", "UID", "数据时间", "钻石", "母猪石", "星球杯", "心碎"]
-            for i, header in enumerate(headers_row1):
-                cell = ws.cell(row=1, column=i+1, value=header)
-                cell.font = Font(bold=True)
-                cell.fill = PatternFill(start_color="DDDDDD", end_color="DDDDDD", fill_type="solid")
-                ws.merge_cells(start_row=1, start_column=i+1, end_row=2, end_column=i+1)
-                ws.cell(row=2, column=i+1).alignment = Alignment(horizontal='center', vertical='center')
-    
-    def _add_user_info(self, ws, client):
-        """添加用户基本信息"""
-        # 计算用户数量
-        user_count = sum(1 for row in range(3, ws.max_row + 1) if ws.cell(row=row, column=2).value)
-        current_row = ws.max_row + 1
-        
-        # 添加用户基本信息 - 检查合并单元格
-        self._safe_set_cell_value(ws, current_row, 1, user_count + 1)  # 序号
-        self._safe_set_cell_value(ws, current_row, 2, client.data.user_name)  # 用户名
-        
-        # UID单元格
-        cell = self._safe_set_cell_value(ws, current_row, 3, client.data.uid)  # UID
-        if cell and not isinstance(cell, openpyxl.cell.cell.MergedCell):
-            cell.number_format = '0'
-        
-        self._safe_set_cell_value(ws, current_row, 4, db.format_time(datetime.fromtimestamp(client.data.data_time)))  # 数据时间
-        
-        # 钻石单元格
-        cell = self._safe_set_cell_value(ws, current_row, 5, client.data.jewel.free_jewel)  # 钻石
-        if cell and not isinstance(cell, openpyxl.cell.cell.MergedCell):
-            cell.number_format = '0'
-        
-        # 母猪石单元格
-        cell = self._safe_set_cell_value(ws, current_row, 6, client.data.get_inventory((eInventoryType.Item, 90005)))  # 母猪石
-        if cell and not isinstance(cell, openpyxl.cell.cell.MergedCell):
-            cell.number_format = '0'
-        
-        # 星球杯单元格
-        cell = self._safe_set_cell_value(ws, current_row, 7, client.data.get_inventory(db.xingqiubei))  # 星球杯
-        if cell and not isinstance(cell, openpyxl.cell.cell.MergedCell):
-            cell.number_format = '0'
-        
-        # 心碎单元格
-        cell = self._safe_set_cell_value(ws, current_row, 8, client.data.get_inventory(db.xinsui))  # 心碎
-        if cell and not isinstance(cell, openpyxl.cell.cell.MergedCell):
-            cell.number_format = '0'
-        
-        return current_row
-    
-    def _add_character_info(self, ws, client, filtered_units, current_row):
-        """添加角色信息"""
-        # 获取现有角色列
-        existing_units = {}
-        for col in range(9, ws.max_column + 1, 12):
-            unit_id_cell = ws.cell(row=1, column=col+2)
-            if unit_id_cell.value:
-                try:
-                    unit_id = int(unit_id_cell.value)
-                    existing_units[unit_id] = col
-                except (ValueError, TypeError):
-                    pass
-        
-        # 添加角色信息
-        col_index = 9
         for unit in filtered_units:
-            if unit in existing_units:
-                col_index = existing_units[unit]
-            else:
-                # 创建新列 - 这里是问题所在，需要确保每个新角色都有自己的列
-                unit_name = db.get_unit_name(unit)
-                
-                # 设置角色名和ID
-                cell = self._safe_set_cell_value(ws, 1, col_index+1, unit_name)
-                if cell and not isinstance(cell, openpyxl.cell.cell.MergedCell):
-                    cell.font = Font(bold=True)
-                
-                cell = self._safe_set_cell_value(ws, 1, col_index+2, unit)
-                if cell and not isinstance(cell, openpyxl.cell.cell.MergedCell):
-                    cell.font = Font(bold=True)
-                
-                # 设置表头背景色
-                for i in range(12):
-                    cell = ws.cell(row=1, column=col_index+i)
-                    if not isinstance(cell, openpyxl.cell.cell.MergedCell):
-                        cell.fill = PatternFill(start_color="DDDDDD", end_color="DDDDDD", fill_type="solid")
-                
-                # 设置属性表头
-                headers_row2 = ["", "星级", "等级", "rank", "装备", "ub", "sk1", "sk2", "ex", "专武", "碎片", "金碎"]
-                for i, header in enumerate(headers_row2):
-                    cell = self._safe_set_cell_value(ws, 2, col_index+i, header)
-                    if cell and not isinstance(cell, openpyxl.cell.cell.MergedCell):
-                        cell.font = Font(bold=True)
-                        cell.fill = PatternFill(start_color="DDDDDD", end_color="DDDDDD", fill_type="solid")
-                
-                existing_units[unit] = col_index
-            
-            # 填充角色数据
-            if unit in client.data.unit:
-                unitinfo = client.data.unit[unit]
-                
-                # 星级
-                rarity = unitinfo.unit_rarity
-                cell = self._safe_set_cell_value(ws, current_row, col_index+1, rarity)
-                if cell and not isinstance(cell, openpyxl.cell.cell.MergedCell):
-                    if rarity == 6:
-                        cell.fill = PatternFill(start_color="FFD700", end_color="FFD700", fill_type="solid")
-                    elif rarity == 5:
-                        cell.fill = PatternFill(start_color="E6E6FA", end_color="E6E6FA", fill_type="solid")
-                
-                # 其他属性
-                self._safe_set_cell_value(ws, current_row, col_index+2, unitinfo.unit_level)  # 等级
-                self._safe_set_cell_value(ws, current_row, col_index+3, unitinfo.promotion_level)  # Rank
-                
-                # 装备
-                equip = "".join("-" if not slot.is_slot else str(slot.enhancement_level) for slot in unitinfo.equip_slot)
-                self._safe_set_cell_value(ws, current_row, col_index+4, equip)
-                
-                # 技能等级
-                self._safe_set_cell_value(ws, current_row, col_index+5, unitinfo.union_burst[0].skill_level if unitinfo.union_burst else 0)  # ub
-                self._safe_set_cell_value(ws, current_row, col_index+6, unitinfo.main_skill[0].skill_level if unitinfo.main_skill else 0)  # sk1
-                self._safe_set_cell_value(ws, current_row, col_index+7, unitinfo.main_skill[1].skill_level if len(unitinfo.main_skill) > 1 else 0)  # sk2
-                self._safe_set_cell_value(ws, current_row, col_index+8, unitinfo.ex_skill[0].skill_level if unitinfo.ex_skill else 0)  # ex
-                
-                # 专武
-                unique_equip = 0 if not unitinfo.unique_equip_slot else 0 if not unitinfo.unique_equip_slot[0].is_slot else unitinfo.unique_equip_slot[0].enhancement_level
-                self._safe_set_cell_value(ws, current_row, col_index+9, unique_equip)
-                
-                # 碎片数量
-                memory_count = 0
-                for memory_id, memory_unit_id in db.memory_to_unit.items():
-                    if memory_unit_id == unit:
-                        memory_count = client.data.get_inventory((eInventoryType.Item, memory_id))
-                        break
-                self._safe_set_cell_value(ws, current_row, col_index+10, memory_count)
-                
-                # 金碎数量
-                pure_memory_count = 0
-                for pure_memory_item, pure_memory_unit_id in db.pure_memory_to_unit.items():
-                    if pure_memory_unit_id == unit:
-                        pure_memory_count = client.data.get_inventory(pure_memory_item)
-                        break
-                self._safe_set_cell_value(ws, current_row, col_index+11, pure_memory_count)
-            else:
-                # 未获得角色
-                for i in range(1, 12):
-                    self._safe_set_cell_value(ws, current_row, col_index+i, "")
-                
-                cell = self._safe_set_cell_value(ws, current_row, col_index+1, "未获得")
-                if cell and not isinstance(cell, openpyxl.cell.cell.MergedCell):
-                    cell.fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
-            
-            # 移动到下一个角色的列 - 修改这里，确保每个角色都有自己的列
-            # 无论角色是否在existing_units中，都需要增加col_index
-            col_index += 12
-    def _safe_set_cell_value(self, ws, row, col, value):
-        """安全地设置单元格值，处理合并单元格的情况"""
-        cell = ws.cell(row=row, column=col)
-        if isinstance(cell, openpyxl.cell.cell.MergedCell):
-            # 找到该单元格所在的合并区域
-            for merged_range in ws.merged_cells.ranges:
-                if cell.coordinate in merged_range:
-                    # 获取合并区域的左上角单元格
-                    min_row, min_col, max_row, max_col = merged_range.bounds
-                    top_left_cell = ws.cell(row=min_row, column=min_col)
-                    top_left_cell.value = value
-                    return top_left_cell
-            return None
-        else:
-            # 正常单元格，直接设置值
-            cell.value = value
-            return cell
-    def _adjust_styles(self, ws):
-        """调整样式"""
-        # 调整列宽
-        ws.column_dimensions[openpyxl.utils.get_column_letter(1)].width = 8   # 序号列宽
-        ws.column_dimensions[openpyxl.utils.get_column_letter(2)].width = 15  # 用户名列宽
+            unit_data = self._get_unit_data(client, unit)
+            excel_data["units"].append(unit_data)
         
-        # 为每个角色设置列宽
-        for col in range(3, ws.max_column + 1):
-            ws.column_dimensions[openpyxl.utils.get_column_letter(col)].width = 8
-        
-        # 添加边框和居中对齐
-        thin_border = Border(
-            left=Side(style='thin'), 
-            right=Side(style='thin'), 
-            top=Side(style='thin'), 
-            bottom=Side(style='thin')
-        )
-        
-        for row in range(1, ws.max_row + 1):
-            for col in range(1, ws.max_column + 1):
-                cell = ws.cell(row=row, column=col)
-                if not isinstance(cell, openpyxl.cell.cell.MergedCell):
-                    cell.border = thin_border
-                    cell.alignment = Alignment(horizontal='center')
+        # 将数据转换为JSON字符串并存入log
+        excel_json = json.dumps(excel_data, ensure_ascii=False)
+        self._log(f"BOX_EXCEL_DATA: {excel_json}")
+        self._log(f"共导出 {len(filtered_units)} 个角色的数据")
+
 
 @description('从缓存中查询角色练度，不会登录！任意登录或者刷新box可以更新缓存')
 @name('查box（多选）')
 @notlogin(check_data=True)
 @default(True)
-@unitlist("box_unit", "要显示的角色") # 修改为默认空数组
+@unitlist("box_unit", "要显示的角色")
 @multichoice("box_user_info", "要显示的用户信息", [], ["UID", "数据时间", "钻石", "母猪石", "星球杯", "心碎"])
-class get_box_table(Module):
+class get_box_table(BoxDataExportBase):
     async def do_task(self, client: pcrclient):
-        # 获取用户名和UID
-        user_name = client.data.user_name
-        user_id = client.data.uid
-        
         # 获取过滤角色列表
         box_unit = self.get_config('box_unit')
+        box_unit = self._parse_unit_list(box_unit)
         
         # 获取要显示的信息列
         user_info = self.get_config('box_user_info')
         
-        # 确保box_unit是数组格式
-        if isinstance(box_unit, str):
-            try:
-                # 尝试解析JSON格式的数组
-                import json
-                try:
-                    box_unit = json.loads(box_unit)
-                except json.JSONDecodeError:
-                    # 如果不是JSON，尝试按逗号分割
-                    box_unit = [int(unit_id.strip()) for unit_id in box_unit.split(',') if unit_id.strip()]
-            except Exception as e:
-                self._log(f"解析过滤角色列表出错: {e}")
-                box_unit = [int(unit_id.strip()) for unit_id in box_unit.split(',') if unit_id.strip()]
-        elif isinstance(box_unit, list):
-            # 如果已经是列表，确保所有元素都是整数
-            box_unit = [int(unit_id) if isinstance(unit_id, str) else unit_id for unit_id in box_unit]
-        else:
-            # 其他情况，设为空列表
-            box_unit = []
-        
         # 筛选角色
-        if box_unit:
-            # 使用box_unit中的所有角色
-            if isinstance(box_unit, list):
-                filtered_units = box_unit.copy()
-            elif isinstance(box_unit, int):
-                filtered_units = [box_unit]
-            else:
-                # 确保有一个默认值
-                filtered_units = []
-            self._log(f"使用筛选角色列表，共{len(filtered_units)}个角色")
-        else:
-            # 如果没有指定过滤角色，使用所有角色
-            filtered_units = list(client.data.unit.keys())
-            self._log(f"使用所有角色，共{len(filtered_units)}个角色")
+        filtered_units = self._get_filtered_units(client, box_unit)
         
         if not filtered_units:
             raise AbortError("没有找到符合条件的角色")
         
         # 创建用户数据
         user_data = {
-            "user_name": user_name,
-            "user_info": user_info,  # 添加要显示的信息列配置
+            "user_name": client.data.user_name,
+            "user_info": user_info,
             "units": []
         }
         
         # 根据选择的信息列添加对应数据
+        base_data = await self._prepare_user_data(client)
         if "UID" in user_info:
-            user_data["uid"] = user_id
+            user_data["uid"] = base_data["user_id"]
         if "数据时间" in user_info:
-            user_data["data_time"] = db.format_time(datetime.fromtimestamp(client.data.data_time))
+            user_data["data_time"] = base_data["data_time"]
         if "钻石" in user_info:
-            user_data["jewel"] = client.data.jewel.free_jewel
+            user_data["jewel"] = base_data["jewel"]
         if "母猪石" in user_info:
-            user_data["mother_stone"] = client.data.get_inventory((eInventoryType.Item, 90005))
+            user_data["mother_stone"] = base_data["mother_stone"]
         if "星球杯" in user_info:
-            user_data["star_cup"] = client.data.get_inventory(db.xingqiubei)
+            user_data["star_cup"] = base_data["star_cup"]
         if "心碎" in user_info:
-            user_data["heart_fragment"] = client.data.get_inventory(db.xinsui)
+            user_data["heart_fragment"] = base_data["heart_fragment"]
         
-        # 添加角色数据 - 只添加当前选择的角色
+        # 添加角色数据
         for unit_id in filtered_units:
-            unit_data = {
-                "unit_id": unit_id,
-                "unit_name": db.get_unit_name(unit_id),
-                "owned": unit_id in client.data.unit
-            }
-            
-            if unit_id in client.data.unit:
-                unitinfo = client.data.unit[unit_id]
-                
-                # 星级
-                unit_data["rarity"] = unitinfo.unit_rarity
-                
-                # 等级
-                unit_data["level"] = unitinfo.unit_level
-                
-                # Rank
-                unit_data["rank"] = unitinfo.promotion_level
-                
-                # 装备
-                equip = ""
-                for slot in unitinfo.equip_slot:
-                    equip += "-" if not slot.is_slot else str(slot.enhancement_level)
-                unit_data["equip"] = equip
-                
-                # 技能等级 - ub
-                unit_data["ub"] = unitinfo.union_burst[0].skill_level if unitinfo.union_burst else 0
-                
-                # 技能等级 - sk1
-                unit_data["sk1"] = unitinfo.main_skill[0].skill_level if unitinfo.main_skill else 0
-                
-                # 技能等级 - sk2
-                unit_data["sk2"] = unitinfo.main_skill[1].skill_level if len(unitinfo.main_skill) > 1 else 0
-                
-                # 技能等级 - ex
-                unit_data["ex"] = unitinfo.ex_skill[0].skill_level if unitinfo.ex_skill else 0
-                
-                # 专武
-                unit_data["unique_equip"] = 0 if not unitinfo.unique_equip_slot else 0 if not unitinfo.unique_equip_slot[0].is_slot else unitinfo.unique_equip_slot[0].enhancement_level
-                
-                # 碎片数量
-                memory_count = 0
-                for memory_id, memory_unit_id in db.memory_to_unit.items():
-                    if memory_unit_id == unit_id:
-                        memory_item = (eInventoryType.Item, memory_id)
-                        memory_count = client.data.get_inventory(memory_item)
-                        break
-                unit_data["memory"] = memory_count
-                
-                # 金碎数量
-                pure_memory_count = 0
-                for pure_memory_item, pure_memory_unit_id in db.pure_memory_to_unit.items():
-                    if pure_memory_unit_id == unit_id:
-                        pure_memory_count = client.data.get_inventory(pure_memory_item)
-                        break
-                unit_data["pure_memory"] = pure_memory_count
-            
+            unit_data = self._get_unit_data(client, unit_id)
             user_data["units"].append(unit_data)
         
-        # 将数据输出到日志中，使用JSON格式以便于后续处理
-        import json
-        self._log(f"用户信息: {user_name}")
+        # 将数据输出到日志中
+        self._log(f"用户信息: {user_data['user_name']}")
         if "UID" in user_info:
-            self._log(f"UID: {user_id}")
+            self._log(f"UID: {user_data.get('uid', '')}")
         if "数据时间" in user_info:
             self._log(f"数据时间: {user_data.get('data_time', '')}")
         if "钻石" in user_info:
@@ -1387,9 +1120,9 @@ class get_box_table(Module):
             self._log(f"心碎: {user_data.get('heart_fragment', '')}")
         self._log(f"角色数量: {len(user_data['units'])}")
         
-        # 输出完整的JSON数据到日志，方便后续表格渲染
-        self._log("BOX_DATA_START")  # 标记数据开始
+        # 输出完整的JSON数据到日志
+        self._log("BOX_DATA_START")
         self._log(json.dumps(user_data, ensure_ascii=False))
-        self._log("BOX_DATA_END")    # 标记数据结束
+        self._log("BOX_DATA_END")
         
-        self._log(f"已输出用户 {user_name} 的角色练度数据")
+        self._log(f"已输出用户 {user_data['user_name']} 的角色练度数据")
