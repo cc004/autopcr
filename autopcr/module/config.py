@@ -227,6 +227,12 @@ class TimeConfig(Config):
         except ValueError:
             pass
         return None
+    def get_value(self) -> str:
+        """返回格式化的时间字符串 'HH:MM'"""
+        value = super().get_value()
+        if isinstance(value, list) and len(value) >= 2:
+            return f"{value[0]}:{value[1]}"
+        return self.default
 
 class TextConfig(Config):
     @property
