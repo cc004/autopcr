@@ -137,9 +137,10 @@ class travel_quest_sweep(Module):
                     self._warn(f"处理特殊事件{top_event.top_event_id}失败:{e}")
             self._log(f"阅读{len(top.top_event_list)}个特殊事件")
 
-        result_count = {}
         check_next = True
+        result_count = {}
         while check_next:
+            check_next = False
             if any(self.can_receive_count(quest, apiclient.time) for quest in top.travel_quest_list):
                 result = await client.travel_receive_all()
                 secret_travel: List[TravelAppearEventData] = []
@@ -162,7 +163,6 @@ class travel_quest_sweep(Module):
                 if msg: self._log(msg)
                 self._log("")
 
-            check_next = False
             add_lap_travel_quest_list: List[TravelQuestAddLap] = []
             add_lap_travel_quest_id: List[int] = []
             start_travel_quest_list: List[TravelStartInfo] = []
@@ -223,6 +223,8 @@ class travel_quest_sweep(Module):
                         check_next = True
             if check_next:
                 top = await client.travel_top(max(db.get_open_travel_area()), 1)
+                reward = []
+                result_count.clear()
 
         if not self.log:
             raise SkipError("探险仍在继续...")
