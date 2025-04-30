@@ -229,9 +229,9 @@ class travel_quest_sweep(Module):
 
 @inttype("travel_speed_up_paper_threshold", "加速阈值", 12, list(range(13)))
 @inttype("travel_target_day", "轮转天数", 7, list(range(1, 31)))
-@multichoice("travel_target_quest3", "轮转目标3", ['1-2','1-3','1-5'], db.travel_quest_candidate)
-@multichoice("travel_target_quest2", "轮转目标2", ['1-4'], db.travel_quest_candidate)
-@multichoice("travel_target_quest1", "轮转目标1", ['1-1'], db.travel_quest_candidate)
+@multichoice("travel_target_quest3", "轮转队伍3", ['1-2','1-3','1-5'], db.travel_quest_candidate)
+@multichoice("travel_target_quest2", "轮转队伍2", ['1-4'], db.travel_quest_candidate)
+@multichoice("travel_target_quest1", "轮转队伍1", ['1-1'], db.travel_quest_candidate)
 @name('探险轮转')
 @description('''
 自动根据轮转进行探险，按轮转时间进行目标切换，需保持三支队探险。
