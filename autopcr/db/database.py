@@ -831,6 +831,15 @@ class database():
             )
 
     @lazy_property
+    def season_pack(self) -> Dict[int, SeasonPack]:
+        with self.dbmgr.session() as db:
+            return (
+                SeasonPack.query(db)
+                .where(lambda x: x.mission_id != 0)
+                .to_dict(lambda x: x.mission_id, lambda x: x)
+            )
+
+    @lazy_property
     def stationary_mission_data(self) -> Dict[int, StationaryMissionDatum]:
         with self.dbmgr.session() as db:
             return (
@@ -1092,6 +1101,14 @@ class database():
             )
 
     @lazy_property
+    def bmy_story_data(self) -> Dict[int, BmyStoryDatum]:
+        with self.dbmgr.session() as db:
+            return (
+                BmyStoryDatum.query(db)
+                .to_dict(lambda x: x.sub_story_id, lambda x: x)
+            )
+
+    @lazy_property
     def won_story_data(self) -> Dict[int, WonStoryDatum]:
         with self.dbmgr.session() as db:
             return (
@@ -1243,6 +1260,15 @@ class database():
             )
 
     @lazy_property
+    def travel_top_event_drama(self) -> Dict[int, List[TravelTopEventDrama]]:
+        with self.dbmgr.session() as db:
+            return (
+                TravelTopEventDrama.query(db)
+                .group_by(lambda x: x.drama_id)
+                .to_dict(lambda x: x.key, lambda x: x.to_list())
+            )
+
+    @lazy_property
     def travel_quest_data(self) -> Dict[int, TravelQuestDatum]:
         with self.dbmgr.session() as db:
             return (
@@ -1359,7 +1385,7 @@ class database():
             return f"未知关卡({quest_id})"
 
     def is_daily_mission(self, mission_id: int) -> bool:
-        return mission_id in self.daily_mission_data
+        return mission_id in self.daily_mission_data or mission_id in self.season_pack
 
     def is_stationary_mission(self, mission_id: int) -> bool:
         return mission_id in self.stationary_mission_data
