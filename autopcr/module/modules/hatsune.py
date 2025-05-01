@@ -271,8 +271,15 @@ class hatsune_mission_accept2(hatsune_mission_accept_base):
 class all_in_hatsune(Module):
     async def do_task(self, client: pcrclient):
         quest = 0
-        id = self.get_config('hatsune_normal_sweep_event').split(':')[0]
-        sweep_hatsune_id: int = int(id if id else 0)
+        event_value = self.get_config('hatsune_normal_sweep_event')
+        # 兼容新旧版本的配置值处理
+        if isinstance(event_value, str) and ':' in event_value:
+            # 旧版格式: "10084:活动名称"
+            sweep_hatsune_id = int(event_value.split(':')[0]) if event_value else 0
+        else:
+            # 新版格式: 直接是数字或已处理的值
+            sweep_hatsune_id = int(event_value) if event_value else 0
+            
         for event in db.get_active_hatsune(): 
             if event.event_id != sweep_hatsune_id:
                 continue
