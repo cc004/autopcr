@@ -97,7 +97,7 @@ class mission_receive(Module):
     async def do_task(self, client: pcrclient):
         missions = await client.mission_index()
         for type_id, condifion in zip([1, 2, 4], [db.is_daily_mission, db.is_stationary_mission, db.is_emblem_mission]): # 我也不知道为什么是1 2 4
-            if any(1 for mission in missions.missions if condifion(mission.mission_id) and mission.mission_status == eMissionStatusType.EnableReceive):
+            if any(1 for mission in missions.missions if condifion(mission.mission_id) and mission.mission_status == eMissionStatusType.EnableReceive) or any(1 for mission in missions.season_pack or [] if condifion(mission.mission_id) and not mission.received):
                 resp = await client.mission_receive(type_id)
                 reward = await client.serialize_reward_summary(resp.rewards)
                 self._log("领取了任务奖励，获得了:\n" + reward)
