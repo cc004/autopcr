@@ -135,7 +135,10 @@ unit_modules = ModuleList(
     '角色',
     'unit',
     [
+        search_box,
+        master_shop,
         missing_unit,
+        refresh_box,
         unit_promote,
         unit_memory_buy,
         unit_set_unique_equip_growth,
@@ -168,8 +171,6 @@ tool_modules = ModuleList(
     [
         # cook_pudding,
         half_schedule,
-        search_box,
-        refresh_box,
         ex_equip_info,
         travel_team_view,
         get_clan_support_unit,
