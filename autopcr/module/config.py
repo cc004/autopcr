@@ -4,14 +4,11 @@ from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 from ..core import pcrclient
 from ..db.database import db
-from ..util.pcr_data import CHARA_NAME
+from ..util.pcr_data import CHARA_NAME, CHARA_NICKNAME
 import os
 import json
 from ..constants import DATA_DIR
 
-nickname_path = os.path.join(DATA_DIR, 'nickname.json')
-with open(nickname_path, 'r', encoding='utf-8') as f:
-    CHARA_NICKNAME = json.load(f)
 def _wrap_init(cls, setter):
     old = cls.__init__
     def __init__(self, *args, **kwargs):
@@ -59,29 +56,21 @@ class Config:
         else:
             return self._candidates
 
-    @property
-    def candidate_display(self):
+    def candidate_display(self, candidate) -> str:
         """Get the display names for the available candidates."""
-        return {}
+        return str(candidate)
 
-    @property
-    def candidate_tag(self):
+    def candidate_tag(self, candidate) -> List[str]:
         """Get the display names for the available candidates."""
-        return {}
-    @property
-    def candidate_nickname(self):
-        return {
-            str(unit_id * 100 + 1): CHARA_NICKNAME.get(str(unit_id * 100 + 1), None)
-            for unit_id in CHARA_NAME.keys()
-    }
+        return []
+
     @property
     def candidates_json(self):
         """Get the available candidates for this configuration."""
         return [Candidate(
                     value = c, 
-                    display = str(self.candidate_display.get(str(c), c)),
-                    tags = self.candidate_tag.get(str(c), []),
-                    nickname = self.candidate_nickname.get(str(c), None)
+                    display = str(self.candidate_display(c)),
+                    tags = self.candidate_tag(c),
                 ) for c in self.candidates]
     
     @property
@@ -111,6 +100,7 @@ class Config:
             processed = self.process_value(raw_config)
             validated = self.validate_value(processed)
             return validated if validated is not None else self.default
+
     def get_raw_value(self):
         """Get the current value from the parent module."""
         return self._parent._get_raw_config(self.key)
@@ -156,12 +146,12 @@ class BoolConfig(Config):
         # For Bool, we provide display values for true/false
         super().__init__(key, desc, default, [True, False])
 
-    @property
-    def candidate_display(self):
-        return {
-            True: "开启",
-            False: "关闭"
-        }
+    def candidate_display(self, candidate: bool) -> str:
+        if candidate:
+            return "开启"
+        else:
+            return "关闭"
+
 
     def get_value(self) -> bool:
         return bool(super().get_value())
@@ -188,17 +178,15 @@ class MultiChoiceConfig(Config):
         if not isinstance(value, list):
             return [value]
         return value
-    
-    def validate_value(self, value):
-        if not isinstance(value, list):
-            return None
-        return [v for v in value if v in self.candidates] or None
 
     def get_value(self) -> List:
         super_value = super().get_value()
         if not isinstance(super_value, list):
             return [super_value]
         return super_value
+    
+    def validate_value(self, value: List):
+        return [v for v in value if v in self.candidates] or None
 
 class TimeConfig(Config):
     @property
@@ -250,43 +238,35 @@ class TextConfig(Config):
         return value
 
 class UnitConfigMixin:
-    @property
-    def candidate_display(self):
-        return {
-            str(unit_id): unit_data.unit_name
-            for unit_id, unit_data in db.unit_data.items()
-        }
+    def candidate_display(self, unit_id: int):
+        if unit_id // 100 in CHARA_NICKNAME:
+            return CHARA_NICKNAME[unit_id // 100]
+        return db.get_unit_name(unit_id)
 
-    @property
-    def candidate_tag(self):
-        return {
-            str(unit_id * 100 + 1): unit_data
-            for unit_id, unit_data in CHARA_NAME.items()
-        }
-        
-    @property
-    def candidate_nickname(self):
-        return {
-            str(unit_id * 100 + 1): CHARA_NICKNAME.get(str(unit_id * 100 + 1), None)
-            for unit_id in CHARA_NAME.keys()
-        }
+    def candidate_tag(self, unit_id: int):
+        return CHARA_NAME.get(unit_id // 100, [])
 
 class UnitChoiceConfig(UnitConfigMixin, SingleChoiceConfig):
     def __init__(self, key: str, desc: str):
-        super().__init__(key, desc, "100101", db.unlock_unit_condition)
+        super().__init__(key, desc, 100101, db.unlock_unit_condition)
 
     def process_value(self, value):
         if isinstance(value, str) and ':' in value: # Compatible with the old version
             value = int(value.split(':')[0])
         return value
 
-class UnitListConfig(UnitConfigMixin, MultiChoiceConfig):
+class MultiSearchConfig(MultiChoiceConfig):
     @property
     def config_type(self):
         return 'multi_search'
 
+class UnitListConfig(UnitConfigMixin, MultiSearchConfig):
     def __init__(self, key: str, desc: str):
-        super().__init__(key, desc, [], db.unlock_unit_condition)
+        super().__init__(key, desc, [], db.unlock_unit_condition_candidate)
+
+class LimitUnitListConfig(UnitConfigMixin, MultiSearchConfig):
+    def __init__(self, key: str, desc: str):
+        super().__init__(key, desc, [], db.limit_unit_condition_candidate)
 
 class ConditionalExecutionMixin:
     """Mixin for conditional execution configs."""
@@ -395,12 +375,11 @@ class TravelQuestConfig(MultiChoiceConfig):
     def __init__(self, key: str, desc: str, default: List):
         super().__init__(key, desc, default, db.travel_quest_data)
 
-    @property
-    def candidate_display(self):
-        return {
-            str(quest_id): f"{quest.travel_area_id % 10}-{quest.travel_quest_id % 10}"
-            for quest_id, quest in db.travel_quest_data.items()
-        }
+    def candidate_display(self, quest_id: int):
+        if quest_id not in db.travel_quest_data:
+            return str(quest_id)
+        quest = db.travel_quest_data[quest_id]
+        return f"{quest.travel_area_id % 10}-{quest.travel_quest_id % 10}"
 
     def process_value(self, value):
         if isinstance(value, str) and '-' in value: # Compatible with the old version
@@ -414,18 +393,49 @@ class LastNormalQuestConfig(MultiChoiceConfig):
     def __init__(self, key: str, desc: str, default: List):
         super().__init__(key, desc, default, db.last_normal_quest)
 
-    @property
-    def candidate_display(self):
-        return {
-            str(quest_id): db.quest_name[quest_id].split(' ')[1]
-            for quest_id in self.candidates
-        }
+    def candidate_display(self, quest_id: int):
+        area = quest_id // 1000 % 1000
+        quest = quest_id % 1000
+        return f"{area}-{quest}"
 
     def process_value(self, value):
         if isinstance(value, str) and ':' in value: # Compatible with the old version
             quest_id = int(value.split(':')[0])
             value = quest_id
         return value
+
+class ActiveHatsuneChoiceConfig(SingleChoiceConfig):
+    """Configuration for active Hatsune."""
+    
+    def __init__(self, key: str, desc: str, default: str):
+        super().__init__(key, desc, default, db.get_active_hatsune_id)
+
+    def candidate_display(self, event_id: int):
+        return db.event_name[event_id] if event_id in db.event_name else str(event_id)
+
+    def process_value(self, value):
+        if isinstance(value, str) and ':' in value: # Compatible with the old version
+            event_id = int(value.split(':')[0])
+            value = event_id
+        return value
+
+class ActiveHatsuneListConfig(MultiChoiceConfig):
+    """Configuration for active Hatsune list."""
+    
+    def __init__(self, key: str, desc: str, default: List):
+        super().__init__(key, desc, default, db.get_active_hatsune_id)
+
+    def candidate_display(self, event_id: int):
+        return db.event_name[event_id] if event_id in db.event_name else str(event_id)
+
+    def process_value(self, value: List):
+        ret = []
+        for v in value:
+            if isinstance(v, str) and ':' in value: # Compatible with the old version
+                event_id = int(v.split(':')[0])
+                v = event_id
+            ret.append(v)
+        return ret
 
 # Compatible with the old version
 def booltype(key: str, desc: str, default: bool):
