@@ -496,7 +496,7 @@ class unit_equip_enhance_up(UnitController):
             raise SkipError("今日已完成装备强化任务")
 
         self.client = client
-        unit_id, unit_name = self.get_config('equip_enhance_up_unit').split(':')
+        unit_id = self.get_config('equip_enhance_up_unit')
         self.unit_id = int(unit_id)
 
         growth_limit = await self.is_growth_unit()
@@ -533,7 +533,7 @@ class unit_skill_level_up(UnitController):
             raise SkipError("今日已完成技能升级任务")
 
         self.client = client
-        unit_id, unit_name = self.get_config('level_up_unit').split(':')
+        unit_id = self.get_config('level_up_unit')
         self.unit_id = int(unit_id)
 
         growth_limit = await self.is_growth_unit()

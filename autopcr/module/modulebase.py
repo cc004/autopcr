@@ -5,7 +5,6 @@ from ..core.pcrclient import eLoginStatus, pcrclient
 from ..model.error import *
 from ..model.enums import *
 from typing import Dict, List, Tuple
-import traceback
 from ..constants import CACHE_DIR
 from .config import Config, _wrap_init
 from enum import Enum
@@ -228,6 +227,9 @@ class Module:
     def cron_hook(self) -> int:
         return None
 
+    def _get_raw_config(self, key, default = None):
+        return self._parent.get_config(key, default)
+
     def get_config_str(self, key) -> str:
         value = self.get_config(key)
         if isinstance(value, list):
@@ -241,24 +243,11 @@ class Module:
 
     def get_config(self, key):
         if key == self.key:
-            default = self.default
+            return self._get_raw_config(key, self.default)
+        elif key in self.config:
+            return self.config[key].get_value()
         else:
-            default = self.config[key].default
-        value = self._parent.get_config(key, default)
-        if key in self.config and self.config[key].config_type == "multi":
-            if not isinstance(value, list):
-                value = default
-            else:
-                value = [v for v in value if v in self.config[key].candidates]
-        if key != self.key and self.config[key].candidates and (
-            not isinstance(value, list) and (
-                value not in self.config[key].candidates or 
-                self.config[key].config_type == "multi"
-                ) or
-            isinstance(value, list) and any(item not in self.config[key].candidates for item in value)
-            ):
-            value = default
-        return value
+            raise ValueError(f"config {key} not found")
 
     def generate_config(self) -> dict:
         return {key: self.config[key].dict() for key in self.config}
