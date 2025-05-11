@@ -101,6 +101,14 @@ class Config:
             validated = self.validate_value(processed)
             return validated if validated is not None else self.default
 
+    def get_display(self) -> str:
+        """Get the display name for the current value."""
+        value = self.get_value()
+        if isinstance(value, list):
+            return ', '.join([str(self.candidate_display(v)) for v in value])
+        else:
+            return str(self.candidate_display(value))
+
     def get_raw_value(self):
         """Get the current value from the parent module."""
         return self._parent._get_raw_config(self.key)
@@ -186,7 +194,7 @@ class MultiChoiceConfig(Config):
         return super_value
     
     def validate_value(self, value: List):
-        return [v for v in value if v in self.candidates] or None
+        return [v for v in value if v in self.candidates]
 
 class TimeConfig(Config):
     @property
@@ -381,10 +389,11 @@ class TravelQuestConfig(MultiChoiceConfig):
         quest = db.travel_quest_data[quest_id]
         return f"{quest.travel_area_id % 10}-{quest.travel_quest_id % 10}"
 
-    def process_value(self, value):
-        if isinstance(value, str) and '-' in value: # Compatible with the old version
-            area_id, quest_id = map(int, value.split('-'))
-            value = 11000000 + area_id * 1000 + quest_id
+    def process_value(self, value: List):
+        for i in range(len(value)):
+            if isinstance(value[i], str) and '-' in value[i]: # Compatible with the old version
+                area_id, quest_id = map(int, value[i].split('-'))
+                value[i] = 11000000 + area_id * 1000 + quest_id
         return value
 
 class LastNormalQuestConfig(MultiChoiceConfig):
@@ -462,9 +471,6 @@ def unitchoice(key: str, desc: str):
 
 def unitlist(key: str, desc: str):
     return UnitListConfig(key, desc)
-
-def tabletype(key: str, desc: str, default=None):
-    return TableConfig(key, desc, default, [])
 
 def conditional_execution1(key: str, default=None, desc: str = "执行条件", check: bool = True):
     return ConditionalExecution1Config(key, desc, default, check)
