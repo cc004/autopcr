@@ -23,6 +23,11 @@ class ModuleList:
     name: str = ""
     key: str = ""
     modules: List[Any] = field(default_factory=list)
+    hidden_in_batch: bool = False
+    hidden_in_clan: bool = False
+    hidden: bool = False
+    visible_in_clan: bool = True
+    visible_in_batch: bool = True
 
 cron_modules = ModuleList(
     '定时',
@@ -34,7 +39,9 @@ cron_modules = ModuleList(
         cron4,
         cron5,
         cron6,
-    ]
+    ],
+    hidden_in_batch=True,
+    hidden_in_clan=True,
 )
 
 daily_modules = ModuleList(
@@ -127,7 +134,19 @@ planning_modules = ModuleList(
         get_need_memory,
         get_need_pure_memory,
         get_need_xinsui,
-    ]
+    ],
+    hidden_in_batch=True,
+)
+
+table_modules = ModuleList(
+    '表格',
+    'table',
+    [
+        get_need_pure_memory_box,
+    ],
+    hidden=True,
+    visible_in_batch=True,
+    visible_in_clan=False,
 )
 
 
@@ -135,7 +154,7 @@ unit_modules = ModuleList(
     '角色',
     'unit',
     [
-        search_box,
+        search_unit,
         master_shop,
         missing_unit,
         refresh_box,
@@ -153,8 +172,9 @@ clan_modules = ModuleList(
         unit_memory_buy_batch,
         set_my_party,
         get_box_table,
-        get_box_excel,
-    ]
+    ],
+    hidden=True,
+    visible_in_clan=True,
 )
 
 danger_modules = ModuleList(
@@ -162,7 +182,8 @@ danger_modules = ModuleList(
     'danger',
     [
         gacha_start,
-    ]
+    ],
+    hidden_in_clan=True,
 )
 
 tool_modules = ModuleList(
