@@ -263,15 +263,15 @@ class AccountBatch(Account):
             ret_list = [x.get_result() for x in resps]
             ret = ret_list[0]
             ret.log = '\n'.join(f"==={name}===\n{x.log}" for name, x in zip(alias, ret_list) if x.log)
-            if ret.table.header:
-                tables = []
+            if any(r.table.header for r in ret_list):
+                ret.table.header = next(r.table.header for r in ret_list)
                 ret.table.header = ["昵称"] + ret.table.header
-                for name, x in zip(alias, ret_list):
-                    if x.table:
-                        for d in x.table.data:
-                            d['昵称'] = name
-                            tables.append(d)
-                ret.table.data = tables
+                ret.table.data = [
+                    {**d, '昵称': name}
+                    for name, x in zip(alias, ret_list)
+                    if x.table
+                    for d in x.table.data
+                ]
             ret.status = eResultStatus.ERROR if any(x.status == eResultStatus.ERROR for x in ret_list) else eResultStatus.WARNING if any(x.status == eResultStatus.WARNING for x in ret_list) else eResultStatus.SUCCESS
             all = await self.save_single_result(key, ret)
             resps = [all] + resps
