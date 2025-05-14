@@ -186,15 +186,12 @@ class MultiChoiceConfig(Config):
         if not isinstance(value, list):
             return [value]
         return value
-
-    def get_value(self) -> List:
-        super_value = super().get_value()
-        if not isinstance(super_value, list):
-            return [super_value]
-        return super_value
     
     def validate_value(self, value: List):
-        return [v for v in value if v in self.candidates]
+        if value:
+            return [v for v in value if v in self.candidates] or None
+        else:
+            return []
 
 class TimeConfig(Config):
     @property
@@ -457,8 +454,7 @@ def singlechoice(key: str, desc: str, default, candidates: Union[List, Callable]
     return SingleChoiceConfig(key, desc, default, candidates)
 
 def multichoice(key: str, desc: str, default, candidates: Union[List, Callable]):
-    config = MultiChoiceConfig(key, desc, default, candidates)
-    return config
+    return MultiChoiceConfig(key, desc, default, candidates)
 
 def timetype(key: str, desc: str, default):
     return TimeConfig(key, desc, default)
