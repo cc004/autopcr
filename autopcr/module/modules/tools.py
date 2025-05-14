@@ -14,17 +14,9 @@ from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
 from ...util.arena import instance as ArenaQuery
-import time
-from datetime import datetime
 import random
-import os
-import os.path as path 
-import json
 import itertools
 from collections import Counter
-from .autosweep import unique_equip_2_pure_memory_id
-from ...http_server.httpserver import static_path
-from ...constants import DATA_DIR
 
 @name('撤下会战助战')
 @default(True)
@@ -395,7 +387,7 @@ class Arena(Module):
             target_info = (await client.get_profile(target.viewer_id)).user_info
             target_rank = self.get_rank_from_user_info(target_info)
 
-            self._log(f"{target.user_name}({target.viewer_id})\n{datetime.datetime.fromtimestamp(history.versus_time)} {'刺' if history_detail.is_challenge else '被刺'}")
+            self._log(f"{target.user_name}({target.viewer_id})\n{datetime.fromtimestamp(history.versus_time)} {'刺' if history_detail.is_challenge else '被刺'}")
             self._log(f"{self_rank} -> {target_rank}({target_info.user_name})")
 
             if history_detail.is_challenge:
