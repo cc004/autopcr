@@ -232,9 +232,9 @@ class clanbattle_shop(shop_buyer):
     def require_equip_units_rank(self) -> str: return self.get_config('clanbattle_shop_buy_equip_consider_unit_rank')
 
 
-@LimitUnitListConfig('master_shop_buy_memory_ids', "记忆碎片")
 @singlechoice('master_shop_buy_memory_count_limit', "记忆碎片盈余值", 0, [0, 10, 20, 40, 120])
-@description('根据需求购买记忆碎片')
+@LimitUnitListConfig('master_shop_buy_memory_ids', "记忆碎片")
+@description('购买指定记忆碎片，直到碎片盈余超过阈值')
 @name('大师币商店购买')
 @default(False)
 class master_shop(Module):
@@ -248,6 +248,11 @@ class master_shop(Module):
 
         master_memory_ids = self.get_config('master_shop_buy_memory_ids')
         target_memory = set(db.unit_to_memory[i] for i in master_memory_ids)
+        memory_demand_gap = client.data.get_memory_demand_gap()
+        master_shop_buy_memory_count_limit = self.get_config('master_shop_buy_memory_count_limit')
+        target_memory = {item_id for item_id in target_memory if -memory_demand_gap[(eInventoryType.Item, item_id)] < master_shop_buy_memory_count_limit}
+        if not target_memory:
+            raise SkipError("指定记忆碎片盈余值均满足")
         items = [item for item in master_shop.item_list if item.item_id in target_memory and not item.sold]
         if not items:
             raise SkipError("需购买的碎片已售罄")
