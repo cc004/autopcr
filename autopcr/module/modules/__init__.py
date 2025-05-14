@@ -26,8 +26,8 @@ class ModuleList:
     hidden_in_batch: bool = False
     hidden_in_clan: bool = False
     hidden: bool = False
-    visible_in_clan: bool = True
-    visible_in_batch: bool = True
+    visible_in_clan: bool = False
+    visible_in_batch: bool = False
 
 cron_modules = ModuleList(
     '定时',
@@ -146,7 +146,6 @@ table_modules = ModuleList(
     ],
     hidden=True,
     visible_in_batch=True,
-    visible_in_clan=False,
 )
 
 

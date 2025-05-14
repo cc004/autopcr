@@ -53,6 +53,6 @@ class ModuleListManager:
                 continue
             if not clan and not batch and ml.hidden:
                 continue
-            if clan and ml.visible_in_clan or batch and ml.visible_in_batch or not clan and not batch and not ml.hidden:
+            if clan and ml.visible_in_clan or batch and ml.visible_in_batch or not ml.hidden:
                 modules.append(ml)
         return [{'key': m.key, 'name': m.name} for m in modules]
