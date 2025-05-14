@@ -234,7 +234,7 @@ class clanbattle_shop(shop_buyer):
 
 @LimitUnitListConfig('master_shop_buy_memory_ids', "记忆碎片")
 @singlechoice('master_shop_buy_memory_count_limit', "记忆碎片盈余值", 0, [0, 10, 20, 40, 120])
-@description('根据需求购买记忆碎片，可设置需求角色的品级和收藏角色')
+@description('根据需求购买记忆碎片')
 @name('大师币商店购买')
 @default(False)
 class master_shop(Module):

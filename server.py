@@ -832,7 +832,7 @@ async def pjjc_atk_shuffle_team(botev: BotEvent):
 async def find_missing_unit(botev: BotEvent):
     return {}
 
-@register_tool("查box", "search_box")
+@register_tool("查角色", "search_unit")
 async def search_box(botev: BotEvent):
     msg = await botev.message()
     unit = None
@@ -846,9 +846,8 @@ async def search_box(botev: BotEvent):
 
     if unit:
         unit = unit * 100 + 1;
-        unit_name = db.get_unit_name(unit)
         return {
-            "search_box_id": f"{unit}:{unit_name}"
+            "search_unit_id": unit
         }
     else:
         await botev.finish(f"未知昵称{unit_name}")
