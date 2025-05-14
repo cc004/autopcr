@@ -4,6 +4,7 @@ import asyncio
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
 from werkzeug.exceptions import Forbidden
+from copy import copy
 
 from ..core.sdkclient import account, platform
 from .modulemgr import ModuleManager, TaskResult, ModuleResult, eResultStatus, TaskResultInfo, ModuleResultInfo, ResultInfo
@@ -261,7 +262,7 @@ class AccountBatch(Account):
 
         if resps:
             ret_list = [x.get_result() for x in resps]
-            ret = ret_list[0]
+            ret = copy(ret_list[0])
             ret.log = '\n'.join(f"==={name}===\n{x.log}" for name, x in zip(alias, ret_list) if x.log)
             if any(r.table.header for r in ret_list):
                 ret.table.header = next(r.table.header for r in ret_list)
@@ -271,6 +272,12 @@ class AccountBatch(Account):
                     for name, x in zip(alias, ret_list)
                     if x.table
                     for d in x.table.data
+                ]
+            else:
+                ret.table.header = ["昵称", "结果"]
+                ret.table.data = [
+                    {'昵称': name, '结果': x.log}
+                    for name, x in zip(alias, ret_list)
                 ]
             ret.status = eResultStatus.ERROR if any(x.status == eResultStatus.ERROR for x in ret_list) else eResultStatus.WARNING if any(x.status == eResultStatus.WARNING for x in ret_list) else eResultStatus.SUCCESS
             all = await self.save_single_result(key, ret)
