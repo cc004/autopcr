@@ -59,13 +59,59 @@ class ex_equip_recycle(Module):
         else:
             raise SkipError("没有可分解的装备")
 
+class eEventReward(IntEnum):
+    Unknown = 0
+    Coin = 1
+    Cake = 2
+    EquipStone = 3
+    ExpItem = 4
+    Mana = 5
+    HeartPiece = 6
+    Muzhu = 7
+    SingleTicket = 8
+
+ManaTravelEventReward = {
+    2001: eEventReward.Cake, # 佩可莉姆,凯露
+    2002: eEventReward.HeartPiece, # 优衣,日和莉
+    2003: eEventReward.ExpItem, # 未奏希,美美
+    2004: eEventReward.HeartPiece, # 莫妮卡,空花
+    2005: eEventReward.Mana, # 杏奈,流夏
+    2006: eEventReward.Mana, # 千爱瑠,克罗依
+    2007: eEventReward.ExpItem, # 望,纺希
+    2008: eEventReward.SingleTicket, # 纯,克莉丝提娜
+    2009: eEventReward.ExpItem, # 碧,美里
+    2010: eEventReward.Cake, # 铃,真阳
+    2011: eEventReward.HeartPiece, # 静流,璃乃
+    2012: eEventReward.HeartPiece, # 真步,香织
+    2013: eEventReward.Mana, # 伊莉亚,宫子
+    2014: eEventReward.EquipStone, # 铃莓,咲恋
+    2015: eEventReward.ExpItem, # 秋乃,由加莉
+    2016: eEventReward.ExpItem, # 铃奈,伊绪
+    2017: eEventReward.ExpItem, # 嘉夜,祈梨
+    2018: eEventReward.Coin, # 克蕾琪塔
+    2019: eEventReward.SingleTicket, # 矛依未,似似花
+    2020: eEventReward.HeartPiece, # 花凛
+    2021: eEventReward.Cake, # 香澄,真琴
+    2022: eEventReward.Coin, # 胡桃,绫音
+    2023: eEventReward.Coin, # 美冬,珠希
+    2024: eEventReward.EquipStone, # 惠理子,深月
+    2025: eEventReward.EquipStone, # 茉莉,智
+    2026: eEventReward.HeartPiece, # 可可萝
+    2027: eEventReward.HeartPiece, # 爱梅斯
+    2028: eEventReward.SingleTicket, # 菈比莉斯塔,霸瞳皇帝
+}
+
+ManaTravelEventRemain = set({eEventReward.Coin, eEventReward.EquipStone, eEventReward.Cake, eEventReward.ExpItem, eEventReward.Mana})
+
 @description('''
 仅支持阅读特殊事件+续派遣次数到最大派遣数。
 加速券大于保留值则会加速，建议与探险轮转的加速阈值保持一致。
 装备事件为 60%三金装40%一金装 或 100%二金装 选项
 代币事件为 30%1000代币70%200代币 或 100%400代币 选项
 赌狗策略为前者，保守策略为后者
+蓝色事件保留指不收取金币、蛋糕、强化石、经验药水、Mana事件，以期提高出现其他事件的概率，当保留事件超过阈值时会自动收取一个。
 '''.strip())
+@inttype('travel_top_blue_event_remain_cnt', '蓝色事件保留', 1, [0, 1, 2])
 @multichoice("travel_speed_up_target", "加速地图", ['1-1', '1-4'], db.travel_quest_candidate)
 @singlechoice('travel_quest_gold_event_strategy', "代币事件策略", '赌狗', ['保守','赌狗','随机'])
 @singlechoice('travel_quest_equip_event_strategy', "装备事件策略", '赌狗', ['保守','赌狗','随机'])
@@ -104,6 +150,7 @@ class travel_quest_sweep(Module):
         travel_quest_equip_event_strategy: str = self.get_config("travel_quest_equip_event_strategy")
         travel_quest_gold_event_strategy: str = self.get_config("travel_quest_gold_event_strategy")
         travel_quest_speed_up_paper_hold: int = self.get_config("travel_quest_speed_up_paper_hold")
+        travel_top_blue_event_remain_cnt: int = self.get_config("travel_top_blue_event_remain_cnt")
         travel_speed_up_target: Set[int] = {db.get_travel_quest_id_from_candidate(id) for id in self.get_config("travel_speed_up_target")}
         reward: List[InventoryInfo] = []
 
@@ -125,16 +172,27 @@ class travel_quest_sweep(Module):
             self._warn(f"正在探险的小队数为{team_count}<3，请上号开始新的探险！")
 
         if top.top_event_list:
+            blue_events = sorted([
+                event for event in top.top_event_list if event.top_event_id in ManaTravelEventReward
+                ], key=lambda x: ManaTravelEventReward[x.top_event_id]) 
+            remain_blue_event_cnt = 0
             for top_event in top.top_event_list:
                 try:
                     chooice = 0
                     if top_event.top_event_choice_flag:
                         strategy = get_strategy(top_event.top_event_id)
                         chooice = self.get_choice(strategy)
-                    result = await client.travel_receive_top_event_reward(top_event.top_event_appear_id, chooice)
-                    reward.extend(result.reward_list)
+                    if top_event in blue_events and \
+                    ManaTravelEventReward.get(top_event.top_event_id, eEventReward.Unknown) in ManaTravelEventRemain and \
+                    blue_events.index(top_event) < travel_top_blue_event_remain_cnt:
+                        remain_blue_event_cnt += 1
+                    else:
+                        result = await client.travel_receive_top_event_reward(top_event.top_event_appear_id, chooice)
+                        reward.extend(result.reward_list)
                 except Exception as e:
                     self._warn(f"处理特殊事件{top_event.top_event_id}失败:{e}")
+            if remain_blue_event_cnt:
+                self._log(f"保留{remain_blue_event_cnt}个蓝色事件")
             self._log(f"阅读{len(top.top_event_list)}个特殊事件")
 
         check_next = True
