@@ -1,13 +1,10 @@
 from typing import Callable, Tuple, Union, Type, Any, Optional, List, Dict
-from types import MethodType
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 from ..core import pcrclient
 from ..db.database import db
 from ..util.pcr_data import CHARA_NAME, CHARA_NICKNAME
-import os
-import json
-from ..constants import DATA_DIR
+from copy import copy
 
 def _wrap_init(cls, setter):
     old = cls.__init__
@@ -126,24 +123,17 @@ class Config:
     async def do_check(self, client: Optional[pcrclient] = None) -> Tuple[bool, str]:
         """Check if this configuration meets certain conditions."""
         return True, ""
-    
-    def __set_name__(self, owner, name):
-        """Set up when the descriptor is assigned to a class attribute."""
-        if not hasattr(owner, 'config'):
-            owner.config = {}
-        self._parent = owner
-        owner.config[self.key] = self
 
-    def wrap_init(self, cls: Type):
+    def wrap_init(self, cls: Type, sself: Type):
         """Wrap the class's __init__ method to set the config instance."""
         if not hasattr(cls, 'config'):
             cls.config = {}
-        self._parent = cls
-        cls.config[self.key] = self
+        sself._parent = cls
+        cls.config[self.key] = sself
     
     def __call__(self, cls):
         """Make the Config instance callable for use as a decorator."""
-        return _wrap_init(cls, self.wrap_init)
+        return _wrap_init(cls, lambda cls: self.wrap_init(cls, copy(self)))
 
 class BoolConfig(Config):
     @property
@@ -294,9 +284,9 @@ class ConditionalExecution1Config(ConditionalExecutionMixin, MultiChoiceConfig):
             return True, "今日" + ','.join(hit) + "，执行"
         return False, "今日不符合执行条件"
 
-    def wrap_init(self, cls: Type):
-        super().wrap_init(cls)
-        if self.check_enabled and hasattr(cls, 'do_check'):
+    def wrap_init(self, cls: Type, sself: Type):
+        super().wrap_init(cls, sself)
+        if sself.check_enabled and hasattr(cls, 'do_check'):
             old_do_check = cls.do_check
 
             async def new_do_check(*args, **kwargs):
@@ -304,7 +294,7 @@ class ConditionalExecution1Config(ConditionalExecutionMixin, MultiChoiceConfig):
                 if not ok:
                     return False, msg
 
-                ok, msg2 = await self.do_check(*args, **kwargs)
+                ok, msg2 = await sself.do_check(*args, **kwargs)
                 if not ok:
                     return False, msg + msg2
                 return True, msg + msg2
@@ -326,9 +316,9 @@ class ConditionalExecution2Config(ConditionalExecutionMixin, MultiChoiceConfig):
             return True, "今日" + ','.join(hit) + "，执行"
         return False, "今日不符合执行条件"
     
-    def wrap_init(self, cls: Type):
-        super().wrap_init(cls)
-        if self.check_enabled and hasattr(cls, 'do_check'):
+    def wrap_init(self, cls: Type, sself: Type):
+        super().wrap_init(cls, sself)
+        if sself.check_enabled and hasattr(cls, 'do_check'):
             old_do_check = cls.do_check
 
             async def new_do_check(*args, **kwargs):
@@ -336,7 +326,7 @@ class ConditionalExecution2Config(ConditionalExecutionMixin, MultiChoiceConfig):
                 if not ok:
                     return False, msg
 
-                ok, msg2 = await self.do_check(*args, **kwargs)
+                ok, msg2 = await sself.do_check(*args, **kwargs)
                 if not ok:
                     return False, msg + msg2
                 return True, msg + msg2
@@ -357,9 +347,9 @@ class ConditionalNotExecutionConfig(ConditionalExecutionMixin, MultiChoiceConfig
             return False, "今日" + ','.join(hit) + "，不执行"
         return True, ""
         
-    def wrap_init(self, cls: Type):
-        super().wrap_init(cls)
-        if self.check_enabled and hasattr(cls, 'do_check'):
+    def wrap_init(self, cls: Type, sself: Type):
+        super().wrap_init(cls, sself)
+        if sself.check_enabled and hasattr(cls, 'do_check'):
             old_do_check = cls.do_check
 
             async def new_do_check(*args, **kwargs):
@@ -367,7 +357,7 @@ class ConditionalNotExecutionConfig(ConditionalExecutionMixin, MultiChoiceConfig
                 if not ok:
                     return False, msg
 
-                ok, msg2 = await self.do_check(*args, **kwargs)
+                ok, msg2 = await sself.do_check(*args, **kwargs)
                 if not ok:
                     return False, msg + msg2
                 return True, msg + msg2
