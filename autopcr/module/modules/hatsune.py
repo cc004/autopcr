@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Set
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
@@ -16,8 +16,7 @@ from ...model.enums import *
 class hatsune_h_sweep(Module):
     async def do_task(self, client: pcrclient):
         area: List[int] = self.get_config('hatsune_h_sweep_quest')
-        not_sweep_hatsune: List[str] = self.get_config('hatsune_h_sweep_not_event')
-        not_sweep_hatsune_id = set(int(event.split(':')[0]) for event in not_sweep_hatsune)
+        not_sweep_hatsune_id: Set[int] = set(self.get_config('hatsune_h_sweep_not_event'))
         hard = 200
         is_error = False
         is_abort = False
