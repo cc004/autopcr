@@ -167,6 +167,16 @@ class SingleChoiceConfig(Config):
     def config_type(self):
         return 'single'
 
+    @property
+    def default(self):
+        """Get the default value for this configuration."""
+        if callable(self._default):
+            return self._default()
+        elif not self._default and callable(self._candidates) and self._candidates():
+            return self._candidates()[0]
+        else:
+            return self._default
+
 class MultiChoiceConfig(Config):
     @property
     def config_type(self):
