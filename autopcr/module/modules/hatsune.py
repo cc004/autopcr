@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Set
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
@@ -8,7 +8,7 @@ from ...model.enums import *
 
 @conditional_not_execution("hatsune_h_sweep_not_run_time", ["n3", "n4及以上"])
 @multichoice("hatsune_h_sweep_quest", "扫荡关卡", [1,2,3,4,5], [1,2,3,4,5])
-@multichoice("hatsune_h_sweep_not_event", "不扫荡活动", [], db.get_active_hatsune_name)
+@ActiveHatsuneListConfig("hatsune_h_sweep_not_event", "不扫荡活动", [])
 @description('')
 @name('扫荡活动h本')
 @default(False)
@@ -16,8 +16,7 @@ from ...model.enums import *
 class hatsune_h_sweep(Module):
     async def do_task(self, client: pcrclient):
         area: List[int] = self.get_config('hatsune_h_sweep_quest')
-        not_sweep_hatsune: List[str] = self.get_config('hatsune_h_sweep_not_event')
-        not_sweep_hatsune_id = set(int(event.split(':')[0]) for event in not_sweep_hatsune)
+        not_sweep_hatsune_id: Set[int] = set(self.get_config('hatsune_h_sweep_not_event'))
         hard = 200
         is_error = False
         is_abort = False
@@ -263,7 +262,7 @@ class hatsune_mission_accept2(hatsune_mission_accept_base):
     pass
 
 @singlechoice("hatsune_normal_sweep_quest", "刷取图", 15, [5, 10, 15])
-@singlechoice("hatsune_normal_sweep_event", "刷取活动", "", db.get_active_hatsune_name)
+@ActiveHatsuneChoiceConfig("hatsune_normal_sweep_event", "刷取活动", "")
 @description('剩余体力全部刷活动图')
 @name('全刷活动普图')
 @default(False)
@@ -271,19 +270,19 @@ class hatsune_mission_accept2(hatsune_mission_accept_base):
 class all_in_hatsune(Module):
     async def do_task(self, client: pcrclient):
         quest = 0
-        id = self.get_config('hatsune_normal_sweep_event').split(':')[0]
-        sweep_hatsune_id: int = int(id if id else 0)
+        sweep_hatsune_id = self.get_config('hatsune_normal_sweep_event')
+
         for event in db.get_active_hatsune(): 
             if event.event_id != sweep_hatsune_id:
                 continue
 
             quest = 1000 * event.event_id + 100 + int(self.get_config('hatsune_normal_sweep_quest'))
-            
+
             await client.get_hatsune_top(event.event_id)
             await client.get_hatsune_quest_top(event.event_id)
 
             break
-        
+
         if not quest: raise SkipError("当前无进行中的活动")
         
         event_name = db.event_name[sweep_hatsune_id]

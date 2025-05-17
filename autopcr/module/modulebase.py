@@ -1,11 +1,10 @@
 from abc import abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
 from ..core.pcrclient import eLoginStatus, pcrclient
 from ..model.error import *
 from ..model.enums import *
-from typing import Dict, List, Tuple
-import traceback
+from typing import Dict, List, Tuple, Union
 from ..constants import CACHE_DIR
 from .config import Config, _wrap_init
 from enum import Enum
@@ -82,9 +81,6 @@ def tag_stamina_get(cls):
         self.do_check = new_do_check
     return _wrap_init(cls, setter)
 
-def text_result(cls):
-    return _wrap_init(cls, lambda self: setattr(self, 'text_result', True))
-
 class eResultStatus(str, Enum):
     SUCCESS = "成功"
     SKIP = "跳过"
@@ -106,12 +102,25 @@ class eResultStatus(str, Enum):
             return old[value]
         return ValueError(f"{value} not found in eResultStatus")
 
+HeaderItem = Union[str, Dict[str, List['HeaderItem']]]
+DataItem = Union[str, int, Dict[str, 'DataItem']]
+
+@dataclass_json
+@dataclass
+class ResultTable:
+    header: List[HeaderItem] = field(default_factory=list)
+    data: List[Dict[str, DataItem]] = field(default_factory=list)
+
+    def __bool__(self):
+        return bool(self.data)
+
 @dataclass_json
 @dataclass
 class ModuleResult:
     name: str = ""
     config: str = ""
     log: str = ""
+    table: ResultTable = field(default_factory=ResultTable)
     status: eResultStatus = eResultStatus.SUCCESS
 
 # refers to a schudule to be done
@@ -122,7 +131,6 @@ class Module:
         self.name: str = ""
         self.default: bool = False
         self.runnable: bool = True
-        self.text_result: bool = False
         self.tags: List[str] = []
         self.stamina_relative: bool = False
         self.description: str = self.name
@@ -134,6 +142,7 @@ class Module:
         self.log = []
         self.warn = []
         self.is_warn = False
+        self.table: ResultTable = ResultTable()
 
         from os.path import join
         self.cache_path: str = join(CACHE_DIR, "modules", self.key, self._parent.id + ".json")
@@ -182,7 +191,7 @@ class Module:
     async def do_from(self, client: pcrclient) -> ModuleResult:
         result: ModuleResult = ModuleResult(
                 name=self.name,
-                config = '\n'.join([f"{self.config[key].desc}: {self.get_config_str(key)}" for key in self.config]),
+                config = '\n'.join([f"{self.config[key].desc}: {self.get_config_display(key)}" for key in self.config]),
             )
         try:
             self.log.clear()
@@ -222,11 +231,15 @@ class Module:
             result.status = eResultStatus.ERROR
         finally:
             result.log = ('\n'.join(self.log) + "\n" + result.log).strip() or "ok"
+            result.table = self.table
 
         return result
 
     def cron_hook(self) -> int:
         return None
+
+    def _get_raw_config(self, key, default = None):
+        return self._parent.get_config(key, default)
 
     def get_config_str(self, key) -> str:
         value = self.get_config(key)
@@ -241,24 +254,14 @@ class Module:
 
     def get_config(self, key):
         if key == self.key:
-            default = self.default
+            return self._get_raw_config(key, self.default)
+        elif key in self.config:
+            return self.config[key].get_value()
         else:
-            default = self.config[key].default
-        value = self._parent.get_config(key, default)
-        if key in self.config and self.config[key].config_type == "multi":
-            if not isinstance(value, list):
-                value = default
-            else:
-                value = [v for v in value if v in self.config[key].candidates]
-        if key != self.key and self.config[key].candidates and (
-            not isinstance(value, list) and (
-                value not in self.config[key].candidates or 
-                self.config[key].config_type == "multi"
-                ) or
-            isinstance(value, list) and any(item not in self.config[key].candidates for item in value)
-            ):
-            value = default
-        return value
+            raise ValueError(f"config {key} not found")
+
+    def get_config_display(self, key):
+        return self.get_config_instance(key).get_display()
 
     def generate_config(self) -> dict:
         return {key: self.config[key].dict() for key in self.config}
@@ -274,8 +277,13 @@ class Module:
                 'stamina_relative': self.stamina_relative,
                 'tags': self.tags,
                 'runnable': self.runnable,
-                'text_result': self.text_result
                 }
+
+    def _table_header(self, header: List):
+        self.table.header = header
+
+    def _table(self, table: Dict):
+        self.table.data.append(table)
 
     def _log(self, msg: str):
         self.log.append(msg)
