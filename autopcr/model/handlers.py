@@ -914,6 +914,14 @@ class ShioriMissionAcceptResponse(responses.ShioriMissionAcceptResponse):
             mgr.stamina = self.stamina_info.user_stamina
             mgr.stamina_full_recovery_time = self.stamina_info.stamina_full_recovery_time
 
+@handles
+class GachaExchangePointResponse(responses.GachaExchangePointResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.gacha_point_info:
+            mgr.gacha_point[self.gacha_point_info.exchange_id] = self.gacha_point_info
+        if self.reward_info_list:
+            for item in self.reward_info_list:
+                mgr.update_inventory(item)
 
 # 菜 就别玩
 def custom_dict(self, *args, **kwargs):

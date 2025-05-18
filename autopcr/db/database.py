@@ -1531,6 +1531,10 @@ class database():
                 .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.end_time)) \
                 .to_list()
 
+    def get_active_hatsune_id(self) -> List[int]:
+        active_hatsune = self.get_active_hatsune()
+        return [event.event_id for event in active_hatsune]
+
     def get_active_hatsune_name(self) -> List[str]:
         active_hatsune = self.get_active_hatsune()
         return [f"{event.event_id}:{db.event_name[event.event_id]}" for event in active_hatsune]
@@ -1996,8 +2000,11 @@ class database():
             int(max(0, power - quest.need_power) * coeff)
         )
 
-    def unlock_unit_condition_candidate(self):
+    def unlock_unit_condition_candidate(self) -> List[int]:
         return self.unlock_unit_condition
+
+    def limit_unit_condition_candidate(self) -> List[int]:
+        return [x for x in self.unlock_unit_condition if self.unit_data[x].is_limited]
 
     def free_gacha_ids_candidate(self):
         free_gacha_campaigns = flow(self.campaign_free_gacha.values()) \
