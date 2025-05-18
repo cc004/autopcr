@@ -450,7 +450,7 @@ class pcrclient(apiclient):
                 pass
             elif auto_select_pickup or target_gacha.select_pickup_slot_num > len(target_gacha.priority_list):
                 pickup_units = [u for u in db.gacha_pickup[pickup_id].values()]
-                pickup_units.sort(key = lambda x: (x.reward_id not in self.data.unit, x.reward_id), reverse = True)
+                pickup_units.sort(key = lambda x: (x.reward_id not in self.data.unit, -x.reward_id), reverse = True)
                 pickup_units = pickup_units[:target_gacha.select_pickup_slot_num]
                 pickup_units = [u.priority for u in pickup_units]
                 if set(pickup_units) != set(target_gacha.priority_list):
