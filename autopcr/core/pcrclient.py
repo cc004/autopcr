@@ -378,6 +378,13 @@ class pcrclient(apiclient):
         req.item_info = [SendGiftData(item_id=item[1], item_num=cnt, current_item_num=self.data.get_inventory(item)) for item, cnt in cakes.items()]
         return await self.request(req)
 
+    async def gacha_exchange_point(self, exchange_id: int, unit_id: int, current_point: int):
+        req = GachaExchangePointRequest()
+        req.exchange_id = exchange_id
+        req.unit_id = unit_id
+        req.current_point = current_point
+        return await self.request(req)
+
     async def gacha_special_fes(self):
         req = GachaSpecialFesIndexRequest()
         return await self.request(req)
@@ -453,7 +460,6 @@ class pcrclient(apiclient):
         if target_gacha.exchange_id in self.data.gacha_point and  \
         self.data.gacha_point[target_gacha.exchange_id].current_point >= self.data.gacha_point[target_gacha.exchange_id].max_point:
             raise AbortError(f"已达到天井{self.data.gacha_point[target_gacha.exchange_id].current_point}pt，请上号兑换角色") 
-            # auto exchange TODO
 
         if draw_type == eGachaDrawType.Payment: # 怎么回传没有宝石数
             tot = 1500

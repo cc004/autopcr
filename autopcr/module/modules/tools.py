@@ -2,7 +2,7 @@ from typing import List, Set
 
 from ...util.ilp_solver import memory_use_average
 
-from ...model.common import ChangeRarityUnit, DeckListData, GrandArenaHistoryDetailInfo, GrandArenaHistoryInfo, GrandArenaSearchOpponent, ProfileUserInfo, RankingSearchOpponent, RedeemUnitInfo, RedeemUnitSlotInfo, VersusResult, VersusResultDetail
+from ...model.common import ChangeRarityUnit, DeckListData, GachaPointInfo, GrandArenaHistoryDetailInfo, GrandArenaHistoryInfo, GrandArenaSearchOpponent, ProfileUserInfo, RankingSearchOpponent, RedeemUnitInfo, RedeemUnitSlotInfo, VersusResult, VersusResultDetail
 from ...model.responses import GachaIndexResponse, PsyTopResponse
 from ...db.models import GachaExchangeLineup
 from ...model.custom import ArenaQueryResult, GachaReward, ItemType
@@ -295,6 +295,51 @@ class gacha_start(Module):
             self._log(await client.serlize_gacha_reward(reward, target_gacha.id))
             point = client.data.gacha_point[target_gacha.exchange_id].current_point if target_gacha.exchange_id in client.data.gacha_point else 0
             self._log(f"当前pt为{point}")
+
+@description('天井兑换角色')
+@name('兑天井')
+@unitchoice("gacha_exchange_unit_id", "兑换角色")
+@singlechoice("gacha_exchange_pool_id", "池子", "", db.get_cur_gacha)
+@default(True)
+class gacha_exchange_chara(Module):
+    async def do_task(self, client: pcrclient):
+        if ':' not in self.get_config('gacha_exchange_pool_id'):
+            raise ValueError("配置格式不正确")
+        gacha_id = int(self.get_config('gacha_exchange_pool_id').split(':')[0])
+        gacha_exchange_unit_id = int(self.get_config('gacha_exchange_unit_id'))
+        real_exchange_id = 0
+        if gacha_id == 120001:
+            if not client.data.return_fes_info_list or all(item.end_time <= client.time for item in client.data.return_fes_info_list):
+                raise AbortError("没有回归池开放")
+            resp = await client.gacha_special_fes()
+            real_exchange_id = db.gacha_data[client.data.return_fes_info_list[0].original_gacha_id].exchange_id
+        else:
+            resp = await client.get_gacha_index()
+        for gacha in resp.gacha_info:
+            if gacha.id == gacha_id:
+                target_gacha = gacha
+                break
+        else:
+            raise AbortError(f"未找到卡池{gacha_id}")
+        if target_gacha.type != eGachaType.Payment:
+            raise AbortError("非宝石抽卡池")
+
+        exchange_id = target_gacha.exchange_id if not real_exchange_id else real_exchange_id
+
+        exchange_unit_ids = [d.unit_id for d in db.gacha_exchange_chara[exchange_id]]
+        if gacha_exchange_unit_id not in exchange_unit_ids:
+            raise AbortError(f"天井池里未找到{db.get_unit_name(gacha_exchange_unit_id)}")
+
+        gacha_point = client.data.gacha_point.get(exchange_id, None)
+        if not gacha_point:
+            raise AbortError(f"当前pt为0，未到达天井")
+        elif gacha_point.current_point < gacha_point.max_point:
+            raise AbortError(f"当前pt为{gacha_point.current_point}<{gacha_point.max_point}，未到达天井")
+
+        resp = await client.gacha_exchange_point(exchange_id, gacha_exchange_unit_id, gacha_point.current_point)
+        msg = await client.serialize_reward_summary(resp.reward_info_list)
+        self._log(f"兑换了{db.get_unit_name(gacha_exchange_unit_id)}，获得了:\n{msg}")
+
 
 @description('查看会战支援角色的详细数据，拒绝内鬼！')
 @name('会战支援数据')
