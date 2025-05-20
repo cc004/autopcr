@@ -50,6 +50,10 @@ class pcrclient(apiclient):
         await self.session.clear_session()
         self.need_refresh = False
 
+    async def emblem_top(self):
+        req = EmblemTopRequest()
+        return await self.request(req)
+
     async def support_unit_get_setting(self):
         req = SupportUnitGetSettingRequest()
         return await self.request(req)

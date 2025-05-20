@@ -193,6 +193,7 @@ tool_modules = ModuleList(
         # cook_pudding,
         half_schedule,
         ex_equip_info,
+        missing_emblem,
         travel_team_view,
         get_clan_support_unit,
         clear_my_party,

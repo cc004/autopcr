@@ -207,8 +207,24 @@ class ex_equip_info(Module):
                 if not cb_only or db.ex_equipment_data[ex.ex_equipment_id].clan_battle_equip_flag).items()),
                 key=lambda x: (db.ex_equipment_data[x[0][0]].rarity, db.ex_equipment_data[x[0][0]].clan_battle_equip_flag, x[0][0], x[0][1]), reverse=True
                 )
+        pink_cnt = sum(1 * c for (id, rank), c in cnt if db.ex_equipment_data[id].rarity == 4)
+        history_pink_cnt = sum((rank + 1) * c for (id, rank), c in cnt if db.ex_equipment_data[id].rarity == 4)
+        self._log(f"粉装数量：{pink_cnt}/{history_pink_cnt}")
         msg = '\n'.join(f"{db.get_ex_equip_name(id, rank)}x{c}" for (id, rank), c in cnt)
         self._log(msg)
+
+@description('看看你缺了什么称号')
+@name('查缺称号')
+@default(True)
+class missing_emblem(Module):
+    async def do_task(self, client: pcrclient):
+        emblem_top = await client.emblem_top()
+        missing_emblem = set(db.emblem_data.keys()) - set(emblem.emblem_id for emblem in emblem_top.user_emblem_list)
+        if not missing_emblem:
+            self._log("全称号玩家！你竟然没有缺少的称号！")
+        else:
+            self._log(f"缺少{len(missing_emblem)}个称号")
+            self._log('\n'.join(db.emblem_data[id].emblem_name for id in missing_emblem))
 
 @description('看看你缺了什么角色')
 @name('查缺角色')
@@ -679,7 +695,7 @@ class ArenaInfo(Module):
                     break
                 user_name = await self.get_user_info(client, info.viewer_id)
                 you = " <--- 你" if info.viewer_id == client.data.uid else ""
-                self._log(f"{info.rank:02}: ({info.viewer_id}){user_name}{you}")
+                self._log(f"{info.rank:02}: ({info.viewer_id}){user_name}-{db.get_unit_name(info.favorite_unit.id)}{you}")
 
 @booltype("jjc_info_cache", "使用缓存信息", True)
 @description('jjc透视前51名玩家的名字')

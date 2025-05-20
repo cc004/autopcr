@@ -836,6 +836,10 @@ async def pjjc_atk_shuffle_team(botev: BotEvent):
 async def find_missing_unit(botev: BotEvent):
     return {}
 
+@register_tool("查缺称号", "missing_emblem")
+async def find_missing_emblem(botev: BotEvent):
+    return {}
+
 @register_tool("查角色", "search_unit")
 async def search_box(botev: BotEvent):
     msg = await botev.message()
