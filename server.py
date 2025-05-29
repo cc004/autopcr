@@ -47,6 +47,7 @@ sv_help = f"""
 - {prefix}日常报告 [0|1|2|3] 最近四次清日常报告
 - {prefix}定时日志 查看定时运行状态
 - {prefix}查角色 [昵称] 查看角色练度
+- {prefix}查缺称号 查看缺少的称号
 - {prefix}查缺角色 查看缺少的限定常驻角色
 - {prefix}查ex装备 [会战] 查看ex装备库存
 - {prefix}查探险编队 根据记忆碎片角色编队战力相当的队伍
@@ -639,74 +640,6 @@ async def clan_support(botev: BotEvent):
 async def find_xinsui(botev: BotEvent):
     return {}
 
-@register_tool("jjc回刺", "jjc_back")
-async def jjc_back(botev: BotEvent):
-    msg = await botev.message()
-    opponent_jjc_rank = -1
-    opponent_jjc_attack_team_id = 1
-    try:
-        opponent_jjc_rank = int(msg[0])
-        del msg[0]
-    except:
-        pass
-    try:
-        opponent_jjc_attack_team_id = int(msg[0])
-        del msg[0]
-    except:
-        pass
-    config = {
-        "opponent_jjc_rank": opponent_jjc_rank,
-        "opponent_jjc_attack_team_id": opponent_jjc_attack_team_id,
-    }
-    return config
-
-@register_tool("pjjc回刺", "pjjc_back")
-async def pjjc_back(botev: BotEvent):
-    msg = await botev.message()
-    opponent_pjjc_rank = -1
-    opponent_pjjc_attack_team_id = 1
-    try:
-        opponent_pjjc_rank = int(msg[0])
-        del msg[0]
-    except:
-        pass
-    try:
-        opponent_pjjc_attack_team_id = int(msg[0])
-        del msg[0]
-    except:
-        pass
-    config = {
-        "opponent_pjjc_rank": opponent_pjjc_rank,
-        "opponent_pjjc_attack_team_id": opponent_pjjc_attack_team_id,
-    }
-    return config
-
-@register_tool("jjc透视", "jjc_info")
-async def jjc_info(botev: BotEvent):
-    use_cache = True
-    msg = await botev.message()
-    try:
-        use_cache = not is_args_exist(msg, 'flush')
-    except:
-        pass
-    config = {
-        "jjc_info_cache": use_cache,
-    }
-    return config
-
-@register_tool("pjjc透视", "pjjc_info")
-async def pjjc_info(botev: BotEvent):
-    use_cache = True
-    msg = await botev.message()
-    try:
-        use_cache = not is_args_exist(msg, 'flush')
-    except:
-        pass
-    config = {
-        "pjjc_info_cache": use_cache,
-    }
-    return config
-
 @register_tool("查记忆碎片", "get_need_memory")
 async def find_memory(botev: BotEvent):
     memory_demand_consider_unit = '所有'
@@ -823,14 +756,6 @@ async def quest_recommand(botev: BotEvent):
     }
     return config
 
-
-@register_tool("pjjc换防", "pjjc_def_shuffle_team")
-async def pjjc_def_shuffle_team(botev: BotEvent):
-    return {}
-
-@register_tool("pjjc换攻", "pjjc_atk_shuffle_team")
-async def pjjc_atk_shuffle_team(botev: BotEvent):
-    return {}
 
 @register_tool("查缺角色", "missing_unit")
 async def find_missing_unit(botev: BotEvent):

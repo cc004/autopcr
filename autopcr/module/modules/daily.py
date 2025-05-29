@@ -253,62 +253,6 @@ class jjc_reward(Module):
             await client.receive_grand_arena_reward()
         self._log(f"pjjc币x{info.reward_info.count}")
 
-@description('仅进攻，不结算，会消耗次数')
-@name('完成每日jjc任务')
-@default(False)
-class jjc_daily(Module):
-    async def do_task(self, client: pcrclient):
-        if client.data.is_empty_deck(ePartyType.ARENA):
-            raise AbortError("未设置进攻队伍，请设置") # AUTO SET TODO
-
-        info = await client.get_arena_info()
-        if info.arena_info.battle_number != info.arena_info.max_battle_number:
-            raise SkipError("今日jjc任务已完成")
-
-        for _ in range(3):
-            if info.search_opponent: break
-            await asyncio.sleep(2)
-            info = await client.get_arena_info()
-
-        if not info.search_opponent:
-            raise AbortError("无法搜到可攻击对手，请稍后再试")
-        opponent = info.search_opponent[0]
-        await client.arena_apply(opponent.viewer_id, opponent.rank)
-        token = create_battle_start_token()
-        await client.arena_start(token, opponent.viewer_id, info.arena_info.battle_number, 1)
-        await client.logout()
-        await asyncio.sleep(2)
-        self._log(f"当前排名{info.arena_info.rank}，进攻第{opponent.rank}名的【{opponent.user_name}】")
-
-@description('仅进攻，不结算，会消耗次数')
-@name('完成每日pjjc任务')
-@default(False)
-class pjjc_daily(Module):
-    async def do_task(self, client: pcrclient):
-        if client.data.is_empty_deck(ePartyType.GRAND_ARENA_1) or \
-        client.data.is_empty_deck(ePartyType.GRAND_ARENA_2) or \
-        client.data.is_empty_deck(ePartyType.GRAND_ARENA_3):
-            raise AbortError("未设置进攻队伍，请设置") # AUTO SET TODO
-
-        info = await client.get_grand_arena_info()
-        if info.grand_arena_info.battle_number != info.grand_arena_info.max_battle_number:
-            raise SkipError("今日pjjc任务已完成")
-
-        for _ in range(3):
-            if info.search_opponent: break
-            await asyncio.sleep(2)
-            info = await client.get_grand_arena_info()
-
-        if not info.search_opponent:
-            raise AbortError("无法搜到可攻击对手，请稍后再试")
-        opponent = info.search_opponent[0]
-        await client.grand_arena_apply(opponent.viewer_id, opponent.rank)
-        token = create_battle_start_token()
-        await client.grand_arena_start(token, opponent.viewer_id, info.grand_arena_info.battle_number, 1)
-        await client.logout()
-        await asyncio.sleep(2)
-        self._log(f"当前排名{info.grand_arena_info.rank}，进攻第{opponent.rank}名的【{opponent.user_name}】")
-
 @description('展示基本信息')
 @name('基本信息')
 @default(True)
