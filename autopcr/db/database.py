@@ -13,6 +13,7 @@ from queue import SimpleQueue
 from .constdata import extra_drops
 from ..core.apiclient import apiclient
 from typing import TypeVar, Generic
+from ..util.pcr_data import CHARA_NICKNAME
 
 T = TypeVar("T")
 
@@ -848,6 +849,14 @@ class database():
             )
 
     @lazy_property
+    def emblem_data(self) -> Dict[int, EmblemDatum]:
+        with self.dbmgr.session() as db:
+            return (
+                EmblemDatum.query(db)
+                .to_dict(lambda x: x.emblem_id, lambda x: x)
+            )
+
+    @lazy_property
     def emblem_mission_data(self) -> Dict[int, EmblemMissionDatum]:
         with self.dbmgr.session() as db:
             return (
@@ -1359,6 +1368,8 @@ class database():
 
     def get_unit_name(self, unit_id: int) -> str:
         try:
+            if unit_id // 100 in CHARA_NICKNAME:
+                return CHARA_NICKNAME[unit_id // 100]
             return self.inventory_name[(eInventoryType.Unit, unit_id)]
         except:
             return f"未知角色({unit_id})"
@@ -1591,12 +1602,14 @@ class database():
         tomorrow = now + datetime.timedelta(days = 1)
         half_day = datetime.timedelta(hours = 7)
         n3 = (flow(self.campaign_schedule.values())
-                .where(lambda x: self.is_normal_quest_campaign(x.id) and x.value >= 6000 and self.is_level_effective_scope_in_campaign(level, x.id)) # TODO change 3000 when stop speed up
+                # .where(lambda x: self.is_normal_quest_campaign(x.id) and x.value >= 6000 and self.is_level_effective_scope_in_campaign(level, x.id)) # TODO change 3000 when stop speed up
+                .where(lambda x: self.is_normal_quest_campaign(x.id) and x.value >= 3000 and self.is_level_effective_scope_in_campaign(level, x.id))
                 .select(lambda x: (db.parse_time(x.start_time), db.parse_time(x.end_time)))
                 .to_list()
               )
         h3 = (flow(self.campaign_schedule.values())
-                .where(lambda x: self.is_hard_quest_campaign(x.id) and x.value >= 6000) # TODO change 3000 when stop speed up
+                # .where(lambda x: self.is_hard_quest_campaign(x.id) and x.value >= 6000) # TODO change 3000 when stop speed up
+                .where(lambda x: self.is_hard_quest_campaign(x.id) and x.value >= 3000)
                 .select(lambda x: (db.parse_time(x.start_time), db.parse_time(x.end_time)))
                 .to_list()
              )

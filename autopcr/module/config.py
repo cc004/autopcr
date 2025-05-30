@@ -244,8 +244,6 @@ class TextConfig(Config):
 
 class UnitConfigMixin:
     def candidate_display(self, unit_id: int):
-        if unit_id // 100 in CHARA_NICKNAME:
-            return CHARA_NICKNAME[unit_id // 100]
         return db.get_unit_name(unit_id)
 
     def candidate_tag(self, unit_id: int):
