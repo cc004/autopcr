@@ -10,6 +10,7 @@ async def run_sync_func(func, *args, **kwargs) -> Any:
     return await asyncio.get_event_loop().run_in_executor(
         None, partial(func, *args, **kwargs))
 
+_global_session = Session()
 
 class AsyncResponse:
     def __init__(self, response: requests.Response):
@@ -61,39 +62,39 @@ class AsyncResponse:
 
 
 async def request(method, url, **kwargs) -> AsyncResponse:
-    return AsyncResponse(await run_sync_func(requests.request,
+    return AsyncResponse(await run_sync_func(_global_session.request,
                                              method=method, url=url, **kwargs))
 
 
 async def get(url, params=None, **kwargs) -> AsyncResponse:
     return AsyncResponse(
-        await run_sync_func(requests.get, url=url, params=params, **kwargs))
+        await run_sync_func(_global_session.get, url=url, params=params, **kwargs))
 
 
 async def options(url, **kwargs) -> AsyncResponse:
     return AsyncResponse(
-        await run_sync_func(requests.options, url=url, **kwargs))
+        await run_sync_func(_global_session.options, url=url, **kwargs))
 
 
 async def head(url, **kwargs) -> AsyncResponse:
-    return AsyncResponse(await run_sync_func(requests.head, url=url, **kwargs))
+    return AsyncResponse(await run_sync_func(_global_session.head, url=url, **kwargs))
 
 
 async def post(url, data=None, json=None, **kwargs) -> AsyncResponse:
-    return AsyncResponse(await run_sync_func(requests.post, url=url,
+    return AsyncResponse(await run_sync_func(_global_session.post, url=url,
                                              data=data, json=json, **kwargs))
 
 
 async def put(url, data=None, **kwargs) -> AsyncResponse:
     return AsyncResponse(
-        await run_sync_func(requests.put, url=url, data=data, **kwargs))
+        await run_sync_func(_global_session.put, url=url, data=data, **kwargs))
 
 
 async def patch(url, data=None, **kwargs) -> AsyncResponse:
     return AsyncResponse(
-        await run_sync_func(requests.patch, url=url, data=data, **kwargs))
+        await run_sync_func(_global_session.patch, url=url, data=data, **kwargs))
 
 
 async def delete(url, **kwargs) -> AsyncResponse:
     return AsyncResponse(
-        await run_sync_func(requests.delete, url=url, **kwargs))
+        await run_sync_func(_global_session.delete, url=url, **kwargs))
