@@ -191,6 +191,7 @@ tool_modules = ModuleList(
     [
         # cook_pudding,
         caravan_play,
+        caravan_shop_buy,
         half_schedule,
         ex_equip_info,
         missing_emblem,

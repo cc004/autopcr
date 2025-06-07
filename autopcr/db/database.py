@@ -91,6 +91,23 @@ class database():
             )
 
     @lazy_property
+    def caravan_coin_shop_lineup(self) -> Dict[int, List[CaravanCoinShopLineup]]:
+        with self.dbmgr.session() as db:
+            return (
+                CaravanCoinShopLineup.query(db)
+                .group_by(lambda x: x.season_id)
+                .to_dict(lambda x: x.key, lambda x: x.to_list())
+            )
+
+    @lazy_property
+    def caravan_schedule(self) -> Dict[int, CaravanSchedule]:
+        with self.dbmgr.session() as db:
+            return (
+                CaravanSchedule.query(db)
+                .to_dict(lambda x: x.season_id, lambda x: x)
+            )
+
+    @lazy_property
     def caravan_gacha_block_lineup(self) -> Dict[int, CaravanGachaBlockLineup]:
         with self.dbmgr.session() as db:
             return (

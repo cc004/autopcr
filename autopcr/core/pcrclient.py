@@ -86,6 +86,14 @@ class pcrclient(apiclient):
         req.roll_num = roll_num
         return await self.request(req)
 
+    async def caravan_coin_shop_buy(self, season_id: int, shop_season_id: int, slot_id_list: List[int], current_currency_num: int):
+        req = CaravanCoinShopBuyRequest()
+        req.season_id = season_id
+        req.shop_season_id = shop_season_id
+        req.slot_id_list = slot_id_list
+        req.current_currency_num = current_currency_num
+        return await self.request(req)
+
     async def caravan_move(self, season_id: int, current_block_id: int, block_id_list: List[int]):
         req = CaravanMoveRequest()
         req.season_id = season_id

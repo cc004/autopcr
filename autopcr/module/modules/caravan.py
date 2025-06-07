@@ -1,6 +1,8 @@
 from collections import Counter
 import typing
-from typing import List, Optional, cast
+from typing import List, cast
+
+from ...module.config import booltype, inttype
 
 from ...model.common import CaravanDishData, CaravanDishEffectData, CaravanDishSellData, CaravanEventEffectData, CaravanShopBlockLineup
 
@@ -183,9 +185,9 @@ class EffectManager:
     def get_effect_influence(self, effect_type: eCaravanEffectType) -> Union[int, None]: ...
 
     def get_effect_lasting_desc(self, effect: CaravanEffectData) -> str:
-        if effect.effect_turn is not None:
+        if effect.effect_turn is not None and effect.effect_turn > 0:
             return f"持续回合：{effect.effect_turn}"
-        elif effect.effect_count is not None:
+        elif effect.effect_count is not None and effect.effect_count > 0:
             return f"持续次数：{effect.effect_count}"
         else:
             return "已失效"
@@ -421,6 +423,7 @@ class CaravanGame:
                 dish_list=sell_dishes,
                 surplus_dish_list=sell_surplus_dishes
             )
+            surplus_dish_list.clear()
 
     async def step(self):
         await self.check_dishes_full(self.last_response.surplus_dish_list)
@@ -670,7 +673,7 @@ class CaravanGame:
                     for rare_type, cost_num in [(eGachaType.PREMIUM, gacha_data.premium_gacha_cost),
                                             (eGachaType.RARE, gacha_data.rare_gacha_cost),
                                             (eGachaType.NORMAL, gacha_data.normal_gacha_cost)]:
-                        if self.licheng_point >= cost:
+                        if self.licheng_point >= cost_num:
                             self._log(f"抽取稀有度{rare_type.name}，费用{cost_num}")
                             rare = rare_type + 1
                             cost = cost_num
@@ -716,10 +719,74 @@ class CaravanGame:
 
 @name('大富翁')
 @default(True)
+@description("料理能用即用")
 class caravan_play(Module):
     async def do_task(self, client: pcrclient):
         game = CaravanGame(client, self)
         await game.init()
         while not game.stop():
             await game.step()
+
+
+@name('大富翁商店购买')
+@default(True)
+@description("默认买最新一期商店，按照商品顺序购买，直到商店币用完为止，有次数的无法购买会提示，无次数的不会提示,便于查看是否搬空商店")
+@booltype('caravan_shop_last_season', '购买上期商店', False)
+class caravan_shop_buy(Module):
+    async def do_task(self, client: pcrclient):
+        top = await client.caravan_top()
+        season_id = top.season_id
+        if self.get_config('caravan_shop_last_season'):
+            season_id -= 1
+        if season_id not in db.caravan_schedule:
+            raise AbortError(f"赛季 {season_id} 不存在")
+        if client.datetime > db.parse_time(db.caravan_schedule[season_id].shop_close_time):
+            raise AbortError(f"赛季 {season_id} 商店已关闭")
+
+        items_list = db.caravan_coin_shop_lineup[season_id]
+        have_bought = Counter({item.slot_id: item.purchase_count for item in top.coin_shop_list or [] if item.season_id == season_id})
+        cost = 0
+        rewards = []
+        items_list = sorted(items_list, key=lambda x: x.slot_id)
+        limit_items_list = [item for item in items_list if item.stock > 0]
+        unlimited_items_list = [item for item in items_list if item.stock == 0]
+
+        limit_expend_items = [item for item in limit_items_list for _ in range(item.stock - have_bought[item.slot_id])]
+
+        for item in limit_expend_items[:]:
+            coin = client.data.get_inventory((eInventoryType.Item, item.currency_id))
+            if coin < item.price:
+                if not rewards:
+                    self._log(f"商店币不足{coin} < {item.price}，无法购买 {db.get_inventory_name_san((item.reward_type, item.reward_id))}")
+                break
+            resp = await client.caravan_coin_shop_buy(
+                season_id=top.season_id,
+                shop_season_id=season_id,
+                slot_id_list=[item.slot_id],
+                current_currency_num=coin
+            )
+            cost += item.price
+            limit_expend_items.remove(item)
+            rewards.extend(resp.purchase_list or [])
+
+        buy = len(limit_expend_items) == 0
+        while buy:
+            buy = False
+            for item in unlimited_items_list:
+                coin = client.data.get_inventory((eInventoryType.Item, item.currency_id))
+                if item.price <= coin:
+                    resp = await client.caravan_coin_shop_buy(
+                        season_id=top.season_id,
+                        shop_season_id=season_id,
+                        slot_id_list=[item.slot_id],
+                        current_currency_num=coin
+                    )
+                    cost += item.price
+                    rewards.extend(resp.purchase_list or [])
+                    buy = True
+
+        if not rewards:
+            self._log("无可购买的物品")
+        else:
+            self._log(f"花费了商店币 {cost}，购买了\n{await client.serlize_reward(rewards)}")
 

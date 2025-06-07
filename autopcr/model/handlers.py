@@ -1,4 +1,5 @@
 from pydantic.class_validators import make_generic_validator
+from pydantic.fields import ModelField
 from pydantic.validators import int_validator
 from . import responses, sdkrequests
 from .common import *
@@ -35,6 +36,18 @@ class CaravanTopResponse(responses.CaravanTopResponse):
                 mgr.update_inventory(item)
         if self.reset_reward:
             for item in self.reset_reward:
+                mgr.update_inventory(item)
+
+
+
+@handles
+class CaravanCoinShopBuyResponse(responses.CaravanCoinShopBuyResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.purchase_list:
+            for item in self.purchase_list:
+                mgr.update_inventory(item)
+        if self.item_data:
+            for item in self.item_data:
                 mgr.update_inventory(item)
 
 @handles
@@ -1010,3 +1023,14 @@ DungeonUnit.__fields__['skill_limit_counter'].validators = [make_generic_validat
 DungeonUnit.__fields__['skill_limit_counter'].annotation = int
 DungeonUnit.__fields__['skill_limit_counter'].sub_fields = None 
 DungeonUnit.__fields__['skill_limit_counter'].shape = 1 # singleton
+
+CaravanCoinShopData.__annotations__['season_id'] = Optional[int]
+field = ModelField.infer(
+    name='season_id',
+    value=None,
+    annotation=int,
+    class_validators=None,
+    config=CaravanCoinShopData.__config__,
+)
+CaravanCoinShopData.__fields__['season_id'] = field
+setattr(CaravanCoinShopData, 'season_id', None)
