@@ -3,6 +3,7 @@ from typing import Any
 from .autosweep import *
 from .box import *
 from .nologin import *
+from .caravan import *
 from .clan import *
 from .cron import *
 from .daily import *
@@ -189,6 +190,7 @@ tool_modules = ModuleList(
     'tool',
     [
         # cook_pudding,
+        caravan_play,
         half_schedule,
         ex_equip_info,
         missing_emblem,

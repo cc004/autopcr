@@ -19,6 +19,72 @@ class SourceIniGetMaintenanceStatusResponse(sdkrequests.SourceIniGetMaintenanceS
             await mgr.try_update_database(int(self.manifest_ver))
 
 @handles
+class CaravanTopResponse(responses.CaravanTopResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.caravan_item_list:
+            for item in self.caravan_item_list:
+                mgr.update_inventory(item)
+        if self.init_reward_list:
+            for item in self.init_reward_list:
+                mgr.update_inventory(item)
+        if self.buddy_reward_list:
+            for item in self.buddy_reward_list:
+                mgr.update_inventory(item)
+        if self.minigame_retire_reward:
+            for item in self.minigame_retire_reward:
+                mgr.update_inventory(item)
+        if self.reset_reward:
+            for item in self.reset_reward:
+                mgr.update_inventory(item)
+
+@handles
+class CaravanDishSellResponse(responses.CaravanDishSellResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_list:
+            for item in self.reward_list:
+                mgr.update_inventory(item)
+
+@handles
+class CaravanMinigameCccFinishResponse(responses.CaravanMinigameCccFinishResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_list:
+            for item in self.reward_list:
+                mgr.update_inventory(item)
+
+@handles
+class CaravanDishUseResponse(responses.CaravanDishUseResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_list:
+            for item in self.reward_list:
+                mgr.update_inventory(item)
+        if self.sub_reward_list:
+            for item in self.sub_reward_list:
+                mgr.update_inventory(item)
+
+@handles
+class CaravanGachaBlockExecResponse(responses.CaravanGachaBlockExecResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_list:
+            for item in self.reward_list:
+                mgr.update_inventory(item)
+
+@handles
+class CaravanMoveResponse(responses.CaravanMoveResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_list:
+            for item in self.reward_list:
+                mgr.update_inventory(item)
+        if self.goal_bonus_list:
+            for item in self.goal_bonus_list:
+                mgr.update_inventory(item)
+        if self.treasure_reward_list:
+            for item in self.treasure_reward_list:
+                mgr.update_inventory(item)
+        if self.lottery_result_list:
+            for item in self.lottery_result_list:
+                mgr.update_inventory(item)
+
+@handles
 class SkillLevelUpResponse(responses.SkillLevelUpResponse):
     async def update(self, mgr: datamgr, request):
         mgr.unit[self.unit_data.id] = self.unit_data
