@@ -2,7 +2,7 @@ from collections import Counter
 import typing
 from typing import List, cast
 
-from ...module.config import booltype, inttype
+from ...module.config import booltype
 
 from ...model.common import CaravanDishData, CaravanDishEffectData, CaravanDishSellData, CaravanEventEffectData, CaravanShopBlockLineup
 
@@ -428,291 +428,287 @@ class CaravanGame:
     async def step(self):
         await self.check_dishes_full(self.last_response.surplus_dish_list)
 
-        match self.state:
-            case eState.IDLE:
-                self._log(f"当前格子 {self.current_block_id}, 检查点距离 {db.caravan_map[self.current_block_id].distance_to_goal}, 料理数量 {self.dish_cnt}")
-                if not self.dish_effect_manager.empty():
-                    self._log(f"料理效果列表\n{self.dish_effect_manager.get_effect_desc()}")
-                if not self.event_effect_manager.empty():
-                    self._log(f"事件效果列表\n{self.event_effect_manager.get_effect_desc()}")
+        if self.state == eState.IDLE:
+            self._log(f"当前格子 {self.current_block_id}, 检查点距离 {db.caravan_map[self.current_block_id].distance_to_goal}, 料理数量 {self.dish_cnt}")
+            if not self.dish_effect_manager.empty():
+                self._log(f"料理效果列表\n{self.dish_effect_manager.get_effect_desc()}")
+            if not self.event_effect_manager.empty():
+                self._log(f"事件效果列表\n{self.event_effect_manager.get_effect_desc()}")
 
-                if self.dice_point <= 0:
-                    self._log("没有骰子了 -> 切到 STOP")
-                    self.state = eState.STOP
-                    return
+            if self.dice_point <= 0:
+                self._log("没有骰子了 -> 切到 STOP")
+                self.state = eState.STOP
+                return
 
-                if self.spots:
-                    self.state = eState.MOVE
-                    return
-
-                if self.action_bit_flag & eFlag.IS_PROGRESS_TURN:
-                    self.state = eState.TURN_END
-                    return
-
-                if not self.action_bit_flag & eFlag.DISH_USED and self.candidate_dishes:
-                    self.state = eState.USE_DISH
-                    return
-
-                self.state = eState.ROLL_DICE
-
-            case eState.ROLL_DICE:
-                if not self.action_bit_flag & eFlag.DICE_USED:
-                    roll_num = self.dish_effect_manager.get_effect_influence(eDishEffectType.MULTI_DICE) or 1
-
-                    self._log(f"当前骰子数{self.dice_point}, 掷出骰子{roll_num}个")
-                    resp = await self.client.caravan_dice_roll(
-                        season_id=self.season_id,
-                        current_num=self.dice_point,
-                        roll_num=roll_num
-                    )
-
-                    self.client.data.set_inventory(db.dice, self.dice_point - 1) # only pcr can do
-                    self.spots_list = resp.spots_list or []
-                    self._log(f"骰子结果={self.spots_list}, 剩余骰子={self.dice_point}")
-                    self.action_bit_flag |= eFlag.DICE_USED
-                    self.dish_effect_manager.process_effect(eDishEffectType.MULTI_DICE)
-                    self.dish_effect_manager.process_effect(eDishEffectType.FIX_DICE_NUMBER)
-                    self.dish_effect_manager.process_effect(eDishEffectType.FIX_DUCE_NUMBER_AND_TURN_NOT_PROGRESS)
-
-                    extra_spots = self.dish_effect_manager.get_effect_influence(eDishEffectType.ADD_MOVE_COUNT) or 0
-                    if extra_spots:
-                        self._log(f"料理效果增加额外步数：{extra_spots}")
-                        self.spots_list.append(extra_spots)
-
+            if self.spots:
                 self.state = eState.MOVE
+                return
 
-            case eState.MOVE:
+            if self.action_bit_flag & eFlag.IS_PROGRESS_TURN:
+                self.state = eState.TURN_END
+                return
 
-                self.block_id_list = [self.current_block_id]
-                if not self.spots:
-                    self.spots = sum(self.spots_list)
-                    self._log(f"当前格子 {self.current_block_id}，移动 {self.spots} 步")
-                    self.spots_list = []
-                while self.spots > 0:
-                    next_blocks = db.caravan_map[self.current_block_id].get_next_blocks()
-                    dis = [(nxt, db.caravan_map[nxt].distance_to_goal) for nxt in next_blocks]
-                    self.current_block_id = min(dis, key=lambda x: x[1])[0]
-                    self.block_id_list.append(self.current_block_id)
-                    if db.caravan_map[self.current_block_id].type == eBlockType.GOAL:
-                        break
-                    else:
-                        self.spots -= 1
+            if not self.action_bit_flag & eFlag.DISH_USED and self.candidate_dishes:
+                self.state = eState.USE_DISH
+                return
 
-                self._log(f"已落在格子 {self.current_block_id}")
-                if len(self.block_id_list) > 1:
-                    self.last_response = await self.client.caravan_move(
-                        season_id=self.season_id,
-                        current_block_id=self.block_id_list[0],
-                        block_id_list=self.block_id_list[1:]
-                    )
-                    self.action_bit_flag = self.last_response.action_bit_flag or 0
+            self.state = eState.ROLL_DICE
 
-                self.state = eState.CELL_ACTION
+        elif self.state == eState.ROLL_DICE:
+            if not self.action_bit_flag & eFlag.DICE_USED:
+                roll_num = self.dish_effect_manager.get_effect_influence(eDishEffectType.MULTI_DICE) or 1
 
-            case eState.CELL_ACTION:
+                self._log(f"当前骰子数{self.dice_point}, 掷出骰子{roll_num}个")
+                resp = await self.client.caravan_dice_roll(
+                    season_id=self.season_id,
+                    current_num=self.dice_point,
+                    roll_num=roll_num
+                )
 
-                resp = self.last_response
+                self.client.data.set_inventory(db.dice, self.dice_point - 1) # only pcr can do
+                self.spots_list = resp.spots_list or []
+                self._log(f"骰子结果={self.spots_list}, 剩余骰子={self.dice_point}")
+                self.action_bit_flag |= eFlag.DICE_USED
+                self.dish_effect_manager.process_effect(eDishEffectType.MULTI_DICE)
+                self.dish_effect_manager.process_effect(eDishEffectType.FIX_DICE_NUMBER)
+                self.dish_effect_manager.process_effect(eDishEffectType.FIX_DUCE_NUMBER_AND_TURN_NOT_PROGRESS)
 
-                block_type = eBlockType(db.caravan_map[self.current_block_id].type)
-                self._log(f"当前格子 {self.current_block_id} 的类型 = {block_type.name}")
+                extra_spots = self.dish_effect_manager.get_effect_influence(eDishEffectType.ADD_MOVE_COUNT) or 0
+                if extra_spots:
+                    self._log(f"料理效果增加额外步数：{extra_spots}")
+                    self.spots_list.append(extra_spots)
 
-                match block_type:
-                    case eBlockType.SHOP:
-                        self._log("商店块 -> 切到 SHOP_BUY")
-                        self.dish_effect_manager.process_effect(eDishEffectType.BLOCK_RANK_UP)
-                        self.candidate_shop_lineup = resp.shop_block_lineup_list
-                        self.state = eState.SHOP_BUY
-                        return
+            self.state = eState.MOVE
 
-                    case eBlockType.DISH:
-                        self._log("料理块 -> TURN_END")
-                        self.state = eState.TURN_END
-                        return
+        elif self.state == eState.MOVE:
+            self.block_id_list = [self.current_block_id]
+            if not self.spots:
+                self.spots = sum(self.spots_list)
+                self._log(f"当前格子 {self.current_block_id}，移动 {self.spots} 步")
+                self.spots_list = []
+            while self.spots > 0:
+                next_blocks = db.caravan_map[self.current_block_id].get_next_blocks()
+                dis = [(nxt, db.caravan_map[nxt].distance_to_goal) for nxt in next_blocks]
+                self.current_block_id = min(dis, key=lambda x: x[1])[0]
+                self.block_id_list.append(self.current_block_id)
+                if db.caravan_map[self.current_block_id].type == eBlockType.GOAL:
+                    break
+                else:
+                    self.spots -= 1
 
-                    case eBlockType.MINI_GAME:
-                        self._log("小游戏块 -> MINI_GAME")
-                        if isinstance(resp, CaravanMoveResponse):
-                            self.mini_game_id = resp.minigame_id or 0
-                        self.state = eState.MINI_GAME
-                        return
+            self._log(f"已落在格子 {self.current_block_id}")
+            if len(self.block_id_list) > 1:
+                self.last_response = await self.client.caravan_move(
+                    season_id=self.season_id,
+                    current_block_id=self.block_id_list[0],
+                    block_id_list=self.block_id_list[1:]
+                )
+                self.action_bit_flag = self.last_response.action_bit_flag or 0
 
-                    case eBlockType.GACHA:
-                        self._log("抽卡块 -> GACHA")
-                        self.state = eState.GACHA
-                        return
+            self.state = eState.CELL_ACTION
 
-                    case eBlockType.TREASURE:
-                        self._log("宝箱块 -> TURN_END")
-                        self.dish_effect_manager.process_effect(eDishEffectType.BLOCK_RANK_UP)
-                        self.state = eState.TURN_END
-                        return
+        elif self.state == eState.CELL_ACTION:
 
-                    case eBlockType.EVENT:
-                        self._log("事件块 -> TURN_END")
-                        self.state = eState.TURN_END
-                        return
+            resp = self.last_response
 
-                    case eBlockType.MILES:
-                        self._log("里程块 -> TURN_END")
-                        self.dish_effect_manager.process_effect(eDishEffectType.MILE_BLOCK_EFFECT)
-                        self.dish_effect_manager.process_effect(eDishEffectType.BLOCK_RANK_UP)
-                        self.state = eState.TURN_END
-                        return
+            block_type = eBlockType(db.caravan_map[self.current_block_id].type)
+            self._log(f"当前格子 {self.current_block_id} 的类型 = {block_type.name}")
 
-                    case eBlockType.GOAL:
-                        self._log("检查点 -> GOAL")
-                        self.state = eState.GOAL
-                        return
+            if block_type == eBlockType.SHOP:
+                self._log("商店块 -> 切到 SHOP_BUY")
+                self.dish_effect_manager.process_effect(eDishEffectType.BLOCK_RANK_UP)
+                self.candidate_shop_lineup = resp.shop_block_lineup_list
+                self.state = eState.SHOP_BUY
+                return
 
-                    case eBlockType.MOVE_ON:
-                        self._log("前进块 -> MOVE")
-                        self.spots_list = [db.caravan_map[self.current_block_id].reference_id]
-                        self.state = eState.MOVE
-                        return
+            elif block_type == eBlockType.DISH:
+                self._log("料理块 -> TURN_END")
+                self.state = eState.TURN_END
+                return
 
-                    case eBlockType.LOTTERY:
-                        self._log("抽奖块 -> TURN_END")
-                        self.state = eState.TURN_END
-                        return
+            elif block_type == eBlockType.MINI_GAME:
+                self._log("小游戏块 -> MINI_GAME")
+                if isinstance(resp, CaravanMoveResponse):
+                    self.mini_game_id = resp.minigame_id or 0
+                self.state = eState.MINI_GAME
+                return
 
-                    case _:
-                        self._log(f"其他类型 {block_type.name} -> TURN_END")
-                        raise AbortError(f"未处理的格子类型：{block_type.name}")
-                        self.state = eState.TURN_END
-                        return
+            elif block_type == eBlockType.GACHA:
+                self._log("抽卡块 -> GACHA")
+                self.state = eState.GACHA
+                return
 
-            case eState.GOAL:
-                if self.action_bit_flag & eFlag.GOAL_EFFECT:
-                    self._log(f"{self.turn_count}回合抵达终点")
-                    resp = await self.client.caravan_read(
-                        season_id=self.season_id,
-                        block_id=self.current_block_id
-                    )
-                rewards = []
-                if isinstance(self.last_response, CaravanMoveResponse):
-                    rewards = self.last_response.treasure_reward_list or []
-                elif isinstance(self.last_response, CaravanTopResponse):
-                    rewards = self.last_response.caravan_item_list or []
-                self._log(f"获得了 {await self.client.serialize_reward_summary(rewards)}")
-                # self.turn_count = -1 if self.dish_effect_manager.get_effect(eDishEffectType.FIX_DUCE_NUMBER_AND_TURN_NOT_PROGRESS) or self.event_effect_manager.get_effect(eEventEffectType.TURN_COUNT_SKIP) else 0
-                self.turn_count = 0
+            elif block_type == eBlockType.TREASURE:
+                self._log("宝箱块 -> TURN_END")
+                self.dish_effect_manager.process_effect(eDishEffectType.BLOCK_RANK_UP)
+                self.state = eState.TURN_END
+                return
+
+            elif block_type == eBlockType.EVENT:
+                self._log("事件块 -> TURN_END")
+                self.state = eState.TURN_END
+                return
+
+            elif block_type == eBlockType.MILES:
+                self._log("里程块 -> TURN_END")
+                self.dish_effect_manager.process_effect(eDishEffectType.MILE_BLOCK_EFFECT)
+                self.dish_effect_manager.process_effect(eDishEffectType.BLOCK_RANK_UP)
+                self.state = eState.TURN_END
+                return
+
+            elif block_type == eBlockType.GOAL:
+                self._log("检查点 -> GOAL")
+                self.state = eState.GOAL
+                return
+
+            elif block_type == eBlockType.MOVE_ON:
+                self._log("前进块 -> MOVE")
+                self.spots_list = [db.caravan_map[self.current_block_id].reference_id]
                 self.state = eState.MOVE
+                return
 
-            case eState.SHOP_BUY:
-                treasures = [slot for slot in self.candidate_shop_lineup if slot.type == eInventoryType.CaravanTreasure and not slot.is_sold]
-                dishes = [slot for slot in self.candidate_shop_lineup if slot.type == eInventoryType.CaravanDish and not slot.is_sold]
-                cost = 0
-                slot_ids = []
-                for treasure in treasures:
-                    price = treasure.discounted_price if treasure.discounted_price else treasure.price
-                    if cost + price > self.licheng_point:
-                        break
-                    cost += price
-                    slot_ids.append(treasure.slot_id)
-
-                for id, dish in enumerate(dishes):
-                    if self.dish_cnt + id >= 6: break
-                    price = dish.discounted_price if dish.discounted_price else dish.price
-                    if cost + price > self.licheng_point:
-                        break
-                    cost += price
-                    slot_ids.append(dish.slot_id)
-                    self.candidate_dishes[dish.item_id] += dish.num
-
-                if slot_ids:
-                    self._log(f"购买槽位：{slot_ids}")
-                    shop_resp = await self.client.caravan_shop_block_buy(
-                        season_id=self.season_id,
-                        block_id=self.current_block_id,
-                        slot_id_list=slot_ids,
-                        current_currency_num=self.licheng_point
-                    )
-                    self._log(f"购买了{await self.client.serialize_reward_summary(shop_resp.purchase_list or [])}")
-                    self.client.data.set_inventory((eInventoryType.CaravanItem, 99007), self.licheng_point - cost)
-
+            elif block_type == eBlockType.LOTTERY:
+                self._log("抽奖块 -> TURN_END")
                 self.state = eState.TURN_END
+                return
 
-            case eState.USE_DISH:
-                if not self.action_bit_flag & eFlag.DISH_USED and self.candidate_dishes:
-                    for category in [1, 2, 3]:
-                        if self.dish_effect_manager.is_category_effect_exist(category):
-                            continue
-                        dish_to_use = next((dish_id for dish_id, stock in self.candidate_dishes.items() if stock > 0 and db.caravan_dish[dish_id].category == category), None)
-                        if dish_to_use is None:
-                            continue
-                        self._log(f"使用料理：{db.caravan_dish[dish_to_use].name}，效果：{db.caravan_dish[dish_to_use].get_effect_desc()}")
-                        use_resp = await self.client.caravan_dish_use(
-                            season_id=self.season_id,
-                            dish_id=dish_to_use
-                        )
-                        self.dish_effect_manager.append(CaravanDishEffectData(id=dish_to_use, effect_turn=db.caravan_dish[dish_to_use].effect_turn, effect_count=db.caravan_dish[dish_to_use].effect_times))
-                        self.candidate_dishes[dish_to_use] -= 1
-                        await self.check_dishes_full(use_resp.surplus_dish_list)
-                        break
-                    self.action_bit_flag |= eFlag.DISH_USED
-                    self.state = eState.IDLE
-
-            case eState.MINI_GAME:
-                if self.action_bit_flag & eFlag.MINIGAME_ACTIVE:
-                    start_resp = await self.client.caravan_minigame_start()
-                    self._log(f"开始小游戏 play_id={start_resp.play_id}")
-                    items = Counter(ccc.ccc_object_id for ccc in db.ccc_scenario[start_resp.ccc_scenario_id] if db.ccc_object[ccc.ccc_object_id].is_report)
-                    finish_resp = await self.client.caravan_minigame_finish(
-                        play_id=start_resp.play_id,
-                        items=items
-                    )
-                    self._log(f"完成小游戏，总分={finish_resp.total_score_corrected}")
+            else:
+                self._log(f"其他类型 {block_type.name} -> TURN_END")
+                raise AbortError(f"未处理的格子类型：{block_type.name}")
                 self.state = eState.TURN_END
+                return
 
-            case eState.GACHA:
-                if self.action_bit_flag & eFlag.BLOCK_EFFECT:
-                    gacha_group_id = db.caravan_map[self.current_block_id].reference_id
-                    gacha_data = db.caravan_gacha_block_lineup[gacha_group_id]
-                    rare = eGachaType.NORMAL
-                    cost = 0
-                    for rare_type, cost_num in [(eGachaType.PREMIUM, gacha_data.premium_gacha_cost),
-                                            (eGachaType.RARE, gacha_data.rare_gacha_cost),
-                                            (eGachaType.NORMAL, gacha_data.normal_gacha_cost)]:
-                        if self.licheng_point >= cost_num:
-                            self._log(f"抽取稀有度{rare_type.name}，费用{cost_num}")
-                            rare = rare_type + 1
-                            cost = cost_num
-                            break
+        elif self.state ==  eState.GOAL:
+            if self.action_bit_flag & eFlag.GOAL_EFFECT:
+                self._log(f"{self.turn_count}回合抵达终点")
+                resp = await self.client.caravan_read(
+                    season_id=self.season_id,
+                    block_id=self.current_block_id
+                )
+            rewards = []
+            if isinstance(self.last_response, CaravanMoveResponse):
+                rewards = self.last_response.treasure_reward_list or []
+            elif isinstance(self.last_response, CaravanTopResponse):
+                rewards = self.last_response.caravan_item_list or []
+            self._log(f"获得了 {await self.client.serialize_reward_summary(rewards)}")
+            self.turn_count = 0
+            self.state = eState.MOVE
 
-                    gacha_resp = await self.client.caravan_gacha_block_exec(
+        elif self.state == eState.SHOP_BUY:
+            treasures = [slot for slot in self.candidate_shop_lineup if slot.type == eInventoryType.CaravanTreasure and not slot.is_sold]
+            dishes = [slot for slot in self.candidate_shop_lineup if slot.type == eInventoryType.CaravanDish and not slot.is_sold]
+            cost = 0
+            slot_ids = []
+            for treasure in treasures:
+                price = treasure.discounted_price if treasure.discounted_price else treasure.price
+                if cost + price > self.licheng_point:
+                    break
+                cost += price
+                slot_ids.append(treasure.slot_id)
+
+            for id, dish in enumerate(dishes):
+                if self.dish_cnt + id >= 6: break
+                price = dish.discounted_price if dish.discounted_price else dish.price
+                if cost + price > self.licheng_point:
+                    break
+                cost += price
+                slot_ids.append(dish.slot_id)
+                self.candidate_dishes[dish.item_id] += dish.num
+
+            if slot_ids:
+                self._log(f"购买槽位：{slot_ids}")
+                shop_resp = await self.client.caravan_shop_block_buy(
+                    season_id=self.season_id,
+                    block_id=self.current_block_id,
+                    slot_id_list=slot_ids,
+                    current_currency_num=self.licheng_point
+                )
+                self._log(f"购买了{await self.client.serialize_reward_summary(shop_resp.purchase_list or [])}")
+                self.client.data.set_inventory((eInventoryType.CaravanItem, 99007), self.licheng_point - cost)
+
+            self.state = eState.TURN_END
+
+        elif self.state == eState.USE_DISH:
+            if not self.action_bit_flag & eFlag.DISH_USED and self.candidate_dishes:
+                for category in [1, 2, 3]:
+                    if self.dish_effect_manager.is_category_effect_exist(category):
+                        continue
+                    dish_to_use = next((dish_id for dish_id, stock in self.candidate_dishes.items() if stock > 0 and db.caravan_dish[dish_id].category == category), None)
+                    if dish_to_use is None:
+                        continue
+                    self._log(f"使用料理：{db.caravan_dish[dish_to_use].name}，效果：{db.caravan_dish[dish_to_use].get_effect_desc()}")
+                    use_resp = await self.client.caravan_dish_use(
                         season_id=self.season_id,
-                        block_id=self.current_block_id,
-                        gacha_type=rare,
-                        current_currency_num=self.licheng_point
+                        dish_id=dish_to_use
                     )
-                    await self.check_dishes_full(gacha_resp.surplus_dish_list)
-                    self._log(f"抽卡结果：{await self.client.serialize_reward_summary(gacha_resp.reward_list or [])}")
-                    self.client.data.set_inventory((eInventoryType.CaravanItem, 99007), self.licheng_point - cost)
-                self.state = eState.TURN_END
-
-            case eState.TURN_END:
-                if self.action_bit_flag & eFlag.IS_PROGRESS_TURN:
-                    progress_resp = await self.client.caravan_progress_turn(
-                        season_id=self.season_id,
-                        turn=self.turn_count
-                    )
-                    self.turn_count = progress_resp.turn
-
-                    self.dish_effect_manager.process_effect_turn()
-                    self.event_effect_manager.process_effect_turn()
-
-                    await self.check_dishes_full(progress_resp.surplus_dish_list)
-                    self.candidate_dishes += Counter() # remove zero dishes
-                    self.action_bit_flag = 0
-
-                    self._log(f"回合结算完成")
+                    self.dish_effect_manager.append(CaravanDishEffectData(id=dish_to_use, effect_turn=db.caravan_dish[dish_to_use].effect_turn, effect_count=db.caravan_dish[dish_to_use].effect_times))
+                    self.candidate_dishes[dish_to_use] -= 1
+                    await self.check_dishes_full(use_resp.surplus_dish_list)
+                    break
+                self.action_bit_flag |= eFlag.DISH_USED
                 self.state = eState.IDLE
 
-            case eState.STOP:
-                self._log("循环结束。")
+        elif self.state == eState.MINI_GAME:
+            if self.action_bit_flag & eFlag.MINIGAME_ACTIVE:
+                start_resp = await self.client.caravan_minigame_start()
+                self._log(f"开始小游戏 play_id={start_resp.play_id}")
+                items = Counter(ccc.ccc_object_id for ccc in db.ccc_scenario[start_resp.ccc_scenario_id] if db.ccc_object[ccc.ccc_object_id].is_report)
+                finish_resp = await self.client.caravan_minigame_finish(
+                    play_id=start_resp.play_id,
+                    items=items
+                )
+                self._log(f"完成小游戏，总分={finish_resp.total_score_corrected}")
+            self.state = eState.TURN_END
 
-            case _:
-                raise RuntimeError(f"未识别状态：{self.state}")
+        elif self.state == eState.GACHA:
+            if self.action_bit_flag & eFlag.BLOCK_EFFECT:
+                gacha_group_id = db.caravan_map[self.current_block_id].reference_id
+                gacha_data = db.caravan_gacha_block_lineup[gacha_group_id]
+                rare = eGachaType.NORMAL
+                cost = 0
+                for rare_type, cost_num in [(eGachaType.PREMIUM, gacha_data.premium_gacha_cost),
+                                        (eGachaType.RARE, gacha_data.rare_gacha_cost),
+                                        (eGachaType.NORMAL, gacha_data.normal_gacha_cost)]:
+                    if self.licheng_point >= cost_num:
+                        self._log(f"抽取稀有度{rare_type.name}，费用{cost_num}")
+                        rare = rare_type + 1
+                        cost = cost_num
+                        break
+
+                gacha_resp = await self.client.caravan_gacha_block_exec(
+                    season_id=self.season_id,
+                    block_id=self.current_block_id,
+                    gacha_type=rare,
+                    current_currency_num=self.licheng_point
+                )
+                await self.check_dishes_full(gacha_resp.surplus_dish_list)
+                self._log(f"抽卡结果：{await self.client.serialize_reward_summary(gacha_resp.reward_list or [])}")
+                self.client.data.set_inventory((eInventoryType.CaravanItem, 99007), self.licheng_point - cost)
+            self.state = eState.TURN_END
+
+        elif self.state == eState.TURN_END:
+            if self.action_bit_flag & eFlag.IS_PROGRESS_TURN:
+                progress_resp = await self.client.caravan_progress_turn(
+                    season_id=self.season_id,
+                    turn=self.turn_count
+                )
+                self.turn_count = progress_resp.turn
+
+                self.dish_effect_manager.process_effect_turn()
+                self.event_effect_manager.process_effect_turn()
+
+                await self.check_dishes_full(progress_resp.surplus_dish_list)
+                self.candidate_dishes += Counter() # remove zero dishes
+                self.action_bit_flag = 0
+
+                self._log(f"回合结算完成")
+            self.state = eState.IDLE
+
+        elif self.state == eState.STOP:
+            self._log("循环结束。")
+
+        else:
+            raise RuntimeError(f"未识别状态：{self.state}")
 
     def stop(self) -> bool:
         return self.state == eState.STOP
