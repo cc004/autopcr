@@ -185,13 +185,20 @@ danger_modules = ModuleList(
     hidden_in_clan=True,
 )
 
+caravan_modules = ModuleList(
+    '大富翁',
+    'caravan',
+    [
+        caravan_play,
+        caravan_shop_buy,
+    ]
+)
+
 tool_modules = ModuleList(
     '工具',
     'tool',
     [
         # cook_pudding,
-        caravan_play,
-        caravan_shop_buy,
         half_schedule,
         ex_equip_info,
         missing_emblem,
