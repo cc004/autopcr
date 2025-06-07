@@ -319,7 +319,7 @@ class CaravanGame:
     def dish_cnt(self) -> int:
         return sum(dish for dish in self.candidate_dishes.values())
 
-    async def init(self):
+    async def init(self, caravan_play_until_shop_empty: bool = False):
         """
         第一次调用，用于拉取 top 接口，把 season_id、地图初始信息、dice_point 等都初始化好
         """
@@ -333,6 +333,15 @@ class CaravanGame:
         self.last_response: Union[CaravanTopResponse, CaravanMoveResponse] = resp
         self.spots = 0
         self.mini_game_id = 0
+        self.caravan_play_until_shop_empty = caravan_play_until_shop_empty
+
+        items_list = db.caravan_coin_shop_lineup[resp.season_id]
+        have_bought = Counter({item.slot_id: item.purchase_count for item in resp.coin_shop_list or [] if item.season_id == resp.season_id})
+        self.coin_token = (eInventoryType.Item, items_list[0].currency_id)
+
+        if self.caravan_play_until_shop_empty:
+            self.total_coin = sum((item.stock - have_bought[item.slot_id]) * item.price for item in items_list if item.stock > 0)
+            self._log(f"搬空商店需要商店币 {self.total_coin}，当前商店币 {self.client.data.get_inventory(self.coin_token)}")
 
         if resp.dish_list:
             self.candidate_dishes = Counter({dish.id:dish.stock for dish in resp.dish_list})
@@ -435,8 +444,13 @@ class CaravanGame:
             if not self.event_effect_manager.empty():
                 self._log(f"事件效果列表\n{self.event_effect_manager.get_effect_desc()}")
 
+            if self.caravan_play_until_shop_empty and self.client.data.get_inventory(self.coin_token) >= self.total_coin:
+                self._log(f"商店币{self.client.data.get_inventory(self.coin_token)} > {self.total_coin}，足够搬空商店 -> STOP")
+                self.state = eState.STOP
+                return
+
             if self.dice_point <= 0:
-                self._log("没有骰子了 -> 切到 STOP")
+                self._log("没有骰子了 -> STOP")
                 self.state = eState.STOP
                 return
 
@@ -715,11 +729,13 @@ class CaravanGame:
 
 @name('大富翁')
 @default(True)
-@description("料理能用即用")
+@description("将运行直至骰子耗尽，料理能用则用。可搬空商店停止指商店币可购买所有限定商品后停止")
+@booltype('caravan_play_until_shop_empty', '可搬空商店停止', True)
 class caravan_play(Module):
     async def do_task(self, client: pcrclient):
         game = CaravanGame(client, self)
-        await game.init()
+        caravan_play_until_shop_empty = self.get_config('caravan_play_until_shop_empty')
+        await game.init(caravan_play_until_shop_empty)
         while not game.stop():
             await game.step()
 
