@@ -1,4 +1,5 @@
 from collections import Counter
+import random
 import typing
 from typing import List, cast
 
@@ -666,7 +667,8 @@ class CaravanGame:
             if self.action_bit_flag & eFlag.MINIGAME_ACTIVE:
                 start_resp = await self.client.caravan_minigame_start()
                 self._log(f"开始小游戏 play_id={start_resp.play_id}")
-                items = Counter(ccc.ccc_object_id for ccc in db.ccc_scenario[start_resp.ccc_scenario_id] if db.ccc_object[ccc.ccc_object_id].is_report)
+                items = Counter(ccc.ccc_object_id for ccc in db.ccc_scenario[start_resp.ccc_scenario_id] if db.ccc_object[ccc.ccc_object_id].is_report and (db.ccc_object[ccc.ccc_object_id].ccc_object_type == 2 or random.random() < 0.8))
+
                 finish_resp = await self.client.caravan_minigame_finish(
                     play_id=start_resp.play_id,
                     items=items
