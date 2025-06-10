@@ -241,15 +241,17 @@ class DishEffectManager(EffectManager):
     def get_effect_sub_effect_type(self, effect: CaravanDishEffectData) -> eDishEffectType:
         return db.caravan_dish[effect.id].sub_effect_type
 
-    def get_effect_influence(self, effect: eDishEffectType) -> Union[int, None]: # 多个影响哪个生效？
+    def get_effect_influence(self, effect: eDishEffectType) -> Union[int, None]:
         dishes = self.get_effect(effect)
         if not dishes:
             return None
+        ret = None
         for dish in dishes:
             if db.caravan_dish[dish.id].effect_type == effect:
-                return db.caravan_dish[dish.id].effect_value
+                ret = db.caravan_dish[dish.id].effect_value
             else:
-                return db.caravan_dish[dish.id].sub_effect_value
+                ret = db.caravan_dish[dish.id].sub_effect_value
+        return ret
 
     def is_disable_effect(self):
         return any(db.caravan_dish[effect.id].disable_category == 1 for effect in self.effect_list)
