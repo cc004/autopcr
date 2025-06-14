@@ -264,6 +264,14 @@ class starcup_sweep(investigate_sweep):
         else:
             return self.get_config(f'starcup{self.quest_id() % 10}_sweep_campaign_times')
 
+@singlechoice("heart7_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("heart7_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
+@name('刷取心碎7')
+@default(False)
+class xinsui7_sweep(xinsui_sweep):
+    def quest_id(self) -> int:
+        return 18001007
+
 @singlechoice("heart6_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
 @singlechoice("heart6_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
 @name('刷取心碎6')

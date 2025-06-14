@@ -86,6 +86,33 @@ class PrizegachaDatum(models.PrizegachaDatum):
                 yield (eInventoryType.Item, prize_memory_id)
 
 @method
+class CaravanMap(models.CaravanMap):
+    def get_next_blocks(self) -> Iterator[int]:
+        yield self.next_1
+        if self.next_2:
+            yield self.next_2
+        if self.next_3:
+            yield self.next_3
+        if self.next_4:
+            yield self.next_4
+
+@method
+class CaravanDish(models.CaravanDish):
+    def get_effect_desc(self, lasting = True) -> str:
+        lasting_msg = f"持续{self.effect_turn}回合" if self.effect_turn > 0 else f"剩余{self.effect_times}次触发" if self.effect_times > 0 else "一次性"
+        if not lasting:
+            lasting_msg = ""
+        return f"{self.effect_description} {self.sub_effect_description} {lasting_msg}"
+
+@method
+class CaravanEventEffect(models.CaravanEventEffect):
+    def get_effect_desc(self, lasting = True) -> str:
+        lasting_msg = f"持续{self.effect_turn}回合" if self.effect_turn > 0 else f"剩余{self.effect_times}次触发" if self.effect_times > 0 else "一次性"
+        if not lasting:
+            lasting_msg = ""
+        return lasting_msg
+
+@method
 class EnemyRewardDatum(models.EnemyRewardDatum):
     def get_rewards(self) -> Iterator[Reward]:
         yield Reward(self.reward_type_1, self.reward_id_1, self.reward_num_1, self.odds_1)

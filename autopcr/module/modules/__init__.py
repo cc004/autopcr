@@ -3,6 +3,7 @@ from typing import Any
 from .autosweep import *
 from .box import *
 from .nologin import *
+from .caravan import *
 from .clan import *
 from .cron import *
 from .daily import *
@@ -67,6 +68,7 @@ daily_modules = ModuleList(
         tower_cloister_sweep,
         smart_very_hard_sweep,
         jjc_reward,
+        xinsui7_sweep,
         xinsui6_sweep,
         xinsui5_sweep,
         xinsui4_sweep,
@@ -182,6 +184,15 @@ danger_modules = ModuleList(
         gacha_exchange_chara,
     ],
     hidden_in_clan=True,
+)
+
+caravan_modules = ModuleList(
+    '大富翁',
+    'caravan',
+    [
+        caravan_play,
+        caravan_shop_buy,
+    ]
 )
 
 tool_modules = ModuleList(

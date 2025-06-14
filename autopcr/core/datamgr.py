@@ -61,6 +61,7 @@ class datamgr(BaseModel, Component[apiclient]):
     return_fes_info_list: List[ReturnFesInfo] = None
     data_time: int = 0
     version: int = 0
+    caravan_dishes: typing.Counter[int] = Counter()
 
     @staticmethod
     async def try_update_database(ver: int):
@@ -419,6 +420,8 @@ class datamgr(BaseModel, Component[apiclient]):
                 self.unit_love_data[unit_id].love_level = 0
         elif item.type == eInventoryType.ExtraEquip and item.ex_equip:
             self.ex_equips[item.ex_equip.serial_id] = item.ex_equip
+        elif item.type == eInventoryType.CaravanDish:
+            self.caravan_dishes[item.id] = item.stock
         else:
             self.inventory[token] = item.stock
 
@@ -464,6 +467,12 @@ class datamgr(BaseModel, Component[apiclient]):
             return self.get_inventory((eInventoryType.Item, 90007))
         elif shop_id == eSystemId.COUNTER_STOP_SHOP: # 大师店
             return self.get_inventory((eInventoryType.Item, 90008))
+        elif shop_id == eSystemId.EX_EQUIPMENT_WEAPON_SHOP: # EX武器店
+            return self.get_inventory((eInventoryType.Item, 90009))
+        elif shop_id == eSystemId.EX_EQUIPMENT_ARMOR_SHOP: # EX防具店
+            return self.get_inventory((eInventoryType.Item, 90010))
+        elif shop_id == eSystemId.EX_EQUIPMENT_ACCESSORY_SHOP: # EX饰品店
+            return self.get_inventory((eInventoryType.Item, 90011))
         else:
             raise ValueError(f"未知的商店{shop_id}")
 

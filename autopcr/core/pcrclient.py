@@ -66,6 +66,85 @@ class pcrclient(apiclient):
         req.unit_id = unit_id
         return await self.request(req)
 
+    async def caravan_top(self):
+        req = CaravanTopRequest()
+        req.is_first = 1
+        return await self.request(req)
+
+    async def caravan_dish_sell(self, season_id: int, block_id: int, dish_list: List[CaravanDishSellData], surplus_dish_list: List[CaravanDishSellData] = []):
+        req = CaravanDishSellRequest()
+        req.season_id = season_id
+        req.block_id = block_id
+        req.dish_list = dish_list
+        req.surplus_dish_list = surplus_dish_list
+        return await self.request(req)
+
+    async def caravan_dice_roll(self, season_id: int, current_num: int, roll_num: int):
+        req = CaravanDiceRollRequest()
+        req.season_id = season_id
+        req.current_num = current_num
+        req.roll_num = roll_num
+        return await self.request(req)
+
+    async def caravan_coin_shop_buy(self, season_id: int, shop_season_id: int, slot_id_list: List[int], current_currency_num: int):
+        req = CaravanCoinShopBuyRequest()
+        req.season_id = season_id
+        req.shop_season_id = shop_season_id
+        req.slot_id_list = slot_id_list
+        req.current_currency_num = current_currency_num
+        return await self.request(req)
+
+    async def caravan_move(self, season_id: int, current_block_id: int, block_id_list: List[int]):
+        req = CaravanMoveRequest()
+        req.season_id = season_id
+        req.current_block_id = current_block_id
+        req.block_id_list = block_id_list
+        return await self.request(req)
+
+    async def caravan_progress_turn(self, season_id: int, turn: int):
+        req = CaravanProgressTurnRequest()
+        req.season_id = season_id
+        req.turn = turn
+        return await self.request(req)
+
+    async def caravan_read(self, season_id: int, block_id: int):
+        req = CaravanReadRequest()
+        req.season_id = season_id
+        req.block_id = block_id
+        return await self.request(req)
+
+    async def caravan_shop_block_buy(self, season_id: int, block_id: int, slot_id_list: List[int], current_currency_num: int):
+        req = CaravanShopBlockBuyRequest()
+        req.season_id = season_id
+        req.block_id = block_id
+        req.slot_id_list = slot_id_list
+        req.current_currency_num = current_currency_num
+        return await self.request(req)
+
+    async def caravan_dish_use(self, season_id: int, dish_id: int):
+        req = CaravanDishUseRequest()
+        req.season_id = season_id
+        req.dish_id = dish_id
+        return await self.request(req)
+
+    async def caravan_gacha_block_exec(self, season_id: int, block_id: int, gacha_type: int, current_currency_num: int):
+        req = CaravanGachaBlockExecRequest()
+        req.season_id = season_id
+        req.block_id = block_id
+        req.gacha_type = gacha_type
+        req.current_currency_num = current_currency_num
+        return await self.request(req)
+
+    async def caravan_minigame_start(self):
+        req = CaravanMinigameCccStartRequest()
+        return await self.request(req)
+
+    async def caravan_minigame_finish(self, play_id: int, items: Dict[int, int]):
+        req = CaravanMinigameCccFinishRequest()
+        req.play_id = play_id
+        req.object_list = [CccFinishItemCountInfo(ccc_object_id=item_id, count=count) for item_id, count in items.items()]
+        return await self.request(req)
+
     async def item_recycle_ex(self, consume_ex_serial_id_list: List[int]):
         req = ItemRecycleExtraEquipRequest()
         req.consume_ex_serial_id_list = consume_ex_serial_id_list

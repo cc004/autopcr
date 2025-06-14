@@ -1,4 +1,5 @@
 from pydantic.class_validators import make_generic_validator
+from pydantic.fields import ModelField
 from pydantic.validators import int_validator
 from . import responses, sdkrequests
 from .common import *
@@ -17,6 +18,84 @@ class SourceIniGetMaintenanceStatusResponse(sdkrequests.SourceIniGetMaintenanceS
     async def update(self, mgr: datamgr, request):
         if self.manifest_ver:
             await mgr.try_update_database(int(self.manifest_ver))
+
+@handles
+class CaravanTopResponse(responses.CaravanTopResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.caravan_item_list:
+            for item in self.caravan_item_list:
+                mgr.update_inventory(item)
+        if self.init_reward_list:
+            for item in self.init_reward_list:
+                mgr.update_inventory(item)
+        if self.buddy_reward_list:
+            for item in self.buddy_reward_list:
+                mgr.update_inventory(item)
+        if self.minigame_retire_reward:
+            for item in self.minigame_retire_reward:
+                mgr.update_inventory(item)
+        if self.reset_reward:
+            for item in self.reset_reward:
+                mgr.update_inventory(item)
+
+
+
+@handles
+class CaravanCoinShopBuyResponse(responses.CaravanCoinShopBuyResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.purchase_list:
+            for item in self.purchase_list:
+                mgr.update_inventory(item)
+        if self.item_data:
+            for item in self.item_data:
+                mgr.update_inventory(item)
+
+@handles
+class CaravanDishSellResponse(responses.CaravanDishSellResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_list:
+            for item in self.reward_list:
+                mgr.update_inventory(item)
+
+@handles
+class CaravanMinigameCccFinishResponse(responses.CaravanMinigameCccFinishResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_list:
+            for item in self.reward_list:
+                mgr.update_inventory(item)
+
+@handles
+class CaravanDishUseResponse(responses.CaravanDishUseResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_list:
+            for item in self.reward_list:
+                mgr.update_inventory(item)
+        if self.sub_reward_list:
+            for item in self.sub_reward_list:
+                mgr.update_inventory(item)
+
+@handles
+class CaravanGachaBlockExecResponse(responses.CaravanGachaBlockExecResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_list:
+            for item in self.reward_list:
+                mgr.update_inventory(item)
+
+@handles
+class CaravanMoveResponse(responses.CaravanMoveResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_list:
+            for item in self.reward_list:
+                mgr.update_inventory(item)
+        if self.goal_bonus_list:
+            for item in self.goal_bonus_list:
+                mgr.update_inventory(item)
+        if self.treasure_reward_list:
+            for item in self.treasure_reward_list:
+                mgr.update_inventory(item)
+        if self.lottery_result_list:
+            for item in self.lottery_result_list:
+                mgr.update_inventory(item)
 
 @handles
 class SkillLevelUpResponse(responses.SkillLevelUpResponse):
@@ -944,3 +1023,14 @@ DungeonUnit.__fields__['skill_limit_counter'].validators = [make_generic_validat
 DungeonUnit.__fields__['skill_limit_counter'].annotation = int
 DungeonUnit.__fields__['skill_limit_counter'].sub_fields = None 
 DungeonUnit.__fields__['skill_limit_counter'].shape = 1 # singleton
+
+CaravanCoinShopData.__annotations__['season_id'] = Optional[int]
+field = ModelField.infer(
+    name='season_id',
+    value=None,
+    annotation=int,
+    class_validators=None,
+    config=CaravanCoinShopData.__config__,
+)
+CaravanCoinShopData.__fields__['season_id'] = field
+setattr(CaravanCoinShopData, 'season_id', None)

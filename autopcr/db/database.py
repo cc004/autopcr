@@ -52,6 +52,7 @@ class database():
     jewel: ItemType = (eInventoryType.Jewel, 91002)
     travel_speed_up_paper: ItemType = (eInventoryType.Item, 23002)
     gacha_single_ticket: ItemType = (eInventoryType.Item, 24001)
+    dice: ItemType = (eInventoryType.Item, 99009)
 
     def update(self, dbmgr):
         self.dbmgr = dbmgr
@@ -63,6 +64,72 @@ class database():
                 RedeemUnit.query(db)
                 .group_by(lambda x: x.unit_id)
                 .to_dict(lambda x: x.key, lambda x: x.to_dict(lambda x: x.slot_id, lambda x: x))
+            )
+
+    @lazy_property
+    def caravan_dish(self) -> Dict[int, CaravanDish]:
+        with self.dbmgr.session() as db:
+            return (
+                CaravanDish.query(db)
+                .to_dict(lambda x: x.dish_id, lambda x: x)
+            )
+
+    @lazy_property
+    def caravan_event_effect(self) -> Dict[int, CaravanEventEffect]:
+        with self.dbmgr.session() as db:
+            return (
+                CaravanEventEffect.query(db)
+                .to_dict(lambda x: x.event_id, lambda x: x)
+            )
+
+    @lazy_property
+    def caravan_map(self) -> Dict[int, CaravanMap]:
+        with self.dbmgr.session() as db:
+            return (
+                CaravanMap.query(db)
+                .to_dict(lambda x: x.block_id, lambda x: x)
+            )
+
+    @lazy_property
+    def caravan_coin_shop_lineup(self) -> Dict[int, List[CaravanCoinShopLineup]]:
+        with self.dbmgr.session() as db:
+            return (
+                CaravanCoinShopLineup.query(db)
+                .group_by(lambda x: x.season_id)
+                .to_dict(lambda x: x.key, lambda x: x.to_list())
+            )
+
+    @lazy_property
+    def caravan_schedule(self) -> Dict[int, CaravanSchedule]:
+        with self.dbmgr.session() as db:
+            return (
+                CaravanSchedule.query(db)
+                .to_dict(lambda x: x.season_id, lambda x: x)
+            )
+
+    @lazy_property
+    def caravan_gacha_block_lineup(self) -> Dict[int, CaravanGachaBlockLineup]:
+        with self.dbmgr.session() as db:
+            return (
+                CaravanGachaBlockLineup.query(db)
+                .to_dict(lambda x: x.group_id, lambda x: x)
+            )
+
+    @lazy_property
+    def ccc_scenario(self) -> Dict[int, List[CccScenario]]:
+        with self.dbmgr.session() as db:
+            return (
+                CccScenario.query(db)
+                .group_by(lambda x: x.ccc_scenario_id)
+                .to_dict(lambda x: x.key, lambda x: x.to_list())
+            )
+
+    @lazy_property
+    def ccc_object(self) -> Dict[int, CccObject]:
+        with self.dbmgr.session() as db:
+            return (
+                CccObject.query(db)
+                .to_dict(lambda x: x.ccc_object_id, lambda x: x)
             )
 
     @lazy_property
@@ -794,6 +861,14 @@ class database():
                     ExEquipmentDatum.query(db)
                     .select(lambda x: (eInventoryType.ExtraEquip, x.ex_equipment_id, x.name))
                 )
+                .concat(
+                    CaravanDish.query(db)
+                    .select(lambda x: (eInventoryType.CaravanDish, x.dish_id, x.name))
+                )
+                .concat(
+                    CaravanTreasure.query(db)
+                    .select(lambda x: (eInventoryType.CaravanTreasure, x.id, x.name))
+                )
                 .to_dict(lambda x: (x[0], x[1]), lambda x: x[2])
             )
 
@@ -1358,7 +1433,7 @@ class database():
         try:
             return self.inventory_name[(item[0], item[1])]
         except:
-            return f"未知物品({item[1]})"
+            return f"未知物品({item[0]}, {item[1]})"
 
     def get_ex_equip_name(self, item: int, rank: int = 0) -> str:
         try:
