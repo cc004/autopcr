@@ -426,7 +426,7 @@ class get_need_pure_memory(Module):
         need_list = []
         for unit in unique_equip_2_pure_memory_id:
             kana = db.unit_data[unit].kana
-            target[kana] += 150
+            target[kana] += 150 if unit not in client.data.unit or len(client.data.unit[unit].unique_equip_slot) < 2 or not client.data.unit[unit].unique_equip_slot[1].is_slot else 0
             own = -sum(pure_gap[db.unit_to_pure_memory[unit]] if unit in db.unit_to_pure_memory else 0 for unit in db.unit_kana_ids[kana])
             need_list.append(((eInventoryType.Unit, unit), target[kana] - own))
         msg = {}
