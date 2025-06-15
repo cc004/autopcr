@@ -92,6 +92,7 @@ class chara_fortune(Module):
             raise SkipError("今日已赛马")
         res = await client.draw_chara_fortune()
         self._log(f"赛马第{client.data.cf.rank}名，获得了宝石x{res.reward_list[0].received}")
+        client.data.cf = None
 
 class mission_receive(Module):
     async def do_task(self, client: pcrclient):
