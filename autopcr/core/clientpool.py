@@ -8,7 +8,7 @@ from .misc import errorhandler, mutexhandler
 from .base import Component, Request, TResponse, RequestHandler
 from ..model.sdkrequests import ToolSdkLoginRequest
 from typing import Dict, Tuple
-from ..constants import SESSION_ERROR_MAX_RETRY, CLIENT_POOL_SIZE_MAX, CLIENT_POOL_MAX_AGE, CACHE_DIR, CLIENT_POOL_MAX_CLIENT_ALIVE
+from ..constants import SESSION_ERROR_MAX_RETRY, CLIENT_POOL_SIZE_MAX, CLIENT_POOL_MAX_AGE, CACHE_DIR, CLIENT_POOL_MAX_CLIENT_ALIVE, CLIENT_POOL_MAX_FARMER_CLIENT_ALIVE
 import time, os, asyncio, pickle
 from ..util.logger import instance as logger
 
@@ -98,9 +98,11 @@ class PoolClientWrapper(pcrclient):
 
     async def logout(self):
         await super().logout()
-        self.deactivate()
+        self.data = datamgr()
+        self._data_wrapper.component = self.data
 
-    def activate(self):
+    async def activate(self):
+        await self.pool.sema_require(self)
         try:
             if os.path.exists(self.cache):
                 with open(self.cache, 'rb') as f:
@@ -116,6 +118,7 @@ class PoolClientWrapper(pcrclient):
         os.remove(self.cache)
 
     def deactivate(self):
+        self.pool.sema_release(self)
         if self.data.ready:
             with open(self.cache, 'wb') as f:
                 f.write(pickle.dumps(self.data))
@@ -123,13 +126,34 @@ class PoolClientWrapper(pcrclient):
         self.data = datamgr()
         self._data_wrapper.component = self.data
 
+class CountingSemaphore:
+    def __init__(self, max_count):
+        self._sema = asyncio.Semaphore(max_count)
+        self.max_count = max_count
+        self.running = 0
+        self.waiting = 0
+
+    async def acquire(self):
+        self.waiting += 1
+        await self._sema.acquire()
+        self.waiting -= 1
+        self.running += 1
+
+    def release(self):
+        self.running -= 1
+        self._sema.release()
+
+    def status(self) -> Tuple[int, int, int]:
+        return self.running, self.waiting, self.max_count
+
 class ClientPool:
     def __init__(self):
         self.active_uids: Dict[str, int] = dict()
         self._pool: Dict[Tuple[str, str], PoolClientWrapper] = dict()
         os.makedirs(os.path.join(CACHE_DIR, 'pool'), exist_ok=True)
 
-        self._sema = asyncio.Semaphore(CLIENT_POOL_MAX_CLIENT_ALIVE)
+        self._sema = CountingSemaphore(CLIENT_POOL_MAX_CLIENT_ALIVE)
+        self._farm_sema = CountingSemaphore(CLIENT_POOL_MAX_FARMER_CLIENT_ALIVE)
 
     def _on_sdk_login(self, client: PoolClientWrapper):
         client_key = id(client)
@@ -138,7 +162,6 @@ class ClientPool:
         self.active_uids[client.uid] = client_key
 
     def _put_in_pool(self, client: PoolClientWrapper):
-        self._sema.release()
         client_key = id(client)
         if self.active_uids.get(client.uid, -1) != client_key:
             logger.debug("Client key mismatch, discard client %s", client.uid)
@@ -160,16 +183,25 @@ class ClientPool:
                     break
 
         logger.debug("Put client %s back to pool", client.uid)
-        client.deactivate()
         if len(self._pool) < CLIENT_POOL_SIZE_MAX:
             self._pool[pool_key] = client
 
-    '''
-    returns a client from the pool if available, otherwise creates a new one
-    client.session.sdk is always set to the provided sdk
-    '''
+    async def sema_require(self, pcrclient: PoolClientWrapper):
+        if pcrclient.session.sdk._account.farm:
+            await self._farm_sema.acquire()
+        else:
+            await self._sema.acquire()
+
+    def sema_release(self, pcrclient: PoolClientWrapper):
+        if pcrclient.session.sdk._account.farm:
+            self._farm_sema.release()
+        else:
+            self._sema.release()
+
+    def sema_status(self):
+        return self._sema.status(), self._farm_sema.status()
+
     async def get_client(self, sdk: sdkclient) -> PoolClientWrapper:
-        await self._sema.acquire()
         pool_key = (sdk.account, type(sdk).__name__)
         if pool_key in self._pool:
             client = self._pool.pop(pool_key)
@@ -178,7 +210,6 @@ class ClientPool:
             client.session.sdk = sdk
         else:
             client = PoolClientWrapper(self, sdk)
-        client.activate()
         return client
 
 instance = ClientPool()
