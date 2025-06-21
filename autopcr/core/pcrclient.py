@@ -754,6 +754,8 @@ class pcrclient(apiclient):
         return await self.request(req)
 
     async def get_tower_top(self):
+        if not self.data.is_quest_cleared(11009001):
+            raise SkipError("未解锁露娜塔")
         req = TowerTopRequest()
         req.is_first = 1
         req.return_cleared_ex_quest = 0
