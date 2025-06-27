@@ -59,6 +59,7 @@ sv_help = f"""
 - {prefix}刷图推荐 [<rank>] [fav] 查询缺口装备的刷图推荐，格式同上
 - {prefix}公会支援 查询公会支援角色配置
 - {prefix}卡池 查看当前卡池
+- {prefix}编队 1 1 春妈 蝶妈 狗妈 水妈 礼妈 便捷设置编队
 - {prefix}免费十连 <卡池id> 卡池id来自【{prefix}卡池】
 - {prefix}来发十连 <卡池id> [抽到出] [单抽券] [开抽] 赛博抽卡，谨慎使用。卡池id来自【{prefix}卡池】，[抽到出]表示抽到出货或达天井，[单抽券]表示仅用厕纸，[开抽]表示确认抽卡。已有up也可再次触发。
 """.strip()
@@ -839,7 +840,7 @@ async def free_gacha(botev: BotEvent):
     return config
 
 
-@register_tool("设置编队", "set_my_party")
+@register_tool("编队", "set_my_party")
 async def set_my_party(botev: BotEvent):
     msg = await botev.message()
     party_start_num = 1
