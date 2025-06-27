@@ -846,12 +846,12 @@ async def set_my_party(botev: BotEvent):
     tab_start_num = 1
     set_my_party_text = "自定义编队\n"
     try:
-        party_start_num = int(msg[0])
+        tab_start_num = int(msg[0])
         del msg[0]
     except:
         pass
     try:
-        tab_start_num = int(msg[0])
+        party_start_num = int(msg[0])
         del msg[0]
     except:
         pass
@@ -872,10 +872,12 @@ async def set_my_party(botev: BotEvent):
         await botev.finish(f"未知昵称{', '.join(unknown_units)}")
     if not units:
         await botev.finish("未指定任何角色")
+    if len(units) < 5:
+        await botev.finish("需要5个角色")
     set_my_party_text += "\n".join(f"{unit * 100 + 1}\t{db.get_unit_name(unit*100+1)}\t1\t{6 if unit*100+1 in db.unit_to_pure_memory else 5}" for unit in units)
     config = {
-        "party_start_num": party_start_num,
         "tab_start_num": tab_start_num,
+        "party_start_num": party_start_num,
         "set_my_party_text": set_my_party_text,
     }
     return config
