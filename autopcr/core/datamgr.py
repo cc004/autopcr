@@ -443,7 +443,12 @@ class datamgr(BaseModel, Component[apiclient]):
         return [item for item in self.inventory if filter(item) and self.inventory[item] > 0]
 
     def get_inventory(self, item: ItemType) -> int:
-        return self.inventory.get(item, 0)
+        if item == db.mana:
+            return self.gold.gold_id_free + self.gold.gold_id_pay
+        elif item == db.jewel:
+            return self.jewel.free_jewel + self.jewel.jewel
+        else:
+            return self.inventory.get(item, 0)
 
     def set_inventory(self, item: ItemType, value: int):
         self.inventory[item] = value
