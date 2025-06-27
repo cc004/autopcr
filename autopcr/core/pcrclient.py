@@ -198,6 +198,12 @@ class pcrclient(apiclient):
         req.current_currency_num = TravelCurrentCurrencyNum(jewel = self.data.jewel.free_jewel + self.data.jewel.jewel, item = self.data.get_inventory(db.travel_speed_up_paper))
         return await self.request(req)
 
+    async def travel_result_round_event(self, round: int, select_door_id: int):
+        req = TravelResultRoundEventRequest()
+        req.round = round
+        req.select_door_id = select_door_id
+        return await self.request(req)
+
     async def travel_receive_top_event_reward(self, top_event_appear_id: int, choice_number: int):
         req = TravelReceiveTopEventRewardRequest()
         req.top_event_appear_id = top_event_appear_id

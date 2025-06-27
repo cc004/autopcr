@@ -38,7 +38,16 @@ class CaravanTopResponse(responses.CaravanTopResponse):
             for item in self.reset_reward:
                 mgr.update_inventory(item)
 
-
+@handles
+class TravelResultRoundEventResponse(responses.TravelResultRoundEventResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.current_round_result and self.current_round_result.reward_list:
+            for item in self.current_round_result.reward_list:
+                mgr.update_inventory(item)
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        if self.user_jewel:
+            mgr.jewel = self.user_jewel
 
 @handles
 class CaravanCoinShopBuyResponse(responses.CaravanCoinShopBuyResponse):

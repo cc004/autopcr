@@ -1361,6 +1361,17 @@ class database():
             )
 
     @lazy_property
+    def travel_round_event_data(self) -> Dict[int, Dict[int, TravelRoundEventDatum]]:
+        with self.dbmgr.session() as db:
+            return (
+                TravelRoundEventDatum.query(db)
+                .group_by(lambda x: x.round_event_id)
+                .to_dict(lambda x: x.key, lambda x: x.to_dict(
+                    lambda x: x.round, lambda x: x
+                ))
+            )
+
+    @lazy_property
     def travel_quest_data(self) -> Dict[int, TravelQuestDatum]:
         with self.dbmgr.session() as db:
             return (

@@ -443,11 +443,6 @@ class CaravanGame:
 
         if self.state == eState.IDLE:
 
-            if self.caravan_play_until_shop_empty and self.client.data.get_inventory(self.coin_token) >= self.total_coin:
-                self._log(f"商店币{self.client.data.get_inventory(self.coin_token)} > {self.total_coin}，足够搬空商店 -> STOP")
-                self.state = eState.STOP
-                return
-
             if self.dice_point <= 0:
                 self._log("没有骰子了 -> STOP")
                 self.state = eState.STOP
@@ -464,6 +459,11 @@ class CaravanGame:
 
             if self.action_bit_flag & eFlag.IS_PROGRESS_TURN:
                 self.state = eState.TURN_END
+                return
+
+            if self.caravan_play_until_shop_empty and self.client.data.get_inventory(self.coin_token) >= self.total_coin:
+                self._log(f"商店币{self.client.data.get_inventory(self.coin_token)} > {self.total_coin}，足够搬空商店 -> STOP")
+                self.state = eState.STOP
                 return
 
             if not self.action_bit_flag & eFlag.DISH_USED and self.candidate_dishes:
