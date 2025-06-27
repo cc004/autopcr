@@ -351,6 +351,15 @@ class PresentReceiveAllResponse(responses.PresentReceiveAllResponse):
             mgr.stamina = self.stamina_info.user_stamina
             mgr.stamina_full_recovery_time = self.stamina_info.stamina_full_recovery_time
 
+@handles
+class PresentReceiveSingleResponse(responses.PresentReceiveSingleResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.rewards:
+            for item in self.rewards:
+                mgr.update_inventory(item)
+        if self.stamina_info:
+            mgr.stamina = self.stamina_info.user_stamina
+            mgr.stamina_full_recovery_time = self.stamina_info.stamina_full_recovery_time
 
 @handles
 class MissionIndexResponse(responses.MissionIndexResponse):

@@ -852,7 +852,12 @@ class pcrclient(apiclient):
         req = HatsuneQuestTopRequest()
         req.event_id = event
         return await self.request(req)
-    
+
+    async def present_receive(self, present_id: int):
+        req = PresentReceiveSingleRequest()
+        req.present_id = present_id
+        return await self.request(req)
+
     async def present_receive_all(self, is_exclude_stamina: bool):
         req = PresentReceiveAllRequest()
         req.time_filter = -1
