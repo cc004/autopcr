@@ -11,7 +11,7 @@ from ...model.enums import *
 from ...util.questutils import *
 import asyncio
 
-@description('仅开启时生效，氪体数优先级n4>n3>h3>vh3>n2>h2>vh2，禅模式指不执行体力相关的功能，仅在清日常生效，单项执行将忽略。庆典包括其倍数')
+@description('仅开启时生效，氪体数优先级n4>n3>h3>vh3>n2>h2>vh2，禅模式指不执行体力相关的功能，仅在清日常生效，单项执行将忽略。庆典包括其倍数，加速期间的所有倍数判断均x2')
 @name("全局配置")
 @default(True)
 @inttype('sweep_recover_stamina_times', "平时氪体数", 0, [i for i in range(41)])
