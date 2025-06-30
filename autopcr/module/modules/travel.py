@@ -182,9 +182,9 @@ class travel_quest_sweep(Module):
                 if round_event_data.right_door_effect_id != 900000:
                     select_door_id = 2
                 resp = await client.travel_result_round_event(round_event_data.round, select_door_id)
-                reward.extend(resp.current_round_result.reward_list)
+                reward.extend(resp.current_round_result.reward_list or [])
                 round_event_data = resp.next_round_event_data
-                result = resp.current_round_result.Result
+                result = resp.current_round_result.result
 
             if result == eRoundEventResultType.SUCCESS:
                 self._log(f"通关宝箱殿，获得了{round_id}层宝箱")

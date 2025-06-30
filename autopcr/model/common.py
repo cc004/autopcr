@@ -2734,7 +2734,7 @@ class BuyBulkBuyItemList(BaseModel):
     slot_id: int = None
     count: int = None
 class TravelRoundEventResult(BaseModel):
-    Result: eRoundEventResultType = None
+    result: eRoundEventResultType = None
     result_drama_id: int = None
     reward_list: List[InventoryInfo] = None
 class TravelAppearRoundEvent(BaseModel):
