@@ -43,7 +43,7 @@ class NormalCronModule(CronModule):
             client.set_stamina_consume_not_run()
 
 
-@singlechoice("module_exclude_type_cron1", "不执行日常模块", '无', ['无', '体力获取', '体力消耗'])
+@multichoice("module_exclude_type_cron1", "不执行日常模块", [], ['体力获取', '体力消耗'])
 @booltype("clanbattle_run_cron1", "会战期间执行", False)
 @timetype("time_cron1", "执行时间", "00:00")
 @description('定时执行')
@@ -58,7 +58,7 @@ class cron1(NormalCronModule):
     def get_module_exclude_type(self) -> str:
         return self.get_config("module_exclude_type_cron1")
 
-@singlechoice("module_exclude_type_cron2", "不执行日常模块", '无', ['无', '体力获取', '体力消耗'])
+@multichoice("module_exclude_type_cron2", "不执行日常模块", [], ['体力获取', '体力消耗'])
 @booltype("clanbattle_run_cron2", "会战期间执行", False)
 @timetype("time_cron2", "执行时间", "00:00")
 @description('定时执行')
@@ -74,7 +74,7 @@ class cron2(NormalCronModule):
         return self.get_config("module_exclude_type_cron2")
 
 
-@singlechoice("module_exclude_type_cron3", "不执行日常模块", '无', ['无', '体力获取', '体力消耗'])
+@multichoice("module_exclude_type_cron3", "不执行日常模块", [], ['体力获取', '体力消耗'])
 @booltype("clanbattle_run_cron3", "会战期间执行", False)
 @timetype("time_cron3", "执行时间", "00:00")
 @description('定时执行')
@@ -89,7 +89,7 @@ class cron3(NormalCronModule):
     def get_module_exclude_type(self) -> str:
         return self.get_config("module_exclude_type_cron3")
 
-@singlechoice("module_exclude_type_cron4", "不执行日常模块", '无', ['无', '体力获取', '体力消耗'])
+@multichoice("module_exclude_type_cron4", "不执行日常模块", [], ['体力获取', '体力消耗'])
 @booltype("clanbattle_run_cron4", "会战期间执行", False)
 @timetype("time_cron4", "执行时间", "00:00")
 @description('定时执行')
