@@ -769,6 +769,8 @@ class caravan_shop_buy(Module):
         season_id = top.season_id
         if self.get_config('caravan_shop_last_season'):
             season_id -= 1
+        elif top.action_bit_flag & eFlag.IS_PROGRESS_TURN:
+            raise AbortError("请先执行大富翁进行回合结算")
         if season_id not in db.caravan_schedule:
             raise AbortError(f"赛季 {season_id} 不存在")
         if client.datetime > db.parse_time(db.caravan_schedule[season_id].shop_close_time):
