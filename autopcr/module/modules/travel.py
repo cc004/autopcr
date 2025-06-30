@@ -189,7 +189,7 @@ class travel_quest_sweep(Module):
             if result == eRoundEventResultType.SUCCESS:
                 self._log(f"通关宝箱殿，获得了{round_id}层宝箱")
             else:
-                suffix = "但获得了该层宝箱" if result == eRoundEventResultType.SUCCESS else "且未获得该层宝箱"
+                suffix = "但获得了该层宝箱" if result == eRoundEventResultType.END else "且未获得该层宝箱"
                 self._log(f"止步于第{round_id}层，{suffix}")
 
         if top.top_event_list:
