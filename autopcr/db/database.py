@@ -669,7 +669,7 @@ class database():
         with self.dbmgr.session() as db:
             return (
                 StoryDetail.query(db)
-                .where(lambda x: x.story_id >= 4010000 and x.story_id < 4020000)
+                .where(lambda x: x.story_group_id == 4010)
                 .to_list()
             )
 
