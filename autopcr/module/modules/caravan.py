@@ -350,6 +350,7 @@ class CaravanGame:
             self.candidate_dishes = Counter({dish.id:dish.stock for dish in resp.dish_list})
         else:
             self.candidate_dishes = Counter()
+        self.used_dish_id = None
         if resp.used_dish_id: # 一般是一次性的
             self.used_dish_id = resp.used_dish_id
             self.dish_effect_manager.append(CaravanDishEffectData(
