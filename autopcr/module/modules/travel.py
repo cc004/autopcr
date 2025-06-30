@@ -171,6 +171,27 @@ class travel_quest_sweep(Module):
         if team_count < 3:
             self._warn(f"正在探险的小队数为{team_count}<3，请上号开始新的探险！")
 
+        if top.round_event_data:
+            self._log("发现宝箱殿")
+            round_event_data = top.round_event_data
+            result = None
+            round_id = round_event_data.round
+            while round_event_data is not None:
+                round_id = round_event_data.round
+                select_door_id = 1
+                if round_event_data.right_door_effect_id != 900000:
+                    select_door_id = 2
+                resp = await client.travel_result_round_event(round_event_data.round, select_door_id)
+                reward.extend(resp.current_round_result.reward_list or [])
+                round_event_data = resp.next_round_event_data
+                result = resp.current_round_result.result
+
+            if result == eRoundEventResultType.SUCCESS:
+                self._log(f"通关宝箱殿，获得了{round_id}层宝箱")
+            else:
+                suffix = "但获得了该层宝箱" if result == eRoundEventResultType.END else "且未获得该层宝箱"
+                self._log(f"止步于第{round_id}层，{suffix}")
+
         if top.top_event_list:
             blue_events = sorted([
                 event for event in top.top_event_list if event.top_event_id in ManaTravelEventReward
@@ -193,7 +214,7 @@ class travel_quest_sweep(Module):
                     self._warn(f"处理特殊事件{top_event.top_event_id}失败:{e}")
             if remain_blue_event_cnt:
                 self._log(f"保留{remain_blue_event_cnt}个蓝色事件")
-            self._log(f"阅读{len(top.top_event_list)}个特殊事件")
+            self._log(f"阅读{len(top.top_event_list) - remain_blue_event_cnt}个特殊事件")
 
         check_next = True
         result_count = {}

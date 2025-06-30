@@ -38,7 +38,16 @@ class CaravanTopResponse(responses.CaravanTopResponse):
             for item in self.reset_reward:
                 mgr.update_inventory(item)
 
-
+@handles
+class TravelResultRoundEventResponse(responses.TravelResultRoundEventResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.current_round_result and self.current_round_result.reward_list:
+            for item in self.current_round_result.reward_list:
+                mgr.update_inventory(item)
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        if self.user_jewel:
+            mgr.jewel = self.user_jewel
 
 @handles
 class CaravanCoinShopBuyResponse(responses.CaravanCoinShopBuyResponse):
@@ -342,6 +351,15 @@ class PresentReceiveAllResponse(responses.PresentReceiveAllResponse):
             mgr.stamina = self.stamina_info.user_stamina
             mgr.stamina_full_recovery_time = self.stamina_info.stamina_full_recovery_time
 
+@handles
+class PresentReceiveSingleResponse(responses.PresentReceiveSingleResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.rewards:
+            for item in self.rewards:
+                mgr.update_inventory(item)
+        if self.stamina_info:
+            mgr.stamina = self.stamina_info.user_stamina
+            mgr.stamina_full_recovery_time = self.stamina_info.stamina_full_recovery_time
 
 @handles
 class MissionIndexResponse(responses.MissionIndexResponse):

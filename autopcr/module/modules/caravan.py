@@ -165,8 +165,6 @@ _zh = {
     eState.BUDDY_SELECTED_WAITING_ANIMATION: "等待",
 }
 
-
-
 CaravanEffectData = typing.Union[CaravanDishEffectData, CaravanEventEffectData]
 eCaravanEffectType = typing.Union[eDishEffectType, eEventEffectType]
 
@@ -249,8 +247,10 @@ class DishEffectManager(EffectManager):
         for dish in dishes:
             if db.caravan_dish[dish.id].effect_type == effect:
                 ret = db.caravan_dish[dish.id].effect_value
-            else:
+            elif dish.id == self.game.used_dish_id:
                 ret = db.caravan_dish[dish.id].sub_effect_value
+            if db.caravan_dish[dish.id].disable_category: # 不可覆盖
+                break
         return ret
 
     def is_disable_effect(self):
@@ -350,7 +350,9 @@ class CaravanGame:
             self.candidate_dishes = Counter({dish.id:dish.stock for dish in resp.dish_list})
         else:
             self.candidate_dishes = Counter()
+        self.used_dish_id = None
         if resp.used_dish_id: # 一般是一次性的
+            self.used_dish_id = resp.used_dish_id
             self.dish_effect_manager.append(CaravanDishEffectData(
                 id=resp.used_dish_id,
                 effect_turn=db.caravan_dish[resp.used_dish_id].effect_turn,
@@ -363,7 +365,7 @@ class CaravanGame:
             self.event_effect_manager.append(event_effect)
 
         self.state = eState.INIT
-        self._log(f"赛季{self.season_id}, 起始格子{self.current_block_id}, 骰子{self.dice_point}")
+        self._log(f"赛季{self.season_id}, 位于格子{self.current_block_id}, 骰子数{self.dice_point}")
         if not self.dish_effect_manager.empty():
             self._log(f"料理效果列表：\n{self.dish_effect_manager.get_effect_desc()}")
         if not self.event_effect_manager.empty():
@@ -441,16 +443,6 @@ class CaravanGame:
         await self.check_dishes_full(self.last_response.surplus_dish_list)
 
         if self.state == eState.IDLE:
-            self._log(f"当前格子 {self.current_block_id}, 检查点距离 {db.caravan_map[self.current_block_id].distance_to_goal}, 料理数量 {self.dish_cnt}")
-            if not self.dish_effect_manager.empty():
-                self._log(f"料理效果列表\n{self.dish_effect_manager.get_effect_desc()}")
-            if not self.event_effect_manager.empty():
-                self._log(f"事件效果列表\n{self.event_effect_manager.get_effect_desc()}")
-
-            if self.caravan_play_until_shop_empty and self.client.data.get_inventory(self.coin_token) >= self.total_coin:
-                self._log(f"商店币{self.client.data.get_inventory(self.coin_token)} > {self.total_coin}，足够搬空商店 -> STOP")
-                self.state = eState.STOP
-                return
 
             if self.dice_point <= 0:
                 self._log("没有骰子了 -> STOP")
@@ -461,8 +453,18 @@ class CaravanGame:
                 self.state = eState.MOVE
                 return
 
+            if self.candidate_shop_lineup:
+                self._log(f"商店开启 -> SHOP_BUY")
+                self.state = eState.SHOP_BUY
+                return
+
             if self.action_bit_flag & eFlag.IS_PROGRESS_TURN:
                 self.state = eState.TURN_END
+                return
+
+            if self.caravan_play_until_shop_empty and self.client.data.get_inventory(self.coin_token) >= self.total_coin:
+                self._log(f"商店币{self.client.data.get_inventory(self.coin_token)} > {self.total_coin}，足够搬空商店 -> STOP")
+                self.state = eState.STOP
                 return
 
             if not self.action_bit_flag & eFlag.DISH_USED and self.candidate_dishes:
@@ -503,6 +505,7 @@ class CaravanGame:
                 self.spots = sum(self.spots_list)
                 self._log(f"当前格子 {self.current_block_id}，移动 {self.spots} 步")
                 self.spots_list = []
+            block_skip_type = self.dish_effect_manager.get_effect_influence(eDishEffectType.BLOCK_SKIP_MOVE_COUNT)
             while self.spots > 0:
                 next_blocks = db.caravan_map[self.current_block_id].get_next_blocks()
                 dis = [(nxt, db.caravan_map[nxt].distance_to_goal) for nxt in next_blocks]
@@ -510,6 +513,8 @@ class CaravanGame:
                 self.block_id_list.append(self.current_block_id)
                 if db.caravan_map[self.current_block_id].type == eBlockType.GOAL:
                     break
+                elif db.caravan_map[self.current_block_id].type - 1 == block_skip_type: # 1 -> skip licheng
+                    continue
                 else:
                     self.spots -= 1
 
@@ -539,8 +544,8 @@ class CaravanGame:
                 return
 
             elif block_type == eBlockType.DISH:
-                self._log("料理块 -> TURN_END")
-                self.state = eState.TURN_END
+                self._log("料理块 -> IDLE")
+                self.state = eState.IDLE
                 return
 
             elif block_type == eBlockType.MINI_GAME:
@@ -556,21 +561,21 @@ class CaravanGame:
                 return
 
             elif block_type == eBlockType.TREASURE:
-                self._log("宝箱块 -> TURN_END")
+                self._log("宝箱块 -> IDLE")
                 self.dish_effect_manager.process_effect(eDishEffectType.BLOCK_RANK_UP)
-                self.state = eState.TURN_END
+                self.state = eState.IDLE
                 return
 
             elif block_type == eBlockType.EVENT:
-                self._log("事件块 -> TURN_END")
-                self.state = eState.TURN_END
+                self._log("事件块 -> IDLE")
+                self.state = eState.IDLE
                 return
 
             elif block_type == eBlockType.MILES:
-                self._log("里程块 -> TURN_END")
+                self._log("里程块 -> IDLE")
                 self.dish_effect_manager.process_effect(eDishEffectType.MILE_BLOCK_EFFECT)
                 self.dish_effect_manager.process_effect(eDishEffectType.BLOCK_RANK_UP)
-                self.state = eState.TURN_END
+                self.state = eState.IDLE
                 return
 
             elif block_type == eBlockType.GOAL:
@@ -585,8 +590,8 @@ class CaravanGame:
                 return
 
             elif block_type == eBlockType.LOTTERY:
-                self._log("抽奖块 -> TURN_END")
-                self.state = eState.TURN_END
+                self._log("抽奖块 -> IDLE")
+                self.state = eState.IDLE
                 return
 
             else:
@@ -643,7 +648,8 @@ class CaravanGame:
                 self._log(f"购买了{await self.client.serialize_reward_summary(shop_resp.purchase_list or [])}")
                 self.client.data.set_inventory((eInventoryType.CaravanItem, 99007), self.licheng_point - cost)
 
-            self.state = eState.TURN_END
+            self.candidate_shop_lineup = []
+            self.state = eState.IDLE
 
         elif self.state == eState.USE_DISH:
             if not self.action_bit_flag & eFlag.DISH_USED and self.candidate_dishes:
@@ -653,11 +659,13 @@ class CaravanGame:
                     dish_to_use = next((dish_id for dish_id, stock in self.candidate_dishes.items() if stock > 0 and db.caravan_dish[dish_id].category == category), None)
                     if dish_to_use is None:
                         continue
+                    self.used_dish_id = dish_to_use
                     self._log(f"使用料理：{db.caravan_dish[dish_to_use].name}，效果：{db.caravan_dish[dish_to_use].get_effect_desc()}")
                     use_resp = await self.client.caravan_dish_use(
                         season_id=self.season_id,
                         dish_id=dish_to_use
                     )
+                    self.candidate_shop_lineup = use_resp.shop_block_lineup_list or []
                     self.dish_effect_manager.append(CaravanDishEffectData(id=dish_to_use, effect_turn=db.caravan_dish[dish_to_use].effect_turn, effect_count=db.caravan_dish[dish_to_use].effect_times))
                     self.candidate_dishes[dish_to_use] -= 1
                     await self.check_dishes_full(use_resp.surplus_dish_list)
@@ -676,7 +684,7 @@ class CaravanGame:
                     items=items
                 )
                 self._log(f"完成小游戏，总分={finish_resp.total_score_corrected}")
-            self.state = eState.TURN_END
+            self.state = eState.IDLE
 
         elif self.state == eState.GACHA:
             if self.action_bit_flag & eFlag.BLOCK_EFFECT:
@@ -702,7 +710,7 @@ class CaravanGame:
                 await self.check_dishes_full(gacha_resp.surplus_dish_list)
                 self._log(f"抽卡结果：{await self.client.serialize_reward_summary(gacha_resp.reward_list or [])}")
                 self.client.data.set_inventory((eInventoryType.CaravanItem, 99007), self.licheng_point - cost)
-            self.state = eState.TURN_END
+            self.state = eState.IDLE
 
         elif self.state == eState.TURN_END:
             if self.action_bit_flag & eFlag.IS_PROGRESS_TURN:
@@ -710,16 +718,24 @@ class CaravanGame:
                     season_id=self.season_id,
                     turn=self.turn_count
                 )
-                self.turn_count = progress_resp.turn
-
                 self.dish_effect_manager.process_effect_turn()
                 self.event_effect_manager.process_effect_turn()
+                self.used_dish_id = None
 
                 await self.check_dishes_full(progress_resp.surplus_dish_list)
                 self.candidate_dishes += Counter() # remove zero dishes
                 self.action_bit_flag = 0
 
                 self._log(f"回合结算完成")
+
+                self.turn_count = progress_resp.turn
+
+                self._log(f"当前格子 {self.current_block_id}, 检查点距离 {db.caravan_map[self.current_block_id].distance_to_goal}, 料理数量 {self.dish_cnt}")
+                if not self.dish_effect_manager.empty():
+                    self._log(f"料理效果列表\n{self.dish_effect_manager.get_effect_desc()}")
+                if not self.event_effect_manager.empty():
+                    self._log(f"事件效果列表\n{self.event_effect_manager.get_effect_desc()}")
+
             self.state = eState.IDLE
 
         elif self.state == eState.STOP:
@@ -754,6 +770,8 @@ class caravan_shop_buy(Module):
         season_id = top.season_id
         if self.get_config('caravan_shop_last_season'):
             season_id -= 1
+        elif top.action_bit_flag & eFlag.IS_PROGRESS_TURN:
+            raise AbortError("请先执行大富翁进行回合结算")
         if season_id not in db.caravan_schedule:
             raise AbortError(f"赛季 {season_id} 不存在")
         if client.datetime > db.parse_time(db.caravan_schedule[season_id].shop_close_time):

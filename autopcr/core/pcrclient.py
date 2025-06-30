@@ -198,6 +198,12 @@ class pcrclient(apiclient):
         req.current_currency_num = TravelCurrentCurrencyNum(jewel = self.data.jewel.free_jewel + self.data.jewel.jewel, item = self.data.get_inventory(db.travel_speed_up_paper))
         return await self.request(req)
 
+    async def travel_result_round_event(self, round: int, select_door_id: int):
+        req = TravelResultRoundEventRequest()
+        req.round = round
+        req.select_door_id = select_door_id
+        return await self.request(req)
+
     async def travel_receive_top_event_reward(self, top_event_appear_id: int, choice_number: int):
         req = TravelReceiveTopEventRewardRequest()
         req.top_event_appear_id = top_event_appear_id
@@ -754,6 +760,8 @@ class pcrclient(apiclient):
         return await self.request(req)
 
     async def get_tower_top(self):
+        if not self.data.is_quest_cleared(11009001):
+            raise SkipError("未解锁露娜塔")
         req = TowerTopRequest()
         req.is_first = 1
         req.return_cleared_ex_quest = 0
@@ -844,7 +852,12 @@ class pcrclient(apiclient):
         req = HatsuneQuestTopRequest()
         req.event_id = event
         return await self.request(req)
-    
+
+    async def present_receive(self, present_id: int):
+        req = PresentReceiveSingleRequest()
+        req.present_id = present_id
+        return await self.request(req)
+
     async def present_receive_all(self, is_exclude_stamina: bool):
         req = PresentReceiveAllRequest()
         req.time_filter = -1

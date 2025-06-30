@@ -11,7 +11,7 @@ from ...model.enums import *
 from ...util.questutils import *
 import asyncio
 
-@description('仅开启时生效，氪体数优先级n4>n3>h3>vh3>n2>h2>vh2，禅模式指不执行体力相关的功能，仅在清日常生效，单项执行将忽略。庆典包括其倍数')
+@description('仅开启时生效，氪体数优先级n4>n3>h3>vh3>n2>h2>vh2，禅模式指不执行体力相关的功能，仅在清日常生效，单项执行将忽略。庆典包括其倍数，加速期间的所有倍数判断均x2')
 @name("全局配置")
 @default(True)
 @inttype('sweep_recover_stamina_times', "平时氪体数", 0, [i for i in range(41)])
@@ -204,28 +204,25 @@ class seasonpass_reward(Module):
             else:
                 raise SkipError("没有可领取的女神祭奖励")
 
-@singlechoice("present_receive_strategy", "领取策略", "非体力", ["非体力", "全部"])
-@description('领取符合条件的所有礼物箱奖励')
+@singlechoice("present_receive_stamina_strategy", "体力", "不领取", ["所有", "有限期", "一天到期", "不领取"])
+@description('领取非体力的所有东西以及符合条件的体力')
 @name('领取礼物箱')
 @default(True)
 @tag_stamina_get
 class present_receive(Module):
     async def do_task(self, client: pcrclient):
-        if self.get_config('present_receive_strategy') == "非体力":
-            is_exclude_stamina = True
-            op = "领取了非体力物品：\n"
-        else:
-            is_exclude_stamina = False
-            op = "领取了所有物品：\n"
         received = False
         result = []
         stop = False
+        present_strategy = self.get_config('present_receive_stamina_strategy')
         while not stop:
+            is_exclude_stamina = False if present_strategy == "所有" else True
             present = await client.present_index()
             for present in present.present_info_list:
                 if not is_exclude_stamina or not (present.reward_type == eInventoryType.Stamina and present.reward_id == 93001):
                     res = await client.present_receive_all(is_exclude_stamina)
                     if not res.rewards:
+                        self._warn("体力满了，无法领取礼物箱的体力")
                         stop = True
                     else:
                         result += res.rewards
@@ -234,11 +231,29 @@ class present_receive(Module):
             else:
                 stop = True
 
-        if not received:
-            raise SkipError(f"不存在未领取{'的非体力的' if is_exclude_stamina == True else '的'}礼物")
-        msg = await client.serialize_reward_summary(result)
-        self._log(op + msg)
+        if present_strategy != "所有" and present_strategy != "不领取":
+            stop = False
+            limit_stamina = present_strategy == "有限期"
+            while not stop:
+                present = await client.present_index()
+                for present in present.present_info_list:
+                    if present.reward_type == eInventoryType.Stamina and present.reward_id == 93001 \
+                    and present.reward_limit_flag \
+                    and (limit_stamina or present.reward_limit_time <= apiclient.time + 24 * 3600):
+                        res = await client.present_receive(present.present_id)
+                        if not res.rewards:
+                            self._warn("体力满了，无法继续领取礼物箱的体力")
+                            stop = True
+                            break
+                        else:
+                            stop = False
+                else:
+                    stop = True
 
+        if not received:
+            raise SkipError(f"不存在未领取礼物")
+        msg = await client.serialize_reward_summary(result)
+        self._log(f"领取了礼物箱，获得了:\n{msg}")
 
 @description('领取jjc和pjjc的币')
 @name('领取双场币')

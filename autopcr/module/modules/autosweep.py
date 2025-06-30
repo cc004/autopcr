@@ -14,6 +14,7 @@ from ...core.apiclient import apiclient
 @conditional_execution1("normal_sweep_run_time", ["n庆典"])
 @singlechoice("normal_sweep_strategy", "刷取策略", "刷最缺", ["刷最缺", "均匀刷"])
 @singlechoice("normal_sweep_quest_scope", "刷取图", "全部", ["全部", "可扫荡", "新开图"])
+@booltype("normal_sweep_full_ok_stop", "刷完所有角色停止", False)
 @booltype("normal_sweep_equip_ok_to_full", "刷满则考虑所有角色", False)
 @singlechoice("normal_sweep_consider_unit", "起始品级", "所有", ["所有", "最高", "次高", "次次高"])
 @booltype("normal_sweep_consider_unit_fav", "收藏角色", True)
@@ -53,6 +54,7 @@ class smart_normal_sweep(Module):
         strategy: str = self.get_config('normal_sweep_strategy')
         full2all: bool = self.get_config('normal_sweep_equip_ok_to_full')
         quest_scope: str = self.get_config('normal_sweep_quest_scope')
+        full2stop: bool = self.get_config('normal_sweep_full_ok_stop')
         opt: Dict[Union[int, str], int] = {
             '所有': 1,
             '最高': db.equip_max_rank,
@@ -92,6 +94,12 @@ class smart_normal_sweep(Module):
                                 demand = all_demand
                                 gap = client.data.get_demand_gap(demand, lambda x: db.is_equip(x))
                                 self._log("考虑所有角色的需求装备")
+
+                                if all(gap[item] <= 0 for item in gap):
+                                    self._log("所有角色的需求装备均已盈余")
+                                    if full2stop:
+                                        self._log("停止刷图")
+                                        break
 
                     quest_weight = client.data.get_quest_weght(gap)
                     quest_id = sorted(quest_list, key = lambda x: quest_weight[x], reverse = True)
@@ -176,18 +184,20 @@ class simple_demand_sweep_base(Module):
                 raise SkipError()
 
 
+@singlechoice('hard_sweep_gap_limit', "盈余阈值", 10, [0, 5, 10])
 @conditional_execution1("hard_sweep_run_time", ["h庆典"])
 @singlechoice('hard_sweep_consider_unit_order', "刷取顺序", "缺口少优先", ["缺口少优先", "缺口大优先"])
 @booltype('hard_sweep_consider_high_rarity_first', "三星角色优先", False)
-@description('根据记忆碎片缺口刷hard图，不包括外传')
+@description('根据记忆碎片缺口刷hard图，不包括外传，直到盈余超过阈值')
 @name('智能刷hard图')
 @default(False)
 @tag_stamina_consume
 class smart_hard_sweep(simple_demand_sweep_base):
 
     async def get_need_list(self, client: pcrclient) -> List[Tuple[ItemType, int]]:
+        gap_limit = self.get_config('hard_sweep_gap_limit')
         need_list = client.data.get_memory_demand_gap()
-        need_list = [(token, need) for token, need in need_list.items() if need > 0]
+        need_list = [(token, need) for token, need in need_list.items() if need > -gap_limit]
         if not need_list:
             raise SkipError("所有记忆碎片均已盈余")
         reverse = -1 if self.get_config('hard_sweep_consider_unit_order') == '缺口大优先' else 1
@@ -204,17 +214,19 @@ class smart_hard_sweep(simple_demand_sweep_base):
     def get_max_times(self, client: pcrclient, quest_id: int) -> int:
         return 3
 
+@singlechoice('shiori_sweep_gap_limit', "盈余阈值", 10, [0, 5, 10])
 @conditional_execution1("shiori_sweep_run_time", ["无庆典"])
 @singlechoice('shiori_sweep_consider_unit_order', "刷取顺序", "缺口少优先", ["缺口少优先", "缺口大优先"])
-@description('根据记忆碎片缺口刷外传图')
+@description('根据记忆碎片缺口刷外传图，直到盈余超过阈值')
 @name('智能刷外传图')
 @default(False)
 @tag_stamina_consume
 class smart_shiori_sweep(simple_demand_sweep_base):
 
     async def get_need_list(self, client: pcrclient) -> List[Tuple[ItemType, int]]:
+        gap_limit = self.get_config('shiori_sweep_gap_limit')
         need_list = client.data.get_memory_demand_gap()
-        need_list = [(token, need) for token, need in need_list.items() if need > 0]
+        need_list = [(token, need) for token, need in need_list.items() if need > -gap_limit]
         if not need_list:
             raise SkipError("所有记忆碎片均已盈余")
         reverse = -1 if self.get_config('shiori_sweep_consider_unit_order') == '缺口大优先' else 1
@@ -372,6 +384,8 @@ class DIY_sweep(Module):
                 f": 刷取{cnt}次" for quest, cnt in clean_cnt.items())
                 self._log(msg)
                 self._log("---------")
+        else:
+            self._log("需刷取的图均无次数")
         if result:
             self._log(await client.serialize_reward_summary(result))
 

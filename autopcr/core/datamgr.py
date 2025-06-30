@@ -123,8 +123,8 @@ class datamgr(BaseModel, Component[apiclient]):
         if not times:
             return 0
         times = max(times)
-        return int(times)
-        # return int(times) // 2 # TODO delete // 2 when stop speed up
+        # return int(times)
+        return int(times) // 2 # TODO delete // 2 when stop speed up
 
     def get_heart_piece_campaign_times(self) -> int:
         return self.get_campaign_times(db.is_heart_piece_campaign) // 1000
@@ -443,7 +443,12 @@ class datamgr(BaseModel, Component[apiclient]):
         return [item for item in self.inventory if filter(item) and self.inventory[item] > 0]
 
     def get_inventory(self, item: ItemType) -> int:
-        return self.inventory.get(item, 0)
+        if item == db.mana:
+            return self.gold.gold_id_free + self.gold.gold_id_pay
+        elif item == db.jewel:
+            return self.jewel.free_jewel + self.jewel.jewel
+        else:
+            return self.inventory.get(item, 0)
 
     def set_inventory(self, item: ItemType, value: int):
         self.inventory[item] = value
