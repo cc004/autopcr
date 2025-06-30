@@ -239,7 +239,7 @@ class present_receive(Module):
                 for present in present.present_info_list:
                     if present.reward_type == eInventoryType.Stamina and present.reward_id == 93001 \
                     and present.reward_limit_flag \
-                    and (limit_stamina or present.reward_limit_time <= apiclient.time() + 24 * 3600):
+                    and (limit_stamina or present.reward_limit_time <= apiclient.time + 24 * 3600):
                         res = await client.present_receive(present.present_id)
                         if not res.rewards:
                             self._warn("体力满了，无法继续领取礼物箱的体力")
