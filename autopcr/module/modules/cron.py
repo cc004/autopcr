@@ -27,7 +27,7 @@ class CronModule(Module):
 
 class NormalCronModule(CronModule):
     def get_clanbattle_run_status(self) -> bool: ...
-    def get_module_exclude_type(self) -> bool: ...
+    def get_module_exclude_type(self) -> List[str]: ...
 
     async def is_cron_condition(self) -> bool:
         is_clan_battle_run = self.get_clanbattle_run_status()
@@ -37,9 +37,9 @@ class NormalCronModule(CronModule):
     async def update_client(self, client: pcrclient):
         await super().update_client(client)
         module_exclude_type = self.get_module_exclude_type()
-        if module_exclude_type == '体力获取':
+        if "体力获取" in module_exclude_type:
             client.set_stamina_get_not_run()
-        elif module_exclude_type == '体力消耗':
+        if "体力消耗" in module_exclude_type:
             client.set_stamina_consume_not_run()
 
 
@@ -55,7 +55,7 @@ class cron1(NormalCronModule):
         return self.get_config("time_cron1")
     def get_clanbattle_run_status(self) -> bool:
         return self.get_config("clanbattle_run_cron1")
-    def get_module_exclude_type(self) -> str:
+    def get_module_exclude_type(self) -> List[str]:
         return self.get_config("module_exclude_type_cron1")
 
 @multichoice("module_exclude_type_cron2", "不执行日常模块", [], ['体力获取', '体力消耗'])
@@ -70,7 +70,7 @@ class cron2(NormalCronModule):
         return self.get_config("time_cron2")
     def get_clanbattle_run_status(self) -> bool:
         return self.get_config("clanbattle_run_cron2")
-    def get_module_exclude_type(self) -> str:
+    def get_module_exclude_type(self) -> List[str]:
         return self.get_config("module_exclude_type_cron2")
 
 
@@ -86,7 +86,7 @@ class cron3(NormalCronModule):
         return self.get_config("time_cron3")
     def get_clanbattle_run_status(self) -> bool:
         return self.get_config("clanbattle_run_cron3")
-    def get_module_exclude_type(self) -> str:
+    def get_module_exclude_type(self) -> List[str]:
         return self.get_config("module_exclude_type_cron3")
 
 @multichoice("module_exclude_type_cron4", "不执行日常模块", [], ['体力获取', '体力消耗'])
@@ -101,7 +101,7 @@ class cron4(NormalCronModule):
         return self.get_config("time_cron4")
     def get_clanbattle_run_status(self) -> bool:
         return self.get_config("clanbattle_run_cron4")
-    def get_module_exclude_type(self) -> str:
+    def get_module_exclude_type(self) -> List[str]:
         return self.get_config("module_exclude_type_cron4")
 
 @conditional_execution2('run_condition_cron5', [], desc='执行庆典', check=False)
