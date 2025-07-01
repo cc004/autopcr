@@ -1027,6 +1027,14 @@ class database():
             )
 
     @lazy_property
+    def colosseum_schedule_data(self) -> Dict[int, ColosseumScheduleDatum]:
+        with self.dbmgr.session() as db:
+            return (
+                ColosseumScheduleDatum.query(db)
+                .to_dict(lambda x: x.schedule_id, lambda x: x)
+            )
+
+    @lazy_property
     def tower_schedule(self) -> Dict[int, TowerSchedule]:
         with self.dbmgr.session() as db:
             return (
