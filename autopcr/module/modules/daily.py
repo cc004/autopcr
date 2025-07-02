@@ -217,12 +217,15 @@ class present_receive(Module):
         present_strategy = self.get_config('present_receive_stamina_strategy')
         while not stop:
             is_exclude_stamina = False if present_strategy == "所有" else True
-            present = await client.present_index()
-            for present in present.present_info_list:
+            present_index = await client.present_index()
+            for present in present_index.present_info_list:
                 if not is_exclude_stamina or not (present.reward_type == eInventoryType.Stamina and present.reward_id == 93001):
                     res = await client.present_receive_all(is_exclude_stamina)
                     if not res.rewards:
-                        self._warn("体力满了，无法领取礼物箱的体力")
+                        if not is_exclude_stamina and any(present.reward_type == eInventoryType.Stamina and present.reward_id == 93001 for present in present_index.present_info_list):
+                            self._warn("体力满了，无法领取礼物箱的体力")
+                        if any(db.is_ex_equip((present.reward_type, present.reward_id)) for present in present_index.present_info_list):
+                            self._warn("EX装备满了，无法领取礼物箱的EX装备")
                         stop = True
                     else:
                         result += res.rewards
