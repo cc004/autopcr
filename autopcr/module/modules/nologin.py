@@ -143,6 +143,18 @@ class TowerSchedule(ISchedule):
 class TdfSchedule(ISchedule):
     description = "次元断层"
 
+class ColosseumScheduleData(ISchedule):
+    description = "斗技场"
+
+class CaravanSchedule(ISchedule):
+    description = "驾车游"
+    def __init__(self, season_id: int, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.season_id = season_id
+
+    def get_description(self) -> str:
+        return f"驾车游第{self.season_id}季"
+
 class CharaFortuneSchedule(ISchedule):
     def __init__(self, name: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -177,6 +189,8 @@ class half_schedule(Module):
         (db.tdf_schedule, lambda x: TdfSchedule(x.start_time, x.end_time, "次元断层")),
         (db.chara_fortune_schedule, lambda x: CharaFortuneSchedule(x.name, x.start_time, x.end_time, "赛马")),
         (db.login_bonus_data, lambda x: LoginBonusDatum(x.name, x.start_time, x.end_time, "登录奖励")),
+        (db.colosseum_schedule_data, lambda x: ColosseumScheduleData(x.start_time, x.end_time, "斗技场")),
+        (db.caravan_schedule, lambda x: CaravanSchedule(x.season_id, x.start_time, x.end_time, "驾车游")),
     ]
     async def do_task(self, _: pcrclient):
         schedules = defaultdict(list)

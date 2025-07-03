@@ -444,11 +444,6 @@ class CaravanGame:
 
         if self.state == eState.IDLE:
 
-            if self.dice_point <= 0:
-                self._log("没有骰子了 -> STOP")
-                self.state = eState.STOP
-                return
-
             if self.spots:
                 self.state = eState.MOVE
                 return
@@ -460,6 +455,11 @@ class CaravanGame:
 
             if self.action_bit_flag & eFlag.IS_PROGRESS_TURN:
                 self.state = eState.TURN_END
+                return
+
+            if self.dice_point <= 0:
+                self._log("没有骰子了 -> STOP")
+                self.state = eState.STOP
                 return
 
             if self.caravan_play_until_shop_empty and self.client.data.get_inventory(self.coin_token) >= self.total_coin:
@@ -770,7 +770,7 @@ class caravan_shop_buy(Module):
         season_id = top.season_id
         if self.get_config('caravan_shop_last_season'):
             season_id -= 1
-        elif top.action_bit_flag & eFlag.IS_PROGRESS_TURN:
+        if top.action_bit_flag & eFlag.IS_PROGRESS_TURN:
             raise AbortError("请先执行大富翁进行回合结算")
         if season_id not in db.caravan_schedule:
             raise AbortError(f"赛季 {season_id} 不存在")

@@ -1027,6 +1027,14 @@ class database():
             )
 
     @lazy_property
+    def colosseum_schedule_data(self) -> Dict[int, ColosseumScheduleDatum]:
+        with self.dbmgr.session() as db:
+            return (
+                ColosseumScheduleDatum.query(db)
+                .to_dict(lambda x: x.schedule_id, lambda x: x)
+            )
+
+    @lazy_property
     def tower_schedule(self) -> Dict[int, TowerSchedule]:
         with self.dbmgr.session() as db:
             return (
@@ -1903,7 +1911,7 @@ class database():
 
     def get_unique_equip_level_from_pt(self, equip_slot: int, enhancement_pt: int) -> int:
         histort_level = [star for star, enhancement_data in self.unique_equipment_enhance_data[equip_slot].items() if enhancement_data.total_point <= enhancement_pt]
-        level = max([1] + histort_level)
+        level = max(histort_level) if histort_level else 1
         return level
 
     def get_unique_equip_max_level_from_rank(self, equip_slot: int, rank: int) -> int:
