@@ -696,7 +696,7 @@ class unit_promote_batch(UnitController):
 class unit_memory_buy(UnitController):
     async def do_task(self, client: pcrclient):
         self.client = client
-        self.unit_id = int(self.get_config('unit_memory_buy_unit').split(':')[0])
+        self.unit_id = self.get_config('unit_memory_buy_unit')
         do_buy = bool(self.get_config('unit_memory_do_buy'))
         star = int(self.get_config('unit_memory_unit_star'))
         exceed_state = bool(self.get_config('unit_memory_unit_exceed_state'))
