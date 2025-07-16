@@ -609,6 +609,11 @@ class pcrclient(apiclient):
         await self.story_check(story_id)
         return await self.story_view(story_id)
 
+    async def read_wtm_story(self, sub_story_id: int):
+        req = SubStoryWtmReadStoryRequest()
+        req.sub_story_id = sub_story_id
+        await self.request(req)
+
     async def read_wts_story(self, sub_story_id: int):
         req = SubStoryWtsReadStoryRequest()
         req.sub_story_id = sub_story_id

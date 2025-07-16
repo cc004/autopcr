@@ -49,6 +49,8 @@ class search_unit(Module):
             read_storys = len([str(story.story_id) for story in db.unit_story if story.story_group_id == unit // 100 and story.story_id in read_story])
             not_read_storys = len([str(story.story_id) for story in db.unit_story if story.story_group_id == unit // 100 and story.story_id not in read_story])
             info.append("未实装" if not unitinfo.unique_equip_slot else "无" if not unitinfo.unique_equip_slot[0].is_slot else unitinfo.unique_equip_slot[0].enhancement_level)
+            if len(unitinfo.unique_equip_slot) > 1:
+                info.append("无" if not unitinfo.unique_equip_slot[1].is_slot else f"{unitinfo.unique_equip_slot[1].enhancement_level}星") 
 
             ex_equip = []
             for cb_ex in unitinfo.cb_ex_equip_slot:
@@ -64,6 +66,7 @@ class search_unit(Module):
             kizuna_unit = set()
             for story in db.chara2story[unit]:
                 kizuna_unit |= set(story.get_effect_unit_ids())
+
             love = []
             for other in kizuna_unit:
                 if other not in db.unlock_unit_condition: continue
