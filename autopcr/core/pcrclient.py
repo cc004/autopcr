@@ -75,6 +75,11 @@ class pcrclient(apiclient):
         req.unit_id = unit_id
         return await self.request(req)
 
+    async def unit_equip_ex(self, ex_equip_change_unit_list: List[ExtraEquipChangeUnit]):
+        req = UnitEquipExRequest()
+        req.ex_equip_change_unit_list = ex_equip_change_unit_list
+        return await self.request(req)
+
     async def caravan_top(self):
         req = CaravanTopRequest()
         req.is_first = 1

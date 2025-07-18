@@ -7,6 +7,7 @@ from .caravan import *
 from .clan import *
 from .cron import *
 from .daily import *
+from .exequip import *
 from .gacha import *
 from .hatsune import *
 from .room import *
@@ -200,6 +201,7 @@ tool_modules = ModuleList(
         missing_emblem,
         get_clan_support_unit,
         clear_my_party,
+        remove_cb_ex_equip,
         remove_cb_support,
         redeem_unit_swap,
     ]
