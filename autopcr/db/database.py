@@ -1361,6 +1361,17 @@ class database():
             )
 
     @lazy_property
+    def ex_equipment_rankup_data(self) -> Dict[int, Dict[int, ExEquipmentRankupDatum]]:
+        with self.dbmgr.session() as db:
+            return (
+                ExEquipmentRankupDatum.query(db)
+                .group_by(lambda x: x.rarity)
+                .to_dict(lambda x: x.key, lambda x: 
+                    x.to_dict(lambda x: x.rankup_level, lambda x: x)
+                )
+            )
+
+    @lazy_property
     def unit_ex_equipment_slot(self) -> Dict[int, UnitExEquipmentSlot]:
         with self.dbmgr.session() as db:
             return (
@@ -1477,8 +1488,17 @@ class database():
     def get_ex_equip_rarity(self, id: int) -> int:
         return self.ex_equipment_data[id].rarity
 
+    def get_ex_equip_max_rank(self, id: int) -> int:
+        return max(self.ex_equipment_rankup_data[self.get_ex_equip_rarity(id)].keys(), default=0)
+
     def get_ex_equip_rarity_name(self, id: int) -> str:
         return self.ex_rarity_name[self.get_ex_equip_rarity(id)]
+
+    def get_ex_equip_rankup_cost(self, id: int, start_rank: int, end_rank: int) -> int:
+        rarity = self.get_ex_equip_rarity(id)
+        if rarity not in self.ex_equipment_rankup_data:
+            return 0
+        return sum((self.ex_equipment_rankup_data[rarity][rank].consume_gold for rank in self.ex_equipment_rankup_data[rarity] if start_rank < rank <= end_rank), 0)
 
     def get_inventory_name(self, item: InventoryInfo) -> str:
         try:

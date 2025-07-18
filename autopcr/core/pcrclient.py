@@ -80,6 +80,20 @@ class pcrclient(apiclient):
         req.ex_equip_change_unit_list = ex_equip_change_unit_list
         return await self.request(req)
 
+    async def equipment_rankup_ex(self, serial_id: int, unit_id: int, frame: int, slot: int, before_rank: int, after_rank: int, consume_gold: int, from_view: int, item_list: List[InventoryInfoPost], consume_ex_serial_id_list: List[int]):
+        req = EquipmentRankupExRequest()
+        req.serial_id = serial_id
+        req.unit_id = unit_id
+        req.frame = frame
+        req.slot = slot
+        req.before_rank = before_rank
+        req.after_rank = after_rank
+        req.consume_gold = consume_gold
+        req.from_view = from_view
+        req.item_list = item_list
+        req.consume_ex_serial_id_list = consume_ex_serial_id_list
+        return await self.request(req)
+
     async def caravan_top(self):
         req = CaravanTopRequest()
         req.is_first = 1

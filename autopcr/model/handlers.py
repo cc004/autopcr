@@ -1073,6 +1073,34 @@ class GachaExchangePointResponse(responses.GachaExchangePointResponse):
             for item in self.reward_info_list:
                 mgr.update_inventory(item)
 
+@handles
+class UnitEquipExResponse(responses.UnitEquipExResponse):
+    async def update(self, mgr: datamgr, request):
+        for unit_slot_info in request.ex_equip_change_unit_list:
+            for ex_equip in unit_slot_info.ex_equip_slot or []:
+                for id, _ in enumerate(mgr.unit[unit_slot_info.unit_id].ex_equip_slot):
+                    if mgr.unit[unit_slot_info.unit_id].ex_equip_slot[id].serial_id == ex_equip.serial_id:
+                        mgr.unit[unit_slot_info.unit_id].ex_equip_slot[id] = ex_equip
+                        break
+
+            for ex_equip in unit_slot_info.cb_ex_equip_slot or []:
+                for id, _ in enumerate(mgr.unit[unit_slot_info.unit_id].cb_ex_equip_slot):
+                    if mgr.unit[unit_slot_info.unit_id].cb_ex_equip_slot[id].serial_id == ex_equip.serial_id:
+                        mgr.unit[unit_slot_info.unit_id].cb_ex_equip_slot[id] = ex_equip
+                        break
+
+@handles
+class EquipmentRankupExResponse(responses.EquipmentRankupExResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        for ex_serial_id in request.consume_ex_serial_id_list:
+            mgr.ex_equips.pop(ex_serial_id, None)
+        mgr.ex_equips[request.serial_id].rank += len(request.consume_ex_serial_id_list)
+
 # 菜 就别玩
 def custom_dict(self, *args, **kwargs):
     original_dict = super(TravelStartRequest, self).dict(*args, **kwargs)
@@ -1105,3 +1133,14 @@ field = ModelField.infer(
 )
 CaravanCoinShopData.__fields__['season_id'] = field
 setattr(CaravanCoinShopData, 'season_id', None)
+
+ExtraEquipSlot.__annotations__['slot'] = Optional[int]
+field = ModelField.infer(
+    name='slot',
+    value=None,
+    annotation=int,
+    class_validators=None,
+    config=ExtraEquipSlot.__config__,
+)
+ExtraEquipSlot.__fields__['slot'] = field
+setattr(ExtraEquipSlot, 'slot', None)

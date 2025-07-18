@@ -91,6 +91,16 @@ class flow(Iterator[T], Generic[T]):
             return next(self.iterable)
         return next(self.where(func).iterable)
 
+    def _take(self, count: int) -> Iterator[T]:
+        try:
+            for _ in range(count):
+                yield next(self.iterable)
+        except StopIteration:
+            pass
+    
+    def take(self, count: int) -> 'flow[T]':
+        return flow(self._take(count))
+
     def _zip(self, other: Iterable[T2]) -> Iterator[Tuple[T, T2]]:
         other_iter = iter(other)
         for item in self.iterable:
