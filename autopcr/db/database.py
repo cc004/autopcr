@@ -53,6 +53,7 @@ class database():
     travel_speed_up_paper: ItemType = (eInventoryType.Item, 23002)
     gacha_single_ticket: ItemType = (eInventoryType.Item, 24001)
     dice: ItemType = (eInventoryType.Item, 99009)
+    ex_pt: ItemType = (eInventoryType.Item, 26201)
 
     def update(self, dbmgr):
         self.dbmgr = dbmgr
@@ -1395,6 +1396,17 @@ class database():
             )
 
     @lazy_property
+    def ex_equipment_enhance_max_star_by_rank(self) -> Dict[int, Dict[int, int]]:
+        with self.dbmgr.session() as db:
+            return (
+                ExEquipmentEnhanceDatum.query(db)
+                .group_by(lambda x: x.rarity)
+                .to_dict(lambda x: x.key,
+                         lambda x: x.group_by(lambda y: y.rankup_level)
+                         .to_dict(lambda y: y.key, lambda y: y.max(lambda z: z.enhance_level).enhance_level))
+            )
+
+    @lazy_property
     def ex_event_data(self) -> Dict[int, TravelExEventDatum]:
         with self.dbmgr.session() as db:
             return (
@@ -1484,6 +1496,23 @@ class database():
         history_star = [star for star, enhancement_data in self.ex_equipment_enhance_data[rarity].items() if enhancement_data.total_point <= pt]
         star = max([0] + history_star)
         return star
+
+    def get_ex_equip_enhance_pt(self, id: int, pt: int, star: int) -> int:
+        rarity = self.get_ex_equip_rarity(id)
+        return self.ex_equipment_enhance_data[rarity][star].total_point - pt
+
+    def get_ex_equip_enhance_mana(self, id: int, pt: int, star: int) -> int:
+        rarity = self.get_ex_equip_rarity(id)
+        now_star = self.get_ex_equip_star_from_pt(id, pt)
+        mana = 0
+        for s in range(now_star + 1, star + 1):
+            mana += self.ex_equipment_enhance_data[rarity][s].needed_mana * (self.ex_equipment_enhance_data[rarity][s].total_point - pt)
+            pt = self.ex_equipment_enhance_data[rarity][s].total_point
+        return mana
+
+    def get_ex_equip_max_star(self, id: int, rank: int) -> int:
+        rarity = self.get_ex_equip_rarity(id)
+        return self.ex_equipment_enhance_max_star_by_rank[rarity][rank]
 
     def get_ex_equip_rarity(self, id: int) -> int:
         return self.ex_equipment_data[id].rarity

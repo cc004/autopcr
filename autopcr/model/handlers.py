@@ -1099,7 +1099,19 @@ class EquipmentRankupExResponse(responses.EquipmentRankupExResponse):
             mgr.gold = self.user_gold
         for ex_serial_id in request.consume_ex_serial_id_list:
             mgr.ex_equips.pop(ex_serial_id, None)
-        mgr.ex_equips[request.serial_id].rank += len(request.consume_ex_serial_id_list)
+        mgr.ex_equips[request.serial_id].rank = request.after_rank
+
+@handles
+class EquipmentEnhanceExResponse(responses.EquipmentEnhanceExResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        for ex_serial_id in request.consume_ex_serial_id_list:
+            mgr.ex_equips.pop(ex_serial_id, None)
+        mgr.ex_equips[request.serial_id].enhancement_pt = request.after_enhancement_pt
 
 # 菜 就别玩
 def custom_dict(self, *args, **kwargs):

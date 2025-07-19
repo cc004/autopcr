@@ -92,12 +92,12 @@ class flow(Iterator[T], Generic[T]):
         return next(self.where(func).iterable)
 
     def _take(self, count: int) -> Iterator[T]:
-        try:
-            for _ in range(count):
-                yield next(self.iterable)
-        except StopIteration:
-            pass
-    
+        for i, item in enumerate(self.iterable):
+            if i < count:
+                yield item
+            else:
+                break
+
     def take(self, count: int) -> 'flow[T]':
         return flow(self._take(count))
 
