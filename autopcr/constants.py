@@ -41,7 +41,7 @@ DEFAULT_HEADERS = {
     'BATTLE-LOGIC-VERSION': '4',
     'BUNDLE-VER': '',
     'DEVICE': '2',
-    'DEVICE-ID': uuid4().hex,
+    'DEVICE-ID': str(os.getenv("AUTOPCR_SERVER_DEVICEID", uuid4().hex)),
     'DEVICE-NAME': 'OPPO PCRT00',
     'EXCEL-VER': '1.0.0',
     'GRAPHICS-DEVICE-NAME': 'Adreno (TM) 640',
