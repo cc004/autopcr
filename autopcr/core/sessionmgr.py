@@ -16,7 +16,7 @@ class sessionmgr(Component[apiclient]):
         self.auto_relogin = True
         self._sdkaccount = None
         self.session_expire_time = 0
-        self.id = hashlib.md5( self.sdk.account.encode('utf-8')).hexdigest()
+        self.id = hashlib.md5(self.sdk.account.encode('utf-8')).hexdigest()
         if not os.path.exists(self.cacheDir):
             os.makedirs(self.cacheDir)
 
@@ -79,6 +79,7 @@ class sessionmgr(Component[apiclient]):
             await self.sdk.invoke_post_login()
 
     async def _login(self, next: RequestHandler):
+        self._container._headers['DEVICE-ID'] = self.id
         if os.path.exists(self.cacheFile):
             with open(self.cacheFile, 'r') as fp:
                 self._sdkaccount = json.load(fp)
