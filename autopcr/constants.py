@@ -1,4 +1,5 @@
 import os
+import uuid
 from distutils.util import strtobool
 import logging
 
@@ -24,7 +25,7 @@ ROOT_DIR = os.path.join(os.path.dirname(__file__), '..')
 CACHE_DIR = os.path.join(ROOT_DIR, './cache/')
 RESULT_DIR = os.path.join(ROOT_DIR, './result/')
 DATA_DIR = os.path.join(ROOT_DIR, './data/')
-CONFIG_PATH = os.path.join(CACHE_DIR, './http_server/') 
+CONFIG_PATH = os.path.join(CACHE_DIR, './http_server/')
 OLD_CONFIG_PATH = os.path.join(ROOT_DIR, 'autopcr/http_server/config')
 CLAN_BATTLE_FORBID_PATH = os.path.join(CONFIG_PATH, 'clan_battle_forbidden.txt')
 
@@ -95,5 +96,25 @@ def refresh_headers(version: str = None):
     IOS_HEADERS['APP-VER'] = VERSION
 
 
+def init_device_id():
+    device_config = os.path.join(CACHE_DIR, 'device.txt')
+    if os.path.exists(device_config):
+        with (open(device_config, encoding='utf-8') as fp):
+            device_id = fp.read().strip()
+            ios_device_id = (
+                f"{device_id[0:8]}-{device_id[8:12]}-{device_id[12:16]}-{device_id[16:20]}-{device_id[20:]}"
+                .upper())
+            DEFAULT_HEADERS['DEVICE-ID'] = device_id
+            IOS_HEADERS['DEVICE-ID'] = ios_device_id
+    else:
+        device_id = uuid.uuid4().hex
+        ios_device_id = (f"{device_id[0:8]}-{device_id[8:12]}-{device_id[12:16]}-{device_id[16:20]}-{device_id[20:]}"
+                         .upper())
+        DEFAULT_HEADERS['DEVICE-ID'] = device_id
+        IOS_HEADERS['DEVICE-ID'] = ios_device_id
+        with open(device_config, "w", encoding='utf-8') as fp:
+            print(device_id, file=fp)
 
+
+init_device_id()
 refresh_headers()
