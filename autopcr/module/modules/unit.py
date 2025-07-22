@@ -509,7 +509,7 @@ class UnitController(Module):
             ex_equip_by_ex_id = flow(self.client.data.ex_equips.values()) \
                 .where(lambda ex: ex.serial_id not in use_ex_equip) \
                 .group_by(lambda ex: ex.ex_equipment_id) \
-                .to_dict(lambda ex: ex.key, lambda ex: sorted(ex.to_list(), key=lambda x: (x.rank, x.enhancement_pt)))
+                .to_dict(lambda ex: ex.key, lambda ex: sorted(ex.to_list(), key=lambda x: (-x.enhancement_pt, x.rank)))
 
             for ex_id, star, slot in zip([target_ex1_id, target_ex2_id, target_ex3_id], 
                                           [target_ex1_star, target_ex2_star, target_ex3_star], 
@@ -541,7 +541,7 @@ class UnitController(Module):
                             continue
 
                         target_serial_id = target_ex.serial_id
-                        self._log(f"{self.unit_name}的{slot}号EX装备设置为{db.get_ex_equip_name(ex_id)}")
+                        self._log(f"{self.unit_name}的{slot}号EX装备设置为{db.get_ex_equip_name(ex_id, target_ex.rank)}")
 
                     exchange_list = [ExtraEquipChangeSlot(slot=unit_ex_equip.slot, serial_id=target_serial_id)]
                     await self.client.unit_equip_ex([ExtraEquipChangeUnit(

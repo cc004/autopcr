@@ -1078,16 +1078,10 @@ class UnitEquipExResponse(responses.UnitEquipExResponse):
     async def update(self, mgr: datamgr, request):
         for unit_slot_info in request.ex_equip_change_unit_list:
             for ex_equip in unit_slot_info.ex_equip_slot or []:
-                for id, _ in enumerate(mgr.unit[unit_slot_info.unit_id].ex_equip_slot):
-                    if mgr.unit[unit_slot_info.unit_id].ex_equip_slot[id].serial_id == ex_equip.serial_id:
-                        mgr.unit[unit_slot_info.unit_id].ex_equip_slot[id] = ex_equip
-                        break
+                mgr.unit[unit_slot_info.unit_id].ex_equip_slot[ex_equip.slot - 1].serial_id = ex_equip.serial_id
 
             for ex_equip in unit_slot_info.cb_ex_equip_slot or []:
-                for id, _ in enumerate(mgr.unit[unit_slot_info.unit_id].cb_ex_equip_slot):
-                    if mgr.unit[unit_slot_info.unit_id].cb_ex_equip_slot[id].serial_id == ex_equip.serial_id:
-                        mgr.unit[unit_slot_info.unit_id].cb_ex_equip_slot[id] = ex_equip
-                        break
+                mgr.unit[unit_slot_info.unit_id].cb_ex_equip_slot[ex_equip.slot - 1].serial_id = ex_equip.serial_id
 
 @handles
 class EquipmentRankupExResponse(responses.EquipmentRankupExResponse):
