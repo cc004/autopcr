@@ -1,5 +1,6 @@
 import os
 from distutils.util import strtobool
+from uuid import uuid4
 import logging
 
 SERVER_PORT = int(os.getenv("AUTOPCR_SERVER_PORT", "13200"))
@@ -40,7 +41,7 @@ DEFAULT_HEADERS = {
     'BATTLE-LOGIC-VERSION': '4',
     'BUNDLE-VER': '',
     'DEVICE': '2',
-    'DEVICE-ID': '7b1703a5d9b394e24051d7a5d4818f17',
+    'DEVICE-ID': str(os.getenv("AUTOPCR_SERVER_DEVICEID", uuid4().hex)),
     'DEVICE-NAME': 'OPPO PCRT00',
     'EXCEL-VER': '1.0.0',
     'GRAPHICS-DEVICE-NAME': 'Adreno (TM) 640',
