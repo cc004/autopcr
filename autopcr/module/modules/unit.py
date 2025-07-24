@@ -450,21 +450,9 @@ class UnitController(Module):
             if self.unit.unit_level < target_level:
                 await self.unit_level_up_aware(target_level, growth_limit)
 
-            if self.unit.union_burst and self.unit.union_burst[0].skill_level < target_skill_ub_level:
-                await self.unit_skill_up_aware(eSkillLocationCategory.UNION_BURST_SKILL, lambda: self.unit.union_burst[0], target_skill_ub_level, growth_limit)
-
-            if self.unit.main_skill and self.unit.main_skill[0].skill_level < target_skill_s1_level:
-                await self.unit_skill_up_aware(eSkillLocationCategory.MAIN_SKILL_1, lambda: self.unit.main_skill[0], target_skill_s1_level, growth_limit)
-
-            if len(self.unit.main_skill) > 1 and self.unit.main_skill[1].skill_level < target_skill_s2_level:
-                await self.unit_skill_up_aware(eSkillLocationCategory.MAIN_SKILL_2, lambda: self.unit.main_skill[1], target_skill_s2_level, growth_limit)
-
-            if self.unit.ex_skill and self.unit.ex_skill[0].skill_level < target_skill_ex_level:
-                await self.unit_skill_up_aware(eSkillLocationCategory.EX_SKILL_1, lambda: self.unit.ex_skill[0], target_skill_ex_level, growth_limit)
-
         except Exception as e:
-            self._warn(f"等级技能升级失败: {e}")
-            logger.exception(f"等级技能升级失败: {e}")
+            self._warn(f"等级升级失败: {e}")
+            logger.exception(f"等级升级失败: {e}")
         
         try:
             if self.unit.promotion_level < target_promote_rank:
@@ -497,6 +485,24 @@ class UnitController(Module):
         except Exception as e:
             self._warn(f"装备专武升级失败: {e}")
             logger.exception(f"装备专武升级失败: {e}")
+
+        try:
+
+            if self.unit.union_burst and self.unit.union_burst[0].skill_level < target_skill_ub_level:
+                await self.unit_skill_up_aware(eSkillLocationCategory.UNION_BURST_SKILL, lambda: self.unit.union_burst[0], target_skill_ub_level, growth_limit)
+
+            if self.unit.main_skill and self.unit.main_skill[0].skill_level < target_skill_s1_level:
+                await self.unit_skill_up_aware(eSkillLocationCategory.MAIN_SKILL_1, lambda: self.unit.main_skill[0], target_skill_s1_level, growth_limit)
+
+            if len(self.unit.main_skill) > 1 and self.unit.main_skill[1].skill_level < target_skill_s2_level:
+                await self.unit_skill_up_aware(eSkillLocationCategory.MAIN_SKILL_2, lambda: self.unit.main_skill[1], target_skill_s2_level, growth_limit)
+
+            if self.unit.ex_skill and self.unit.ex_skill[0].skill_level < target_skill_ex_level:
+                await self.unit_skill_up_aware(eSkillLocationCategory.EX_SKILL_1, lambda: self.unit.ex_skill[0], target_skill_ex_level, growth_limit)
+
+        except Exception as e:
+            self._warn(f"技能升级失败: {e}")
+            logger.exception(f"技能升级失败: {e}")
 
         try:
             frame = 1 + cb_ex
