@@ -826,14 +826,17 @@ class unit_memory_buy(UnitController):
 @booltype("unit_memory_batch_do_buy", "开买", False)
 @description('''角色ID	角色名字	角色等级	角色星级	好感度	Rank	左上	右上	左中	右中	左下	右下	UB	技能1	技能2	EX技能	专武1	专武2	EX武器	EX武器等级	EX防具	EX防具等级	EX首饰	EX首饰等级	高级设置
 购买目标练度所缺的记忆碎片，先考虑大师店，再考虑女神店，其余商店请用对应的商店模块购买！
-仅考虑星级、专武1，不考虑界限突破''')
+仅考虑星级、专武1，不考虑界限突破
+数量上限指购买的记忆碎片数量上限，超过上限则不购买''')
 @default(False)
 @texttype("unit_memory_buy_batch_text", "目标练度", "")
+@inttype("unit_memory_buy_batch_demand_uplimit", "数量上限", 10, list(range(540)))
 class unit_memory_buy_batch(UnitController):
     async def do_task(self, client: pcrclient):
         self.client = client
         unit_memory_buy_text = self.get_config('unit_memory_buy_batch_text').strip().split('\n')
         do_buy = bool(self.get_config('unit_memory_batch_do_buy'))
+        uplimit = self.get_config('unit_memory_buy_batch_demand_uplimit')
 
         summary = []
 
@@ -855,12 +858,16 @@ class unit_memory_buy_batch(UnitController):
 
                 gap = await self.get_memory_gap(star, unique_level, exceed_state)
                 if do_buy:
+                    if gap > uplimit:
+                        self._log(f"{unit_name}记忆碎片需求{gap}超过上限{uplimit}，不购买")
+                        continue
+
                     gap = await self.buy_memory(gap)
                     if gap > 0:
                         self._log(f"剩余{gap}个记忆碎片未购买")
                 else:
                     if gap > 0:
-                        summary.append(f"{gap}片{unit_name}记忆碎片")
+                        summary.append(f"{gap}片{unit_name}记忆碎片" + "，但不购买" if gap > uplimit else "")
 
             except Exception as e:
                 self._warn(str(e))
