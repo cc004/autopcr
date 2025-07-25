@@ -417,6 +417,7 @@ class LoadIndexResponse(responses.LoadIndexResponse):
             mgr.resident_info = self.resident_info
         if self.bank_bought:
             mgr.user_gold_bank_info = self.user_gold_bank_info
+        mgr.user_clan_battle_ex_equip_restriction = {i.serial_id: i for i in self.user_clan_battle_ex_equip_restriction} if self.user_clan_battle_ex_equip_restriction else {}
         mgr.clan_like_count = self.clan_like_count
         mgr.user_my_quest = self.user_my_quest
         mgr.cf = self.cf

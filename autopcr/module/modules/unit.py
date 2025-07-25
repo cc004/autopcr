@@ -510,7 +510,7 @@ class UnitController(Module):
 
             use_ex_equip = set(ex_slot.serial_id
                             for unit in self.client.data.unit.values() 
-                            for ex_slot in ex_slots_func(unit) if ex_slot.serial_id != 0)
+                            for ex_slot in ex_slots_func(unit) if ex_slot.serial_id != 0) | self.client.data.user_clan_battle_ex_equip_restriction.keys()
 
             ex_equip_by_ex_id = flow(self.client.data.ex_equips.values()) \
                 .where(lambda ex: ex.serial_id not in use_ex_equip) \
