@@ -458,30 +458,31 @@ class UnitController(Module):
             if self.unit.promotion_level < target_promote_rank:
                 await self.unit_promotion_up_aware(target_promote_rank, growth_limit)
 
-            for i in range(6):
-                equip = self.unit.equip_slot[i]
-                if equip.id == 999999:
-                    continue
+            if self.unit.promotion_level == target_promote_rank:
+                for i in range(6):
+                    equip = self.unit.equip_slot[i]
+                    if equip.id == 999999:
+                        continue
 
-                star = target_equip_star[i]
+                    star = target_equip_star[i]
 
-                if star != -1:
-                    if not equip.is_slot:
-                        await self.unit_equip_slot_aware(equip.id, i + 1, growth_limit)
+                    if star != -1:
+                        if not equip.is_slot:
+                            await self.unit_equip_slot_aware(equip.id, i + 1, growth_limit)
 
-                    promotion_limit = db.get_equip_max_star(equip.id)
-                    if star > promotion_limit:
-                        self._log(f"{i+1}号位装备预设{star}星级超过了最大星级{promotion_limit}，提升至最大星级{promotion_limit}")
-                        star = promotion_limit
+                        promotion_limit = db.get_equip_max_star(equip.id)
+                        if star > promotion_limit:
+                            self._log(f"{i+1}号位装备预设{star}星级超过了最大星级{promotion_limit}，提升至最大星级{promotion_limit}")
+                            star = promotion_limit
 
-                    if equip.enhancement_level < star:
-                        await self.unit_equip_enhance(equip.id, i + 1, star, growth_limit is not None and (
-                            self.unit.promotion_level < growth_limit.promotion_level or \
-                            self.unit.promotion_level == growth_limit.promotion_level and getattr(growth_limit, f"equipment_{i}") > star))
+                        if equip.enhancement_level < star:
+                            await self.unit_equip_enhance(equip.id, i + 1, star, growth_limit is not None and (
+                                self.unit.promotion_level < growth_limit.promotion_level or \
+                                self.unit.promotion_level == growth_limit.promotion_level and getattr(growth_limit, f"equipment_{i}") > star))
 
-            growth_limit_unique = await self.is_unique_growth_unit()
-            if self.unit.unique_equip_slot and self.unit.unique_equip_slot[0].enhancement_level < target_unique1_level:
-                await self.unit_unique_equip_enhance_aware(target_unique1_level, growth_limit_unique)
+                growth_limit_unique = await self.is_unique_growth_unit()
+                if self.unit.unique_equip_slot and self.unit.unique_equip_slot[0].enhancement_level < target_unique1_level:
+                    await self.unit_unique_equip_enhance_aware(target_unique1_level, growth_limit_unique)
         except Exception as e:
             self._warn(f"装备专武升级失败: {e}")
             logger.exception(f"装备专武升级失败: {e}")
