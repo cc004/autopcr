@@ -537,7 +537,7 @@ class UnitController(Module):
                         target_serial_id = 0
                     else:
                         try:
-                            target_ex = flow(ex_equip_by_ex_id[ex_id]) \
+                            target_ex = flow(ex_equip_by_ex_id.get(ex_id, [])) \
                                     .first(lambda ex: db.get_ex_equip_max_star(ex.ex_equipment_id, ex.rank) >= star
                                            and db.get_ex_equip_star_from_pt(ex.ex_equipment_id, ex.enhancement_pt) <= star)
                         except StopIteration:
