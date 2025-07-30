@@ -215,6 +215,7 @@ class smart_hard_sweep(simple_demand_sweep_base):
         return 3
 
 @singlechoice('shiori_sweep_gap_limit', "盈余阈值", 10, [0, 5, 10])
+@conditional_not_execution("shiori_sweep_not_run_time", ["n3", 'n4及以上'])
 @conditional_execution1("shiori_sweep_run_time", ["无庆典"])
 @singlechoice('shiori_sweep_consider_unit_order', "刷取顺序", "缺口少优先", ["缺口少优先", "缺口大优先"])
 @description('根据记忆碎片缺口刷外传图，直到盈余超过阈值')
