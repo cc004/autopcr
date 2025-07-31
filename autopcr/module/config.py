@@ -272,6 +272,9 @@ class LimitUnitListConfig(UnitConfigMixin, MultiSearchConfig):
         super().__init__(key, desc, [], db.limit_unit_condition_candidate)
 
 class ConditionalExecutionWrapper(Config):
+    def __init__(self, key: str, desc: str, default: Any, candidates: Union[Callable, List], check: bool):
+        super().__init__(key, desc, default, candidates)
+        self.check_enabled = check
 
     async def do_check(self, client: Union[pcrclient, None] = None) -> Tuple[bool, str]: ...
 
@@ -318,23 +321,19 @@ class ConditionalNotExecutionClient(ConditionalExecutionWrapper):
 
 class ConditionalExecution1Config(ConditionalExecutionClient, MultiChoiceConfig):
     def __init__(self, key: str, desc: str = "执行条件", default=[], check: bool = True):
-        super().__init__(key, desc, default, ['无庆典', 'n庆典', 'h庆典', 'vh庆典', '总是执行'])
-        self.check_enabled = check
+        super().__init__(key, desc, default, ['无庆典', 'n庆典', 'h庆典', 'vh庆典', '总是执行'], check)
 
 class ConditionalExecution2Config(ConditionalExecutionDB, MultiChoiceConfig):
     def __init__(self, key: str, desc: str = "执行条件", default=[], check: bool = True):
-        super().__init__(key, desc, default, ['n3以上前夕', 'n3以上首日午前', 'h3以上前夕', '会战前夕', '会战期间', '总是执行'])
-        self.check_enabled = check
+        super().__init__(key, desc, default, ['n3以上前夕', 'n3以上首日午前', 'h3以上前夕', '会战前夕', '会战期间', '总是执行'], check)
 
 class ConditionalExecution3Config(ConditionalExecutionClient, MultiChoiceConfig):
     def __init__(self, key: str, desc: str = "执行条件", default=[], check: bool = True):
-        super().__init__(key, desc, default, ['n2', 'n3', 'n4及以上', 'h2', 'h3及以上', 'vh2', 'vh3及以上', '总是执行'])
-        self.check_enabled = check
+        super().__init__(key, desc, default, ['n2', 'n3', 'n4及以上', 'h2', 'h3及以上', 'vh2', 'vh3及以上', '总是执行'], check)
 
 class ConditionalNotExecutionConfig(ConditionalNotExecutionClient, MultiChoiceConfig):
     def __init__(self, key: str, desc: str = "不执行条件", default=[], check: bool = True):
-        super().__init__(key, desc, default, ['n2', 'n3', 'n4及以上', 'h2', 'h3及以上', 'vh2', 'vh3及以上'])
-        self.check_enabled = check
+        super().__init__(key, desc, default, ['n2', 'n3', 'n4及以上', 'h2', 'h3及以上', 'vh2', 'vh3及以上'], check)
 
 class TravelQuestConfig(MultiChoiceConfig):
     """Configuration for travel quests."""
