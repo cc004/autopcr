@@ -1,9 +1,10 @@
+import hashlib, uuid
 from enum import Enum
 from typing import Tuple, Coroutine, Any, List, Callable
 from abc import abstractmethod
 from ..sdk.validator import remoteValidator
 from copy import deepcopy
-from ..constants import DEFAULT_HEADERS, IOS_HEADERS
+from ..constants import DEFAULT_HEADERS, IOS_HEADERS, UUID_NAMESPACE
 from ..util.logger import instance as logger
 
 class platform(Enum):
@@ -54,8 +55,10 @@ class sdkclient:
     def header(self):
         if self._account.type == platform.Android:
             headers = deepcopy(DEFAULT_HEADERS)
+            headers['DEVICE-ID'] = hashlib.md5(self.account.encode('utf-8')).hexdigest()
         elif self._account.type == platform.IOS:
             headers = deepcopy(IOS_HEADERS)
+            headers['DEVICE-ID'] = str(uuid.uuid5(UUID_NAMESPACE, self.account)).upper()
         else:
             raise ValueError(f"Invalid platform {self._account.type}")
 
