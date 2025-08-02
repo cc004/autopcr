@@ -310,9 +310,9 @@ class travel_quest_sweep(Module):
 
 @inttype("travel_speed_up_paper_threshold", "加速阈值", 12, list(range(13)))
 @inttype("travel_target_day", "轮转天数", 7, list(range(1, 31)))
-@TravelQuestConfig("travel_target_quest3", "轮转目标3", [11002002, 11002003, 11002005])
-@TravelQuestConfig("travel_target_quest2", "轮转目标2", [11002004])
-@TravelQuestConfig("travel_target_quest1", "轮转目标1", [11002001])
+@TravelQuestConfig("travel_target_quest3", "轮转目标3", [11003002, 11003003])
+@TravelQuestConfig("travel_target_quest2", "轮转目标2", [11003004])
+@TravelQuestConfig("travel_target_quest1", "轮转目标1", [11003001])
 @name('探险轮转')
 @description('''
 自动根据轮转进行探险，按轮转时间进行目标切换，需保持三支队探险。

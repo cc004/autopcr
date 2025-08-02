@@ -271,26 +271,12 @@ class LimitUnitListConfig(UnitConfigMixin, MultiSearchConfig):
     def __init__(self, key: str, desc: str):
         super().__init__(key, desc, [], db.limit_unit_condition_candidate)
 
-class ConditionalExecutionMixin:
-    """Mixin for conditional execution configs."""
-    async def check_campaigns(self, campaign_list, client_data):
-        """Check if any campaign in the list is active."""
-        hit = [campaign for campaign in campaign_list if client_data.is_campaign(campaign)]
-        return hit
-
-class ConditionalExecution1Config(ConditionalExecutionMixin, MultiChoiceConfig):
-    def __init__(self, key: str, desc: str = "执行条件", default=[], check: bool = True):
-        super().__init__(key, desc, default, ['无庆典', 'n庆典', 'h庆典', 'vh庆典', '总是执行'])
+class ConditionalExecutionWrapper(Config):
+    def __init__(self, key: str, desc: str, default: Any, candidates: Union[Callable, List], check: bool):
+        super().__init__(key, desc, default, candidates)
         self.check_enabled = check
-    
-    async def do_check(self, client: pcrclient) -> Tuple[bool, str]:
-            
-        run_time = self.get_value()
-        hit = await self.check_campaigns(run_time, client.data)
-        
-        if hit:
-            return True, "今日" + ','.join(hit) + "，执行"
-        return False, "今日不符合执行条件"
+
+    async def do_check(self, client: Union[pcrclient, None] = None) -> Tuple[bool, str]: ...
 
     def wrap_init(self, cls: Type, sself: Type):
         super().wrap_init(cls, sself)
@@ -309,68 +295,45 @@ class ConditionalExecution1Config(ConditionalExecutionMixin, MultiChoiceConfig):
 
             cls.do_check = new_do_check
 
+class ConditionalExecutionClient(ConditionalExecutionWrapper):
+    async def do_check(self, client: pcrclient) -> Tuple[bool, str]:
+        run_time = self.get_value()
+        hit = [campaign for campaign in run_time if client.data.is_campaign(campaign)]
+        if hit:
+            return True, "今日" + ','.join(hit) + "，执行"
+        return False, "今日不符合执行条件"
 
-class ConditionalExecution2Config(ConditionalExecutionMixin, MultiChoiceConfig):
-    def __init__(self, key: str, desc: str = "执行条件", default=[], check: bool = True):
-        super().__init__(key, desc, default, ['n3以上前夕', 'n3以上首日午前', 'h3以上前夕', '会战前夕', '会战期间', '总是执行'])
-        self.check_enabled = check
-    
+class ConditionalExecutionDB(ConditionalExecutionWrapper, MultiChoiceConfig):
     async def do_check(self) -> Tuple[bool, str]:
-            
         run_time = self.get_value()
         hit = [campaign for campaign in run_time if db.is_campaign(campaign)]
-        
         if hit:
             return True, "今日" + ','.join(hit) + "，执行"
         return False, "今日不符合执行条件"
-    
-    def wrap_init(self, cls: Type, sself: Type):
-        super().wrap_init(cls, sself)
-        if sself.check_enabled and hasattr(cls, 'do_check'):
-            old_do_check = cls.do_check
 
-            async def new_do_check(*args, **kwargs):
-                ok, msg = await old_do_check(*args, **kwargs)
-                if not ok:
-                    return False, msg
-
-                ok, msg2 = await sself.do_check(*args, **kwargs)
-                if not ok:
-                    return False, msg + msg2
-                return True, msg + msg2
-
-            cls.do_check = new_do_check
-
-
-class ConditionalNotExecutionConfig(ConditionalExecutionMixin, MultiChoiceConfig):
-    def __init__(self, key: str, desc: str = "不执行条件", default=[], check: bool = True):
-        super().__init__(key, desc, default, ['n2', 'n3', 'n4及以上', 'h2', 'h3及以上', 'vh2', 'vh3及以上'])
-        self.check_enabled = check
-    
+class ConditionalNotExecutionClient(ConditionalExecutionWrapper):
     async def do_check(self, client: pcrclient) -> Tuple[bool, str]:
         run_time = self.get_value()
-        hit = await self.check_campaigns(run_time, client.data)
-        
+        hit = [campaign for campaign in run_time if client.data.is_campaign(campaign)]
         if hit:
             return False, "今日" + ','.join(hit) + "，不执行"
         return True, ""
-        
-    def wrap_init(self, cls: Type, sself: Type):
-        super().wrap_init(cls, sself)
-        if sself.check_enabled and hasattr(cls, 'do_check'):
-            old_do_check = cls.do_check
 
-            async def new_do_check(*args, **kwargs):
-                ok, msg = await old_do_check(*args, **kwargs)
-                if not ok:
-                    return False, msg
+class ConditionalExecution1Config(ConditionalExecutionClient, MultiChoiceConfig):
+    def __init__(self, key: str, desc: str = "执行条件", default=[], check: bool = True):
+        super().__init__(key, desc, default, ['无庆典', 'n庆典', 'h庆典', 'vh庆典', '总是执行'], check)
 
-                ok, msg2 = await sself.do_check(*args, **kwargs)
-                if not ok:
-                    return False, msg + msg2
-                return True, msg + msg2
+class ConditionalExecution2Config(ConditionalExecutionDB, MultiChoiceConfig):
+    def __init__(self, key: str, desc: str = "执行条件", default=[], check: bool = True):
+        super().__init__(key, desc, default, ['n3以上前夕', 'n3以上首日午前', 'h3以上前夕', '会战前夕', '会战期间', '总是执行'], check)
 
-            cls.do_check = new_do_check
+class ConditionalExecution3Config(ConditionalExecutionClient, MultiChoiceConfig):
+    def __init__(self, key: str, desc: str = "执行条件", default=[], check: bool = True):
+        super().__init__(key, desc, default, ['n2', 'n3', 'n4及以上', 'h2', 'h3及以上', 'vh2', 'vh3及以上', '总是执行'], check)
+
+class ConditionalNotExecutionConfig(ConditionalNotExecutionClient, MultiChoiceConfig):
+    def __init__(self, key: str, desc: str = "不执行条件", default=[], check: bool = True):
+        super().__init__(key, desc, default, ['n2', 'n3', 'n4及以上', 'h2', 'h3及以上', 'vh2', 'vh3及以上'], check)
 
 class TravelQuestConfig(MultiChoiceConfig):
     """Configuration for travel quests."""

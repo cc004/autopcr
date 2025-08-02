@@ -215,6 +215,7 @@ class smart_hard_sweep(simple_demand_sweep_base):
         return 3
 
 @singlechoice('shiori_sweep_gap_limit', "盈余阈值", 10, [0, 5, 10])
+@conditional_not_execution("shiori_sweep_not_run_time", ["n3", 'n4及以上'])
 @conditional_execution1("shiori_sweep_run_time", ["无庆典"])
 @singlechoice('shiori_sweep_consider_unit_order', "刷取顺序", "缺口少优先", ["缺口少优先", "缺口大优先"])
 @description('根据记忆碎片缺口刷外传图，直到盈余超过阈值')
@@ -285,6 +286,8 @@ unique_equip_2_pure_memory_id = [
         107501, # 水吃
         113101, # 水流夏
         113301, # 水七七香
+        117001, # 水娇
+        117101, # 水姐姐
 ]
 @conditional_execution1("very_hard_sweep_run_time", ["vh庆典"])
 @description('储备专二需求的150碎片，包括' + ','.join(db.get_unit_name(unit_id) for unit_id in unique_equip_2_pure_memory_id))

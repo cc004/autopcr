@@ -204,7 +204,9 @@ class seasonpass_reward(Module):
             else:
                 raise SkipError("没有可领取的女神祭奖励")
 
-@singlechoice("present_receive_stamina_strategy", "体力", "不领取", ["所有", "有限期", "一天到期", "不领取"])
+@ConditionalExecution3Config('present_receive_unlimit_stamina_strategy', "无限期体力", [], check = False)
+@ConditionalExecution3Config('present_receive_limit_stamina_strategy', "有限期体力", ["n3", "n4及以上"], check = False)
+@ConditionalExecution3Config('present_receive_one_day_limit_stamina_strategy', "一天到期体力", ["总是执行"], check = False)
 @description('领取非体力的所有东西以及符合条件的体力')
 @name('领取礼物箱')
 @default(True)
@@ -214,9 +216,16 @@ class present_receive(Module):
         received = False
         result = []
         stop = False
-        present_strategy = self.get_config('present_receive_stamina_strategy')
+        gets = []
+        for conf in ['present_receive_unlimit_stamina_strategy', 'present_receive_limit_stamina_strategy', 'present_receive_one_day_limit_stamina_strategy']:
+            config = self.get_config_instance(conf)
+            get, msg = await config.do_check(client)
+            gets.append(get)
+            if get:
+                self._log(msg + config.desc + "领取")
+        unlimit_stamina_get, limit_stamina_get, one_day_limit_stamina_get = gets
         while not stop:
-            is_exclude_stamina = False if present_strategy == "所有" else True
+            is_exclude_stamina = False if unlimit_stamina_get and limit_stamina_get else True
             present_index = await client.present_index()
             for present in present_index.present_info_list:
                 if not is_exclude_stamina or not (present.reward_type == eInventoryType.Stamina and present.reward_id == 93001):
@@ -234,15 +243,15 @@ class present_receive(Module):
             else:
                 stop = True
 
-        if present_strategy != "所有" and present_strategy != "不领取":
+        if unlimit_stamina_get or limit_stamina_get or one_day_limit_stamina_get:
             stop = False
-            limit_stamina = present_strategy == "有限期"
             while not stop:
                 present = await client.present_index()
                 for present in present.present_info_list:
                     if present.reward_type == eInventoryType.Stamina and present.reward_id == 93001 \
-                    and present.reward_limit_flag \
-                    and (limit_stamina or present.reward_limit_time <= apiclient.time + 24 * 3600):
+                    and ((not present.reward_limit_flag and unlimit_stamina_get) or
+                        (present.reward_limit_flag and limit_stamina_get) or
+                        (present.reward_limit_flag and one_day_limit_stamina_get and present.reward_limit_time <= apiclient.time + 24 * 3600)):
                         res = await client.present_receive(present.present_id)
                         if not res.rewards:
                             self._warn("体力满了，无法继续领取礼物箱的体力")
