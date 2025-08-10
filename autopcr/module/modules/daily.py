@@ -9,9 +9,8 @@ from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
 from ...util.questutils import *
-import asyncio
 
-@description('仅开启时生效，氪体数优先级n4>n3>h3>vh3>n2>h2>vh2，禅模式指不执行体力相关的功能，仅在清日常生效，单项执行将忽略。庆典包括其倍数，加速期间的所有倍数判断均x2')
+@description('仅开启时生效，氪体数将取满足条件的最大值，禅模式指不执行体力相关的功能，仅在清日常生效，单项执行将忽略。庆典包括其倍数，加速期间的所有倍数判断均x2')
 @name("全局配置")
 @default(True)
 @inttype('sweep_recover_stamina_times', "平时氪体数", 0, [i for i in range(41)])
@@ -31,30 +30,26 @@ class global_config(Module):
             self._log("执行定时任务")
 
         stamina_check = [('sweep_recover_stamina_times_n4', 
-                          lambda: client.data.is_normal_quest_campaign() and client.data.get_normal_quest_campaign_times() >= 4),
+                          lambda: client.data.is_normal_quest_campaign() and client.data.get_normal_quest_campaign_times() >= 4, "n4及以上"),
                          ('sweep_recover_stamina_times_n3',
-                          lambda: client.data.is_normal_quest_campaign() and client.data.get_normal_quest_campaign_times() == 3),
+                          lambda: client.data.is_normal_quest_campaign() and client.data.get_normal_quest_campaign_times() == 3, "n3"),
                          ('sweep_recover_stamina_times_h3',
-                          lambda: client.data.is_hard_quest_campaign() and client.data.get_hard_quest_campaign_times() >= 3),
+                          lambda: client.data.is_hard_quest_campaign() and client.data.get_hard_quest_campaign_times() >= 3, "h3及以上"),
                          ('sweep_recover_stamina_times_vh3',
-                          lambda: client.data.is_very_hard_quest_campaign() and client.data.get_very_hard_quest_campaign_times() >= 3),
+                          lambda: client.data.is_very_hard_quest_campaign() and client.data.get_very_hard_quest_campaign_times() >= 3, "vh3及以上"),
                          ('sweep_recover_stamina_times_n2',
-                          lambda: client.data.is_normal_quest_campaign() and client.data.get_normal_quest_campaign_times() == 2),
+                          lambda: client.data.is_normal_quest_campaign() and client.data.get_normal_quest_campaign_times() == 2, "n2"),
                          ('sweep_recover_stamina_times_h2',
-                          lambda: client.data.is_hard_quest_campaign() and client.data.get_hard_quest_campaign_times() == 2),
+                          lambda: client.data.is_hard_quest_campaign() and client.data.get_hard_quest_campaign_times() == 2, "h2"),
                          ('sweep_recover_stamina_times_vh2',
-                          lambda: client.data.is_very_hard_quest_campaign() and client.data.get_very_hard_quest_campaign_times() == 2),
+                          lambda: client.data.is_very_hard_quest_campaign() and client.data.get_very_hard_quest_campaign_times() == 2, "vh2"),
                          ('sweep_recover_stamina_times',
-                          lambda: True)
+                          lambda: True, "")
         ]
-        for key, check in stamina_check:
-            if check():
-                stamina: int = self.get_config(key)
-                campaign = key.split('_')[-1]
-                campaign = '无庆典' if campaign == 'times' else campaign
-                client.set_stamina_recover_cnt(stamina)
-                self._log(f"今日{campaign}，氪体数{stamina}")
-                break
+        stamina_hit = [(self.get_config(key), desc) for key, check, desc in stamina_check if check()]
+        today_recover_stamina = max([stamina for stamina, _ in stamina_hit], default=0)
+        self._log(f"今日" + '，'.join([desc for _, desc in stamina_hit]) + f"氪体数{today_recover_stamina}")
+        client.set_stamina_recover_cnt(today_recover_stamina)
 
         force_stop_star_cup_sweep = self.get_config_instance('force_stop_star_cup_sweep')
         ok, msg = await force_stop_star_cup_sweep.do_check(client)
@@ -258,6 +253,7 @@ class present_receive(Module):
                             stop = True
                             break
                         else:
+                            result += res.rewards
                             stop = False
                 else:
                     stop = True
