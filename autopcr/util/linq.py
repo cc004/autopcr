@@ -109,6 +109,11 @@ class flow(Iterator[T], Generic[T]):
     def zip(self, other: Iterable[T2]) -> 'flow[Tuple[T, T2]]':
         return flow(self._zip(other))
 
+    def count(self, func: Union[Callable[[T], bool], None] = None) -> int:
+        if func is None:
+            return sum(1 for _ in self.iterable)
+        return sum(1 for item in self.iterable if func(item))
+
 class groupflow(flow[T], Generic[T, T2]):
     def __init__(self, iterable: Iterable[T], key: T2):
         super().__init__(iterable)

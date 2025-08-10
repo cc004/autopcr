@@ -193,6 +193,7 @@ tool_modules = ModuleList(
     [
         # cook_pudding,
         ex_equip_rank_up,
+        ex_equip_enhance_up,
         half_schedule,
         caravan_play,
         caravan_shop_buy,
