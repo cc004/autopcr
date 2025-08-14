@@ -1202,6 +1202,8 @@ class pcrclient(apiclient):
     async def quest_skip_aware(self, quest: int, times: int, recover: bool = False, is_total: bool = False):
         name = db.get_quest_name(quest)
         if db.is_hatsune_quest(quest):
+            if not quest in db.quest_to_event:
+                raise AbortError(f"任务{name}不存在")
             event = db.quest_to_event[quest].event_id
             if not quest in self.data.hatsune_quest_dict[event]:
                 raise AbortError(f"任务{name}未通关或不存在")
