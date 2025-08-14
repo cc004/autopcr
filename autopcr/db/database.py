@@ -1193,6 +1193,14 @@ class database():
             )
 
     @lazy_property
+    def xac_story_data(self) -> Dict[int, XacStoryDatum]:
+        with self.dbmgr.session() as db:
+            return (
+                XacStoryDatum.query(db)
+                .to_dict(lambda x: x.sub_story_id, lambda x: x)
+            )
+
+    @lazy_property
     def asb_story_data(self) -> Dict[int, AsbStoryDatum]:
         with self.dbmgr.session() as db:
             return (
