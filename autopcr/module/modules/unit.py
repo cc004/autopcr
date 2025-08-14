@@ -442,7 +442,7 @@ class UnitController(Module):
                 gap = await buy_shop(gap)
         return gap
 
-    async def promote(self, target_level: int = 1, target_star: int = 1, target_dear: int = 1, target_promote_rank: int = 1, target_equip_star: List[int] = [-1, -1, -1, -1, -1, -1], target_skill_ub_level: int = 1, target_skill_s1_level: int = 1, target_skill_s2_level: int = 1, target_skill_ex_level: int = 1, target_unique1_level: int = 0, target_ex1_id: int = 0, target_ex1_star: int = 0, target_ex2_id: int = 0, target_ex2_star: int = 0, target_ex3_id: int = 0, target_ex3_star: int = 0, cb_ex: bool = False):
+    async def promote(self, target_level: int = 1, target_star: int = 1, target_dear: int = 1, target_promote_rank: int = 1, target_equip_star: List[int] = [-1, -1, -1, -1, -1, -1], target_skill_ub_level: int = 1, target_skill_s1_level: int = 1, target_skill_s2_level: int = 1, target_skill_ex_level: int = 1, target_unique1_level: int = 0, target_ex1_id: int = -1, target_ex1_star: int = 0, target_ex2_id: int = -1, target_ex2_star: int = 0, target_ex3_id: int = -1, target_ex3_star: int = 0, cb_ex: bool = False):
         growth_limit = await self.is_growth_unit()
 
         try:
@@ -480,9 +480,9 @@ class UnitController(Module):
                                 self.unit.promotion_level < growth_limit.promotion_level or \
                                 self.unit.promotion_level == growth_limit.promotion_level and getattr(growth_limit, f"equipment_{i}") > star))
 
-                growth_limit_unique = await self.is_unique_growth_unit()
-                if self.unit.unique_equip_slot and self.unit.unique_equip_slot[0].enhancement_level < target_unique1_level:
-                    await self.unit_unique_equip_enhance_aware(target_unique1_level, growth_limit_unique)
+            growth_limit_unique = await self.is_unique_growth_unit()
+            if self.unit.unique_equip_slot and self.unit.unique_equip_slot[0].enhancement_level < target_unique1_level:
+                await self.unit_unique_equip_enhance_aware(target_unique1_level, growth_limit_unique)
         except Exception as e:
             self._warn(f"装备专武升级失败: {e}")
             logger.exception(f"装备专武升级失败: {e}")
@@ -521,6 +521,9 @@ class UnitController(Module):
             for ex_id, star, slot in zip([target_ex1_id, target_ex2_id, target_ex3_id], 
                                           [target_ex1_star, target_ex2_star, target_ex3_star], 
                                           [1,2,3]):
+                if ex_id == -1:
+                    continue
+
                 unit_ex_equip = ex_slots_func(self.unit)[slot - 1]
                 if unit_ex_equip.serial_id == 0 and ex_id == 0:
                     continue
