@@ -67,6 +67,14 @@ class database():
             )
 
     @lazy_property
+    def caravan_buddy(self) -> Dict[int, CaravanBuddy]:
+        with self.dbmgr.session() as db:
+            return (
+                CaravanBuddy.query(db)
+                .to_dict(lambda x: x.buddy_id, lambda x: x)
+            )
+
+    @lazy_property
     def caravan_dish(self) -> Dict[int, CaravanDish]:
         with self.dbmgr.session() as db:
             return (
