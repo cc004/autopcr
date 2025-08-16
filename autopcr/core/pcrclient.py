@@ -79,6 +79,19 @@ class pcrclient(apiclient):
         req.surplus_dish_list = surplus_dish_list
         return await self.request(req)
 
+    async def caravan_spots_choice(self, season_id: int, choice: int):
+        req = CaravanSpotsChoiceRequest()
+        req.season_id = season_id
+        req.choice = choice
+        return await self.request(req)
+
+    async def caravan_dice_reroll(self, season_id: int, current_count: int, roll_num: int):
+        req = CaravanDiceRerollRequest()
+        req.season_id = season_id
+        req.current_count = current_count
+        req.roll_num = roll_num
+        return await self.request(req)
+
     async def caravan_dice_roll(self, season_id: int, current_num: int, roll_num: int):
         req = CaravanDiceRollRequest()
         req.season_id = season_id
@@ -133,6 +146,18 @@ class pcrclient(apiclient):
         req.block_id = block_id
         req.gacha_type = gacha_type
         req.current_currency_num = current_currency_num
+        return await self.request(req)
+
+    async def caravan_minigame_bs_start(self, season_id: int):
+        req = CaravanMinigameCccBsStartRequest()
+        req.season_id = season_id
+        return await self.request(req)
+
+    async def caravan_minigame_bs_finish(self, season_id: int, play_id: int, items: Dict[int, int]):
+        req = CaravanMinigameCccBsFinishRequest()
+        req.season_id = season_id
+        req.play_id = play_id
+        req.object_list = [CccFinishItemCountInfo(ccc_object_id=item_id, count=count) for item_id, count in items.items()]
         return await self.request(req)
 
     async def caravan_minigame_start(self):
@@ -608,6 +633,11 @@ class pcrclient(apiclient):
     async def read_story(self, story_id: int):
         await self.story_check(story_id)
         return await self.story_view(story_id)
+
+    async def read_xac_story(self, sub_story_id: int):
+        req = SubStoryXacReadStoryRequest()
+        req.sub_story_id = sub_story_id
+        await self.request(req)
 
     async def read_asb_story(self, sub_story_id: int):
         req = SubStoryAsbReadStoryRequest()
@@ -1202,6 +1232,8 @@ class pcrclient(apiclient):
     async def quest_skip_aware(self, quest: int, times: int, recover: bool = False, is_total: bool = False):
         name = db.get_quest_name(quest)
         if db.is_hatsune_quest(quest):
+            if not quest in db.quest_to_event:
+                raise AbortError(f"任务{name}不存在")
             event = db.quest_to_event[quest].event_id
             if not quest in self.data.hatsune_quest_dict[event]:
                 raise AbortError(f"任务{name}未通关或不存在")

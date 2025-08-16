@@ -113,6 +113,14 @@ class CaravanEventEffect(models.CaravanEventEffect):
         return lasting_msg
 
 @method
+class CaravanBuddy(models.CaravanBuddy):
+    def get_effect_desc(self, lasting = True) -> str:
+        lasting_msg = f"持续{self.effect_turn}回合" if self.effect_turn > 0 else "一次性"
+        if not lasting:
+            lasting_msg = ""
+        return f"{self.description.format(self.effect_value_1, self.effect_value_2)} {lasting_msg}"
+
+@method
 class EnemyRewardDatum(models.EnemyRewardDatum):
     def get_rewards(self) -> Iterator[Reward]:
         yield Reward(self.reward_type_1, self.reward_id_1, self.reward_num_1, self.odds_1)

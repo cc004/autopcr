@@ -74,6 +74,13 @@ class CaravanMinigameCccFinishResponse(responses.CaravanMinigameCccFinishRespons
                 mgr.update_inventory(item)
 
 @handles
+class CaravanMinigameCccBsFinishResponse(responses.CaravanMinigameCccBsFinishResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_list:
+            for item in self.reward_list:
+                mgr.update_inventory(item)
+
+@handles
 class CaravanDishUseResponse(responses.CaravanDishUseResponse):
     async def update(self, mgr: datamgr, request):
         if self.reward_list:
@@ -81,6 +88,20 @@ class CaravanDishUseResponse(responses.CaravanDishUseResponse):
                 mgr.update_inventory(item)
         if self.sub_reward_list:
             for item in self.sub_reward_list:
+                mgr.update_inventory(item)
+
+@handles
+class CaravanDiceRollResponse(responses.CaravanDiceRollResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.buddy_reward_list:
+            for item in self.buddy_reward_list:
+                mgr.update_inventory(item)
+
+@handles
+class CaravanProgressTurnResponse(responses.CaravanProgressTurnResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.buddy_reward_list:
+            for item in self.buddy_reward_list:
                 mgr.update_inventory(item)
 
 @handles
@@ -672,6 +693,13 @@ class SeasonPassMissionAcceptResponse(responses.SeasonPassMissionAcceptResponse)
     async def update(self, mgr: datamgr, request):
         if self.rewards:
             for reward in self.rewards:
+                mgr.update_inventory(reward)
+
+@handles
+class SubStoryXacReadStoryResponse(responses.SubStoryXacReadStoryResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_info:
+            for reward in self.reward_info:
                 mgr.update_inventory(reward)
 
 @handles
