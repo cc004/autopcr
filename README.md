@@ -46,3 +46,9 @@ python3 _httpserver_test.py
 打包镜像默认推送到[ghcr](https://ghcr.io),如需推送到[dockerhub](https://hub.docker.com)需要执行以下步骤
 - 添加变量`DOKCKERHUB_IMAGE_NAME`用于推送到dockerhub镜像名称,例如autopcr/autopcr
 - 添加机密`DOCKERHUB_USERNAME`和`DOCKERHUB_TOKEN`用于推送到dockerhub的身份验证
+
+## 使用 pixi
+
+创建环境：`pixi install`
+下载前端资源：`pixi run download_web`
+启动服务器：`pixi run server`
