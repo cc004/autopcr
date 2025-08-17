@@ -83,6 +83,7 @@ class CaravanMinigameCccBsFinishResponse(responses.CaravanMinigameCccBsFinishRes
 @handles
 class CaravanDishUseResponse(responses.CaravanDishUseResponse):
     async def update(self, mgr: datamgr, request):
+        mgr.caravan_dishes[request.dish_id] -= 1
         if self.reward_list:
             for item in self.reward_list:
                 mgr.update_inventory(item)

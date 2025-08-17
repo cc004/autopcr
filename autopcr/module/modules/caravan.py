@@ -848,7 +848,6 @@ class CaravanGame:
                         continue
                     self.used_dish_id = dish_to_use
                     self._log(f"使用料理：{db.caravan_dish[dish_to_use].name}，效果：{db.caravan_dish[dish_to_use].get_effect_desc()}")
-                    self.candidate_dishes[dish_to_use] -= 1
                     use_resp = await self.client.caravan_dish_use(
                         season_id=self.season_id,
                         dish_id=dish_to_use

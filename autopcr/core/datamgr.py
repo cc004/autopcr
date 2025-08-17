@@ -421,7 +421,12 @@ class datamgr(BaseModel, Component[apiclient]):
         elif item.type == eInventoryType.ExtraEquip and item.ex_equip:
             self.ex_equips[item.ex_equip.serial_id] = item.ex_equip
         elif item.type == eInventoryType.CaravanDish:
-            self.caravan_dishes[item.id] = item.stock
+            if item.stock is not None:
+                self.caravan_dishes[item.id] = item.stock
+            elif item.received is not None:
+                self.caravan_dishes[item.id] += item.received
+            else:
+                self.caravan_dishes[item.id] += item.count
         else:
             self.inventory[token] = item.stock
 
