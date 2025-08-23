@@ -556,7 +556,7 @@ class clear_my_party(Module):
 
 
 
-@description('从指定面板的指定队开始设置。6行重复，标题+5行角色ID	角色名字	角色等级	角色星级')
+@description('从指定面板的指定队开始设置，并调整星级。若干行重复，标题+若干行角色ID	角色名字	角色等级	角色星级\n忽略角色名字和角色等级')
 @texttype("set_my_party_text", "队伍阵容", "")
 @inttype("party_start_num", "初始队伍", 1, [i for i in range(1, 11)])
 @inttype("tab_start_num", "初始面板", 1, [i for i in range(1, 7)])
@@ -565,19 +565,29 @@ class set_my_party(Module):
     async def do_task(self, client: pcrclient):
         set_my_party_text: str = self.get_config('set_my_party_text')
         tab_number: int = self.get_config('tab_start_num')
-        party_number: int = self.get_config('party_start_num') - 1
+        party_number: int = self.get_config('party_start_num')
         party = set_my_party_text.splitlines()
-        for i in range(0, len(party), 6):
+        title_id = [i for i, text in enumerate(party) if len(text.strip().split()) == 1]
+        title_id.append(len(party))
+        for i in range(len(title_id) - 1):
 
-            party_number += 1
-            if party_number == 11:
-                tab_number += 1
-                party_number = 1
-                if tab_number >= 6:
-                    raise AbortError("队伍数量超过上限")
+            if tab_number >= 6:
+                raise AbortError("队伍数量超过上限")
 
-            title = party[i].strip() + "记得借人"
-            unit_list = [u.split('\t') for u in party[i + 1 : i + 1 + 5]]
+            st = title_id[i]
+            ed = title_id[i + 1]
+
+            title = party[st].strip()
+            unit_list = [u.split() for u in party[st + 1 : ed]]
+            if len(unit_list) > 5:
+                self._warn(f"{title}角色数超过5个，忽略该队伍")
+                continue
+            if len(unit_list) < 1:
+                self._warn(f"{title}角色数小于1个，忽略该队伍")
+                continue
+            if len(set(u[0] for u in unit_list)) != len(unit_list):
+                self._warn(f"{title}角色重复，忽略该队伍")
+                continue
 
             own_unit = [u for u in unit_list if int(u[0]) in client.data.unit]
             not_own_unit = [u for u in unit_list if int(u[0]) not in client.data.unit]
@@ -607,4 +617,9 @@ class set_my_party(Module):
             else:
                 await client.set_my_party(tab_number, party_number, 4, title, unit_list, change_rarity_list)
                 self._log(f"设置了{title}")
+
+            party_number += 1
+            if party_number == 11:
+                tab_number += 1
+                party_number = 1
 
