@@ -2016,6 +2016,27 @@ class database():
         level = self.unique_equipment_rank_up[equip_id][rank].unit_level if rank > 0 else 1
         return level
 
+    def get_unique_equip_enhance_mana(self, equip_slot:int, st_pt: int, ed_pt: int) -> int:
+        middle = flow(self.unique_equipment_enhance_data[equip_slot].values()) \
+            .where(lambda x: st_pt <= x.total_point < ed_pt) \
+            .select(lambda x: x.needed_mana * x.needed_point) \
+            .sum()
+        prefix = flow(self.unique_equipment_enhance_data[equip_slot].values()) \
+            .where(lambda x: x.total_point < st_pt) \
+            .max(lambda x: x.total_point)
+        if prefix:
+            prefix = prefix.needed_mana * (st_pt - prefix.total_point)
+        else:
+            prefix = 0
+        suffix = flow(self.unique_equipment_enhance_data[equip_slot].values()) \
+            .where(lambda x: x.total_point >= ed_pt) \
+            .min(lambda x: x.total_point)
+        if suffix:
+            suffix = suffix.needed_mana * (suffix.total_point - ed_pt)
+        else:
+            suffix = 0
+        return prefix + middle + suffix
+
     def get_unique_equip_pt_from_level(self, equip_slot: int, level: int) -> int:
         pt = self.unique_equipment_enhance_data[equip_slot][level].total_point if level in self.unique_equipment_enhance_data[equip_slot] else 0
         return pt
@@ -2075,7 +2096,8 @@ class database():
         return list(range(1, self.team_max_level + 1 + 10))
 
     def unit_unique_equip_level_candidate(self, equip_slot: int) -> List[int]:
-        return list(range(0, self.unique_equipment_max_level[equip_slot] + 1))
+        st = 0 if equip_slot == 1 else -1
+        return list(range(st, self.unique_equipment_max_level[equip_slot] + 1))
 
     def last_normal_quest(self) -> List[int]:
         last_start_time = flow(self.normal_quest_data.values()) \

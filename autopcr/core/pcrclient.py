@@ -420,6 +420,19 @@ class pcrclient(apiclient):
         req.item_list = [InventoryInfoPost(id=item[1], type=eInventoryType.Item, count=count) for item, count in items.items()]
         return await self.request(req)
 
+    async def multi_enhance_unique_2(self, unit_id: int, current_enhance_level: int, after_enhance_level: int, consume_item: typing.Counter[ItemType]):
+        req = UniqueEquip2MultiEnhanceRequest()
+        req.unit_id = unit_id
+        req.current_enhance_level = current_enhance_level
+        req.after_enhance_level = after_enhance_level
+        req.consume_item_list = [EnhanceRecipe(
+                id=item[1], 
+                type=item[0],
+                count=count,
+                current_count=self.data.get_inventory(item)
+            ) for item, count in consume_item.items()]
+        return await self.request(req)
+
     async def unique_equip_free_enhance(self, unit_id: int, equip_slot_num: int, current_enhancement_pt: int, after_enhancement_pt: int):
         req = EquipmentFreeMultiEnhanceUniqueRequest()
         req.unit_id = unit_id

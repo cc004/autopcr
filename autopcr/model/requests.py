@@ -4088,7 +4088,7 @@ class UniqueEquip2MultiEnhanceRequest(Request[UniqueEquip2MultiEnhanceResponse])
     consume_item_list: List[EnhanceRecipe] = None
     @property
     def url(self) -> str:
-        return ""
+        return "equipment/multi_enhance_unique_2"
 class UnitChangeMultiAutomaticModeRequest(Request[UnitChangeMultiAutomaticModeResponse]):
     setting: int = None
     @property

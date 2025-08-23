@@ -161,6 +161,19 @@ class datamgr(BaseModel, Component[apiclient]):
             and db.is_quest_effective_scope_in_campaign(quest, campaign_id)
         return self.get_campaign_times(func)
 
+    def prepare_kana_pure_memory(self, unit_id: int, num: int) -> typing.Counter[ItemType]:
+        ret = Counter()
+        kana = db.unit_data[unit_id].kana
+        for kana_id in db.unit_kana_ids[kana]:
+            if kana_id in db.unit_to_pure_memory:
+                token = db.unit_to_pure_memory[kana_id]
+                cnt = min(num, self.get_inventory(token))
+                ret[token] += cnt
+                num -= cnt
+        if num > 0:
+            return Counter()
+        return ret
+
     def get_unique_equip_material_demand(self, equip_slot:int, unit_id: int, token: ItemType, target_rank: int = -1) -> int:
         start_rank = self.unit[unit_id].unique_equip_slot[0].rank if unit_id in self.unit and self.unit[unit_id].unique_equip_slot else 0
         demand = db.get_unique_equip_material_demand(unit_id, equip_slot, start_rank, db.unique_equipment_max_rank[equip_slot] if target_rank == -1 else target_rank)

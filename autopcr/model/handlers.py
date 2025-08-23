@@ -886,6 +886,17 @@ class EquipEnhanceResponse(responses.EquipEnhanceResponse):
         if self.user_gold:
             mgr.gold = self.user_gold
 
+
+@handles
+class UniqueEquip2MultiEnhanceRequest(responses.UniqueEquip2MultiEnhanceResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        mgr.unit[self.unit_data.id] = self.unit_data
+        if self.user_gold:
+            mgr.gold = self.user_gold
+
 @handles
 class UniqueEquipEnhanceResponse(responses.UniqueEquipEnhanceResponse):
     async def update(self, mgr: datamgr, request):
