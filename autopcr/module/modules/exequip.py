@@ -184,13 +184,17 @@ class remove_cb_ex_equip(Module):
     async def do_task(self, client: pcrclient):
         ex_cnt = 0
         unit_cnt = 0
+        forbidden = set(client.data.user_clan_battle_ex_equip_restriction.keys())
+        no_remove_for_forbidden = 0
         for unit_id in client.data.unit:
             unit = client.data.unit[unit_id]
             exchange_list = []
             for ex_equip in unit.cb_ex_equip_slot:
-                if ex_equip.serial_id != 0:
+                if ex_equip.serial_id != 0 and ex_equip.serial_id not in forbidden:
                     exchange_list.append(ExtraEquipChangeSlot(slot=ex_equip.slot, serial_id=0))
                     ex_cnt += 1
+                elif ex_equip.serial_id in forbidden:
+                    no_remove_for_forbidden += 1
 
             if exchange_list:
                 unit_cnt += 1
@@ -199,7 +203,8 @@ class remove_cb_ex_equip(Module):
                         ex_equip_slot = None,
                         cb_ex_equip_slot=exchange_list)])
         if ex_cnt:
-            self._log(f"撤下了{unit_cnt}个角色的{ex_cnt}个会战EX装备")
+            msg = f"（{no_remove_for_forbidden}个因会战CD未撤下）" if no_remove_for_forbidden else ""
+            self._log(f"撤下了{unit_cnt}个角色的{ex_cnt}个会战EX装备{msg}")
         else:
             raise SkipError("所有会战EX装备均已撤下")
 
