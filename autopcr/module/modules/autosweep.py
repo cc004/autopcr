@@ -185,6 +185,7 @@ class simple_demand_sweep_base(Module):
 
 
 @singlechoice('hard_sweep_gap_limit', "盈余阈值", 10, [0, 5, 10])
+@conditional_not_execution("hard_sweep_not_run_time", [])
 @conditional_execution1("hard_sweep_run_time", ["h庆典"])
 @singlechoice('hard_sweep_consider_unit_order', "刷取顺序", "缺口少优先", ["缺口少优先", "缺口大优先"])
 @booltype('hard_sweep_consider_high_rarity_first', "三星角色优先", False)
