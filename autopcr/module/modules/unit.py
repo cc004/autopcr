@@ -527,18 +527,28 @@ class UnitController(Module):
                                 self.unit.promotion_level < growth_limit.promotion_level or \
                                 self.unit.promotion_level == growth_limit.promotion_level and getattr(growth_limit, f"equipment_{i}") > star))
 
+        except Exception as e:
+            self._warn(f"装备失败: {e}")
+            logger.exception(f"装备失败: {e}")
+            self.auto_rank_up = False
+
+        try:
             growth_limit_unique = await self.is_unique_growth_unit()
             if self.unit.unique_equip_slot and self.unit.unique_equip_slot[0].enhancement_level < target_unique1_level:
                 await self.unit_unique_equip1_enhance_aware(target_unique1_level, growth_limit_unique)
+        except Exception as e:
+            self._warn(f"专武1升级失败: {e}")
+            logger.exception(f"专武1升级失败: {e}")
+            self.auto_unique1_slot = False
 
+        try:
+            growth_limit_unique = await self.is_unique_growth_unit()
             if len(self.unit.unique_equip_slot) > 1 and (not self.unit.unique_equip_slot[1].is_slot and target_unique2_level != -1 
                                                          or self.unit.unique_equip_slot[1].enhancement_level < target_unique2_level):
                 await self.unit_unique_equip2_enhance_aware(target_unique2_level, growth_limit_unique)
-
         except Exception as e:
-            self._warn(f"装备专武升级失败: {e}")
-            logger.exception(f"装备专武升级失败: {e}")
-            self.auto_rank_up = False
+            self._warn(f"专武2升级失败: {e}")
+            logger.exception(f"专武2升级失败: {e}")
 
         try:
 
