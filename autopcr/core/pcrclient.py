@@ -50,6 +50,15 @@ class pcrclient(apiclient):
         await self.session.clear_session()
         self.need_refresh = False
 
+    async def clan_battle_top(self):
+        if not self.data.clan:
+            raise AbortError("未加入公会")
+        req = ClanBattleTopRequest()
+        req.clan_id = self.data.clan
+        req.is_first = 1
+        req.current_clan_battle_coin = self.data.get_shop_gold(eSystemId.CLAN_BATTLE_SHOP)
+        return await self.request(req)
+
     async def emblem_top(self):
         req = EmblemTopRequest()
         return await self.request(req)

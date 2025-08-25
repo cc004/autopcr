@@ -7,6 +7,18 @@ from ...model.enums import *
 from ...db.database import db
 import random
 
+@description('看看你是否掉刀')
+@name("公会战刀数")
+@default(True)
+@tag_stamina_get
+class clan_battle_knive(Module):
+    async def do_task(self, client: pcrclient):
+        top = await client.clan_battle_top()
+        if not top.remaining_count and top.point == 900:
+            self._log("今日三刀已出完！")
+        else:
+            self._warn(f"今日还有{top.remaining_count}刀未出，体力点数{top.point}！")
+
 @description('在公会中自动随机选择一位成员点赞。')
 @name("公会点赞")
 @default(True)

@@ -194,6 +194,7 @@ tool_modules = ModuleList(
         half_schedule,
         caravan_play,
         caravan_shop_buy,
+        clan_battle_knive,
         ex_equip_info,
         travel_team_view,
         missing_emblem,
