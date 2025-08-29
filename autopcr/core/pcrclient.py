@@ -588,7 +588,8 @@ class pcrclient(apiclient):
         if self.data.get_mana() >= mana:
             return True
         elif self.data.get_mana(include_bank = True) >= mana:
-            await self.draw_from_bank(self.data.user_gold_bank_info.bank_gold, mana - self.data.get_mana())
+            to_get = min(self.data.settings.limit.limit_gold, mana) - self.data.get_mana()
+            await self.draw_from_bank(self.data.user_gold_bank_info.bank_gold, to_get)
             return True
         else:
             return False
