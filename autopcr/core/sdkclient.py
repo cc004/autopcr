@@ -86,5 +86,12 @@ class sdkclient:
         return self._account.username
 
     @property
+    def id(self):
+        return hashlib.md5(
+                self._account.username.encode('utf-8') +
+                self._account.password.encode('utf-8')
+        ).hexdigest()
+
+    @property
     @abstractmethod
     def reskey(self) -> str: ...

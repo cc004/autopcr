@@ -22,7 +22,7 @@ class sessionmgr(Component[apiclient]):
 
     @property
     def cacheFile(self):
-        return os.path.join(self.cacheDir, self.id)
+        return os.path.join(self.cacheDir, self.sdk.id)
 
     async def _bililogin(self):
         uid, access_key = await self.sdk.login()
