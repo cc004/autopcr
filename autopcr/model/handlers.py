@@ -83,6 +83,7 @@ class CaravanMinigameCccBsFinishResponse(responses.CaravanMinigameCccBsFinishRes
 @handles
 class CaravanDishUseResponse(responses.CaravanDishUseResponse):
     async def update(self, mgr: datamgr, request):
+        mgr.caravan_dishes[request.dish_id] -= 1
         if self.reward_list:
             for item in self.reward_list:
                 mgr.update_inventory(item)
@@ -416,6 +417,7 @@ class LoadIndexResponse(responses.LoadIndexResponse):
             mgr.resident_info = self.resident_info
         if self.bank_bought:
             mgr.user_gold_bank_info = self.user_gold_bank_info
+        mgr.user_clan_battle_ex_equip_restriction = {i.serial_id: i for i in self.user_clan_battle_ex_equip_restriction} if self.user_clan_battle_ex_equip_restriction else {}
         mgr.clan_like_count = self.clan_like_count
         mgr.user_my_quest = self.user_my_quest
         mgr.cf = self.cf
@@ -696,6 +698,16 @@ class SeasonPassMissionAcceptResponse(responses.SeasonPassMissionAcceptResponse)
                 mgr.update_inventory(reward)
 
 @handles
+class SubStoryNydReadStoryResponse(responses.SubStoryNydReadStoryResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_info:
+            for reward in self.reward_info:
+                mgr.update_inventory(reward)
+        if self.special_reward_list:
+            for reward in self.special_reward_list:
+                mgr.update_inventory(reward)
+
+@handles
 class SubStoryXacReadStoryResponse(responses.SubStoryXacReadStoryResponse):
     async def update(self, mgr: datamgr, request):
         if self.reward_info:
@@ -866,6 +878,17 @@ class UseExpItemResponse(responses.UseExpItemResponse):
 
 @handles
 class EquipEnhanceResponse(responses.EquipEnhanceResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        mgr.unit[self.unit_data.id] = self.unit_data
+        if self.user_gold:
+            mgr.gold = self.user_gold
+
+
+@handles
+class UniqueEquip2MultiEnhanceRequest(responses.UniqueEquip2MultiEnhanceResponse):
     async def update(self, mgr: datamgr, request):
         if self.item_list:
             for item in self.item_list:
@@ -1062,6 +1085,40 @@ class GachaExchangePointResponse(responses.GachaExchangePointResponse):
             for item in self.reward_info_list:
                 mgr.update_inventory(item)
 
+@handles
+class UnitEquipExResponse(responses.UnitEquipExResponse):
+    async def update(self, mgr: datamgr, request):
+        for unit_slot_info in request.ex_equip_change_unit_list:
+            for ex_equip in unit_slot_info.ex_equip_slot or []:
+                mgr.unit[unit_slot_info.unit_id].ex_equip_slot[ex_equip.slot - 1].serial_id = ex_equip.serial_id
+
+            for ex_equip in unit_slot_info.cb_ex_equip_slot or []:
+                mgr.unit[unit_slot_info.unit_id].cb_ex_equip_slot[ex_equip.slot - 1].serial_id = ex_equip.serial_id
+
+@handles
+class EquipmentRankupExResponse(responses.EquipmentRankupExResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        for ex_serial_id in request.consume_ex_serial_id_list:
+            mgr.ex_equips.pop(ex_serial_id, None)
+        mgr.ex_equips[request.serial_id].rank = request.after_rank
+
+@handles
+class EquipmentEnhanceExResponse(responses.EquipmentEnhanceExResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        for ex_serial_id in request.consume_ex_serial_id_list:
+            mgr.ex_equips.pop(ex_serial_id, None)
+        mgr.ex_equips[request.serial_id].enhancement_pt = request.after_enhancement_pt
+
 # 菜 就别玩
 def custom_dict(self, *args, **kwargs):
     original_dict = super(TravelStartRequest, self).dict(*args, **kwargs)
@@ -1094,3 +1151,14 @@ field = ModelField.infer(
 )
 CaravanCoinShopData.__fields__['season_id'] = field
 setattr(CaravanCoinShopData, 'season_id', None)
+
+ExtraEquipSlot.__annotations__['slot'] = Optional[int]
+field = ModelField.infer(
+    name='slot',
+    value=None,
+    annotation=int,
+    class_validators=None,
+    config=ExtraEquipSlot.__config__,
+)
+ExtraEquipSlot.__fields__['slot'] = field
+setattr(ExtraEquipSlot, 'slot', None)

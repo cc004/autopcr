@@ -50,6 +50,15 @@ class pcrclient(apiclient):
         await self.session.clear_session()
         self.need_refresh = False
 
+    async def clan_battle_top(self):
+        if not self.data.clan:
+            raise AbortError("未加入公会")
+        req = ClanBattleTopRequest()
+        req.clan_id = self.data.clan
+        req.is_first = 1
+        req.current_clan_battle_coin = self.data.get_shop_gold(eSystemId.CLAN_BATTLE_SHOP)
+        return await self.request(req)
+
     async def emblem_top(self):
         req = EmblemTopRequest()
         return await self.request(req)
@@ -64,6 +73,39 @@ class pcrclient(apiclient):
         req.position = position
         req.action = action
         req.unit_id = unit_id
+        return await self.request(req)
+
+    async def unit_equip_ex(self, ex_equip_change_unit_list: List[ExtraEquipChangeUnit]):
+        req = UnitEquipExRequest()
+        req.ex_equip_change_unit_list = ex_equip_change_unit_list
+        return await self.request(req)
+
+    async def equipment_rankup_ex(self, serial_id: int, unit_id: int, frame: int, slot: int, before_rank: int, after_rank: int, consume_gold: int, from_view: int, item_list: List[InventoryInfoPost], consume_ex_serial_id_list: List[int]):
+        req = EquipmentRankupExRequest()
+        req.serial_id = serial_id
+        req.unit_id = unit_id
+        req.frame = frame
+        req.slot = slot
+        req.before_rank = before_rank
+        req.after_rank = after_rank
+        req.consume_gold = consume_gold
+        req.from_view = from_view
+        req.item_list = item_list
+        req.consume_ex_serial_id_list = consume_ex_serial_id_list
+        return await self.request(req)
+
+    async def equipment_enhance_ex(self, unit_id: int, serial_id: int, frame: int, slot: int, before_enhancement_pt: int, after_enhancement_pt: int, consume_gold: int, from_view: int, item_list: List[InventoryInfoPost], consume_ex_serial_id_list: List[int]):
+        req = EquipmentEnhanceExRequest()
+        req.unit_id = unit_id
+        req.serial_id = serial_id
+        req.frame = frame
+        req.slot = slot
+        req.before_enhancement_pt = before_enhancement_pt
+        req.after_enhancement_pt = after_enhancement_pt
+        req.consume_gold = consume_gold
+        req.from_view = from_view
+        req.item_list = item_list
+        req.consume_ex_serial_id_list = consume_ex_serial_id_list
         return await self.request(req)
 
     async def caravan_top(self):
@@ -378,6 +420,19 @@ class pcrclient(apiclient):
         req.item_list = [InventoryInfoPost(id=item[1], type=eInventoryType.Item, count=count) for item, count in items.items()]
         return await self.request(req)
 
+    async def multi_enhance_unique_2(self, unit_id: int, current_enhance_level: int, after_enhance_level: int, consume_item: typing.Counter[ItemType]):
+        req = UniqueEquip2MultiEnhanceRequest()
+        req.unit_id = unit_id
+        req.current_enhance_level = current_enhance_level
+        req.after_enhance_level = after_enhance_level
+        req.consume_item_list = [EnhanceRecipe(
+                id=item[1], 
+                type=item[0],
+                count=count,
+                current_count=self.data.get_inventory(item)
+            ) for item, count in consume_item.items()]
+        return await self.request(req)
+
     async def unique_equip_free_enhance(self, unit_id: int, equip_slot_num: int, current_enhancement_pt: int, after_enhancement_pt: int):
         req = EquipmentFreeMultiEnhanceUniqueRequest()
         req.unit_id = unit_id
@@ -533,7 +588,8 @@ class pcrclient(apiclient):
         if self.data.get_mana() >= mana:
             return True
         elif self.data.get_mana(include_bank = True) >= mana:
-            await self.draw_from_bank(self.data.user_gold_bank_info.bank_gold, mana - self.data.get_mana())
+            to_get = min(self.data.settings.limit.limit_gold, mana) - self.data.get_mana()
+            await self.draw_from_bank(self.data.user_gold_bank_info.bank_gold, to_get)
             return True
         else:
             return False
@@ -633,6 +689,11 @@ class pcrclient(apiclient):
     async def read_story(self, story_id: int):
         await self.story_check(story_id)
         return await self.story_view(story_id)
+
+    async def read_nyd_story(self, sub_story_id: int):
+        req = SubStoryNydReadStoryRequest()
+        req.sub_story_id = sub_story_id
+        await self.request(req)
 
     async def read_xac_story(self, sub_story_id: int):
         req = SubStoryXacReadStoryRequest()
@@ -1118,7 +1179,12 @@ class pcrclient(apiclient):
                     summary[name(reward)] += reward.count
                     break
             else:
-                rewards[item] += reward.count
+                if reward.count is not None:
+                    rewards[item] += reward.count
+                elif reward.received is not None:
+                    rewards[item] += reward.received
+                else:
+                    pass
         result = []
         for key, value in sorted(summary.items(), key = lambda x: x[1], reverse = True):
             result.append(f"{key}x{value}")

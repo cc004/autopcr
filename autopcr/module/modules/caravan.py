@@ -318,6 +318,15 @@ class DishEffectManager(EffectManager):
     def is_disable_effect(self):
         return any(db.caravan_dish[effect.id].disable_category == 1 for effect in self._effect_list)
 
+    def is_block_skip(self, block_type: int) -> bool:
+        val = self.get_effect_influence_value(eDishEffectType.BLOCK_SKIP_MOVE_COUNT)
+        if val is not None: # only god and pcrer know the rule
+            if val == 1 and block_type == eBlockType.MILES:
+                return True
+            elif val == 2 and block_type == eBlockType.TREASURE:
+                return True
+        return False
+
 class EventEffectManager(EffectManager):
     _effect_list: List[CaravanEventEffectData]
 
@@ -673,7 +682,6 @@ class CaravanGame:
                 self.spots = sum(self.spots_list)
                 self._log(f"当前格子 {self.current_block_id}，移动 {self.spots} 步")
                 self.spots_list = []
-            block_skip_type = self.dish_effect_manager.get_effect_influence_value(eDishEffectType.BLOCK_SKIP_MOVE_COUNT)
             while self.spots > 0:
                 next_blocks = db.caravan_map[self.current_block_id].get_next_blocks()
                 dis = [(nxt, db.caravan_map[nxt].distance_to_goal) for nxt in next_blocks]
@@ -681,7 +689,7 @@ class CaravanGame:
                 self.block_id_list.append(self.current_block_id)
                 if db.caravan_map[self.current_block_id].type == eBlockType.GOAL:
                     break
-                elif db.caravan_map[self.current_block_id].type - 1 == block_skip_type: # 1 -> skip licheng
+                elif self.dish_effect_manager.is_block_skip(db.caravan_map[self.current_block_id].type):
                     continue
                 else:
                     self.spots -= 1
@@ -848,7 +856,6 @@ class CaravanGame:
                         continue
                     self.used_dish_id = dish_to_use
                     self._log(f"使用料理：{db.caravan_dish[dish_to_use].name}，效果：{db.caravan_dish[dish_to_use].get_effect_desc()}")
-                    self.candidate_dishes[dish_to_use] -= 1
                     use_resp = await self.client.caravan_dish_use(
                         season_id=self.season_id,
                         dish_id=dish_to_use

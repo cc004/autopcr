@@ -1,5 +1,8 @@
 from collections import Counter
 
+from ...util.linq import flow
+from ...util.logger import instance as logger
+
 from ...model.custom import ItemType
 from ..modulebase import *
 from ..config import *
@@ -8,7 +11,7 @@ from ...model.error import *
 from ...db.database import db
 from ...db.models import GrowthParameter, GrowthParameterUnique
 from ...model.enums import *
-from ...model.common import SkillLevelInfo, SkillLevelUpDetail, UnitData
+from ...model.common import ExtraEquipChangeSlot, ExtraEquipChangeUnit, InventoryInfoPost, SkillLevelInfo, SkillLevelUpDetail, UnitData
 
 class UnitController(Module):
 
@@ -16,6 +19,7 @@ class UnitController(Module):
     client: pcrclient
     auto_level_up : bool = True
     auto_rank_up : bool = True
+    auto_unique1_slot: bool = True
     use_raw_ore : bool = True
 
     skill_name = {
@@ -238,9 +242,9 @@ class UnitController(Module):
             self._log(f"{self.unit_name}{slot_num}位装备{db.get_equip_name(equip_id)}强化至{enhancement_level}星级")
             await self.client.equipment_enhance(self.unit.id, slot_num, current_enhancement_pt, cost_stone)
 
-    async def unit_unique_slot_aware(self, limit: Union[GrowthParameterUnique, None] = None):
+    async def unit_unique1_slot_aware(self, limit: Union[GrowthParameterUnique, None] = None):
         if self.unit.promotion_level < 7:
-            self._log(f"{self.unit_name}专武需要角色升至品级7")
+            self._log(f"{self.unit_name}专武1需要角色升至品级7")
             if not self.auto_rank_up:
                 raise AbortError(f"当前设置不自动拉品级，无法装备")
             await self.unit_promotion_up_aware(7, await self.is_growth_unit())
@@ -248,9 +252,9 @@ class UnitController(Module):
         if limit:
             pass
         else:
-            await self.unit_unique_slot(False)
+            await self.unit_unique1_slot(False)
 
-    async def unit_unique_slot(self, free: bool):
+    async def unit_unique1_slot(self, free: bool):
         if free: # impossible
             pass
         else:
@@ -260,19 +264,19 @@ class UnitController(Module):
                 bad = self.client.data.get_not_enough_item(demand)
                 if bad:
                     bad_list = '\n'.join([f"{db.get_inventory_name_san(item)}缺少{cnt}片" for item, cnt in bad.items()])
-                    raise AbortError(f"制作{self.unit_name}专武所需材料不足:\n{bad_list}")
-                self._log(f"{self.unit_name}制作专武")
+                    raise AbortError(f"制作{self.unit_name}专武1所需材料不足:\n{bad_list}")
+                self._log(f"{self.unit_name}制作专武1")
                 equip_recipe_dict = Counter({item: cnt for item, cnt in demand.items() if db.is_equip(item) or item == db.xinsui})
                 item_recipe_dict = demand - equip_recipe_dict
                 await self.client.equipment_craft_unique(equip_id, equip_recipe_dict, item_recipe_dict, 0)
             mana = self.client.data.get_mana()
-            self._log(f"{self.unit_name}装备专武")
+            self._log(f"{self.unit_name}装备专武1")
             await self.client.equipment_multi_enhance_unique(self.unit_id, 1, mana, [], [], [], [], [], 0, 1, [], 0)
 
-    async def unit_unique_equip_rank_up_aware(self, target_rank: int, limit: Union[GrowthParameterUnique, None] = None):
+    async def unit_unique_equip1_rank_up_aware(self, target_rank: int, limit: Union[GrowthParameterUnique, None] = None):
         require_level = db.get_unique_equip_rank_required_level(1, self.unit_id, target_rank)
         if require_level > self.unit.unit_level:
-            self._log(f"{self.unit_name}专武突破至{target_rank}品级需要角色升至{require_level}级")
+            self._log(f"{self.unit_name}专武1突破至{target_rank}品级需要角色升至{require_level}级")
             if not self.auto_level_up:
                 raise AbortError(f"当前设置不自动拉角色等级，无法升级")
             await self.unit_level_up_aware(require_level, await self.is_growth_unit())
@@ -283,21 +287,21 @@ class UnitController(Module):
         bad = self.client.data.get_not_enough_item(demand)
         if bad:
             bad_list = '\n'.join([f"{db.get_inventory_name_san(item)}缺少{cnt}片" for item, cnt in bad.items()])
-            raise AbortError(f"{self.unit_name}专武突破至{target_rank}品级所需材料不足:\n{bad_list}")
+            raise AbortError(f"{self.unit_name}专武1突破至{target_rank}品级所需材料不足:\n{bad_list}")
 
         if not self.unit.unique_equip_slot:
-            raise AbortError(f"{self.unit_name}专武未实装")
+            raise AbortError(f"{self.unit_name}专武1未实装")
 
         if self.unit.unique_equip_slot[0].is_slot == 0:
-            self._log(f"{self.unit_name}专武突破至{target_rank}品级需要先装备专武")
-            await self.unit_unique_slot_aware(limit)
+            self._log(f"{self.unit_name}专武1突破至{target_rank}品级需要先装备专武1")
+            await self.unit_unique1_slot_aware(limit)
 
         if limit and self.unit.unique_equip_slot[0].enhancement_pt < limit.unique_equip_strength_point_1:
             pass
         else:
-            await self.unit_unique_equip_rank_up(target_rank, False)
+            await self.unit_unique_equip1_rank_up(target_rank, False)
 
-    async def unit_unique_equip_rank_up(self, target_rank: int, free: bool):
+    async def unit_unique_equip1_rank_up(self, target_rank: int, free: bool):
         if free: # impossible
             pass
         else:
@@ -306,38 +310,83 @@ class UnitController(Module):
             bad = self.client.data.get_not_enough_item(demand)
             if bad:
                 bad_list = '\n'.join([f"{db.get_inventory_name_san(item)}缺少{cnt}片" for item, cnt in bad.items()])
-                raise AbortError(f"{self.unit_name}专武突破至{target_rank}品级所需材料不足:\n{bad_list}")
+                raise AbortError(f"{self.unit_name}专武1突破至{target_rank}品级所需材料不足:\n{bad_list}")
 
             mana = (target_rank - current_rank) * 1000000 # TODO 随便设的
             if not (await self.client.prepare_mana(mana)):
-                raise AbortError(f"{self.unit_name}专武突破至{target_rank}品级需要{mana}玛娜，当前玛娜不足")
+                raise AbortError(f"{self.unit_name}专武1突破至{target_rank}品级需要{mana}玛娜，当前玛娜不足")
 
             for cur_rank in range(current_rank, target_rank):
-                self._log(f"{self.unit_name}专武突破至{cur_rank + 1}品级")
+                self._log(f"{self.unit_name}专武1突破至{cur_rank + 1}品级")
                 demand = db.get_unique_equip_material_demand(self.unit_id, 1, cur_rank, cur_rank + 1)
                 equip_recipe_dict = Counter({item: cnt for item, cnt in demand.items() if db.is_equip(item) or item == db.xinsui})
                 item_recipe_dict = demand - equip_recipe_dict
                 await self.client.equipment_rankup_unique(self.unit.id, 1, equip_recipe_dict, item_recipe_dict, cur_rank)
 
-    async def unit_unique_equip_enhance_aware(self, target_level: int, limit: Union[GrowthParameterUnique, None] = None):
+    async def unit_unique_equip2_enhance_aware(self, target_level: int, limit: Union[GrowthParameterUnique, None] = None):
+        if len(self.unit.unique_equip_slot) < 2:
+            raise AbortError(f"{self.unit_name}专武2未实装")
+        if not self.unit.unique_equip_slot or self.unit.unique_equip_slot[0].is_slot == 0:
+            self._log(f"{self.unit_name}专武2需要先装备专武1")
+            if not self.auto_unique1_slot:
+                raise AbortError(f"当前设置不自动装备专武1，无法装备专武2")
+            await self.unit_unique1_slot_aware(limit)
+
+        target_pt = db.get_unique_equip_pt_from_level(2, target_level)
+        if limit and target_pt > limit.unique_equip_strength_point_2 and self.unit.unique_equip_slot[1].enhancement_pt < limit.unique_equip_strength_point_2:
+            level = db.get_unique_equip_level_from_pt(2, limit.unique_equip_strength_point_2)
+            self._log(f"目标专武2等级{target_level}超过了免费可提升等级{level},先提升至等级{level}")
+            await self.unit_unique_equip2_enhance_aware(level, limit)
+
+        # target_rank = db.get_unique_equip_rank_from_level(2, target_level)
+
+        # if target_rank > self.unit.unique_equip_slot[1].rank:
+            # self._log(f"{self.unit_name}专武2升至{target_level}级需要先突破至{target_rank}品级")
+            # raise ValueError("专武2还没有突破功能")
+            # await self.unit_unique_equip2_rank_up_aware(target_rank, limit)
+
+        if self.unit.unique_equip_slot[1].enhancement_level < target_level:
+            await self.unit_unique_equip2_enhance(target_level, limit is not None and target_level <= db.get_unique_equip_level_from_pt(2, limit.unique_equip_strength_point_2))
+
+    async def unit_unique_equip2_enhance(self, target_level: int, free: bool):
+        if free:
+            raise ValueError("专武2没有免费升级功能")
+        else:
+            current_enhancement_pt: int = self.unit.unique_equip_slot[1].enhancement_pt
+            target_pt = db.get_unique_equip_pt_from_level(2, target_level)
+            pt = target_pt - current_enhancement_pt
+
+            items = self.client.data.prepare_kana_pure_memory(self.unit_id, pt)
+            if not items:
+                raise AbortError(f"{self.unit_name}专武2升至{target_level}星所需同名纯净记忆不足{pt}片")
+
+            mana = db.get_unique_equip_enhance_mana(2, current_enhancement_pt, target_pt)
+            if not (await self.client.prepare_mana(mana)):
+                raise AbortError(f"{self.unit_name}专武2升至{target_level}级需要{mana}玛娜，当前玛娜不足")
+
+            self._log(f"{self.unit_name}专武2升至{target_level}星")
+            current_level = -1 if not self.unit.unique_equip_slot[1].is_slot else self.unit.unique_equip_slot[1].enhancement_level
+            await self.client.multi_enhance_unique_2(self.unit_id, current_level, target_level, items)
+
+    async def unit_unique_equip1_enhance_aware(self, target_level: int, limit: Union[GrowthParameterUnique, None] = None):
         target_pt = db.get_unique_equip_pt_from_level(1, target_level)
         if limit and target_pt > limit.unique_equip_strength_point_1 and self.unit.unique_equip_slot[0].enhancement_pt < limit.unique_equip_strength_point_1:
             level = db.get_unique_equip_level_from_pt(1, limit.unique_equip_strength_point_1)
-            self._log(f"目标专武等级{target_level}超过了免费可提升等级{level},先提升至等级{level}")
-            await self.unit_unique_equip_enhance_aware(level, limit)
+            self._log(f"目标专武1等级{target_level}超过了免费可提升等级{level},先提升至等级{level}")
+            await self.unit_unique_equip1_enhance_aware(level, limit)
 
         target_rank = db.get_unique_equip_rank_from_level(1, target_level)
 
         if target_rank > self.unit.unique_equip_slot[0].rank:
-            self._log(f"{self.unit_name}专武升至{target_level}级需要先突破至{target_rank}品级")
-            await self.unit_unique_equip_rank_up_aware(target_rank, limit)
+            self._log(f"{self.unit_name}专武1升至{target_level}级需要先突破至{target_rank}品级")
+            await self.unit_unique_equip1_rank_up_aware(target_rank, limit)
 
         if self.unit.unique_equip_slot[0].enhancement_level < target_level:
-            await self.unit_unique_equip_enhance(target_level, limit is not None and target_level <= db.get_unique_equip_level_from_pt(1, limit.unique_equip_strength_point_1))
+            await self.unit_unique_equip1_enhance(target_level, limit is not None and target_level <= db.get_unique_equip_level_from_pt(1, limit.unique_equip_strength_point_1))
 
-    async def unit_unique_equip_enhance(self, target_level: int, free: bool):
+    async def unit_unique_equip1_enhance(self, target_level: int, free: bool):
         if free:
-            self._log(f"{self.unit_name}专武升至{target_level}级")
+            self._log(f"{self.unit_name}专武1升至{target_level}级")
             start_pt = self.unit.unique_equip_slot[0].enhancement_pt
             target_pt = db.get_unique_equip_pt_from_level(1, target_level)
             await self.client.unique_equip_free_enhance(self.unit.id, 1, start_pt, target_pt)
@@ -349,13 +398,13 @@ class UnitController(Module):
             pt_limit = -1 if target_level == db.get_unique_equip_max_level_from_rank(1, self.unit.unique_equip_slot[0].rank) else db.get_unique_equip_pt_from_level(1, target_level + 1) - current_enhancement_pt
             cost_stone = self.client.data.get_equip_enhance_stone_demand(pt, pt_limit)
             if not cost_stone:
-                raise AbortError(f"{self.unit_name}专武升至{target_level}级所需强化石不足，或无法达到其要求")
+                raise AbortError(f"{self.unit_name}专武1升至{target_level}级所需强化石不足，或无法达到其要求")
 
-            mana = pt * 680 # guess
+            mana = db.get_unique_equip_enhance_mana(1, current_enhancement_pt, target_pt)
             if not (await self.client.prepare_mana(mana)):
-                raise AbortError(f"{self.unit_name}专武升至{target_level}级需要{mana}玛娜，当前玛娜不足")
+                raise AbortError(f"{self.unit_name}专武1升至{target_level}级需要{mana}玛娜，当前玛娜不足")
 
-            self._log(f"{self.unit_name}专武升至{target_level}级")
+            self._log(f"{self.unit_name}专武1升至{target_level}级")
             await self.client.equipment_enhance_unique(self.unit.id, 1, cost_stone, current_enhancement_pt)
 
     async def get_memory_gap(self, star: int, unique_level: int, exceed_state: bool) -> int:
@@ -439,51 +488,175 @@ class UnitController(Module):
                 gap = await buy_shop(gap)
         return gap
 
-    async def promote(self, target_level: int = 1, target_star: int = 1, target_dear: int = 1, target_promote_rank: int = 1, target_equip_star: List[int] = [-1, -1, -1, -1, -1, -1], target_skill_ub_level: int = 1, target_skill_s1_level: int = 1, target_skill_s2_level: int = 1, target_skill_ex_level: int = 1, target_unique1_level: int = 0):
+    async def promote(self, target_level: int = 1, target_star: int = 1, target_dear: int = 1, target_promote_rank: int = 1, target_equip_star: List[int] = [-1, -1, -1, -1, -1, -1], target_skill_ub_level: int = 1, target_skill_s1_level: int = 1, target_skill_s2_level: int = 1, target_skill_ex_level: int = 1, target_unique1_level: int = 0, target_unique2_level: int = -1, target_ex1_id: int = -1, target_ex1_star: int = 0, target_ex2_id: int = -1, target_ex2_star: int = 0, target_ex3_id: int = -1, target_ex3_star: int = 0, cb_ex: bool = False):
         growth_limit = await self.is_growth_unit()
 
-        if self.unit.unit_level < target_level:
-            await self.unit_level_up_aware(target_level, growth_limit)
+        try:
 
-        if self.unit.promotion_level < target_promote_rank:
-            await self.unit_promotion_up_aware(target_promote_rank, growth_limit)
+            if self.unit.unit_level < target_level:
+                await self.unit_level_up_aware(target_level, growth_limit)
 
-        if self.unit.union_burst and self.unit.union_burst[0].skill_level < target_skill_ub_level:
-            await self.unit_skill_up_aware(eSkillLocationCategory.UNION_BURST_SKILL, lambda: self.unit.union_burst[0], target_skill_ub_level, growth_limit)
+        except Exception as e:
+            self._warn(f"等级升级失败: {e}")
+            logger.exception(f"等级升级失败: {e}")
+            self.auto_level_up = False
+        
+        try:
+            if self.unit.promotion_level < target_promote_rank:
+                await self.unit_promotion_up_aware(target_promote_rank, growth_limit)
 
-        if self.unit.main_skill and self.unit.main_skill[0].skill_level < target_skill_s1_level:
-            await self.unit_skill_up_aware(eSkillLocationCategory.MAIN_SKILL_1, lambda: self.unit.main_skill[0], target_skill_s1_level, growth_limit)
+            if self.unit.promotion_level == target_promote_rank:
+                for i in range(6):
+                    equip = self.unit.equip_slot[i]
+                    if equip.id == 999999:
+                        continue
 
-        if len(self.unit.main_skill) > 1 and self.unit.main_skill[1].skill_level < target_skill_s2_level:
-            await self.unit_skill_up_aware(eSkillLocationCategory.MAIN_SKILL_2, lambda: self.unit.main_skill[1], target_skill_s2_level, growth_limit)
+                    star = target_equip_star[i]
 
-        if self.unit.ex_skill and self.unit.ex_skill[0].skill_level < target_skill_ex_level:
-            await self.unit_skill_up_aware(eSkillLocationCategory.EX_SKILL_1, lambda: self.unit.ex_skill[0], target_skill_ex_level, growth_limit)
+                    if star != -1:
+                        if not equip.is_slot:
+                            await self.unit_equip_slot_aware(equip.id, i + 1, growth_limit)
 
-        for i in range(6):
-            equip = self.unit.equip_slot[i]
-            if equip.id == 999999:
-                continue
+                        promotion_limit = db.get_equip_max_star(equip.id)
+                        if star > promotion_limit:
+                            self._log(f"{i+1}号位装备预设{star}星级超过了最大星级{promotion_limit}，提升至最大星级{promotion_limit}")
+                            star = promotion_limit
 
-            star = target_equip_star[i]
+                        if equip.enhancement_level < star:
+                            await self.unit_equip_enhance(equip.id, i + 1, star, growth_limit is not None and (
+                                self.unit.promotion_level < growth_limit.promotion_level or \
+                                self.unit.promotion_level == growth_limit.promotion_level and getattr(growth_limit, f"equipment_{i}") > star))
 
-            if star != -1:
-                if not equip.is_slot:
-                    await self.unit_equip_slot_aware(equip.id, i + 1, growth_limit)
+        except Exception as e:
+            self._warn(f"装备失败: {e}")
+            logger.exception(f"装备失败: {e}")
+            self.auto_rank_up = False
 
-                promotion_limit = db.get_equip_max_star(equip.id)
-                if star > promotion_limit:
-                    self._log(f"{i+1}号位装备预设{star}星级超过了最大星级{promotion_limit}，提升至最大星级{promotion_limit}")
-                    star = promotion_limit
+        try:
+            growth_limit_unique = await self.is_unique_growth_unit()
+            if self.unit.unique_equip_slot and self.unit.unique_equip_slot[0].enhancement_level < target_unique1_level:
+                await self.unit_unique_equip1_enhance_aware(target_unique1_level, growth_limit_unique)
+        except Exception as e:
+            self._warn(f"专武1升级失败: {e}")
+            logger.exception(f"专武1升级失败: {e}")
+            self.auto_unique1_slot = False
 
-                if equip.enhancement_level < star:
-                    await self.unit_equip_enhance(equip.id, i + 1, star, growth_limit is not None and (
-                        self.unit.promotion_level < growth_limit.promotion_level or \
-                        self.unit.promotion_level == growth_limit.promotion_level and getattr(growth_limit, f"equipment_{i}") > star))
+        try:
+            growth_limit_unique = await self.is_unique_growth_unit()
+            if len(self.unit.unique_equip_slot) > 1 and (not self.unit.unique_equip_slot[1].is_slot and target_unique2_level != -1 
+                                                         or self.unit.unique_equip_slot[1].enhancement_level < target_unique2_level):
+                await self.unit_unique_equip2_enhance_aware(target_unique2_level, growth_limit_unique)
+        except Exception as e:
+            self._warn(f"专武2升级失败: {e}")
+            logger.exception(f"专武2升级失败: {e}")
 
-        growth_limit_unique = await self.is_unique_growth_unit()
-        if self.unit.unique_equip_slot and self.unit.unique_equip_slot[0].enhancement_level < target_unique1_level:
-            await self.unit_unique_equip_enhance_aware(target_unique1_level, growth_limit_unique)
+        try:
+
+            if self.unit.union_burst and self.unit.union_burst[0].skill_level < target_skill_ub_level:
+                await self.unit_skill_up_aware(eSkillLocationCategory.UNION_BURST_SKILL, lambda: self.unit.union_burst[0], target_skill_ub_level, growth_limit)
+
+            if self.unit.main_skill and self.unit.main_skill[0].skill_level < target_skill_s1_level:
+                await self.unit_skill_up_aware(eSkillLocationCategory.MAIN_SKILL_1, lambda: self.unit.main_skill[0], target_skill_s1_level, growth_limit)
+
+            if len(self.unit.main_skill) > 1 and self.unit.main_skill[1].skill_level < target_skill_s2_level:
+                await self.unit_skill_up_aware(eSkillLocationCategory.MAIN_SKILL_2, lambda: self.unit.main_skill[1], target_skill_s2_level, growth_limit)
+
+            if self.unit.ex_skill and self.unit.ex_skill[0].skill_level < target_skill_ex_level:
+                await self.unit_skill_up_aware(eSkillLocationCategory.EX_SKILL_1, lambda: self.unit.ex_skill[0], target_skill_ex_level, growth_limit)
+
+        except Exception as e:
+            self._warn(f"技能升级失败: {e}")
+            logger.exception(f"技能升级失败: {e}")
+
+        try:
+            frame = 1 + cb_ex
+            ex_slots_func = (lambda unit: unit.cb_ex_equip_slot) if cb_ex else (lambda unit: unit.ex_equip_slot)
+
+            use_ex_equip = set(ex_slot.serial_id
+                            for unit in self.client.data.unit.values() 
+                            for ex_slot in ex_slots_func(unit) if ex_slot.serial_id != 0) | self.client.data.user_clan_battle_ex_equip_restriction.keys()
+
+            ex_equip_by_ex_id = flow(self.client.data.ex_equips.values()) \
+                .where(lambda ex: ex.serial_id not in use_ex_equip) \
+                .group_by(lambda ex: ex.ex_equipment_id) \
+                .to_dict(lambda ex: ex.key, lambda ex: sorted(ex.to_list(), key=lambda x: (-x.enhancement_pt, x.rank)))
+
+            for ex_id, star, slot in zip([target_ex1_id, target_ex2_id, target_ex3_id], 
+                                          [target_ex1_star, target_ex2_star, target_ex3_star], 
+                                          [1,2,3]):
+                if ex_id == -1:
+                    continue
+
+                unit_ex_equip = ex_slots_func(self.unit)[slot - 1]
+                if unit_ex_equip.serial_id == 0 and ex_id == 0:
+                    continue
+
+                cur_ex_equip = self.client.data.ex_equips[unit_ex_equip.serial_id] if unit_ex_equip.serial_id != 0 else None
+                target_ex = cur_ex_equip
+                if cur_ex_equip is None \
+                or cur_ex_equip.ex_equipment_id != ex_id \
+                or db.get_ex_equip_max_star(cur_ex_equip.ex_equipment_id, cur_ex_equip.rank) < star \
+                or db.get_ex_equip_star_from_pt(cur_ex_equip.ex_equipment_id, cur_ex_equip.enhancement_pt) > star:
+
+                    if ex_id == 0:
+                        self._log(f"{self.unit_name}的{slot}号EX装备设置为未装备")
+                        target_serial_id = 0
+                    else:
+                        try:
+                            target_ex = flow(ex_equip_by_ex_id.get(ex_id, [])) \
+                                    .first(lambda ex: db.get_ex_equip_max_star(ex.ex_equipment_id, ex.rank) >= star
+                                           and db.get_ex_equip_star_from_pt(ex.ex_equipment_id, ex.enhancement_pt) <= star)
+                        except StopIteration:
+                            target_ex = None
+
+                        if not target_ex:
+                            self._warn(f"{self.unit_name}无可升级至{star}星的{db.get_ex_equip_name(ex_id)}")
+                            continue
+
+                        target_serial_id = target_ex.serial_id
+                        self._log(f"{self.unit_name}的{slot}号EX装备设置为{db.get_ex_equip_name(ex_id, target_ex.rank)}")
+
+                    exchange_list = [ExtraEquipChangeSlot(slot=unit_ex_equip.slot, serial_id=target_serial_id)]
+                    await self.client.unit_equip_ex([ExtraEquipChangeUnit(
+                            unit_id=self.unit_id, 
+                            ex_equip_slot = None if cb_ex else exchange_list,
+                            cb_ex_equip_slot = exchange_list if cb_ex else None,
+                            )])
+
+                if ex_id == 0:
+                    continue
+
+                if db.get_ex_equip_star_from_pt(target_ex.ex_equipment_id, target_ex.enhancement_pt) < star:
+                    demand_pt = db.get_ex_equip_enhance_pt(target_ex.ex_equipment_id, target_ex.enhancement_pt, star)
+                    demand_mana = db.get_ex_equip_enhance_mana(target_ex.ex_equipment_id, target_ex.enhancement_pt, star)
+                    if not await self.client.prepare_mana(demand_mana):
+                        self._warn(f"{self.unit_name}的{slot}号EX装备强化至{star}星级需要{demand_mana}玛娜，当前玛娜不足")
+                        continue
+
+
+                    if self.client.data.get_inventory(db.ex_pt) < demand_pt:
+                        self._warn(f"{self.unit_name}的{slot}号EX装备强化至{star}星级所需强化pt不足")
+                        continue
+
+                    self._log(f"{self.unit_name}的{slot}号EX装备强化至{star}星级")
+                    await self.client.equipment_enhance_ex(
+                        unit_id=self.unit_id,
+                        serial_id=target_ex.serial_id,
+                        frame=frame,
+                        slot=slot,
+                        before_enhancement_pt=target_ex.enhancement_pt,
+                        after_enhancement_pt=target_ex.enhancement_pt + demand_pt,
+                        consume_gold=demand_mana,
+                        from_view=2,
+                        item_list=[
+                            InventoryInfoPost(type = db.ex_pt[0], id = db.ex_pt[1], count = demand_pt)
+                        ],
+                        consume_ex_serial_id_list=[],
+                    )
+
+        except Exception as e:
+            self._warn(f"EX装备升级失败: {e}")
+            logger.exception(f"EX装备升级失败: {e}")
 
 
 @description('支持全部角色')
@@ -569,12 +742,14 @@ class unit_set_unique_equip_growth(UnitController):
         self.unit_id = int(unit_id)
         await self.set_unique_growth_unit()
 
-@description('支持全部角色，装备星级-1表示不穿装备，自动拉等级指当前等级不足以穿装备或提升技能等级，将会提升角色等级，自动拉品级指当前品级不足以装备专武时，会提升角色品级，使用原矿指装备不足时用原矿补充')
+@description('支持全部角色，装备星级-1表示不穿装备，自动拉等级指当前等级不足以穿装备或提升技能等级，将会提升角色等级，自动拉品级指当前品级不足以装备专武时，会提升角色品级，自动专武1指开专武2未开专武1时自动开专武1，使用原矿指装备不足时用原矿补充')
 @name('拉角色练度')
+@booltype("unit_promote_unique2_when_fail_to_unique_equip2", "自动专武1", False)
 @booltype("unit_promote_rank_when_fail_to_unique_equip", "自动拉品级", False)
 @booltype("unit_promote_level_when_fail_to_equip_or_skill", "自动拉等级", False)
 @booltype("unit_promote_rank_use_raw_ore", "使用原矿", False)
-@singlechoice("unit_promote_unique_equip1_level", "专武等级", 0, lambda : db.unit_unique_equip_level_candidate(1))
+@singlechoice("unit_promote_unique_equip2_level", "专武2等级", 0, lambda : db.unit_unique_equip_level_candidate(2))
+@singlechoice("unit_promote_unique_equip1_level", "专武1等级", 0, lambda : db.unit_unique_equip_level_candidate(1))
 @singlechoice("unit_promote_equip_5", "右下装备星级", -1, [-1,0,1,2,3,4,5])
 @singlechoice("unit_promote_equip_4", "左下装备星级", -1, [-1,0,1,2,3,4,5])
 @singlechoice("unit_promote_equip_3", "右中装备星级", -1, [-1,0,1,2,3,4,5])
@@ -594,22 +769,25 @@ class unit_promote(UnitController):
     async def do_task(self, client: pcrclient):
         self.client = client
         unit_list = self.get_config('unit_promote_units')
+
+        self.auto_level_up = bool(self.get_config('unit_promote_level_when_fail_to_equip_or_skill'))
+        self.auto_rank_up = bool(self.get_config('unit_promote_rank_when_fail_to_unique_equip'))
+        self.use_raw_ore = bool(self.get_config('unit_promote_rank_use_raw_ore'))
+        self.auto_unique1_slot = bool(self.get_config('unit_promote_unique2_when_fail_to_unique_equip2'))
+
+        target_level = int(self.get_config('unit_promote_level'))
+        target_promotion_rank = int(self.get_config('unit_promote_rank'))
+        target_equip_star = [int(self.get_config(f'unit_promote_equip_{i}')) for i in range(6)]
+        target_skill_ub_level = int(self.get_config('unit_promote_skill_ub'))
+        target_skill_s1_level = int(self.get_config('unit_promote_skill_s1'))
+        target_skill_s2_level = int(self.get_config('unit_promote_skill_s2'))
+        target_skill_ex_level = int(self.get_config('unit_promote_skill_ex'))
+        target_unique1_level = int(self.get_config('unit_promote_unique_equip1_level'))
+        target_unique2_level = int(self.get_config('unit_promote_unique_equip2_level'))
+
         for unit_id in unit_list:
             try:
                 self.unit_id = int(unit_id)
-
-                self.auto_level_up = bool(self.get_config('unit_promote_level_when_fail_to_equip_or_skill'))
-                self.auto_rank_up = bool(self.get_config('unit_promote_rank_when_fail_to_unique_equip'))
-                self.use_raw_ore = bool(self.get_config('unit_promote_rank_use_raw_ore'))
-
-                target_level = int(self.get_config('unit_promote_level'))
-                target_promotion_rank = int(self.get_config('unit_promote_rank'))
-                target_equip_star = [int(self.get_config(f'unit_promote_equip_{i}')) for i in range(6)]
-                target_skill_ub_level = int(self.get_config('unit_promote_skill_ub'))
-                target_skill_s1_level = int(self.get_config('unit_promote_skill_s1'))
-                target_skill_s2_level = int(self.get_config('unit_promote_skill_s2'))
-                target_skill_ex_level = int(self.get_config('unit_promote_skill_ex'))
-                target_unique1_level = int(self.get_config('unit_promote_unique_equip1_level'))
 
                 await self.promote(target_level = target_level, 
                                    target_promote_rank = target_promotion_rank, 
@@ -618,15 +796,18 @@ class unit_promote(UnitController):
                                    target_skill_s1_level = target_skill_s1_level, 
                                    target_skill_s2_level = target_skill_s2_level, 
                                    target_skill_ex_level = target_skill_ex_level, 
-                                   target_unique1_level = target_unique1_level)
+                                   target_unique1_level = target_unique1_level, 
+                                   target_unique2_level = target_unique2_level)
             except Exception as e:
                 self._warn(str(e))
                 continue
 
 @description('''角色ID	角色名字	角色等级	角色星级	好感度	Rank	左上	右上	左中	右中	左下	右下	UB	技能1	技能2	EX技能	专武1	专武2	EX武器	EX武器等级	EX防具	EX防具等级	EX首饰	EX首饰等级	高级设置
 不会使用专武球，专武升级请认真考虑！
-不考虑星级、好感度、专武2、EX装备、高级设置''')
+EX装备不考虑合成、替换已装备的EX装备！
+不考虑星级、好感度、高级设置''')
 @name('批量拉角色练度')
+@booltype("unit_promote_ex_cb", "会战EX装", True)
 @texttype("unit_promote_text", "目标练度", "")
 @booltype("unit_promote_batch_use_raw_ore", "使用原矿", False)
 @default(False)
@@ -636,7 +817,8 @@ class unit_promote_batch(UnitController):
 
         self.client = client
         unit_promote_texts = self.get_config('unit_promote_text').strip().split('\n')
-        self.use_raw_ore = bool(self.get_config('unit_promote_batch_use_raw_ore'))
+        self.use_raw_ore = self.get_config('unit_promote_batch_use_raw_ore')
+        cb_ex = self.get_config('unit_promote_ex_cb')
 
         for unit_text in unit_promote_texts:
             try:
@@ -652,6 +834,7 @@ class unit_promote_batch(UnitController):
 
                 self.auto_level_up = False
                 self.auto_rank_up = False
+                self.auto_unique1_slot = False
 
                 target_level = int(target_level)
                 target_star = int(target_star)
@@ -663,6 +846,7 @@ class unit_promote_batch(UnitController):
                 target_skill_s2_level = int(s2)
                 target_skill_ex_level = int(ex)
                 target_unique1_level = int(unique1_level) if unique1_level.isdigit() else 0
+                target_unique2_level = int(unique2_level) if unique2_level.isdigit() else 0
                 target_ex1_id = int(ex1_id)
                 target_ex1_star = int(ex1_star)
                 target_ex2_id = int(ex2_id)
@@ -679,7 +863,15 @@ class unit_promote_batch(UnitController):
                                    target_skill_s1_level = target_skill_s1_level,
                                    target_skill_s2_level = target_skill_s2_level,
                                    target_skill_ex_level = target_skill_ex_level,
-                                   target_unique1_level = target_unique1_level)
+                                   target_unique1_level = target_unique1_level,
+                                   target_unique2_level = target_unique2_level,
+                                   target_ex1_id = target_ex1_id,
+                                   target_ex1_star = target_ex1_star,
+                                   target_ex2_id = target_ex2_id,
+                                   target_ex2_star = target_ex2_star,
+                                   target_ex3_id = target_ex3_id,
+                                   target_ex3_star = target_ex3_star,
+                                   cb_ex = cb_ex)
 
             except Exception as e:
                 self._warn(str(e))
@@ -710,14 +902,17 @@ class unit_memory_buy(UnitController):
 @booltype("unit_memory_batch_do_buy", "开买", False)
 @description('''角色ID	角色名字	角色等级	角色星级	好感度	Rank	左上	右上	左中	右中	左下	右下	UB	技能1	技能2	EX技能	专武1	专武2	EX武器	EX武器等级	EX防具	EX防具等级	EX首饰	EX首饰等级	高级设置
 购买目标练度所缺的记忆碎片，先考虑大师店，再考虑女神店，其余商店请用对应的商店模块购买！
-仅考虑星级、专武1，不考虑界限突破''')
+仅考虑星级、专武1，不考虑界限突破
+数量上限指购买的记忆碎片数量上限，超过上限则不购买''')
 @default(False)
 @texttype("unit_memory_buy_batch_text", "目标练度", "")
+@inttype("unit_memory_buy_batch_demand_uplimit", "数量上限", 10, list(range(540)))
 class unit_memory_buy_batch(UnitController):
     async def do_task(self, client: pcrclient):
         self.client = client
         unit_memory_buy_text = self.get_config('unit_memory_buy_batch_text').strip().split('\n')
         do_buy = bool(self.get_config('unit_memory_batch_do_buy'))
+        uplimit = self.get_config('unit_memory_buy_batch_demand_uplimit')
 
         summary = []
 
@@ -739,12 +934,16 @@ class unit_memory_buy_batch(UnitController):
 
                 gap = await self.get_memory_gap(star, unique_level, exceed_state)
                 if do_buy:
+                    if gap > uplimit:
+                        self._log(f"{unit_name}记忆碎片需求{gap}超过上限{uplimit}，不购买")
+                        continue
+
                     gap = await self.buy_memory(gap)
                     if gap > 0:
                         self._log(f"剩余{gap}个记忆碎片未购买")
                 else:
                     if gap > 0:
-                        summary.append(f"{gap}片{unit_name}记忆碎片")
+                        summary.append(f"{gap}片{unit_name}记忆碎片" + "，但不购买" if gap > uplimit else "")
 
             except Exception as e:
                 self._warn(str(e))

@@ -18,7 +18,7 @@ from ..module.accountmgr import Account, AccountManager, instance as usermgr, Ac
 from ..util.draw import instance as drawer
 from ..util.logger import instance as logger
 
-APP_VERSION = "1.4.0"
+APP_VERSION = "1.5.0"
 
 CACHE_HTTP_DIR = os.path.join(CACHE_DIR, 'http_server')
 

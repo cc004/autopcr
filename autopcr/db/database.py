@@ -53,6 +53,7 @@ class database():
     travel_speed_up_paper: ItemType = (eInventoryType.Item, 23002)
     gacha_single_ticket: ItemType = (eInventoryType.Item, 24001)
     dice: ItemType = (eInventoryType.Item, 99009)
+    ex_pt: ItemType = (eInventoryType.Item, 26201)
 
     def update(self, dbmgr):
         self.dbmgr = dbmgr
@@ -1201,6 +1202,14 @@ class database():
             )
 
     @lazy_property
+    def nyd_story_data(self) -> Dict[int, NydStoryDatum]:
+        with self.dbmgr.session() as db:
+            return (
+                NydStoryDatum.query(db)
+                .to_dict(lambda x: x.sub_story_id, lambda x: x)
+            )
+
+    @lazy_property
     def xac_story_data(self) -> Dict[int, XacStoryDatum]:
         with self.dbmgr.session() as db:
             return (
@@ -1353,6 +1362,17 @@ class database():
             )
 
     @lazy_property
+    def ex_equipment_rankup_data(self) -> Dict[int, Dict[int, ExEquipmentRankupDatum]]:
+        with self.dbmgr.session() as db:
+            return (
+                ExEquipmentRankupDatum.query(db)
+                .group_by(lambda x: x.rarity)
+                .to_dict(lambda x: x.key, lambda x: 
+                    x.to_dict(lambda x: x.rankup_level, lambda x: x)
+                )
+            )
+
+    @lazy_property
     def unit_ex_equipment_slot(self) -> Dict[int, UnitExEquipmentSlot]:
         with self.dbmgr.session() as db:
             return (
@@ -1373,6 +1393,17 @@ class database():
                 ExEquipmentEnhanceDatum.query(db)
                 .group_by(lambda x: x.rarity)
                 .to_dict(lambda x: x.key, lambda x: x.to_dict(lambda x: x.enhance_level, lambda x: x))
+            )
+
+    @lazy_property
+    def ex_equipment_enhance_max_star_by_rank(self) -> Dict[int, Dict[int, int]]:
+        with self.dbmgr.session() as db:
+            return (
+                ExEquipmentEnhanceDatum.query(db)
+                .group_by(lambda x: x.rarity)
+                .to_dict(lambda x: x.key,
+                         lambda x: x.group_by(lambda y: y.rankup_level)
+                         .to_dict(lambda y: y.key, lambda y: y.max(lambda z: z.enhance_level).enhance_level))
             )
 
     @lazy_property
@@ -1466,11 +1497,37 @@ class database():
         star = max([0] + history_star)
         return star
 
+    def get_ex_equip_enhance_pt(self, id: int, pt: int, star: int) -> int:
+        rarity = self.get_ex_equip_rarity(id)
+        return self.ex_equipment_enhance_data[rarity][star].total_point - pt
+
+    def get_ex_equip_enhance_mana(self, id: int, pt: int, star: int) -> int:
+        rarity = self.get_ex_equip_rarity(id)
+        now_star = self.get_ex_equip_star_from_pt(id, pt)
+        mana = 0
+        for s in range(now_star + 1, star + 1):
+            mana += self.ex_equipment_enhance_data[rarity][s].needed_mana * (self.ex_equipment_enhance_data[rarity][s].total_point - pt)
+            pt = self.ex_equipment_enhance_data[rarity][s].total_point
+        return mana
+
+    def get_ex_equip_max_star(self, id: int, rank: int) -> int:
+        rarity = self.get_ex_equip_rarity(id)
+        return self.ex_equipment_enhance_max_star_by_rank[rarity][rank]
+
     def get_ex_equip_rarity(self, id: int) -> int:
         return self.ex_equipment_data[id].rarity
 
+    def get_ex_equip_max_rank(self, id: int) -> int:
+        return max(self.ex_equipment_rankup_data[self.get_ex_equip_rarity(id)].keys(), default=0)
+
     def get_ex_equip_rarity_name(self, id: int) -> str:
         return self.ex_rarity_name[self.get_ex_equip_rarity(id)]
+
+    def get_ex_equip_rankup_cost(self, id: int, start_rank: int, end_rank: int) -> int:
+        rarity = self.get_ex_equip_rarity(id)
+        if rarity not in self.ex_equipment_rankup_data:
+            return 0
+        return sum((self.ex_equipment_rankup_data[rarity][rank].consume_gold for rank in self.ex_equipment_rankup_data[rarity] if start_rank < rank <= end_rank), 0)
 
     def get_inventory_name(self, item: InventoryInfo) -> str:
         try:
@@ -1959,6 +2016,27 @@ class database():
         level = self.unique_equipment_rank_up[equip_id][rank].unit_level if rank > 0 else 1
         return level
 
+    def get_unique_equip_enhance_mana(self, equip_slot:int, st_pt: int, ed_pt: int) -> int:
+        middle = flow(self.unique_equipment_enhance_data[equip_slot].values()) \
+            .where(lambda x: st_pt <= x.total_point < ed_pt) \
+            .select(lambda x: x.needed_mana * x.needed_point) \
+            .sum()
+        prefix = flow(self.unique_equipment_enhance_data[equip_slot].values()) \
+            .where(lambda x: x.total_point < st_pt) \
+            .max(lambda x: x.total_point)
+        if prefix:
+            prefix = prefix.needed_mana * (st_pt - prefix.total_point)
+        else:
+            prefix = 0
+        suffix = flow(self.unique_equipment_enhance_data[equip_slot].values()) \
+            .where(lambda x: x.total_point >= ed_pt) \
+            .min(lambda x: x.total_point)
+        if suffix:
+            suffix = suffix.needed_mana * (suffix.total_point - ed_pt)
+        else:
+            suffix = 0
+        return prefix + middle + suffix
+
     def get_unique_equip_pt_from_level(self, equip_slot: int, level: int) -> int:
         pt = self.unique_equipment_enhance_data[equip_slot][level].total_point if level in self.unique_equipment_enhance_data[equip_slot] else 0
         return pt
@@ -2018,7 +2096,8 @@ class database():
         return list(range(1, self.team_max_level + 1 + 10))
 
     def unit_unique_equip_level_candidate(self, equip_slot: int) -> List[int]:
-        return list(range(0, self.unique_equipment_max_level[equip_slot] + 1))
+        st = 0 if equip_slot == 1 else -1
+        return list(range(st, self.unique_equipment_max_level[equip_slot] + 1))
 
     def last_normal_quest(self) -> List[int]:
         last_start_time = flow(self.normal_quest_data.values()) \

@@ -62,6 +62,7 @@ class datamgr(BaseModel, Component[apiclient]):
     data_time: int = 0
     version: int = 0
     caravan_dishes: typing.Counter[int] = Counter()
+    user_clan_battle_ex_equip_restriction: Dict[int, RestrictionExtraEquip] = {}
 
     @staticmethod
     async def try_update_database(ver: int):
@@ -159,6 +160,19 @@ class datamgr(BaseModel, Component[apiclient]):
             ) \
             and db.is_quest_effective_scope_in_campaign(quest, campaign_id)
         return self.get_campaign_times(func)
+
+    def prepare_kana_pure_memory(self, unit_id: int, num: int) -> typing.Counter[ItemType]:
+        ret = Counter()
+        kana = db.unit_data[unit_id].kana
+        for kana_id in db.unit_kana_ids[kana]:
+            if kana_id in db.unit_to_pure_memory:
+                token = db.unit_to_pure_memory[kana_id]
+                cnt = min(num, self.get_inventory(token))
+                ret[token] += cnt
+                num -= cnt
+        if num > 0:
+            return Counter()
+        return ret
 
     def get_unique_equip_material_demand(self, equip_slot:int, unit_id: int, token: ItemType, target_rank: int = -1) -> int:
         start_rank = self.unit[unit_id].unique_equip_slot[0].rank if unit_id in self.unit and self.unit[unit_id].unique_equip_slot else 0
@@ -421,7 +435,12 @@ class datamgr(BaseModel, Component[apiclient]):
         elif item.type == eInventoryType.ExtraEquip and item.ex_equip:
             self.ex_equips[item.ex_equip.serial_id] = item.ex_equip
         elif item.type == eInventoryType.CaravanDish:
-            self.caravan_dishes[item.id] = item.stock
+            if item.stock is not None:
+                self.caravan_dishes[item.id] = item.stock
+            elif item.received is not None:
+                self.caravan_dishes[item.id] += item.received
+            else:
+                self.caravan_dishes[item.id] += item.count
         else:
             self.inventory[token] = item.stock
 
