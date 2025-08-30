@@ -1179,7 +1179,12 @@ class pcrclient(apiclient):
                     summary[name(reward)] += reward.count
                     break
             else:
-                rewards[item] += reward.count
+                if reward.count is not None:
+                    rewards[item] += reward.count
+                elif reward.received is not None:
+                    rewards[item] += reward.received
+                else:
+                    pass
         result = []
         for key, value in sorted(summary.items(), key = lambda x: x[1], reverse = True):
             result.append(f"{key}x{value}")
