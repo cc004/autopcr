@@ -20,6 +20,7 @@ class UnitController(Module):
     auto_level_up : bool = True
     auto_rank_up : bool = True
     auto_unique1_slot: bool = True
+    to_max_level: bool = True
     use_raw_ore : bool = True
 
     skill_name = {
@@ -178,11 +179,18 @@ class UnitController(Module):
             await self.client.unit_level_up(self.unit.id, cost_potion)
 
     async def unit_level_up_aware(self, target_level: int, limit: Union[GrowthParameter, None] = None):
+        level_limit = self.client.data.team_level + (10 if self.unit.exceed_stage else 0)
+        if self.to_max_level:
+            target_level = min(target_level, level_limit)
+            if self.unit.unit_level >= level_limit:
+                raise AbortError(f"{self.unit_name}未突破，已达当前可提升的最高等级{level_limit}")
+            if target_level > level_limit:
+                self._log(f"{self.unit_name}未突破，将升级至最高允许的等级{level_limit}")
+
         if limit and target_level > limit.unit_level and self.unit.unit_level < limit.unit_level:
                 self._log(f"{self.unit_name}目标等级{target_level}超过了免费可提升等级{limit.unit_level},先提升至等级{limit.unit_level}")
                 await self.unit_level_up_aware(limit.unit_level, limit)
 
-        level_limit = self.client.data.team_level + (10 if self.unit.exceed_stage else 0)
         if target_level > level_limit:
             raise AbortError(f"{self.unit_name}目标等级{target_level}超过了可提升的最高等级{level_limit}，无法升级")
 
@@ -742,8 +750,10 @@ class unit_set_unique_equip_growth(UnitController):
         self.unit_id = int(unit_id)
         await self.set_unique_growth_unit()
 
-@description('支持全部角色，装备星级-1表示不穿装备，自动拉等级指当前等级不足以穿装备或提升技能等级，将会提升角色等级，自动拉品级指当前品级不足以装备专武时，会提升角色品级，自动专武1指开专武2未开专武1时自动开专武1，使用原矿指装备不足时用原矿补充')
+@description('支持全部角色，装备星级-1表示不穿装备，自动拉等级指当前等级不足以穿装备或提升技能等级，将会提升角色等级，自动拉品级指当前品级不足以装备专武时，会提升角色品级，自动专武1指开专武2未开专武1时自动开专武1，使用原矿指装备不足时用原矿补充'
+             '\n未突破角色升级至最高允许的等级：未突破角色升级至突破等级（+10）时，将升级至角色的最高允许等级')
 @name('拉角色练度')
+@booltype("unit_promote_to_max_level_when_no_exceed", "未突破角色升级至最高允许的等级", False)
 @booltype("unit_promote_unique2_when_fail_to_unique_equip2", "自动专武1", False)
 @booltype("unit_promote_rank_when_fail_to_unique_equip", "自动拉品级", False)
 @booltype("unit_promote_level_when_fail_to_equip_or_skill", "自动拉等级", False)
@@ -774,6 +784,7 @@ class unit_promote(UnitController):
         self.auto_rank_up = bool(self.get_config('unit_promote_rank_when_fail_to_unique_equip'))
         self.use_raw_ore = bool(self.get_config('unit_promote_rank_use_raw_ore'))
         self.auto_unique1_slot = bool(self.get_config('unit_promote_unique2_when_fail_to_unique_equip2'))
+        self.to_max_level = bool(self.get_config('unit_promote_to_max_level_when_no_exceed'))
 
         target_level = int(self.get_config('unit_promote_level'))
         target_promotion_rank = int(self.get_config('unit_promote_rank'))
