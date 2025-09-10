@@ -411,6 +411,13 @@ class pcrclient(apiclient):
         req.unit_id = unit_id
         req.item_list = [ItemInfo(item_id=item[1], item_num=count, current_num=self.data.get_inventory(item)) for item, count in item.items()]
         return await self.request(req)
+    
+    async def unit_exceed_level_limit(self, unit_id: int, exceed_stage: int, cost_item_list: List[InventoryInfoPost]):
+        req = UnitExceedLevelLimitRequest()
+        req.unit_id = unit_id
+        req.exceed_stage = exceed_stage
+        req.cost_item_list = cost_item_list
+        return await self.request(req)
 
     async def equipment_enhance(self, unit_id: int, equip_slot_num: int, current_enhancement_pt: int, items: typing.Counter[ItemType]):
         req = EquipEnhanceRequest()
