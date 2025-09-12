@@ -956,7 +956,7 @@ class unit_memory_buy_batch(UnitController):
 
 
 @description(
-    "批量角色突破"
+    "批量角色突破，只使用角色碎片进行突破"
     "\n忽略盈余：默认只有在角色碎片完全盈余的条件下才可以进行突破，开启后可忽略盈余检查"
     "\n保留Mana下限：妈的钱包+现有Mana小于该值时停止突破"
 )
