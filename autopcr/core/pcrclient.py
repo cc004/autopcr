@@ -385,8 +385,15 @@ class pcrclient(apiclient):
                 equip_list=[UserEquipParameterIdCount(id=item[1], count=count) for item, count in equips.items()]
             ) for equips in equip_recipe_list]
         return await self.request(req)
-    
-    async def unit_multi_evolution(self, unit_id:int,current_rarity:int, after_rarity:int,current_gold_num:int,current_memory_piece_num:int):
+
+    async def unit_multi_evolution(
+        self,
+        unit_id: int,
+        current_rarity: int,
+        after_rarity: int,
+        current_gold_num: int,
+        current_memory_piece_num: int,
+    ):
         req = UnitMultiEvolutionRequest()
         req.unit_id = unit_id
         req.current_rarity = current_rarity
