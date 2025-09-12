@@ -999,7 +999,7 @@ class unit_evolution(UnitController):
 
             if not ignore_memory and all_memory_gap > 0:
                 self._warn(
-                    f"{self.unit_name}记忆碎片总需求{all_memory_gap}，库存{memory_inventory}，不满足升星条件"
+                    f"{self.unit_name}记忆碎片总需求{all_memory_demand}，库存{memory_inventory}，不满足升星条件"
                 )
                 continue
 
