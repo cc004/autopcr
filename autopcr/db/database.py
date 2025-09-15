@@ -52,6 +52,7 @@ class database():
     jewel: ItemType = (eInventoryType.Jewel, 91002)
     travel_speed_up_paper: ItemType = (eInventoryType.Item, 23002)
     gacha_single_ticket: ItemType = (eInventoryType.Item, 24001)
+    gacha_ten_tickets: List[ItemType] = [(eInventoryType.Item, 24002), (eInventoryType.Item, 24004)]
     dice: ItemType = (eInventoryType.Item, 99009)
     ex_pt: ItemType = (eInventoryType.Item, 26201)
 
@@ -1199,6 +1200,14 @@ class database():
             return (
                 HatsuneItem.query(db)
                 .to_dict(lambda x: x.event_id, lambda x: x)
+            )
+
+    @lazy_property
+    def ais_story_data(self) -> Dict[int, AisStoryDatum]:
+        with self.dbmgr.session() as db:
+            return (
+                AisStoryDatum.query(db)
+                .to_dict(lambda x: x.sub_story_id, lambda x: x)
             )
 
     @lazy_property

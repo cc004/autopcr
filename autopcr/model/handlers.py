@@ -711,6 +711,13 @@ class SeasonPassMissionAcceptResponse(responses.SeasonPassMissionAcceptResponse)
                 mgr.update_inventory(reward)
 
 @handles
+class SubStoryAisReadStoryResponse(responses.SubStoryAisReadStoryResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_info:
+            for reward in self.reward_info:
+                mgr.update_inventory(reward)
+
+@handles
 class SubStoryNydReadStoryResponse(responses.SubStoryNydReadStoryResponse):
     async def update(self, mgr: datamgr, request):
         if self.reward_info:
