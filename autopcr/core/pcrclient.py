@@ -713,6 +713,11 @@ class pcrclient(apiclient):
         await self.story_check(story_id)
         return await self.story_view(story_id)
 
+    async def read_ais_story(self, sub_story_id: int):
+        req = SubStoryAisReadStoryRequest()
+        req.sub_story_id = sub_story_id
+        await self.request(req)
+
     async def read_nyd_story(self, sub_story_id: int):
         req = SubStoryNydReadStoryRequest()
         req.sub_story_id = sub_story_id
