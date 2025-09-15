@@ -751,9 +751,9 @@ class unit_set_unique_equip_growth(UnitController):
         await self.set_unique_growth_unit()
 
 @description('支持全部角色，装备星级-1表示不穿装备，自动拉等级指当前等级不足以穿装备或提升技能等级，将会提升角色等级，自动拉品级指当前品级不足以装备专武时，会提升角色品级，自动专武1指开专武2未开专武1时自动开专武1，使用原矿指装备不足时用原矿补充'
-             '\n未突破角色升级至最高允许的等级：未突破角色升级至突破等级（+10）时，将升级至角色的最高允许等级')
+             '\n等级升至上限：在当前升级条件下，升级至角色的允许等级上限（比如未突破角色升级至突破后等级，开启该选项可以避免升级至最大的未突破等级）')
 @name('拉角色练度')
-@booltype("unit_promote_to_max_level_when_no_exceed", "未突破角色升级至最高允许的等级", False)
+@booltype("unit_promote_to_max_level", "等级升至上限", False)
 @booltype("unit_promote_unique2_when_fail_to_unique_equip2", "自动专武1", False)
 @booltype("unit_promote_rank_when_fail_to_unique_equip", "自动拉品级", False)
 @booltype("unit_promote_level_when_fail_to_equip_or_skill", "自动拉等级", False)
@@ -784,7 +784,7 @@ class unit_promote(UnitController):
         self.auto_rank_up = bool(self.get_config('unit_promote_rank_when_fail_to_unique_equip'))
         self.use_raw_ore = bool(self.get_config('unit_promote_rank_use_raw_ore'))
         self.auto_unique1_slot = bool(self.get_config('unit_promote_unique2_when_fail_to_unique_equip2'))
-        self.to_max_level = bool(self.get_config('unit_promote_to_max_level_when_no_exceed'))
+        self.to_max_level = bool(self.get_config('unit_promote_to_max_level'))
 
         target_level = int(self.get_config('unit_promote_level'))
         target_promotion_rank = int(self.get_config('unit_promote_rank'))
