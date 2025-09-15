@@ -162,6 +162,7 @@ unit_modules = ModuleList(
         unit_memory_buy,
         unit_set_unique_equip_growth,
         unit_exceed,
+        unit_evolution,
     ]
 )
 

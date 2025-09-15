@@ -386,6 +386,22 @@ class pcrclient(apiclient):
             ) for equips in equip_recipe_list]
         return await self.request(req)
 
+    async def unit_multi_evolution(
+        self,
+        unit_id: int,
+        current_rarity: int,
+        after_rarity: int,
+        current_gold_num: int,
+        current_memory_piece_num: int,
+    ):
+        req = UnitMultiEvolutionRequest()
+        req.unit_id = unit_id
+        req.current_rarity = current_rarity
+        req.after_rarity = after_rarity
+        req.current_gold_num = current_gold_num
+        req.current_memory_piece_num = current_memory_piece_num
+        return await self.request(req)
+
     async def unit_free_promotion(self, unit_id: int, target_promotion_level: int):
         req = UnitFreePromotionRequest()
         req.unit_id = unit_id

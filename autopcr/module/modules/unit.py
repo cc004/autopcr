@@ -1040,3 +1040,92 @@ class unit_exceed(UnitController):
                 ],
             )
             self._log(f"{self.unit_name}突破成功")
+
+@description(
+    "批量角色升星"
+    "\n忽略盈余：默认只有在角色碎片完全盈余的条件下才可以进行升星，开启后可忽略盈余检查"
+    "\n升至最高星级：开启后会升级至填写的目标星级范围内的最大可升级星级"
+)
+@name("角色升星")
+@unitlist("unit_evolution_units", "角色")
+@singlechoice("unit_evolution_to_rarity", "目标星级", 5, range(2, 6))
+@booltype("unit_evolution_to_max_rarity", "升至最高星级", False)
+@booltype("unit_evolution_ignore_memory", "忽略盈余", False)
+@default(False)
+class unit_evolution(UnitController):
+    async def do_task(self, client: pcrclient):
+        self.client = client
+        unit_list = self.get_config("unit_evolution_units")
+        target_rarity = self.get_config("unit_evolution_to_rarity")
+        to_max_rarity = self.get_config("unit_evolution_to_max_rarity")
+        ignore_memory = self.get_config("unit_evolution_ignore_memory")
+
+        for unit_id in unit_list:
+            self.unit_id = int(unit_id)
+            if self.unit_id not in self.client.data.unit:
+                self._warn(f"未解锁角色{self.unit_name}")
+                continue
+
+            if self.unit.unit_rarity >= target_rarity:
+                self._warn(f"{self.unit_name}已到目标{target_rarity}星，无需升星")
+                continue
+
+            client = self.client
+            token = (eInventoryType.Item, self.memory_id)
+            required_dict = db.rarity_up_required[unit_id]
+            all_memory_demand = client.data.get_unit_memory_demand(self.unit_id)
+            memory_demand = {
+                i: sum(
+                    required_dict[i][token]
+                    for i in range(self.unit.unit_rarity + 1, i + 1)
+                )
+                for i in range(self.unit.unit_rarity + 1, target_rarity + 1)
+            }
+            rarity_memory_demand = memory_demand[target_rarity]
+            memory_inventory = client.data.get_inventory(token)
+            all_memory_gap = all_memory_demand - memory_inventory
+
+            if not ignore_memory and all_memory_gap > 0:
+                self._warn(
+                    f"{self.unit_name}记忆碎片总需求{all_memory_demand}，库存{memory_inventory}，不满足升星条件"
+                )
+                continue
+
+            if not to_max_rarity and rarity_memory_demand > memory_inventory:
+                self._warn(
+                    f"{self.unit_name}升至{target_rarity}星所需记忆碎片{rarity_memory_demand}，库存{memory_inventory}，不满足升星条件"
+                )
+                continue
+
+            min_memory_demand = min(memory_demand.values())
+            if min_memory_demand > memory_inventory:
+                self._warn(
+                    f"{self.unit_name}碎片库存{memory_inventory}，升星最低需要记忆碎片{min_memory_demand}，不满足升星条件"
+                )
+                continue
+
+            to_rarity = min(
+                target_rarity,
+                max(k for k, v in memory_demand.items() if memory_inventory >= v),
+            )
+            if to_rarity != target_rarity:
+                self._log(
+                    f"{self.unit_name}记忆碎片库存{memory_inventory}，升级至{target_rarity}星需要{rarity_memory_demand}碎片"
+                    f"，最大可升级至{to_rarity}星"
+                )
+
+            # 1->2需要2w mana，2->3需要3w mana，以此类推
+            mana = sum(
+                10_000 * i for i in range(self.unit.unit_rarity + 1, to_rarity + 1)
+            )
+            if not await self.client.prepare_mana(mana):  # 这点mana都没了吗
+                raise AbortError(f"mana不足，升星共需{mana}")
+
+            await client.unit_multi_evolution(
+                unit_id=self.unit_id,
+                current_rarity=self.unit.unit_rarity,
+                after_rarity=to_rarity,
+                current_gold_num=self.client.data.get_mana(),
+                current_memory_piece_num=memory_inventory,
+            )
+            self._log(f"{self.unit_name}升星至{to_rarity}星")

@@ -1132,6 +1132,19 @@ class EquipmentEnhanceExResponse(responses.EquipmentEnhanceExResponse):
             mgr.ex_equips.pop(ex_serial_id, None)
         mgr.ex_equips[request.serial_id].enhancement_pt = request.after_enhancement_pt
 
+
+@handles
+class UnitMultiEvolutionResponse(responses.UnitMultiEvolutionResponse):
+    async def update(self, mgr: datamgr, request: UnitMultiEvolutionRequest):
+        for u in self.unit_data_list or []:
+            mgr.unit[u.id] = u
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        if self.item_data:
+            for item in self.item_data:
+                mgr.update_inventory(item)
+
+
 # 菜 就别玩
 def custom_dict(self, *args, **kwargs):
     original_dict = super(TravelStartRequest, self).dict(*args, **kwargs)
