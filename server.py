@@ -61,7 +61,7 @@ sv_help = f"""
 - {prefix}卡池 查看当前卡池
 - {prefix}编队 1 1 春妈 蝶妈 狗妈 水妈 礼妈 便捷设置编队
 - {prefix}免费十连 <卡池id> 卡池id来自【{prefix}卡池】
-- {prefix}来发十连 <卡池id> [抽到出] [单抽券] [开抽] 赛博抽卡，谨慎使用。卡池id来自【{prefix}卡池】，[抽到出]表示抽到出货或达天井，[单抽券]表示仅用厕纸，[开抽]表示确认抽卡。已有up也可再次触发。
+- {prefix}来发十连 <卡池id> [抽到出] [单抽券|单抽] [编号小优先] [开抽] 赛博抽卡，谨慎使用。卡池id来自【{prefix}卡池】，[抽到出]表示抽到出货或达天井，默认十连，[单抽券]表示仅用厕纸，[单抽]表示宝石单抽，[标号小优先]指智能pickup时优先选择编号小的角色，[开抽]表示确认抽卡。已有up也可再次触发。
 """.strip()
 
 if address is None:
@@ -667,7 +667,9 @@ async def shilian(botev: BotEvent):
     cc_until_get = False
     pool_id = ""
     really_do = False
-    ticket = False
+    single_ticket = False
+    single = False
+    small_first = False
     msg = await botev.message()
     try:
         pool_id = msg[0]
@@ -686,7 +688,17 @@ async def shilian(botev: BotEvent):
         pass
 
     try:
-        ticket = is_args_exist(msg, '单抽券')
+        single_ticket = is_args_exist(msg, '单抽券')
+    except:
+        pass
+
+    try:
+        single = is_args_exist(msg, '单抽')
+    except:
+        pass
+
+    try:
+        small_first = is_args_exist(msg, '编号小优先')
     except:
         pass
 
@@ -697,19 +709,30 @@ async def shilian(botev: BotEvent):
 
     pool_id = current_gacha[pool_id]
 
+    if single_ticket and single:
+        await botev.finish("单抽券和单抽只能选一个")
+
+    gacha_method = "十连"
+    if single_ticket:
+        gacha_method = "单抽券"
+    elif single:
+        gacha_method = "单抽"
+
     if not really_do:
         msg = f"卡池{pool_id}\n"
         if cc_until_get:
             msg += "抽到出\n"
-        if ticket:
-            msg += "单抽券\n"
+        if small_first:
+            msg += "编号小优先\n"
+        msg += f"{gacha_method}\n"
         msg += "确认无误，消息末尾加上【开抽】即可开始抽卡"
         await botev.finish(msg)
 
     config = {
         "pool_id": pool_id,
         "cc_until_get": cc_until_get,
-        "single_ticket": ticket,
+        "gacha_method": gacha_method,
+        "gacha_start_auto_select_pickup_min_first": small_first,
     }
     return config
 
