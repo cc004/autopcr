@@ -159,6 +159,19 @@ class EquipmentFreeEnhanceResponse(responses.EquipmentFreeEnhanceResponse):
         mgr.unit[self.unit_data.id] = self.unit_data
 
 @handles
+class UnitExceedLevelLimitResponse(responses.UnitExceedLevelLimitResponse):
+    async def update(self, mgr: datamgr, request:UnitExceedLevelLimitRequest):
+        mgr.unit[request.unit_id].exceed_stage = self.exceed_stage
+        if self.item_data:
+            for item in self.item_data:
+                mgr.update_inventory(item)
+        if self.equip_list:
+            for item in self.equip_list:
+                mgr.update_inventory(item)
+        if self.user_gold:
+            mgr.gold = self.user_gold
+
+@handles
 class ShioriQuestSkipResponse(responses.ShioriQuestSkipResponse):
     async def update(self, mgr: datamgr, request):
         if self.quest_result_list:

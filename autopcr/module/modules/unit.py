@@ -22,6 +22,8 @@ class UnitController(Module):
     auto_unique1_slot: bool = True
     to_max_level: bool = True
     use_raw_ore : bool = True
+    
+    E = 100_000_000
 
     skill_name = {
         eSkillLocationCategory.UNION_BURST_SKILL: "UB",
@@ -962,3 +964,79 @@ class unit_memory_buy_batch(UnitController):
 
         if summary:
             self._warn(f"将购买记忆碎片:\n" + '\n'.join(summary))
+
+
+@description(
+    "批量角色突破，只使用角色碎片进行突破"
+    "\n忽略盈余：默认只有在角色碎片完全盈余的条件下才可以进行突破，开启后可忽略盈余检查"
+    "\n保留Mana下限：妈的钱包+现有Mana小于该值时停止突破"
+)
+@name("角色突破")
+@unitlist("unit_exceed_units", "角色")
+@booltype("unit_exceed_ignore_memory", "忽略盈余", False)
+@inttype("unit_exceed_mana_keep", "保留Mana下限（亿）", 10, range(1000))
+@default(False)
+class unit_exceed(UnitController):
+    async def do_task(self, client: pcrclient):
+        self.client = client
+        unit_list = self.get_config("unit_exceed_units")
+        ignore_memory = self.get_config("unit_exceed_ignore_memory")
+        minimum_mana_keep = self.get_config("unit_exceed_mana_keep")
+
+        for unit_id in unit_list:
+            self.unit_id = int(unit_id)
+            if self.unit_id not in self.client.data.unit:
+                self._warn(f"未解锁角色{self.unit_name}")
+                continue
+
+            if self.unit.exceed_stage:
+                self._warn(f"{self.unit_name}已突破，无需突破")
+                continue
+            
+            if self.unit.unit_rarity < 5:
+                self._warn(f"{self.unit_name}不是5星角色，无法突破")
+                continue
+
+            client = self.client
+            token = (eInventoryType.Item, self.memory_id)
+            all_memory_demand = client.data.get_unit_memory_demand(self.unit_id)
+            exceed_memory_demand = db.exceed_level_unit_required[unit_id].consume_num_1
+            exceed_mana_demand = db.exceed_level_unit_required[unit_id].consume_num_2
+            memory_inventory = client.data.get_inventory(token)
+            all_memory_gap = all_memory_demand - memory_inventory
+
+            if not ignore_memory and all_memory_gap > 0:
+                self._warn(
+                    f"{self.unit_name}记忆碎片总需求{all_memory_demand}，库存{memory_inventory}，不满足突破条件"
+                )
+                continue
+
+            if exceed_memory_demand > memory_inventory:
+                self._warn(
+                    f"{self.unit_name}突破所需记忆碎片{exceed_memory_demand}，库存{memory_inventory}，不满足突破条件"
+                )
+                continue
+
+            mana_keep = self.client.data.get_mana(include_bank=True)
+            if (mana_keep - exceed_mana_demand) < minimum_mana_keep * 100000000:
+                raise AbortError(
+                    f"{self.unit_name}突破所需Mana{exceed_mana_demand/self.E}亿，"
+                    f"当前Mana{round(mana_keep/self.E, 2)}亿，"
+                    f"设置的保留Mana下限{minimum_mana_keep}亿，不满足突破条件"
+                )
+
+            await self.client.prepare_mana(exceed_mana_demand)
+
+            await client.unit_exceed_level_limit(
+                unit_id=self.unit_id,
+                exceed_stage=1,
+                cost_item_list=[
+                    InventoryInfoPost(
+                        type=db.zmana[0], id=db.zmana[1], count=exceed_mana_demand
+                    ),
+                    InventoryInfoPost(
+                        type=token[0], id=token[1], count=exceed_memory_demand
+                    ),
+                ],
+            )
+            self._log(f"{self.unit_name}突破成功")
