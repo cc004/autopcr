@@ -45,6 +45,9 @@ class ais_substory(SubStoryReader):
     async def read(self, sub_story_id: int):
         await self.client.read_ais_story(sub_story_id)
 
+    async def confirm(self):
+        await self.client.confirm_ais_story()
+
 @EventId(10134)
 class nyd_substory(SubStoryReader):
 
