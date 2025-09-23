@@ -748,8 +748,7 @@ class unit_set_unique_equip_growth(UnitController):
 
     async def do_task(self, client: pcrclient):
         self.client = client
-        unit_id, unit_name = self.get_config('unit_set_unique_equip_growth_id').split(':')
-        self.unit_id = int(unit_id)
+        self.unit_id = self.get_config('unit_set_unique_equip_growth_id')
         await self.set_unique_growth_unit()
 
 @description('支持全部角色，装备星级-1表示不穿装备，自动拉等级指当前等级不足以穿装备或提升技能等级，将会提升角色等级，自动拉品级指当前品级不足以装备专武时，会提升角色品级，自动专武1指开专武2未开专武1时自动开专武1，使用原矿指装备不足时用原矿补充'
