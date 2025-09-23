@@ -635,3 +635,36 @@ class set_my_party(Module):
                 tab_number += 1
                 party_number = 1
 
+@description('计算等级同步返钻数量')
+@name('返钻计算')
+@notlogin(check_data = True)
+@default(True)
+class return_jewel(Module):
+    async def do_task(self, client: pcrclient):
+        import math
+        max_unit_rarity, max_promotion_level = 31, 305
+        return_jewel_count = 0
+        
+        units = list(client.data.unit.values())
+        count_unit = len(units)
+        
+        units_sorted = sorted(units, key=lambda u: (u.promotion_level, u.unit_level), reverse=True)
+        units_excluded_top20 = units_sorted[20:] if len(units_sorted) > 20 else []
+        
+        value1 = value2 = 0
+        for unit in units_excluded_top20:
+            value1 += unit.promotion_level - 1
+            value2 += unit.unit_level - 1
+        return_jewel_count = math.ceil((1500 + (value1 + value2 / 10) / 2) / 10) * 10
+        
+        count_max_rarity = count_max_level = 0
+        for unit in units:
+            count_max_rarity += unit.promotion_level == max_unit_rarity
+            count_max_level += unit.unit_level == max_promotion_level
+        
+        max_return_jewel_count = math.ceil((1500 + (count_unit - 20) * (max_unit_rarity - 1 + (max_promotion_level - 1) / 10) / 2) / 10) * 10
+
+        self._log(f"当前角色数: {count_unit}")
+        self._log(f"当前处于最大品级角色数: {count_max_rarity}")
+        self._log(f"当前处于最大突破等级角色数: {count_max_level}")
+        self._log(f"返钻数量: {return_jewel_count} (当前box最多返钻数量: {max_return_jewel_count})")
