@@ -648,14 +648,14 @@ class return_jewel(Module):
         units = list(client.data.unit.values())
         count_unit = len(units)
         
-        units_sorted = sorted(units, key=lambda u: (u.promotion_level, u.unit_level), reverse=True)
-        units_excluded_top20 = units_sorted[20:] if len(units_sorted) > 20 else []
-        
-        value1 = value2 = 0
-        for unit in units_excluded_top20:
-            value1 += unit.promotion_level - 1
-            value2 += unit.unit_level - 1
-        return_jewel_count = math.ceil((1500 + (value1 + value2 / 10) / 2) / 10) * 10
+        promo_levels = sorted([u.promotion_level for u in units], reverse=True)
+        unit_levels = sorted([u.unit_level for u in units], reverse=True)
+
+        value1 = sum(promo_levels[20:]) - len(promo_levels[20:])
+        value2 = sum(unit_levels[20:]) - len(unit_levels[20:])
+
+        return_jewel_count = 1500 + (value1 + value2 / 10) / 2
+        return_jewel_count_10 = math.ceil(return_jewel_count / 10) * 10
         
         count_max_rarity = count_max_level = 0
         for unit in units:
@@ -667,4 +667,5 @@ class return_jewel(Module):
         self._log(f"当前角色数: {count_unit}")
         self._log(f"当前处于最大品级角色数: {count_max_rarity}")
         self._log(f"当前处于最大突破等级角色数: {count_max_level}")
-        self._log(f"返钻数量: {return_jewel_count} (当前box最多返钻数量: {max_return_jewel_count})")
+        self._log(f"返钻数量: {return_jewel_count} (向上取整实际获得: {return_jewel_count_10})")
+        self._log(f"当前box最多返钻数量: {max_return_jewel_count}")
