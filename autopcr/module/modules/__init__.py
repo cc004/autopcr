@@ -193,6 +193,7 @@ tool_modules = ModuleList(
     '工具',
     'tool',
     [
+        return_jewel,
         # cook_pudding,
         ex_equip_rank_up,
         ex_equip_enhance_up,

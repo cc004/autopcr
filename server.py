@@ -847,6 +847,10 @@ async def redeem_unit_swap(botev: BotEvent):
 async def half_schedule(botev: BotEvent):
     return {}
 
+@register_tool("返钻", "return_jewel")
+async def return_jewel(botev: BotEvent):
+    return {}
+
 @register_tool("免费十连", "free_gacha")
 async def free_gacha(botev: BotEvent):
     msg = await botev.message()
