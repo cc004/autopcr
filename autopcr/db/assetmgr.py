@@ -69,6 +69,7 @@ class assetmgr:
     async def init(self, ver):
         self.registries.clear()
 
+        os.makedirs(os.path.join(CACHE_DIR, 'manifest'), exist_ok=True)
         cacheFile = os.path.join(CACHE_DIR, 'manifest', f'{ver}.json')
         try:
             self.root = content.parse_file(cacheFile)

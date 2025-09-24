@@ -20,7 +20,8 @@ async def do_update_database() -> int:
     version = (await rsp.json())['TruthVersion']
 
     url = f'https://redive.estertion.win/db/redive_cn.db.br'
-    
+
+    os.makedirs(os.path.join(CACHE_DIR, 'db'), exist_ok=True)
     save_path = os.path.join(CACHE_DIR, "db", f"{version}.db")
     try:
         rsp = await aiorequests.get(url, headers={'Accept-Encoding': 'br'}, stream=True, timeout=20)
