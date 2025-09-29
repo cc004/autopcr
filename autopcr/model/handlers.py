@@ -1163,12 +1163,12 @@ class UnitMultiEvolutionResponse(responses.UnitMultiEvolutionResponse):
 
 
 # 菜 就别玩
-def custom_dict(self, *args, **kwargs):
-    original_dict = super(TravelStartRequest, self).dict(*args, **kwargs)
-    if self.action_type is not None:
-        original_dict['action_type'] = {"value__": self.action_type.value}
-    return original_dict
-TravelStartRequest.dict = custom_dict
+# def custom_dict(self, *args, **kwargs):
+#     original_dict = super(TravelStartRequest, self).dict(*args, **kwargs)
+#     if self.action_type is not None:
+#         original_dict['action_type'] = {"value__": self.action_type.value}
+#     return original_dict
+# TravelStartRequest.dict = custom_dict
 
 HatsuneTopResponse.__annotations__['event_status'] = HatsuneEventStatus
 HatsuneTopResponse.__fields__['event_status'].type_ = Optional[HatsuneEventStatus]
