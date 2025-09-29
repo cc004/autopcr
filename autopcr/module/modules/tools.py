@@ -290,24 +290,24 @@ class gacha_start(Module):
         try:
             while True:
                 if gacha_method == '单抽券':
-                    reward += await client.exec_gacha_aware(target_gacha, 1, eGachaDrawType.Ticket, client.data.get_inventory(db.gacha_single_ticket), 0, gacha_start_auto_select_pickup, pickup_min_first)
+                    reward += await client.exec_gacha_aware(target_gacha, 1, eGachaDrawType.Ticket, client.data.get_inventory(db.gacha_single_ticket), 0, client.time, gacha_start_auto_select_pickup, pickup_min_first)
                 elif gacha_method == '单抽':
-                    reward += await client.exec_gacha_aware(target_gacha, 1, eGachaDrawType.Payment, client.data.jewel.free_jewel + client.data.jewel.jewel, 0, gacha_start_auto_select_pickup, pickup_min_first)
+                    reward += await client.exec_gacha_aware(target_gacha, 1, eGachaDrawType.Payment, client.data.jewel.free_jewel + client.data.jewel.jewel, 0, client.time, gacha_start_auto_select_pickup, pickup_min_first)
                 elif gacha_method == '十连':
                     if isinstance(resp, GachaIndexResponse) and resp.campaign_info and resp.campaign_info.fg10_exec_cnt and target_gacha.id in db.campaign_free_gacha_data[resp.campaign_info.campaign_id]:
-                        reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Campaign10Shot, cnt, resp.campaign_info.campaign_id, gacha_start_auto_select_pickup, pickup_min_first)
+                        reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Campaign10Shot, cnt, resp.campaign_info.campaign_id, client.time, gacha_start_auto_select_pickup, pickup_min_first)
                         resp.campaign_info.campaign_id -= 1
                     elif any(client.data.get_inventory(temp_ticket) > 0 for temp_ticket in temp_tickets):
                         # find first ticket
                         ticket = next((temp_ticket for temp_ticket in temp_tickets if client.data.get_inventory(temp_ticket)))
                         num = client.data.get_inventory(ticket)
-                        reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Temp_Ticket_10, num, 0, gacha_start_auto_select_pickup, pickup_min_first)
+                        reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Temp_Ticket_10, num, 0, client.time, gacha_start_auto_select_pickup, pickup_min_first)
                     elif any(client.data.get_inventory(gacha_ten_ticket) > 0 for gacha_ten_ticket in db.gacha_ten_tickets):
                         ticket = next((gacha_ten_ticket for gacha_ten_ticket in db.gacha_ten_tickets if client.data.get_inventory(gacha_ten_ticket)))
                         num = client.data.get_inventory(ticket)
-                        reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Ticket, num, 0, gacha_start_auto_select_pickup, pickup_min_first) # real ticket ?
+                        reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Ticket, num, 0, client.time, gacha_start_auto_select_pickup, pickup_min_first) # real ticket ?
                     else:
-                        reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Payment, client.data.jewel.free_jewel + client.data.jewel.jewel, 0, gacha_start_auto_select_pickup, pickup_min_first)
+                        reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Payment, client.data.jewel.free_jewel + client.data.jewel.jewel, 0, client.time, gacha_start_auto_select_pickup, pickup_min_first)
                 else:
                     raise ValueError("未知的抽卡方式")
 

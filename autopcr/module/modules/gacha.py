@@ -22,7 +22,7 @@ class normal_gacha(Module):
                 break
         if normal_gacha.free_exec_times != 0:
             raise SkipError("已进行过普通扭蛋")
-        resp = await client.exec_gacha(normal_gacha.id, 10, 0, eGachaDrawType.Free, -1, 0)
+        resp = await client.exec_gacha(normal_gacha.id, 10, 0, eGachaDrawType.Free, -1, 0, 0)
         memory = [i for i in resp.reward_info_list if db.is_unit_memory((i.type, i.id))]
         msg = "10件装备"
         if memory:
@@ -51,13 +51,13 @@ class monthly_gacha(Module):
             self._log("今日单抽已使用")
         else:
             self._log("使用单抽")
-            gacha_reward += await client.exec_gacha_aware(gacha, 1, eGachaDrawType.Monthly_Free_Single, 1, 0)
+            gacha_reward += await client.exec_gacha_aware(gacha, 1, eGachaDrawType.Monthly_Free_Single, 1, 0, client.time)
 
         if not resp.free_gacha_info.fg10_exec_cnt and resp.free_gacha_info.fg10_last_exec_time:
             self._log("十连已使用")
         elif resp.free_gacha_info.fg10_exec_cnt:
             self._log("使用十连")
-            gacha_reward += await client.exec_gacha_aware(gacha, 10, eGachaDrawType.Monthly_Free_Multi, 1, 0)
+            gacha_reward += await client.exec_gacha_aware(gacha, 10, eGachaDrawType.Monthly_Free_Multi, 1, 0, client.time)
 
         reward = await client.serlize_gacha_reward(gacha_reward, gacha.id)
         if reward != "无":
@@ -124,7 +124,7 @@ class free_gacha(Module):
         self._log(f"抽取卡池：{db.gacha_data[target_gacha.id].gacha_name}")
 
         while cnt > 0:
-            gacha_reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Campaign10Shot, cnt, res.campaign_info.campaign_id, free_gacha_auto_select_pickup, pickup_min_first)
+            gacha_reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Campaign10Shot, cnt, res.campaign_info.campaign_id, client.time, free_gacha_auto_select_pickup, pickup_min_first)
             cnt -= 1
 
         self._log(await client.serlize_gacha_reward(gacha_reward, target_gacha.id))

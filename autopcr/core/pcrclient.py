@@ -617,7 +617,7 @@ class pcrclient(apiclient):
         else:
             return False
 
-    async def exec_gacha_aware(self, target_gacha: GachaParameter, gacha_times: int, draw_type: eGachaDrawType, current_cost_num: int, campaign_id: int, auto_select_pickup: bool = True, pickup_min_first: bool = False) -> GachaReward:
+    async def exec_gacha_aware(self, target_gacha: GachaParameter, gacha_times: int, draw_type: eGachaDrawType, current_cost_num: int, campaign_id: int, last_gacha_index_time: int, auto_select_pickup: bool = True, pickup_min_first: bool = False) -> GachaReward:
 
         if draw_type == eGachaDrawType.Payment and current_cost_num < 150 * gacha_times:
             raise AbortError(f"宝石{current_cost_num}不足{150 * gacha_times}")
@@ -669,13 +669,13 @@ class pcrclient(apiclient):
             ticket = next((eInventoryType.Item, temp_ticket) for temp_ticket in db.get_gacha_temp_ticket() if self.data.get_inventory((eInventoryType.Item, temp_ticket)))
             self.data.set_inventory(ticket, current_cost_num - 1)
 
-        resp = await self.exec_gacha(target_gacha.id, gacha_times, target_gacha.exchange_id, draw_type, current_cost_num, campaign_id)
+        resp = await self.exec_gacha(target_gacha.id, gacha_times, target_gacha.exchange_id, draw_type, current_cost_num, campaign_id, last_gacha_index_time)
 
         reward: GachaReward = GachaReward(resp)
 
         return reward
 
-    async def exec_gacha(self, gacha_id: int, gacha_times: int, exchange_id: int, draw_type: int, current_cost_num: int, campaign_id: int):
+    async def exec_gacha(self, gacha_id: int, gacha_times: int, exchange_id: int, draw_type: int, current_cost_num: int, campaign_id: int, last_gacha_index_time: int):
         req = GachaExecRequest()
         req.gacha_id = gacha_id
         req.gacha_times = gacha_times
@@ -683,6 +683,7 @@ class pcrclient(apiclient):
         req.draw_type = draw_type
         req.current_cost_num = current_cost_num
         req.campaign_id = campaign_id
+        req.last_gacha_index_time = last_gacha_index_time
         return await self.request(req)
 
     async def exec_hatsune_gacha(self, event_id: int, gacha_id: int, gacha_times: int, current_cost_num: int, loop_box_multi_gacha_flag: int):
