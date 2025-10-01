@@ -1200,8 +1200,8 @@ class TalentQuestRecoverChallengeResponse(
     async def update(self, mgr: datamgr, request: TalentQuestRecoverChallengeRequest):
         mgr.jewel = self.user_jewel
         mgr.talent_quest_area_info[
-            self.UserTalentQuest.TalentId
-        ].daily_recovery_count = self.UserTalentQuest.daily_recovery_count
+            self.user_talent_quest.talent_id
+        ].daily_recovery_count = self.user_talent_quest.daily_recovery_count
 
 
 # 菜 就别玩

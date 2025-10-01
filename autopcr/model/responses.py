@@ -3343,7 +3343,7 @@ class TalentQuestFinishResponse(ResponseBase):
     TalentQuestAreaInfo: List[TalentQuestAreaInfo] = None
 class TalentQuestRecoverChallengeResponse(ResponseBase):
     user_jewel: UserJewel = None
-    UserTalentQuest: TalentQuestRecoverInfo = None
+    user_talent_quest: TalentQuestRecoverInfo = None
 class TalentQuestRetireResponse(ResponseBase):
     pass
 class TalentQuestSkipResponse(ResponseBase):

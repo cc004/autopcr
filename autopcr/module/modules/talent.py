@@ -67,7 +67,7 @@ class talent_sweep(Module):
 
             need_reset = talent_name in target_recovery_areas
             total_times = clear_limit_count * (
-                1 + recovery_max_count if need_reset else 0
+                1 + (recovery_max_count if need_reset else 0)
             )
             if daily_clear_count >= total_times:
                 self._log(
@@ -76,10 +76,14 @@ class talent_sweep(Module):
                 continue
 
             res: list[InventoryInfo] = []
-            while self.get_daily_clear_count(client, talent_id) <= total_times:
+            while self.get_daily_clear_count(client, talent_id) < total_times:
                 times_in_this_round = clear_limit_count * (
                     self.get_daily_recovery_count(client, talent_id) + 1
                 ) - self.get_daily_clear_count(client, talent_id)
+
+                if times_in_this_round <= 0:
+                    await client.talent_quest_recovery_challenge(talent_id)
+                    continue
 
                 stamina = client.data.stamina
                 stamina_times_round = min(
@@ -89,10 +93,6 @@ class talent_sweep(Module):
                 if stamina_times_round <= 0:
                     self._warn("体力不足")
                     break
-
-                if times_in_this_round <= 0:
-                    await client.talent_quest_recovery_challenge(talent_id)
-                    continue
 
                 r = await client.talent_quest_skip(quest_id, stamina_times_round)
                 res.extend(r.item_list)

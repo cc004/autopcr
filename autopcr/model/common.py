@@ -2900,7 +2900,7 @@ class RenameAvailableTimes(BaseModel):
     user_name: int = None
     user_comment: int = None
 class TalentQuestRecoverInfo(BaseModel):
-    TalentId: int = None
+    talent_id: int = None
     daily_recovery_count: int = None
 class ExchangeRewards(BaseModel):
     id: int = None
