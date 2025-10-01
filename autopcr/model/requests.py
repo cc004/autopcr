@@ -4516,7 +4516,7 @@ class TalentQuestRecoverChallengeRequest(Request[TalentQuestRecoverChallengeResp
     current_currency_num: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "talent_quest/recover_challenge"
 class TalentQuestRetireRequest(Request[TalentQuestRetireResponse]):
     quest_id: int = None
     @property
@@ -4528,7 +4528,7 @@ class TalentQuestSkipRequest(Request[TalentQuestSkipResponse]):
     current_ticket_num: int = None
     @property
     def url(self) -> str:
-        return ""
+        return "talent_quest/quest_skip"
 class TalentQuestStartRequest(Request[TalentQuestStartResponse]):
     quest_id: int = None
     token: str = None

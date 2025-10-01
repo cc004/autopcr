@@ -19,6 +19,7 @@ from .tower import *
 from .tools import *
 from .travel import *
 from .unit import *
+from .talent import *
 
 @dataclass
 class ModuleList:
@@ -69,6 +70,7 @@ daily_modules = ModuleList(
         tower_cloister_sweep,
         smart_very_hard_sweep,
         jjc_reward,
+        talent_sweep,
         xinsui8_sweep,
         xinsui7_sweep,
         xinsui6_sweep,
@@ -97,8 +99,8 @@ daily_modules = ModuleList(
         hatsune_gacha_exchange,
         hatsune_mission_accept2,
 
-        unit_equip_enhance_up,
-        unit_skill_level_up,
+        # unit_equip_enhance_up,
+        # unit_skill_level_up,
 
         mission_receive_last,
         seasonpass_accept,
