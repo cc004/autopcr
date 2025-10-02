@@ -646,6 +646,7 @@ class database():
                 QuestDatum.query(db)
                 .concat(HatsuneQuest.query(db))
                 .concat(ShioriQuest.query(db))
+                .concat(TalentQuestDatum.query(db))
                 .to_dict(lambda x: x.quest_id, lambda x: x)
             )
 
@@ -1468,6 +1469,7 @@ class database():
                 .concat(HatsuneQuest.query(db))
                 .concat(ShioriQuest.query(db))
                 .concat(TrainingQuestDatum.query(db))
+                .concat(TalentQuestDatum.query(db))
                 .to_dict(lambda x: x.quest_id, lambda x: x.quest_name)
             )
         ret.update(
@@ -1499,6 +1501,30 @@ class database():
                 .group_by(lambda x: x.event_id)
                 .to_dict(lambda x: x.key, lambda x: x.to_dict(lambda x: x.quest_id, lambda x: x))
             )
+
+    @lazy_property
+    def talent_areas(self) -> Dict[int, TalentQuestAreaDatum]:
+        with self.dbmgr.session() as db:
+            return TalentQuestAreaDatum.query(db).to_dict(
+                lambda x: x.talent_id, lambda x: x
+            )
+
+    @lazy_property
+    def talent_quests_by_area(self) -> Dict[int, Dict[int, TalentQuestDatum]]:
+        with self.dbmgr.session() as db:
+            return (
+                TalentQuestDatum.query(db)
+                .group_by(lambda x: x.area_id)
+                .to_dict(
+                    lambda x: x.key,
+                    lambda x: x.to_dict(lambda x: x.quest_id, lambda x: x),
+                )
+            )
+
+    @lazy_property
+    def talents(self) -> Dict[str, Talent]:
+        with self.dbmgr.session() as db:
+            return Talent.query(db).to_dict(lambda x: x.talent_name, lambda x: x)
 
     def get_ex_equip_star_from_pt(self, id: int, pt: int) -> int:
         rarity = self.get_ex_equip_rarity(id)

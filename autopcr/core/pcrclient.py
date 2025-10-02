@@ -1532,6 +1532,19 @@ class pcrclient(apiclient):
         req.from_system_id = from_system_id
         return await self.request(req)
 
+    async def talent_quest_skip(self, quest_id: int, use_ticket_num: int):
+        req = TalentQuestSkipRequest()
+        req.quest_id = quest_id
+        req.use_ticket_num = use_ticket_num
+        req.current_ticket_num = self.data.get_inventory((eInventoryType.Item, 23001))
+        return await self.request(req)
+
+    async def talent_quest_recovery_challenge(self, talent_id: int):
+        req = TalentQuestRecoverChallengeRequest()
+        req.talent_id = talent_id
+        req.current_currency_num = self.data.jewel.free_jewel + self.data.jewel.jewel
+        return await self.request(req)
+
     def _get_key(self, key, default=None):
         return self._keys.get(key, self._base_keys.get(key, default))
     

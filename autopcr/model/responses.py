@@ -1033,8 +1033,8 @@ class HomeIndexResponse(ResponseBase):
     custom_season_pack_end_time: List[int] = None
     story_bookmark: List[StoryBookmark] = None
     PrincessKnightMissionReceivableCount: int = None
-    TalentQuestAreaInfo: List[TalentQuestAreaInfo] = None
-    ClearedTalentQuestIdList: List[int] = None
+    talent_quest_area_info: List[TalentQuestAreaInfo] = None
+    cleared_talent_quest_id_list: List[int] = None
     ReceivableDomeMissionFlag: bool = None
     AcnNewFlag: bool = None
     AcnUnknownBattleFinishFlag: bool = None
@@ -1289,7 +1289,7 @@ class LoadIndexResponse(ResponseBase):
     resident_info: MonthlyGachaInfo = None
     Aso: int = None
     PrincessKnightRankExp: int = None
-    PrincessKnightInfo: PrincessKnightInfo = None
+    princess_knight_info: PrincessKnightInfo = None
     Cns: int = None
     Sdlb: int = None
     Cbslf: int = None
@@ -3343,7 +3343,7 @@ class TalentQuestFinishResponse(ResponseBase):
     TalentQuestAreaInfo: List[TalentQuestAreaInfo] = None
 class TalentQuestRecoverChallengeResponse(ResponseBase):
     user_jewel: UserJewel = None
-    UserTalentQuest: TalentQuestRecoverInfo = None
+    user_talent_quest: TalentQuestRecoverInfo = None
 class TalentQuestRetireResponse(ResponseBase):
     pass
 class TalentQuestSkipResponse(ResponseBase):
@@ -3360,7 +3360,7 @@ class TalentQuestSkipResponse(ResponseBase):
     caravan_dice_point: int = None
     add_present_count: int = None
     upper_limit_flag: bool = None
-    TalentQuestAreaInfo: List[TalentQuestAreaInfo] = None
+    talent_quest_area_info: List[TalentQuestAreaInfo] = None
 class TalentQuestStartResponse(ResponseBase):
     seed: int = None
     battle_log_id: int = None

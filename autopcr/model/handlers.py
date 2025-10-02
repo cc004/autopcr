@@ -490,6 +490,14 @@ class HomeIndexResponse(responses.HomeIndexResponse):
         shiori_dict = {q.quest_id: q for q in self.shiori_quest_info.quest_list} if self.shiori_quest_info and self.shiori_quest_info.quest_list else {}
         mgr.quest_dict.update(shiori_dict)
 
+        if self.talent_quest_area_info:
+            mgr.talent_quest_area_info = {
+                v.talent_id: v for v in self.talent_quest_area_info
+            }
+
+        if self.cleared_talent_quest_id_list:
+            mgr.cleared_talent_quest_id_set |= set(self.cleared_talent_quest_id_list)
+
         mgr.ready = True
 
 
@@ -1160,6 +1168,40 @@ class UnitMultiEvolutionResponse(responses.UnitMultiEvolutionResponse):
         if self.item_data:
             for item in self.item_data:
                 mgr.update_inventory(item)
+
+
+@handles
+class TalentQuestSkipResponse(responses.TalentQuestSkipResponse):
+    async def update(self, mgr: datamgr, request: TalentQuestSkipRequest):
+        for result in self.quest_result_list or []:
+            for item in result.reward_list:
+                mgr.update_inventory(item)
+        for item in self.bonus_reward_list or []:
+            mgr.update_inventory(item)
+        for item in self.item_list or []:
+            mgr.update_inventory(item)
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        if self.level_info:
+            mgr.team_level = self.level_info.team.start_level
+        if self.user_info:
+            mgr.stamina = self.user_info.user_stamina
+            mgr.stamina_full_recovery_time = self.user_info.stamina_full_recovery_time
+        for info in self.talent_quest_area_info:
+            mgr.talent_quest_area_info[info.talent_id] = info
+        mgr.stamina = self.user_info.user_stamina
+        mgr.stamina_full_recovery_time = self.user_info.stamina_full_recovery_time
+
+
+@handles
+class TalentQuestRecoverChallengeResponse(
+    responses.TalentQuestRecoverChallengeResponse
+):
+    async def update(self, mgr: datamgr, request: TalentQuestRecoverChallengeRequest):
+        mgr.jewel = self.user_jewel
+        mgr.talent_quest_area_info[
+            self.user_talent_quest.talent_id
+        ].daily_recovery_count = self.user_talent_quest.daily_recovery_count
 
 
 # 菜 就别玩

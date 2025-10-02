@@ -60,9 +60,11 @@ class datamgr(BaseModel, Component[apiclient]):
     cleared_byway_quest_id_set: Set[int] = set({})
     return_fes_info_list: List[ReturnFesInfo] = None
     data_time: int = 0
-    version: int = 0
+    version: int = 1
     caravan_dishes: typing.Counter[int] = Counter()
     user_clan_battle_ex_equip_restriction: Dict[int, RestrictionExtraEquip] = {}
+    talent_quest_area_info: dict[int, TalentQuestAreaInfo] = {}
+    cleared_talent_quest_id_set: set[int] = set()
 
     @staticmethod
     async def try_update_database(ver: int):
