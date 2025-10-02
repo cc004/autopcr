@@ -105,7 +105,7 @@ class talent_sweep(Module):
                 threshold_quest_id = q.quest_id
                 if max_quest_id < threshold_quest_id:
                     self._warn(
-                        f"深域属性图[{talent_name}]当前最高进度为{db.quest_name[max_quest_id]}，"
+                        f"深域属性图[{talent_name}]当前最高通关进度为{db.quest_name[max_quest_id]}，"
                         f"设置的最低扫荡关卡为{db.quest_name[threshold_quest_id]}，暂不扫荡"
                     )
                     continue
