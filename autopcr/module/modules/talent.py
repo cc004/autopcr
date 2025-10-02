@@ -153,6 +153,6 @@ class talent_sweep(Module):
                 res.extend(r.bonus_reward_list)
             if sweep_cnt > 0:
                 self._log(
-                    f"扫荡[{db.quest_name[max_quest_id]}]共{sweep_cnt}次，重置{recovery_cnt}次，获得："
+                    f"> 扫荡[{db.quest_name[max_quest_id]}]共{sweep_cnt}次，重置{recovery_cnt}次，获得："
                     "\n" + await client.serialize_reward_summary(res)
                 )
