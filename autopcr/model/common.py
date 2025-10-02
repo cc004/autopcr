@@ -1936,11 +1936,15 @@ class ProfileUserInfo(BaseModel):
     last_login_time: int = None
     friend_num: int = None
     PrincessKnightRankTotalExp: int = None
+class TalentQuestData(BaseModel):
+    talent_id: int = None
+    clear_count: int = None    
 class ProfileQuestInfo(BaseModel):
     normal_quest: List[int] = None
     hard_quest: List[int] = None
     very_hard_quest: List[int] = None
     byway_quest: int = None
+    talent_quest: List[TalentQuestData] = None
 class SupportUnitForProfile(BaseModel):
     position: int = None
     unit_data: UnitDataLight = None
