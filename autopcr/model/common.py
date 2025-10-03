@@ -919,9 +919,9 @@ class GachaBonusItem(BaseModel):
     reward_type: eInventoryType = None
     reward_id: int = None
     reward_count: int = None
-    IsLimitCountReward: bool = None
+    is_limit_count_reward: bool = None
 class RemainLimitCountBonusData(BaseModel):
-    RemainLimitCountBonus: int = None
+    remain_limit_count_bonus: int = None
     target_unit_id: int = None
 class GachaParameter(BaseModel):
     id: int = None
@@ -946,12 +946,12 @@ class GachaParameter(BaseModel):
     exec_count: int = None
     select_pickup_slot_num: int = None
     priority_list: List[int] = None
-    RemainLimitCountBonus: int = None
-    RemainExecGachaBonus: int = None
+    remain_limit_count_bonus: int = None
+    remain_exec_gacha_bonus: int = None
     original_gacha_id: int = None
     remain_exec_count: int = None
-    ExecBonusItemList: List[GachaBonusItem] = None
-    RemainLimitCountBonusList: List[RemainLimitCountBonusData] = None
+    exec_bonus_item_list: List[GachaBonusItem] = None
+    remain_limit_count_bonus_list: List[RemainLimitCountBonusData] = None
 class CampaignGachaInfo(BaseModel):
     campaign_id: int = None
     fg1_exec_cnt: int = None
@@ -1143,8 +1143,8 @@ class ShopItem(BaseModel):
     renewal_time: int = None
     banner_type: eShopItemBannerType = None
     gojuon_order: int = None
-    DescriptionId: int = None
-    IsUnlimitedStock: bool = None
+    description_id: int = None
+    is_unlimited_stock: bool = None
 class DailyShop(BaseModel):
     system_id: int = None
     item_list: List[ShopItem] = None
@@ -1572,26 +1572,26 @@ class CaravanSetting(BaseModel):
     limit_caravan_lottery: int = None
     limit_caravan_treasure: int = None
     limit_caravan_treasure_by_type: int = None
-    IsEnableCaravanCoinShopBuyBulk: bool = None
+    is_enable_caravan_coin_shop_buy_bulk: bool = None
 class MultiRankUnitLimitSetting(BaseModel):
     multi_rank_unit_limit: int = None
 class StoryBookmarkIniSetting(BaseModel):
     story_bookmark_limit_count: int = None
 class TalentQuestIniSetting(BaseModel):
-    DailyBonusUseLimitCount: int = None
+    daily_bonus_use_limit_count: int = None
     daily_clear_limit_count: int = None
     recovery_max_count: int = None
-    RecoveryCost: int = None
+    recovery_cost: int = None
 class MyPartyIniSetting(BaseModel):
-    TabPartyNum: int = None
+    tab_party_num: int = None
 class LogBarrierIniSetting(BaseModel):
-    Coefficient: int = None
-    Threshold: int = None
+    coefficient: int = None
+    threshold: int = None
 class SynchroIniSetting(BaseModel):
-    LevelThresholdUnitNum: int = None
-    RankThresholdUnitNum: int = None
+    level_threshold_unit_num: int = None
+    rank_threshold_unit_num: int = None
 class AbyssIniSetting(BaseModel):
-    DailyClearLimitCount: int = None
+    daily_clear_limit_count: int = None
 class IniSetting(BaseModel):
     equipment_enhance: EquipStrSetting = None
     quest: QuestSetting = None
@@ -1635,10 +1635,10 @@ class IniSetting(BaseModel):
     multi_rank_unit_limit: MultiRankUnitLimitSetting = None
     story_bookmark: StoryBookmarkIniSetting = None
     talent_quest: TalentQuestIniSetting = None
-    MyParty: MyPartyIniSetting = None
-    LogBarrier: LogBarrierIniSetting = None
-    Synchro: SynchroIniSetting = None
-    Abyss: AbyssIniSetting = None
+    my_party: MyPartyIniSetting = None
+    log_barrier: LogBarrierIniSetting = None
+    synchro: SynchroIniSetting = None
+    abyss: AbyssIniSetting = None
 class LoginBonusData(BaseModel):
     campaign_id: int = None
     total_count: int = None
@@ -1935,16 +1935,12 @@ class ProfileUserInfo(BaseModel):
     emblem: EmblemData = None
     last_login_time: int = None
     friend_num: int = None
-    PrincessKnightRankTotalExp: int = None
-class TalentQuestData(BaseModel):
-    talent_id: int = None
-    clear_count: int = None    
+    princess_knight_rank_total_exp: int = None
 class ProfileQuestInfo(BaseModel):
     normal_quest: List[int] = None
     hard_quest: List[int] = None
     very_hard_quest: List[int] = None
     byway_quest: int = None
-    talent_quest: List[TalentQuestData] = None
 class SupportUnitForProfile(BaseModel):
     position: int = None
     unit_data: UnitDataLight = None
@@ -2567,9 +2563,9 @@ class AbyssBossScoreReward(BaseModel):
     reward_list: List[InventoryInfo] = None
 class AbyssUserBoss(BaseModel):
     boss_id: int = None
-    EnemyIndex: int = None
+    enemy_index: int = None
     boss_hp: int = None
-    BestDamage: int = None
+    best_damage: int = None
 class AbyssDailyClearCountList(BaseModel):
     quest_id: int = None
     daily_clear_count: int = None
@@ -2588,25 +2584,25 @@ class AcnModeInfo(BaseModel):
     mode: int = None
 class AcnEndlessBattleInfo(BaseModel):
     difficulty: int = None
-    TodayIndividualKillCount: int = None
-    IndividualTotalKillCount: int = None
+    today_individual_kill_count: int = None
+    individual_total_kill_count: int = None
 class AcnEnemyUnit(BaseModel):
     unit_id: int = None
     hp: int = None
 class AcnBossBattleInfo(BaseModel):
     quest_id: int = None
     difficulty: int = None
-    IndividualTotalKillCount: int = None
+    individual_total_kill_count: int = None
     challenge_count: int = None
     enemy_status_list: List[AcnEnemyUnit] = None
 class AcnSpecialBattleInfo(BaseModel):
-    IndividualTotalKillCount: int = None
+    individual_total_kill_count: int = None
     challenge_count: int = None
     enemy_unit: List[AcnEnemyUnit] = None
     enemy_point: int = None
     mode: int = None
 class AcnUnknownBattleInfo(BaseModel):
-    IndividualTotalKillCount: int = None
+    individual_total_kill_count: int = None
     challenge_count: int = None
     enemy_unit: List[AcnEnemyUnit] = None
     step: int = None
@@ -2635,9 +2631,9 @@ class TeamSkillNodeInfo(BaseModel):
     node_id: int = None
     enhance_level: int = None
 class PrincessKnightInfo(BaseModel):
-    TalentLevelInfoList: List[TalentLevelInfo] = None
-    TalentSkillLastEnhancedPageNodeList: List[TalentSkillNodeInfo] = None
-    TeamSkillLatestNode: TeamSkillNodeInfo = None
+    talent_level_info_list: List[TalentLevelInfo] = None
+    talent_skill_last_enhanced_page_node_list: List[TalentSkillNodeInfo] = None
+    team_skill_latest_node: TeamSkillNodeInfo = None
 class AsmAnswerInfo(BaseModel):
     wave_no: int = None
     asm_id: int = None
@@ -2679,7 +2675,7 @@ class BuyBulkBuyItemList(BaseModel):
     slot_id: int = None
     count: int = None
 class RollResultListData(BaseModel):
-    RollTurnNum: int = None
+    roll_turn_num: int = None
     spots_list: List[int] = None
 class RivalInfo(BaseModel):
     rival_id: int = None
@@ -2747,8 +2743,8 @@ class CaravanBuddyListInfoData(BaseModel):
     is_appear: bool = None
 class DiceMultiRollSpotsData(BaseModel):
     spots: int = None
-    RemainSpots: int = None
-    IsAppliedTurn: int = None
+    remain_spots: int = None
+    is_applied_turn: int = None
 class ColosseumBattleFinishUnitInfo(BaseModel):
     damage: int = None
     unit_id: int = None
@@ -2791,7 +2787,7 @@ class DomeBattleFinishUnitInfo(BaseModel):
     passive_skill_hp: int = None
 class DomeQuestChallengeStatus(BaseModel):
     quest_id: int = None
-    StatusList: List[int] = None
+    status_list: List[int] = None
 class DomeUnitDamageInfo(BaseModel):
     is_my_unit: int = None
     unit_id: int = None
@@ -2834,19 +2830,19 @@ class TopicStoryInfo(BaseModel):
     is_unlocked: bool = None
 class GetTopicInfo(BaseModel):
     idx: int = None
-    TopicId: int = None
-    IsPointUp: bool = None
+    topic_id: int = None
+    is_point_up: bool = None
 class TopicAddInfo(BaseModel):
-    GuestCharaIndex: int = None
-    AdditionalTopicList: List[GetTopicInfo] = None
+    guest_chara_index: int = None
+    additional_topic_list: List[GetTopicInfo] = None
 class ExpectedTopicFixedInfo(BaseModel):
-    TopicId: int = None
+    topic_id: int = None
     count: int = None
 class ExpectedTopicInfo(BaseModel):
     chara_index: int = None
-    ExpectedTopicList: List[ExpectedTopicFixedInfo] = None
-    RandomTopicCount: int = None
-    IsShowSign: bool = None
+    expected_topic_list: List[ExpectedTopicFixedInfo] = None
+    random_topic_count: int = None
+    is_show_sign: bool = None
 class BeginnerCharaExchangeTicketProductData(BaseModel):
     csv_data_id: int = None
     beginner_id: int = None
@@ -2877,7 +2873,7 @@ class StoryBookmark(BaseModel):
     StoryGroupId: int = None
 class TalentQuestAreaInfo(BaseModel):
     talent_id: int = None
-    DailyBonusUseCount: int = None
+    daily_bonus_use_count: int = None
     daily_clear_count: int = None
     daily_recovery_count: int = None
 class GuaranteeGachaCounter(BaseModel):
@@ -2895,7 +2891,7 @@ class MonthlyGachaInfo(BaseModel):
     max_exchange_num: int = None
     gacha_point_info: GachaPointInfo = None
 class TotalScoreList(BaseModel):
-    NbbCharaType: int = None
+    nbb_chara_type: int = None
     total_score: int = None
 class HighScoreList(BaseModel):
     difficulty: int = None
