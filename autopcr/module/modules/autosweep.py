@@ -450,3 +450,33 @@ class last_normal_quest_sweep(DIY_sweep):
         last_sweep_quests_count: int = 3
         quest: List[Tuple[int, int]] = [(id, last_sweep_quests_count) for id in last_sweep_quests]
         return quest
+
+@description('''
+每天扫荡！重置扫荡！
+'''.strip())
+@name("深域扫荡")
+@TalentConfig("talent_sweep_target_recovery_areas", "重置扫荡", [])
+@TalentConfig("talent_sweep_no_max_no_sweep", "非最高不扫荡", list(db.talents.keys()))
+@default(True)
+@tag_stamina_consume
+class talent_sweep(DIY_sweep):
+    async def get_start_quest(self, client: pcrclient) -> List[Tuple[int, int]]:
+        recovery_areas: List[int] = self.get_config('talent_sweep_target_recovery_areas')
+        no_max_no_sweep: List[int] = self.get_config('talent_sweep_no_max_no_sweep')
+        daily_clear_limit_count = client.data.settings.talent_quest.daily_clear_limit_count
+        ret = []
+        for area_id in db.talent_quest_area_data:
+            talent_id = db.talent_quest_area_data[area_id].talent_id
+            talent_name = db.talents[talent_id].talent_name
+            max_quest = max(db.talent_quests_data[area_id])
+            max_sweepable_quest = client.data.cleared_talent_quest_ids.get(talent_id, 0)
+            if max_sweepable_quest == 0:
+                self._warn(f"未通关{talent_name}关卡，无法扫荡")
+                continue
+            elif max_quest != max_sweepable_quest and talent_id in no_max_no_sweep:
+                self._log(f"不扫荡非最高的{db.get_quest_name(max_sweepable_quest)}关卡")
+                self._log(f"如欲扫荡，请移除{talent_name}的非最高不扫荡")
+                continue
+            recover = talent_id in recovery_areas
+            ret.append((max_sweepable_quest, daily_clear_limit_count * (1 + recover * client.data.settings.talent_quest.recovery_max_count)))
+        return ret

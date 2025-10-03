@@ -16,7 +16,7 @@ TALENT_TARGET_NAMES: List[str] = list(db.talents.keys())
 TALENT_QUESTS: Dict[str, List[Tuple[str, int]]] = {
     t_name: [
         (q.quest_name, q.quest_id)
-        for q in db.talent_quests_by_area[db.talent_areas[t.talent_id].area_id].values()
+        for q in db.talent_quests_data[db.talent_quest_area_data[t.talent_id].area_id].values()
     ]
     for t_name, t in db.talents.items()
 }
@@ -76,14 +76,14 @@ class talent_sweep(Module):
 
         for talent_name in targets:
             talent_id = db.talents[talent_name].talent_id
-            area = db.talent_areas[talent_id]
+            area = db.talent_quest_area_data[talent_id]
             area_info = client.data.talent_quest_area_info.get(talent_id)
 
             daily_clear_count = self.get_daily_clear_count(client, talent_id)
 
             max_quest_id: int | None = next(
                 filter(
-                    lambda i: i in db.talent_quests_by_area[area.area_id],
+                    lambda i: i in db.talent_quests_data[area.area_id],
                     cleared_talent_quest_id_set,
                 ),
                 None,
@@ -97,7 +97,7 @@ class talent_sweep(Module):
                 q = next(
                     filter(
                         lambda q: q.quest_name == quest_threshold_name,
-                        db.talent_quests_by_area[area.area_id].values(),
+                        db.talent_quests_data[area.area_id].values(),
                     ),
                     None,
                 )
@@ -110,7 +110,7 @@ class talent_sweep(Module):
                     )
                     continue
 
-            quest_info = db.talent_quests_by_area[area.area_id][max_quest_id]
+            quest_info = db.talent_quests_data[area.area_id][max_quest_id]
 
             need_reset = talent_name in target_recovery_areas
             total_times = clear_limit_count * (

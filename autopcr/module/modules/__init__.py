@@ -19,7 +19,7 @@ from .tower import *
 from .tools import *
 from .travel import *
 from .unit import *
-from .talent import *
+# from .talent import *
 
 @dataclass
 class ModuleList:

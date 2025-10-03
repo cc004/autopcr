@@ -404,6 +404,15 @@ class ActiveHatsuneListConfig(MultiChoiceConfig):
             ret.append(v)
         return ret
 
+class TalentConfig(MultiChoiceConfig):
+    """Configuration for talent quests."""
+    
+    def __init__(self, key: str, desc: str, default: List):
+        super().__init__(key, desc, default, db.talents)
+
+    def candidate_display(self, talent_id: int):
+        return db.talents[talent_id].talent_name
+
 # Compatible with the old version
 def booltype(key: str, desc: str, default: bool):
     return BoolConfig(key, desc, default)

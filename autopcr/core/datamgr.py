@@ -64,7 +64,7 @@ class datamgr(BaseModel, Component[apiclient]):
     caravan_dishes: typing.Counter[int] = Counter()
     user_clan_battle_ex_equip_restriction: Dict[int, RestrictionExtraEquip] = {}
     talent_quest_area_info: Dict[int, TalentQuestAreaInfo] = {}
-    cleared_talent_quest_id_set: Set[int] = set()
+    cleared_talent_quest_ids: Dict[int, int] = {}
 
     @staticmethod
     async def try_update_database(ver: int):
@@ -457,6 +457,8 @@ class datamgr(BaseModel, Component[apiclient]):
             return self.settings.equip_recover_challenge_count.recovery_max_count
         elif db.is_star_cup_quest(quest):
             return self.settings.high_rarity_equip_recover_challenge_count.recovery_max_count
+        elif db.is_talent_quest(quest):
+            return self.settings.talent_quest.recovery_max_count
         else: # hatsune, shiori 0
             return self.settings.hatsune_recover_challenge_count.recovery_max_count
 

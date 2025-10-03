@@ -1503,14 +1503,17 @@ class database():
             )
 
     @lazy_property
-    def talent_areas(self) -> Dict[int, TalentQuestAreaDatum]:
+    def talent_quest_area_data(self) -> Dict[int, TalentQuestAreaDatum]:
         with self.dbmgr.session() as db:
-            return TalentQuestAreaDatum.query(db).to_dict(
-                lambda x: x.talent_id, lambda x: x
+            return (
+                TalentQuestAreaDatum.query(db)
+                .to_dict(
+                    lambda x: x.area_id, lambda x: x
+                )
             )
 
     @lazy_property
-    def talent_quests_by_area(self) -> Dict[int, Dict[int, TalentQuestDatum]]:
+    def talent_quests_data(self) -> Dict[int, Dict[int, TalentQuestDatum]]:
         with self.dbmgr.session() as db:
             return (
                 TalentQuestDatum.query(db)
@@ -1522,9 +1525,9 @@ class database():
             )
 
     @lazy_property
-    def talents(self) -> Dict[str, Talent]:
+    def talents(self) -> Dict[int, Talent]:
         with self.dbmgr.session() as db:
-            return Talent.query(db).to_dict(lambda x: x.talent_name, lambda x: x)
+            return Talent.query(db).to_dict(lambda x: x.talent_id, lambda x: x)
 
     def get_ex_equip_star_from_pt(self, id: int, pt: int) -> int:
         rarity = self.get_ex_equip_rarity(id)
@@ -1686,6 +1689,10 @@ class database():
 
     def is_hatsune_quest(self, quest_id: int) -> bool:
         return quest_id // 1000000 == 10
+
+    def is_talent_quest(self, quest_id: int) -> bool:
+        top = quest_id // 1000000
+        return top >= 81 and top <= 85
 
     def is_hatsune_normal_quest(self, quest_id: int) -> bool:
         return self.is_hatsune_quest(quest_id) and (quest_id // 100) % 10 == 1
@@ -2098,6 +2105,15 @@ class database():
             .first(lambda x: x.buy_count_from <= buy_cnt and (buy_cnt <= x.buy_count_to or x.buy_count_to == -1)) 
         return item
 
+    def get_talent_id_from_quest_id(self, quest: int) -> int:
+        if not self.is_talent_quest(quest):
+            return 0
+        area_id = db.quest_info[quest].area_id
+        talent_id = db.talent_quest_area_data[area_id].talent_id
+        return talent_id
+
+    def talent_candidate(self) -> List[str]:
+        return [f"{talent_id}: {self.talents[talent_id].talent_name}" for talent_id in self.talents]
 
     def deck_sort_unit(self, units: List[int]) -> List[int]:
         return sorted(units, key=lambda x: self.unit_data[x].search_area_width if x in self.unit_data else 9999)
