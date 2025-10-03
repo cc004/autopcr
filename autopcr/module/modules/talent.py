@@ -10,10 +10,10 @@ from ...model.enums import *
 from ...model.custom import ItemType
 from ...util.linq import flow
 
-from typing import cast
+from typing import List, Dict, Tuple
 
-TALENT_TARGET_NAMES: list[str] = list(db.talents.keys())
-TALENT_QUESTS: dict[str, list[tuple[str, int]]] = {
+TALENT_TARGET_NAMES: List[str] = list(db.talents.keys())
+TALENT_QUESTS: Dict[str, List[Tuple[str, int]]] = {
     t_name: [
         (q.quest_name, q.quest_id)
         for q in db.talent_quests_by_area[db.talent_areas[t.talent_id].area_id].values()
@@ -58,10 +58,10 @@ class talent_sweep(Module):
 
     async def do_task(self, client: pcrclient):
         targets = self.get_config("talent_sweep_targets")
-        target_recovery_areas: list[str] = self.get_config(
+        target_recovery_areas: List[str] = self.get_config(
             "talent_sweep_target_recovery_areas"
         )
-        quest_threshold: dict[str, str] = {
+        quest_threshold: Dict[str, str] = {
             t_name: self.get_config(f"talent_sweep_quest_threshold_{t.talent_id}")
             for t_name, t in db.talents.items()
         }
@@ -122,7 +122,7 @@ class talent_sweep(Module):
                 )
                 continue
 
-            res: list[InventoryInfo] = []
+            res: List[InventoryInfo] = []
             sweep_cnt = 0
             recovery_cnt = 0
             while self.get_daily_clear_count(client, talent_id) < total_times:
