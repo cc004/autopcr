@@ -63,8 +63,8 @@ class datamgr(BaseModel, Component[apiclient]):
     version: int = 1
     caravan_dishes: typing.Counter[int] = Counter()
     user_clan_battle_ex_equip_restriction: Dict[int, RestrictionExtraEquip] = {}
-    talent_quest_area_info: dict[int, TalentQuestAreaInfo] = {}
-    cleared_talent_quest_id_set: set[int] = set()
+    talent_quest_area_info: Dict[int, TalentQuestAreaInfo] = {}
+    cleared_talent_quest_id_set: Set[int] = set()
 
     @staticmethod
     async def try_update_database(ver: int):
