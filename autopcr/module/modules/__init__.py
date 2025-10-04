@@ -19,7 +19,7 @@ from .tower import *
 from .tools import *
 from .travel import *
 from .unit import *
-# from .talent import *
+from .talent import *
 
 @dataclass
 class ModuleList:
@@ -196,7 +196,9 @@ tool_modules = ModuleList(
     '工具',
     'tool',
     [
-        return_jewel,
+        find_talent_quest,
+        find_clan_talent_quest,
+        # return_jewel,
         # cook_pudding,
         ex_equip_rank_up,
         ex_equip_enhance_up,
@@ -212,6 +214,5 @@ tool_modules = ModuleList(
         remove_cb_ex_equip,
         remove_cb_support,
         redeem_unit_swap,
-        query_deep_progress,
     ]
 )

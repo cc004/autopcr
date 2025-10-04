@@ -1047,7 +1047,8 @@ class pcrclient(apiclient):
         await self.request(req)
 
     async def get_clan_info(self):
-        if self.data.clan == 0: return None
+        if not self.data.clan:
+            raise AbortError("未加入公会")
         req = ClanInfoRequest()
         req.clan_id = self.data.clan
         req.get_user_equip = 0

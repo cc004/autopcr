@@ -28,8 +28,6 @@ class clan_like(Module):
         if client.data.clan_like_count:
             raise SkipError('今日点赞次数已用完。')
         clan = await client.get_clan_info()
-        if not clan:
-            raise AbortError("未加入公会")
         info = clan.clan
         members = [(x.viewer_id, x.name) for x in info.members if x.viewer_id != client.viewer_id]
         if len(members) == 0: raise AbortError("nobody's home?")
@@ -55,8 +53,6 @@ class clan_equip_request(Module):
     }
     async def do_task(self, client: pcrclient):
         clan = await client.get_clan_info()
-        if not clan:
-            raise AbortError("未加入公会")
 
         if clan.latest_request_time and apiclient.time <= clan.latest_request_time + client.data.settings.clan.equipment_request_interval:
             raise SkipError("当前请求尚未结束")
