@@ -43,7 +43,7 @@ class find_clan_talent_quest(Module):
             for talent_info in profile.quest_info.talent_quest:
                 talent_id = talent_info.talent_id
                 clear_count = talent_info.clear_count
-                quest = f"{(clear_count + 9) // 10}-{(clear_count - 1) % 10 + 1}"
+                quest = f"{(clear_count + 9) // 10}-{(clear_count - 1) % 10 + 1}" if clear_count > 0 else "0-0"
                 msg.append(f"{db.talents[talent_id].talent_name}{quest}")
             member_progress = f"({member.viewer_id}){member.name}: " + "/".join(msg)
             self._log(member_progress)
