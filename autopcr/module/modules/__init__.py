@@ -68,9 +68,9 @@ daily_modules = ModuleList(
         underground_skip,
         special_underground_skip,
         tower_cloister_sweep,
-        smart_very_hard_sweep,
         jjc_reward,
         talent_sweep,
+        smart_very_hard_sweep,
         xinsui8_sweep,
         xinsui7_sweep,
         xinsui6_sweep,
@@ -112,7 +112,8 @@ daily_modules = ModuleList(
         jjc_shop,
         pjjc_shop,
         clanbattle_shop,
-        
+        master_shop_talent,
+
         clan_equip_request,
         love_up,
         shiori_mission_check,
