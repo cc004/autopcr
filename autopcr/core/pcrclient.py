@@ -1220,38 +1220,57 @@ class pcrclient(apiclient):
                 else:
                     pass
         result = []
-        for key, value in sorted(summary.items(), key = lambda x: x[1], reverse = True):
-            result.append(f"{key}x{value}")
-        if result:
-            result = [' '.join(result)]
+        if not ignore_summary:
+            for key, value in sorted(summary.items(), key = lambda x: x[1], reverse = True):
+                result.append(f"{key}x{value}")
+            if result:
+                result = [' '.join(result)]
         for key, value in sorted(rewards.items(), key = lambda x: x[1], reverse = True):
             try:
                 name = db.get_inventory_name_san(key)
             except:
                 name = f"未知物品({key})"
+            if item_filter and not item_filter(key, name):
+                continue
             result.append(f"{name}x{value}({self.data.get_inventory(key)})")
         return '\n'.join(result) if result else "无"
 
-    async def serlize_reward(self, reward_list: List[InventoryInfo], target: Union[ItemType, None] = None, filter: Union[None, Callable[[ItemType],bool]] = None): # 无用 
+    async def serlize_reward(
+        self,
+        reward_list: List[InventoryInfo],
+        item_filter: Callable[[Tuple[eInventoryType, int], str], bool] | None = None,
+    ):
         rewards = {}
         for reward in reward_list or []:
-            if target and (reward.type == target[0] and reward.id == target[1]) or filter and filter((reward.type, reward.id)) or not target and not filter:
-                if (reward.id, reward.type) not in rewards:
-                    rewards[(reward.id, reward.type)] = [reward.count, reward.stock, reward]
-                else:
-                    rewards[(reward.id, reward.type)][0] += reward.count
-                    rewards[(reward.id, reward.type)][1] = max(reward.stock, rewards[(reward.id, reward.type)][1])
+            if item_filter and not item_filter(
+                (reward.type, reward.id), db.get_inventory_name(reward)
+            ):
+                continue
+
+            if (reward.id, reward.type) not in rewards:
+                rewards[(reward.id, reward.type)] = [
+                    reward.count,
+                    reward.stock,
+                    reward,
+                ]
+            else:
+                rewards[(reward.id, reward.type)][0] += reward.count
+                rewards[(reward.id, reward.type)][1] = max(
+                    reward.stock, rewards[(reward.id, reward.type)][1]
+                )
         reward_item = list(rewards.values())
-        reward_item = sorted(reward_item, key = lambda x: x[0], reverse = True)
+        reward_item = sorted(reward_item, key=lambda x: x[0], reverse=True)
         result = []
         for value in reward_item:
             try:
-                result.append(f"{db.get_inventory_name(value[2])}x{value[0]}({value[1]})")
+                result.append(
+                    f"{db.get_inventory_name(value[2])}x{value[0]}({value[1]})"
+                )
             except:
-                result.append(f"未知物品({value[2],type},{value[2].id})x{value[0]}({value[1]})")
-        if target is not None and len(result) == 0:
-            result.append(f"{db.get_inventory_name_san(target)}x0({self.data.get_inventory(target)})")
-        return '\n'.join(result) if result else "无"
+                result.append(
+                    f"未知物品({value[2], type},{value[2].id})x{value[0]}({value[1]})"
+                )
+        return "\n".join(result) if result else "无"
 
     async def serialize_unit_info(self, unit_data: Union[UnitData, UnitDataLight]) -> Tuple[bool, str]:
         info = []
