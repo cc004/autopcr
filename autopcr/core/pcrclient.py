@@ -1270,10 +1270,6 @@ class pcrclient(apiclient):
                 result.append(
                     f"未知物品({value[2], type},{value[2].id})x{value[0]}({value[1]})"
                 )
-        if target is not None and len(result) == 0:
-            result.append(
-                f"{db.get_inventory_name_san(target)}x0({self.data.get_inventory(target)})"
-            )
         return "\n".join(result) if result else "无"
 
     async def serialize_unit_info(self, unit_data: Union[UnitData, UnitDataLight]) -> Tuple[bool, str]:
