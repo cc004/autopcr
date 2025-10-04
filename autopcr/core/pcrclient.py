@@ -1196,7 +1196,12 @@ class pcrclient(apiclient):
 
         return res
 
-    async def serialize_reward_summary(self, reward_list: List[InventoryInfo]):
+    async def serialize_reward_summary(
+        self,
+        reward_list: List[InventoryInfo],
+        item_filter: Callable[[Tuple[eInventoryType, int], str], bool] | None = None,
+        ignore_summary: bool = False,
+    ):
         summary_condition = [
             (db.is_equip, lambda x: "装备"),
             (db.is_equip_upper, lambda x: "强化石"),
@@ -1220,15 +1225,18 @@ class pcrclient(apiclient):
                 else:
                     pass
         result = []
-        for key, value in sorted(summary.items(), key = lambda x: x[1], reverse = True):
-            result.append(f"{key}x{value}")
-        if result:
-            result = [' '.join(result)]
+        if not ignore_summary:
+            for key, value in sorted(summary.items(), key = lambda x: x[1], reverse = True):
+                result.append(f"{key}x{value}")
+            if result:
+                result = [' '.join(result)]
         for key, value in sorted(rewards.items(), key = lambda x: x[1], reverse = True):
             try:
                 name = db.get_inventory_name_san(key)
             except:
                 name = f"未知物品({key})"
+            if item_filter and not item_filter(key, name):
+                continue
             result.append(f"{name}x{value}({self.data.get_inventory(key)})")
         return '\n'.join(result) if result else "无"
 
