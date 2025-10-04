@@ -156,9 +156,7 @@ class talent_sweep(Module):
                     f"> 扫荡[{db.quest_name[max_quest_id]}]共{sweep_cnt}次，"
                     + (f"重置{recovery_cnt}次，" if recovery_cnt > 0 else "")
                     + "获得：\n"
-                    + await client.serialize_reward_summary(
-                        res,
-                        item_filter=lambda _, name: "星幽" in name,
-                        ignore_summary=True,
+                    + await client.serlize_reward(
+                        res, item_filter=lambda _, name: "星幽" in name
                     )
                 )
