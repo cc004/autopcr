@@ -1,6 +1,8 @@
 from pydantic.class_validators import make_generic_validator
 from pydantic.fields import ModelField
 from pydantic.validators import int_validator
+
+from ..model.custom import TalentQuestData
 from . import responses, sdkrequests
 from .common import *
 from .requests import *
@@ -1245,3 +1247,14 @@ field = ModelField.infer(
 )
 ExtraEquipSlot.__fields__['slot'] = field
 setattr(ExtraEquipSlot, 'slot', None)
+
+ProfileQuestInfo.__annotations__['talent_quest'] = Optional[List[TalentQuestData]]
+field = ModelField.infer(
+    name='talent_quest',
+    value=None,
+    annotation=List[TalentQuestData],
+    class_validators=None,
+    config=ProfileQuestInfo.__config__,
+)
+ProfileQuestInfo.__fields__['talent_quest'] = field
+setattr(ProfileQuestInfo, 'talent_quest', None)
