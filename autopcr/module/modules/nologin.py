@@ -81,6 +81,7 @@ class CampaignSchedule(ISchedule):
         HIGH_RARITY_EQUIP = "神殿"
         EVENT_NORMAL = "活动normal"
         EVENT_HARD = "活动hard"
+        TALENT_QUEST = "深域本"
 
     class eCampaignCategoryHigh(Enum):
         HALF_STAMINA = "体力消耗"
