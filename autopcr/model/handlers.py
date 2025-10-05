@@ -52,6 +52,16 @@ class TravelResultRoundEventResponse(responses.TravelResultRoundEventResponse):
             mgr.jewel = self.user_jewel
 
 @handles
+class CaravanCoinShopBuyBulkResponse(responses.CaravanCoinShopBuyBulkResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.purchase_list:
+            for item in self.purchase_list:
+                mgr.update_inventory(item)
+        if self.item_data:
+            for item in self.item_data:
+                mgr.update_inventory(item)
+
+@handles
 class CaravanCoinShopBuyResponse(responses.CaravanCoinShopBuyResponse):
     async def update(self, mgr: datamgr, request):
         if self.purchase_list:

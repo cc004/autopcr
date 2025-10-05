@@ -141,6 +141,15 @@ class pcrclient(apiclient):
         req.roll_num = roll_num
         return await self.request(req)
 
+    async def caravan_coin_shop_buy_bulk(self, season_id: int, shop_season_id: int, buy_item_dict: typing.Counter[int], current_currency_num: int):
+        req = CaravanCoinShopBuyBulkRequest()
+        req.season_id = season_id
+        req.shop_season_id = shop_season_id
+        req.buy_item_list = [BuyBulkBuyItemList(slot_id=slot_id, count=count) for slot_id, count in buy_item_dict.items()]
+        req.current_currency_num = current_currency_num
+        req.is_multi_slots = 0
+        return await self.request(req)
+
     async def caravan_coin_shop_buy(self, season_id: int, shop_season_id: int, slot_id_list: List[int], current_currency_num: int):
         req = CaravanCoinShopBuyRequest()
         req.season_id = season_id
