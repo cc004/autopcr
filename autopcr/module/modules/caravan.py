@@ -450,7 +450,7 @@ class CaravanGame:
     def dish_cnt(self) -> int:
         return sum(dish for dish in self.candidate_dishes.values())
 
-    async def init(self, caravan_play_until_shop_empty: bool = False, caravan_dice_hold_num: int = 0):
+    async def init(self, caravan_play_until_shop_empty: bool = False, caravan_dice_hold_num: int = 0, caravan_play_goal_num: int = 0):
         """
         第一次调用，用于拉取 top 接口，把 season_id、地图初始信息、dice_point 等都初始化好
         """
@@ -466,6 +466,8 @@ class CaravanGame:
         self.mini_game_id = 0
         self.caravan_play_until_shop_empty = caravan_play_until_shop_empty
         self.caravan_play_dice_hold_num = caravan_dice_hold_num
+        self.caravan_play_goal_target = caravan_play_goal_num
+        self.caravan_play_goal_num = 0
         self.spots_choices_1 = resp.spots_choices_1
         self.spots_choices_2 = resp.spots_choices_2
         self.rival_info = None
@@ -636,6 +638,11 @@ class CaravanGame:
                 self.state = eState.STOP
                 return
 
+            if self.caravan_play_goal_target and self.caravan_play_goal_num >= self.caravan_play_goal_target:
+                self._log(f"达终点次数{self.caravan_play_goal_num} >= {self.caravan_play_goal_target} -> STOP")
+                self.state = eState.STOP
+                return
+
             if not self.action_bit_flag & eFlag.DISH_USED and self.candidate_dishes:
                 self.state = eState.USE_DISH
                 return
@@ -803,6 +810,7 @@ class CaravanGame:
             self.turn_count = 0
             self.state = eState.MOVE
             self.rival_info = None
+            self.caravan_play_goal_num += 1
 
         elif self.state == eState.RIVAL_TURN_PROGRESS:
             await self.update_rival_info(self.last_response.rival_info)
@@ -1021,7 +1029,8 @@ class CaravanGame:
 
 @name('大富翁')
 @default(True)
-@description("将运行直至骰子耗尽或可搬空商店或骰子数低于阈值，料理能用则用。可搬空商店停止指商店币可购买所有限定商品后停止")
+@description("将运行直至骰子耗尽或可搬空商店或骰子数低于阈值，料理能用则用。可搬空商店停止指商店币可购买所有限定商品后停止，到达终点次数指达到终点的次数满足后停止，骰子保留指当骰子数小于等于该值时停止")
+@inttype('caravan_play_goal_num', '到达终点次数', 0, list(range(0, 10)))
 @inttype('caravan_play_dice_hold_num', '骰子保留', 0, list(range(0, 100)))
 @booltype('caravan_play_until_shop_empty', '可搬空商店停止', True)
 class caravan_play(Module):
@@ -1029,7 +1038,8 @@ class caravan_play(Module):
         game = CaravanGame(client, self)
         caravan_play_until_shop_empty = self.get_config('caravan_play_until_shop_empty')
         caravan_play_dice_hold_num = self.get_config('caravan_play_dice_hold_num')
-        await game.init(caravan_play_until_shop_empty, caravan_play_dice_hold_num)
+        caravan_play_goal_num = self.get_config('caravan_play_goal_num')
+        await game.init(caravan_play_until_shop_empty, caravan_play_dice_hold_num, caravan_play_goal_num)
         while not game.stop():
             await game.step()
 
