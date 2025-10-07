@@ -1652,7 +1652,7 @@ class database():
         return item[0] == eInventoryType.Item and item[1] >= 32000 and item[1] < 33000
 
     def is_equip(self, item: ItemType, uncraftable_only: bool = False) -> bool:
-        return item[0] == eInventoryType.Equip and item[1] >= 101000 and item[1] < 140000 and (not uncraftable_only or not self.is_equip_craftable(item))
+        return item[0] == eInventoryType.Equip and (item[1] >= 101000 and item[1] < 140000 or item[1] > 160000) and (not uncraftable_only or not self.is_equip_craftable(item))
 
     def is_equip_raw_ore(self, item: ItemType) -> bool:
         return item[0] == eInventoryType.Equip and item[1] >= 150001 and item[1] < 160000
