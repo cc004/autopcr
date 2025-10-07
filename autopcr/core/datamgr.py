@@ -181,11 +181,26 @@ class datamgr(BaseModel, Component[apiclient]):
         demand = db.get_unique_equip_material_demand(unit_id, equip_slot, start_rank, db.unique_equipment_max_rank[equip_slot] if target_rank == -1 else target_rank)
         return demand.get(token, 0)
 
-    def get_unit_eqiup_demand(self, unit_id: int) -> typing.Counter[ItemType]:
+    def get_unit_eqiup_demand(self, unit_id: int, grow_parameter_list: Union[None, GrowthParameterList] = None) -> typing.Counter[ItemType]:
         unit = self.unit[unit_id]
         unit_id = unit.id
         rank = unit.promotion_level
         equip_slot = [equip.is_slot for equip in unit.equip_slot]
+        if grow_parameter_list:
+            rank = max(unit.promotion_level, grow_parameter_list.promotion_level)
+            if unit.promotion_level == grow_parameter_list.promotion_level:
+                slot_num = sum(equip.is_slot for equip in unit.equip_slot)
+                free_num = sum(getattr(grow_parameter_list, f"equipment_{i+1}") is not None for i in range(len(unit.equip_slot)))
+                left_num = max(0, free_num - slot_num)
+                for i in [6, 4, 2, 5, 3, 1]:
+                    if left_num <= 0:
+                        break
+                    if not equip_slot[i-1] and getattr(grow_parameter_list, f"equipment_{i}") is not None:
+                        equip_slot[i-1] = True
+                        left_num -= 1
+            else:
+                equip_slot = [False if getattr(grow_parameter_list, f"equipment_{i+1}") is None else True for i in range(len(unit.equip_slot))]
+
         equips = db.get_rank_promote_equip_demand(unit_id, rank, equip_slot, db.equip_max_rank, db.equip_max_rank_equip_slot)
         equip_demand, mana = db.craft_equip(equips)
         return equip_demand
@@ -286,14 +301,14 @@ class datamgr(BaseModel, Component[apiclient]):
             )
         )
 
-    def get_equip_demand(self, start_rank: Union[None, int] = None, like_unit_only: bool = False) -> typing.Counter[ItemType]:
+    def get_equip_demand(self, start_rank: Union[None, int] = None, like_unit_only: bool = False, grow_parameter_list: Union[None, GrowthParameterList] = None) -> typing.Counter[ItemType]:
         cnt: typing.Counter[ItemType] = Counter()
         for unit_id in self.unit:
             if start_rank and self.unit[unit_id].promotion_level < start_rank:
                 continue
             if like_unit_only and not self.unit[unit_id].favorite_flag:
                 continue
-            need = self.get_unit_eqiup_demand(unit_id)
+            need = self.get_unit_eqiup_demand(unit_id, grow_parameter_list)
             if need:
                 cnt += need
         return cnt 
@@ -303,8 +318,8 @@ class datamgr(BaseModel, Component[apiclient]):
         demand = Counter({token: required[token] - self.get_inventory(token) for token in all if filter(token)})
         return demand
 
-    def get_equip_demand_gap(self, start_rank: Union[None, int] = None, like_unit_only: bool = False) -> typing.Counter[ItemType]:
-        demand = self.get_equip_demand(start_rank, like_unit_only)
+    def get_equip_demand_gap(self, start_rank: Union[None, int] = None, like_unit_only: bool = False, grow_parameter_list: Union[GrowthParameterList, None] = None) -> typing.Counter[ItemType]:
+        demand = self.get_equip_demand(start_rank, like_unit_only, grow_parameter_list)
         gap = self.get_demand_gap(demand, lambda x: db.is_equip(x, uncraftable_only=True))
         return gap
 
@@ -419,6 +434,43 @@ class datamgr(BaseModel, Component[apiclient]):
     def get_mana(self, include_bank: bool = False) -> int:
         mana = self.gold.gold_id_free + self.gold.gold_id_pay + (self.user_gold_bank_info.bank_gold if include_bank and self.user_gold_bank_info else 0)
         return mana
+
+    def get_synchro_parameter(self) -> GrowthParameterList:
+
+        def get_equip_slot_num(equips: List[EquipSlot]) -> int:
+            return sum(e.is_slot for e in equips)
+        def get_equip_max_enhance_num(equips: List[EquipSlot]) -> int:
+            return sum(e.enhancement_level == db.get_equip_max_star(e.id) for e in equips if e.is_slot and db.equip_data[e.id].promotion_level > 2)
+
+        ret = GrowthParameterList()
+
+        units = [unit_id for unit_id in self.unit if self.unit[unit_id].promotion_level >= 7]
+
+        level = sorted(units, key=lambda x: self.unit[x].unit_level, reverse=True)
+        if len(level) >= self.settings.synchro.level_threshold_unit_num:
+            ret.unit_level = ret.skill_level = self.unit[level[self.settings.synchro.level_threshold_unit_num - 1]].unit_level
+
+        rank = sorted(units, key=lambda x: (self.unit[x].promotion_level, get_equip_slot_num(self.unit[x].equip_slot)), reverse=True)
+
+        equip_slot_num = 0
+        if len(rank) >= self.settings.synchro.rank_threshold_unit_num:
+            ret.promotion_level = self.unit[rank[self.settings.synchro.rank_threshold_unit_num - 1]].promotion_level
+            equip_slot_num = get_equip_slot_num(self.unit[rank[self.settings.synchro.rank_threshold_unit_num - 1]].equip_slot)
+
+        equip = sorted(units, key=lambda x: (self.unit[x].promotion_level, get_equip_max_enhance_num(self.unit[x].equip_slot)), reverse=True)
+
+        if len(equip) >= self.settings.synchro.rank_threshold_unit_num:
+            max_enhance_num = get_equip_max_enhance_num(self.unit[equip[self.settings.synchro.rank_threshold_unit_num - 1]].equip_slot)
+
+            for i, j in zip(range(1, 6 + 1), [6, 4, 2, 5, 3, 1]):
+                if i > equip_slot_num:
+                    break
+                max_star = 5 if i <= max_enhance_num else 0
+                setattr(ret, f"equipment_{j}", max_star)
+
+        print(equip_slot_num, max_enhance_num)
+
+        return ret
 
     def update_inventory(self, item: InventoryInfo):
         token = (item.type, item.id)
