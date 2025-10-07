@@ -89,7 +89,7 @@ daily_modules = ModuleList(
         smart_hard_sweep,
         smart_shiori_sweep,
         last_normal_quest_sweep,
-        smart_normal_sweep,
+        lazy_normal_sweep,
 
         all_in_hatsune,
 
