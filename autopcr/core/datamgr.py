@@ -313,10 +313,25 @@ class datamgr(BaseModel, Component[apiclient]):
                 cnt += need
         return cnt 
 
+    def get_equip_demand2(self, unit_list: List[int], grow_parameter_list: Union[None, GrowthParameterList] = None) -> typing.Counter[ItemType]:
+        cnt: typing.Counter[ItemType] = Counter()
+        for unit_id in unit_list:
+            if unit_id not in self.unit:
+                continue
+            need = self.get_unit_eqiup_demand(unit_id, grow_parameter_list)
+            if need:
+                cnt += need
+        return cnt 
+
     def get_demand_gap(self, required: typing.Counter[ItemType], filter: Callable[[ItemType], bool] = lambda x: True) -> typing.Counter[ItemType]:
         all = set(self.inventory) | set(required)
         demand = Counter({token: required[token] - self.get_inventory(token) for token in all if filter(token)})
         return demand
+
+    def get_equip_demand2_gap(self, unit_list: List[int],  grow_parameter_list: Union[GrowthParameterList, None] = None) -> typing.Counter[ItemType]:
+        demand = self.get_equip_demand2(unit_list, grow_parameter_list)
+        gap = self.get_demand_gap(demand, lambda x: db.is_equip(x, uncraftable_only=True))
+        return gap
 
     def get_equip_demand_gap(self, start_rank: Union[None, int] = None, like_unit_only: bool = False, grow_parameter_list: Union[GrowthParameterList, None] = None) -> typing.Counter[ItemType]:
         demand = self.get_equip_demand(start_rank, like_unit_only, grow_parameter_list)

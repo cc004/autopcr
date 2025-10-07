@@ -13,7 +13,8 @@ from ...core.apiclient import apiclient
 
 @conditional_execution1("lazy_sweep_run_time", ["n庆典"])
 @singlechoice("lazy_sweep_strategy", "刷取策略", "刷最缺", ["刷最缺", "均匀刷"])
-@description('刷够收藏角色需求的装备后停止')
+@UnitListConfig('lazy_sweep_consider_units', "考虑角色")
+@description('根据【刷图推荐】结果刷n图，均匀刷指每次刷取的图覆盖所缺的需求装备，若无缺装备则刷取推荐的第一张图')
 @name('懒人刷n图')
 @default(False)
 @tag_stamina_consume
@@ -44,9 +45,10 @@ class lazy_normal_sweep(Module):
 
     async def do_task(self, client: pcrclient):
         strategy: str = self.get_config('lazy_sweep_strategy')
+        consider_units: List[int] = self.get_config('lazy_sweep_consider_units')
 
         grow_parameter_list = client.data.get_synchro_parameter()
-        demand = client.data.get_equip_demand(like_unit_only=True, grow_parameter_list=grow_parameter_list)
+        demand = client.data.get_equip_demand2(consider_units, grow_parameter_list=grow_parameter_list)
 
         clean_cnt = Counter()
         quest_id = []
