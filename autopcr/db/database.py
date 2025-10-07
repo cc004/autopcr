@@ -2115,6 +2115,9 @@ class database():
         talent_id = db.talent_quest_area_data[area_id].talent_id
         return talent_id
 
+    def equip_candidate(self) -> List[int]:
+        return [p for p in self.equip_data if self.is_equip((eInventoryType.Equip, p))]
+
     def talent_candidate(self) -> List[str]:
         return [f"{talent_id}: {self.talents[talent_id].talent_name}" for talent_id in self.talents]
 

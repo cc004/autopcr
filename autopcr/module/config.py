@@ -268,6 +268,13 @@ class MultiSearchConfig(MultiChoiceConfig):
     def config_type(self):
         return 'multi_search'
 
+class EquipListConfig(MultiSearchConfig):
+    def __init__(self, key: str, desc: str):
+        super().__init__(key, desc, [], db.equip_candidate(), short_display=True)
+
+    def candidate_display(self, equip_id: int):
+        return db.get_equip_name(equip_id)
+
 class UnitListConfig(UnitConfigMixin, MultiSearchConfig):
     def __init__(self, key: str, desc: str):
         super().__init__(key, desc, [], db.unlock_unit_condition_candidate, short_display=True)
