@@ -615,7 +615,7 @@ class clear_my_party(Module):
 
 @description('从指定面板的指定队开始设置，并调整星级。若干行重复，标题+若干行角色ID	角色名字	角色等级	角色星级\n忽略角色名字和角色等级')
 @texttype("set_my_party_text", "队伍阵容", "")
-@inttype("party_start_num", "初始队伍", 1, [i for i in range(1, 11)])
+@inttype("party_start_num", "初始队伍", 1, [i for i in range(1, 21)])
 @inttype("tab_start_num", "初始面板", 1, [i for i in range(1, 7)])
 @name('设置编队')
 class set_my_party(Module):
@@ -676,7 +676,7 @@ class set_my_party(Module):
                 self._log(f"设置了{title}")
 
             party_number += 1
-            if party_number == 11:
+            if party_number == 21:
                 tab_number += 1
                 party_number = 1
 
