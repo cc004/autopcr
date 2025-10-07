@@ -2157,6 +2157,8 @@ class database():
         return list(range(st, self.unique_equipment_max_level[equip_slot] + 1))
 
     def last_normal_quest(self) -> List[int]:
+        quest_ids = sorted(self.normal_quest_data.keys(), reverse=True)
+        return quest_ids[:5]
         last_start_time = flow(self.normal_quest_data.values()) \
                 .where(lambda x: db.parse_time(x.start_time) <= apiclient.datetime) \
                 .max(lambda x: x.start_time).start_time
