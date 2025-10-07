@@ -31,13 +31,14 @@ class Candidate:
 class Config:
     """Base class for all configuration types."""
     
-    def __init__(self, key: str, desc: str, default: Any, candidates: Union[Callable, List]):
+    def __init__(self, key: str, desc: str, default: Any, candidates: Union[Callable, List], short_display: bool = False):
         from .modulebase import Module
         self.key = key
         self.desc = desc
         self._default = default
         self._candidates = candidates
         self._parent: Module = None  # Will be set when the decorator is applied
+        self.short_display = short_display
     
     @property
     def config_type(self) -> str:
@@ -101,10 +102,14 @@ class Config:
     def get_display(self) -> str:
         """Get the display name for the current value."""
         value = self.get_value()
+        ret = ""
         if isinstance(value, list):
-            return ', '.join([str(self.candidate_display(v)) for v in value])
+            ret = ', '.join([str(self.candidate_display(v)) for v in value])
         else:
-            return str(self.candidate_display(value))
+            ret = str(self.candidate_display(value))
+        if self.short_display and len(ret) > 15:
+            ret = ret[:15] + '...'
+        return ret
 
     def get_raw_value(self):
         """Get the current value from the parent module."""
@@ -265,11 +270,11 @@ class MultiSearchConfig(MultiChoiceConfig):
 
 class UnitListConfig(UnitConfigMixin, MultiSearchConfig):
     def __init__(self, key: str, desc: str):
-        super().__init__(key, desc, [], db.unlock_unit_condition_candidate)
+        super().__init__(key, desc, [], db.unlock_unit_condition_candidate, short_display=True)
 
 class LimitUnitListConfig(UnitConfigMixin, MultiSearchConfig):
     def __init__(self, key: str, desc: str):
-        super().__init__(key, desc, [], db.limit_unit_condition_candidate)
+        super().__init__(key, desc, [], db.limit_unit_condition_candidate, short_display=True)
 
 class ConditionalExecutionWrapper(Config):
     def __init__(self, key: str, desc: str, default: Any, candidates: Union[Callable, List], check: bool):
