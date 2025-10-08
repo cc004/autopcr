@@ -198,7 +198,7 @@ class datamgr(BaseModel, Component[apiclient]):
                     if not equip_slot[i-1] and getattr(grow_parameter_list, f"equipment_{i}") is not None:
                         equip_slot[i-1] = True
                         left_num -= 1
-            else:
+            elif unit.promotion_level < grow_parameter_list.promotion_level:
                 equip_slot = [False if getattr(grow_parameter_list, f"equipment_{i+1}") is None else True for i in range(len(unit.equip_slot))]
 
         equips = db.get_rank_promote_equip_demand(unit_id, rank, equip_slot, db.equip_max_rank, db.equip_max_rank_equip_slot)
@@ -450,7 +450,7 @@ class datamgr(BaseModel, Component[apiclient]):
         mana = self.gold.gold_id_free + self.gold.gold_id_pay + (self.user_gold_bank_info.bank_gold if include_bank and self.user_gold_bank_info else 0)
         return mana
 
-    def get_synchro_parameter(self) -> GrowthParameterList:
+    def get_synchro_parameter(self) -> GrowthParameterList: # something wrong with ball-used units, but 99% is ok.
 
         def get_equip_slot_num(equips: List[EquipSlot]) -> int:
             return sum(e.is_slot for e in equips)
@@ -482,8 +482,6 @@ class datamgr(BaseModel, Component[apiclient]):
                     break
                 max_star = 5 if i <= max_enhance_num else 0
                 setattr(ret, f"equipment_{j}", max_star)
-
-        print(equip_slot_num, max_enhance_num)
 
         return ret
 
