@@ -1,6 +1,8 @@
 from pydantic.class_validators import make_generic_validator
 from pydantic.fields import ModelField
 from pydantic.validators import int_validator
+
+from ..model.custom import TalentQuestData
 from . import responses, sdkrequests
 from .common import *
 from .requests import *
@@ -48,6 +50,16 @@ class TravelResultRoundEventResponse(responses.TravelResultRoundEventResponse):
             mgr.gold = self.user_gold
         if self.user_jewel:
             mgr.jewel = self.user_jewel
+
+@handles
+class CaravanCoinShopBuyBulkResponse(responses.CaravanCoinShopBuyBulkResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.purchase_list:
+            for item in self.purchase_list:
+                mgr.update_inventory(item)
+        if self.item_data:
+            for item in self.item_data:
+                mgr.update_inventory(item)
 
 @handles
 class CaravanCoinShopBuyResponse(responses.CaravanCoinShopBuyResponse):
@@ -489,6 +501,12 @@ class HomeIndexResponse(responses.HomeIndexResponse):
             mgr.missions = self.missions
         shiori_dict = {q.quest_id: q for q in self.shiori_quest_info.quest_list} if self.shiori_quest_info and self.shiori_quest_info.quest_list else {}
         mgr.quest_dict.update(shiori_dict)
+
+        if request.is_first:
+            mgr.talent_quest_area_info = {
+                v.talent_id: v for v in self.talent_quest_area_info
+            }
+            mgr.cleared_talent_quest_ids = {db.get_talent_id_from_quest_id(qid): qid for qid in self.cleared_talent_quest_id_list}
 
         mgr.ready = True
 
@@ -1162,13 +1180,47 @@ class UnitMultiEvolutionResponse(responses.UnitMultiEvolutionResponse):
                 mgr.update_inventory(item)
 
 
+@handles
+class TalentQuestSkipResponse(responses.TalentQuestSkipResponse):
+    async def update(self, mgr: datamgr, request: TalentQuestSkipRequest):
+        for result in self.quest_result_list or []:
+            for item in result.reward_list:
+                mgr.update_inventory(item)
+        for item in self.bonus_reward_list or []:
+            mgr.update_inventory(item)
+        for item in self.item_list or []:
+            mgr.update_inventory(item)
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        if self.level_info:
+            mgr.team_level = self.level_info.team.start_level
+        if self.user_info:
+            mgr.stamina = self.user_info.user_stamina
+            mgr.stamina_full_recovery_time = self.user_info.stamina_full_recovery_time
+        for info in self.talent_quest_area_info:
+            mgr.talent_quest_area_info[info.talent_id] = info
+        mgr.stamina = self.user_info.user_stamina
+        mgr.stamina_full_recovery_time = self.user_info.stamina_full_recovery_time
+
+
+@handles
+class TalentQuestRecoverChallengeResponse(
+    responses.TalentQuestRecoverChallengeResponse
+):
+    async def update(self, mgr: datamgr, request: TalentQuestRecoverChallengeRequest):
+        mgr.jewel = self.user_jewel
+        mgr.talent_quest_area_info[
+            self.user_talent_quest.talent_id
+        ].daily_recovery_count = self.user_talent_quest.daily_recovery_count
+
+
 # 菜 就别玩
-def custom_dict(self, *args, **kwargs):
-    original_dict = super(TravelStartRequest, self).dict(*args, **kwargs)
-    if self.action_type is not None:
-        original_dict['action_type'] = {"value__": self.action_type.value}
-    return original_dict
-TravelStartRequest.dict = custom_dict
+# def custom_dict(self, *args, **kwargs):
+#     original_dict = super(TravelStartRequest, self).dict(*args, **kwargs)
+#     if self.action_type is not None:
+#         original_dict['action_type'] = {"value__": self.action_type.value}
+#     return original_dict
+# TravelStartRequest.dict = custom_dict
 
 HatsuneTopResponse.__annotations__['event_status'] = HatsuneEventStatus
 HatsuneTopResponse.__fields__['event_status'].type_ = Optional[HatsuneEventStatus]
@@ -1205,3 +1257,14 @@ field = ModelField.infer(
 )
 ExtraEquipSlot.__fields__['slot'] = field
 setattr(ExtraEquipSlot, 'slot', None)
+
+ProfileQuestInfo.__annotations__['talent_quest'] = Optional[List[TalentQuestData]]
+field = ModelField.infer(
+    name='talent_quest',
+    value=None,
+    annotation=List[TalentQuestData],
+    class_validators=None,
+    config=ProfileQuestInfo.__config__,
+)
+ProfileQuestInfo.__fields__['talent_quest'] = field
+setattr(ProfileQuestInfo, 'talent_quest', None)

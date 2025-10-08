@@ -1,16 +1,26 @@
 import glob, os
+
+from ..sdk.sdkclients import bsdkclient
+from ..core.sdkclient import account, platform
+from ..core.apiclient import apiclient
+from ..model.sdkrequests import SourceIniGetMaintenanceStatusRequest
 from ..constants import CACHE_DIR
 from ..core.datamgr import datamgr
 from ..util import aiorequests
 import brotli
 
 async def db_start():
+    os.makedirs(os.path.join(CACHE_DIR, 'db'), exist_ok=True)
     dbs = glob.glob(os.path.join(CACHE_DIR, "db", "*.db"))
     if dbs:
         db = max(dbs)
         version = int(os.path.basename(db).split('.')[0])
     else:
-        version = await do_update_database()
+        version = int(
+                (await apiclient(bsdkclient(account("autopcr", "autopcr", platform.Android)))
+                .request(SourceIniGetMaintenanceStatusRequest()))
+                .manifest_ver
+        )
     await datamgr.try_update_database(version)
 
 async def do_update_database() -> int:
@@ -21,7 +31,6 @@ async def do_update_database() -> int:
 
     url = f'https://redive.estertion.win/db/redive_cn.db.br'
 
-    os.makedirs(os.path.join(CACHE_DIR, 'db'), exist_ok=True)
     save_path = os.path.join(CACHE_DIR, "db", f"{version}.db")
     try:
         rsp = await aiorequests.get(url, headers={'Accept-Encoding': 'br'}, stream=True, timeout=20)

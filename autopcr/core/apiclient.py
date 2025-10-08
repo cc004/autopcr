@@ -73,12 +73,12 @@ class apiclient(Container["apiclient"]):
 
     @staticmethod
     def _encrypt(data: bytes, key: bytes) -> bytes:
-        aes = AES.new(key, AES.MODE_CBC, b'ha4nBYA2APUD6Uv1')
+        aes = AES.new(key, AES.MODE_CBC, b'7Fk9Lm3Np8Qr4Sv2')
         return aes.encrypt(apiclient._add_to_16(data)) + key
     @staticmethod
     def _decrypt(data: bytes) -> Tuple[bytes, bytes]:
         data = b64decode(data.decode('utf8'))
-        aes = AES.new(data[-32:], AES.MODE_CBC, b'ha4nBYA2APUD6Uv1')
+        aes = AES.new(data[-32:], AES.MODE_CBC, b'7Fk9Lm3Np8Qr4Sv2')
         return aes.decrypt(data[:-32]), data[-32:]
 
     @staticmethod
@@ -159,8 +159,11 @@ class apiclient(Container["apiclient"]):
         if response.data_headers.viewer_id:
             self.viewer_id = int(response.data_headers.viewer_id)
 
-        if "check/game_start" == request.url and "store_url" in response0['data_headers']:
-            version = search(r'_v?([4-9]\.\d\.\d).*?_', response0['data_headers']["store_url"]).group(1)
+        if r"source_ini/get_maintenance_status?format=json" == request.url and "store_url" in response0['data_headers']:
+            match = search(r'(?<=gzlj_)(\d+\.\d+\.\d+)', response0['data_headers']["store_url"])
+            if not match:
+                raise ValueError("无法解析版本号，请手动修改constants.py的default_ver")
+            version = match.group(1)
             self._headers['APP-VER'] = version
             refresh_headers(version)
             logger.info(f"版本已更新至{version}")

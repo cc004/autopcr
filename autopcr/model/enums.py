@@ -65,6 +65,10 @@ class ePromotionLevel(IntEnum):
     LEVEL_31 = 31
     LEVEL_32 = 32
     INVALID_VALUE = -1
+    LEVEL_33 = 33
+    LEVEL_34 = 34
+    LEVEL_35 = 35
+    LEVEL_36 = 36
 
 class ePartyType(IntEnum):
     QUEST = 1
@@ -134,6 +138,21 @@ class ePartyType(IntEnum):
     COLOSSEUM_EXTRA_2 = 51
     COLOSSEUM_EXTRA_3 = 52
     HATSUNE_EX_PLUS = 53
+    DOME = 54
+    TALENT_QUEST_FIRE = 81
+    TALENT_QUEST_WATER = 82
+    TALENT_QUEST_WIND = 83
+    TALENT_QUEST_LIGHT = 84
+    TALENT_QUEST_DARK = 85
+    ACN_ENDLESS_BATTLE = 91
+    ACN_BOSS_BATTLE_1 = 92
+    ACN_BOSS_BATTLE_2 = 93
+    ACN_SPECIAL_BATTLE = 94
+    ACN_UNKNOWN_BATTLE = 95
+    ABYSS_QUEST = 101
+    ABYSS_BOSS_FIRST = 102
+    ABYSS_BOSS_SECOND = 103
+    ABYSS_BOSS_THIRD = 104
 
 class eClanRole(IntEnum):
     MEMBER = 0
@@ -344,6 +363,12 @@ class eSystemId(IntEnum):
     BYWAY_QUEST = 126
     COLOSSEUM = 127
     CARAVAN = 128
+    KNIGHT_ENHANCE = 129
+    TALENT_QUEST = 130
+    DOME = 131
+    ABYSS = 132
+    ACN = 133
+    CONNECT_SHOP = 216
     STORY_BOOKMARK = 802
     HATSUNE_EX_PLUS_BOSS = 6013
     SEASON_PASS = 90001
@@ -395,6 +420,7 @@ class eStoryStatus(IntEnum):
     UNVIEWED = 2
     VIEWING = 3
     INVALID_VALUE = -1
+    DUMMY = 4
 
 class eSrtCatalogStatus(IntEnum):
     EnemyUnlock = 1
@@ -469,6 +495,7 @@ class eGachaDrawType(IntEnum):
     SpFesCmapaign10Shot = 10
     SpFesDiscount10Shot = 11
     INVALID_VALUE = -1
+    Single_Ticket_10 = 9000
     Temp_Ticket_10 = 9003
     Monthly_Free_Single = 9005
     Monthly_Free_Multi = 9006
@@ -590,6 +617,14 @@ class eCampaignCategory(IntEnum):
     GOLD_DROP_AMOUNT_SECRET_DUNGEON = 541
     MASTER_COIN_DROP_SECRET_DUNGEON = 551
     DUNGEON_COIN_DROP_SECRET_DUNGEON = 552
+    HALF_STAMINA_TALENT_QUEST = 611
+    ITEM_DROP_AMOUNT_TALENT_QUEST = 621
+    GOLD_DROP_AMOUNT_TALENT_QUEST = 631
+    PLAYER_EXP_AMOUNT_TALENT_QUEST = 641
+    MASTER_COIN_DROP_TALENT_QUEST = 651
+    PLAYER_EXP_AMOUNT_ABYSS = 711
+    MASTER_COIN_DROP_ABYSS = 712
+    MASTER_COIN_DROP_ACN = 801
 
 class eStoryVisibleType(IntEnum):
     PRE_STORYID_AND_LOVE_LEVEL = 0
@@ -627,6 +662,30 @@ class eParamType(IntEnum):
     HP_RECOVERY_RATE = 15
     ENERGY_REDUCE_RATE = 16
     ACCURACY = 17
+    INVALID_VALUE = -1
+    BASE_PARAMETER_NUM = 18
+    PHYSICAL_CRITICAL_DAMAGE_RATE = 100
+    MAGIC_CRITICAL_DAMAGE_RATE = 101
+    PHYSICAL_DAMAGE_UP_PERCENT = 102
+    MAGIC_DAMAGE_UP_PERCENT = 103
+    TALENT_BONUS = 104
+
+class eStorySkipType(IntEnum):
+    NO_SKIP = 1
+    MENU_SKIP = 2
+    ALL_TEXT_LOG_SKIP = 3
+    INVALID_VALUE = -1
+
+class eFpcPeriod(IntEnum):
+    DAY = 1
+    NIGIHT = 2
+    INVALID_VALUE = -1
+
+class eFpcOperationType(IntEnum):
+    NORMAL = 1
+    CHANGE_VIEW_TOP = 2
+    SKIP = 3
+    DAY_NIGHT_CHANGE = 4
     INVALID_VALUE = -1
 
 class eRoundEventResultType(IntEnum):

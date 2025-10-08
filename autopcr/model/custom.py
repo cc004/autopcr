@@ -198,3 +198,6 @@ class ArenaQueryResponse(BaseModel):
     data: Optional[ArenaQueryData]
     version: str
 
+class TalentQuestData(BaseModel):
+    talent_id: int = None
+    clear_count: int = None

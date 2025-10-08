@@ -21,11 +21,12 @@ class content(pydantic.BaseModel):
     @staticmethod
     def from_line(line: str, category: str) -> "content":
         splits = line.split(',')
+        offset = len(splits) > 5
         return content(
             url=splits[0],
             md5=splits[1],
-            type=splits[2],
-            size=int(splits[3]),
+            type=splits[2 + offset],
+            size=int(splits[3 + offset]),
             category=category,
             children=[]
         )
@@ -95,6 +96,7 @@ class assetmgr:
         return await content.download(genHash)
  
     async def db(self) -> bytes:
+        UnityPy.config.FALLBACK_UNITY_VERSION = "2021.3.20f1"
         ab = UnityPy.load(await self.download('a/masterdata_master.unity3d'))
         asset = ab.objects[0].read()
         return asset.script

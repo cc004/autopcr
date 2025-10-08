@@ -1,6 +1,8 @@
 from abc import abstractmethod
 from collections import Counter
 from typing import List
+
+from ...model.common import ShopInfo
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
@@ -232,12 +234,10 @@ class clanbattle_shop(shop_buyer):
     def require_equip_units_rank(self) -> str: return self.get_config('clanbattle_shop_buy_equip_consider_unit_rank')
 
 
-@singlechoice('master_shop_buy_memory_count_limit', "记忆碎片盈余值", 0, [0, 10, 20, 40, 120])
-@LimitUnitListConfig('master_shop_buy_memory_ids', "记忆碎片")
-@description('购买指定记忆碎片，直到碎片盈余超过阈值')
-@name('大师币商店购买')
-@default(False)
-class master_shop(Module):
+class master_shop_buyer(Module):
+    @abstractmethod
+    def get_buy_items(self, shop: ShopInfo, client: pcrclient) -> List: ...
+
     async def do_task(self, client: pcrclient):
         shop_id = eSystemId.COUNTER_STOP_SHOP
         shops = {shop.system_id: shop for shop in (await client.get_shop_item_list()).shop_list}
@@ -246,16 +246,7 @@ class master_shop(Module):
         if not master_shop:
             raise SkipError("大师店未开启")
 
-        master_memory_ids = self.get_config('master_shop_buy_memory_ids')
-        target_memory = set(db.unit_to_memory[i] for i in master_memory_ids)
-        memory_demand_gap = client.data.get_memory_demand_gap()
-        master_shop_buy_memory_count_limit = self.get_config('master_shop_buy_memory_count_limit')
-        target_memory = {item_id for item_id in target_memory if -memory_demand_gap[(eInventoryType.Item, item_id)] < master_shop_buy_memory_count_limit}
-        if not target_memory:
-            raise SkipError("指定记忆碎片盈余值均满足")
-        items = [item for item in master_shop.item_list if item.item_id in target_memory and not item.sold]
-        if not items:
-            raise SkipError("需购买的碎片已售罄")
+        items = self.get_buy_items(master_shop, client)
         cost = sum((item.stock_count - item.purchase_count) * item.price.currency_num for item in items)
         golds = client.data.get_shop_gold(shop_id)
         if cost > golds:
@@ -268,3 +259,34 @@ class master_shop(Module):
         ret = await client.shop_buy_bulk(shop_id, buy)
         msg = await client.serlize_reward(ret.purchase_list)
         self._log(f"花费{cost}大师币购买了:\n{msg}")
+
+@singlechoice('master_shop_buy_memory_count_limit', "记忆碎片盈余值", 0, [0, 10, 20, 40, 120])
+@LimitUnitListConfig('master_shop_buy_memory_ids', "记忆碎片")
+@description('购买大师币商店的指定记忆碎片，直到碎片盈余超过阈值')
+@name('记忆碎片购买')
+@default(False)
+class master_shop(master_shop_buyer):
+    def get_buy_items(self, shop: ShopInfo, client: pcrclient) -> List:
+        master_memory_ids = self.get_config('master_shop_buy_memory_ids')
+        target_memory = set(db.unit_to_memory[i] for i in master_memory_ids)
+        memory_demand_gap = client.data.get_memory_demand_gap()
+        master_shop_buy_memory_count_limit = self.get_config('master_shop_buy_memory_count_limit')
+        target_memory = {item_id for item_id in target_memory if -memory_demand_gap
+            [(eInventoryType.Item, item_id)] < master_shop_buy_memory_count_limit}
+        if not target_memory:
+            raise SkipError("指定记忆碎片盈余值均满足")
+        items = [item for item in shop.item_list if item.item_id in target_memory and
+            not item.sold]
+        if not items:
+            raise SkipError("需购买的碎片已售罄")
+        return items
+
+@description('购买大师币商店里的属性材料')
+@name('属性材料购买')
+@default(False)
+class master_shop_talent(master_shop_buyer):
+    def get_buy_items(self, shop: ShopInfo, client: pcrclient) -> List:
+        items = [item for item in shop.item_list if db.is_talent_material((item.type, item.item_id)) and not item.sold]
+        if not items:
+            raise SkipError("属性材料已售罄")
+        return items

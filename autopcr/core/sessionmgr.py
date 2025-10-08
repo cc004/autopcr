@@ -82,7 +82,7 @@ class sessionmgr(Component[apiclient]):
         if os.path.exists(self.cacheFile):
             with open(self.cacheFile, 'r') as fp:
                 self._sdkaccount = json.load(fp)
-        while True:
+        for _ in range(5):
             try:
                 current = self._container.servers[self._container.active_server]
                 self._container.servers = [f'https://{server}'.replace('\t', '') for server in (await next.request(SourceIniIndexRequest())).server]
@@ -128,6 +128,8 @@ class sessionmgr(Component[apiclient]):
                 if "维护" in str(e):
                     raise PanicError(str(e))
                 pass
+        else:
+            raise PanicError("登录失败")
 
     @property
     def is_session_expired(self):

@@ -847,8 +847,16 @@ async def redeem_unit_swap(botev: BotEvent):
 async def half_schedule(botev: BotEvent):
     return {}
 
-@register_tool("返钻", "return_jewel")
-async def return_jewel(botev: BotEvent):
+# @register_tool("返钻", "return_jewel")
+# async def return_jewel(botev: BotEvent):
+    # return {}
+
+@register_tool("查深域", "find_talent_quest")
+async def find_talent_quest(botev: BotEvent):
+    return {}
+
+@register_tool("查公会深域", "find_clan_talent_quest")
+async def find_clan_talent_quest(botev: BotEvent):
     return {}
 
 @register_tool("免费十连", "free_gacha")

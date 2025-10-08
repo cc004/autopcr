@@ -1161,6 +1161,7 @@ class GachaExecRequest(Request[GachaExecResponse]):
     draw_type: int = None
     current_cost_num: int = None
     campaign_id: int = None
+    last_gacha_index_time: int = None
     @property
     def url(self) -> str:
         return "gacha/exec"
@@ -2019,6 +2020,7 @@ class QuestRecoverChallengeMultipleRequest(Request[QuestRecoverChallengeMultiple
     hard_quest_list: List[int] = None
     very_hard_quest_list: List[int] = None
     current_currency_num: int = None
+    talent_id_list: List[int] = None
     @property
     def url(self) -> str:
         return "quest/recover_challenge_multiple"
@@ -2058,6 +2060,7 @@ class QuestSkipMultipleRequest(Request[QuestSkipMultipleResponse]):
     very_hard_skip_list: List[QuestSkipInfo] = None
     shiori_hard_skip_list: List[QuestSkipInfo] = None
     current_ticket_num: int = None
+    talent_quest_skip_list: List[QuestSkipInfo] = None
     @property
     def url(self) -> str:
         return "quest/quest_skip_multiple"
@@ -2812,6 +2815,7 @@ class StoryQuestStartRequest(Request[StoryQuestStartResponse]):
         return "story/quest_start"
 class StoryViewingRequest(Request[StoryViewingResponse]):
     story_id: int = None
+    skip_info: StorySkipInfo = None
     @property
     def url(self) -> str:
         return "story/start"
@@ -3322,6 +3326,8 @@ class TrialBattleStartRequest(Request[TrialBattleStartResponse]):
     owner_viewer_id: int = None
     support_unit_id: int = None
     changed_support_battle_rarity: int = None
+    talent_weakness_id_list: List[int] = None
+    enable_talent_bonus: int = None
     @property
     def url(self) -> str:
         return "trial_battle/start"
@@ -3653,6 +3659,229 @@ class VoteTopRequest(Request[VoteTopResponse]):
     @property
     def url(self) -> str:
         return "vote/top"
+class AbyssBossFinishRequest(Request[AbyssBossFinishResponse]):
+    abyss_id: int = None
+    boss_id: int = None
+    enemy_index: int = None
+    remain_time: int = None
+    damage: int = None
+    unit_hp_list: List[UnitHpInfo] = None
+    auto_clear: int = None
+    owner_viewer_id: int = None
+    support_position: int = None
+    is_friend: int = None
+    @property
+    def url(self) -> str:
+        return "abyss/boss_finish"
+class AbyssBossRetireRequest(Request[AbyssBossRetireResponse]):
+    abyss_id: int = None
+    boss_id: int = None
+    enemy_index: int = None
+    @property
+    def url(self) -> str:
+        return "abyss/boss_retire"
+class AbyssBossSkipRequest(Request[AbyssBossSkipResponse]):
+    abyss_id: int = None
+    boss_id: int = None
+    enemy_index: int = None
+    exec_skip_num: int = None
+    current_skip_ticket_num: int = None
+    current_boss_ticket_num: int = None
+    @property
+    def url(self) -> str:
+        return "abyss/boss_skip"
+class AbyssBossStartRequest(Request[AbyssBossStartResponse]):
+    abyss_id: int = None
+    boss_id: int = None
+    enemy_index: int = None
+    token: str = None
+    owner_viewer_id: int = None
+    support_unit_id: int = None
+    is_friend: int = None
+    support_battle_rarity: int = None
+    current_boss_ticket_num: int = None
+    @property
+    def url(self) -> str:
+        return "abyss/boss_start"
+class AbyssQuestFinishRequest(Request[AbyssQuestFinishResponse]):
+    abyss_id: int = None
+    quest_id: int = None
+    remain_time: int = None
+    unit_hp_list: List[UnitHpInfo] = None
+    auto_clear: int = None
+    owner_viewer_id: int = None
+    support_position: int = None
+    is_friend: int = None
+    @property
+    def url(self) -> str:
+        return "abyss/quest_finish"
+class AbyssQuestRetireRequest(Request[AbyssQuestRetireResponse]):
+    abyss_id: int = None
+    quest_id: int = None
+    @property
+    def url(self) -> str:
+        return "abyss/quest_retire"
+class AbyssQuestSkipMultipleRequest(Request[AbyssQuestSkipMultipleResponse]):
+    abyss_id: int = None
+    skip_list: List[QuestSkipInfo] = None
+    current_ticket_num: int = None
+    exec_type: int = None
+    @property
+    def url(self) -> str:
+        return "abyss/quest_skip_multiple"
+class AbyssQuestStartRequest(Request[AbyssQuestStartResponse]):
+    abyss_id: int = None
+    quest_id: int = None
+    token: str = None
+    owner_viewer_id: int = None
+    support_unit_id: int = None
+    is_friend: int = None
+    support_battle_rarity: int = None
+    @property
+    def url(self) -> str:
+        return "abyss/quest_start"
+class AbyssRehearsalBossFinishRequest(Request[AbyssRehearsalBossFinishResponse]):
+    abyss_id: int = None
+    boss_id: int = None
+    enemy_index: int = None
+    remain_time: int = None
+    damage: int = None
+    unit_hp_list: List[UnitHpInfo] = None
+    auto_clear: int = None
+    owner_viewer_id: int = None
+    support_position: int = None
+    is_friend: int = None
+    is_actual_boss_status: int = None
+    @property
+    def url(self) -> str:
+        return "abyss/rehearsal_boss_finish"
+class AbyssRehearsalBossRetireRequest(Request[AbyssRehearsalBossRetireResponse]):
+    abyss_id: int = None
+    boss_id: int = None
+    enemy_index: int = None
+    @property
+    def url(self) -> str:
+        return "abyss/rehearsal_boss_retire"
+class AbyssRehearsalBossStartRequest(Request[AbyssRehearsalBossStartResponse]):
+    abyss_id: int = None
+    boss_id: int = None
+    enemy_index: int = None
+    token: str = None
+    owner_viewer_id: int = None
+    support_unit_id: int = None
+    is_friend: int = None
+    support_battle_rarity: int = None
+    is_actual_boss_status: int = None
+    @property
+    def url(self) -> str:
+        return "abyss/rehearsal_boss_start"
+class AbyssTopRequest(Request[AbyssTopResponse]):
+    abyss_id: int = None
+    is_first: int = None
+    @property
+    def url(self) -> str:
+        return "abyss/top"
+class AcnBattleRetireRequest(Request[AcnBattleRetireResponse]):
+    quest_id: int = None
+    difficulty: int = None
+    battle_log_id: int = None
+    @property
+    def url(self) -> str:
+        return "acn/battle_retire"
+class AcnBossBattleFinishRequest(Request[AcnBossBattleFinishResponse]):
+    quest_id: int = None
+    difficulty: int = None
+    battle_log_id: int = None
+    remain_time: int = None
+    total_damage: int = None
+    battle_finish_unit: AcnBattleFinishUnit = None
+    @property
+    def url(self) -> str:
+        return "acn/boss_battle_finish"
+class AcnBossBattleStartRequest(Request[AcnBossBattleStartResponse]):
+    quest_id: int = None
+    difficulty: int = None
+    owner_viewer_id: int = None
+    support_unit_id: int = None
+    support_battle_rarity: int = None
+    is_friend: int = None
+    challenge_reward_request_flag: int = None
+    @property
+    def url(self) -> str:
+        return "acn/boss_battle_start"
+class AcnEndlessBattleFinishRequest(Request[AcnEndlessBattleFinishResponse]):
+    difficulty: int = None
+    battle_log_id: int = None
+    kill_count: int = None
+    @property
+    def url(self) -> str:
+        return "acn/endless_battle_finish"
+class AcnEndlessBattleStartRequest(Request[AcnEndlessBattleStartResponse]):
+    difficulty: int = None
+    owner_viewer_id: int = None
+    support_unit_id: int = None
+    support_battle_rarity: int = None
+    is_friend: int = None
+    challenge_reward_request_flag: int = None
+    @property
+    def url(self) -> str:
+        return "acn/endless_battle_start"
+class AcnMissionAcceptRequest(Request[AcnMissionAcceptResponse]):
+    id: int = None
+    @property
+    def url(self) -> str:
+        return "acn/mission_accept"
+class AcnMissionIndexRequest(Request[AcnMissionIndexResponse]):
+    @property
+    def url(self) -> str:
+        return "acn/mission_index"
+class AcnReadRequest(Request[AcnReadResponse]):
+    adv_id: int = None
+    @property
+    def url(self) -> str:
+        return "acn/read"
+class AcnSpecialBattleFinishRequest(Request[AcnSpecialBattleFinishResponse]):
+    battle_log_id: int = None
+    remain_time: int = None
+    total_damage: int = None
+    mode: int = None
+    battle_finish_unit: AcnBattleFinishUnit = None
+    enemy_info: List[EventEnemyInfo] = None
+    @property
+    def url(self) -> str:
+        return "acn/special_battle_finish"
+class AcnSpecialBattleStartRequest(Request[AcnSpecialBattleStartResponse]):
+    mode: int = None
+    owner_viewer_id: int = None
+    support_unit_id: int = None
+    support_battle_rarity: int = None
+    is_friend: int = None
+    challenge_reward_request_flag: int = None
+    @property
+    def url(self) -> str:
+        return "acn/special_battle_start"
+class AcnTopRequest(Request[AcnTopResponse]):
+    @property
+    def url(self) -> str:
+        return "acn/top"
+class AcnUnknownBattleFinishRequest(Request[AcnUnknownBattleFinishResponse]):
+    battle_log_id: int = None
+    remain_time: int = None
+    total_damage: int = None
+    battle_finish_unit: AcnBattleFinishUnit = None
+    enemy_unit_list: List[AcnUnknownEnemyUnit] = None
+    @property
+    def url(self) -> str:
+        return "acn/unknown_battle_finish"
+class AcnUnknownBattleStartRequest(Request[AcnUnknownBattleStartResponse]):
+    step: int = None
+    owner_viewer_id: int = None
+    support_unit_id: int = None
+    support_battle_rarity: int = None
+    is_friend: int = None
+    @property
+    def url(self) -> str:
+        return "acn/unknown_battle_start"
 class AsmFinishRequest(Request[AsmFinishResponse]):
     from_system_id: int = None
     play_id: int = None
@@ -3732,6 +3961,15 @@ class BywayQuestReplayReportRequest(Request[BywayQuestReplayReportResponse]):
     @property
     def url(self) -> str:
         return "byway_quest/replay_report"
+class CaravanCoinShopBuyBulkRequest(Request[CaravanCoinShopBuyBulkResponse]):
+    season_id: int = None
+    shop_season_id: int = None
+    buy_item_list: List[BuyBulkBuyItemList] = None
+    current_currency_num: int = None
+    is_multi_slots: int = None
+    @property
+    def url(self) -> str:
+        return "caravan/coin_shop_buy_bulk"
 class CaravanCoinShopBuyRequest(Request[CaravanCoinShopBuyResponse]):
     season_id: int = None
     shop_season_id: int = None
@@ -3740,6 +3978,13 @@ class CaravanCoinShopBuyRequest(Request[CaravanCoinShopBuyResponse]):
     @property
     def url(self) -> str:
         return "caravan/coin_shop_buy"
+class CaravanDiceMultiRollRequest(Request[CaravanDiceMultiRollResponse]):
+    season_id: int = None
+    current_num: int = None
+    roll_num: int = None
+    @property
+    def url(self) -> str:
+        return ""
 class CaravanDiceRerollRequest(Request[CaravanDiceRerollResponse]):
     season_id: int = None
     current_count: int = None
@@ -3834,6 +4079,14 @@ class CaravanShopBlockBuyRequest(Request[CaravanShopBlockBuyResponse]):
     @property
     def url(self) -> str:
         return "caravan/shop_block_buy"
+class CaravanShortcutChoiceRequest(Request[CaravanShortcutChoiceResponse]):
+    season_id: int = None
+    block_id: int = None
+    is_open: int = None
+    current_currency_num: int = None
+    @property
+    def url(self) -> str:
+        return "caravan/shortcut_choice"
 class CaravanSpotsChoiceRequest(Request[CaravanSpotsChoiceResponse]):
     season_id: int = None
     choice: int = None
@@ -3895,6 +4148,71 @@ class ColosseumTopRequest(Request[ColosseumTopResponse]):
     @property
     def url(self) -> str:
         return "colosseum/top"
+class ConnectShopItemListRequest(Request[ConnectShopItemListResponse]):
+    @property
+    def url(self) -> str:
+        return ""
+class DomeBattleFinishRequest(Request[DomeBattleFinishResponse]):
+    quest_id: int = None
+    user_unit_info: List[DomeBattleFinishUnitInfo] = None
+    versus_user_unit_info: List[DomeBattleFinishUnitInfo] = None
+    remain_time: int = None
+    @property
+    def url(self) -> str:
+        return "dome/battle_finish"
+class DomeBattleRetireRequest(Request[DomeBattleRetireResponse]):
+    quest_id: int = None
+    @property
+    def url(self) -> str:
+        return "dome/battle_retire"
+class DomeBattleStartRequest(Request[DomeBattleStartResponse]):
+    quest_id: int = None
+    token: str = None
+    @property
+    def url(self) -> str:
+        return "dome/battle_start"
+class DomeHistoryRequest(Request[DomeHistoryResponse]):
+    quest_id: int = None
+    @property
+    def url(self) -> str:
+        return "dome/history"
+class DomeMissionAcceptRequest(Request[DomeMissionAcceptResponse]):
+    mission_id: int = None
+    @property
+    def url(self) -> str:
+        return "dome/mission_accept"
+class DomeMissionIndexRequest(Request[DomeMissionIndexResponse]):
+    @property
+    def url(self) -> str:
+        return "dome/mission_index"
+class DomeReplayRequest(Request[DomeReplayResponse]):
+    quest_id: int = None
+    log_id: int = None
+    @property
+    def url(self) -> str:
+        return "dome/replay"
+class DomeTopRequest(Request[DomeTopResponse]):
+    @property
+    def url(self) -> str:
+        return "dome/top"
+class EnhanceTalentLevelRequest(Request[EnhanceTalentLevelResponse]):
+    enhance_info_list: List[TalentLevelInfo] = None
+    item_list: List[ItemInfo] = None
+    @property
+    def url(self) -> str:
+        return ""
+class EnhanceTalentSkillRequest(Request[EnhanceTalentSkillResponse]):
+    enhance_node_list: List[TalentSkillNodeInfo] = None
+    item_list: List[ItemInfo] = None
+    @property
+    def url(self) -> str:
+        return ""
+class EnhanceTeamSkillRequest(Request[EnhanceTeamSkillResponse]):
+    enhance_node_list: List[TalentSkillNodeInfo] = None
+    item_list: List[ItemInfo] = None
+    @property
+    def url(self) -> str:
+        return ""
 class GachaMonthlyIndexRequest(Request[GachaMonthlyIndexResponse]):
     @property
     def url(self) -> str:
@@ -3955,6 +4273,31 @@ class HatsuneQuestSkipMultipleRequest(Request[HatsuneQuestSkipMultipleResponse])
     @property
     def url(self) -> str:
         return ""
+class HatsuneReadTopicTalkStoryRequest(Request[HatsuneReadTopicTalkStoryResponse]):
+    event_id: int = None
+    sub_story_id: int = None
+    skip_info: StorySkipInfo = None
+    @property
+    def url(self) -> str:
+        return ""
+class HatsuneTopicTalkGetTopicRequest(Request[HatsuneTopicTalkGetTopicResponse]):
+    event_id: int = None
+    chara_index: int = None
+    is_free: int = None
+    @property
+    def url(self) -> str:
+        return ""
+class HatsuneTopicTalkTopRequest(Request[HatsuneTopicTalkTopResponse]):
+    event_id: int = None
+    @property
+    def url(self) -> str:
+        return ""
+class HatsuneUnlockRestrictedTopicTalkStoryRequest(Request[HatsuneUnlockRestrictedTopicTalkStoryResponse]):
+    event_id: int = None
+    sub_story_id: int = None
+    @property
+    def url(self) -> str:
+        return ""
 class HatsuneUpdateSkipQuestListRequest(Request[HatsuneUpdateSkipQuestListResponse]):
     event_id: int = None
     skip_count: int = None
@@ -3970,6 +4313,38 @@ class LogConnectionErrorRequest(Request[LogConnectionErrorResponse]):
     @property
     def url(self) -> str:
         return "log/connection_error"
+class NbbFinishRequest(Request[NbbFinishResponse]):
+    play_id: int = None
+    kill_score: int = None
+    help_bonus: int = None
+    help_list: List[int] = None
+    clear_flg: int = None
+    from_system_id: int = None
+    @property
+    def url(self) -> str:
+        return "nbb/finish"
+class NbbStartRequest(Request[NbbStartResponse]):
+    nbb_chara_type: int = None
+    difficulty: int = None
+    from_system_id: int = None
+    @property
+    def url(self) -> str:
+        return "nbb/start"
+class NbbTopRequest(Request[NbbTopResponse]):
+    from_system_id: int = None
+    @property
+    def url(self) -> str:
+        return "nbb/top"
+class PrincessKnightMissionAcceptRequest(Request[PrincessKnightMissionAcceptResponse]):
+    mission_type: int = None
+    mission_id: int = None
+    @property
+    def url(self) -> str:
+        return "princess_knight/mission_accept"
+class PrincessKnightMissionIndexRequest(Request[PrincessKnightMissionIndexResponse]):
+    @property
+    def url(self) -> str:
+        return "princess_knight/mission_index"
 class SeasonPassBuyLevelRequest(Request[SeasonPassBuyLevelResponse]):
     season_id: int = None
     current_currency_num: int = None
@@ -3997,6 +4372,13 @@ class SeasonPassRewardAcceptRequest(Request[SeasonPassRewardAcceptResponse]):
     @property
     def url(self) -> str:
         return "season_ticket_new/reward"
+class SelectionTicketExchangeRequest(Request[SelectionTicketExchangeResponse]):
+    ticket_id: int = None
+    ticket_count: int = None
+    exchange_number: int = None
+    @property
+    def url(self) -> str:
+        return "selection_ticket/exchange"
 class ShopBuyBulkRequest(Request[ShopBuyBulkResponse]):
     system_id: int = None
     buy_item_list: List[BuyBulkBuyItemList] = None
@@ -4015,6 +4397,16 @@ class StoryRegisterBookmarkRequest(Request[StoryRegisterBookmarkResponse]):
     @property
     def url(self) -> str:
         return "story/register_bookmark"
+class SubStoryAbdReadStoryRequest(Request[SubStoryAbdReadStoryResponse]):
+    sub_story_id: int = None
+    skip_info: StorySkipInfo = None
+    @property
+    def url(self) -> str:
+        return "sub_story/abd/read_story"
+class SubStoryAbdTopRequest(Request[SubStoryAbdTopResponse]):
+    @property
+    def url(self) -> str:
+        return "sub_story/abd/top"
 class SubStoryAisConfirmRequest(Request[SubStoryAisConfirmResponse]):
     @property
     def url(self) -> str:
@@ -4024,6 +4416,15 @@ class SubStoryAisReadStoryRequest(Request[SubStoryAisReadStoryResponse]):
     @property
     def url(self) -> str:
         return "sub_story/ais/read_story"
+class SubStoryApgReadStoryRequest(Request[SubStoryApgReadStoryResponse]):
+    sub_story_id: int = None
+    @property
+    def url(self) -> str:
+        return "sub_story/apg/read_story"
+class SubStoryApgTopRequest(Request[SubStoryApgTopResponse]):
+    @property
+    def url(self) -> str:
+        return "sub_story/apg/top"
 class SubStoryAsbReadStoryRequest(Request[SubStoryAsbReadStoryResponse]):
     sub_story_id: int = None
     @property
@@ -4039,11 +4440,46 @@ class SubStoryDvsReadStoryRequest(Request[SubStoryDvsReadStoryResponse]):
     @property
     def url(self) -> str:
         return "sub_story/dvs/read_story"
+class SubStoryFpcDrawStoryRequest(Request[SubStoryFpcDrawStoryResponse]):
+    period: eFpcPeriod = None
+    fpc_operation_type: eFpcOperationType = None
+    @property
+    def url(self) -> str:
+        return "sub_story/fpc/draw_story"
+class SubStoryFpcReadStoryRequest(Request[SubStoryFpcReadStoryResponse]):
+    sub_story_id: int = None
+    @property
+    def url(self) -> str:
+        return "sub_story/fpc/read_story"
+class SubStoryLssReadStoryRequest(Request[SubStoryLssReadStoryResponse]):
+    sub_story_id: int = None
+    skip_info: StorySkipInfo = None
+    @property
+    def url(self) -> str:
+        return "sub_story/lss/read_story"
 class SubStoryNydReadStoryRequest(Request[SubStoryNydReadStoryResponse]):
     sub_story_id: int = None
     @property
     def url(self) -> str:
         return "sub_story/nyd/read_story"
+class SubStoryRagReadStoryRequest(Request[SubStoryRagReadStoryResponse]):
+    sub_story_id: int = None
+    skip_info: StorySkipInfo = None
+    @property
+    def url(self) -> str:
+        return "sub_story/rag/read_story"
+class SubStoryTprReadStoryRequest(Request[SubStoryTprReadStoryResponse]):
+    sub_story_id: int = None
+    @property
+    def url(self) -> str:
+        return "sub_story/tpr/read_story"
+class SubStoryTprRegisterSuccessRequest(Request[SubStoryTprRegisterSuccessResponse]):
+    panel_id: int = None
+    correct_type: int = None
+    parts_id_list: List[int] = None
+    @property
+    def url(self) -> str:
+        return "sub_story/tpr/register_success"
 class SubStoryWonReadStoryRequest(Request[SubStoryWonReadStoryResponse]):
     sub_story_id_list: List[int] = None
     @property
@@ -4064,6 +4500,45 @@ class SubStoryXacReadStoryRequest(Request[SubStoryXacReadStoryResponse]):
     @property
     def url(self) -> str:
         return "sub_story/xac/read_story"
+class TalentQuestFinishRequest(Request[TalentQuestFinishResponse]):
+    quest_id: int = None
+    remain_time: int = None
+    unit_hp_list: List[UnitHpInfo] = None
+    auto_clear: int = None
+    owner_viewer_id: int = None
+    support_position: int = None
+    is_friend: int = None
+    @property
+    def url(self) -> str:
+        return "talent_quest/finish"
+class TalentQuestRecoverChallengeRequest(Request[TalentQuestRecoverChallengeResponse]):
+    talent_id: int = None
+    current_currency_num: int = None
+    @property
+    def url(self) -> str:
+        return "talent_quest/recover_challenge"
+class TalentQuestRetireRequest(Request[TalentQuestRetireResponse]):
+    quest_id: int = None
+    @property
+    def url(self) -> str:
+        return "talent_quest/retire"
+class TalentQuestSkipRequest(Request[TalentQuestSkipResponse]):
+    quest_id: int = None
+    use_ticket_num: int = None
+    current_ticket_num: int = None
+    @property
+    def url(self) -> str:
+        return "talent_quest/quest_skip"
+class TalentQuestStartRequest(Request[TalentQuestStartResponse]):
+    quest_id: int = None
+    token: str = None
+    owner_viewer_id: int = None
+    support_unit_id: int = None
+    support_battle_rarity: int = None
+    is_friend: int = None
+    @property
+    def url(self) -> str:
+        return "talent_quest/start"
 class TestBuyMonthlyCardRequest(Request[TestBuyMonthlyCardResponse]):
     jewel_store_id: int = None
     max_free_count_10: int = None

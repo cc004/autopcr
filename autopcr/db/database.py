@@ -646,6 +646,7 @@ class database():
                 QuestDatum.query(db)
                 .concat(HatsuneQuest.query(db))
                 .concat(ShioriQuest.query(db))
+                .concat(TalentQuestDatum.query(db))
                 .to_dict(lambda x: x.quest_id, lambda x: x)
             )
 
@@ -1468,6 +1469,7 @@ class database():
                 .concat(HatsuneQuest.query(db))
                 .concat(ShioriQuest.query(db))
                 .concat(TrainingQuestDatum.query(db))
+                .concat(TalentQuestDatum.query(db))
                 .to_dict(lambda x: x.quest_id, lambda x: x.quest_name)
             )
         ret.update(
@@ -1499,6 +1501,33 @@ class database():
                 .group_by(lambda x: x.event_id)
                 .to_dict(lambda x: x.key, lambda x: x.to_dict(lambda x: x.quest_id, lambda x: x))
             )
+
+    @lazy_property
+    def talent_quest_area_data(self) -> Dict[int, TalentQuestAreaDatum]:
+        with self.dbmgr.session() as db:
+            return (
+                TalentQuestAreaDatum.query(db)
+                .to_dict(
+                    lambda x: x.area_id, lambda x: x
+                )
+            )
+
+    @lazy_property
+    def talent_quests_data(self) -> Dict[int, Dict[int, TalentQuestDatum]]:
+        with self.dbmgr.session() as db:
+            return (
+                TalentQuestDatum.query(db)
+                .group_by(lambda x: x.area_id)
+                .to_dict(
+                    lambda x: x.key,
+                    lambda x: x.to_dict(lambda x: x.quest_id, lambda x: x),
+                )
+            )
+
+    @lazy_property
+    def talents(self) -> Dict[int, Talent]:
+        with self.dbmgr.session() as db:
+            return Talent.query(db).to_dict(lambda x: x.talent_id, lambda x: x)
 
     def get_ex_equip_star_from_pt(self, id: int, pt: int) -> int:
         rarity = self.get_ex_equip_rarity(id)
@@ -1623,7 +1652,7 @@ class database():
         return item[0] == eInventoryType.Item and item[1] >= 32000 and item[1] < 33000
 
     def is_equip(self, item: ItemType, uncraftable_only: bool = False) -> bool:
-        return item[0] == eInventoryType.Equip and item[1] >= 101000 and item[1] < 140000 and (not uncraftable_only or not self.is_equip_craftable(item))
+        return item[0] == eInventoryType.Equip and (item[1] >= 101000 and item[1] < 140000 or item[1] > 160000) and (not uncraftable_only or not self.is_equip_craftable(item))
 
     def is_equip_raw_ore(self, item: ItemType) -> bool:
         return item[0] == eInventoryType.Equip and item[1] >= 150001 and item[1] < 160000
@@ -1636,6 +1665,9 @@ class database():
 
     def is_unique_equip_glow_ball(self, item: ItemType) -> bool:
         return item[0] == eInventoryType.Item and item[1] >= 21950 and item[1] < 22000
+
+    def is_talent_material(self, item: ItemType) -> bool:
+        return item[0] == eInventoryType.Item and item[1] >= 25011 and item[1] < 25103
 
     def is_room_item_level_upable(self, team_level: int, item: RoomUserItem, now: int) -> bool:
         return (item.room_item_level < self.room_item[item.room_item_id].max_level and 
@@ -1660,6 +1692,10 @@ class database():
 
     def is_hatsune_quest(self, quest_id: int) -> bool:
         return quest_id // 1000000 == 10
+
+    def is_talent_quest(self, quest_id: int) -> bool:
+        top = quest_id // 1000000
+        return top >= 81 and top <= 85
 
     def is_hatsune_normal_quest(self, quest_id: int) -> bool:
         return self.is_hatsune_quest(quest_id) and (quest_id // 100) % 10 == 1
@@ -2072,6 +2108,18 @@ class database():
             .first(lambda x: x.buy_count_from <= buy_cnt and (buy_cnt <= x.buy_count_to or x.buy_count_to == -1)) 
         return item
 
+    def get_talent_id_from_quest_id(self, quest: int) -> int:
+        if not self.is_talent_quest(quest):
+            return 0
+        area_id = db.quest_info[quest].area_id
+        talent_id = db.talent_quest_area_data[area_id].talent_id
+        return talent_id
+
+    def equip_candidate(self) -> List[int]:
+        return [p for p in self.equip_data if self.is_equip((eInventoryType.Equip, p))]
+
+    def talent_candidate(self) -> List[str]:
+        return [f"{talent_id}: {self.talents[talent_id].talent_name}" for talent_id in self.talents]
 
     def deck_sort_unit(self, units: List[int]) -> List[int]:
         return sorted(units, key=lambda x: self.unit_data[x].search_area_width if x in self.unit_data else 9999)
@@ -2109,6 +2157,8 @@ class database():
         return list(range(st, self.unique_equipment_max_level[equip_slot] + 1))
 
     def last_normal_quest(self) -> List[int]:
+        quest_ids = sorted(self.normal_quest_data.keys(), reverse=True)
+        return quest_ids[:5]
         last_start_time = flow(self.normal_quest_data.values()) \
                 .where(lambda x: db.parse_time(x.start_time) <= apiclient.datetime) \
                 .max(lambda x: x.start_time).start_time
