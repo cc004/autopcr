@@ -1083,9 +1083,9 @@ class caravan_shop_buy(Module):
         to_buy = Counter()
         for item in limit_expend_items[:]:
             coin = client.data.get_inventory((eInventoryType.Item, item.currency_id))
-            if coin < item.price:
+            if coin < cost + item.price:
                 if not rewards:
-                    self._log(f"商店币不足{coin} < {item.price}，无法购买 {db.get_inventory_name_san((item.reward_type, item.reward_id))}")
+                    self._log(f"商店币不足{coin} < {cost + item.price}，无法购买 {db.get_inventory_name_san((item.reward_type, item.reward_id))}及以后的物品")
                 break
             if not is_enable_buy_bulk:
                 resp = await client.caravan_coin_shop_buy(
