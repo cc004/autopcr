@@ -727,6 +727,9 @@ class SeasonPassMissionAcceptResponse(responses.SeasonPassMissionAcceptResponse)
         if self.rewards:
             for reward in self.rewards:
                 mgr.update_inventory(reward)
+        if self.exchange_rewards:
+            for reward in self.exchange_rewards:
+                mgr.update_inventory(reward)
 
 @handles
 class SubStoryAisReadStoryResponse(responses.SubStoryAisReadStoryResponse):
