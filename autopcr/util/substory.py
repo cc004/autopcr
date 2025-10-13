@@ -1,4 +1,10 @@
-from typing import Union
+from enum import IntEnum
+from typing import Callable, List, Union
+
+from ..model.enums import eFpcOperationType, eFpcPeriod
+from ..model.enums import eEventSubStoryStatus
+
+from .linq import flow
 from ..core.pcrclient import pcrclient
 from ..core.apiclient import apiclient
 from ..model.common import EventSubStory
@@ -16,6 +22,7 @@ def EventId(event_id: int):
 class SubStoryReader:
 
     client: pcrclient
+    special: bool = False
 
     def is_readable(self, sub_story_id: int) -> bool:
         return True # it seems to be readable when it appear in the substory list
@@ -25,6 +32,7 @@ class SubStoryReader:
     def title(self, sub_story_id: int) -> str: ...
     async def read(self, sub_story_id: int): ...
     async def place_piece(self, sub_story_id: int): ...
+    async def special_read(self, sub_storys: List[EventSubStory], _log: Callable): ...
     async def confirm(self): ...
 
     def __init__(self, client: pcrclient):
@@ -34,6 +42,43 @@ def GetSubStoryReader(sub_story_data: EventSubStory, client: pcrclient) -> Union
     if sub_story_data.event_id in constructor:
         return constructor[sub_story_data.event_id](client)
     return None
+
+@EventId(10140)
+class fpc_substory(SubStoryReader):
+    special = True
+
+    def title(self, sub_story_id: int) -> str:
+        return db.fpc_story_data[sub_story_id].title
+
+    async def read(self, sub_story_id: int):
+        await self.client.read_fpc_story(sub_story_id)
+
+    async def special_read(self, sub_storys: EventSubStory, _log: Callable):
+        all_ids = set(s.sub_story_id for s in sub_storys.sub_story_info_list)
+        unread_ids = set(s.sub_story_id for s in sub_storys.sub_story_info_list if s.status == eEventSubStoryStatus.UNREAD)
+        cnt = 0;
+        last_period = eFpcPeriod.DAY
+        for period in eFpcPeriod:
+            unread_in_period = flow(unread_ids).where(lambda id: db.fpc_story_data[id].period == period).to_list()
+            fpc_op = eFpcOperationType.DAY_NIGHT_CHANGE if last_period != period else eFpcOperationType.SKIP
+            last_period = period
+            for _ in range(80): # should not be more than 80 times
+                if len(unread_in_period) == 0:
+                    break
+                resp = await self.client.draw_fpc_story(period, fpc_op)
+                fpc_op = eFpcOperationType.SKIP
+                cnt += 1
+                if resp.hit_sub_story_id in all_ids:
+                    if resp.hit_sub_story_id in unread_in_period:
+                        await self.read(resp.hit_sub_story_id)
+                        _log(f'阅读了{self.title(resp.hit_sub_story_id)}')
+                        unread_in_period.remove(resp.hit_sub_story_id)
+                        next((s for s in sub_storys.sub_story_info_list if s.sub_story_id == resp.hit_sub_story_id)).status = eEventSubStoryStatus.READED
+            else:
+                _log(f'80次未能完成故事阅读，下次再试吧')
+        if cnt:
+            _log(f'观看了{cnt}次表演')
+
 
 @EventId(10137)
 @EventId(10136)

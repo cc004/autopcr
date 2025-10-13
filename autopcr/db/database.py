@@ -1204,6 +1204,14 @@ class database():
             )
 
     @lazy_property
+    def fpc_story_data(self) -> Dict[int, FpcStoryDatum]:
+        with self.dbmgr.session() as db:
+            return (
+                FpcStoryDatum.query(db)
+                .to_dict(lambda x: x.sub_story_id, lambda x: x)
+            )
+
+    @lazy_property
     def ais_story_data(self) -> Dict[int, AisStoryDatum]:
         with self.dbmgr.session() as db:
             return (
