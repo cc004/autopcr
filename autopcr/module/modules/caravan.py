@@ -381,12 +381,19 @@ class BudyEffectManager(EffectManager):
         for effect in self.get_effect():
             effect.exec_count = 0
 
-    def is_effect_execable(self, effect: eBuddyEffectType) -> bool:
-        buddys = self.get_effect(effect)
+    def is_dice_retryable(self) -> bool:
+        buddys = self.get_effect(eBuddyEffectType.RETRY)
         for buddy in buddys:
             if not buddy.exec_count: 
                 buddy.exec_count = 0
             if buddy.exec_count < db.caravan_buddy[buddy.buddy_id].effect_value_1:
+                return True
+        return False
+
+    def is_effect_exist(self, effect: eBuddyEffectType) -> bool:
+        buddys = self.get_effect(effect)
+        for buddy in buddys:
+            if buddy.turn > 0:
                 return True
         return False
 
@@ -563,7 +570,7 @@ class CaravanGame:
 
         assert isinstance(self.rival_info, RivalInfo), "rival_info must be an instance of RivalInfo"
         self.rival_info.block_id = rival_info.after_block_id
-        self._log(f"若菜掷出了{rival_info.spots}，到达格子 {self.rival_info.block_id}")
+        self._log(f"若菜掷出了{rival_info.spots_list}，到达格子 {self.rival_info.block_id}")
         if self.current_block_id == self.rival_info.block_id:
             self._log("若菜在当前格子，开始小游戏")
             self.state = eState.RIVAL_MINI_GAME
@@ -877,7 +884,7 @@ class CaravanGame:
 
         elif self.state == eState.SELECT_RESULT:
             roll_num = self.dish_effect_manager.get_effect_influence_value(eDishEffectType.MULTI_DICE) or 1
-            while not self.dish_effect_manager.is_dice_fix() and self.buddy_effect_manager.is_effect_execable(eBuddyEffectType.RETRY):
+            while not self.dish_effect_manager.is_dice_fix() and self.buddy_effect_manager.is_dice_retryable():
                 exec_count = self.buddy_effect_manager.exec_effect(eBuddyEffectType.RETRY)
                 if sum(self.spots_list) >= 3 * roll_num:
                     self._log(f"骰子结果 {self.spots_list} >= 3 * {roll_num}, 不低于期望，不重投")
@@ -910,7 +917,8 @@ class CaravanGame:
                 if repeat_count:
                     self._log(f"当前骰子结果 {self.spots_list}, 达到 {self.buddy_effect_manager.get_repeat_count()}，停止投")
 
-            if self.buddy_effect_manager.is_effect_execable(eBuddyEffectType.SELECT_DICE_RESULT):
+            if self.buddy_effect_manager.is_effect_exist(eBuddyEffectType.SELECT_DICE_RESULT) \
+                or self.buddy_effect_manager.is_effect_exist(eBuddyEffectType.SELECT_FRONT_OR_BACK):
                 choice = 1 + (self.spots_choices_1 < self.spots_choices_2)
                 self._log(f"{self.spots_choices_1} vs {self.spots_choices_2}，选择骰子结果 {choice}")
                 await self.client.caravan_spots_choice(
