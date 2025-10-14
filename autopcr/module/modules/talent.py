@@ -10,7 +10,7 @@ from ...db.database import db
 from ...model.enums import *
 from collections import Counter
 from ...core.apiclient import apiclient
-
+import re
 @description('看看你的通关情况')
 @notlogin(check_data=True)
 @name('查深域')
@@ -39,11 +39,39 @@ class find_clan_talent_quest(Module):
         self._log(f"公会: {clan_name}({len(clan_info.clan.members)}人)")
         for member in clan_info.clan.members:
             profile = await client.get_profile(member.viewer_id)
+            rank_exp = profile.user_info.princess_knight_rank_total_exp
+            kight_rank=db.query_knight_exp_rank(rank_exp)
             msg = []
             for talent_info in profile.quest_info.talent_quest:
                 talent_id = talent_info.talent_id
                 clear_count = talent_info.clear_count
+                talent_name = db.talents[talent_id].talent_name
+                
+                #获取对应area_id
+                area_id = next((a_id for a_id in db.talent_quest_area_data 
+                              if db.talent_quest_area_data[a_id].talent_id == talent_id), None)
+                if not area_id:
+                    continue
+                
+                # 获取该区域最高关卡ID
+                quest_ids = db.talent_quests_data.get(area_id, [])
+                if not quest_ids:
+                    continue
+                max_quest_id = max(quest_ids)
+                
+                # 解析最高关卡名称中的章节信息
+                max_quest_name = db.quest_name.get(max_quest_id, "")
+                if match := re.search(r'(\d+)-(\d+)$', max_quest_name):
+                    chapter, stage = map(int, match.groups())
+                    max_count = (chapter - 1) * 10 + stage
+                    if clear_count < max_count:
+                        warn = f" (未通关最高关卡{chapter}-{stage}！！！)"
+                    else:
+                        warn = ""
+                else:
+                    warn = ""
+                
                 quest = f"{(clear_count + 9) // 10}-{(clear_count - 1) % 10 + 1}" if clear_count > 0 else "0-0"
-                msg.append(f"{db.talents[talent_id].talent_name}{quest}")
-            member_progress = f"({member.viewer_id}){member.name}: " + "/".join(msg)
+                msg.append(f"{talent_name}{quest}")
+            member_progress = f"({member.viewer_id}){member.name}: " + "/".join(msg) + f" rank等级:{kight_rank}{warn}"
             self._log(member_progress)
