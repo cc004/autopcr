@@ -95,7 +95,7 @@ class ex_equip_enhance_up(Module):
 @default(True)
 @inttype('ex_equip_rank_max_num', '满突破个数', 5, list(range(-1, 51)))
 @MultiChoiceConfig('ex_equip_rank_up_kind', '合成种类', [], ['粉', '会战金', '普通金', '会战银'])
-@description('忽略已装备和锁定的EX装，满突破个数指同类满突破EX装超过阈值则不突破，-1表示不限制')
+@description('合成忽略已装备和锁定的EX装，满突破个数指同类满突破EX装超过阈值则不突破，-1表示不限制')
 class ex_equip_rank_up(Module):
     async def do_task(self, client: pcrclient):
         use_ex_equip = {ex_slot.serial_id: [unit.id, frame, ex_slot.slot]
@@ -120,7 +120,7 @@ class ex_equip_rank_up(Module):
                     .group_by(lambda ex: ex.ex_equipment_id) \
                     .to_dict(lambda ex: ex.key, lambda ex: ex.to_list())
 
-        ex_equips_max_rank_cnt = Counter(flow(consider_ex_equips) \
+        ex_equips_max_rank_cnt = Counter(flow(client.data.ex_equips.values()) \
                 .where(lambda ex: ex.rank == db.get_ex_equip_max_rank(ex.ex_equipment_id)) \
                 .group_by(lambda ex: ex.ex_equipment_id) \
                 .to_dict(lambda ex: ex.key, lambda ex: ex.count()))
