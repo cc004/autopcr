@@ -59,22 +59,33 @@ class UnitController(Module):
         await self.client.set_growth_item_unique(self.unit_id, ball[1])
 
     async def is_growth_unit(self) -> Union[GrowthParameter, None]:
-        if self.unit_id not in self.client.data.unit:
-            raise AbortError(f"未解锁角色{self.unit_name}")
-        if self.unit_id not in self.client.data.growth_unit:
-            return None
-        growth_id = list(set(self.client.data.growth_unit[self.unit_id].growth_parameter_list.growth_id_list) & set(db.growth_parameter.keys())) 
-        if not growth_id:
-            return None
-        if len(growth_id) > 1:
-            raise ValueError(f"{self.unit_name}怎么装了多个辉光球？" + ','.join(map(str, growth_id)))
-        growth_limit = db.growth_parameter[growth_id[0]]
-        return growth_limit
+        def old():
+            if self.unit_id not in self.client.data.unit:
+                raise AbortError(f"未解锁角色{self.unit_name}")
+            if self.unit_id not in self.client.data.growth_unit:
+                return None
+            if not self.client.data.growth_unit[self.unit_id].growth_parameter_list:
+                return None
+            if not self.client.data.growth_unit[self.unit_id].growth_parameter_list.growth_id_list:
+                return None
+            growth_id = list(set(self.client.data.growth_unit[self.unit_id].growth_parameter_list.growth_id_list) & set(db.growth_parameter.keys())) 
+            if not growth_id:
+                return None
+            if len(growth_id) > 1:
+                raise ValueError(f"{self.unit_name}怎么装了多个辉光球？" + ','.join(map(str, growth_id)))
+            growth_limit = db.growth_parameter[growth_id[0]]
+            return growth_limit
+        ret = old()
+        return ret if ret else self.client.data.get_synchro_parameter()
 
     async def is_unique_growth_unit(self) -> Union[GrowthParameterUnique, None]:
         if self.unit_id not in self.client.data.unit:
             raise AbortError(f"未解锁角色{self.unit_name}")
         if self.unit_id not in self.client.data.growth_unit:
+            return None
+        if not self.client.data.growth_unit[self.unit_id].growth_parameter_list:
+            return None
+        if not self.client.data.growth_unit[self.unit_id].growth_parameter_list.growth_id_list:
             return None
         growth_id = list(set(self.client.data.growth_unit[self.unit_id].growth_parameter_list.growth_id_list) & set(db.growth_parameter_unique.keys())) 
         if not growth_id:
@@ -811,7 +822,9 @@ class unit_promote(UnitController):
                                    target_unique1_level = target_unique1_level, 
                                    target_unique2_level = target_unique2_level)
             except Exception as e:
-                self._warn(str(e))
+                msg = f"拉{unit_id}练度失败: {e}"
+                logger.exception(msg)
+                self._warn(msg)
                 continue
 
 @description('''角色ID	角色名字	角色等级	角色星级	好感度	Rank	左上	右上	左中	右中	左下	右下	UB	技能1	技能2	EX技能	专武1	专武2	EX武器	EX武器等级	EX防具	EX防具等级	EX首饰	EX首饰等级	高级设置
@@ -886,7 +899,9 @@ class unit_promote_batch(UnitController):
                                    cb_ex = cb_ex)
 
             except Exception as e:
-                self._warn(str(e))
+                msg = f"拉{unit_text}练度失败: {e}"
+                logger.exception(msg)
+                self._warn(msg)
                 continue
 
 @name('购买记忆碎片')
@@ -958,7 +973,9 @@ class unit_memory_buy_batch(UnitController):
                         summary.append(f"{gap}片{unit_name}记忆碎片" + "，但不购买" if gap > uplimit else "")
 
             except Exception as e:
-                self._warn(str(e))
+                msg = f"购买{unit_text}记忆碎片失败: {e}"
+                logger.exception(msg)
+                self._warn(msg)
                 continue
 
         if summary:
