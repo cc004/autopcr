@@ -164,13 +164,14 @@ class hatsune_hboss_sweep(Module):
         if is_abort: raise AbortError("")
         if is_skip: raise SkipError("")
 
-@singlechoice("hatsune_gacha_strategy", "兑换策略", "全部兑换", ["前两轮尽早重置", "全部兑换"])
-@description('自动兑换，前两轮兑换处目标物品可选择重置')
+# @singlechoice("hatsune_gacha_strategy", "兑换策略", "全部兑换", ["全部兑换"])
+@description('自动兑换')
 @name('讨伐证交换')
 @default(True)
 class hatsune_gacha_exchange(Module):
     async def do_task(self, client: pcrclient):
-        early_stop = False if self.get_config('hatsune_gacha_strategy') == "全部兑换" else True
+        # early_stop = False if self.get_config('hatsune_gacha_strategy') == "全部兑换" else True
+        early_stop = False
         event_active = False
 
         for event in db.get_open_hatsune():

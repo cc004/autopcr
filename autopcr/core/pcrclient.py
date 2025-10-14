@@ -724,44 +724,55 @@ class pcrclient(apiclient):
         await self.story_check(story_id)
         return await self.story_view(story_id)
 
+    async def draw_fpc_story(self, period: eFpcPeriod, fpc_operation_type: eFpcOperationType):
+        req = SubStoryFpcDrawStoryRequest()
+        req.period = period
+        req.fpc_operation_type = fpc_operation_type
+        return await self.request(req)
+
+    async def read_fpc_story(self, sub_story_id: int):
+        req = SubStoryFpcReadStoryRequest()
+        req.sub_story_id = sub_story_id
+        return await self.request(req)
+
     async def read_ais_story(self, sub_story_id: int):
         req = SubStoryAisReadStoryRequest()
         req.sub_story_id = sub_story_id
-        await self.request(req)
+        return await self.request(req)
 
     async def confirm_ais_story(self):
         req = SubStoryAisConfirmRequest()
-        await self.request(req)
+        return await self.request(req)
 
     async def read_nyd_story(self, sub_story_id: int):
         req = SubStoryNydReadStoryRequest()
         req.sub_story_id = sub_story_id
-        await self.request(req)
+        return await self.request(req)
 
     async def read_xac_story(self, sub_story_id: int):
         req = SubStoryXacReadStoryRequest()
         req.sub_story_id = sub_story_id
-        await self.request(req)
+        return await self.request(req)
 
     async def read_asb_story(self, sub_story_id: int):
         req = SubStoryAsbReadStoryRequest()
         req.sub_story_id = sub_story_id
-        await self.request(req)
+        return await self.request(req)
 
     async def read_wtm_story(self, sub_story_id: int):
         req = SubStoryWtmReadStoryRequest()
         req.sub_story_id = sub_story_id
-        await self.request(req)
+        return await self.request(req)
 
     async def read_wts_story(self, sub_story_id: int):
         req = SubStoryWtsReadStoryRequest()
         req.sub_story_id = sub_story_id
-        await self.request(req)
+        return await self.request(req)
 
     async def read_bmy_story(self, sub_story_id: int):
         req = SubStoryBmyReadStoryRequest()
         req.sub_story_id = sub_story_id
-        await self.request(req)
+        return await self.request(req)
 
     async def put_mme_piece(self, sub_story_id: int):
         req = SubStoryMmePutPieceRequest()
@@ -776,66 +787,66 @@ class pcrclient(apiclient):
     async def read_xeh_story(self, sub_story_id: int):
         req = SubStoryXehReadStoryRequest()
         req.sub_story_id = sub_story_id
-        await self.request(req)
+        return await self.request(req)
 
     async def read_lsv_story(self, sub_story_id: int):
         req = SubStoryLsvReadStoryRequest()
         req.sub_story_id = sub_story_id
-        await self.request(req)
+        return await self.request(req)
 
     async def read_dsb_story(self, sub_story_id: int):
         req = SubStoryDsbReadStoryRequest()
         req.sub_story_id = sub_story_id
-        await self.request(req)
+        return await self.request(req)
 
     async def read_ysn_story(self, sub_story_id: int):
         req = SubStoryYsnReadStoryRequest()
         req.sub_story_id = sub_story_id
-        await self.request(req)
+        return await self.request(req)
 
     async def read_nop_story(self, sub_story_id: int):
         req = SubStoryNopReadStoryRequest()
         req.sub_story_id = sub_story_id
-        await self.request(req)
+        return await self.request(req)
 
     async def read_mhp_story(self, sub_story_id: int):
         req = SubStoryMhpReadStoryRequest()
         req.sub_story_id = sub_story_id
-        await self.request(req)
+        return await self.request(req)
 
     async def read_svd_story(self, sub_story_id: int):
         req = SubStorySvdReadStoryRequest()
         req.sub_story_id = sub_story_id
-        await self.request(req)
+        return await self.request(req)
 
     async def read_ssp_story(self, sub_story_id: int):
         req = SubStorySspReadSspStoryRequest()
         req.sub_story_id = sub_story_id
-        await self.request(req)
+        return await self.request(req)
 
     async def read_ske_story(self, sub_story_id: int):
         req = SubStorySkeReadStoryRequest()
         req.sub_story_id = sub_story_id
-        await self.request(req)
+        return await self.request(req)
 
     async def read_dvs_story(self, sub_story_id: int):
         req = SubStoryDvsReadStoryRequest()
         req.sub_story_id = sub_story_id
-        await self.request(req)
+        return await self.request(req)
 
     async def read_won_story(self, sub_story_id: int):
         req = SubStoryWonReadStoryRequest()
         req.sub_story_id_list = [sub_story_id]
-        await self.request(req)
+        return await self.request(req)
 
     async def confirm_ske_story(self):
         req = SubStorySkeConfirmRequest()
-        await self.request(req)
+        return await self.request(req)
 
     async def read_lto_story(self, sub_story_id: int):
         req = SubStoryLtoReadStoryRequest()
         req.sub_story_id = sub_story_id
-        await self.request(req)
+        return await self.request(req)
 
     async def read_hatsune_dear(self, event_id: int, story_id: int):
         req = HatsuneDearFinishRequest()

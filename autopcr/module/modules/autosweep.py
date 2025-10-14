@@ -14,7 +14,7 @@ from ...core.apiclient import apiclient
 @conditional_execution1("lazy_sweep_run_time", ["n庆典"])
 @singlechoice("lazy_sweep_strategy", "刷取策略", "刷最缺", ["刷最缺", "均匀刷"])
 @UnitListConfig('lazy_sweep_consider_units', "考虑角色")
-@description('根据【刷图推荐】结果刷n图，均匀刷指每次刷取的图覆盖所缺的需求装备，若无缺装备则刷取推荐的第一张图')
+@description('根据【刷图推荐】结果刷n图，均匀刷指每次刷取的图覆盖所缺的需求装备，无缺装备则停止刷')
 @name('懒人刷n图')
 @default(False)
 @tag_stamina_consume
