@@ -77,7 +77,7 @@ class Account(ModuleManager):
         self.qq = qid
         self.alias = account
         self.token = f"{self.qq}_{self.alias}"
-        super().__init__(self.data.config)
+        super().__init__(deepcopy(self.data.config))
 
     async def _do_aenter(self):
         if not self.readonly:
