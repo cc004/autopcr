@@ -1550,8 +1550,7 @@ class database():
 
     def get_ex_equip_star_from_pt(self, id: int, pt: int) -> int:
         rarity = self.get_ex_equip_rarity(id)
-        history_star = [star for star, enhancement_data in self.ex_equipment_enhance_data[rarity].items() if enhancement_data.total_point <= pt]
-        star = max([0] + history_star)
+        star = max([star for star, enhancement_data in self.ex_equipment_enhance_data[rarity].items() if enhancement_data.total_point <= pt], default=0)
         return star
 
     def get_ex_equip_enhance_pt(self, id: int, pt: int, star: int) -> int:
@@ -1575,7 +1574,7 @@ class database():
         return self.ex_equipment_data[id].rarity
 
     def get_ex_equip_max_rank(self, id: int) -> int:
-        return max(self.ex_equipment_rankup_data[self.get_ex_equip_rarity(id)].keys(), default=0)
+        return max(self.ex_equipment_rankup_data.get(self.get_ex_equip_rarity(id), {}).keys(), default=0)
 
     def get_ex_equip_rarity_name(self, id: int) -> str:
         return self.ex_rarity_name[self.get_ex_equip_rarity(id)]
