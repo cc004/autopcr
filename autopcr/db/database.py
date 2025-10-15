@@ -1533,7 +1533,7 @@ class database():
             )
 
     @lazy_property
-    def Experience_Knight_Rank(self) -> Dict[int, ExperienceKnightRank]:
+    def experience_knight_rank(self) -> Dict[int, ExperienceKnightRank]:
         with self.dbmgr.session() as db:
             return (
                 ExperienceKnightRank.query(db) 
@@ -2016,7 +2016,7 @@ class database():
 
     def query_knight_exp_rank(self, target_value: int) -> int:
         target_rank = max(  
-            (rank for rank, exp in self.Experience_Knight_Rank.items() if target_value >= exp),  
+            (rank for rank, exp in self.experience_knight_rank.items() if target_value >= exp),  
             default=1  
         )  
 
