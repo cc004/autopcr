@@ -10,7 +10,6 @@ from ...db.database import db
 from ...model.enums import *
 from collections import Counter
 from ...core.apiclient import apiclient
-import re
 @description('看看你的通关情况')
 @notlogin(check_data=True)
 @name('查深域')
@@ -33,6 +32,11 @@ class find_talent_quest(Module):
 @description('看看公会深域的通关情况，会登录！')
 @name('查公会深域')
 class find_clan_talent_quest(Module):
+    def _format_quest_stage(self, count: int) -> str:
+        if count <= 0:
+            return "0-0"
+        return f"{(count + 9) // 10}-{(count - 1) % 10 + 1}"
+
     async def do_task(self, client: pcrclient):
         clan_info = await client.get_clan_info()
         clan_name = clan_info.clan.detail.clan_name
@@ -57,21 +61,10 @@ class find_clan_talent_quest(Module):
                 quest_ids = db.talent_quests_data.get(area_id, [])
                 if not quest_ids:
                     continue
-                max_quest_id = max(quest_ids)
-                
-                # 解析最高关卡名称中的章节信息
-                max_quest_name = db.quest_name.get(max_quest_id, "")
-                if match := re.search(r'(\d+)-(\d+)$', max_quest_name):
-                    chapter, stage = map(int, match.groups())
-                    max_count = (chapter - 1) * 10 + stage
-                    if clear_count < max_count:
-                        warn = f" (未通关最高关卡{chapter}-{stage}！！！)"
-                    else:
-                        warn = ""
-                else:
-                    warn = ""
-                
-                quest = f"{(clear_count + 9) // 10}-{(clear_count - 1) % 10 + 1}" if clear_count > 0 else "0-0"
+                max_count = len(quest_ids)
+                max_stage =self._format_quest_stage(max_count)
+                warn = f" (未通关最高关卡{max_stage}！！！)" if clear_count < max_count else "" 
+                quest = self._format_quest_stage(clear_count) 
                 msg.append(f"{talent_name}{quest}")
             member_progress = f"({member.viewer_id}){member.name}: " + "/".join(msg) + f" rank等级:{kight_rank}{warn}"
             self._log(member_progress)
