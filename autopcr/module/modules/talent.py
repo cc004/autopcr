@@ -10,7 +10,6 @@ from ...db.database import db
 from ...model.enums import *
 from collections import Counter
 from ...core.apiclient import apiclient
-
 @description('看看你的通关情况')
 @notlogin(check_data=True)
 @name('查深域')
@@ -33,17 +32,42 @@ class find_talent_quest(Module):
 @description('看看公会深域的通关情况，会登录！')
 @name('查公会深域')
 class find_clan_talent_quest(Module):
+    def _format_quest_stage(self, count: int) -> str:
+        if count <= 0:
+            return "0-0"
+        return f"{(count + 9) // 10}-{(count - 1) % 10 + 1}"
+
     async def do_task(self, client: pcrclient):
         clan_info = await client.get_clan_info()
         clan_name = clan_info.clan.detail.clan_name
         self._log(f"公会: {clan_name}({len(clan_info.clan.members)}人)")
         for member in clan_info.clan.members:
             profile = await client.get_profile(member.viewer_id)
+            rank_exp = profile.user_info.princess_knight_rank_total_exp
+            kight_rank=db.query_knight_exp_rank(rank_exp)
             msg = []
+            flag = False
             for talent_info in profile.quest_info.talent_quest:
                 talent_id = talent_info.talent_id
                 clear_count = talent_info.clear_count
-                quest = f"{(clear_count + 9) // 10}-{(clear_count - 1) % 10 + 1}" if clear_count > 0 else "0-0"
-                msg.append(f"{db.talents[talent_id].talent_name}{quest}")
-            member_progress = f"({member.viewer_id}){member.name}: " + "/".join(msg)
+                talent_name = db.talents[talent_id].talent_name
+                
+                #获取对应area_id
+                area_id = next((a_id for a_id in db.talent_quest_area_data 
+                              if db.talent_quest_area_data[a_id].talent_id == talent_id), None)
+                if not area_id:
+                    continue
+                
+                # 获取该区域最高关卡ID
+                quest_ids = db.talent_quests_data.get(area_id, [])
+                if not quest_ids:
+                    continue
+                max_count = len(quest_ids)
+                max_stage =self._format_quest_stage(max_count)
+                if clear_count < max_count:
+                    flag = True
+                warn = f"(未通关最高关卡：{max_stage}！！！)" if flag else "" 
+                quest = self._format_quest_stage(clear_count) 
+                msg.append(f"{talent_name}{quest}")
+            member_progress = f"({member.viewer_id}){member.name}: " + "/".join(msg) + f" rank等级:{kight_rank}{warn}"
             self._log(member_progress)
