@@ -46,6 +46,7 @@ class find_clan_talent_quest(Module):
             rank_exp = profile.user_info.princess_knight_rank_total_exp
             kight_rank=db.query_knight_exp_rank(rank_exp)
             msg = []
+            flag = False
             for talent_info in profile.quest_info.talent_quest:
                 talent_id = talent_info.talent_id
                 clear_count = talent_info.clear_count
@@ -63,7 +64,9 @@ class find_clan_talent_quest(Module):
                     continue
                 max_count = len(quest_ids)
                 max_stage =self._format_quest_stage(max_count)
-                warn = f" (未通关最高关卡{max_stage}！！！)" if clear_count < max_count else "" 
+                if clear_count < max_count:
+                    flag = True
+                warn = f"(未通关最高关卡：{max_stage}！！！)" if flag else "" 
                 quest = self._format_quest_stage(clear_count) 
                 msg.append(f"{talent_name}{quest}")
             member_progress = f"({member.viewer_id}){member.name}: " + "/".join(msg) + f" rank等级:{kight_rank}{warn}"
