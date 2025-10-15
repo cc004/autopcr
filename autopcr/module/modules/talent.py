@@ -47,27 +47,29 @@ class find_clan_talent_quest(Module):
             kight_rank=db.query_knight_exp_rank(rank_exp)
             msg = []
             flag = False
+            max_stage = 0
             for talent_info in profile.quest_info.talent_quest:
                 talent_id = talent_info.talent_id
                 clear_count = talent_info.clear_count
                 talent_name = db.talents[talent_id].talent_name
-                
+
                 #获取对应area_id
                 area_id = next((a_id for a_id in db.talent_quest_area_data 
                               if db.talent_quest_area_data[a_id].talent_id == talent_id), None)
                 if not area_id:
                     continue
-                
+
                 # 获取该区域最高关卡ID
                 quest_ids = db.talent_quests_data.get(area_id, [])
                 if not quest_ids:
                     continue
                 max_count = len(quest_ids)
-                max_stage =self._format_quest_stage(max_count)
                 if clear_count < max_count:
                     flag = True
-                warn = f"(未通关最高关卡：{max_stage}！！！)" if flag else "" 
+                    max_stage = max(max_stage, max_count)
                 quest = self._format_quest_stage(clear_count) 
                 msg.append(f"{talent_name}{quest}")
+            max_stage = self._format_quest_stage(max_stage)
+            warn = f"(未通关最高关卡：{max_stage}！！！)" if flag else "" 
             member_progress = f"({member.viewer_id}){member.name}: " + "/".join(msg) + f" rank等级:{kight_rank}{warn}"
             self._log(member_progress)
