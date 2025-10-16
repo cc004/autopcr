@@ -65,6 +65,7 @@ class datamgr(BaseModel, Component[apiclient]):
     user_clan_battle_ex_equip_restriction: Dict[int, RestrictionExtraEquip] = {}
     talent_quest_area_info: Dict[int, TalentQuestAreaInfo] = {}
     cleared_talent_quest_ids: Dict[int, int] = {}
+    princess_knight_info: PrincessKnightInfo = None
 
     @staticmethod
     async def try_update_database(ver: int):

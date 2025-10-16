@@ -148,6 +148,7 @@ table_modules = ModuleList(
     '表格',
     'table',
     [
+        get_talent_info,
         get_need_pure_memory_box,
     ],
     hidden=True,
