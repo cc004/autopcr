@@ -1,36 +1,40 @@
 from .bsgamesdk import login
 from ..model.error import PanicError
 from ..core.sdkclient import sdkclient
-from ..constants import BSDK, QSDK
+from ..constants import BSDK, BSDKNOLOGIN, QSDK
+
 
 class bsdkclient(sdkclient):
     async def login(self):
         while True:
             resp = await login(
-                self._account.username,
-                self._account.password,
-                self.captchaVerifier
+                self._account.username, self._account.password, self.captchaVerifier
             )
-            if resp['code'] == 0:
+            if resp["code"] == 0:
                 self.logger.info("geetest or captcha succeed")
                 break
-            self.logger.error(resp['message'])
-            raise PanicError(resp['message'])
+            self.logger.error(resp["message"])
+            raise PanicError(resp["message"])
 
-        return resp['uid'], resp['access_key']
+        return resp["uid"], resp["access_key"]
 
     @property
     def apiroot(self):
-        return 'https://l3-prod-all-gs-gzlj.bilibiligame.net/'
+        return "https://l3-prod-all-gs-gzlj.bilibiligame.net/"
 
     @property
     def platform_id(self) -> str:
         return str(self.platform)
-    
+
     @property
     def reskey(self):
-        return 'ab00a0a6dd915a052a2ef7fd649083e5'
- 
+        return "ab00a0a6dd915a052a2ef7fd649083e5"
+
+
+class bsdkclientWithoutLogin(bsdkclient):
+    async def login(self):
+        return self._account.username, self._account.password
+
 
 class qsdkclient(sdkclient):
     async def login(self):
@@ -38,23 +42,22 @@ class qsdkclient(sdkclient):
 
     @property
     def apiroot(self):
-        return 'https://l1-prod-uo-gs-gzlj.bilibiligame.net/'
+        return "https://l1-prod-uo-gs-gzlj.bilibiligame.net/"
 
     @property
     def platform_id(self):
-        return '4'
-    
+        return "4"
+
     @property
     def reskey(self):
-        return 'd145b29050641dac2f8b19df0afe0e59'
+        return "d145b29050641dac2f8b19df0afe0e59"
 
     async def do_captcha(self):
         raise NotImplementedError
-                  
-sdkclients = {
-    BSDK: bsdkclient,
-    QSDK: qsdkclient
-}
+
+
+sdkclients = {BSDK: bsdkclient, QSDK: qsdkclient, BSDKNOLOGIN: bsdkclientWithoutLogin}
+
 
 def create(channel, *args, **kwargs) -> sdkclient:
     if channel not in sdkclients:
