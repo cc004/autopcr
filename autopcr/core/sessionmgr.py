@@ -82,14 +82,17 @@ class sessionmgr(Component[apiclient]):
                 self._sdkaccount = json.load(fp)
         for _ in range(5):
             try:
-                """
                 current = self._container.servers[self._container.active_server]
-                self._container.servers = [f'https://{server}'.replace('\t', '') for server in (await next.request(SourceIniIndexRequest())).server]
+                self._container.servers = [
+                    f"https://{server}".replace("\t", "")
+                    for server in (await next.request(SourceIniIndexRequest())).server
+                ]
                 try:
-                    self._container.active_server = self._container.servers.index(current)
+                    self._container.active_server = self._container.servers.index(
+                        current
+                    )
                 except ValueError:
                     self._container.active_server = 0
-                """
                 manifest = await next.request(SourceIniGetMaintenanceStatusRequest())
                 self._container._headers["MANIFEST-VER"] = (
                     manifest.required_manifest_ver
