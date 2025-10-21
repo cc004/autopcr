@@ -1,7 +1,7 @@
 from .bsgamesdk import login
 from ..model.error import PanicError
 from ..core.sdkclient import sdkclient
-from ..constants import BSDK, QSDK
+from ..constants import BSDK, BSDKNOLOGIN, QSDK
 
 class bsdkclient(sdkclient):
     async def login(self):
@@ -31,7 +31,10 @@ class bsdkclient(sdkclient):
     def reskey(self):
         return 'ab00a0a6dd915a052a2ef7fd649083e5'
  
-
+class bsdkclientWithoutLogin(bsdkclient):
+    async def login(self):
+        return self._account.username, self._account.password
+    
 class qsdkclient(sdkclient):
     async def login(self):
         return self._account.username, self._account.password
@@ -53,7 +56,8 @@ class qsdkclient(sdkclient):
                   
 sdkclients = {
     BSDK: bsdkclient,
-    QSDK: qsdkclient
+    QSDK: qsdkclient,
+    BSDKNOLOGIN: bsdkclientWithoutLogin
 }
 
 def create(channel, *args, **kwargs) -> sdkclient:

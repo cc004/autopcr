@@ -13,8 +13,9 @@ MAX_API_RUNNING = 8
 
 BSDK = '官服'
 QSDK = '渠道服'
+BSDKNOLOGIN = '官服免登录'
 
-CHANNEL_OPTION = [BSDK, QSDK]
+CHANNEL_OPTION = [BSDK, QSDK, BSDKNOLOGIN]
 
 DEBUG_LOG = strtobool(os.getenv("AUTOPCR_SERVER_DEBUG_LOG", "false"))
 
