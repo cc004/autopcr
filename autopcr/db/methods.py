@@ -168,3 +168,30 @@ class TravelQuestDatum(models.TravelQuestDatum):
         yield Reward(eInventoryType.ExtraEquip, self.main_reward_3, 1, 1)
         yield Reward(eInventoryType.ExtraEquip, self.main_reward_4, 1, 1)
         yield Reward(eInventoryType.ExtraEquip, self.main_reward_5, 1, 1)
+
+@method
+class TalentSkillNode(models.TalentSkillNode):
+    def get_unit_attribute(self) -> UnitAttribute:
+        return UnitAttribute.load(self)
+
+    def pre_node_ids(self) -> Iterator[int]:
+        if self.pre_node_1 != 0:
+            yield self.pre_node_1
+        if self.pre_node_2 != 0:
+            yield self.pre_node_2
+        if self.pre_node_3 != 0:
+            yield self.pre_node_3
+        if self.pre_node_4 != 0:
+            yield self.pre_node_4
+
+    def is_joined_node(self) -> bool:
+        return len(set(self.pre_node_ids())) >= 3
+
+    def pos(self) -> str:
+        if self.pos_x == 2:
+            return "左"
+        elif self.pos_x == 5:
+            return "中"
+        elif self.pos_x == 8:
+            return "右"
+        return "未知"
