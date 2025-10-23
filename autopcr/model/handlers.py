@@ -474,6 +474,7 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         mgr.tower_status = self.tower_status
         mgr.campaign_list = self.campaign_list
         mgr.dispatch_units = self.dispatch_units
+        mgr.princess_knight_info = self.princess_knight_info
 
 @handles
 class HomeIndexResponse(responses.HomeIndexResponse):
