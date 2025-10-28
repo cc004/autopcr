@@ -84,6 +84,10 @@ class shop_buyer(Module):
                     )
             ]
 
+            if len(target) == 0 and all(-it >= self._equip_count() for it in equip_demand_gap.values()):
+                self._log(f'商店物品全部盈余，停止购买')
+                break
+
             slots_to_buy = [item[0] for item in target]
             cost_gold = sum([item[1] for item in target])
 
