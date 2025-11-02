@@ -1,4 +1,5 @@
 aiohttp~=3.8.4
+aiofile~=3.9.0
 bili_ticket_gt_python==0.2.7
 msgpack~=1.0.2
 pycryptodome~=3.14.1
