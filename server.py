@@ -952,7 +952,7 @@ async def set_my_party_multi(botev: BotEvent):
     while True:
         if not msg:
             break
-        if get_id_from_name(msg[0]) or msg[0].isdigit() and get_id_from_name(msg[0][1:]):
+        if get_id_from_name(msg[0]) or msg[0][0].isdigit() and get_id_from_name(msg[0][1:]):
             title = "自定义编队"
         else:
             title = msg[0]
