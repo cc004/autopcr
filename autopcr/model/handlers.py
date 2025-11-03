@@ -474,6 +474,7 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         mgr.tower_status = self.tower_status
         mgr.campaign_list = self.campaign_list
         mgr.dispatch_units = self.dispatch_units
+        mgr.princess_knight_info = self.princess_knight_info
 
 @handles
 class HomeIndexResponse(responses.HomeIndexResponse):
@@ -725,7 +726,7 @@ class SeasonPassRewardAcceptResponse(responses.SeasonPassRewardAcceptResponse):
 class SeasonPassMissionAcceptResponse(responses.SeasonPassMissionAcceptResponse):
     async def update(self, mgr: datamgr, request):
         if self.rewards:
-            for reward in self.rewards:
+            for reward in self.rewards[::-1]:
                 mgr.update_inventory(reward)
         if self.exchange_rewards:
             for reward in self.exchange_rewards:
