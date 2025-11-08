@@ -1,8 +1,8 @@
 import os, io
-from typing import List
+from typing import Dict, List
 from PIL import Image, ImageFont 
 from ..constants import DATA_DIR
-from .draw_table import grid2img
+from .draw_table import grid2img, json2img
 
 class Drawer():
 
@@ -56,6 +56,10 @@ class Drawer():
         img = grid2img(content, header, colors=self.color(), font=self.font, stock=True)
         return img
 
+    async def draw_json(self, titles: List[str], records: List[Dict]) -> Image.Image:
+        img = json2img(records, titles, colors=self.color(), font=self.font, stock=True)
+        return img
+
     async def draw_tasks_result(self, data: "TaskResult") -> Image.Image:
         content = []
         header = ["序号", "名字","配置","状态","结果"]
@@ -71,9 +75,17 @@ class Drawer():
         return img
 
     async def draw_task_result(self, data: "ModuleResult") -> Image.Image:
-        content = [["配置", data.config.strip()], ["状态", "#"+data.status.value], ["结果", data.log.strip()]]
+        if data.table and data.table.data and len(data.table.data) > 1:
+            return await self.draw_task_table(data)
+        content = [["配置", data.config.strip()], ["状态", f"#{data.status.value}"], ["结果", data.log.strip()]]
         header = ["名字", data.name.strip()]
         img = await self.draw(header, content)
+        return img
+
+    async def draw_task_table(self, data: "ModuleResult") -> Image.Image:
+        content = data.table.data
+        header = data.table.header
+        img = await self.draw_json(header, content)
         return img
 
     async def draw_msgs(self, msgs: List[str]) -> Image.Image:

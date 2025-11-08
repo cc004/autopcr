@@ -765,6 +765,14 @@ class database():
             )
 
     @lazy_property
+    def story_detail(self) -> Dict[int, StoryDetail]:
+        with self.dbmgr.session() as db:
+            return (
+                StoryDetail.query(db)
+                .to_dict(lambda x: x.story_id, lambda x: x)
+            )
+
+    @lazy_property
     def unit_story(self) -> List[StoryDetail]:
         with self.dbmgr.session() as db:
             return (

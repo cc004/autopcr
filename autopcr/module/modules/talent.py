@@ -15,28 +15,6 @@ from ...util.linq import flow
 
 @description('看看你的通关情况')
 @notlogin(check_data=True)
-@name('查深域(表格版)')
-class find_talent_quest_table(Module):
-    async def do_task(self, client: pcrclient):
-        data = {
-            "数据时间": db.format_time(db.parse_time(client.data.data_time)),
-        }
-        data.update({
-            f"{db.talents[talent_id].talent_name}深域": client.data.get_talent_quest_single(talent_id) for talent_id in sorted([area.talent_id for area in db.talent_quest_area_data.values()])
-        })
-        data.update({
-            f"{db.talents[talent_info.talent_id].talent_name}属性": client.data.get_talent_level_single(talent_info) for talent_info in client.data.princess_knight_info.talent_level_info_list
-        })
-        data.update({
-            "属性技能": client.data.get_talent_skill_info(),
-            "大师技能": client.data.get_master_skill_info(),
-        })
-        header = list(data.keys())
-        self._table_header(header)
-        self._table(data)
-
-@description('看看你的通关情况')
-@notlogin(check_data=True)
 @name('查深域')
 class find_talent_quest(Module):
     async def do_task(self, client: pcrclient):
@@ -48,7 +26,6 @@ class find_talent_quest(Module):
             self._log(f"大师技能: {client.data.get_master_skill_info()}")
 
         data = {
-            "名字": client.data.user_name,
             "数据时间": db.format_time(db.parse_time(client.data.data_time)),
         }
         data.update({

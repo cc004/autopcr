@@ -45,6 +45,9 @@ def notlogin(check_data = False):
             async def new_do_task(client: pcrclient):
                 self._log(f"[{db.format_time(datetime.fromtimestamp(client.data.data_time))}]")
                 await old_do_task(client)
+                self.table.header.insert(0, "数据时间")
+                for row in self.table.data:
+                    row["数据时间"] = db.format_time(datetime.fromtimestamp(client.data.data_time))
             self.do_task = new_do_task
 
 

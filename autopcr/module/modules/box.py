@@ -65,21 +65,28 @@ class search_unit(Module):
 
             kizuna_unit = set()
             for story in db.chara2story[unit]:
-                kizuna_unit |= set(story.get_effect_unit_ids())
+                if story.story_id in db.story_detail:
+                    kizuna_unit.add(db.story_detail[story.story_id].requirement_id)
 
             love = []
             for other in kizuna_unit:
                 if other not in db.unlock_unit_condition: continue
-                unit_name = db.get_unit_name(other)
+                kizuna_name = db.get_unit_name(other)
                 unit_id = other // 100
                 love_level = client.data.unit_love_data[unit_id].love_level if unit_id in client.data.unit_love_data else 0
                 unit_story = [story.story_id for story in db.unit_story if story.story_group_id == unit_id]
                 total_storys = len(unit_story)
                 read_storys = len([story for story in unit_story if story in read_story])
-                love.append(f"{unit_name}好感{love_level}({read_storys}/{total_storys})")
+                love.append(f"{kizuna_name}好感{love_level}({read_storys}/{total_storys})")
             info.append("\n" + ";".join(i for i in love))
 
         self._log(" ".join(str(i) for i in info))
+
+        data = client.unit_info_to_dict(unit)
+        header = ['姓名'] + list(data.keys())
+        data.update({"姓名": unit_name})
+        self._table_header(header)
+        self._table(data)
 
 @description('从缓存中查询角色练度，不会登录！任意登录或者刷新box可以更新缓存')
 @name('查box')
@@ -88,14 +95,13 @@ class search_unit(Module):
 @unitlist("box_unit", "查询角色")
 @booltype("box_all_unit", "附加所有角色", False)
 @multichoice("box_unit_info", "角色信息", ['星级', '等级', '品级', '装备', 'UB', 'S1', 'S2', 'EX', '剧情', '专武1', '专武2', '普碎数', '金碎数'], ['星级', '等级', '品级', '装备', 'UB', 'S1', 'S2', 'EX', '剧情', '专武1', '专武2', '普碎数', '金碎数'])
-@multichoice("box_user_info", "用户信息", ['名字', '数据时间', '钻石', '母猪石', '星球杯', '心碎', 'mana'], ['名字', '数据时间', '钻石', '母猪石', '星球杯', '心碎', 'mana'])
+@multichoice("box_user_info", "用户信息", ['名字', '钻石', '母猪石', '星球杯', '心碎', 'mana'], ['名字', '钻石', '母猪石', '星球杯', '心碎', 'mana'])
 @multichoice("box_talent_info", "属性信息", ['火深域', '水深域', '风深域', '光深域', '暗深域', '火属性', '水属性', '风属性', '光属性', '暗属性', '属性技能', '大师技能'], ['火深域', '水深域', '风深域', '光深域', '暗深域', '火属性', '水属性', '风属性', '光属性', '暗属性', '属性技能', '大师技能'])
 class get_box_table(Module):
     async def _prepare_user_data(self, client: pcrclient, user_info: Set[str]) -> Dict:
         """准备用户基本信息"""
         ret = {
             "名字": client.data.user_name,
-            "数据时间": db.format_time(db.parse_time(client.data.data_time)),
             "钻石": client.data.jewel.free_jewel,
             "母猪石": client.data.get_inventory((eInventoryType.Item, 90005)),
             "星球杯": client.data.get_inventory(db.xingqiubei),
@@ -125,48 +131,7 @@ class get_box_table(Module):
         return filtered_units
     
     def _get_unit_data(self, client: pcrclient, unit_id: int, box_unit_info: Set[str]) -> Dict:
-        """获取单个角色的详细数据"""
-        unit_data = {
-            "星级": "无",
-            "等级": "无",
-            "品级": "无",
-            "装备": "无",
-            "UB": 0,
-            "S1": 0,
-            "S2": 0,
-            "EX": 0,
-            "剧情": "无",
-            "专武1": "无",
-            "专武2": "无",
-            "普碎数": "无",
-            "金碎数": "无",
-        }
-
-        read_story = set(client.data.read_story_ids)
-        if unit_id in client.data.unit:
-            unitinfo = client.data.unit[unit_id]
-            rank = f"R{unitinfo.promotion_level}"
-            equip = ''.join('-' if not solt.is_slot else str(solt.enhancement_level) for solt in unitinfo.equip_slot)
-            total_storys = [story.story_id for story in db.unit_story if story.story_group_id == unit_id // 100]
-            read_storys_num = len([id for id in total_storys if id in read_story])
-            total_storys_num = len(total_storys)
-
-            unit_data.update({
-                "星级": f"{unitinfo.unit_rarity}★",
-                "等级": unitinfo.unit_level,
-                "品级": rank,
-                "装备": equip,
-                "UB": unitinfo.union_burst[0].skill_level if unitinfo.union_burst else "无",
-                "S1": unitinfo.main_skill[0].skill_level if unitinfo.main_skill else "无",
-                "S2": unitinfo.main_skill[1].skill_level if len(unitinfo.main_skill) > 1 else "无",
-                "EX": unitinfo.ex_skill[0].skill_level if unitinfo.ex_skill else "无",
-                "剧情": f"{read_storys_num}/{total_storys_num}",
-                "专武1": "未实装" if not unitinfo.unique_equip_slot else "无" if not unitinfo.unique_equip_slot[0].is_slot else unitinfo.unique_equip_slot[0].enhancement_level,
-                "专武2": "未实装" if len(unitinfo.unique_equip_slot) < 2 else "无" if not unitinfo.unique_equip_slot[1].is_slot else unitinfo.unique_equip_slot[1].enhancement_level,
-                "普碎数": client.data.get_inventory((eInventoryType.Item, db.unit_to_memory[unit_id])) if unit_id in db.unit_to_memory else "无",
-                "金碎数": client.data.get_inventory((eInventoryType.Item, db.unit_to_pure_memory[unit_id])) if unit_id in db.unit_to_pure_memory else "无",
-            })
-        
+        unit_data = client.unit_info_to_dict(unit_id)
         unit_data = {key: unit_data[key] for key in unit_data if key in box_unit_info}
         return unit_data
 

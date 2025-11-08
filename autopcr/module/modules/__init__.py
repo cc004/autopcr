@@ -149,8 +149,6 @@ table_modules = ModuleList(
     '表格',
     'table',
     [
-        get_need_pure_memory_box,
-        find_talent_quest_table,
     ],
     hidden=True,
     visible_in_batch=True,
