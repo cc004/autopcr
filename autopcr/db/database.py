@@ -1554,17 +1554,50 @@ class database():
     @lazy_property
     def talents(self) -> Dict[int, Talent]:
         with self.dbmgr.session() as db:
-            return Talent.query(db).to_dict(lambda x: x.talent_id, lambda x: x)
+            return (
+                Talent.query(db)
+                .to_dict(lambda x: x.talent_id, lambda x: x)
+            )
+
+    @lazy_property
+    def talent_level_material(self) -> Dict[int, TalentLevelMaterial]:
+        with self.dbmgr.session() as db:
+            return (
+                TalentLevelMaterial.query(db)
+                .to_dict(lambda x: x.talent_id, lambda x: x)
+            )
 
     @lazy_property
     def talent_skill_node(self) -> Dict[int, TalentSkillNode]:
         with self.dbmgr.session() as db:
-            return TalentSkillNode.query(db).to_dict(lambda x: x.node_id, lambda x: x)
+            return (
+                TalentSkillNode.query(db)
+                .to_dict(lambda x: x.node_id, lambda x: x)
+            )
+
+    @lazy_property
+    def team_skill_enhance_level(self) -> Dict[int, TeamSkillEnhanceLevel]:
+        with self.dbmgr.session() as db:
+            return (
+                TeamSkillEnhanceLevel.query(db)
+                .to_dict(lambda x: x.enhance_level_id, lambda x: x)
+            )
+
+    @lazy_property
+    def team_skill_node(self) -> Dict[int, TeamSkillNode]:
+        with self.dbmgr.session() as db:
+            return (
+                TeamSkillNode.query(db)
+                .to_dict(lambda x: x.node_id, lambda x: x)
+            )
 
     @lazy_property
     def experience_talent_level(self) -> Dict[int, ExperienceTalentLevel]:
         with self.dbmgr.session() as db:
-            return ExperienceTalentLevel.query(db).to_dict(lambda x: x.talent_level, lambda x: x)
+            return (
+                ExperienceTalentLevel.query(db)
+                .to_dict(lambda x: x.talent_level, lambda x: x)
+            )
 
     def get_ex_equip_star_from_pt(self, id: int, pt: int) -> int:
         rarity = self.get_ex_equip_rarity(id)

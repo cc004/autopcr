@@ -150,6 +150,7 @@ table_modules = ModuleList(
     'table',
     [
         get_need_pure_memory_box,
+        find_talent_quest_table,
     ],
     hidden=True,
     visible_in_batch=True,

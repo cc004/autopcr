@@ -86,10 +86,12 @@ class search_unit(Module):
 @notlogin(check_data=True)
 @default(True)
 @unitlist("box_unit", "查询角色")
+@booltype("box_all_unit", "附加所有角色", False)
 @multichoice("box_unit_info", "角色信息", ['星级', '等级', '品级', '装备', 'UB', 'S1', 'S2', 'EX', '剧情', '专武1', '专武2', '普碎数', '金碎数'], ['星级', '等级', '品级', '装备', 'UB', 'S1', 'S2', 'EX', '剧情', '专武1', '专武2', '普碎数', '金碎数'])
 @multichoice("box_user_info", "用户信息", ['名字', '数据时间', '钻石', '母猪石', '星球杯', '心碎', 'mana'], ['名字', '数据时间', '钻石', '母猪石', '星球杯', '心碎', 'mana'])
+@multichoice("box_talent_info", "属性信息", ['火深域', '水深域', '风深域', '光深域', '暗深域', '火属性', '水属性', '风属性', '光属性', '暗属性', '属性技能', '大师技能'], ['火深域', '水深域', '风深域', '光深域', '暗深域', '火属性', '水属性', '风属性', '光属性', '暗属性', '属性技能', '大师技能'])
 class get_box_table(Module):
-    async def _prepare_user_data(self, client: pcrclient, box_user_info: Set[str]) -> Dict:
+    async def _prepare_user_data(self, client: pcrclient, user_info: Set[str]) -> Dict:
         """准备用户基本信息"""
         ret = {
             "名字": client.data.user_name,
@@ -98,17 +100,28 @@ class get_box_table(Module):
             "母猪石": client.data.get_inventory((eInventoryType.Item, 90005)),
             "星球杯": client.data.get_inventory(db.xingqiubei),
             "心碎": client.data.get_inventory(db.xinsui),
-            "mana": client.data.gold.gold_id_pay + client.data.gold.gold_id_free + client.data.user_gold_bank_info.bank_gold if client.data.user_gold_bank_info else 0
+            "mana": client.data.gold.gold_id_pay + client.data.gold.gold_id_free + client.data.user_gold_bank_info.bank_gold if client.data.user_gold_bank_info else 0,
         }
-        ret = {key : ret[key] for key in ret if key in box_user_info}
+        ret.update({
+            f"{db.talents[talent_id].talent_name}深域": client.data.get_talent_quest_single(talent_id) for talent_id in sorted([area.talent_id for area in db.talent_quest_area_data.values()])
+        })
+        ret.update({
+            f"{db.talents[talent_info.talent_id].talent_name}属性": client.data.get_talent_level_single(talent_info) for talent_info in client.data.princess_knight_info.talent_level_info_list
+        })
+        ret.update({
+            "属性技能": client.data.get_talent_skill_info(),
+            "大师技能": client.data.get_master_skill_info(),
+        })
+        ret = {key : ret[key] for key in ret if key in user_info}
         return ret
     
     def _get_filtered_units(self, client: pcrclient, unit_list):
         """获取过滤后的角色列表"""
+        filtered_units = []
         if unit_list:
             filtered_units = unit_list.copy()
-        else:
-            filtered_units = list(client.data.unit.keys())
+        if self.get_config('box_all_unit') or not filtered_units:
+            filtered_units.extend(db.unlock_unit_condition_candidate())
         return filtered_units
     
     def _get_unit_data(self, client: pcrclient, unit_id: int, box_unit_info: Set[str]) -> Dict:
@@ -128,7 +141,7 @@ class get_box_table(Module):
             "普碎数": "无",
             "金碎数": "无",
         }
-        
+
         read_story = set(client.data.read_story_ids)
         if unit_id in client.data.unit:
             unitinfo = client.data.unit[unit_id]
@@ -165,13 +178,13 @@ class get_box_table(Module):
         if not filtered_units:
             raise AbortError("没有找到符合条件的角色")
 
-        box_user_info = set(self.get_config('box_user_info'))
+        user_info = set(self.get_config('box_user_info')) | set(self.get_config('box_talent_info'))
         box_unit_info = set(self.get_config('box_unit_info'))
         
         header = []
         data = {}
 
-        user_data = await self._prepare_user_data(client, box_user_info)
+        user_data = await self._prepare_user_data(client, user_info)
         data.update(user_data)
         header.extend(list(user_data.keys()))
 
@@ -180,6 +193,6 @@ class get_box_table(Module):
             unit_name = db.get_unit_name(unit_id)
             header.append({unit_name: list(unit_data.keys())})
             data[unit_name] = unit_data
-        
+
         self._table_header(header)
         self._table(data)

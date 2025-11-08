@@ -15,55 +15,55 @@ from ...util.linq import flow
 
 @description('看看你的通关情况')
 @notlogin(check_data=True)
+@name('查深域(表格版)')
+class find_talent_quest_table(Module):
+    async def do_task(self, client: pcrclient):
+        data = {
+            "数据时间": db.format_time(db.parse_time(client.data.data_time)),
+        }
+        data.update({
+            f"{db.talents[talent_id].talent_name}深域": client.data.get_talent_quest_single(talent_id) for talent_id in sorted([area.talent_id for area in db.talent_quest_area_data.values()])
+        })
+        data.update({
+            f"{db.talents[talent_info.talent_id].talent_name}属性": client.data.get_talent_level_single(talent_info) for talent_info in client.data.princess_knight_info.talent_level_info_list
+        })
+        data.update({
+            "属性技能": client.data.get_talent_skill_info(),
+            "大师技能": client.data.get_master_skill_info(),
+        })
+        header = list(data.keys())
+        self._table_header(header)
+        self._table(data)
+
+@description('看看你的通关情况')
+@notlogin(check_data=True)
 @name('查深域')
 class find_talent_quest(Module):
     async def do_task(self, client: pcrclient):
-        result = []
-
-        for area in db.talent_quest_area_data.values():
-            talent_id = area.talent_id
-            max_quest_id = client.data.cleared_talent_quest_ids.get(talent_id, 0)
-            result.append((area.talent_id, max_quest_id))
-        result.sort(key = lambda x: x[0])
-
-        msg = []
-        for talent_id, quest_id in result:
-            talent_name = db.talents[talent_id].talent_name 
-            quest = "0-0" if quest_id == 0 else f"{db.quest_name[quest_id][4:]}"
-            msg.append(f"{talent_name}{quest}")
-        self._log("深域通关:" + "/".join(msg))
-
+        self._log(f"深域通关: {client.data.get_talent_quest_info()}")
         princess_knight_info = client.data.princess_knight_info
         if princess_knight_info:
-            msg = []
-            for talent_info in princess_knight_info.talent_level_info_list:
-                msg.append(f"{db.talents[talent_info.talent_id].talent_name}{db.get_talent_level(talent_info.total_point)}")
-            self._log("属性等级:" + "/".join(msg))
+            self._log(f"属性等级: {client.data.get_talent_level_info()}")
+            self._log(f"属性技能: {client.data.get_talent_skill_info()}")
+            self._log(f"大师技能: {client.data.get_master_skill_info()}")
 
-            page = 0 if not princess_knight_info.talent_skill_last_enhanced_page_node_list else db.talent_skill_node[princess_knight_info.talent_skill_last_enhanced_page_node_list[0].node_id].page_num
-            joined_nodes = flow(princess_knight_info.talent_skill_last_enhanced_page_node_list) \
-                            .where(lambda x: db.talent_skill_node[x.node_id].is_joined_node()) \
-                            .to_list()
-            max_joined_node = max(joined_nodes, key=lambda x: x.node_id, default=TalentSkillNodeInfo(node_id=1))
-            joined_node_after = flow(princess_knight_info.talent_skill_last_enhanced_page_node_list) \
-                                .where(lambda x: x.node_id > max_joined_node.node_id) \
-                                .group_by(lambda x: db.talent_skill_node[x.node_id].pos_x) \
-                                .to_dict(lambda g: g.key, lambda g: g.to_list())
-            joined_node_after_max = {pos: max(nodes, key=lambda x: x.node_id) for pos, nodes in joined_node_after.items()}
-
-            prefix = f"第{page}页 第{len(joined_nodes)}合流"
-            msg = []
-            if not joined_node_after and joined_nodes:
-                prefix += f"[{max_joined_node.enhance_level}级]"
-            elif joined_node_after:
-                for pos, nodes in joined_node_after.items():
-                    msg.append(f"{db.talent_skill_node[nodes[0].node_id].pos()}{len(nodes)}[{joined_node_after_max[pos].enhance_level}级]")
-            self._log("属性技能:" + prefix + " " + "/".join(msg))
-
-            self._log(f"大师技能: MP{princess_knight_info.team_skill_latest_node.node_id}")
-
-            for item in [db.fire_ball, db.water_ball, db.wind_ball, db.sun_ball, db.dark_ball, db.xinyou, db.master_fragment, db.master_ffragment]: # temp display, future replace with effect
-                self._log(f"{db.get_inventory_name_san(item)}: {client.data.get_inventory(item)}")
+        data = {
+            "名字": client.data.user_name,
+            "数据时间": db.format_time(db.parse_time(client.data.data_time)),
+        }
+        data.update({
+            f"{db.talents[talent_id].talent_name}深域": client.data.get_talent_quest_single(talent_id) for talent_id in sorted([area.talent_id for area in db.talent_quest_area_data.values()])
+        })
+        data.update({
+            f"{db.talents[talent_info.talent_id].talent_name}属性": client.data.get_talent_level_single(talent_info) for talent_info in client.data.princess_knight_info.talent_level_info_list
+        })
+        data.update({
+            "属性技能": client.data.get_talent_skill_info(),
+            "大师技能": client.data.get_master_skill_info(),
+        })
+        header = list(data.keys())
+        self._table_header(header)
+        self._table(data)
 
 @description('看看公会深域的通关情况，会登录！')
 @name('查公会深域')

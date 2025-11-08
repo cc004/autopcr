@@ -195,3 +195,17 @@ class TalentSkillNode(models.TalentSkillNode):
         elif self.pos_x == 8:
             return "右"
         return "未知"
+
+@method
+class TeamSkillNode(models.TeamSkillNode):
+    def enhance_level_ids(self) -> Iterator[int]:
+        if self.enhance_level_id_1 != 0:
+            yield self.enhance_level_id_1
+        if self.enhance_level_id_2 != 0:
+            yield self.enhance_level_id_2
+        if self.enhance_level_id_3 != 0:
+            yield self.enhance_level_id_3
+        if self.enhance_level_id_4 != 0:
+            yield self.enhance_level_id_4
+        if self.enhance_level_id_5 != 0:
+            yield self.enhance_level_id_5
