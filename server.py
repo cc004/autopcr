@@ -275,9 +275,15 @@ def wrap_account(func):
         msg = await botev.message()
 
         alias = msg[0] if msg else ""
+        all = False
 
         if alias == '所有':
             alias = BATCHINFO
+            all = True
+            del msg[0]
+        elif alias == '批量':
+            alias = BATCHINFO
+            all = False
             del msg[0]
         elif alias not in accmgr.accounts():
             alias = accmgr.default_account
@@ -293,7 +299,7 @@ def wrap_account(func):
             else:
                 await botev.finish(f"存在多账号且未找到默认账号，请指定昵称")
 
-        async with accmgr.load(alias) as acc:
+        async with accmgr.load(alias, force_use_all=all) as acc:
             await func(botev = botev, acc = acc, *args, **kwargs)
 
     wrapper.__name__ = func.__name__

@@ -25,9 +25,7 @@ class find_talent_quest(Module):
             self._log(f"属性技能: {client.data.get_talent_skill_info()}")
             self._log(f"大师技能: {client.data.get_master_skill_info()}")
 
-        data = {
-            "数据时间": db.format_time(db.parse_time(client.data.data_time)),
-        }
+        data = {}
         data.update({
             f"{db.talents[talent_id].talent_name}深域": client.data.get_talent_quest_single(talent_id) for talent_id in sorted([area.talent_id for area in db.talent_quest_area_data.values()])
         })

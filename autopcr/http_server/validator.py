@@ -90,8 +90,8 @@ def enable_manual_validator():
     def usermgr_load(qid: str, readonly=False):
         result = usermgr_load_legacy(qid, readonly=readonly)
         accountmgr_load_legacy = result.load
-        def accountmgr_load(account: str = "", readonly=False):
-            result = accountmgr_load_legacy(account=account, readonly=readonly)
+        def accountmgr_load(account: str = "", readonly=False, force_use_all=False):
+            result = accountmgr_load_legacy(account=account, readonly=readonly, force_use_all=force_use_all)
             async def post_login():
                 validate_dict[qid].append(ValidateInfo(status="ok"))
             account_aenter_legacy = result._do_aenter

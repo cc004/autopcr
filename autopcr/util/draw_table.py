@@ -151,7 +151,7 @@ def json2img(records, titles=None, font=ImageFont.load_default(), cell_pad=(20, 
     for i, record in enumerate(records):
         outp.append([])
         for title in titles:
-            outp[i].append(record[title])
+            outp[i].append(str(record[title]))
 
     return draw_table(outp, titles, font, cell_pad, margin, align, colors, stock)
 
