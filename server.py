@@ -241,7 +241,7 @@ def check_final_args_be_empty(func):
     wrapper.__name__ = func.__name__
     return wrapper
 
-async def get_folder_id(botev: BotEvent, folder_name: str) -> str | None:
+async def get_folder_id(botev: BotEvent, folder_name: str) -> Union[str, None]:
     try:
         gid = await botev.group_id()
         resp = await botev.call_action('get_group_root_files', group_id=gid)
