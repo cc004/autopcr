@@ -52,6 +52,8 @@ class find_clan_talent_quest(Module):
         clan_info = await client.get_clan_info()
         clan_name = clan_info.clan.detail.clan_name
         self._log(f"公会: {clan_name}({len(clan_info.clan.members)}人)")
+        header = ['uid', '名字', 'Rank等级', '火深域', '水深域', '风深域', '光深域', '暗深域', '顶关未通']
+        self._table_header(header)
         for member in clan_info.clan.members:
             profile = await client.get_profile(member.viewer_id)
             rank_exp = profile.user_info.princess_knight_rank_total_exp
@@ -59,6 +61,11 @@ class find_clan_talent_quest(Module):
             msg = []
             flag = False
             max_stage = 0
+            data = {
+                'uid': member.viewer_id,
+                '名字': member.name,
+                'Rank等级': kight_rank
+            }
             for talent_info in profile.quest_info.talent_quest:
                 talent_id = talent_info.talent_id
                 clear_count = talent_info.clear_count
@@ -80,7 +87,11 @@ class find_clan_talent_quest(Module):
                     max_stage = max(max_stage, max_count)
                 quest = self._format_quest_stage(clear_count) 
                 msg.append(f"{talent_name}{quest}")
+                data[f'{talent_name}深域'] = quest
             max_stage = self._format_quest_stage(max_stage)
             warn = f"(未通关最高关卡：{max_stage}！！！)" if flag else "" 
             member_progress = f"({member.viewer_id}){member.name}: " + "/".join(msg) + f" rank等级:{kight_rank}{warn}"
+
+            data['顶关未通'] = "√" if flag else ""
             self._log(member_progress)
+            self._table(data)
