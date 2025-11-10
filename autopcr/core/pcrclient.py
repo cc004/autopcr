@@ -1312,9 +1312,9 @@ class pcrclient(apiclient):
             for other in kizuna_unit:
                 if other not in db.unlock_unit_condition: continue
                 unit_name = db.get_unit_name(other)
-                unit_id = other // 100
-                love_level = self.data.unit_love_data[unit_id].love_level if unit_id in self.data.unit_love_data else 0
-                unit_story = [story.story_id for story in db.unit_story if story.story_group_id == unit_id]
+                other_id = other // 100
+                love_level = self.data.unit_love_data[other_id].love_level if other_id in self.data.unit_love_data else 0
+                unit_story = [story.story_id for story in db.unit_story if story.story_group_id == other_id]
                 total_storys = len(unit_story)
                 read_storys = len([story for story in unit_story if story in read_story])
                 love.append(f"{unit_name}好感{love_level}({read_storys}/{total_storys})")
