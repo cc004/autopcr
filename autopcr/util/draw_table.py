@@ -125,7 +125,7 @@ def json2imgb64(records, titles=None, font=ImageFont.load_default(), cell_pad=(2
     :return 可直接向qq发送的图片b64。
     '''
     assert len(records)
-    if titles == None:
+    if titles is None:
         titles = records[0].keys()
     assert sum([set(record) != set(titles) for record in records]) == 0
 
@@ -143,7 +143,7 @@ def json2img(records, titles=None, font=ImageFont.load_default(), cell_pad=(20, 
     :return 返回Image变量
     '''
     assert len(records)
-    if titles == None:
+    if titles is None:
         titles = records[0].keys()
     assert sum([set(record) != set(titles) for record in records]) == 0
 
