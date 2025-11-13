@@ -12,6 +12,7 @@ from .autopcr.db.dbstart import db_start
 from .autopcr.util.draw import instance as drawer
 from .autopcr.util.excel_export import export_excel
 import asyncio, datetime
+import aiofiles
 
 from io import BytesIO
 from PIL import Image
@@ -272,8 +273,8 @@ async def upload_excel(botev: BotEvent, data: BytesIO, filename: str, folder_nam
     excel_R = R.get('autopcr', 'excel', filename)
     path = Path(excel_R.path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(excel_R.path, 'wb') as f:
-        f.write(data.getbuffer())
+    async with aiofiles.open(excel_R.path, 'wb') as f:
+        await f.write(data.getbuffer())
 
     try:
         gid = await botev.group_id()
