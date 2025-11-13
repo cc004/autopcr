@@ -2250,7 +2250,7 @@ class database():
         return list(range(st, self.unique_equipment_max_level[equip_slot] + 1))
 
     def last_normal_quest(self) -> List[int]:
-        quest_ids = sorted([k for k, v in self.normal_quest_data.items() if db.parse_time(v.start_time) <= apiclient.datetime] , reverse=True)
+        quest_ids = sorted([k for k, v in self.normal_quest_data.items() if self.parse_time(v.start_time) <= apiclient.datetime] , reverse=True)
         return quest_ids[:5]
         last_start_time = flow(self.normal_quest_data.values()) \
                 .where(lambda x: db.parse_time(x.start_time) <= apiclient.datetime) \
