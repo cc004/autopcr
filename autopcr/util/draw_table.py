@@ -125,7 +125,7 @@ def json2imgb64(records, titles=None, font=ImageFont.load_default(), cell_pad=(2
     :return 可直接向qq发送的图片b64。
     '''
     assert len(records)
-    if titles == None:
+    if titles is None:
         titles = records[0].keys()
     assert sum([set(record) != set(titles) for record in records]) == 0
 
@@ -135,6 +135,25 @@ def json2imgb64(records, titles=None, font=ImageFont.load_default(), cell_pad=(2
             outp[i].append(record[title])
 
     return outp_b64(draw_table(outp, titles, font, cell_pad, margin, align, colors, stock))
+
+def json2img(records, titles=None, font=ImageFont.load_default(), cell_pad=(20, 10), margin=(10, 10), align=None, colors={}, stock=False) -> Image.Image:
+    '''
+    :param records: 格式: [dict, dict, ..., dict]。E:[{"x":1, "y":2}, {"x":3, "y":4}]
+    :param titles: E:["x", "y"]。当titles=None时，尝试从grid[0]获取。
+    :return 返回Image变量
+    '''
+    assert len(records)
+    if titles is None:
+        titles = records[0].keys()
+    assert sum([set(record) != set(titles) for record in records]) == 0
+
+    outp = []
+    for i, record in enumerate(records):
+        outp.append([])
+        for title in titles:
+            outp[i].append(str(record[title]))
+
+    return draw_table(outp, titles, font, cell_pad, margin, align, colors, stock)
 
 def grid2imgb64(grid, titles, font=ImageFont.load_default(), cell_pad=(20, 10), margin=(10, 10), align=None, colors={}, stock=False) -> str:
     '''

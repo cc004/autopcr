@@ -1,5 +1,6 @@
 from collections import Counter
 from typing import Any, Callable, Coroutine, Dict, List, Tuple, Union
+from pathlib import Path
 
 from .autopcr.module.accountmgr import BATCHINFO, AccountBatch, TaskResultInfo
 from .autopcr.module.modulebase import eResultStatus
@@ -9,14 +10,16 @@ from .autopcr.db.database import db
 from .autopcr.module.accountmgr import Account, AccountManager, instance as usermgr
 from .autopcr.db.dbstart import db_start
 from .autopcr.util.draw import instance as drawer
+from .autopcr.util.excel_export import export_excel
 import asyncio, datetime
+import aiofiles
 
 from io import BytesIO
 from PIL import Image
 import nonebot
 from nonebot import on_startup
 import hoshino
-from hoshino import HoshinoBot, Service, priv
+from hoshino import HoshinoBot, Service, priv, R
 from hoshino.util import escape
 from hoshino.typing import CQEvent
 from quart_auth import QuartAuth
@@ -122,6 +125,7 @@ class BotEvent:
     async def is_admin(self) -> bool: ...
     async def is_super_admin(self) -> bool: ...
     async def get_group_member_list(self) -> List: ...
+    async def call_action(self, *args, **kwargs) -> Dict: ...
 
 class HoshinoEvent(BotEvent):
     def __init__(self, bot: HoshinoBot, ev: CQEvent):
@@ -177,6 +181,9 @@ class HoshinoEvent(BotEvent):
 
     async def group_id(self) -> str:
         return str(self.ev.group_id)
+
+    async def call_action(self, action: str, **kwargs) -> Dict:
+        return await self.bot.call_action(action, **kwargs)
 
 def wrap_hoshino_event(func):
     async def wrapper(bot: HoshinoBot, ev: CQEvent, *args, **kwargs):
@@ -235,9 +242,68 @@ def check_final_args_be_empty(func):
     wrapper.__name__ = func.__name__
     return wrapper
 
+async def get_folder_id(botev: BotEvent, folder_name: str) -> Union[str, None]:
+    try:
+        gid = await botev.group_id()
+        resp = await botev.call_action('get_group_root_files', group_id=gid)
+        folders = resp.get('folders', [])
+        
+        for folder in folders:
+            if folder.get('folder_name') == folder_name:
+                folder_id = folder.get('folder_id')
+                return folder_id
+
+        await botev.send(f"本群 {gid} 未找到「{folder_name}」，尝试创建...")
+        create_resp = await botev.call_action(
+            'create_group_file_folder',
+            group_id=gid,
+            folder_name=folder_name, # napcat
+            name=folder_name # Lagrange
+        )
+        new_folder_id = create_resp.get('folder_id')
+        if not new_folder_id:
+            raise Exception("非管理员无法创建文件夹")
+        return new_folder_id
+
+    except Exception as e:
+        await botev.send(f"获取或创建「{folder_name}」文件夹失败: {e}")
+        return None
+
+async def upload_excel(botev: BotEvent, data: BytesIO, filename: str, folder_name: str):
+    excel_R = R.get('autopcr', 'excel', filename)
+    path = Path(excel_R.path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    async with aiofiles.open(excel_R.path, 'wb') as f:
+        await f.write(data.getbuffer())
+
+    try:
+        gid = await botev.group_id()
+        folder_id = await get_folder_id(botev, folder_name)
+
+        upload_kwargs = {
+            'action': 'upload_group_file',
+            'group_id': gid,
+            'file': excel_R.url,
+            'name': filename
+        }
+        if folder_id:
+            upload_kwargs['folder'] = folder_id
+        else:
+            await botev.send(f"未能获取文件夹ID，上传到根目录")
+
+        await botev.call_action(**upload_kwargs)
+
+    finally:
+        try:
+            path.unlink()
+        except Exception as e:
+            sv.logger.warning(f"⚠️ 删除临时文件失败: {e}")
+
+
 from dataclasses import dataclass
 @dataclass
 class ToolInfo:
+    name: str
     key: str
     config_parser: Callable[..., Coroutine[Any, Any, Any]]
 
@@ -245,7 +311,7 @@ tool_info: Dict[str, ToolInfo]= {}
 
 def register_tool(name: str, key: str):
     def wrapper(func):
-        tool_info[name] = ToolInfo(key=key, config_parser=func)
+        tool_info[name] = ToolInfo(name=name, key=key, config_parser=func)
         async def inner(*args, **kwargs):
             await func(*args, **kwargs)
 
@@ -275,9 +341,15 @@ def wrap_account(func):
         msg = await botev.message()
 
         alias = msg[0] if msg else ""
+        all = False
 
         if alias == '所有':
             alias = BATCHINFO
+            all = True
+            del msg[0]
+        elif alias == '批量':
+            alias = BATCHINFO
+            all = False
             del msg[0]
         elif alias not in accmgr.accounts():
             alias = accmgr.default_account
@@ -293,8 +365,23 @@ def wrap_account(func):
             else:
                 await botev.finish(f"存在多账号且未找到默认账号，请指定昵称")
 
-        async with accmgr.load(alias) as acc:
+        async with accmgr.load(alias, force_use_all=all) as acc:
             await func(botev = botev, acc = acc, *args, **kwargs)
+
+    wrapper.__name__ = func.__name__
+    return wrapper
+
+def wrap_export(func):
+    async def wrapper(botev: BotEvent, *args, **kwargs):
+        msg = await botev.message()
+        command = msg[0] if msg else ""
+
+        export = False
+        if command.startswith("导出"):
+            msg[0] = msg[0].lstrip("导出")
+            export = True
+
+        await func(botev = botev, export = export, *args, **kwargs)
 
     wrapper.__name__ = func.__name__
     return wrapper
@@ -608,19 +695,21 @@ async def config_clear_daily(botev: BotEvent):
 
 @sv.on_prefix(f"{prefix}")
 @wrap_hoshino_event
+@wrap_export
 @wrap_group
 @wrap_tool
 @wrap_accountmgr
 @wrap_account
 @wrap_config
 @check_final_args_be_empty
-async def tool_used(botev: BotEvent, tool: ToolInfo, config: Dict[str, str], acc: Union[AccountBatch, Account]):
+async def tool_used(botev: BotEvent, tool: ToolInfo, config: Dict[str, str], acc: Union[AccountBatch, Account], export: bool):
     alias = escape(acc.alias)
     try:
         loop = asyncio.get_event_loop()
         loop.create_task(check_validate(botev, acc.qq))
 
         is_admin_call = await botev.is_admin()
+        await botev.send(f"开始为{alias}执行【{tool.name}】")
         resp = await acc.do_from_key(config, tool.key, is_admin_call)
         if isinstance(resp, List):
             if resp:
@@ -629,10 +718,15 @@ async def tool_used(botev: BotEvent, tool: ToolInfo, config: Dict[str, str], acc
                 await botev.send("未选择账号！请到网页端批量运行选择账号后运行")
                 return
         resp = resp.get_result()
-        img = await drawer.draw_task_result(resp)
-        msg = f"{alias}"
-        msg += outp_b64(img)
-        await botev.send(msg)
+        if export:
+            data = await export_excel(resp.table)
+            timestamp = db.format_time_safe(datetime.datetime.now())
+            await upload_excel(botev, data, f"{tool.name}_{alias}_{timestamp}.xlsx", 'autopcr')
+        else:
+            img = await drawer.draw_task_result(resp)
+            msg = f"{alias}"
+            msg += outp_b64(img)
+            await botev.send(msg)
     except Exception as e:
         logger.exception(e)
         await botev.send(f'{alias}: {e}')
@@ -874,6 +968,36 @@ async def find_talent_quest(botev: BotEvent):
 @register_tool("查公会深域", "find_clan_talent_quest")
 async def find_clan_talent_quest(botev: BotEvent):
     return {}
+
+@register_tool("查box", "get_box_table")
+async def get_box_table(botev: BotEvent):
+    msg = await botev.message()
+    box_all_unit = False
+    try:
+        box_all_unit = is_args_exist(msg, '所有')
+    except:
+        pass
+
+    known_units = []
+    unknown_units = []
+    while msg:
+        unit_name = msg[0]
+        unit = get_id_from_name(unit_name)
+        if unit:
+            known_units.append(unit * 100 + 1)
+        else:
+            unknown_units.append(unit_name)
+        del msg[0]
+    if unknown_units:
+        await botev.finish(f"未知昵称{', '.join(unknown_units)}")
+
+    if not known_units and not box_all_unit:
+        await botev.finish("请指定角色或添加【所有】参数")
+
+    return {
+        'box_unit': known_units,
+        'box_all_unit': box_all_unit
+    }
 
 @register_tool("免费十连", "free_gacha")
 async def free_gacha(botev: BotEvent):

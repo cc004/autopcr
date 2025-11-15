@@ -596,6 +596,76 @@ class datamgr(BaseModel, Component[apiclient]):
     def is_quest_sweepable(self, quest: int) -> bool:
         return quest in self.quest_dict and self.quest_dict[quest].clear_flg == 3
 
+    def get_talent_quest_single(self, talent_id: int) -> str:
+        max_quest_id = self.cleared_talent_quest_ids.get(talent_id, 0)
+        quest = "0-0" if max_quest_id == 0 else f"{db.quest_name[max_quest_id][4:]}"
+        return quest
+
+    def get_talent_quest_info(self) -> str:
+        msg = []
+        for talent_id in sorted([area.talent_id for area in db.talent_quest_area_data.values()]):
+            talent_name = db.talents[talent_id].talent_name 
+            msg.append(f"{talent_name}{self.get_talent_quest_single(talent_id)}")
+        return "/".join(msg)
+
+    def get_talent_level_single(self, talent_info: TalentLevelInfo) -> str:
+        material = db.talent_level_material[talent_info.talent_id]
+        cur_point = talent_info.total_point
+        up_point = talent_info.total_point + self.get_inventory((material.reward_type, material.item_id)) * material.point
+        info = f"{db.get_talent_level(cur_point)}"
+        if True and cur_point != up_point: # always show for pretty format
+            info += f"→{db.get_talent_level(up_point)}"
+        return info
+
+    def get_talent_level_info(self) -> str:
+        msg = []
+        for talent_info in self.princess_knight_info.talent_level_info_list:
+            msg.append(f"{db.talents[talent_info.talent_id].talent_name}{self.get_talent_level_single(talent_info)}")
+        return "/".join(msg)
+
+    def get_talent_skill_info(self) -> str:
+        page = 0 if not self.princess_knight_info.talent_skill_last_enhanced_page_node_list else db.talent_skill_node[self.princess_knight_info.talent_skill_last_enhanced_page_node_list[0].node_id].page_num
+        joined_nodes = flow(self.princess_knight_info.talent_skill_last_enhanced_page_node_list) \
+                        .where(lambda x: db.talent_skill_node[x.node_id].is_joined_node()) \
+                        .to_list()
+        max_joined_node = max(joined_nodes, key=lambda x: x.node_id, default=TalentSkillNodeInfo(node_id=1))
+        joined_node_after = flow(self.princess_knight_info.talent_skill_last_enhanced_page_node_list) \
+                            .where(lambda x: x.node_id > max_joined_node.node_id) \
+                            .group_by(lambda x: db.talent_skill_node[x.node_id].pos_x) \
+                            .to_dict(lambda g: g.key, lambda g: g.to_list())
+        joined_node_after_max = {pos: max(nodes, key=lambda x: x.node_id) for pos, nodes in joined_node_after.items()}
+
+        prefix = f"第{page}页 第{len(joined_nodes)}合流"
+        msg = []
+        if not joined_node_after and joined_nodes:
+            prefix += f"[{max_joined_node.enhance_level}级]"
+        elif joined_node_after:
+            for pos, nodes in joined_node_after.items():
+                msg.append(f"{db.talent_skill_node[nodes[0].node_id].pos()}{len(nodes)}[{joined_node_after_max[pos].enhance_level}级]")
+
+        info = prefix + " " + "/".join(msg)
+        info += f"(余{self.get_inventory(db.xinyou)})"
+        return info
+
+    def get_master_skill_info(self) -> str:
+        cur_node_id = self.princess_knight_info.team_skill_latest_node.node_id
+        up_node_id = cur_node_id
+        num = self.get_inventory(db.master_fragment) + self.get_inventory(db.master_ffragment) // 100
+        next_id = sorted([k for k in db.team_skill_node if k > cur_node_id])
+        for node_id in next_id:
+            tot = 0
+            for enhance_level_id in db.team_skill_node[node_id].enhance_level_ids():
+                tot += db.team_skill_enhance_level[enhance_level_id].consume_num
+            if num >= tot:
+                num -= tot
+                up_node_id = node_id
+
+        info = f"MP{cur_node_id}"
+        if True and cur_node_id != up_node_id: # always show for pretty format
+            info += f"→{up_node_id}"
+        info += f"(余{num})"
+        return info
+
     async def request(self, request: Request[TResponse], next: RequestHandler) -> TResponse:
         resp = await next.request(request)
         if resp:

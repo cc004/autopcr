@@ -1281,59 +1281,62 @@ class pcrclient(apiclient):
             result.append(f"{db.get_inventory_name_san(target)}x0({self.data.get_inventory(target)})")
         return '\n'.join(result) if result else "无"
 
-    async def serialize_unit_info(self, unit_data: Union[UnitData, UnitDataLight]) -> Tuple[bool, str]:
-        info = []
-        ok = True
-        def add_info(prefix, cur, expect = None):
-            if expect:
-                nonlocal ok
-                info.append(f'{prefix}:{cur}/{expect}')
-                ok &= (cur == expect)
-            else:
-                info.append(f'{prefix}:{cur}')
-        unit_id = unit_data.id
-        add_info("等级", unit_data.unit_level, db.team_max_level)
-        if unit_data.battle_rarity:
-            add_info("星级", f"{unit_data.battle_rarity}-{unit_data.unit_rarity}")
-        else:
-            add_info("星级", f"{unit_data.unit_rarity}")
-        add_info("品级", unit_data.promotion_level, db.equip_max_rank)
-        for id, union_burst in enumerate(unit_data.union_burst):
-            if union_burst.skill_level:
-                add_info(f"ub{id}", union_burst.skill_level, unit_data.unit_level)
-        for id, skill in enumerate(unit_data.main_skill):
-            if skill.skill_level:
-                add_info(f"skill{id}", skill.skill_level, unit_data.unit_level)
-        for id, skill in enumerate(unit_data.ex_skill):
-            if skill.skill_level:
-                add_info(f"ex{id}", skill.skill_level, unit_data.unit_level)
-        equip_info = []
-        for id, equip in enumerate(unit_data.equip_slot):
-            equip_id = getattr(db.unit_promotion[unit_id][unit_data.promotion_level], f'equip_slot_{id + 1}')
-            if not equip.is_slot:
-                if equip_id != 999999:
-                    equip_info.append('-')
-                    ok = False
-                else:
-                    equip_info.append('*')
-            else:
-                star = db.get_equip_star_from_pt(equip_id, equip.enhancement_pt)
-                ok &= (star == 5)
-                equip_info.append(str(star))
-        equip_info = '/'.join(equip_info)
-        add_info("装备", equip_info)
+    def unit_info_to_dict(self, unit_id: int) -> Dict:
+        unit_data = {
+            "星级": "无",
+            "等级": "无",
+            "品级": "无",
+            "装备": "无",
+            "UB": 0,
+            "S1": 0,
+            "S2": 0,
+            "EX": 0,
+            "剧情": "无",
+            "专武1": "无",
+            "专武2": "无",
+            "普碎数": "无",
+            "金碎数": "无",
+        }
 
-        for id, equip in enumerate(unit_data.unique_equip_slot):
-            equip_slot = id + 1
-            have_unique = (equip_slot in db.unit_unique_equip and unit_id in db.unit_unique_equip[equip_slot])
-            max_level = 0 if not have_unique else db.unique_equipment_max_level[equip_slot]
-            if have_unique:
-                if not equip.is_slot:
-                    add_info(f"专武{id}", '-', max_level)
-                else:
-                    add_info(f"专武{id}", db.get_unique_equip_level_from_pt(equip_slot, equip.enhancement_pt), max_level)
-        
-        return ok, ' '.join(info)
+        read_story = set(self.data.read_story_ids)
+        if unit_id in self.data.unit:
+            unitinfo = self.data.unit[unit_id]
+            rank = f"R{unitinfo.promotion_level}"
+            equip = ''.join('-' if not solt.is_slot else str(solt.enhancement_level) for solt in unitinfo.equip_slot)
+            kizuna_unit = set()
+            for story in db.chara2story[unit_id]:
+                if story.story_id in db.story_detail:
+                    kizuna_unit.add(db.story_detail[story.story_id].requirement_id)
+
+            love = []
+            for other in kizuna_unit:
+                if other not in db.unlock_unit_condition: continue
+                unit_name = db.get_unit_name(other)
+                other_id = other // 100
+                love_level = self.data.unit_love_data[other_id].love_level if other_id in self.data.unit_love_data else 0
+                unit_story = [story.story_id for story in db.unit_story if story.story_group_id == other_id]
+                total_storys = len(unit_story)
+                read_storys = len([story for story in unit_story if story in read_story])
+                love.append(f"{unit_name}好感{love_level}({read_storys}/{total_storys})")
+            love_str = '\n'.join(love) if love else "无"
+
+            unit_data.update({
+                "星级": f"{unitinfo.unit_rarity}★",
+                "等级": unitinfo.unit_level,
+                "品级": rank,
+                "装备": equip,
+                "UB": unitinfo.union_burst[0].skill_level if unitinfo.union_burst else "无",
+                "S1": unitinfo.main_skill[0].skill_level if unitinfo.main_skill else "无",
+                "S2": unitinfo.main_skill[1].skill_level if len(unitinfo.main_skill) > 1 else "无",
+                "EX": unitinfo.ex_skill[0].skill_level if unitinfo.ex_skill else "无",
+                "剧情": love_str,
+                "专武1": "未实装" if not unitinfo.unique_equip_slot else "无" if not unitinfo.unique_equip_slot[0].is_slot else unitinfo.unique_equip_slot[0].enhancement_level,
+                "专武2": "未实装" if len(unitinfo.unique_equip_slot) < 2 else "无" if not unitinfo.unique_equip_slot[1].is_slot else unitinfo.unique_equip_slot[1].enhancement_level,
+                "普碎数": self.data.get_inventory((eInventoryType.Item, db.unit_to_memory[unit_id])) if unit_id in db.unit_to_memory else "无",
+                "金碎数": self.data.get_inventory((eInventoryType.Item, db.unit_to_pure_memory[unit_id])) if unit_id in db.unit_to_pure_memory else "无",
+            })
+
+        return unit_data
 
     async def recover_challenge(self, quest: int):
         req = QuestRecoverChallengeRequest()

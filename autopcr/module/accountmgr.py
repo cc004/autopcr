@@ -231,9 +231,12 @@ class Account(ModuleManager):
         return self._parent._parent.is_clan_battle_forbidden(username)
 
 class AccountBatch(Account):
-    def __init__(self, parent: 'AccountManager', qid: str, accounts: str = BATCHINFO, readonly: bool = False):
+    def __init__(self, parent: 'AccountManager', qid: str, accounts: str = BATCHINFO, readonly: bool = False, force_use_all: bool = False):
         super().__init__(parent, qid, accounts, readonly)
-        self.enable_account = sorted(set([x for x in self.data.batch_accounts]) & set(self._parent.accounts()))
+        if force_use_all:
+            self.enable_account = sorted(list(self._parent.accounts()))
+        else:
+            self.enable_account = sorted(set([x for x in self.data.batch_accounts]) & set(self._parent.accounts()))
 
     def generate_info(self):
         accounts = list(self.enable_account)
@@ -264,22 +267,26 @@ class AccountBatch(Account):
             ret_list = [x.get_result() for x in resps]
             ret = copy(ret_list[0])
             ret.log = '\n'.join(f"==={name}===\n{x.log}" for name, x in zip(alias, ret_list) if x.log)
+            ret.status = eResultStatus.ERROR if any(x.status == eResultStatus.ERROR for x in ret_list) else eResultStatus.WARNING if any(x.status == eResultStatus.WARNING for x in ret_list) else eResultStatus.SUCCESS
             if any(r.table.header for r in ret_list):
                 ret.table.header = next(r.table.header for r in ret_list)
-                ret.table.header = ["昵称"] + ret.table.header
+                ret.table.header = ["昵称", '状态'] + ret.table.header
                 ret.table.data = [
-                    {**d, '昵称': name}
+                    {**d, '昵称': name, '状态': f"#{x.status.value}"}
                     for name, x in zip(alias, ret_list)
                     if x.table
                     for d in x.table.data
                 ]
             else:
-                ret.table.header = ["昵称", "结果"]
+                ret.table.header = ["昵称", "状态", "结果"]
                 ret.table.data = [
-                    {'昵称': name, '结果': x.log}
+                    {
+                     '昵称': name, 
+                     '状态': f"#{x.status.value}",
+                     '结果': x.log
+                    }
                     for name, x in zip(alias, ret_list)
                 ]
-            ret.status = eResultStatus.ERROR if any(x.status == eResultStatus.ERROR for x in ret_list) else eResultStatus.WARNING if any(x.status == eResultStatus.WARNING for x in ret_list) else eResultStatus.SUCCESS
             all = await self.save_single_result(key, ret)
             resps = [all] + resps
         self.data.single_result[key] = resps
@@ -342,11 +349,11 @@ class AccountManager:
     def validate_password(self, password: str) -> bool:
         return self.secret.password == password
 
-    def load(self, account: str = "", readonly = False) -> Account:
+    def load(self, account: str = "", readonly = False, force_use_all: bool = False) -> Account:
         if not AccountManager.pathsyntax.fullmatch(account):
             raise AccountException(f'非法账户名{account}')
         if account == BATCHINFO:
-            return AccountBatch(self, self.qid, account, readonly = readonly)
+            return AccountBatch(self, self.qid, account, readonly = readonly, force_use_all = force_use_all)
         if not account:
             account = self.secret.default_account
         if not account and len(list(self.accounts())) == 1:
