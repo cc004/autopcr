@@ -613,7 +613,7 @@ class datamgr(BaseModel, Component[apiclient]):
         cur_point = talent_info.total_point
         up_point = talent_info.total_point + self.get_inventory((material.reward_type, material.item_id)) * material.point
         info = f"{db.get_talent_level(cur_point)}"
-        if cur_point != up_point:
+        if True and cur_point != up_point: # always show for pretty format
             info += f"→{db.get_talent_level(up_point)}"
         return info
 
@@ -661,7 +661,7 @@ class datamgr(BaseModel, Component[apiclient]):
                 up_node_id = node_id
 
         info = f"MP{cur_node_id}"
-        if cur_node_id != up_node_id:
+        if True and cur_node_id != up_node_id: # always show for pretty format
             info += f"→{up_node_id}"
         info += f"(余{num})"
         return info
