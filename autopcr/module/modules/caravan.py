@@ -321,9 +321,9 @@ class DishEffectManager(EffectManager):
     def is_block_skip(self, block_type: int) -> bool:
         val = self.get_effect_influence_value(eDishEffectType.BLOCK_SKIP_MOVE_COUNT)
         if val is not None: # only god and pcrer know the rule
-            if val == 1 and block_type == eBlockType.MILES:
+            if (val & 1) and block_type == eBlockType.MILES:
                 return True
-            elif val == 2 and block_type == eBlockType.TREASURE:
+            elif (val & 2) and block_type == eBlockType.TREASURE:
                 return True
         return False
 
