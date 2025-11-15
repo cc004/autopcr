@@ -612,9 +612,11 @@ class datamgr(BaseModel, Component[apiclient]):
         material = db.talent_level_material[talent_info.talent_id]
         cur_point = talent_info.total_point
         up_point = talent_info.total_point + self.get_inventory((material.reward_type, material.item_id)) * material.point
-        info = f"{db.get_talent_level(cur_point)}"
-        if True and cur_point != up_point: # always show for pretty format
-            info += f"→{db.get_talent_level(up_point)}"
+        cur_level = db.get_talent_level(cur_point)
+        nxt_level = db.get_talent_level(up_point)
+        info = f"{cur_level}"
+        if cur_level != nxt_level: 
+            info += f"→{nxt_level}"
         return info
 
     def get_talent_level_info(self) -> str:
@@ -663,7 +665,7 @@ class datamgr(BaseModel, Component[apiclient]):
                 break
 
         info = f"MP{cur_node_id}"
-        if True and cur_node_id != up_node_id: # always show for pretty format
+        if cur_node_id != up_node_id:
             info += f"→{up_node_id}"
         info += f"(余{num})"
         return info
