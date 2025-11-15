@@ -612,9 +612,11 @@ class datamgr(BaseModel, Component[apiclient]):
         material = db.talent_level_material[talent_info.talent_id]
         cur_point = talent_info.total_point
         up_point = talent_info.total_point + self.get_inventory((material.reward_type, material.item_id)) * material.point
-        info = f"{db.get_talent_level(cur_point)}"
-        if True and cur_point != up_point: # always show for pretty format
-            info += f"→{db.get_talent_level(up_point)}"
+        cur_level = db.get_talent_level(cur_point)
+        nxt_level = db.get_talent_level(up_point)
+        info = f"{cur_level}"
+        if cur_level != nxt_level: 
+            info += f"→{nxt_level}"
         return info
 
     def get_talent_level_info(self) -> str:
@@ -648,7 +650,7 @@ class datamgr(BaseModel, Component[apiclient]):
         return info
 
     def get_master_skill_info(self) -> str:
-        cur_node_id = self.princess_knight_info.team_skill_latest_node.node_id
+        cur_node_id = self.princess_knight_info.team_skill_latest_node.node_id if self.princess_knight_info.team_skill_latest_node else 0
         up_node_id = cur_node_id
         num = self.get_inventory(db.master_fragment) + self.get_inventory(db.master_ffragment) // 100
         next_id = sorted([k for k in db.team_skill_node if k > cur_node_id])
@@ -659,9 +661,11 @@ class datamgr(BaseModel, Component[apiclient]):
             if num >= tot:
                 num -= tot
                 up_node_id = node_id
+            else:
+                break
 
         info = f"MP{cur_node_id}"
-        if True and cur_node_id != up_node_id: # always show for pretty format
+        if cur_node_id != up_node_id:
             info += f"→{up_node_id}"
         info += f"(余{num})"
         return info
