@@ -732,6 +732,15 @@ class pcrclient(apiclient):
         await self.story_check(story_id)
         return await self.story_view(story_id)
 
+    async def apg_story_top(self):
+        req = SubStoryApgTopRequest()
+        return await self.request(req)
+
+    async def read_apg_story(self, sub_story_id: int):
+        req = SubStoryApgReadStoryRequest()
+        req.sub_story_id = sub_story_id
+        return await self.request(req)
+
     async def draw_fpc_story(self, period: eFpcPeriod, fpc_operation_type: eFpcOperationType):
         req = SubStoryFpcDrawStoryRequest()
         req.period = period
