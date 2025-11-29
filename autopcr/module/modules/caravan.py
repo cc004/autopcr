@@ -266,39 +266,39 @@ class DishEffectManager(EffectManager):
     def get_effect_sub_effect_type(self, effect: CaravanDishEffectData) -> eDishEffectType:
         return db.caravan_dish[effect.id].sub_effect_type
 
-    def get_effect_influence(self, effect: eDishEffectType) -> Union[CaravanDishEffectData, None]:
+    def get_effect_influence(self, effect: eDishEffectType) -> List[CaravanDishEffectData]:
         dishes = self.get_effect(effect)
+        ret = []
         if not dishes:
-            return None
-        ret = None
+            return ret
         for dish in dishes:
             if db.caravan_dish[dish.id].effect_type == effect:
-                ret = dish
-            elif dish.id == self.game.used_dish_id: # sub_effect_type
-                ret = dish
+                ret.append(dish)
+            elif dish.id in self.game.used_dish_id_list: # sub_effect_type
+                ret.append(dish)
             if db.caravan_dish[dish.id].disable_category: # 不可覆盖
                 break
         return ret
 
     def get_effect_influence_value(self, effect: eDishEffectType) -> Union[int, None]:
-        dish = self.get_effect_influence(effect)
+        dishes = self.get_effect_influence(effect)
         hit = False
         val = 0
-        if dish is None:
-            return None
-        elif db.caravan_dish[dish.id].effect_type == effect:
-            hit = True
-            val += db.caravan_dish[dish.id].effect_value
-        elif dish.id == self.game.used_dish_id:
-            hit = True
-            val += db.caravan_dish[dish.id].sub_effect_value
+        for dish in dishes:
+            if db.caravan_dish[dish.id].effect_type == effect:
+                hit = True
+                val += db.caravan_dish[dish.id].effect_value
+            elif dish.id in self.game.used_dish_id_list:
+                hit = True
+                val += db.caravan_dish[dish.id].sub_effect_value
         return val if hit else None
 
     def is_dice_fix(self) -> bool:
         for effect in [eDishEffectType.FIX_DICE_NUMBER, eDishEffectType.FIX_DUCE_NUMBER_AND_TURN_NOT_PROGRESS, eDishEffectType.CHANGE_DICE_BY_TURN_ODDS]:
-            dish = self.get_effect_influence(effect)
-            if dish and '必定' in db.caravan_dish[dish.id].get_effect_desc(lasting=False): # simple
-                return True
+            dishes = self.get_effect_influence(effect)
+            for dish in dishes:
+                if dish and '必定' in db.caravan_dish[dish.id].get_effect_desc(lasting=False): # simple
+                    return True
         return False
 
     def is_dish_forbidden(self) -> int:
@@ -485,14 +485,9 @@ class CaravanGame:
             self.candidate_dishes = Counter({dish.id:dish.stock for dish in resp.dish_list})
         else:
             self.candidate_dishes = Counter()
-        self.used_dish_id = None
-        if resp.used_dish_id: # 一般是一次性的
-            self.used_dish_id = resp.used_dish_id
-            self.dish_effect_manager.append(CaravanEffectData(CaravanDishEffectData(
-                id=resp.used_dish_id,
-                effect_turn=db.caravan_dish[resp.used_dish_id].effect_turn,
-                effect_count=db.caravan_dish[resp.used_dish_id].effect_times
-            )))
+        self.used_dish_id_list = []
+        if resp.used_dish_id_list: # 一般是一次性的
+            self.used_dish_id_list = resp.used_dish_id_list
 
         for dish_effect in resp.dish_effect_list or []:
             self.dish_effect_manager.append(CaravanEffectData(dish_effect))
@@ -536,7 +531,9 @@ class CaravanGame:
                 await self.step()
             if eFlag.SELECT_RESULT & resp.action_bit_flag:
                 self._log("处理 SELECT_RESULT")
-                self.spots_list = [resp.spots]
+                extra_spots = self.dish_effect_manager.get_effect_influence_value(eDishEffectType.ADD_MOVE_COUNT) or 0
+                self.spots_list = [resp.spots - extra_spots]
+                print(self.spots_list)
                 resp.spots = 0
                 self.state = eState.SELECT_RESULT
                 await self.step()
@@ -901,7 +898,7 @@ class CaravanGame:
                     dish_to_use = next((dish_id for dish_id, stock in self.candidate_dishes.items() if stock > 0 and db.caravan_dish[dish_id].category == category), None)
                     if dish_to_use is None:
                         continue
-                    self.used_dish_id = dish_to_use
+                    self.used_dish_id_list.append(dish_to_use)
                     self._log(f"使用料理：{db.caravan_dish[dish_to_use].name}，效果：{db.caravan_dish[dish_to_use].get_effect_desc()}")
                     use_resp = await self.client.caravan_dish_use(
                         season_id=self.season_id,
@@ -1028,7 +1025,7 @@ class CaravanGame:
                 self.dish_effect_manager.process_effect_turn()
                 self.event_effect_manager.process_effect_turn()
                 self.buddy_effect_manager.process_effect_turn()
-                self.used_dish_id = None
+                self.used_dish_id_list = []
 
                 if progress_resp.buddy_id:
                     self.buddy_effect_manager.append(CaravanEffectData(
