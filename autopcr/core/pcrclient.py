@@ -121,6 +121,14 @@ class pcrclient(apiclient):
         req.surplus_dish_list = surplus_dish_list
         return await self.request(req)
 
+    async def caravan_shortcut_choice(self, season_id: int, block_id: int, is_open: int, current_currency_num: int):
+        req = CaravanShortcutChoiceRequest()
+        req.season_id = season_id
+        req.block_id = block_id
+        req.is_open = is_open
+        req.current_currency_num = current_currency_num
+        return await self.request(req)
+
     async def caravan_spots_choice(self, season_id: int, choice: int):
         req = CaravanSpotsChoiceRequest()
         req.season_id = season_id

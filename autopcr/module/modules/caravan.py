@@ -17,58 +17,52 @@ from ...model.enums import *
 from enum import IntEnum
 
 class eFlag(IntEnum):
-	DISH_USED = 1
-	DICE_USED = 2
-	BLOCK_EFFECT = 4
-	MINIGAME_ACTIVE = 8
-	GOAL_EFFECT = 16
-	SELECT_RESULT = 32
-	IS_RIVAL_MINIGAME = 64
-	IS_RIVAL_TURN_PROGRESS = 128
-	IS_PROGRESS_TURN = 256
-
-class eDicePrefix(IntEnum):
-	NONE = 0
-	NORMAL_FIX_ROLL = 100
-	BUDDY_FIX_ROLL = 1100
-	RIVAL_FIX_ROLL = 2100
+    DISH_USED = 1
+    DICE_USED = 2
+    BLOCK_EFFECT = 4
+    MINIGAME_ACTIVE = 8
+    GOAL_EFFECT = 16
+    SELECT_RESULT = 32
+    IS_RIVAL_MINIGAME = 64
+    IS_RIVAL_TURN_PROGRESS = 128
+    IS_PROGRESS_TURN = 256
+    BULK_DICE = 512 # unknown
+    IS_PARTY_ON = 1024 # unknown 
+    IS_SHORTCUT_ON = 2048
 
 class eBlockType(IntEnum):
-	NONE = 0
-	START_POINT = 1
-	MILES = 2
-	SHOP = 3
-	DISH = 4
-	MINI_GAME = 5
-	EVENT = 6
-	TREASURE = 7
-	WARP = 8
-	WARP_START_POINT = 9
-	WARP_END_POINT = 10
-	GACHA = 11
-	LOTTERY = 12
-	GOAL = 13
-	MOVE_ON = 14
-
-class eEffectActivationType(IntEnum):
-	NONE = 0
-	DISH = 1
-	EVENT = 2
-	BUDDY = 3
+    NONE = 0
+    START_POINT = 1
+    MILES = 2
+    SHOP = 3
+    DISH = 4
+    MINI_GAME = 5
+    EVENT = 6
+    TREASURE = 7
+    WARP = 8
+    WARP_START_POINT = 9
+    WARP_END_POINT = 10
+    GACHA = 11
+    LOTTERY = 12
+    GOAL = 13
+    MOVE_ON = 14
+    PARTY = 15
+    SHORTCUT = 16
 
 class eDishEffectType(IntEnum):
-	NONE = 0
-	MULTI_DICE = 1
-	FIX_DICE_NUMBER = 2
-	FIX_DUCE_NUMBER_AND_TURN_NOT_PROGRESS = 3
-	RANDOM_EVENT = 4
-	MILE_BLOCK_EFFECT = 5
-	BLOCK_RANK_UP = 6
-	CHANGE_DICE_BY_TURN_ODDS = 7
-	OPEN_MILE_SHOP = 8
-	BLOCK_SKIP_MOVE_COUNT = 9
-	GET_CARAVAN_REWARD = 10
-	ADD_MOVE_COUNT = 11
+    NONE = 0
+    MULTI_DICE = 1
+    FIX_DICE_NUMBER = 2
+    FIX_DUCE_NUMBER_AND_TURN_NOT_PROGRESS = 3
+    RANDOM_EVENT = 4
+    MILE_BLOCK_EFFECT = 5
+    BLOCK_RANK_UP = 6
+    CHANGE_DICE_BY_TURN_ODDS = 7
+    OPEN_MILE_SHOP = 8
+    BLOCK_SKIP_MOVE_COUNT = 9
+    GET_CARAVAN_REWARD = 10
+    ADD_MOVE_COUNT = 11
+    CHANGE_BLOCK_TYPE = 12
 
 class eEventEffectType(IntEnum):
 	NONE = 0
@@ -78,12 +72,6 @@ class eEventEffectType(IntEnum):
 	MILE_BLOCK_MUL = 4
 	MINIGAME_BLOCK_MUL = 5
 	SHOP_DISCOUNT = 6
-
-class eMoveDirection(IntEnum):
-	UP = 0
-	DOWN = 1
-	LEFT = 2
-	RIGHT = 3
 
 class eGachaType(IntEnum):
 	NORMAL = 0
@@ -130,6 +118,7 @@ class eState(IntEnum):
     RIVAL_MINI_GAME = 12
     RIVAL_TURN_PROGRESS = 13
     SELECT_RESULT = 14
+    SHORTCUT = 15
 
     _ignore_ = "_zh"
     @property
@@ -293,13 +282,17 @@ class DishEffectManager(EffectManager):
 
     def get_effect_influence_value(self, effect: eDishEffectType) -> Union[int, None]:
         dish = self.get_effect_influence(effect)
+        hit = False
+        val = 0
         if dish is None:
             return None
         elif db.caravan_dish[dish.id].effect_type == effect:
-            return db.caravan_dish[dish.id].effect_value
+            hit = True
+            val += db.caravan_dish[dish.id].effect_value
         elif dish.id == self.game.used_dish_id:
-            return db.caravan_dish[dish.id].sub_effect_value
-        return None
+            hit = True
+            val += db.caravan_dish[dish.id].sub_effect_value
+        return val if hit else None
 
     def is_dice_fix(self) -> bool:
         for effect in [eDishEffectType.FIX_DICE_NUMBER, eDishEffectType.FIX_DUCE_NUMBER_AND_TURN_NOT_PROGRESS, eDishEffectType.CHANGE_DICE_BY_TURN_ODDS]:
@@ -443,7 +436,7 @@ class CaravanGame:
 
     @property
     def licheng_point(self) -> int:
-        return self.client.data.get_inventory((eInventoryType.CaravanItem, 99007))
+        return self.client.data.get_inventory(db.licheng_point)
 
     @property
     def candidate_dishes(self) -> typing.Counter[int]:
@@ -521,6 +514,14 @@ class CaravanGame:
         self.action_bit_flag = resp.action_bit_flag or 0
         if resp.action_bit_flag:
             self._log(f"处理 action_bit_flag={resp.action_bit_flag}")
+            if eFlag.IS_PARTY_ON & resp.action_bit_flag:
+                self._log("处理 IS_PARTY_ON")
+                self.state = eState.USE_DISH
+                await self.step()
+            if eFlag.IS_SHORTCUT_ON & resp.action_bit_flag:
+                self._log("处理 IS_SHORTCUT_ON")
+                self.state = eState.SHORTCUT
+                await self.step()
             if eFlag.BLOCK_EFFECT & resp.action_bit_flag:
                 self._log("处理 BLOCK_EFFECT")
                 self.state = eState.CELL_ACTION
@@ -582,17 +583,17 @@ class CaravanGame:
             return
         surplus_dishes = Counter({dish.id: dish.stock for dish in surplus_dish_list})
         tot = sum(surplus_dishes.values()) + self.dish_cnt
-        if tot > 8: # self.client.data.settings.caravan.limit_caravan_dish_by_type disappear
-            self._log(f"料理数量{tot} > 8")
+        if tot > 10: # self.client.data.settings.caravan.limit_caravan_dish_by_type disappear
+            self._log(f"料理数量{tot} > 10")
             sell_dishes = []
             sell_surplus_dishes = []
             sell_num = 0
             for dishes, sell_list in [self.candidate_dishes, sell_dishes], [surplus_dishes, sell_surplus_dishes]:
                 for dish_id, stock in dishes.items():
                     if stock > 0:
-                        if tot <= 8:
+                        if tot <= 10:
                             break
-                        sold = min(stock, tot - 8)
+                        sold = min(stock, tot - 10)
                         sell_list.append(CaravanDishSellData(id=dish_id, current_num=stock, sell_num=sold))
                         dishes[dish_id] -= sold
                         tot -= sold
@@ -696,6 +697,7 @@ class CaravanGame:
                 self.spots = sum(self.spots_list)
                 self._log(f"当前格子 {self.current_block_id}，移动 {self.spots} 步")
                 self.spots_list = []
+
             while self.spots > 0:
                 next_blocks = db.caravan_map[self.current_block_id].get_next_blocks()
                 dis = [(nxt, db.caravan_map[nxt].distance_to_goal) for nxt in next_blocks]
@@ -790,6 +792,15 @@ class CaravanGame:
                 self.state = eState.RIVAL_TURN_PROGRESS
                 return
 
+            elif block_type == eBlockType.SHORTCUT:
+                self._log("捷近块 -> SHORTCUT")
+                self.state = eState.SHORTCUT
+
+            elif block_type == eBlockType.PARTY:
+                self._log("派对块 -> IDLE")
+                self.state = eState.RIVAL_TURN_PROGRESS
+                return
+
             else:
                 self._log(f"其他类型 {block_type.name} -> TURN_END")
                 raise AbortError(f"未处理的格子类型：{block_type.name}")
@@ -822,6 +833,27 @@ class CaravanGame:
         elif self.state == eState.RIVAL_TURN_PROGRESS:
             await self.update_rival_info(self.last_response.rival_info)
             self.last_response.rival_info = None
+            self.state = eState.IDLE
+
+        elif self.state == eState.SHORTCUT:
+            if self.licheng_point >= db.caravan_shortcut[self.current_block_id].cost:
+                self._log(f"花费{db.caravan_shortcut[self.current_block_id].cost}里程币抄近道")
+                resp = await self.client.caravan_shortcut_choice(
+                    season_id=self.season_id,
+                    block_id=self.current_block_id,
+                    is_open=1,
+                    current_currency_num=self.licheng_point
+                )
+                self.client.data.set_inventory(db.licheng_point, self.licheng_point - db.caravan_shortcut[self.current_block_id].cost)
+            else:
+                self._log("里程币不足，放弃抄近道")
+                resp = await self.client.caravan_shortcut_choice(
+                    season_id=self.season_id,
+                    block_id=self.current_block_id,
+                    is_open=0,
+                    current_currency_num=self.licheng_point
+                )
+            await self.update_rival_info(resp.rival_info)
             self.state = eState.IDLE
 
         elif self.state == eState.SHOP_BUY:
@@ -878,7 +910,8 @@ class CaravanGame:
                     self.candidate_shop_lineup = use_resp.shop_block_lineup_list or []
                     self.dish_effect_manager.append(CaravanEffectData(CaravanDishEffectData(id=dish_to_use, effect_turn=db.caravan_dish[dish_to_use].effect_turn, effect_count=db.caravan_dish[dish_to_use].effect_times)))
                     await self.check_dishes_full(use_resp.surplus_dish_list)
-                    break
+                    if not db.caravan_map[self.current_block_id].type == eBlockType.PARTY:
+                        break
                 self.action_bit_flag |= eFlag.DISH_USED
                 self.state = eState.IDLE
 
@@ -918,7 +951,8 @@ class CaravanGame:
                     self._log(f"当前骰子结果 {self.spots_list}, 达到 {self.buddy_effect_manager.get_repeat_count()}，停止投")
 
             if self.buddy_effect_manager.is_effect_exist(eBuddyEffectType.SELECT_DICE_RESULT) \
-                or self.buddy_effect_manager.is_effect_exist(eBuddyEffectType.SELECT_FRONT_OR_BACK):
+                or self.buddy_effect_manager.is_effect_exist(eBuddyEffectType.SELECT_FRONT_OR_BACK) \
+                or self.buddy_effect_manager.is_effect_exist(eBuddyEffectType.GO_FORWARD_BY_ODD_OR_EVEN) and sum(self.spots_list) % 2 == self.buddy_effect_manager.get_effect_influence_value(eBuddyEffectType.GO_FORWARD_BY_ODD_OR_EVEN)[0] % 2: # type: ignore
                 choice = 1 + (self.spots_choices_1 < self.spots_choices_2)
                 self._log(f"{self.spots_choices_1} vs {self.spots_choices_2}，选择骰子结果 {choice}")
                 await self.client.caravan_spots_choice(
