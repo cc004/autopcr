@@ -144,6 +144,7 @@ _zh = {
     eState.RIVAL_MINI_GAME: "对战",
     eState.RIVAL_TURN_PROGRESS: "若菜",
     eState.SELECT_RESULT: "选骰",
+    eState.SHORTCUT: "捷径",
 }
 
 class CaravanEffectData:
