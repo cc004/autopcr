@@ -471,6 +471,7 @@ class CaravanGame:
         self.spots_choices_1 = resp.spots_choices_1
         self.spots_choices_2 = resp.spots_choices_2
         self.rival_info = None
+        self.shortcut_block_id = resp.shortcut_block_id or 0
         await self.update_rival_info(resp.rival_info)
 
         items_list = db.caravan_coin_shop_lineup[resp.season_id]
@@ -697,6 +698,9 @@ class CaravanGame:
 
             while self.spots > 0:
                 next_blocks = db.caravan_map[self.current_block_id].get_next_blocks()
+                if self.shortcut_block_id and self.shortcut_block_id == self.current_block_id:
+                    next_blocks.append(db.caravan_shortcut[self.shortcut_block_id].end_point_block_id)
+                    self.shortcut_block_id = 0
                 dis = [(nxt, db.caravan_map[nxt].distance_to_goal) for nxt in next_blocks]
                 self.current_block_id = min(dis, key=lambda x: x[1])[0]
                 self.block_id_list.append(self.current_block_id)
@@ -841,6 +845,7 @@ class CaravanGame:
                     is_open=1,
                     current_currency_num=self.licheng_point
                 )
+                self.shortcut_block_id = self.current_block_id
                 self.client.data.set_inventory(db.licheng_point, self.licheng_point - db.caravan_shortcut[self.current_block_id].cost)
             else:
                 self._log("里程币不足，放弃抄近道")
