@@ -699,6 +699,7 @@ class CaravanGame:
             while self.spots > 0:
                 next_blocks = db.caravan_map[self.current_block_id].get_next_blocks()
                 if self.shortcut_block_id and self.shortcut_block_id == self.current_block_id:
+                    next_blocks = list(next_blocks)
                     next_blocks.append(db.caravan_shortcut[self.shortcut_block_id].end_point_block_id)
                     self.shortcut_block_id = 0
                 dis = [(nxt, db.caravan_map[nxt].distance_to_goal) for nxt in next_blocks]
