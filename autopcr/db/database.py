@@ -1,7 +1,7 @@
 from typing import List, Dict, Set, Tuple, Union
 import typing
 from ..model.enums import eCampaignCategory
-from ..model.common import UnitData, eInventoryType, RoomUserItem, InventoryInfo
+from ..model.common import ExtraEquipInfo, UnitData, eInventoryType, RoomUserItem, InventoryInfo
 from ..model.custom import ItemType
 import datetime
 from collections import Counter, defaultdict
@@ -14,6 +14,7 @@ from .constdata import extra_drops
 from ..core.apiclient import apiclient
 from typing import TypeVar, Generic
 from ..util.pcr_data import CHARA_NICKNAME
+from ..util.logger import instance as logger
 
 T = TypeVar("T")
 
@@ -2301,7 +2302,7 @@ class database():
     def is_unit_rank_bonus(self, unit_id: int, promotion_level: int) -> bool:
         return unit_id in self.promote_bonus and promotion_level in self.promote_bonus[unit_id]
 
-    def calc_unit_attribute(self, unit_data: UnitData, read_story: Set[int]) -> UnitAttribute:
+    def calc_unit_attribute(self, unit_data: UnitData, read_story: Set[int], ex_equips: Dict[int, ExtraEquipInfo]) -> UnitAttribute:
         unit_id = unit_data.id
         promotion_level = unit_data.promotion_level.value
         rarity = unit_data.battle_rarity if unit_data.battle_rarity else unit_data.unit_rarity
@@ -2342,10 +2343,22 @@ class database():
                 kizuna_attribute += story.get_unit_attribute()
 
         unit_attribute = base_attribute.round() + rb_attribute.round() + equip_attribute.round() + unique_equip_attribute.ceil() + kizuna_attribute.round()
+
+        # EX装备
+        ex_attribute = UnitAttribute()
+        for ex_equip in unit_data.ex_equip_slot:
+            if ex_equip.serial_id:
+                ex_equip_data = ex_equips[ex_equip.serial_id]
+                star = self.get_ex_equip_star_from_pt(ex_equip_data.ex_equipment_id, ex_equip_data.enhancement_pt)
+                attr = self.ex_equipment_data[ex_equip_data.ex_equipment_id].get_unit_attribute(star)
+                bonus = unit_attribute.ex_equipment_mul(attr).ceil()
+                ex_attribute += bonus
+        unit_attribute += ex_attribute
+
         return unit_attribute
 
-    def calc_unit_attribute_power(self, unit_data: UnitData, read_story: Set[int], coefficient: UnitStatusCoefficient) -> float:
-        unit_attribute = self.calc_unit_attribute(unit_data, read_story)
+    def calc_unit_attribute_power(self, unit_data: UnitData, read_story: Set[int], ex_equips: Dict[int, ExtraEquipInfo], coefficient: UnitStatusCoefficient) -> float:
+        unit_attribute = self.calc_unit_attribute(unit_data, read_story, ex_equips)
         return unit_attribute.get_power(coefficient)
 
     def calc_skill_power(self, unit_data: UnitData, coefficient: UnitStatusCoefficient) -> float:
@@ -2374,9 +2387,9 @@ class database():
 
         return skill_power * coefficient.skill_lv_coefficient
 
-    def calc_unit_power(self, unit_data: UnitData, read_story: Set[int]) -> float:
+    def calc_unit_power(self, unit_data: UnitData, read_story: Set[int], ex_equips: Dict[int, ExtraEquipInfo]) -> float:
         coefficient = self.unit_status_coefficient[1]
-        attribute_power = self.calc_unit_attribute_power(unit_data, read_story, coefficient)
+        attribute_power = self.calc_unit_attribute_power(unit_data, read_story, ex_equips, coefficient)
         skill_power = self.calc_skill_power(unit_data, coefficient)
         return attribute_power + skill_power
 

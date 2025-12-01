@@ -587,7 +587,7 @@ class datamgr(BaseModel, Component[apiclient]):
         return bad
 
     def get_unit_power(self, unit_id: int) -> int:
-        power = db.calc_unit_power(self.unit[unit_id], set(self.read_story_ids))
+        power = db.calc_unit_power(self.unit[unit_id], set(self.read_story_ids), self.ex_equips)
         return int(power + 0.5)
 
     def is_quest_cleared(self, quest: int) -> bool:

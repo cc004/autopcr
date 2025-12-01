@@ -51,6 +51,27 @@ class UnitAttribute:
         eParamType.ACCURACY: "accuracy"
     }
 
+    is_present = {
+        "hp": True,
+        "atk": True,
+        "magic_str": True,
+        "def_": True,
+        "magic_def": True,
+        "physical_critical": True,
+        "magic_critical": True,
+        "wave_hp_recovery": False,
+        "wave_energy_recovery": False,
+        "dodge": False,
+        "physical_penetrate": False,
+        "magic_penetrate": False,
+        "life_steal": False,
+        "hp_recovery_rate": False,
+        "energy_recovery_rate": False,
+        "energy_reduce_rate": False,
+        "accuracy": False,
+    }
+
+
     def __add__(self, oth: UnitAttribute):
         return UnitAttribute(**{key: getattr(self, key) + getattr(oth, key) for key in self.__annotations__})
 
@@ -59,10 +80,29 @@ class UnitAttribute:
             setattr(self, key, getattr(self, key) + getattr(oth, key))
         return self
 
+    def __sub__(self, oth: UnitAttribute):
+        return UnitAttribute(**{key: getattr(self, key) - getattr(oth, key) for key in self.__annotations__})
+
+    def __isub__(self, oth: UnitAttribute):
+        for key in self.__annotations__:
+            setattr(self, key, getattr(self, key) - getattr(oth, key))
+        return self
+
     def __mul__(self, oth: Union[int, float, Decimal]):
         if not isinstance(oth, Decimal):
             oth = Decimal(str(oth))
         return UnitAttribute(**{key: getattr(self, key) * oth for key in self.__annotations__})
+
+    def ex_equipment_mul(self, oth: 'UnitAttribute'):
+        ret = UnitAttribute()
+        for key in self.__annotations__:
+            base = getattr(self, key)
+            bonus = getattr(oth, key)
+            if UnitAttribute.is_present[key]:
+                setattr(ret, key, base * bonus / Decimal(10000))
+            else:
+                setattr(ret, key, bonus)
+        return ret
 
     def round(self):
         ret = UnitAttribute()
@@ -80,7 +120,7 @@ class UnitAttribute:
     def load(data: object, pre: str = '', suf: str = '') -> UnitAttribute:
         ret = UnitAttribute()
         for key in ret.__annotations__:
-            target = (pre + key.strip('_') + suf) if suf else key
+            target = (pre + key.strip('_') + suf) if suf or pre else key
             setattr(ret, key, Decimal(str(getattr(data, target, 0))))
         return ret
 

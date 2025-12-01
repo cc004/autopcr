@@ -35,6 +35,15 @@ class UnitRarity(models.UnitRarity):
         return UnitAttribute.load(self, suf='_growth') * level
 
 @method
+class ExEquipmentDatum(models.ExEquipmentDatum):
+    def get_unit_attribute(self, level: int) -> UnitAttribute:
+        from .database import db
+        min_val = UnitAttribute.load(self, pre='default_')
+        max_val = UnitAttribute.load(self, pre='max_')
+        max_rank = db.get_ex_equip_max_rank(self.ex_equipment_id)
+        return min_val + (max_val - min_val) * (level / db.get_ex_equip_max_star(self.ex_equipment_id, max_rank))
+
+@method
 class EquipmentDatum(models.EquipmentDatum):
     def get_unit_attribute(self) -> UnitAttribute:
         return UnitAttribute.load(self)
