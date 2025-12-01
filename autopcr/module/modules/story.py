@@ -195,6 +195,8 @@ class hatsune_sub_story_reading(Module):
                 await reader.special_read(sub_storys, self._log)
                 continue
 
+            await reader.prepare()
+
             if any(sub_story.status == eEventSubStoryStatus.ADDED for sub_story in sub_storys.sub_story_info_list):
                 await reader.confirm()
             for sub_story in sub_storys.sub_story_info_list:

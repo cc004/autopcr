@@ -34,6 +34,8 @@ class SubStoryReader:
     async def place_piece(self, sub_story_id: int): ...
     async def special_read(self, sub_storys: List[EventSubStory], _log: Callable): ...
     async def confirm(self): ...
+    async def prepare(self):
+        pass
 
     def __init__(self, client: pcrclient):
         self.client = client
@@ -42,6 +44,18 @@ def GetSubStoryReader(sub_story_data: EventSubStory, client: pcrclient) -> Union
     if sub_story_data.event_id in constructor:
         return constructor[sub_story_data.event_id](client)
     return None
+
+@EventId(10146)
+class apg_substory(SubStoryReader):
+
+    def title(self, sub_story_id: int) -> str:
+        return db.apg_story_data[sub_story_id].sub_story_id
+
+    async def prepare(self):
+        await self.client.apg_story_top()
+
+    async def read(self, sub_story_id: int):
+        await self.client.read_apg_story(sub_story_id)
 
 @EventId(10140)
 class fpc_substory(SubStoryReader):

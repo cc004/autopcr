@@ -18,25 +18,29 @@ async def localValidator():
     _type = None
     info = None
 
-    n = 3
-    for _ in range(n):
-        try:
-            _type = gt_obj.get_type(gt, challenge)
-            break
-        except Exception as e:
-            pass
+    try:
+        n = 3
+        for _ in range(n):
+            try:
+                _type = gt_obj.get_type(gt, challenge)
+                break
+            except Exception as e:
+                pass
 
-    if _type == 'click':
-        (c, s, args) = gt_obj.get_new_c_s_args(gt, challenge)
-        cor = asyncio.sleep(2)
-        w = gt_obj.generate_w(gt_obj.calculate_key(args), gt, challenge, str(c), s, "abcdefghijklmnop")
-        await cor
-        (msg, validate) = gt_obj.verify(gt, challenge, w)
-        info = {
-            "challenge": challenge,
-            "gt_user_id": userid,
-            "validate": validate
-        }
+        if _type == 'click':
+            (c, s, args) = gt_obj.get_new_c_s_args(gt, challenge)
+            cor = asyncio.sleep(2)
+            w = gt_obj.generate_w(gt_obj.calculate_key(args), gt, challenge, str(c), s, "abcdefghijklmnop")
+            await cor
+            (msg, validate) = gt_obj.verify(gt, challenge, w)
+            info = {
+                "challenge": challenge,
+                "gt_user_id": userid,
+                "validate": validate
+            }
+    except Exception as e:
+        logger.error(f'local validator error: {e}')
+
     return info
 
 @freqlimiter.FreqLimiter(5,30)

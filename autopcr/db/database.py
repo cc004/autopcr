@@ -54,6 +54,7 @@ class database():
     gacha_single_ticket: ItemType = (eInventoryType.Item, 24001)
     gacha_ten_tickets: List[ItemType] = [(eInventoryType.Item, 24002), (eInventoryType.Item, 24004)]
     dice: ItemType = (eInventoryType.Item, 99009)
+    licheng_point: ItemType = (eInventoryType.CaravanItem, 99007)
     ex_pt: ItemType = (eInventoryType.Item, 26201)
     xinyou: ItemType = (eInventoryType.Item, 25021)
     master_fragment: ItemType = (eInventoryType.Item, 25101)
@@ -106,6 +107,14 @@ class database():
             return (
                 CaravanMap.query(db)
                 .to_dict(lambda x: x.block_id, lambda x: x)
+            )
+
+    @lazy_property
+    def caravan_shortcut(self) -> Dict[int, CaravanShortcut]:
+        with self.dbmgr.session() as db:
+            return (
+                CaravanShortcut.query(db)
+                .to_dict(lambda x: x.shortcut_id, lambda x: x)
             )
 
     @lazy_property
@@ -1217,6 +1226,14 @@ class database():
             return (
                 HatsuneItem.query(db)
                 .to_dict(lambda x: x.event_id, lambda x: x)
+            )
+
+    @lazy_property
+    def apg_story_data(self) -> Dict[int, ApgStoryDatum]:
+        with self.dbmgr.session() as db:
+            return (
+                ApgStoryDatum.query(db)
+                .to_dict(lambda x: x.sub_story_id, lambda x: x)
             )
 
     @lazy_property

@@ -121,6 +121,14 @@ class pcrclient(apiclient):
         req.surplus_dish_list = surplus_dish_list
         return await self.request(req)
 
+    async def caravan_shortcut_choice(self, season_id: int, block_id: int, is_open: int, current_currency_num: int):
+        req = CaravanShortcutChoiceRequest()
+        req.season_id = season_id
+        req.block_id = block_id
+        req.is_open = is_open
+        req.current_currency_num = current_currency_num
+        return await self.request(req)
+
     async def caravan_spots_choice(self, season_id: int, choice: int):
         req = CaravanSpotsChoiceRequest()
         req.season_id = season_id
@@ -723,6 +731,15 @@ class pcrclient(apiclient):
     async def read_story(self, story_id: int):
         await self.story_check(story_id)
         return await self.story_view(story_id)
+
+    async def apg_story_top(self):
+        req = SubStoryApgTopRequest()
+        return await self.request(req)
+
+    async def read_apg_story(self, sub_story_id: int):
+        req = SubStoryApgReadStoryRequest()
+        req.sub_story_id = sub_story_id
+        return await self.request(req)
 
     async def draw_fpc_story(self, period: eFpcPeriod, fpc_operation_type: eFpcOperationType):
         req = SubStoryFpcDrawStoryRequest()

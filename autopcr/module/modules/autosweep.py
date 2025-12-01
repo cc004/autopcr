@@ -387,6 +387,8 @@ unique_equip_2_pure_memory_id = [
         113901, # 鬼裁
         113801, # 天姐
         113701, # 天妹
+        114401, # 圣哈
+        114501, # 圣电
 ]
 @conditional_execution1("very_hard_sweep_run_time", ["vh庆典"])
 @description('储备专二需求的150碎片，包括' + ','.join(db.get_unit_name(unit_id) for unit_id in unique_equip_2_pure_memory_id))
@@ -583,15 +585,13 @@ class talent_sweep(TalentSweep):
         return self.get_config('talent_sweep_no_max_no_sweep')
 
 @description('''
-领取邮件体力后再次扫荡！
+领取邮件体力后再次扫荡！复用「深域扫荡」配置
 '''.strip())
 @name("深域扫荡2")
-@TalentConfig("talent_sweep2_target_recovery_areas", "重置扫荡", [])
-@TalentConfig("talent_sweep2_no_max_no_sweep", "非最高不扫荡", list(db.talents.keys()))
 @default(True)
 @tag_stamina_consume
 class talent_sweep2(TalentSweep):
     def get_recovery_areas(self) -> List[int]:
-        return self.get_config('talent_sweep2_target_recovery_areas')
+        return self._parent.get_config('talent_sweep_target_recovery_areas', [])
     def get_no_max_no_sweep_areas(self) -> List[int]: 
-        return self.get_config('talent_sweep2_no_max_no_sweep')
+        return self._parent.get_config('talent_sweep_no_max_no_sweep', list(db.talents.keys()))
