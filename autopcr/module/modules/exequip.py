@@ -1,4 +1,5 @@
 from ...util.linq import flow
+from ...util.ilp_solver import ex_equip_power_max_cost_flow
 from ...model.common import ExtraEquipChangeSlot, ExtraEquipChangeUnit, InventoryInfoPost
 from ..modulebase import *
 from ..config import *
@@ -208,4 +209,113 @@ class remove_cb_ex_equip(Module):
         else:
             raise SkipError("所有会战EX装备均已撤下")
 
+
+@name('EX装战力最高搭配')
+@default(True)
+@description('理论最优，执行装备将撤下所有EX装备，然后再进行最优搭配')
+@booltype('ex_equip_power_maximun_do', '执行装备', False)
+class ex_equip_power_maximun(Module):
+    async def do_task(self, client: pcrclient):
+        st = "st"
+        ed = "ed"
+        edges = []
+        read_story = set(client.data.read_story_ids)
+        coefficient = db.unit_status_coefficient[1]
+        for unit_id in client.data.unit:
+            unit_node = f"u{unit_id}"
+            edges.append((st, unit_node, 3, 0))
+
+            unit_attr = db.calc_unit_attribute(client.data.unit[unit_id], read_story, client.data.ex_equips)
+
+            slot_data = db.unit_ex_equipment_slot[unit_id]
+            for ex_category in [slot_data.slot_category_1, slot_data.slot_category_2, slot_data.slot_category_3]:
+                ex_equip_group_by_star = flow(client.data.ex_equips.values()) \
+                        .where(lambda ex: ex_category == db.ex_equipment_data[ex.ex_equipment_id].category) \
+                        .group_by(lambda ex: db.get_ex_equip_star_from_pt(ex.ex_equipment_id, ex.enhancement_pt)) \
+                        .to_dict(lambda ex: ex.key, lambda ex: ex.to_list())
+                for star in ex_equip_group_by_star:
+                    consider_ex = set()
+                    for ex in ex_equip_group_by_star[star]:
+                        if ex.ex_equipment_id in consider_ex:
+                            continue
+                        consider_ex.add(ex.ex_equipment_id)
+                        ex_node = f"e{ex.ex_equipment_id}s{star}"
+                        attr = db.ex_equipment_data[ex.ex_equipment_id].get_unit_attribute(star)
+                        bonus = unit_attr.ex_equipment_mul(attr).ceil()
+                        power = int(bonus.get_power(coefficient) + 0.5)
+                        edges.append((unit_node, ex_node, 1, -power))
+
+        ex_equips_group_by_id_star = flow(client.data.ex_equips.values()) \
+                .group_by(lambda ex: (ex.ex_equipment_id, db.get_ex_equip_star_from_pt(ex.ex_equipment_id, ex.enhancement_pt))) \
+                .to_dict(lambda ex: ex.key, lambda ex: ex.count())
+        for (ex_id, star) in ex_equips_group_by_id_star:
+            ex_node = f"e{ex_id}s{star}"
+            edges.append((ex_node, ed, ex_equips_group_by_id_star[(ex_id, star)], 0))
+        min_cost, strategy = ex_equip_power_max_cost_flow(edges, st, ed)
+        self._log(f"最大战力提升：{-min_cost}")
+
+        slot_strategy = []
+        for u, v, flow_num in strategy:
+            if u == st or v == ed or flow_num == 0:
+                continue
+            unit_id = int(u[1:])
+            ex_equipment_id = int(v[1:v.index('s')])
+            star = int(v[v.index('s') + 1:])
+
+            slot_strategy.append((unit_id, ex_equipment_id, star))
+
+        slot_strategy = flow(slot_strategy) \
+                .group_by(lambda x: x[0]) \
+                .to_dict(lambda x: x.key, lambda x: x.to_list())
+        do_equip = self.get_config('ex_equip_power_maximun_do')
+        if do_equip:
+            cnt = 0
+            for unit_id in client.data.unit:
+                unit = client.data.unit[unit_id]
+                exchange_list = []
+                for ex_slot in unit.ex_equip_slot:
+                    if ex_slot.serial_id != 0:
+                        exchange_list.append(ExtraEquipChangeSlot(slot=ex_slot.slot, serial_id=0))
+                if exchange_list:
+                    cnt += 1
+                    await client.unit_equip_ex([ExtraEquipChangeUnit(
+                            unit_id=unit_id, 
+                            ex_equip_slot=exchange_list[:len(unit.ex_equip_slot)],
+                            cb_ex_equip_slot=None)])
+            if cnt:
+                self._log(f"撤下了{cnt}个角色的EX装备")
+
+            use_series_set = set()
+            for unit_id in slot_strategy:
+                unit = client.data.unit[unit_id]
+                exchange_list = []
+                for (_, ex_equipment_id, star) in slot_strategy[unit_id]:
+                    ex_candidates = flow(client.data.ex_equips.values()) \
+                            .where(lambda ex: ex.ex_equipment_id == ex_equipment_id and db.get_ex_equip_star_from_pt(ex.ex_equipment_id, ex.enhancement_pt) == star) \
+                            .where(lambda ex: ex.serial_id not in use_series_set) \
+                            .to_list()
+                    if not ex_candidates:
+                        continue
+                    ex_to_equip = ex_candidates[0]
+                    use_series_set.add(ex_to_equip.serial_id)
+                    slot_data = db.unit_ex_equipment_slot[unit_id]
+                    if db.ex_equipment_data[ex_equipment_id].category == slot_data.slot_category_1:
+                        slot = 1
+                    elif db.ex_equipment_data[ex_equipment_id].category == slot_data.slot_category_2:
+                        slot = 2
+                    else:
+                        slot = 3
+                    exchange_list.append(ExtraEquipChangeSlot(slot=slot, serial_id=ex_to_equip.serial_id))
+                if exchange_list:
+                    await client.unit_equip_ex([ExtraEquipChangeUnit(
+                            unit_id=unit_id, 
+                            ex_equip_slot=exchange_list,
+                            cb_ex_equip_slot=None)])
+
+        for unit_id in slot_strategy:
+            msg = []
+            for (_, ex_equipment_id, star) in slot_strategy[unit_id]:
+                msg.append(f"{db.get_ex_equip_name(ex_equipment_id)}★{star}")
+            msg = ','.join(msg)
+            self._log(f"{db.get_unit_name(unit_id)} 装备 {msg}")
 

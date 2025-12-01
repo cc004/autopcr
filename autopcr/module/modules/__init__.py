@@ -197,6 +197,7 @@ tool_modules = ModuleList(
     '工具',
     'tool',
     [
+        ex_equip_power_maximun,
         find_talent_quest,
         find_clan_talent_quest,
         # return_jewel,

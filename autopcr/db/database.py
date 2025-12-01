@@ -1676,9 +1676,9 @@ class database():
         except:
             return f"未知物品({item[0]}, {item[1]})"
 
-    def get_ex_equip_name(self, item: int, rank: int = 0) -> str:
+    def get_ex_equip_name(self, item: int, rank: int = -1) -> str:
         try:
-            return f"{self.ex_rarity_name[self.ex_equipment_data[item].rarity]}{rank}-" + self.inventory_name[(eInventoryType.ExtraEquip, item)] 
+            return f"{self.ex_rarity_name[self.ex_equipment_data[item].rarity]}{rank if rank != -1 else ''}-" + self.inventory_name[(eInventoryType.ExtraEquip, item)] 
         except:
             return f"未知ex装备({item})"
 
