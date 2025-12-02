@@ -18,4 +18,4 @@ quart-compress~=0.2.1
 dataclasses_json~=0.6.4
 PuLP~=2.8.0
 openpyxl~=3.1.5
-networkx~=3.6
+networkx

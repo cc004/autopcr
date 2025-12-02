@@ -228,7 +228,9 @@ class ex_equip_power_maximun(Module):
             unit_attr = db.calc_unit_attribute(client.data.unit[unit_id], read_story, client.data.ex_equips)
 
             slot_data = db.unit_ex_equipment_slot[unit_id]
-            for ex_category in [slot_data.slot_category_1, slot_data.slot_category_2, slot_data.slot_category_3]:
+            for slot_id, ex_category in enumerate([slot_data.slot_category_1, slot_data.slot_category_2, slot_data.slot_category_3], start=1):
+                unit_slot_node = f"{unit_node}k{slot_id}"
+                edges.append((unit_node, unit_slot_node, 1, 0))
                 ex_equip_group_by_star = flow(client.data.ex_equips.values()) \
                         .where(lambda ex: ex_category == db.ex_equipment_data[ex.ex_equipment_id].category) \
                         .group_by(lambda ex: db.get_ex_equip_star_from_pt(ex.ex_equipment_id, ex.enhancement_pt)) \
@@ -243,7 +245,7 @@ class ex_equip_power_maximun(Module):
                         attr = db.ex_equipment_data[ex.ex_equipment_id].get_unit_attribute(star)
                         bonus = unit_attr.ex_equipment_mul(attr).ceil()
                         power = int(bonus.get_power(coefficient) + 0.5)
-                        edges.append((unit_node, ex_node, 1, -power))
+                        edges.append((unit_slot_node, ex_node, 1, -power))
 
         ex_equips_group_by_id_star = flow(client.data.ex_equips.values()) \
                 .group_by(lambda ex: (ex.ex_equipment_id, db.get_ex_equip_star_from_pt(ex.ex_equipment_id, ex.enhancement_pt))) \
@@ -256,13 +258,14 @@ class ex_equip_power_maximun(Module):
 
         slot_strategy = []
         for u, v, flow_num in strategy:
-            if u == st or v == ed or flow_num == 0:
+            if u == st or v == ed or flow_num == 0 or u.startswith("u") and v.startswith("u"):
                 continue
-            unit_id = int(u[1:])
+            unit_id = int(u[1:u.index('k')])
+            slot_id = int(u[u.index('k') + 1:])
             ex_equipment_id = int(v[1:v.index('s')])
             star = int(v[v.index('s') + 1:])
 
-            slot_strategy.append((unit_id, ex_equipment_id, star))
+            slot_strategy.append((unit_id, slot_id, ex_equipment_id, star))
 
         slot_strategy = flow(slot_strategy) \
                 .group_by(lambda x: x[0]) \
@@ -289,22 +292,16 @@ class ex_equip_power_maximun(Module):
             for unit_id in slot_strategy:
                 unit = client.data.unit[unit_id]
                 exchange_list = []
-                for (_, ex_equipment_id, star) in slot_strategy[unit_id]:
+                for (_, slot, ex_equipment_id, star) in slot_strategy[unit_id]:
                     ex_candidates = flow(client.data.ex_equips.values()) \
                             .where(lambda ex: ex.ex_equipment_id == ex_equipment_id and db.get_ex_equip_star_from_pt(ex.ex_equipment_id, ex.enhancement_pt) == star) \
                             .where(lambda ex: ex.serial_id not in use_series_set) \
                             .to_list()
                     if not ex_candidates:
+                        self._warn(f"无{db.get_ex_equip_name(ex_equipment_id)}★{star}，无法装备")
                         continue
                     ex_to_equip = ex_candidates[0]
                     use_series_set.add(ex_to_equip.serial_id)
-                    slot_data = db.unit_ex_equipment_slot[unit_id]
-                    if db.ex_equipment_data[ex_equipment_id].category == slot_data.slot_category_1:
-                        slot = 1
-                    elif db.ex_equipment_data[ex_equipment_id].category == slot_data.slot_category_2:
-                        slot = 2
-                    else:
-                        slot = 3
                     exchange_list.append(ExtraEquipChangeSlot(slot=slot, serial_id=ex_to_equip.serial_id))
                 if exchange_list:
                     await client.unit_equip_ex([ExtraEquipChangeUnit(
@@ -314,7 +311,7 @@ class ex_equip_power_maximun(Module):
 
         for unit_id in slot_strategy:
             msg = []
-            for (_, ex_equipment_id, star) in slot_strategy[unit_id]:
+            for (_, slot, ex_equipment_id, star) in slot_strategy[unit_id]:
                 msg.append(f"{db.get_ex_equip_name(ex_equipment_id)}★{star}")
             msg = ','.join(msg)
             self._log(f"{db.get_unit_name(unit_id)} 装备 {msg}")

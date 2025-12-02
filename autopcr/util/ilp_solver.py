@@ -131,12 +131,7 @@ def ex_equip_power_max_cost_flow(edges: List[Tuple[str, str, int, int]], s: str,
     # 求最小费用最大流
     minCostFlow = nx.max_flow_min_cost(G, s, t)
     minCost = nx.cost_of_flow(G, minCostFlow)
-    strategy = []
-    strategy = []
-    for u, v in G.edges():
-        flow = minCostFlow[u][v]
-        if flow > 0:
-            strategy.append((u, v, flow))
+    strategy = [(u, v, minCostFlow[u][v]) for u, v in G.edges() if minCostFlow[u][v] > 0]
     return minCost, strategy
 
 if __name__ == '__main__':
