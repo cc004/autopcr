@@ -595,3 +595,4 @@ class talent_sweep2(TalentSweep):
         return self._parent.get_config('talent_sweep_target_recovery_areas', [])
     def get_no_max_no_sweep_areas(self) -> List[int]: 
         return self._parent.get_config('talent_sweep_no_max_no_sweep', list(db.talents.keys()))
+

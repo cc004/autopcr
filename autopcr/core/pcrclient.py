@@ -1147,6 +1147,30 @@ class pcrclient(apiclient):
         req.random_count = times
         return await self.request(req)
 
+    async def abyss_top(self, abyss_id: int):
+        req = AbyssTopRequest()
+        req.abyss_id = abyss_id
+        req.is_first = 1
+        return await self.request(req)
+
+    async def abyss_boss_skip(self, abyss_id: int, boss_id: int, enemy_index: int, exec_skip_num: int, current_boss_ticket_num: int):
+        req = AbyssBossSkipRequest()
+        req.abyss_id = abyss_id
+        req.boss_id = boss_id
+        req.enemy_index = enemy_index
+        req.exec_skip_num = exec_skip_num
+        req.current_skip_ticket_num = self.data.get_inventory((eInventoryType.Item, 23001))
+        req.current_boss_ticket_num = current_boss_ticket_num
+        return await self.request(req)
+
+    async def abyss_quest_skip(self, quest_id: int, times: int):
+        req = AbyssQuestSkipMultipleRequest()
+        req.abyss_id = db.quest_info[quest_id].abyss_id
+        req.skip_list = [QuestSkipInfo(quest_id=quest_id, skip_count=times)]
+        req.current_ticket_num = self.data.get_inventory((eInventoryType.Item, 23001))
+        req.exec_type = 1 # for single 2 for multiple
+        return await self.request(req)
+
     async def talent_quest_skip(self, quest_id: int, use_ticket_num: int):
         req = TalentQuestSkipRequest()
         req.quest_id = quest_id
@@ -1419,6 +1443,14 @@ class pcrclient(apiclient):
                 daily_clear_count = 0,
                 daily_recovery_count = 0,
             ))
+        elif db.is_abyss_quest(quest):
+            if quest not in self.data.cleared_abyss_quests:
+                raise AbortError(f"任务{name}未通关或不存在")
+            qinfo = self.data.abyss_quest_info.get(quest, AbyssDailyClearCountList(
+                quest_id = quest,
+                daily_clear_count = 0,
+            ))
+            setattr(qinfo, 'daily_recovery_count', 0)
         else:
             if not quest in self.data.quest_dict:
                 raise AbortError(f"任务{name}未通关或不存在")
@@ -1430,6 +1462,8 @@ class pcrclient(apiclient):
         info = db.quest_info[quest]
         if db.is_talent_quest(quest): # fix
             setattr(info, 'daily_limit', self.data.settings.talent_quest.daily_clear_limit_count)
+        elif db.is_abyss_quest(quest):
+            setattr(info, 'daily_limit', self.data.settings.abyss.daily_clear_limit_count)
 
         stamina_coefficient = self.data.get_quest_stamina_half_campaign_times(quest)
         if not stamina_coefficient: stamina_coefficient = 100
@@ -1448,6 +1482,8 @@ class pcrclient(apiclient):
                 return await self.hatsune_quest_skip(event, quest, times)
             elif db.is_talent_quest(quest):
                 return await self.talent_quest_skip(quest, times)
+            elif db.is_abyss_quest(quest):
+                return await self.abyss_quest_skip(quest, times)
             else:
                 return await self.quest_skip(quest, times)
         if info.daily_limit:
@@ -1472,7 +1508,7 @@ class pcrclient(apiclient):
                         result = result + result_list.reward_list
                 if resp.bonus_reward_list:
                     result = result + resp.bonus_reward_list
-                    
+
                 times -= t
                 remain -= t
         else:

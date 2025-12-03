@@ -1,5 +1,6 @@
 from dataclasses import field
 from typing import Any
+from .abyss import *
 from .autosweep import *
 from .box import *
 from .nologin import *
@@ -69,6 +70,8 @@ daily_modules = ModuleList(
         special_underground_skip,
         tower_cloister_sweep,
         jjc_reward,
+        abyss_quest_sweep,
+        abyss_boss_sweep,
         talent_sweep,
         present_receive,
         talent_sweep2,

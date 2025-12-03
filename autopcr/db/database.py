@@ -665,7 +665,25 @@ class database():
                 .concat(HatsuneQuest.query(db))
                 .concat(ShioriQuest.query(db))
                 .concat(TalentQuestDatum.query(db))
+                .concat(AbyssQuestDatum.query(db))
                 .to_dict(lambda x: x.quest_id, lambda x: x)
+            )
+
+    @lazy_property
+    def abyss_quest_info(self) -> Dict[int, List[AbyssQuestDatum]]:
+        with self.dbmgr.session() as db:
+            return (
+                AbyssQuestDatum.query(db)
+                .group_by(lambda x: x.abyss_id)
+                .to_dict(lambda x: x.key, lambda x: x.to_list())
+            )
+
+    @lazy_property
+    def abyss_boss_data(self) -> Dict[int, AbyssBossDatum]:
+        with self.dbmgr.session() as db:
+            return (
+                AbyssBossDatum.query(db)
+                .to_dict(lambda x: x.boss_id, lambda x: x)
             )
 
     @lazy_property
@@ -1544,6 +1562,7 @@ class database():
                 .concat(ShioriQuest.query(db))
                 .concat(TrainingQuestDatum.query(db))
                 .concat(TalentQuestDatum.query(db))
+                .concat(AbyssQuestDatum.query(db))
                 .to_dict(lambda x: x.quest_id, lambda x: x.quest_name)
             )
         ret.update(
@@ -1824,6 +1843,9 @@ class database():
         top = quest_id // 1000000
         return top >= 81 and top <= 85
 
+    def is_abyss_quest(self, quest_id: int) -> bool:
+        return quest_id // 1000000 == 92
+
     def is_hatsune_normal_quest(self, quest_id: int) -> bool:
         return self.is_hatsune_quest(quest_id) and (quest_id // 100) % 10 == 1
 
@@ -1909,6 +1931,17 @@ class database():
         now = apiclient.datetime
         return flow(self.hatsune_schedule.values()) \
                 .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.close_time)) \
+                .to_list()
+
+    def get_active_abyss(self) -> List[AbyssSchedule]:
+        now = apiclient.datetime
+        return flow(self.abyss_schedule.values()) \
+                .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.close_time)) \
+                .to_list()
+
+    def get_abyss_bosses(self, abyss_id: int) -> List[AbyssBossDatum]:
+        return flow(self.abyss_boss_data.values()) \
+                .where(lambda x: x.abyss_id == abyss_id) \
                 .to_list()
 
     def get_active_seasonpass(self) -> List[SeasonpassFoundation]:
