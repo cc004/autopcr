@@ -1072,6 +1072,22 @@ class database():
             )
 
     @lazy_property
+    def dome_schedule_data(self) -> Dict[int, DomeScheduleDatum]:
+        with self.dbmgr.session() as db:
+            return (
+                DomeScheduleDatum.query(db)
+                .to_dict(lambda x: x.schedule_id, lambda x: x)
+            )
+
+    @lazy_property
+    def abyss_schedule(self) -> Dict[int, AbyssSchedule]:
+        with self.dbmgr.session() as db:
+            return (
+                AbyssSchedule.query(db)
+                .to_dict(lambda x: x.abyss_id, lambda x: x)
+            )
+
+    @lazy_property
     def tower_schedule(self) -> Dict[int, TowerSchedule]:
         with self.dbmgr.session() as db:
             return (
