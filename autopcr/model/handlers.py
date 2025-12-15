@@ -733,6 +733,38 @@ class SeasonPassMissionAcceptResponse(responses.SeasonPassMissionAcceptResponse)
                 mgr.update_inventory(reward)
 
 @handles
+class SubStoryTprRegisterSuccessResponse(responses.SubStoryTprRegisterSuccessResponse):
+    async def update(self, mgr: datamgr, request):
+        for reward in self.reward_info or []:
+            mgr.update_inventory(reward)
+        if self.unlock_sub_story_info_list:
+            for sub_story in self.unlock_sub_story_info_list:
+                event_id = db.tpr_story_data[sub_story.sub_story_id].original_event_id
+                if event_id not in mgr.event_sub_story:
+                    mgr.event_sub_story[event_id] = datamgr.EventSubStoryData(event_id=event_id, sub_story_info_list=[])
+                find_one = next((s for s in mgr.event_sub_story[event_id].sub_story_info_list if s.sub_story_id == sub_story.sub_story_id), None)
+                if find_one:
+                    find_one.status = sub_story.status
+                else:
+                    mgr.event_sub_story[event_id].sub_story_info_list.append(sub_story)
+
+@handles
+class SubStoryTprReadStoryResponse(responses.SubStoryTprReadStoryResponse):
+    async def update(self, mgr: datamgr, request):
+        sub_story_id = request.sub_story_id
+        event_id = db.tpr_story_data[sub_story_id].original_event_id
+        sub_story_info = next((s for s in mgr.event_sub_story[event_id].sub_story_info_list if s.sub_story_id == sub_story_id), None)
+        if sub_story_info:
+            sub_story_info.status = eEventSubStoryStatus.READED
+        else:
+            mgr.event_sub_story[event_id].sub_story_info_list.append(
+                datamgr.EventSubStoryInfo(
+                    sub_story_id=sub_story_id,
+                    status=eEventSubStoryStatus.READED
+                )
+            )
+
+@handles
 class SubStoryApgReadStoryResponse(responses.SubStoryApgReadStoryResponse):
     async def update(self, mgr: datamgr, request):
         if self.reward_info:

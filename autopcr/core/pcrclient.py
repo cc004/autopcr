@@ -732,6 +732,18 @@ class pcrclient(apiclient):
         await self.story_check(story_id)
         return await self.story_view(story_id)
 
+    async def tpr_register_success(self, panel_id: int, correct_type: int, parts_id_list: List[int]):
+        req = SubStoryTprRegisterSuccessRequest()
+        req.panel_id = panel_id
+        req.correct_type = correct_type
+        req.parts_id_list = parts_id_list
+        return await self.request(req)
+
+    async def read_tpr_story(self, sub_story_id: int):
+        req = SubStoryTprReadStoryRequest()
+        req.sub_story_id = sub_story_id
+        return await self.request(req)
+
     async def apg_story_top(self):
         req = SubStoryApgTopRequest()
         return await self.request(req)

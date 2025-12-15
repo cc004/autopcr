@@ -218,3 +218,26 @@ class TeamSkillNode(models.TeamSkillNode):
             yield self.enhance_level_id_4
         if self.enhance_level_id_5 != 0:
             yield self.enhance_level_id_5
+
+@method
+class TprPanelDatum(models.TprPanelDatum):
+    def get_correct_parts(self):
+        if self.correct_parts_id_1 != 0:
+            yield self.correct_parts_id_1
+        if self.correct_parts_id_2 != 0:
+            yield self.correct_parts_id_2
+        if self.correct_parts_id_3 != 0:
+            yield self.correct_parts_id_3
+        if self.correct_parts_id_4 != 0:
+            yield self.correct_parts_id_4
+    
+    def get_another_parts(self):
+        if self.another_parts_id_1 != 0:
+            yield self.another_parts_id_1
+        if self.another_parts_id_2 != 0:
+            yield self.another_parts_id_2
+        if self.another_parts_id_3 != 0:
+            yield self.another_parts_id_3
+        if self.another_parts_id_4 != 0:
+            yield self.another_parts_id_4
+

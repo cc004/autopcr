@@ -1246,6 +1246,22 @@ class database():
             )
 
     @lazy_property
+    def tpr_story_data(self) -> Dict[int, TprStoryDatum]:
+        with self.dbmgr.session() as db:
+            return (
+                TprStoryDatum.query(db)
+                .to_dict(lambda x: x.sub_story_id, lambda x: x)
+            )
+
+    @lazy_property
+    def tpr_panel_data(self) -> Dict[int, TprPanelDatum]:
+        with self.dbmgr.session() as db:
+            return (
+                TprPanelDatum.query(db)
+                .to_dict(lambda x: x.panel_id, lambda x: x)
+            )
+
+    @lazy_property
     def apg_story_data(self) -> Dict[int, ApgStoryDatum]:
         with self.dbmgr.session() as db:
             return (
