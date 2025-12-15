@@ -82,6 +82,7 @@ class CampaignSchedule(ISchedule):
         EVENT_NORMAL = "活动normal"
         EVENT_HARD = "活动hard"
         TALENT_QUEST = "深域本"
+        ABYSS = "深渊讨伐战"
 
     class eCampaignCategoryHigh(Enum):
         HALF_STAMINA = "体力消耗"
@@ -151,14 +152,14 @@ class DomeScheduleData(ISchedule):
     description = "新斗技场"
 
 class AbyssSchedule(ISchedule):
-    description = "深域讨伐战"
+    description = "深渊讨伐战"
 
     def __init__(self, talent_id: int, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.talent_id = talent_id
 
     def get_description(self) -> str:
-        return f"深域讨伐战——{db.talents[self.talent_id].talent_name}"
+        return f"深渊讨伐战——{db.talents[self.talent_id].talent_name}"
 
 class CaravanSchedule(ISchedule):
     description = "驾车游"
@@ -206,7 +207,7 @@ class half_schedule(Module):
         (db.colosseum_schedule_data, lambda x: ColosseumScheduleData(x.start_time, x.end_time, "斗技场")),
         (db.caravan_schedule, lambda x: CaravanSchedule(x.season_id, x.start_time, x.end_time, "驾车游")),
         (db.dome_schedule_data, lambda x: DomeScheduleData(x.start_time, x.end_time, "新斗技场")),
-        (db.abyss_schedule, lambda x: AbyssSchedule(x.talent_id, x.start_time, x.end_time, "深域讨伐战")),
+        (db.abyss_schedule, lambda x: AbyssSchedule(x.talent_id, x.start_time, x.end_time, "深渊讨伐战")),
     ]
     async def do_task(self, _: pcrclient):
         schedules = defaultdict(list)
