@@ -60,7 +60,7 @@ class datamgr(BaseModel, Component[apiclient]):
     cleared_byway_quest_id_set: Set[int] = set({})
     return_fes_info_list: List[ReturnFesInfo] = None
     data_time: int = 0
-    version: int = 3
+    version: int = 4
     caravan_dishes: typing.Counter[int] = Counter()
     user_clan_battle_ex_equip_restriction: Dict[int, RestrictionExtraEquip] = {}
     talent_quest_area_info: Dict[int, TalentQuestAreaInfo] = {}
