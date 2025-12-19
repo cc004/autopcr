@@ -98,8 +98,10 @@ class lazy_normal_sweep(Module):
                 f": 刷取{cnt}次" for quest, cnt in clean_cnt.items())
                 self._log(msg)
                 self._log("---------")
-            if tmp:
-                self._log(await client.serialize_reward_summary(tmp))
+                if tmp:
+                    self._log(await client.serialize_reward_summary(tmp))
+            elif not self.is_warn:
+                raise SkipError()
 
 # @conditional_execution1("normal_sweep_run_time", ["n庆典"])
 # @singlechoice("normal_sweep_strategy", "刷取策略", "刷最缺", ["刷最缺", "均匀刷"])
@@ -269,11 +271,12 @@ class simple_demand_sweep_base(Module):
                 f": 刷取{cnt}次" for quest, cnt in clean_cnt.items())
                 self._log(msg)
                 self._log("---------")
-            if tmp:
-                self._log(await client.serialize_reward_summary(tmp))
-            if not self.log:
-                self._log("需刷取的图均无次数")
-                raise SkipError()
+                if tmp:
+                    self._log(await client.serialize_reward_summary(tmp))
+            else:
+                if not self.is_warn:
+                    self._log("需刷取的图均无次数")
+                    raise SkipError()
 
 
 @singlechoice('hard_sweep_gap_limit', "盈余阈值", 10, [0, 5, 10])
@@ -496,16 +499,19 @@ class DIY_sweep(Module):
                 else:
                     self._log(str(e))
                 break
-        
+
         if clean_cnt:
-                msg = '\n'.join(db.get_quest_name(quest) +
-                f": 刷取{cnt}次" for quest, cnt in clean_cnt.items())
-                self._log(msg)
-                self._log("---------")
-        elif not self.log:
-            self._log("需刷取的图均无次数")
-        if result:
-            self._log(await client.serialize_reward_summary(result))
+            msg = '\n'.join(db.get_quest_name(quest) +
+            f": 刷取{cnt}次" for quest, cnt in clean_cnt.items())
+            self._log(msg)
+            self._log("---------")
+            if result:
+                self._log(await client.serialize_reward_summary(result))
+        else:
+            if not self.log:
+                self._log("需刷取的图均无次数")
+            if not self.warn:
+                raise SkipError()
 
 @description('''
 首先按次数逐一刷取名字为start和start2的图

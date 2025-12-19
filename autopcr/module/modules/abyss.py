@@ -37,6 +37,8 @@ class abyss_quest_sweep(DIY_sweep):
 class abyss_boss_sweep(Module):
     async def do_task(self, client: pcrclient):
         abyss_difficulty = self.get_config("abyss_boss_sweep_when_all_difficulty_clear")
+        do_sweep = False
+        rewards = []
         for abyss in db.get_active_abyss():
             self._log(f"=={abyss.title}==")
             abyss_id = abyss.abyss_id
@@ -44,9 +46,13 @@ class abyss_boss_sweep(Module):
             boss_info = {boss.boss_id : boss for boss in top.user_boss_list}
             boss_ticket_cnt = client.data.get_inventory((eInventoryType.Item, abyss.boss_ticket_id))
 
-            self._log(f"当前持有深渊讨伐券x{boss_ticket_cnt}")
+            if boss_ticket_cnt:
+                self._log(f"当前持有深渊讨伐券x{boss_ticket_cnt}")
+            else:
+                self._log("没有深渊讨伐券，跳过扫荡")
+                continue
 
-            do_sweep = True
+            to_sweep = True
 
             for boss in db.get_abyss_bosses(abyss_id):
                 if boss.difficulty != abyss_difficulty or abyss_difficulty == eDifficulty.NONE:
@@ -54,9 +60,9 @@ class abyss_boss_sweep(Module):
                 boss_status = boss_info.get(boss.boss_id, None)
                 if not boss_status or boss_status.enemy_index == 1:
                     self._warn(f"未通关{eDifficulty(abyss_difficulty).name} {boss.boss_id // 100 % 10}，跳过扫荡")
-                    do_sweep = False
+                    to_sweep = False
 
-            if do_sweep:
+            if to_sweep:
                 target_boss = max(
                     (boss for boss in boss_info.values() if boss.enemy_index > 1),
                     key=lambda b: b.best_damage * db.abyss_boss_data[b.boss_id].score_rate,
@@ -68,7 +74,17 @@ class abyss_boss_sweep(Module):
                     raise SkipError("没有深渊讨伐券")
                 boss_name = f"{eDifficulty(db.abyss_boss_data[target_boss.boss_id].difficulty).name}{target_boss.boss_id // 100 % 10}"
                 self._log(f"扫荡{boss_name}x{boss_ticket_cnt}")
-                await client.abyss_boss_skip(abyss_id, target_boss.boss_id, target_boss.enemy_index, boss_ticket_cnt, boss_ticket_cnt)
+                do_sweep = True
+                resp = await client.abyss_boss_skip(abyss_id, target_boss.boss_id, target_boss.enemy_index, boss_ticket_cnt, boss_ticket_cnt)
+                rewards.extend(resp.reward_list or [])
+                rewards.extend(resp.challenge_reward_list or [])
+
+        if rewards:
+            self._log("------")
+            self._log(await client.serialize_reward_summary(rewards))
+
         if not self.log:
             self._log("当前无进行中的深渊讨伐战")
 
+        if not do_sweep:
+            raise SkipError()
