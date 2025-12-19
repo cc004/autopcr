@@ -431,7 +431,7 @@ class AbyssBossConfig(SingleChoiceConfig):
     """Configuration for abyss boss difficulty."""
 
     def __init__(self, key: str, desc: str, default: int):
-        super().__init__(key, desc, default, [eDifficulty.NORMAL, eDifficulty.HARD, eDifficulty.VERY_HARD, eDifficulty.EXTREME])
+        super().__init__(key, desc, default, [eDifficulty.NONE, eDifficulty.NORMAL, eDifficulty.HARD, eDifficulty.VERY_HARD, eDifficulty.EXTREME])
 
     def candidate_display(self, difficulty: int):
         return (eDifficulty)(difficulty).name

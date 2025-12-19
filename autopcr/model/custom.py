@@ -244,6 +244,7 @@ class TalentQuestData(BaseModel):
     clear_count: int = None
 
 class eDifficulty(IntEnum):
+    NONE = 0
     NORMAL = 1
     HARD = 2
     VERY_HARD = 3

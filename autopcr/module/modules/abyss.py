@@ -36,7 +36,6 @@ class abyss_quest_sweep(DIY_sweep):
 @default(True)
 class abyss_boss_sweep(Module):
     async def do_task(self, client: pcrclient):
-        do_sweep_when_all_clear = self.get_config("abyss_boss_sweep_when_all_clear")
         abyss_difficulty = self.get_config("abyss_boss_sweep_when_all_difficulty_clear")
         for abyss in db.get_active_abyss():
             self._log(f"=={abyss.title}==")
@@ -50,13 +49,12 @@ class abyss_boss_sweep(Module):
             do_sweep = True
 
             for boss in db.get_abyss_bosses(abyss_id):
-                if boss.difficulty != abyss_difficulty:
+                if boss.difficulty != abyss_difficulty or abyss_difficulty == eDifficulty.NONE:
                     continue
                 boss_status = boss_info.get(boss.boss_id, None)
                 if not boss_status or boss_status.enemy_index == 1:
-                    if do_sweep_when_all_clear:
-                        self._warn(f"未通关{eDifficulty(abyss_difficulty).name} {boss.boss_id // 100 % 10}，跳过扫荡")
-                        do_sweep = False
+                    self._warn(f"未通关{eDifficulty(abyss_difficulty).name} {boss.boss_id // 100 % 10}，跳过扫荡")
+                    do_sweep = False
 
             if do_sweep:
                 target_boss = max(
