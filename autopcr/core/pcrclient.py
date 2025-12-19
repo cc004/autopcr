@@ -1419,7 +1419,7 @@ class pcrclient(apiclient):
             (quest in db.tower_quest and self.data.tower_status and self.data.tower_status.cleared_floor_num >= db.tower_quest[quest].floor_num)
         )
 
-    async def quest_skip_aware(self, quest: int, times: int, recover: bool = False, is_total: bool = False):
+    async def quest_skip_aware(self, quest: int, times: int, recover: bool = False, is_total: bool = False) -> Tuple[List[InventoryInfo], int, bool]:
         name = db.get_quest_name(quest)
         if db.is_hatsune_quest(quest):
             if not quest in db.quest_to_event:
@@ -1468,12 +1468,13 @@ class pcrclient(apiclient):
         stamina_coefficient = self.data.get_quest_stamina_half_campaign_times(quest)
         if not stamina_coefficient: stamina_coefficient = 100
         result: List[InventoryInfo] = []
-        async def skip(times):
+        clear_count = 0
+        async def skip(times) -> Tuple[bool, List[InventoryInfo]]:
             while self.data.stamina < int(math.floor((info.stamina * (stamina_coefficient / 100)))) * times:
                 if self.stamina_recover_cnt > self.data.recover_stamina_exec_count:
                     await self.recover_stamina()
                 else:
-                    raise AbortError(f"任务{name}体力不足")
+                    return True, []
             if db.is_shiori_quest(quest):
                 event = db.quest_to_event[quest].event_id
                 resp = await self.shiori_quest_skip(event, quest, times)
@@ -1487,6 +1488,8 @@ class pcrclient(apiclient):
             else:
                 resp = await self.quest_skip(quest, times)
 
+            nonlocal clear_count
+            clear_count += times
             result = []
             if resp.quest_result_list:
                 for result_list in resp.quest_result_list:
@@ -1497,8 +1500,9 @@ class pcrclient(apiclient):
                         result = result + result_list.reward_list
             if resp.bonus_reward_list:
                 result = result + resp.bonus_reward_list
-            return result
+            return False, result
 
+        no_stamina = False
         if info.daily_limit:
             if is_total:
                 times -= qinfo.daily_clear_count
@@ -1515,16 +1519,19 @@ class pcrclient(apiclient):
                         await self.recover_challenge(quest)
                     remain = info.daily_limit
                 t = min(times, remain)
-                resp = await skip(t)
+                no_stamina, resp = await skip(t)
+                if no_stamina:
+                    break
+
                 result = result + resp
 
                 times -= t
                 remain -= t
         else:
-            resp = await skip(times)
+            no_stamina, resp = await skip(times)
             result = result + resp
 
-        return result
+        return result, clear_count, no_stamina
 
     async def refresh(self):
         req = HomeIndexRequest()

@@ -33,16 +33,18 @@ class hatsune_h_sweep(Module):
             await client.get_hatsune_quest_top(event.event_id)
             for i in area:
                 quest_id = event.event_id * 1000 + hard + i
-                try: 
-                    times = 3 - client.data.hatsune_quest_dict[event.event_id][quest_id].daily_clear_count
-                    await client.quest_skip_aware(quest_id, 3, False, True)
+                try:
+                    reward, clear_count, no_stamina = await client.quest_skip_aware(quest_id, 3, False, True)
                     is_skip = False
-                    self._log(f"{quest_id}: 扫荡{times}次")
+                    self._log(f"{quest_id}: 扫荡{clear_count}次")
+                    if no_stamina:
+                        self._log(f"刷取{db.get_quest_name(quest_id)}体力不足")
+                        break
+
                 except SkipError as e:
                     self._log(f"{quest_id}: {str(e)}")
                 except AbortError as e:
-                    if not str(e).endswith("体力不足"):
-                        is_abort = True
+                    is_abort = True
                     self._log(f"{quest_id}: {str(e)}")
                     break
                 except Exception as e: 
@@ -292,21 +294,21 @@ class all_in_hatsune(Module):
         count = 0
         while True:
             try:
-                await client.quest_skip_aware(quest, 12)
-                count += 12
+                reward, clear_count, no_stamina = await client.quest_skip_aware(quest, 12)
+                count += clear_count
+                if no_stamina:
+                    break
             except SkipError as e:
                 pass
             except AbortError as e:
-                if not str(e).endswith("体力不足"):
-                    self._log(f"{str(e)}")
-                    raise AbortError("")
-                break
+                self._log(f"{str(e)}")
+                raise AbortError("")
 
         remain = client.data.stamina // db.quest_info[quest].stamina
 
         if remain: 
-            await client.quest_skip_aware(quest, remain)
-            count += remain
+            reward, clear_count, no_stamina = await client.quest_skip_aware(quest, remain)
+            count += clear_count
 
         if count:
             self._log(f"已刷{quest}图{count}次")

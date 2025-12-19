@@ -75,18 +75,19 @@ class lazy_normal_sweep(Module):
 
                 for target_id in target_quest:
                     try:
-                        resp = await client.quest_skip_aware(target_id, 3)
+                        resp, clear_count, no_stamina = await client.quest_skip_aware(target_id, 3)
                         tmp.extend([item for item in resp if db.is_equip((item.type, item.id))]) 
-                        clean_cnt[target_id] += 3
+                        if clear_count:
+                            clean_cnt[target_id] += clear_count
+                        if no_stamina:
+                            stop = True
+                            if not clean_cnt: self._log(f"刷取{db.get_quest_name(target_id)}体力不足")
+                            break
                     except SkipError:
                         pass
                     except AbortError as e:
                         stop = True
-                        if str(e).endswith("体力不足"):
-                            if not tmp and not self.log: self._log(str(e))
-                        else:
-                            raise e
-                        break
+                        raise e
                 if stop:
                     break
         except:
@@ -241,16 +242,18 @@ class simple_demand_sweep_base(Module):
                 for quest in self.get_need_quest(token):
                     max_times = self.get_max_times(client, quest.quest_id)
                     try:
-                        resp = await client.quest_skip_aware(quest.quest_id, max_times, True, True)
-                        clean_cnt[quest.quest_id] += max_times
+                        resp, clear_count, no_stamina = await client.quest_skip_aware(quest.quest_id, max_times, True, True)
+                        if clear_count:
+                            clean_cnt[quest.quest_id] += clear_count
                         tmp.extend(resp) 
+                        if no_stamina:
+                            stop = True
+                            if not clean_cnt: self._log(f"刷取{db.get_quest_name(quest.quest_id)}体力不足")
+                            break
                     except SkipError as e:
                         pass
                     except AbortError as e:
-                        if str(e).endswith("体力不足"):
-                            stop = True
-                            if not tmp and not self.log: self._log(str(e))
-                        elif str(e).endswith("未通关或不存在") or str(e).endswith("未三星"):
+                        if str(e).endswith("未通关或不存在") or str(e).endswith("未三星"):
                             self._warn(f"{db.get_inventory_name_san(token)}: {str(e)}")
                         else:
                             self._log(str(e))
@@ -478,8 +481,13 @@ class DIY_sweep(Module):
         clean_cnt = Counter()
         for quest_id, count in _sweep(): 
             try:
-                result += await client.quest_skip_aware(quest_id, count, True, True)
-                clean_cnt[quest_id] += count
+                reward, clear_count, no_stamina = await client.quest_skip_aware(quest_id, count, True, True)
+                result += reward
+                if clear_count:
+                    clean_cnt[quest_id] += clear_count
+                if no_stamina:
+                    if not clean_cnt: self._log(f"刷取{db.get_quest_name(quest_id)}体力不足")
+                    break
             except SkipError as e:
                 pass
             except AbortError as e:
