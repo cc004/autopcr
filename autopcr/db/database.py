@@ -1936,7 +1936,7 @@ class database():
     def get_active_abyss(self) -> List[AbyssSchedule]:
         now = apiclient.datetime
         return flow(self.abyss_schedule.values()) \
-                .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.close_time)) \
+                .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.end_time)) \
                 .to_list()
 
     def get_abyss_bosses(self, abyss_id: int) -> List[AbyssBossDatum]:

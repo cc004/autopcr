@@ -1450,7 +1450,7 @@ class pcrclient(apiclient):
                 quest_id = quest,
                 daily_clear_count = 0,
             ))
-            setattr(qinfo, 'daily_recovery_count', 0)
+            qinfo.__dict__['daily_recovery_count'] = 0
         else:
             if not quest in self.data.quest_dict:
                 raise AbortError(f"任务{name}未通关或不存在")
@@ -1476,16 +1476,29 @@ class pcrclient(apiclient):
                     raise AbortError(f"任务{name}体力不足")
             if db.is_shiori_quest(quest):
                 event = db.quest_to_event[quest].event_id
-                return await self.shiori_quest_skip(event, quest, times)
+                resp = await self.shiori_quest_skip(event, quest, times)
             elif db.is_hatsune_quest(quest):
                 event = db.quest_to_event[quest].event_id
-                return await self.hatsune_quest_skip(event, quest, times)
+                resp = await self.hatsune_quest_skip(event, quest, times)
             elif db.is_talent_quest(quest):
-                return await self.talent_quest_skip(quest, times)
+                resp = await self.talent_quest_skip(quest, times)
             elif db.is_abyss_quest(quest):
-                return await self.abyss_quest_skip(quest, times)
+                resp = await self.abyss_quest_skip(quest, times)
             else:
-                return await self.quest_skip(quest, times)
+                resp = await self.quest_skip(quest, times)
+
+            result = []
+            if resp.quest_result_list:
+                for result_list in resp.quest_result_list:
+                    if hasattr(result_list, 'quest_result'):
+                        for quest_result in result_list.quest_result:
+                            result = result + quest_result.reward_list
+                    else:
+                        result = result + result_list.reward_list
+            if resp.bonus_reward_list:
+                result = result + resp.bonus_reward_list
+            return result
+
         if info.daily_limit:
             if is_total:
                 times -= qinfo.daily_clear_count
@@ -1503,21 +1516,13 @@ class pcrclient(apiclient):
                     remain = info.daily_limit
                 t = min(times, remain)
                 resp = await skip(t)
-                if resp.quest_result_list:
-                    for result_list in resp.quest_result_list:
-                        result = result + result_list.reward_list
-                if resp.bonus_reward_list:
-                    result = result + resp.bonus_reward_list
+                result = result + resp
 
                 times -= t
                 remain -= t
         else:
             resp = await skip(times)
-            if resp.quest_result_list:
-                for result_list in resp.quest_result_list:
-                    result = result + result_list.reward_list
-            if resp.bonus_reward_list:
-                result = result + resp.bonus_reward_list
+            result = result + resp
 
         return result
 

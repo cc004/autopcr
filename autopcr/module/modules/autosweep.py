@@ -450,6 +450,7 @@ class smart_very_hard_sweep(simple_demand_sweep_base):
         return self.times
 
 class DIY_sweep(Module):
+    warn = False
 
     async def get_start_quest(self, client: pcrclient) -> List[Tuple[int, int]]:
         return []
@@ -482,7 +483,10 @@ class DIY_sweep(Module):
             except SkipError as e:
                 pass
             except AbortError as e:
-                self._log(str(e))
+                if self.warn:
+                    self._warn(str(e))
+                else:
+                    self._log(str(e))
                 break
         
         if clean_cnt:
@@ -490,7 +494,7 @@ class DIY_sweep(Module):
                 f": 刷取{cnt}次" for quest, cnt in clean_cnt.items())
                 self._log(msg)
                 self._log("---------")
-        else:
+        elif not self.log:
             self._log("需刷取的图均无次数")
         if result:
             self._log(await client.serialize_reward_summary(result))

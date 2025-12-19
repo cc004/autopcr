@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from enum import IntEnum
 from ..db.models import UnitStatusCoefficient
 from .enums import eInventoryType, eParamType
 from typing import List, Optional, Tuple, Counter as CounterType, Union
@@ -241,3 +242,10 @@ class ArenaQueryResponse(BaseModel):
 class TalentQuestData(BaseModel):
     talent_id: int = None
     clear_count: int = None
+
+class eDifficulty(IntEnum):
+    NORMAL = 1
+    HARD = 2
+    VERY_HARD = 3
+    EXTREME = 4
+

@@ -1262,18 +1262,19 @@ class TalentQuestRecoverChallengeResponse(responses.TalentQuestRecoverChallengeR
 @handles
 class AbyssTopResponse(responses.AbyssTopResponse):
     async def update(self, mgr: datamgr, request):
-        if self.cleared_abyss_quest_id_list:
-            mgr.cleared_abyss_quests |= set(self.cleared_abyss_quest_id_list)
+        if self.clear_quest_list:
+            mgr.cleared_abyss_quests |= set(self.clear_quest_list)
         if self.daily_clear_count_list:
-            mgr.dabyss_quest_info.update({d.quest_id for d in self.daily_clear_count_list})
+            mgr.abyss_quest_info.update({d.quest_id: d for d in self.daily_clear_count_list})
 
 @handles
 class AbyssQuestSkipMultipleResponse(responses.AbyssQuestSkipMultipleResponse):
     async def update(self, mgr: datamgr, request):
         if self.quest_result_list:
             for result_list in self.quest_result_list:
-                for item in result_list.reward_list:
-                    mgr.update_inventory(item)
+                for quest_result in result_list.quest_result:
+                    for item in quest_result.reward_list:
+                        mgr.update_inventory(item)
         if self.bonus_reward_list:
             for item in self.bonus_reward_list:
                 mgr.update_inventory(item)
