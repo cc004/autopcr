@@ -86,5 +86,5 @@ class abyss_boss_sweep(Module):
         if not self.log:
             self._log("当前无进行中的深渊讨伐战")
 
-        if not do_sweep:
+        if not do_sweep and not self.is_warn:
             raise SkipError()
