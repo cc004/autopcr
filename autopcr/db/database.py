@@ -2,7 +2,7 @@ from typing import List, Dict, Set, Tuple, Union
 import typing
 from ..model.enums import eCampaignCategory
 from ..model.common import ExtraEquipInfo, UnitData, eInventoryType, RoomUserItem, InventoryInfo
-from ..model.custom import ItemType
+from ..model.custom import ItemType, eDifficulty
 import datetime
 from collections import Counter, defaultdict
 from .dbmgr import dbmgr
@@ -1562,11 +1562,13 @@ class database():
                 .concat(ShioriQuest.query(db))
                 .concat(TrainingQuestDatum.query(db))
                 .concat(TalentQuestDatum.query(db))
-                .concat(AbyssQuestDatum.query(db))
                 .to_dict(lambda x: x.quest_id, lambda x: x.quest_name)
             )
         ret.update(
             {x.travel_quest_id :x.travel_quest_name for x in self.travel_quest_data.values()}
+        )
+        ret.update(
+            {x.quest_id: f"{x.quest_name}-{eDifficulty(x.difficulty).name}" for xs in self.abyss_quest_info.values() for x in xs}
         )
         return ret
 
