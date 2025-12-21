@@ -167,6 +167,7 @@ class travel_quest_sweep(Module):
         top = await client.travel_top(max(db.get_open_travel_area()), 1)
 
         team_count = len(top.travel_quest_list)
+        do_travel = False
 
         if team_count < 3:
             self._warn(f"正在探险的小队数为{team_count}<3，请上号开始新的探险！")
@@ -212,9 +213,9 @@ class travel_quest_sweep(Module):
                         reward.extend(result.reward_list)
                 except Exception as e:
                     self._warn(f"处理特殊事件{top_event.top_event_id}失败:{e}")
-            if remain_blue_event_cnt:
-                self._log(f"保留{remain_blue_event_cnt}个蓝色事件")
-            self._log(f"阅读{len(top.top_event_list) - remain_blue_event_cnt}个特殊事件")
+            read_cnt = len(top.top_event_list) - remain_blue_event_cnt
+            if read_cnt:
+                self._log(f"保留{remain_blue_event_cnt}个蓝色事件，阅读了{read_cnt}个特殊事件")
 
         check_next = True
         result_count = {}
@@ -354,6 +355,9 @@ class travel_round(Module):
 
         to_delete = {k: v for k, v in now_quest.items() if k not in target_quest}
         to_add = target_quest - set(now_quest.keys())
+
+        if not to_delete and not to_add:
+            raise SkipError()
 
         start_infos = []
         reward = []

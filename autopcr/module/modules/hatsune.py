@@ -20,7 +20,7 @@ class hatsune_h_sweep(Module):
         hard = 200
         is_error = False
         is_abort = False
-        is_skip = True
+        do_sweep = False
         event_active = False
         for event in db.get_active_hatsune():
             event_name = db.event_name[event.event_id]
@@ -33,16 +33,19 @@ class hatsune_h_sweep(Module):
             await client.get_hatsune_quest_top(event.event_id)
             for i in area:
                 quest_id = event.event_id * 1000 + hard + i
-                try: 
-                    times = 3 - client.data.hatsune_quest_dict[event.event_id][quest_id].daily_clear_count
-                    await client.quest_skip_aware(quest_id, 3, False, True)
-                    is_skip = False
-                    self._log(f"{quest_id}: 扫荡{times}次")
+                try:
+                    reward, clear_count, no_stamina = await client.quest_skip_aware(quest_id, 3, False, True)
+                    if clear_count:
+                        do_sweep = True
+                        self._log(f"{quest_id}: 扫荡{clear_count}次")
+                    if no_stamina:
+                        self._log(f"{quest_id}: 刷取{db.get_quest_name(quest_id)}体力不足")
+                        break
+
                 except SkipError as e:
                     self._log(f"{quest_id}: {str(e)}")
                 except AbortError as e:
-                    if not str(e).endswith("体力不足"):
-                        is_abort = True
+                    is_abort = True
                     self._log(f"{quest_id}: {str(e)}")
                     break
                 except Exception as e: 
@@ -50,9 +53,9 @@ class hatsune_h_sweep(Module):
                     self._log(f"{quest_id}: {str(e)}")
                     break
         if not event_active: raise SkipError("当前无进行中的活动")
-        if is_error: raise ValueError("")
-        if is_abort: raise AbortError("")
-        if is_skip: raise SkipError("")
+        if is_error: raise ValueError()
+        if is_abort: raise AbortError()
+        if not do_sweep: raise SkipError()
 
 @name('扫荡活动vh本boss')
 @default(True)
@@ -173,6 +176,7 @@ class hatsune_gacha_exchange(Module):
         # early_stop = False if self.get_config('hatsune_gacha_strategy') == "全部兑换" else True
         early_stop = False
         event_active = False
+        do_exchange = False
 
         for event in db.get_open_hatsune():
             event_active = True
@@ -191,6 +195,7 @@ class hatsune_gacha_exchange(Module):
                 if res.event_gacha_info.gacha_step >= 6:
                     exchange_times = min(client.data.settings.loop_box_multi_gacha_count, ticket)
                     self._log(f"当前处于第六轮及以上，一键交换{exchange_times}次")
+                    do_exchange = True
                     await client.exec_hatsune_gacha(event.event_id, event.event_id, exchange_times, ticket, 1)
                     ticket -= exchange_times
                 else:
@@ -203,15 +208,19 @@ class hatsune_gacha_exchange(Module):
                         continue
                     exchange_times = min(100, ticket, remain_cnt)
                     self._log(f"当前处于第{res.event_gacha_info.gacha_step}轮，交换{exchange_times}次")
+                    do_exchange = True
                     resp = await client.exec_hatsune_gacha(event.event_id, event.event_id, exchange_times, ticket, 0)
                     ticket -= exchange_times
                     for item in resp.draw_result:
                         box_item[item.box_set_id].remain_inbox_count -= item.hit_reward_count
             self._log(f"已交换至" + (f"第{res.event_gacha_info.gacha_step}轮" if res.event_gacha_info.gacha_step < 6 else "第六轮及以上"))
             client.data.set_inventory((eInventoryType.Item, exchange_ticket_id), ticket)
-            
+
         if not event_active:
             raise SkipError("当前无可进入的活动")
+
+        if not do_exchange:
+            raise SkipError()
 
 class hatsune_mission_accept_base(Module):
     async def do_task(self, client: pcrclient):
@@ -292,21 +301,21 @@ class all_in_hatsune(Module):
         count = 0
         while True:
             try:
-                await client.quest_skip_aware(quest, 12)
-                count += 12
+                reward, clear_count, no_stamina = await client.quest_skip_aware(quest, 12)
+                count += clear_count
+                if no_stamina:
+                    break
             except SkipError as e:
                 pass
             except AbortError as e:
-                if not str(e).endswith("体力不足"):
-                    self._log(f"{str(e)}")
-                    raise AbortError("")
-                break
+                self._log(f"{str(e)}")
+                raise AbortError("")
 
         remain = client.data.stamina // db.quest_info[quest].stamina
 
         if remain: 
-            await client.quest_skip_aware(quest, remain)
-            count += remain
+            reward, clear_count, no_stamina = await client.quest_skip_aware(quest, remain)
+            count += clear_count
 
         if count:
             self._log(f"已刷{quest}图{count}次")

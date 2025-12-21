@@ -35,6 +35,15 @@ class UnitRarity(models.UnitRarity):
         return UnitAttribute.load(self, suf='_growth') * level
 
 @method
+class ExEquipmentDatum(models.ExEquipmentDatum):
+    def get_unit_attribute(self, level: int) -> UnitAttribute:
+        from .database import db
+        min_val = UnitAttribute.load(self, pre='default_')
+        max_val = UnitAttribute.load(self, pre='max_')
+        max_rank = db.get_ex_equip_max_rank(self.ex_equipment_id)
+        return min_val + (max_val - min_val) * (level / db.get_ex_equip_max_star(self.ex_equipment_id, max_rank))
+
+@method
 class EquipmentDatum(models.EquipmentDatum):
     def get_unit_attribute(self) -> UnitAttribute:
         return UnitAttribute.load(self)
@@ -209,3 +218,26 @@ class TeamSkillNode(models.TeamSkillNode):
             yield self.enhance_level_id_4
         if self.enhance_level_id_5 != 0:
             yield self.enhance_level_id_5
+
+@method
+class TprPanelDatum(models.TprPanelDatum):
+    def get_correct_parts(self):
+        if self.correct_parts_id_1 != 0:
+            yield self.correct_parts_id_1
+        if self.correct_parts_id_2 != 0:
+            yield self.correct_parts_id_2
+        if self.correct_parts_id_3 != 0:
+            yield self.correct_parts_id_3
+        if self.correct_parts_id_4 != 0:
+            yield self.correct_parts_id_4
+    
+    def get_another_parts(self):
+        if self.another_parts_id_1 != 0:
+            yield self.another_parts_id_1
+        if self.another_parts_id_2 != 0:
+            yield self.another_parts_id_2
+        if self.another_parts_id_3 != 0:
+            yield self.another_parts_id_3
+        if self.another_parts_id_4 != 0:
+            yield self.another_parts_id_4
+

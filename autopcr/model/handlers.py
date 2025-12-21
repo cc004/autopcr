@@ -733,6 +733,38 @@ class SeasonPassMissionAcceptResponse(responses.SeasonPassMissionAcceptResponse)
                 mgr.update_inventory(reward)
 
 @handles
+class SubStoryTprRegisterSuccessResponse(responses.SubStoryTprRegisterSuccessResponse):
+    async def update(self, mgr: datamgr, request):
+        for reward in self.reward_info or []:
+            mgr.update_inventory(reward)
+        if self.unlock_sub_story_info_list:
+            for sub_story in self.unlock_sub_story_info_list:
+                event_id = db.tpr_story_data[sub_story.sub_story_id].original_event_id
+                if event_id not in mgr.event_sub_story:
+                    mgr.event_sub_story[event_id] = datamgr.EventSubStoryData(event_id=event_id, sub_story_info_list=[])
+                find_one = next((s for s in mgr.event_sub_story[event_id].sub_story_info_list if s.sub_story_id == sub_story.sub_story_id), None)
+                if find_one:
+                    find_one.status = sub_story.status
+                else:
+                    mgr.event_sub_story[event_id].sub_story_info_list.append(sub_story)
+
+@handles
+class SubStoryTprReadStoryResponse(responses.SubStoryTprReadStoryResponse):
+    async def update(self, mgr: datamgr, request):
+        sub_story_id = request.sub_story_id
+        event_id = db.tpr_story_data[sub_story_id].original_event_id
+        sub_story_info = next((s for s in mgr.event_sub_story[event_id].sub_story_info_list if s.sub_story_id == sub_story_id), None)
+        if sub_story_info:
+            sub_story_info.status = eEventSubStoryStatus.READED
+        else:
+            mgr.event_sub_story[event_id].sub_story_info_list.append(
+                datamgr.EventSubStoryInfo(
+                    sub_story_id=sub_story_id,
+                    status=eEventSubStoryStatus.READED
+                )
+            )
+
+@handles
 class SubStoryApgReadStoryResponse(responses.SubStoryApgReadStoryResponse):
     async def update(self, mgr: datamgr, request):
         if self.reward_info:
@@ -1220,14 +1252,62 @@ class TalentQuestSkipResponse(responses.TalentQuestSkipResponse):
 
 
 @handles
-class TalentQuestRecoverChallengeResponse(
-    responses.TalentQuestRecoverChallengeResponse
-):
+class TalentQuestRecoverChallengeResponse(responses.TalentQuestRecoverChallengeResponse):
     async def update(self, mgr: datamgr, request: TalentQuestRecoverChallengeRequest):
         mgr.jewel = self.user_jewel
         mgr.talent_quest_area_info[
             self.user_talent_quest.talent_id
         ].daily_recovery_count = self.user_talent_quest.daily_recovery_count
+
+@handles
+class AbyssTopResponse(responses.AbyssTopResponse):
+    async def update(self, mgr: datamgr, request):
+        mgr.cleared_abyss_quests = set(self.clear_quest_list) if self.clear_quest_list else set()
+        mgr.abyss_quest_info = {d.quest_id: d for d in self.daily_clear_count_list} if self.daily_clear_count_list else {}
+
+@handles
+class AbyssQuestSkipMultipleResponse(responses.AbyssQuestSkipMultipleResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.quest_result_list:
+            for result_list in self.quest_result_list:
+                for quest_result in result_list.quest_result:
+                    for item in quest_result.reward_list:
+                        mgr.update_inventory(item)
+        if self.bonus_reward_list:
+            for item in self.bonus_reward_list:
+                mgr.update_inventory(item)
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        if self.user_stamina_info:
+            mgr.stamina = self.user_stamina_info.user_stamina
+            mgr.stamina_full_recovery_time = self.user_stamina_info.stamina_full_recovery_time
+        if self.level_info:
+            mgr.team_level = self.level_info.team.start_level
+
+@handles
+class AbyssBossSkipResponse(responses.AbyssBossSkipResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_list:
+            for item in self.reward_list:
+                mgr.update_inventory(item)
+        if self.challenge_reward_list:
+            for item in self.challenge_reward_list:
+                mgr.update_inventory(item)
+        if self.score_reward_list:
+            for score_reward in self.score_reward_list:
+                for item in score_reward.reward_list:
+                    mgr.update_inventory(item)
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        if self.user_jewel:
+            mgr.jewel = self.user_jewel
+        if self.user_gold:
+            mgr.gold = self.user_gold
+
 
 
 # 菜 就别玩

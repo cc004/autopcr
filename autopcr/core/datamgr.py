@@ -60,12 +60,14 @@ class datamgr(BaseModel, Component[apiclient]):
     cleared_byway_quest_id_set: Set[int] = set({})
     return_fes_info_list: List[ReturnFesInfo] = None
     data_time: int = 0
-    version: int = 3
+    version: int = 4
     caravan_dishes: typing.Counter[int] = Counter()
     user_clan_battle_ex_equip_restriction: Dict[int, RestrictionExtraEquip] = {}
     talent_quest_area_info: Dict[int, TalentQuestAreaInfo] = {}
     cleared_talent_quest_ids: Dict[int, int] = {}
     princess_knight_info: PrincessKnightInfo = None
+    cleared_abyss_quests: Set[int] = set()
+    abyss_quest_info: Dict[int, AbyssDailyClearCountList] = {}
 
     @staticmethod
     async def try_update_database(ver: int):
@@ -587,7 +589,7 @@ class datamgr(BaseModel, Component[apiclient]):
         return bad
 
     def get_unit_power(self, unit_id: int) -> int:
-        power = db.calc_unit_power(self.unit[unit_id], set(self.read_story_ids))
+        power = db.calc_unit_power(self.unit[unit_id], set(self.read_story_ids), self.ex_equips)
         return int(power + 0.5)
 
     def is_quest_cleared(self, quest: int) -> bool:

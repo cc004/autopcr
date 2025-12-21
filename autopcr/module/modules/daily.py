@@ -230,6 +230,8 @@ class present_receive(Module):
                             self._warn("体力满了，无法领取礼物箱的体力")
                         if any(db.is_ex_equip((present.reward_type, present.reward_id)) for present in present_index.present_info_list):
                             self._warn("EX装备满了，无法领取礼物箱的EX装备")
+                        if any((present.reward_type, present.reward_id) == db.dice for present in present_index.present_info_list):
+                            self._warn("骰子满了，无法领取礼物箱的骰子")
                         stop = True
                     else:
                         result += res.rewards
