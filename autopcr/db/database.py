@@ -1264,6 +1264,14 @@ class database():
             )
 
     @lazy_property
+    def lss_story_data(self) -> Dict[int, LssStoryDatum]:
+        with self.dbmgr.session() as db:
+            return (
+                LssStoryDatum.query(db)
+                .to_dict(lambda x: x.sub_story_id, lambda x: x)
+            )
+
+    @lazy_property
     def tpr_story_data(self) -> Dict[int, TprStoryDatum]:
         with self.dbmgr.session() as db:
             return (
