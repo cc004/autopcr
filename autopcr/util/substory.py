@@ -36,6 +36,8 @@ class SubStoryReader:
     async def confirm(self): ...
     async def prepare(self):
         pass
+    async def sort_by_time(self, sub_story_ids: List[EventSubStory]) -> List[EventSubStory]:
+        return sub_story_ids
 
     def __init__(self, client: pcrclient):
         self.client = client
@@ -107,6 +109,9 @@ class apg_substory(SubStoryReader):
 
     async def read(self, sub_story_id: int):
         await self.client.read_apg_story(sub_story_id)
+
+    async def sort_by_time(self, sub_story_ids: List[EventSubStory]) -> List[EventSubStory]:
+        return sorted(sub_story_ids, key=lambda s: db.parse_time(db.apg_story_data[s.sub_story_id].condition_time))
 
 @EventId(10140)
 class fpc_substory(SubStoryReader):
