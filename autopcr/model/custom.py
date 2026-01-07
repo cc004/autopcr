@@ -239,6 +239,18 @@ class ArenaQueryResponse(BaseModel):
     data: Optional[ArenaQueryData]
     version: str
 
+class eRedeemUnitUnlockCondition(IntEnum):
+    NONE = 0
+    UNLOCK_UNIT = 1
+    VIEWED_STORY = 2
+    GOLD = 3
+    CURRENCY = 4
+    MEMORY_PIECE = 5
+    SUPER_MEMORY_PIECE = 6
+    JEWEL = 7
+    EQUIP = 8
+    EQUIP_MATERIAL = 9
+
 class TalentQuestData(BaseModel):
     talent_id: int = None
     clear_count: int = None

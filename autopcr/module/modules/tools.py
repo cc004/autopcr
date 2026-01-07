@@ -5,7 +5,7 @@ from ...util.ilp_solver import memory_use_average
 from ...model.common import ChangeRarityUnit, DeckListData, GachaPointInfo, GrandArenaHistoryDetailInfo, GrandArenaHistoryInfo, GrandArenaSearchOpponent, ProfileUserInfo, RankingSearchOpponent, RedeemUnitInfo, RedeemUnitSlotInfo, UnitData, UnitDataLight, VersusResult, VersusResultDetail
 from ...model.responses import GachaIndexResponse, PsyTopResponse
 from ...db.models import GachaExchangeLineup
-from ...model.custom import ArenaQueryResult, GachaReward, ItemType
+from ...model.custom import ArenaQueryResult, GachaReward, ItemType, eRedeemUnitUnlockCondition
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
@@ -37,6 +37,7 @@ class remove_cb_support(Module):
 @booltype('redeem_unit_swap_do', '开换', False)
 @description('计算兑换对应角色所需的3000碎片的最优使用方案，使得剩余碎片的盈余值的最大值最小')
 class redeem_unit_swap(Module):
+
     async def do_task(self, client: pcrclient):
         do = self.get_config('redeem_unit_swap_do')
 
@@ -57,17 +58,27 @@ class redeem_unit_swap(Module):
 
             for slot_info in info.slot_info:
                 db_info = db.get_redeem_unit_slot_info(unit_id,slot_info.slot_id)
-                if slot_info.slot_id == 1:
-                    self._log(f"已使用{slot_info.register_num}碎片")
-                    use_piece = int(db_info.consume_num) - slot_info.register_num
-                elif slot_info.slot_id == 2:
-                    self._log(f"已使用{slot_info.register_num}玛那")
-                elif slot_info.slot_id == 3:
+                if db_info.condition_category == eRedeemUnitUnlockCondition.UNLOCK_UNIT:
                     if db_info.condition_id not in client.data.unit:
                         raise AbortError(f"未解锁{db.get_unit_name(db_info.condition_id)}，无法兑换{db.get_unit_name(unit_id)}")
-                elif slot_info.slot_id == 4:
+                elif db_info.condition_category == eRedeemUnitUnlockCondition.VIEWED_STORY:
                     if db_info.condition_id not in client.data.read_story_ids:
                         raise AbortError(f"未阅读{db_info.condition_id}，无法兑换{db.get_unit_name(unit_id)}")
+                elif db_info.condition_category == eRedeemUnitUnlockCondition.GOLD:
+                    self._log(f"已使用{slot_info.register_num}玛那")
+                elif db_info.condition_category == eRedeemUnitUnlockCondition.CURRENCY:
+                    self._log(f"已使用{slot_info.register_num}??")
+                elif db_info.condition_category == eRedeemUnitUnlockCondition.MEMORY_PIECE:
+                    self._log(f"已使用{slot_info.register_num}碎片")
+                    use_piece = int(db_info.consume_num) - slot_info.register_num
+                elif db_info.condition_category == eRedeemUnitUnlockCondition.SUPER_MEMORY_PIECE:
+                    self._log(f"已使用{slot_info.register_num}纯净碎片")
+                elif db_info.condition_category == eRedeemUnitUnlockCondition.JEWEL:
+                    self._log(f"已使用{slot_info.register_num}宝石")
+                elif db_info.condition_category == eRedeemUnitUnlockCondition.EQUIP:
+                    self._log(f"已使用{slot_info.register_num}装备")
+                elif db_info.condition_category == eRedeemUnitUnlockCondition.EQUIP_MATERIAL:
+                    self._log(f"已使用{slot_info.register_num}装备碎片")
                 else:
                     raise ValueError(f"未知的兑换条件{slot_info.slot_id}")
 
@@ -90,13 +101,14 @@ class redeem_unit_swap(Module):
 
             if do:
                 for slot_info in info.slot_info:
-                    if slot_info.slot_id == 1:
+                    db_info = db.get_redeem_unit_slot_info(unit_id,slot_info.slot_id)
+                    if db_info.condition_category == eRedeemUnitUnlockCondition.MEMORY_PIECE:
                         memory_use = Counter({item[i]: res[i] for i in id if res[i] > 0})
                         if memory_use:
                             self._log(f"使用了角色碎片")
                             ret = await client.unit_register_item(unit_id, slot_info.slot_id, memory_use, slot_info.register_num)
                             slot_info.register_num = ret.register_num
-                    elif slot_info.slot_id == 2:
+                    elif db_info.condition_category == eRedeemUnitUnlockCondition.GOLD:
                         info = db.get_redeem_unit_slot_info(unit_id,slot_info.slot_id)
                         total_mana = int(info.consume_num) - slot_info.register_num
                         if not (await client.prepare_mana(total_mana)):
@@ -107,6 +119,11 @@ class redeem_unit_swap(Module):
                             ret = await client.unit_register_item(unit_id, slot_info.slot_id, Counter({(eInventoryType.Gold, info.condition_id): mana}), slot_info.register_num)
                             slot_info.register_num = ret.register_num
                             total_mana -= mana
+                    else:
+                        if db_info.condition_category in [eRedeemUnitUnlockCondition.UNLOCK_UNIT,
+                                                        eRedeemUnitUnlockCondition.VIEWED_STORY]:
+                            continue
+                        raise AbortError(f"未实现的兑换条件{db_info.condition_category}")
 
                 self._log(f"兑换{db.get_unit_name(unit_id)}")
                 await client.unit_unlock_redeem_unit(unit_id)

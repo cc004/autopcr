@@ -36,6 +36,8 @@ class SubStoryReader:
     async def confirm(self): ...
     async def prepare(self):
         pass
+    async def sort_by_time(self, sub_story_ids: List[EventSubStory]) -> List[EventSubStory]:
+        return sub_story_ids
 
     def __init__(self, client: pcrclient):
         self.client = client
@@ -44,6 +46,16 @@ def GetSubStoryReader(sub_story_data: EventSubStory, client: pcrclient) -> Union
     if sub_story_data.event_id in constructor:
         return constructor[sub_story_data.event_id](client)
     return None
+
+@EventId(10150)
+class lss_substory(SubStoryReader):
+
+    def title(self, sub_story_id: int) -> str:
+        return db.lss_story_data[sub_story_id].title
+
+    async def read(self, sub_story_id: int):
+        await self.client.story_check(sub_story_id)
+        await self.client.read_lss_story(sub_story_id)
 
 @EventId(10148)
 class tpr_substory(SubStoryReader):
@@ -97,6 +109,9 @@ class apg_substory(SubStoryReader):
 
     async def read(self, sub_story_id: int):
         await self.client.read_apg_story(sub_story_id)
+
+    async def sort_by_time(self, sub_story_ids: List[EventSubStory]) -> List[EventSubStory]:
+        return sorted(sub_story_ids, key=lambda s: db.parse_time(db.apg_story_data[s.sub_story_id].condition_time))
 
 @EventId(10140)
 class fpc_substory(SubStoryReader):
