@@ -329,6 +329,14 @@ class xinsui1_sweep(xinsui_sweep):
     def quest_id(self) -> int:
         return 18001001
 
+@singlechoice("starcup3_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
+@singlechoice("starcup3_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
+@name('刷取星球杯3')
+@default(False)
+class starcup3_sweep(starcup_sweep):
+    def quest_id(self) -> int:
+        return 19001003
+
 @singlechoice("starcup2_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
 @singlechoice("starcup2_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
 @name('刷取星球杯2')
