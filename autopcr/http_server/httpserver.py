@@ -193,6 +193,21 @@ class HttpServer:
         async def get_role(accountmgr: AccountManager):
             return await accountmgr.generate_role(), 200
 
+        @self.api.route('/running_status', methods = ["GET"])
+        @HttpServer.login_required()
+        async def get_running_status():
+            from ..core.clientpool import instance as clientpool
+            sema, farm_sema = clientpool.sema_status()
+            ret = []
+            for i, (running, waiting, max_count) in enumerate([sema, farm_sema]):
+                ret.append({
+                    'name': f"运行状态{i}",
+                    'running': running,
+                    'waiting': waiting,
+                    'max_running': max_count,
+                })
+            return {'statuses': ret}, 200
+
         @self.api.route('/account', methods = ['GET'])
         @HttpServer.login_required()
         @HttpServer.wrapaccountmgr(readonly = True)
