@@ -2529,6 +2529,14 @@ class database():
                 ex_equip_data = ex_equips[ex_equip.serial_id]
                 star = self.get_ex_equip_star_from_pt(ex_equip_data.ex_equipment_id, ex_equip_data.enhancement_pt)
                 attr = self.ex_equipment_data[ex_equip_data.ex_equipment_id].get_unit_attribute(star)
+                if ex_equip_data.sub_status:
+                    group = self.ex_equipment_sub_status_group[ex_equip_data.ex_equipment_id]
+                    sub_status_data = db.ex_equipment_sub_status[group.group_id]
+                    for status in ex_equip_data.sub_status:
+                        value = sub_status_data[status.status].step_value(status.step)
+                        a = UnitAttribute()
+                        a.set_value(status.status, value)
+                        attr += a
                 bonus = unit_attribute.ex_equipment_mul(attr).ceil()
                 ex_attribute += bonus
         unit_attribute += ex_attribute
