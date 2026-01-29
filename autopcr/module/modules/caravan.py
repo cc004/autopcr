@@ -484,6 +484,7 @@ class CaravanGame:
         self.spots_choices_2 = resp.spots_choices_2
         self.rival_info = None
         self.shortcut_block_id = resp.shortcut_block_id or 0
+        self.is_rival_pk_turn = False
         await self.update_rival_info(resp.rival_info)
 
         items_list = db.caravan_coin_shop_lineup[resp.season_id]
@@ -667,6 +668,8 @@ class CaravanGame:
                 self.state = eState.USE_DISH
                 return
 
+            self.is_rival_pk_turn = False
+
             self.state = eState.ROLL_DICE
 
         elif self.state == eState.ROLL_DICE:
@@ -760,6 +763,7 @@ class CaravanGame:
                 self._log("抵达若菜格子 -> RIVAL_MINI_GAME")
                 self.state = eState.RIVAL_MINI_GAME
                 self.action_bit_flag |= eFlag.IS_RIVAL_MINIGAME
+                self.is_rival_pk_turn = True
                 return
 
             elif block_type == eBlockType.SHOP:
@@ -934,7 +938,7 @@ class CaravanGame:
                     self.candidate_shop_lineup = use_resp.shop_block_lineup_list or []
                     self.dish_effect_manager.append(CaravanEffectData(CaravanDishEffectData(id=dish_to_use, effect_turn=db.caravan_dish[dish_to_use].effect_turn, effect_count=db.caravan_dish[dish_to_use].effect_times)))
                     await self.check_dishes_full(use_resp.surplus_dish_list)
-                    if not db.caravan_map[self.current_block_id].type == eBlockType.PARTY:
+                    if not db.caravan_map[self.current_block_id].type == eBlockType.PARTY or self.is_rival_pk_turn:
                         break
                 self.action_bit_flag |= eFlag.DISH_USED
                 self.state = eState.IDLE
