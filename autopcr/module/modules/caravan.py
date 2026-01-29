@@ -1,7 +1,7 @@
 from collections import Counter
 import random
 import typing
-from typing import List, cast
+from typing import List, cast, Dict
 
 from ...module.config import booltype, inttype
 
@@ -321,7 +321,7 @@ class DishEffectManager(EffectManager):
                 return True
         return False
     
-    def get_block_change(self) -> dict[eBlockType, eBlockType]:
+    def get_block_change(self) -> Dict[eBlockType, eBlockType]:
         effects = self.get_effect_influence(eDishEffectType.CHANGE_BLOCK_TYPE)
         ret = {}
         for effect in effects:

@@ -19,7 +19,7 @@ from collections import Counter
 @ExEquipSubStatusConfig('ex_equip_rainbow_enchance_sub_status_1', '炼成属性1')
 @booltype('ex_equip_rainbow_enchance_view', '看状态', True)
 @texttype('ex_equip_rainbow_enchance_id', '彩装id', 0)
-@description('看状态指获取彩装id和炼成属性,不炼成,选择最多四个属性,非满属性指属性值不必最大,以便手动用光球强化')
+@description('看状态指获取彩装id和炼成属性,不炼成,选择最多四个属性,非满属性指属性值不必最大,以便手动用光球强化.满强目标属性会自动锁住')
 class ex_equip_rainbow_enchance(Module):
 
     async def do_task(self, client: pcrclient):
