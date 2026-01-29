@@ -29,6 +29,7 @@ class ArenaApplyResponse(ResponseBase):
     true_rank: int = None
 class ArenaCancelResponse(ResponseBase):
     search_opponent: List[SearchOpponent] = None
+    arena_info: ArenaInfo = None
 class ArenaFinishResponse(ResponseBase):
     old_record: int = None
     new_record: int = None
@@ -66,12 +67,15 @@ class ArenaReplayResponse(ResponseBase):
     team_level: int = None
     opponent_team_level: int = None
     my_princess_knight_info: PrincessKnightInfo = None
+    my_unit_role_list: List[UnitRoleInfo] = None
     versus_princess_knight_info: PrincessKnightInfo = None
+    versus_unit_role_list: List[UnitRoleInfo] = None
 class ArenaResetBattleNumberResponse(ResponseBase):
     arena_info: ArenaInfo = None
     user_jewel: UserJewel = None
 class ArenaSearchResponse(ResponseBase):
     search_opponent: List[SearchOpponent] = None
+    arena_info: ArenaInfo = None
 class ArenaStartResponse(ResponseBase):
     my_viewer_id: int = None
     battle_viewer_id: int = None
@@ -79,6 +83,7 @@ class ArenaStartResponse(ResponseBase):
     battle_speed: int = None
     wave_info_list: List[ArenaWaveInfo] = None
     versus_princess_knight_info: PrincessKnightInfo = None
+    versus_unit_role_list: List[UnitRoleInfo] = None
 class ArenaSuspendFinishResponse(ResponseBase):
     old_record: int = None
     new_record: int = None
@@ -131,6 +136,7 @@ class ChangeSkinResponse(ResponseBase):
 class CharaETicketExchangeResponse(ResponseBase):
     reward_info_list: List[InventoryInfo] = None
     item_data: List[InventoryInfo] = None
+    add_present_count: int = None
 class CharaETicketRewardsResponse(ResponseBase):
     rewards: List[CharaExchangeTicketReward] = None
 class CheckAgreementResponse(ResponseBase):
@@ -258,6 +264,7 @@ class ClanBattleSuggestDeckReplayResponse(ResponseBase):
     team_level: int = None
     manual_clear_flags: int = None
     princess_knight_info: PrincessKnightInfo = None
+    unit_role_list: List[UnitRoleInfo] = None
 class ClanBattleSuggestDeckReplayReportResponse(ResponseBase):
     pass
 class ClanBattleSupportUnitList2Response(ResponseBase):
@@ -389,6 +396,7 @@ class ClanMemberBattleStartResponse(ResponseBase):
     battle_id: int = None
     wave_info_list: List[PracticeWaveInfo] = None
     versus_princess_knight_info: PrincessKnightInfo = None
+    versus_unit_role_list: List[UnitRoleInfo] = None
 class ClanRemoveResponse(ResponseBase):
     pass
 class ClanSearchResponse(ResponseBase):
@@ -611,6 +619,7 @@ class FriendBattleStartResponse(ResponseBase):
     battle_id: int = None
     wave_info_list: List[PracticeWaveInfo] = None
     versus_princess_knight_info: PrincessKnightInfo = None
+    versus_unit_role_list: List[UnitRoleInfo] = None
 class FriendBattleTopResponse(ResponseBase):
     my_deck_list: List[PracticeDeckData] = None
     friend: List[FriendBattleInfo] = None
@@ -711,6 +720,7 @@ class GrandArenaCancelIntervalResponse(ResponseBase):
     user_jewel: UserJewel = None
 class GrandArenaCancelResponse(ResponseBase):
     search_opponent: List[GrandArenaSearchOpponent] = None
+    grand_arena_info: GrandArenaInfo = None
 class GrandArenaFinishResponse(ResponseBase):
     old_record: int = None
     new_record: int = None
@@ -743,12 +753,15 @@ class GrandArenaReplayResponse(ResponseBase):
     team_level: int = None
     opponent_team_level: int = None
     my_princess_knight_info: PrincessKnightInfo = None
+    my_unit_role_list: List[UnitRoleInfo] = None
     versus_princess_knight_info: PrincessKnightInfo = None
+    versus_unit_role_list: List[UnitRoleInfo] = None
 class GrandArenaResetBattleNumberResponse(ResponseBase):
     grand_arena_info: GrandArenaInfo = None
     user_jewel: UserJewel = None
 class GrandArenaSearchResponse(ResponseBase):
     search_opponent: List[GrandArenaSearchOpponent] = None
+    grand_arena_info: GrandArenaInfo = None
 class GrandArenaStartResponse(ResponseBase):
     battle_id: int = None
     my_viewer_id: int = None
@@ -757,6 +770,7 @@ class GrandArenaStartResponse(ResponseBase):
     wave_info_list: List[ArenaWaveInfo] = None
     opponent_team_level: int = None
     versus_princess_knight_info: PrincessKnightInfo = None
+    versus_unit_role_list: List[UnitRoleInfo] = None
 class GrandArenaSuspendFinishResponse(ResponseBase):
     old_record: int = None
     new_record: int = None
@@ -1038,6 +1052,17 @@ class HomeIndexResponse(ResponseBase):
     receivable_dome_mission_flag: bool = None
     acn_new_flag: bool = None
     acn_unknown_battle_finish_flag: bool = None
+    alces_appear_story_flag: int = None
+    alces_receive_tutorial_item_flag: int = None
+    mirage_reward_full_time: int = None
+    is_pending_external_purchase: int = None
+    is_pending_serial_code: int = None
+    crown_quest_list: List[CrownHardQuestInfo] = None
+    auto_gacha_exec_seven_schedule_id_list: List[int] = None
+    season_pack_end_time_info_list: List[SeasonPackEndTimeInfo] = None
+    season_pack_campaign_info_list: List[SeasonPackCampaignInfo] = None
+    limited_mission_progress_list: List[UserMissionProgressInfo] = None
+    limited_mission_category_list: List[UserLimitedMissionCategoryInfo] = None
 class ItemETicketExchangeResponse(ResponseBase):
     reward_list: List[InventoryInfo] = None
     item_data: List[InventoryInfo] = None
@@ -1279,11 +1304,13 @@ class LoadIndexResponse(ResponseBase):
     sdgl: int = None
     sdgl_start: int = None
     sdgl_end: int = None
+    unit_role_list: List[UnitRoleInfo] = None
     guarantee_gacha_counter_list: List[GuaranteeGachaCounter] = None
     evmb: int = None
     banner_linked_pack_list: List[BannerLinkedPackList] = None
     adc: int = None
     receive_caravan_dice_count: int = None
+    receive_labyrinth_passport_count: int = None
     drc: int = None
     hsm: int = None
     resident_info: MonthlyGachaInfo = None
@@ -1294,6 +1321,8 @@ class LoadIndexResponse(ResponseBase):
     sdlb: int = None
     cbslf: int = None
     unlocked_topic_talk_event_id_list: List[int] = None
+    seven_story_list: List[SevenStory] = None
+    gtm: int = None
 class LoadNextDayIndexResponse(ResponseBase):
     daily_reset_time: int = None
     login_bonus_list: LoginBonusList = None
@@ -1334,6 +1363,7 @@ class LoadNextDayIndexResponse(ResponseBase):
     banner_linked_pack_list: List[BannerLinkedPackList] = None
     adc: int = None
     receive_caravan_dice_count: int = None
+    receive_labyrinth_passport_count: int = None
     drc: int = None
     hsm: int = None
     aso: int = None
@@ -1342,6 +1372,7 @@ class LoadNextDayIndexResponse(ResponseBase):
     cns: int = None
     sdlb: int = None
     cbslf: int = None
+    gtm: int = None
 class MirokuBattleFinishResponse(ResponseBase):
     damage_result: int = None
     attack_count: int = None
@@ -1378,6 +1409,7 @@ class MissionAcceptResponse(ResponseBase):
     add_present_count: int = None
     release_contents: List[ReleaseContentData] = None
     room_item_level_mission: List[int] = None
+    season_pack_mission_id_list: List[int] = None
 class MissionIndexResponse(ResponseBase):
     missions: List[UserMissionInfo] = None
     season_pack: List[UserSeasonPackInfo] = None
@@ -1571,6 +1603,7 @@ class QuestReplayResponse(ResponseBase):
     enemy_list: List[UnitData] = None
     team_level: int = None
     princess_knight_info: PrincessKnightInfo = None
+    unit_role_list: List[UnitRoleInfo] = None
 class QuestReplayReportResponse(ResponseBase):
     pass
 class QuestRetireResponse(ResponseBase):
@@ -1841,6 +1874,7 @@ class ShioriEventTopResponse(ResponseBase):
     bosses: List[HatsuneEventBossStatus] = None
     boss_battle_info: List[HatsuneEventBossStatus] = None
     boss_enemy_info: List[HatsuneEventBossEnemyInfo] = None
+    new_sub_story_info_list: List[EventSubStoryInfo] = None
 class ShioriFavoriteResponse(ResponseBase):
     pass
 class ShioriMissionAcceptResponse(ResponseBase):
@@ -2181,6 +2215,8 @@ class StoryViewingResponse(ResponseBase):
     event_id: int = None
     unlocked_sub_story_list: List[int] = None
     unlock_sub_story_info_list: List[EventSubStoryInfo] = None
+    new_dear_story_id_list: List[int] = None
+    unlock_quest_ids: List[int] = None
 class SubStoryDsbReadStoryResponse(ResponseBase):
     reward_info: List[InventoryInfo] = None
     add_present_count: int = None
@@ -2401,6 +2437,10 @@ class TowerReplayResponse(ResponseBase):
     princess_knight_info_1: PrincessKnightInfo = None
     princess_knight_info_2: PrincessKnightInfo = None
     princess_knight_info_3: PrincessKnightInfo = None
+    unit_role_list: List[UnitRoleInfo] = None
+    unit_role_list_1: List[UnitRoleInfo] = None
+    unit_role_list_2: List[UnitRoleInfo] = None
+    unit_role_list_3: List[UnitRoleInfo] = None
 class TowerReplayReportResponse(ResponseBase):
     pass
 class TowerResetResponse(ResponseBase):
@@ -2877,6 +2917,34 @@ class AcnUnknownBattleStartResponse(ResponseBase):
     battle_log_id: int = None
     seed: int = None
     enemy_unit_list: List[AcnUnknownEnemyUnit] = None
+class AlcesCancelResultResponse(ResponseBase):
+    serial_id: int = None
+class AlcesExecResponse(ResponseBase):
+    pending_alces_data: AlcesData = None
+    current_alces_point: InventoryInfo = None
+    user_gold: UserGold = None
+    play_effect_id: int = None
+class AlcesFixResultResponse(ResponseBase):
+    fixed_alces_data: ExtraEquipInfo = None
+class AlcesLockSlotResponse(ResponseBase):
+    alces_data_list: List[AlcesData] = None
+class AlcesReadStoryResponse(ResponseBase):
+    reward_list: List[InventoryInfo] = None
+    add_present_count: int = None
+    upper_limit_flag: bool = None
+class AlcesReceiveTutorialItemResponse(ResponseBase):
+    alces_ex_equip: List[ExtraEquipInfo] = None
+    reward_list: List[InventoryInfo] = None
+    add_present_count: int = None
+    upper_limit_flag: bool = None
+class AlcesTopResponse(ResponseBase):
+    read_story_id_list: List[int] = None
+    appear_story_id: int = None
+    pending_alces_data: AlcesData = None
+class AlcesUseStoneResponse(ResponseBase):
+    fixed_alces_data: ExtraEquipInfo = None
+    current_alces_stone: InventoryInfo = None
+    play_effect_id: int = None
 class AsmFinishResponse(ResponseBase):
     score_result: AsmScoreResult = None
     present_reward_list: List[AsmRewardInfo] = None
@@ -2892,6 +2960,72 @@ class AsmStartResponse(ResponseBase):
 class AsmTopResponse(ResponseBase):
     asm_archive_info: List[AsmArchiveInfo] = None
     asm_memory_gauge_info: List[AsmMemoryGaugeInfo] = None
+class BsmBattleFinishResponse(ResponseBase):
+    battle_point: int = None
+class BsmBattleStartResponse(ResponseBase):
+    machine: BsmMachine = None
+class BsmCustomizeResponse(ResponseBase):
+    pass
+class BsmFriendBattlePrepareResponse(ResponseBase):
+    background_id: int = None
+    friends: List[BsmFriendBattle] = None
+    clans: List[BsmFriendBattle] = None
+class BsmGachaFinishResponse(ResponseBase):
+    gacha_num: int = None
+    next_gacha_max_time: int = None
+    reward_parts: List[BsmParts] = None
+class BsmGachaStartResponse(ResponseBase):
+    parts_id_1: int = None
+    bonus_id_1: int = None
+    joint_id_1: int = None
+    parts_id_2: int = None
+    bonus_id_2: int = None
+    joint_id_2: int = None
+class BsmHistoryResponse(ResponseBase):
+    history: List[BsmReplay] = None
+class BsmMissionAcceptResponse(ResponseBase):
+    rewards: List[InventoryInfo] = None
+    reward_emblem_ids: List[int] = None
+    reward_parts: List[BsmParts] = None
+    add_present_count: int = None
+class BsmProtectResponse(ResponseBase):
+    pass
+class BsmRecycleResponse(ResponseBase):
+    gacha_num: int = None
+    next_gacha_max_time: int = None
+class BsmRivalBattlePrepareResponse(ResponseBase):
+    background_id: int = None
+    rivals: List[BsmRivalBattle] = None
+    npcs: List[BsmRivalBattle] = None
+class BsmSoloModeFinishResponse(ResponseBase):
+    reward_parts: List[BsmParts] = None
+class BsmSoloModeStartResponse(ResponseBase):
+    pass
+class BsmTopResponse(ResponseBase):
+    battle_point: int = None
+    last_clear_solo_mode_id: int = None
+    gacha_num: int = None
+    next_gacha_max_time: int = None
+    missions: List[BsmMissionInfo] = None
+    machines: List[BsmMyMachine] = None
+    parts: List[BsmParts] = None
+    reward_parts: List[BsmParts] = None
+    parts_max_num: int = None
+    parts_process_limit: int = None
+    body_min_num: int = None
+    wheel_min_num: int = None
+    weapon_min_num: int = None
+    gadget_min_num: int = None
+    gacha_max_count: int = None
+    gacha_interval: int = None
+    rival_battle_top_point: int = None
+    rival_battle_middle_point: int = None
+    rival_battle_bottom_point: int = None
+    npc_battle_top_point: int = None
+    npc_battle_middle_point: int = None
+    npc_battle_bottom_point: int = None
+    power_coefficient_hp: int = None
+    power_coefficient_atk: int = None
 class BywayQuestBattleFinishResponse(ResponseBase):
     quest_id: int = None
     clear_flag: int = None
@@ -2914,6 +3048,7 @@ class BywayQuestReplayResponse(ResponseBase):
     user_unit_list: List[UnitData] = None
     team_level: int = None
     princess_knight_info: PrincessKnightInfo = None
+    unit_role_list: List[UnitRoleInfo] = None
 class BywayQuestReplayReportResponse(ResponseBase):
     pass
 class CaravanCoinShopBuyBulkResponse(ResponseBase):
@@ -2977,6 +3112,9 @@ class CaravanMinigameRetireResponse(ResponseBase):
     minigame_retire_reward: List[InventoryInfo] = None
     add_present_count: int = None
     rival_info: RivalInfo = None
+class CaravanMinigameSkipResponse(ResponseBase):
+    minigame_skip_reward: List[InventoryInfo] = None
+    rival_info: RivalInfo = None
 class CaravanMoveResponse(ResponseBase):
     reward_list: List[InventoryInfo] = None
     surplus_dish_list: List[CaravanDishData] = None
@@ -3004,6 +3142,17 @@ class CaravanReadResponse(ResponseBase):
     pass
 class CaravanRivalMinigameRetireResponse(ResponseBase):
     rival_info: RivalInfo = None
+class CaravanRivalMinigameSkipResponse(ResponseBase):
+    rival_info: RivalInfo = None
+class CaravanSectionSkipResponse(ResponseBase):
+    after_block_id: int = None
+    lottery_result_list: List[InventoryInfo] = None
+    surplus_dish_list: List[CaravanDishData] = None
+    skip_treasure_list: List[InventoryInfo] = None
+    treasure_appraisal_list: List[CaravanTreasureAppraisalData] = None
+    treasure_reward_list: List[InventoryInfo] = None
+    dice_info_after_skip: InventoryInfo = None
+    action_bit_flag: int = None
 class CaravanShopBlockBuyResponse(ResponseBase):
     purchase_list: List[InventoryInfo] = None
     add_present_count: int = None
@@ -3041,6 +3190,7 @@ class CaravanTopResponse(ResponseBase):
     used_dish_id_list: List[int] = None
     shortcut_block_id: int = None
     dice_multiroll_spots_list: List[DiceMultiRollSpotsData] = None
+    fastest_goal_turn: int = None
 class ColosseumBattleFinishResponse(ResponseBase):
     score: ColosseumScore = None
 class ColosseumBattleRetireResponse(ResponseBase):
@@ -3076,6 +3226,98 @@ class ColosseumTopResponse(ResponseBase):
     scores: List[ColosseumScore] = None
 class ConnectShopItemListResponse(ResponseBase):
     shop_list: List[ShopInfo] = None
+class CrownBossBattleFinishResponse(ResponseBase):
+    result_type: int = None
+    clear_reward_list: List[InventoryInfo] = None
+    user_jewel: UserJewel = None
+    user_gold: UserGold = None
+    add_present_count: int = None
+    upper_limit_flag: bool = None
+    unlock_quest_ids: List[int] = None
+    unlock_sub_contents_story_ids: List[int] = None
+    unlock_unit: UnitData = None
+    new_dear_story_id_list: List[int] = None
+    after_target_boss_info: SevenBossInfo = None
+class CrownBossBattleRetireResponse(ResponseBase):
+    pass
+class CrownBossBattleStartResponse(ResponseBase):
+    seed: int = None
+    battle_log_id: int = None
+class CrownEventTopResponse(ResponseBase):
+    login_count: int = None
+    unlock_story_ids: List[int] = None
+    unlock_sub_contents_story_ids: List[int] = None
+    unlock_quest_ids: List[int] = None
+    missions: List[UserMissionInfo] = None
+    unlocked_sub_contents: List[int] = None
+    clear_quest_list: List[SevenClearQuest] = None
+    boss_info: List[SevenBossInfo] = None
+    event_decks: List[DeckData] = None
+class CrownFavoriteResponse(ResponseBase):
+    pass
+class CrownMissionAcceptResponse(ResponseBase):
+    rewards: List[InventoryInfo] = None
+    add_present_count: int = None
+class CrownMissionIndexResponse(ResponseBase):
+    missions: List[UserMissionInfo] = None
+class CrownQuestFinishResponse(ResponseBase):
+    quest_id: int = None
+    result_type: int = None
+    clear_flag: int = None
+    level_info: LevelInfo = None
+    user_stamina_info: UserStaminaInfo = None
+    flag_exchange_team_exp: bool = None
+    state_exchange_stamina: eExchangeStaminaState = None
+    unlock_quest_list: List[int] = None
+    reward_list: List[InventoryInfo] = None
+    first_clear_reward_list: List[InventoryInfo] = None
+    rank_clear_reward_list: List[InventoryInfo] = None
+    user_jewel: UserJewel = None
+    user_gold: UserGold = None
+    add_present_count: int = None
+    upper_limit_flag: bool = None
+    daily_shop: DailyShop = None
+    clan_point: ClanPoint = None
+    caravan_dice_point: int = None
+    daily_clear_count: int = None
+    unlock_boss_ids: List[int] = None
+    unlock_story_ids: List[int] = None
+    unlock_sub_contents_story_ids: List[int] = None
+    new_dear_story_id_list: List[int] = None
+class CrownQuestRetireResponse(ResponseBase):
+    pass
+class CrownQuestSkipMultipleResponse(ResponseBase):
+    quest_result_list: List[QuestResultList] = None
+    bonus_reward_list: List[InventoryInfo] = None
+    user_jewel: UserJewel = None
+    user_gold: UserGold = None
+    user_stamina_info: UserStaminaInfo = None
+    level_info: LevelInfo = None
+    flag_exchange_team_exp: bool = None
+    state_exchange_stamina: eExchangeStaminaState = None
+    daily_shop: DailyShop = None
+    clan_point: ClanPoint = None
+    caravan_dice_point: int = None
+    daily_clear_count_list: List[SevenDailyClearCount] = None
+    add_present_count: int = None
+    upper_limit_flag: bool = None
+    item_list: List[InventoryInfo] = None
+class CrownQuestStartResponse(ResponseBase):
+    seed: int = None
+    battle_log_id: int = None
+    support_position: int = None
+class CrownUnlockScenarioBossResponse(ResponseBase):
+    pass
+class CustomMissionAcceptResponse(ResponseBase):
+    team_level: int = None
+    team_exp: int = None
+    stamina_info: UserStaminaInfo = None
+    rewards: List[InventoryInfo] = None
+    flag_exchange_team_exp: bool = None
+    add_present_count: int = None
+    release_contents: List[ReleaseContentData] = None
+    room_item_level_mission: List[int] = None
+    season_pack_mission_id_list: List[int] = None
 class DomeBattleFinishResponse(ResponseBase):
     quest_challenge_status: DomeQuestChallengeStatus = None
     rewards: List[InventoryInfo] = None
@@ -3104,6 +3346,7 @@ class DomeReplayResponse(ResponseBase):
     user_unit_info: List[UnitData] = None
     versus_user_unit_info: List[UnitData] = None
     my_princess_knight_info: PrincessKnightInfo = None
+    my_unit_role_list: List[UnitRoleInfo] = None
     versus_princess_knight_info: PrincessKnightInfo = None
 class DomeTopResponse(ResponseBase):
     schedule_id: int = None
@@ -3121,11 +3364,29 @@ class EnhanceTeamSkillResponse(ResponseBase):
     princess_knight_rank_exp: int = None
     item_list: List[InventoryInfo] = None
     user_gold: UserGold = None
+class ExchangeTicketRewardListResponse(ResponseBase):
+    exchange_list: List[ExchangeInfo] = None
+class ExchangeTicketUseResponse(ResponseBase):
+    reward_list: List[InventoryInfo] = None
+    item_data: List[InventoryInfo] = None
+    add_present_count: int = None
+class ExternalPaymentApplyPendingProductListResponse(ResponseBase):
+    user_jewel: UserJewel = None
+    add_present_count: int = None
+    rewards: List[InventoryInfo] = None
+    banner_linked_pack_list: List[BannerLinkedPackList] = None
+    chara_e_ticket_purchased_times: List[CharaExchangeTicketProductData] = None
+    beginner_chara_e_ticket_purchased_times: List[BeginnerCharaExchangeTicketProductData] = None
+    season_pack_end_time_info_list: List[SeasonPackEndTimeInfo] = None
 class GachaMonthlyIndexResponse(ResponseBase):
     gacha_info: List[GachaParameter] = None
     exchange_num: int = None
     max_exchange_num: int = None
     free_gacha_info: MonthlyFreeGachaInfo = None
+class GetReusableSupportListResponse(ResponseBase):
+    support_unit_list: List[SupportUnitStatus] = None
+class GetSevenScenarioBossSupportListResponse(ResponseBase):
+    npc_support_unit_list: List[SupportUnitStatus] = None
 class GetValidFriendSupportUnitListResponse(ResponseBase):
     friend_support_unit_list: List[SupportUnitStatus] = None
     general_support_unit_list: List[SupportUnitStatus] = None
@@ -3191,8 +3452,228 @@ class HatsuneUnlockRestrictedTopicTalkStoryResponse(ResponseBase):
     pass
 class HatsuneUpdateSkipQuestListResponse(ResponseBase):
     pass
+class ItemConvertAlcesPointResponse(ResponseBase):
+    user_equip: List[InventoryInfo] = None
+    user_item: List[InventoryInfo] = None
+    item_list: List[InventoryInfo] = None
+    add_present_count: int = None
+class LabyrinthBattleFinishResponse(ResponseBase):
+    result_type: int = None
+    use_relic_id: int = None
+    reward_list: List[InventoryInfo] = None
+    status: LabyrinthStatus = None
+class LabyrinthBattleRetireResponse(ResponseBase):
+    pass
+class LabyrinthBattleRetryResponse(ResponseBase):
+    pass
+class LabyrinthBattleStartResponse(ResponseBase):
+    seed: int = None
+    battle_log_id: int = None
+class LabyrinthBossBattleFinishResponse(ResponseBase):
+    result_type: int = None
+    use_relic_id: int = None
+    reward_list: List[InventoryInfo] = None
+    status: LabyrinthStatus = None
+class LabyrinthBossBattleRetireResponse(ResponseBase):
+    pass
+class LabyrinthBossBattleStartResponse(ResponseBase):
+    seed_list: List[int] = None
+    battle_log_id_list: List[int] = None
+class LabyrinthChoiceEventResponse(ResponseBase):
+    event_result_id: int = None
+    status: LabyrinthStatus = None
+    after_currency_num: int = None
+class LabyrinthChoiceRewardResponse(ResponseBase):
+    status: LabyrinthStatus = None
+    reward_list: List[InventoryInfo] = None
+class LabyrinthCoinShopBuyBulkResponse(ResponseBase):
+    purchase_list: List[InventoryInfo] = None
+    item_data: List[InventoryInfo] = None
+    add_present_count: int = None
+class LabyrinthEnhanceResponse(ResponseBase):
+    after_point: int = None
+class LabyrinthEnterResponse(ResponseBase):
+    enter_id: int = None
+    reward_list: List[InventoryInfo] = None
+    status: LabyrinthStatus = None
+    map_list: List[LabyrinthMapInfo] = None
+    item_list: List[InventoryInfo] = None
+class LabyrinthEventEffectResponse(ResponseBase):
+    status: LabyrinthStatus = None
+    reward_list: List[InventoryInfo] = None
+class LabyrinthExitResponse(ResponseBase):
+    unit_score: int = None
+    relic_score: int = None
+    move_score: int = None
+    battle_normal_score: int = None
+    battle_hard_score: int = None
+    battle_boss_score: int = None
+    result_score: int = None
+    add_labyrinth_point: int = None
+    labyrinth_point_limit_flag: bool = None
+    add_enhance_point: int = None
+    enhance_point_limit_flag: bool = None
+    exit_reward_list: List[InventoryInfo] = None
+    treasure_box_reward_list: List[LabyrinthTreasureBoxResult] = None
+    rare_treasure_box_reward_list: List[LabyrinthTreasureBoxResult] = None
+    rare_treasure_box_count: int = None
+    add_present_count: int = None
+class LabyrinthGetCandidateUnitResponse(ResponseBase):
+    unit_id_list: List[int] = None
+class LabyrinthMissionAcceptResponse(ResponseBase):
+    reward_list: List[InventoryInfo] = None
+    add_present_count: int = None
+class LabyrinthMissionIndexResponse(ResponseBase):
+    mission_list: List[UserMissionInfo] = None
+class LabyrinthMoveResponse(ResponseBase):
+    status: LabyrinthStatus = None
+    reward_list: List[InventoryInfo] = None
+class LabyrinthPictureBookAcceptAllResponse(ResponseBase):
+    reward_list: List[InventoryInfo] = None
+    user_jewel: UserJewel = None
+    add_present_count: int = None
+class LabyrinthPointRewardAcceptResponse(ResponseBase):
+    reward_list: List[InventoryInfo] = None
+    add_present_count: int = None
+class LabyrinthReRollUnitResponse(ResponseBase):
+    status: LabyrinthStatus = None
+    pick_unit_list: List[int] = None
+    reroll_unit_count: int = None
+    after_currency_num: int = None
+class LabyrinthResumeResponse(ResponseBase):
+    guild_id: int = None
+    block_id: int = None
+    alpha_rupee: int = None
+    status: LabyrinthStatus = None
+    map_list: List[LabyrinthMapInfo] = None
+    unit_list: List[LabyrinthUnitInfo] = None
+    deck_list: List[LoadDeckData] = None
+    relic_list: List[LabyrinthRelicInfo] = None
+    enter_status: int = None
+    treasure_box: int = None
+class LabyrinthRetireResponse(ResponseBase):
+    reward_list: List[InventoryInfo] = None
+class LabyrinthRollUnitResponse(ResponseBase):
+    status: LabyrinthStatus = None
+    pick_unit_list: List[int] = None
+class LabyrinthShopBuyResponse(ResponseBase):
+    status: LabyrinthStatus = None
+    purchase_list: List[InventoryInfo] = None
+    after_currency_num: int = None
+class LabyrinthShopCloseResponse(ResponseBase):
+    status: LabyrinthStatus = None
+class LabyrinthShopResetResponse(ResponseBase):
+    shop_lineup_list: List[LabyrinthShopLineupInfo] = None
+    after_currency_num: int = None
+    shop_reset_count: int = None
+class LabyrinthSkipResponse(ResponseBase):
+    add_labyrinth_point: int = None
+    labyrinth_point_limit_flag: bool = None
+    add_enhance_point: int = None
+    enhance_point_limit_flag: bool = None
+    skip_reward_list: List[InventoryInfo] = None
+    treasure_box_reward_list: List[InventoryInfo] = None
+    item_list: List[InventoryInfo] = None
+    add_present_count: int = None
+    treasure_box_count: int = None
+    rare_treasure_box_count: int = None
+class LabyrinthSummonUnitResponse(ResponseBase):
+    status: LabyrinthStatus = None
+    unit_info_list: List[LabyrinthUnitInfo] = None
+class LabyrinthTopResponse(ResponseBase):
+    labyrinth_point: int = None
+    labyrinth_reward_received_point: int = None
+    labyrinth_enhance_point: int = None
+    labyrinth_enhance_node_list: List[int] = None
+    acceptable_mission_count: int = None
+    picture_book_info: LabyrinthPictureBookInfo = None
+    enter_id: int = None
+    guild_id: int = None
+    difficulty: int = None
+    guild_cleared_difficulty_list: List[LabyrinthGuildClearedDifficultyInfo] = None
+    reward_list: List[InventoryInfo] = None
+    coin_shop_list: List[LabyrinthCoinShopInfo] = None
+    skip_id_list: List[int] = None
+class LabyrinthUpdateDeckResponse(ResponseBase):
+    pass
+class LabyrinthUpdateSkipListResponse(ResponseBase):
+    pass
+class LabyrinthUseRelicResponse(ResponseBase):
+    status: LabyrinthStatus = None
+    reward_list: List[InventoryInfo] = None
+class LimitedMissionReadCategoryAnimationResponse(ResponseBase):
+    reward_list: List[InventoryInfo] = None
+    add_present_count: int = None
+class LimitedMissionReadGroupAnimationResponse(ResponseBase):
+    reward_list: List[InventoryInfo] = None
+    mission_progress_list: List[UserMissionProgressInfo] = None
+    category_info: UserLimitedMissionCategoryInfo = None
+    add_present_count: int = None
+class LimitedMissionReceiveRewardListResponse(ResponseBase):
+    reward_list: List[InventoryInfo] = None
+    mission_progress_list: List[UserMissionProgressInfo] = None
+    category_info: UserLimitedMissionCategoryInfo = None
+    user_jewel: UserJewel = None
+    user_gold: UserGold = None
+    team_level: int = None
+    team_exp: int = None
+    stamina_info: UserStaminaInfo = None
+    flag_exchange_team_exp: bool = None
+    add_present_count: int = None
 class LogConnectionErrorResponse(ResponseBase):
     pass
+class MirageFloorQuestFinishResponse(ResponseBase):
+    result_type: int = None
+    clear_reward_list: List[InventoryInfo] = None
+    user_jewel: UserJewel = None
+    user_gold: UserGold = None
+    reward_full_time: int = None
+    add_present_count: int = None
+    upper_limit_flag: bool = None
+class MirageFloorQuestRetireResponse(ResponseBase):
+    pass
+class MirageFloorQuestStartResponse(ResponseBase):
+    seed: int = None
+    battle_log_id: int = None
+    support_position: int = None
+class MirageNemesisFinishResponse(ResponseBase):
+    result_type: int = None
+    drop_reward_list: List[InventoryInfo] = None
+    clear_reward_list: List[InventoryInfo] = None
+    user_jewel: UserJewel = None
+    user_gold: UserGold = None
+    add_present_count: int = None
+    upper_limit_flag: bool = None
+    nemesis_progress: List[MirageNemesisProgress] = None
+    clear_count_reset_time: int = None
+class MirageNemesisRetireResponse(ResponseBase):
+    nemesis_progress: List[MirageNemesisProgress] = None
+    clear_count_reset_time: int = None
+class MirageNemesisSkipMultipleResponse(ResponseBase):
+    drop_reward_list: List[InventoryInfo] = None
+    item_list: List[InventoryInfo] = None
+    user_jewel: UserJewel = None
+    user_gold: UserGold = None
+    add_present_count: int = None
+    upper_limit_flag: bool = None
+    nemesis_progress: List[MirageNemesisProgress] = None
+    clear_count_reset_time: int = None
+class MirageNemesisStartResponse(ResponseBase):
+    seed: int = None
+    battle_log_id: int = None
+    support_position: int = None
+class MirageReceiveRewardResponse(ResponseBase):
+    reward_info: List[InventoryInfo] = None
+    reward_full_time: int = None
+    add_present_count: int = None
+    upper_limit_flag: bool = None
+    user_jewel: UserJewel = None
+    user_gold: UserGold = None
+class MirageTopResponse(ResponseBase):
+    max_cleared_floor_num: int = None
+    nemesis_progress: List[MirageNemesisProgress] = None
+    reward_full_time: int = None
+    clear_count_reset_time: int = None
 class NbbFinishResponse(ResponseBase):
     emblem_list: List[int] = None
     score_reward_list: List[InventoryInfo] = None
@@ -3211,6 +3692,8 @@ class PrincessKnightMissionAcceptResponse(ResponseBase):
     add_present_count: int = None
 class PrincessKnightMissionIndexResponse(ResponseBase):
     missions: List[UserMissionInfo] = None
+class ProfileSetPictureFrameResponse(ResponseBase):
+    frame_id: int = None
 class SeasonPassBuyLevelResponse(ResponseBase):
     user_jewel: UserJewel = None
     seasonpass_level: int = None
@@ -3246,6 +3729,167 @@ class SelectionTicketExchangeResponse(ResponseBase):
     item_data: List[InventoryInfo] = None
     add_present_count: int = None
     upper_limit_flag: bool = None
+class SerialCodeApplyPendingSerialCodeListResponse(ResponseBase):
+    emblem_added: int = None
+    add_present_count: int = None
+class SevenBossBattleFinishResponse(ResponseBase):
+    result_type: int = None
+    clear_reward_list: List[InventoryInfo] = None
+    user_jewel: UserJewel = None
+    user_gold: UserGold = None
+    add_present_count: int = None
+    upper_limit_flag: bool = None
+    unlock_quest_ids: List[int] = None
+    unlock_sub_contents_story_ids: List[int] = None
+    unlock_unit: UnitData = None
+    new_dear_story_id_list: List[int] = None
+    after_target_boss_info: SevenBossInfo = None
+class SevenBossBattleHistoryResponse(ResponseBase):
+    total_attack_count: int = None
+    clear_time: int = None
+    history: List[EventSpecialBattleExHistory] = None
+class SevenBossBattleResetResponse(ResponseBase):
+    pass
+class SevenBossBattleRetireResponse(ResponseBase):
+    pass
+class SevenBossBattleStartResponse(ResponseBase):
+    seed: int = None
+    battle_log_id: int = None
+class SevenDearFinishResponse(ResponseBase):
+    before_dear_point_info: DearPointInfo = None
+    after_dear_point_info: DearPointInfo = None
+    add_present_count: int = None
+class SevenDearTopResponse(ResponseBase):
+    unlock_dear_story_info_list: List[DearStoryInfo] = None
+    dear_point_info_list: List[DearPointInfo] = None
+class SevenGachaExecMultipleAutoResponse(ResponseBase):
+    reward_info_list: List[InventoryInfo] = None
+    add_present_count: int = None
+class SevenGachaExecMultipleResponse(ResponseBase):
+    draw_result: List[EventBoxGachaHitRewardInfo] = None
+    reward_info_list: List[InventoryInfo] = None
+    add_present_count: int = None
+class SevenGachaExecResponse(ResponseBase):
+    draw_result: List[EventBoxGachaHitRewardInfo] = None
+    reward_info_list: List[InventoryInfo] = None
+    add_present_count: int = None
+class SevenGachaIndexResponse(ResponseBase):
+    event_gacha_info: EventGachaInfo = None
+class SevenGachaLineupResponse(ResponseBase):
+    event_gacha_lineup: List[EventBoxGachaSet] = None
+class SevenGachaResetResponse(ResponseBase):
+    event_gacha_info: EventGachaInfo = None
+class SevenListoryTopResponse(ResponseBase):
+    unlock_sub_contents_story_ids: List[int] = None
+    lock_story_condition: List[SevenLockStoryCondition] = None
+class SevenMissionAcceptResponse(ResponseBase):
+    rewards: List[InventoryInfo] = None
+    add_present_count: int = None
+class SevenMissionIndexResponse(ResponseBase):
+    missions: List[UserMissionInfo] = None
+    daily_reset_time: int = None
+class SevenObtentTopResponse(ResponseBase):
+    unlock_sub_contents_story_ids: List[int] = None
+    obtent_story_status_list: List[SevenStoryInfo] = None
+    lock_story_condition: List[SevenLockStoryCondition] = None
+class SevenQuestFinishResponse(ResponseBase):
+    quest_id: int = None
+    result_type: int = None
+    clear_flag: int = None
+    level_info: LevelInfo = None
+    user_stamina_info: UserStaminaInfo = None
+    flag_exchange_team_exp: bool = None
+    state_exchange_stamina: eExchangeStaminaState = None
+    unlock_quest_list: List[int] = None
+    reward_list: List[InventoryInfo] = None
+    first_clear_reward_list: List[InventoryInfo] = None
+    rank_clear_reward_list: List[InventoryInfo] = None
+    user_jewel: UserJewel = None
+    user_gold: UserGold = None
+    add_present_count: int = None
+    upper_limit_flag: bool = None
+    daily_shop: DailyShop = None
+    clan_point: ClanPoint = None
+    caravan_dice_point: int = None
+    daily_clear_count: int = None
+    unlock_boss_ids: List[int] = None
+    unlock_story_ids: List[int] = None
+    unlock_sub_contents_story_ids: List[int] = None
+    new_dear_story_id_list: List[int] = None
+class SevenQuestRetireResponse(ResponseBase):
+    pass
+class SevenQuestSkipMultipleResponse(ResponseBase):
+    quest_result_list: List[QuestResultList] = None
+    bonus_reward_list: List[InventoryInfo] = None
+    user_jewel: UserJewel = None
+    user_gold: UserGold = None
+    user_stamina_info: UserStaminaInfo = None
+    level_info: LevelInfo = None
+    flag_exchange_team_exp: bool = None
+    state_exchange_stamina: eExchangeStaminaState = None
+    daily_shop: DailyShop = None
+    clan_point: ClanPoint = None
+    caravan_dice_point: int = None
+    daily_clear_count_list: List[SevenDailyClearCount] = None
+    add_present_count: int = None
+    upper_limit_flag: bool = None
+    item_list: List[InventoryInfo] = None
+class SevenQuestStartResponse(ResponseBase):
+    seed: int = None
+    battle_log_id: int = None
+    support_position: int = None
+class SevenQuestTopResponse(ResponseBase):
+    sp_ranking_list: List[EventSpecialBattleExRankingInfoList] = None
+    multi_skip_setting: SevenQuestBulkSkipInfo = None
+class SevenSpBattleFinishResponse(ResponseBase):
+    result_type: int = None
+    clear_reward_list: List[InventoryInfo] = None
+    user_jewel: UserJewel = None
+    user_gold: UserGold = None
+    add_present_count: int = None
+    upper_limit_flag: bool = None
+    unlock_quest_ids: List[int] = None
+    unlock_sub_contents_story_ids: List[int] = None
+    chat_battle_log_flag: int = None
+    after_target_boss_info: SevenBossInfo = None
+class SevenSpBattleRetireResponse(ResponseBase):
+    pass
+class SevenSpBattleStartResponse(ResponseBase):
+    battle_log_id: int = None
+    enemy_info: List[EventEnemyInfo] = None
+class SevenSpPlusBattleFinishResponse(ResponseBase):
+    result_type: int = None
+    clear_reward_list: List[InventoryInfo] = None
+    user_jewel: UserJewel = None
+    user_gold: UserGold = None
+    add_present_count: int = None
+    upper_limit_flag: bool = None
+    chat_battle_log_flag: int = None
+    after_target_boss_info: SevenBossInfo = None
+class SevenSpPlusBattleRetireResponse(ResponseBase):
+    pass
+class SevenSpPlusBattleStartResponse(ResponseBase):
+    battle_log_id: int = None
+    enemy_info: List[EventEnemyInfo] = None
+    support_position: int = None
+class SevenStoryTopResponse(ResponseBase):
+    unlock_story_ids: List[int] = None
+    lock_story_condition: List[SevenLockStoryCondition] = None
+class SevenTopResponse(ResponseBase):
+    unlock_story_ids: List[int] = None
+    unlock_sub_contents_story_ids: List[int] = None
+    unlock_quest_ids: List[int] = None
+    login_bonus: SevenLoginBonus = None
+    add_present_count: int = None
+    missions: List[UserMissionInfo] = None
+    unlocked_sub_contents: List[int] = None
+    clear_quest_list: List[SevenClearQuest] = None
+    boss_info: List[SevenBossInfo] = None
+    event_decks: List[DeckData] = None
+class SevenUnlockScenarioBossResponse(ResponseBase):
+    pass
+class SevenUpdateSkipQuestListResponse(ResponseBase):
+    pass
 class ShopBuyBulkResponse(ResponseBase):
     purchase_list: List[InventoryInfo] = None
     item_data: List[InventoryInfo] = None
@@ -3369,6 +4013,11 @@ class TestBuyMonthlyCardResponse(ResponseBase):
     resident_info: MonthlyGachaInfo = None
 class TestBuyTicketResponse(ResponseBase):
     ticket_status: int = None
+class TotalRechargeMissionAcceptResponse(ResponseBase):
+    rewards: List[InventoryInfo] = None
+    add_present_count: int = None
+class TotalRechargeMissionIndexResponse(ResponseBase):
+    missions: List[UserMissionInfo] = None
 class TravelResultRoundEventResponse(ResponseBase):
     current_round_result: TravelRoundEventResult = None
     next_round_event_data: TravelAppearRoundEvent = None
@@ -3394,3 +4043,16 @@ class UnitMultiAutomaticPromotionResponse(ResponseBase):
     refund_items: List[InventoryInfo] = None
     user_gold: UserGold = None
     add_present_count: int = None
+class UnitRoleEnhanceResponse(ResponseBase):
+    unit_role_list: List[UnitRoleInfo] = None
+    item_data: List[InventoryInfo] = None
+    princess_knight_rank_exp: int = None
+class UnitRoleGachaExecResponse(ResponseBase):
+    reward_info_list: List[InventoryInfo] = None
+    add_present_count: int = None
+    gacha_level: int = None
+    exec_count: int = None
+class UnitRoleGachaIndexResponse(ResponseBase):
+    gacha_level: int = None
+    exec_count: int = None
+    reward_info_list: List[InventoryInfo] = None

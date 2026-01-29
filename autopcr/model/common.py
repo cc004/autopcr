@@ -65,10 +65,17 @@ class UnlockRarity6Slot(BaseModel):
     Status1: int = None
     Status2: int = None
     Status3: int = None
+class ExtraEquipSubStatus(BaseModel):
+    slot_number: int = None
+    status: int = None
+    step: int = None
+    is_lock: bool = None
 class ExtraEquipSlot(BaseModel):
     serial_id: int = None
     ex_equipment_id: int = None
     enhancement_pt: int = None
+    sub_status: List[ExtraEquipSubStatus] = None
+    alces_flag: int = None
 class UnitData(BaseModel):
     id: int = None
     get_time: int = None
@@ -132,6 +139,8 @@ class ExtraEquipInfo(BaseModel):
     enhancement_pt: int = None
     rank: int = None
     protection_flag: int = None
+    sub_status: List[ExtraEquipSubStatus] = None
+    is_alces_pending: int = None
 class InventoryInfo(BaseModel):
     id: int = None
     type: eInventoryType = None
@@ -163,6 +172,7 @@ class SearchOpponent(BaseModel):
     favorite_unit: UnitDataForView = None
     arena_deck: List[UnitData] = None
     emblem: EmblemData = None
+    my_profile_picture_frame: int = None
 class UnitDamageInfo(BaseModel):
     viewer_id: int = None
     unit_id: int = None
@@ -206,6 +216,7 @@ class OpponentUser(BaseModel):
     favorite_unit: UnitDataForView = None
     total_power: int = None
     emblem: EmblemData = None
+    my_profile_picture_frame: int = None
 class VersusResult(BaseModel):
     log_id: int = None
     versus_time: int = None
@@ -229,6 +240,7 @@ class RankingSearchOpponent(BaseModel):
     favorite_unit: UnitDataForView = None
     arena_deck: List[UnitDataForView] = None
     emblem: EmblemData = None
+    my_profile_picture_frame: int = None
 class ArenaWaveInfo(BaseModel):
     user_arena_deck: List[UnitData] = None
     vs_user_arena_deck: List[UnitData] = None
@@ -301,6 +313,7 @@ class ClanMemberInfo(BaseModel):
     dispatch_units: List[UnitDataForClanMember] = None
     last_login_time: int = None
     total_power: int = None
+    my_profile_picture_frame: int = None
 class SkinDataForRequest(BaseModel):
     unit_id: int = None
     icon_skin_id: int = None
@@ -313,6 +326,7 @@ class CharaExchangeTicketReward(BaseModel):
     reward_type: eInventoryType = None
     reward_id: int = None
     reward_count: int = None
+    exchange_number: int = None
 class AgreementStatus(BaseModel):
     ver: int = None
     state: int = None
@@ -368,6 +382,7 @@ class MemberScoreRanking(BaseModel):
     total_power: int = None
     emblem: EmblemData = None
     viewer_id: int = None
+    my_profile_picture_frame: int = None
 class BossRankingInClanPhase(BaseModel):
     phase_num: int = None
     enemy_id: int = None
@@ -387,6 +402,7 @@ class MemberBossRanks(BaseModel):
     bosses: List[BossRank] = None
     viewer_id: int = None
     score: int = None
+    my_profile_picture_frame: int = None
 class BossRankingInClanSummaryPhase(BaseModel):
     phase_num: int = None
     my_member_pos: int = None
@@ -416,6 +432,7 @@ class DamageReport(BaseModel):
     damage: int = None
     rank: int = None
     emblem: EmblemData = None
+    my_profile_picture_frame: int = None
 class ClanBattleBattleLogFavoriteDeleted(BaseModel):
     target_viewer_id: int = None
     battle_log_id: int = None
@@ -452,6 +469,7 @@ class PeriodRanking(BaseModel):
     rank: int = None
     damage: int = None
     grade_rank: int = None
+    leader_profile_picture_frame: int = None
 class ClanBattleRecord(BaseModel):
     clan_battle_id: int = None
     clan_name: str = None
@@ -568,6 +586,7 @@ class BlockUserDetail(BaseModel):
     owner_name: str = None
     favorite_unit: UnitDataForView = None
     owner_last_login_time: int = None
+    my_profile_picture_frame: int = None
 class ChatMessageInfo(BaseModel):
     viewer_id: int = None
     message_id: int = None
@@ -581,6 +600,7 @@ class ChatMemberInfo(BaseModel):
     level: int = None
     favorite_unit: UnitDataForView = None
     emblem: EmblemData = None
+    my_profile_picture_frame: int = None
 class EquipDonate(BaseModel):
     equip_id: int = None
     num: int = None
@@ -610,6 +630,7 @@ class ClanInfo(BaseModel):
     grade_rank: int = None
     current_period_ranking: int = None
     clan_battle_mode: int = None
+    leader_profile_picture_frame: int = None
 class ClanData(BaseModel):
     detail: ClanInfo = None
     members: List[ClanMemberInfo] = None
@@ -625,6 +646,7 @@ class InvitedUserDetail(BaseModel):
     team_level: int = None
     user_last_login_time: int = None
     emblem: EmblemData = None
+    my_profile_picture_frame: int = None
 class JoinRequestUserInfo(BaseModel):
     viewer_id: int = None
     name: str = None
@@ -632,6 +654,7 @@ class JoinRequestUserInfo(BaseModel):
     comment: str = None
     favorite_unit: UnitDataForView = None
     emblem: EmblemData = None
+    my_profile_picture_frame: int = None
 class UserStaminaInfo(BaseModel):
     user_stamina: int = None
     stamina_full_recovery_time: int = None
@@ -837,6 +860,7 @@ class FriendBattleInfo(BaseModel):
     level: int = None
     favorite_unit: UnitDataForView = None
     deck_list: List[FriendDeckInfo] = None
+    my_profile_picture_frame: int = None
 class FriendInfo(BaseModel):
     viewer_id: int = None
     name: str = None
@@ -846,6 +870,7 @@ class FriendInfo(BaseModel):
     last_login_time: int = None
     total_power: int = None
     friend_num: int = None
+    my_profile_picture_frame: int = None
 class CampaignTarget(BaseModel):
     viewer_id: int = None
     target_flag: bool = None
@@ -1015,6 +1040,7 @@ class GrandArenaSearchOpponent(BaseModel):
     emblem: EmblemData = None
     last_match_flag: bool = None
     grand_arena_deck: GrandArenaDeck = None
+    my_profile_picture_frame: int = None
 class RankingGroupInfo(BaseModel):
     group_id: int = None
     is_destination: int = None
@@ -1040,6 +1066,7 @@ class GrandArenaOppnentUserInfo(BaseModel):
     favorite_unit: UnitDataForView = None
     total_power: int = None
     emblem: EmblemData = None
+    my_profile_picture_frame: int = None
 class GrandArenaHistoryInfo(BaseModel):
     log_id: int = None
     versus_time: int = None
@@ -1264,6 +1291,8 @@ class CharaExchangeTicketProductData(BaseModel):
     number_of_product_purchased: int = None
     start_time: int = None
     end_time: int = None
+    is_external_payment: int = None
+    product_name: str = None
 class ShioriQuestInfo(BaseModel):
     quest_list: List[UserQuestInfo] = None
     dead_boss_list: List[int] = None
@@ -1326,6 +1355,9 @@ class LegionMainModeInfo(BaseModel):
 class LegionBattleBonus(BaseModel):
     legion_boss_id: int = None
     start_time_list: List[int] = None
+class PlayerFrameData(BaseModel):
+    frame_id: int = None
+    expire_time: int = None
 class UserInfo(BaseModel):
     viewer_id: int = None
     user_name: str = None
@@ -1341,6 +1373,8 @@ class UserInfo(BaseModel):
     arena_rank: int = None
     invite_accept_flag: int = None
     reg_time: int = None
+    my_profile_picture_frame_list: List[PlayerFrameData] = None
+    my_profile_picture_frame: int = None
 class UserBankGoldInfo(BaseModel):
     bank_gold: int = None
     highest_bank_gold: int = None
@@ -1592,6 +1626,14 @@ class SynchroIniSetting(BaseModel):
     rank_threshold_unit_num: int = None
 class AbyssIniSetting(BaseModel):
     daily_clear_limit_count: int = None
+class AlcesIniSetting(BaseModel):
+    convert_limit_count: int = None
+    lock_ex_equip_limit_count: int = None
+class UnitRoleIniSetting(BaseModel):
+    gacha_cost_id: int = None
+    gacha_cost_count: int = None
+    gacha_exec_limit: int = None
+    mastery_convert_rate_list: List[int] = None
 class IniSetting(BaseModel):
     equipment_enhance: EquipStrSetting = None
     quest: QuestSetting = None
@@ -1639,6 +1681,8 @@ class IniSetting(BaseModel):
     log_barrier: LogBarrierIniSetting = None
     synchro: SynchroIniSetting = None
     abyss: AbyssIniSetting = None
+    alces: AlcesIniSetting = None
+    unit_role: UnitRoleIniSetting = None
 class LoginBonusData(BaseModel):
     campaign_id: int = None
     total_count: int = None
@@ -1709,6 +1753,7 @@ class MyPartyExtraEquipSlot(BaseModel):
     slot: int = None
     ex_equipment_id: int = None
     enhancement_pt: int = None
+    sub_status: List[ExtraEquipSubStatus] = None
 class MyPartyExEquipInfo(BaseModel):
     unit_id: int = None
     ex_equip_slot: List[MyPartyExtraEquipSlot] = None
@@ -1936,6 +1981,7 @@ class ProfileUserInfo(BaseModel):
     last_login_time: int = None
     friend_num: int = None
     princess_knight_rank_total_exp: int = None
+    my_profile_picture_frame: int = None
 class ProfileQuestInfo(BaseModel):
     normal_quest: List[int] = None
     hard_quest: List[int] = None
@@ -2050,6 +2096,7 @@ class RoomUserInfo(BaseModel):
     favorite_unit: UnitDataForView = None
     DeckListForClient: List[DeckListDataForView] = None
     emblem: EmblemData = None
+    my_profile_picture_frame: int = None
 class RoomItemPosition(BaseModel):
     serial_id: int = None
     direction: int = None
@@ -2114,6 +2161,7 @@ class SekaiRanking(BaseModel):
     rank: int = None
     damage: int = None
     total_power: int = None
+    my_profile_picture_frame: int = None
 class PaymentGoldDetail(BaseModel):
     id: int = None
     name: str = None
@@ -2265,6 +2313,7 @@ class TowerClearedUserInfo(BaseModel):
     favorite_unit: UnitDataForView = None
     cleared_time: int = None
     emblem: EmblemData = None
+    my_profile_picture_frame: int = None
 class ClearedExQuestList(BaseModel):
     quest_id: int = None
     ex_cleared_time: int = None
@@ -2547,6 +2596,7 @@ class InviteClanDetail(BaseModel):
     clan_battle_mode: int = None
     member_num: int = None
     grade_rank: int = None
+    leader_profile_picture_frame: int = None
 class VotedUnit(BaseModel):
     rarity_1: int = None
     rarity_2: int = None
@@ -2615,6 +2665,15 @@ class AcnUnlockQuestMission(BaseModel):
 class AcnUnknownEnemyUnit(BaseModel):
     unit_id: int = None
     current_hp: int = None
+class AlcesData(BaseModel):
+    serial_id: int = None
+    sub_status: List[ExtraEquipSubStatus] = None
+class ExtraEquipSubStatusPost(BaseModel):
+    slot_number: int = None
+    is_lock: int = None
+class AlcesDataPost(BaseModel):
+    serial_id: int = None
+    sub_status: List[ExtraEquipSubStatusPost] = None
 class ArenaDefendInfo(BaseModel):
     round_max_limited_times: int = None
     daily_max_limited_times: int = None
@@ -2634,6 +2693,16 @@ class PrincessKnightInfo(BaseModel):
     talent_level_info_list: List[TalentLevelInfo] = None
     talent_skill_last_enhanced_page_node_list: List[TalentSkillNodeInfo] = None
     team_skill_latest_node: TeamSkillNodeInfo = None
+class UnitRoleInfo(BaseModel):
+    unit_role_id: int = None
+    slot_level_1: int = None
+    enhance_level_1: int = None
+    slot_level_2: int = None
+    enhance_level_2: int = None
+    slot_level_3: int = None
+    enhance_level_3: int = None
+    slot_level_4: int = None
+    enhance_level_4: int = None
 class AsmAnswerInfo(BaseModel):
     wave_no: int = None
     asm_id: int = None
@@ -2667,6 +2736,75 @@ class AsmArchiveInfo(BaseModel):
 class AsmMemoryGaugeInfo(BaseModel):
     gauge_id: int = None
     score: int = None
+class BsmMachine(BaseModel):
+    user_name: str = None
+    favorite_unit: UnitDataForView = None
+    emblem: EmblemData = None
+    machine_name: str = None
+    leader_id: int = None
+    member_id_1: int = None
+    member_id_2: int = None
+    body_parts_id: int = None
+    body_bonus_id: int = None
+    body_joint_id: int = None
+    wheel_parts_id_1: int = None
+    wheel_bonus_id_1: int = None
+    wheel_parts_id_2: int = None
+    wheel_bonus_id_2: int = None
+    wheel_parts_id_3: int = None
+    wheel_bonus_id_3: int = None
+    weapon_parts_id_1: int = None
+    weapon_bonus_id_1: int = None
+    weapon_parts_id_2: int = None
+    weapon_bonus_id_2: int = None
+    weapon_parts_id_3: int = None
+    weapon_bonus_id_3: int = None
+    gadget_parts_id_1: int = None
+    gadget_bonus_id_1: int = None
+    gadget_parts_id_2: int = None
+    gadget_bonus_id_2: int = None
+    power: int = None
+class BsmMyMachine(BaseModel):
+    machine_id: int = None
+    machine_name: str = None
+    leader_id: int = None
+    member_id_1: int = None
+    member_id_2: int = None
+    body_serial_id: int = None
+    wheel_serial_id_1: int = None
+    wheel_serial_id_2: int = None
+    wheel_serial_id_3: int = None
+    weapon_serial_id_1: int = None
+    weapon_serial_id_2: int = None
+    weapon_serial_id_3: int = None
+    gadget_serial_id_1: int = None
+    gadget_serial_id_2: int = None
+    power: int = None
+class BsmFriendBattle(BaseModel):
+    enemy_viewer_id: int = None
+    last_login_time: int = None
+    machine: BsmMachine = None
+class BsmParts(BaseModel):
+    serial_id: int = None
+    parts_id: int = None
+    bonus_id: int = None
+    joint_id: int = None
+    protection_flag: int = None
+class BsmReplay(BaseModel):
+    replay_log_id: int = None
+    battle_time: int = None
+    win_or_lose: int = None
+    background_id: int = None
+    my_machine: BsmMachine = None
+    enemy_machine: BsmMachine = None
+class BsmRivalBattle(BaseModel):
+    type: int = None
+    machine: BsmMachine = None
+class BsmMissionInfo(BaseModel):
+    mission_id: int = None
+    mission_status: eMissionStatusType = None
+    exec_count: int = None
+    clear_count: int = None
 class BywayDeliveryItemInfo(BaseModel):
     slot_id: int = None
     condition_id: int = None
@@ -2684,6 +2822,7 @@ class RivalInfo(BaseModel):
     minigame_id: int = None
     minigame_start_count: int = None
     minigame_retire_reward: List[InventoryInfo] = None
+    minigame_skip_reward: List[InventoryInfo] = None
     spots: int = None
     spots_list: List[int] = None
     after_block_id: int = None
@@ -2780,6 +2919,25 @@ class ColosseumRankingInfo(BaseModel):
     emblem: EmblemData = None
     favorite_unit: UnitDataForView = None
     total_score: int = None
+    my_profile_picture_frame: int = None
+class SevenBossEnemyInfo(BaseModel):
+    unit_id: int = None
+    hp: int = None
+class SevenBossInfo(BaseModel):
+    quest_id: int = None
+    appear_num: int = None
+    attack_num: int = None
+    enemy_unit: List[SevenBossEnemyInfo] = None
+    enemy_point: int = None
+    mode: int = None
+    special_enemy_unit: List[UnitHpInfo] = None
+class SevenClearQuest(BaseModel):
+    quest_id: int = None
+    clear_flg: int = None
+    daily_clear_count: int = None
+class SevenDailyClearCount(BaseModel):
+    quest_id: int = None
+    daily_clear_count: int = None
 class DomeBattleFinishUnitInfo(BaseModel):
     damage: int = None
     unit_id: int = None
@@ -2798,6 +2956,29 @@ class DomeHistoryInfo(BaseModel):
     user_unit_info: List[UnitDataForView] = None
     versus_user_unit_info: List[UnitDataForView] = None
     damage_list: List[DomeUnitDamageInfo] = None
+class ExchangeInfo(BaseModel):
+    exchange_number: int = None
+    reward_list: List[InventoryInfo] = None
+class BannerLinkedPackList(BaseModel):
+    id: int = None
+    remaining_count: int = None
+    start_time: int = None
+    end_time: int = None
+class BeginnerCharaExchangeTicketProductData(BaseModel):
+    csv_data_id: int = None
+    beginner_id: int = None
+    ticket_id: int = None
+    ticket_count: int = None
+    forced_exchange_time: int = None
+    number_of_product_purchased: int = None
+    start_time: int = None
+    end_time: int = None
+class SeasonPackEndTimeInfo(BaseModel):
+    csv_data_id: int = None
+    SeasonPackType: eSeasonPackType = None
+    season_pack_alert: int = None
+    season_pack_end_time: int = None
+    is_cidp_only: int = None
 class GachaBonusResultList(BaseModel):
     bonus_1: List[InventoryInfo] = None
     bonus_2: List[InventoryInfo] = None
@@ -2843,15 +3024,6 @@ class ExpectedTopicInfo(BaseModel):
     expected_topic_list: List[ExpectedTopicFixedInfo] = None
     random_topic_count: int = None
     is_show_sign: bool = None
-class BeginnerCharaExchangeTicketProductData(BaseModel):
-    csv_data_id: int = None
-    beginner_id: int = None
-    ticket_id: int = None
-    ticket_count: int = None
-    forced_exchange_time: int = None
-    number_of_product_purchased: int = None
-    start_time: int = None
-    end_time: int = None
 class SeasonPassData(BaseModel):
     SeasonPassRewards: Dict[int, List[int]] = None
     HasBuy: bool = None
@@ -2876,20 +3048,108 @@ class TalentQuestAreaInfo(BaseModel):
     daily_bonus_use_count: int = None
     daily_clear_count: int = None
     daily_recovery_count: int = None
+class CrownHardQuestInfo(BaseModel):
+    quest_id: int = None
+    clear_flg: int = None
+    result_type: int = None
+    daily_clear_count: int = None
+class SeasonPackCampaignInfo(BaseModel):
+    campaign_category: int = None
+    Value: int = None
+class UserMissionProgressInfo(BaseModel):
+    mission_id: int = None
+    status: eMissionStatusType = None
+    exec_count: int = None
+class UserLimitedMissionCategoryInfo(BaseModel):
+    category_id: int = None
+    group_id: int = None
+    step_id: int = None
+    status: eLimitedMissionCategoryStatusType = None
+    end_time: int = None
+class LabyrinthUnitInfo(BaseModel):
+    unit_id: int = None
+    unit_type: eLabyrinthUnitType = None
+    unit_data: UnitData = None
+class LabyrinthShopLineupInfo(BaseModel):
+    lineup_id: int = None
+    reward_type: eInventoryType = None
+    reward_id: int = None
+    reward_count: int = None
+    price: int = None
+    is_sold: int = None
+    availability: eLabyrinthShopItemStatus = None
+class LabyrinthChoiceInfo(BaseModel):
+    choice_num: int = None
+    reward_type: int = None
+    reward_id: int = None
+    reward_count: int = None
+class LabyrinthStatus(BaseModel):
+    type: eLabyrinthStatusType = None
+    item_id: int = None
+    candidate_unit_list: List[LabyrinthUnitInfo] = None
+    quest_id: int = None
+    event_id: int = None
+    event_result_id: int = None
+    effect_num: int = None
+    relic_id: int = None
+    shop_lineup_list: List[LabyrinthShopLineupInfo] = None
+    shop_reset_count: int = None
+    choices: List[LabyrinthChoiceInfo] = None
+    current_choice_count: int = None
+    remain_choice_count: int = None
+class LabyrinthCoinShopBuyItem(BaseModel):
+    lineup_id: int = None
+    count: int = None
+class LabyrinthMapInfo(BaseModel):
+    area: int = None
+    column: int = None
+    row: int = None
+    block_id: int = None
+    block_type: eLabyrinthBlockType = None
+    is_visited: int = None
+    quest_id: int = None
+    next_block_id_list: List[int] = None
+    IsAreaLastPoint: bool = None
+    ChangeBlockType: eLabyrinthBlockType = None
+class LabyrinthTreasureBoxResult(BaseModel):
+    reward_list: List[InventoryInfo] = None
+class LabyrinthRelicInfo(BaseModel):
+    relic_id: int = None
+    effected_count: int = None
+    enable: int = None
+class LabyrinthSkipData(BaseModel):
+    guild_id: int = None
+    skip_count: int = None
+class LabyrinthPictureBookRelicData(BaseModel):
+    relic_id: int = None
+    received: bool = None
+class LabyrinthPictureBookInfo(BaseModel):
+    relic_list: List[LabyrinthPictureBookRelicData] = None
+class LabyrinthGuildClearedDifficultyInfo(BaseModel):
+    guild_id: int = None
+    difficulty: int = None
+class LabyrinthCoinShopInfo(BaseModel):
+    lineup_id: int = None
+    purchase_count: int = None
 class GuaranteeGachaCounter(BaseModel):
     gacha_id: int = None
     remain_exec_count: int = None
-class BannerLinkedPackList(BaseModel):
-    id: int = None
-    remaining_count: int = None
-    start_time: int = None
-    end_time: int = None
 class MonthlyGachaInfo(BaseModel):
     end_time: int = None
     original_gacha_id: int = None
     exchange_num: int = None
     max_exchange_num: int = None
     gacha_point_info: GachaPointInfo = None
+class SevenStoryInfo(BaseModel):
+    story_id: int = None
+    status: int = None
+class SevenStory(BaseModel):
+    event_id: int = None
+    story_info: List[SevenStoryInfo] = None
+class MirageNemesisProgress(BaseModel):
+    nemesis_id: int = None
+    area_level: int = None
+    periodic_clear_count: int = None
 class TotalScoreList(BaseModel):
     nbb_chara_type: int = None
     total_score: int = None
@@ -2908,6 +3168,21 @@ class ExchangeRewards(BaseModel):
     count: int = None
     stock: int = None
     received: int = None
+class SevenLockStoryCondition(BaseModel):
+    story_id: int = None
+    condition_time: str = None
+    condition_story_list: List[int] = None
+    condition_boss: int = None
+    condition_read_all_story_flg: bool = None
+class EventSpecialBattleExRankingInfoList(BaseModel):
+    quest_id: int = None
+    ranking_list: List[EventSpecialBattleExRankingInfo] = None
+class SevenQuestBulkSkipInfo(BaseModel):
+    skip_count: int = None
+    skip_list: List[int] = None
+class SevenLoginBonus(BaseModel):
+    rewards: List[InventoryInfo] = None
+    todays_count: int = None
 class TravelRoundEventResult(BaseModel):
     result: eRoundEventResultType = None
     result_drama_id: int = None
@@ -2923,3 +3198,11 @@ class MultiAutomaticPromotion(BaseModel):
     unit_id: int = None
     equip_recipe_list: List[RequiredMaterialList] = None
     item_list: List[ItemInfo] = None
+class UnitRoleMasteryEnhanceInfo(BaseModel):
+    unit_role_id: int = None
+    slot_id: int = None
+    before_slot_level: int = None
+    before_enhance_level: int = None
+    after_slot_level: int = None
+    after_enhance_level: int = None
+    item_list: List[InventoryInfoPost] = None
