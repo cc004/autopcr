@@ -710,6 +710,8 @@ class CaravanGame:
                 self._log(f"当前格子 {self.current_block_id}，移动 {self.spots} 步")
                 self.spots_list = []
 
+            block_change = self.dish_effect_manager.get_block_change()
+
             while self.spots > 0:
                 next_blocks = db.caravan_map[self.current_block_id].get_next_blocks()
                 if self.shortcut_block_id and self.shortcut_block_id == self.current_block_id:
@@ -719,9 +721,11 @@ class CaravanGame:
                 dis = [(nxt, db.caravan_map[nxt].distance_to_goal) for nxt in next_blocks]
                 self.current_block_id = min(dis, key=lambda x: x[1])[0]
                 self.block_id_list.append(self.current_block_id)
-                if db.caravan_map[self.current_block_id].type == eBlockType.GOAL:
+                block_type = eBlockType(db.caravan_map[self.current_block_id].type)
+                block_type = block_change.get(block_type, block_type)
+                if block_type == eBlockType.GOAL:
                     break
-                elif self.dish_effect_manager.is_block_skip(db.caravan_map[self.current_block_id].type):
+                elif self.dish_effect_manager.is_block_skip(int(block_type)):
                     continue
                 else:
                     self.spots -= 1
