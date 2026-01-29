@@ -574,6 +574,8 @@ class CaravanGame:
     async def update_rival_info(self, rival_info: RivalInfo):
         if not rival_info or (not rival_info.block_id and not rival_info.after_block_id):
             return
+        if not rival_info.spots_list and not rival_info.block_id:
+            return
         if (not self.rival_info or not self.rival_info.block_id) and rival_info.block_id:
             self._log(f"若菜出现于{rival_info.block_id}")
             self.rival_info = rival_info
