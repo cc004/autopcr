@@ -12,14 +12,15 @@ from ...db.database import db
 class mirage_floor_receive(Module):
     async def do_task(self, client: pcrclient):
         top = await client.mirage_top()
-        max_floor = max(db.mirage_floor_setting.keys())
-        if top.max_cleared_floor_num < max_floor:
-            self._warn(f"最高层{db.get_quest_name(db.mirage_floor_setting[max_floor])}未通关")
+        if top.reward_full_time == -1:
+            raise AbortError(f"追忆战未通关")
+        # max_floor = max(db.mirage_floor_setting.keys())
+        # if top.max_cleared_floor_num < max_floor:
+            # self._warn(f"最高层{db.get_quest_name(db.mirage_floor_setting[max_floor].quest_id)}未通关")
         setting = db.get_mirage_setting()
         if top.reward_full_time - apiclient.time < (setting.pool_reward_accumulate_day_num_max - 1) * 24 * 60 * 60:
             resp = await client.mirage_receive_reward(eSystemId.MIRAGE)
-            rewards = []
-            rewards.extend(resp.clear_count_reset_time or [])
+            rewards = resp.reward_info or []
 
             self._log("领取了礼物箱，获得了:")
             self._log(await client.serialize_reward_summary(rewards))
@@ -37,6 +38,8 @@ class mirage_nemesis_sweep(Module):
         to_skip = []
         setting = db.get_mirage_setting()
         for nemesis_id in db.mirage_nemesis_quest:
+            if nemesis_id not in db.mirage_nemesis_area:
+                continue
             boss = next((b for b in top.nemesis_progress or [] if b.nemesis_id == nemesis_id), None)
             if db.mirage_nemesis_area[nemesis_id].condition_story_id not in client.data.read_story_ids:
                 self._warn(f"未阅读剧情{db.story_detail[db.mirage_nemesis_area[nemesis_id].condition_story_id].title}，无法进入{db.mirage_nemesis_area[nemesis_id].nemesis_area_name}")
@@ -52,8 +55,10 @@ class mirage_nemesis_sweep(Module):
                 continue
             if boss.periodic_clear_count < setting.challenge_count_max:
                 to_skip.append((boss_info[boss.area_level].quest_id, setting.challenge_count_max - boss.periodic_clear_count))
-        if not to_skip and not self.log:
-            raise SkipError("本周追忆战・霸已扫荡")
+        if not to_skip:
+            if not self.log:
+                raise SkipError("本周追忆战・霸已扫荡")
+            return
 
         skip_info = [QuestSkipInfo(quest_id=qid, skip_count=count) for qid, count in to_skip]
         resp = await client.mirage_nemesis_skip_multiple(skip_info)
@@ -62,7 +67,6 @@ class mirage_nemesis_sweep(Module):
 
         rewards = []
         rewards.extend(resp.drop_reward_list or [])
-        rewards.extend(resp.item_list or [])
 
         self._log("获得了:")
         self._log(await client.serialize_reward_summary(rewards))
