@@ -60,7 +60,7 @@ class datamgr(BaseModel, Component[apiclient]):
     cleared_byway_quest_id_set: Set[int] = set({})
     return_fes_info_list: List[ReturnFesInfo] = None
     data_time: int = 0
-    version: int = 4
+    version: int = 5
     caravan_dishes: typing.Counter[int] = Counter()
     user_clan_battle_ex_equip_restriction: Dict[int, RestrictionExtraEquip] = {}
     talent_quest_area_info: Dict[int, TalentQuestAreaInfo] = {}
@@ -68,6 +68,8 @@ class datamgr(BaseModel, Component[apiclient]):
     princess_knight_info: PrincessKnightInfo = None
     cleared_abyss_quests: Set[int] = set()
     abyss_quest_info: Dict[int, AbyssDailyClearCountList] = {}
+    alces_appear_story_flag: int = 0
+    alces_receive_tutorial_item_flag: int = 0
 
     @staticmethod
     async def try_update_database(ver: int):
@@ -534,7 +536,9 @@ class datamgr(BaseModel, Component[apiclient]):
         return [item for item in self.inventory if filter(item) and self.inventory[item] > 0]
 
     def get_inventory(self, item: ItemType) -> int:
-        if item == db.mana:
+        if item == db.zmana:
+            return self.gold.gold_id_free + self.gold.gold_id_pay
+        elif item == db.mana:
             return self.gold.gold_id_free + self.gold.gold_id_pay
         elif item == db.jewel:
             return self.jewel.free_jewel + self.jewel.jewel

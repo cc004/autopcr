@@ -126,6 +126,7 @@ daily_modules = ModuleList(
         clan_equip_request,
         love_up,
         shiori_mission_check,
+        alces_story_reading,
         main_story_reading,
         tower_story_reading,
         hatsune_story_reading,
@@ -204,6 +205,7 @@ tool_modules = ModuleList(
     '工具',
     'tool',
     [
+        ex_equip_rainbow_enchance,
         ex_equip_power_maximun,
         find_talent_quest,
         find_clan_talent_quest,

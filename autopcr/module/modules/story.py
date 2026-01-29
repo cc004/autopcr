@@ -270,3 +270,22 @@ class hatsune_dear_reading(Module):
             raise SkipError("不存在未阅读的活动信赖度剧情")
         self._log(f"共{len(self.log)}篇")
 
+@name('阅读究极炼成剧情')
+@default(True)
+@description('获得每日炼成资源')
+class alces_story_reading(Module):
+    async def do_task(self, client: pcrclient):
+        top = await client.alces_top()
+        if client.data.alces_appear_story_flag == 0:
+            raise SkipError("今日究极炼成剧情已阅读")
+        rewards = []
+        if not client.data.alces_receive_tutorial_item_flag:
+            if len(client.data.ex_equips) >= client.data.settings.ex_equip.ex_equip_limit_possession_num:
+                raise AbortError("EX装备已满，无法领取剧情彩装")
+            resp = await client.alces_receive_tutorial_item()
+            rewards.extend(resp.reward_list)
+        resp = await client.alces_read_story(top.appear_story_id)
+        rewards.extend(resp.reward_list)
+
+        self._log(f"阅读了{db.alces_story[top.appear_story_id].title}，获得了：")
+        self._log(await client.serialize_reward_summary(rewards))

@@ -59,7 +59,54 @@ class pcrclient(apiclient):
         req.current_clan_battle_coin = self.data.get_shop_gold(eSystemId.CLAN_BATTLE_SHOP)
         return await self.request(req)
 
+    async def alces_top(self):
+        if not self.data.is_quest_cleared(11018002):
+            raise SkipError("究极炼成未解锁")
+        req = AlcesTopRequest()
+        return await self.request(req)
+
+    async def alces_receive_tutorial_item(self):
+        req = AlcesReceiveTutorialItemRequest()
+        return await self.request(req)
+
+    async def alces_read_story(self, story_id: int):
+        req = AlcesReadStoryRequest()
+        req.story_id = story_id
+        return await self.request(req)
+
+    async def alces_exec(self, serial_id: int):
+        req = AlcesExecRequest()
+        req.serial_id = serial_id
+        req.current_alces_point = self.data.get_inventory((eInventoryType.Item, 26202))
+        req.current_gold = self.data.get_mana()
+        return await self.request(req)
+
+    async def alces_lock_slot(self, serial_id: int, slot_number: int, is_lock: int):
+        req = AlcesLockSlotRequest()
+        req.lock_list = [
+            AlcesDataPost(
+                serial_id=serial_id,
+                sub_status=[ExtraEquipSubStatusPost(
+                    slot_number=slot_number,
+                    is_lock=is_lock
+                )]
+            )
+        ]
+        return await self.request(req)
+
+    async def alces_cancel_result(self, serial_id: int):
+        req = AlcesCancelResultRequest()
+        req.serial_id = serial_id
+        return await self.request(req)
+
+    async def alces_fix_result(self, serial_id: int):
+        req = AlcesFixResultRequest()
+        req.serial_id = serial_id
+        return await self.request(req)
+
     async def mirage_top(self):
+        if not self.data.is_quest_cleared(11072001):
+            raise SkipError("追忆战未解锁")
         req = MirageTopRequest()
         return await self.request(req)
 
@@ -72,7 +119,7 @@ class pcrclient(apiclient):
         req = MirageNemesisSkipMultipleRequest()
         req.skip_list = skip_list
         req.current_skip_ticket_num = self.data.get_inventory((eInventoryType.Item, 23001))
-        req.exec_type = 0
+        req.exec_type = 2
         return await self.request(req)
 
     async def emblem_top(self):

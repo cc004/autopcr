@@ -1,6 +1,6 @@
 from ...util.linq import flow
 from ...util.ilp_solver import ex_equip_power_max_cost_flow
-from ...model.common import ExtraEquipChangeSlot, ExtraEquipChangeUnit, InventoryInfoPost
+from ...model.common import ExtraEquipChangeSlot, ExtraEquipChangeUnit, InventoryInfoPost, AlcesData
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
@@ -8,6 +8,160 @@ from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
 from collections import Counter
+
+
+@name('彩装究极炼成')
+@default(True)
+@inttype('ex_equip_rainbow_enhance_no_max_num', '非满属性', 1, [0, 1, 2, 3, 4])
+@ExEquipSubStatusConfig('ex_equip_rainbow_enchance_sub_status_4', '炼成属性4')
+@ExEquipSubStatusConfig('ex_equip_rainbow_enchance_sub_status_3', '炼成属性3')
+@ExEquipSubStatusConfig('ex_equip_rainbow_enchance_sub_status_2', '炼成属性2')
+@ExEquipSubStatusConfig('ex_equip_rainbow_enchance_sub_status_1', '炼成属性1')
+@booltype('ex_equip_rainbow_enchance_view', '看状态', True)
+@texttype('ex_equip_rainbow_enchance_id', '彩装id', 0)
+@description('看状态指获取彩装id和炼成属性,不炼成,选择最多四个属性,非满属性指属性值不必最大,以便手动用光球强化')
+class ex_equip_rainbow_enchance(Module):
+
+    async def do_task(self, client: pcrclient):
+        ex_equip_rainbow_enchance_view = self.get_config('ex_equip_rainbow_enchance_view')
+        if ex_equip_rainbow_enchance_view:
+            msg = flow(client.data.ex_equips.values()) \
+                .where(lambda ex: db.get_ex_equip_rarity(ex.ex_equipment_id) == 5) \
+                .select(lambda ex: f"{ex.serial_id}: {db.get_ex_equip_name(ex.ex_equipment_id)} "
+                                  f"{db.get_ex_equip_sub_status_str(ex.ex_equipment_id, ex.sub_status or [])}") \
+                .to_list()
+            cnt = len(msg)
+            if not cnt:
+                raise SkipError("无彩装")
+            msg = '\n'.join(msg)
+            self._log(f"{cnt}件彩装:\n{msg}")
+        else:
+            serial_id = self.get_config('ex_equip_rainbow_enchance_id')
+            if not serial_id.isdigit():
+                raise AbortError("彩装id非法")
+            serial_id = int(serial_id)
+            if serial_id not in client.data.ex_equips or db.get_ex_equip_rarity(client.data.ex_equips[serial_id].ex_equipment_id) != 5:
+                raise AbortError("彩装id不存在")
+            
+            group = db.ex_equipment_sub_status_group[client.data.ex_equips[serial_id].ex_equipment_id]
+            sub_status_data = db.ex_equipment_sub_status[group.group_id]
+            target_sub_status = Counter()
+            for i in range(1, 5):
+                val = self.get_config(f'ex_equip_rainbow_enchance_sub_status_{i}')
+                if val:
+                    target_sub_status[val] += 1
+            
+            invalid_status = [status for status in target_sub_status if status not in sub_status_data]
+            if invalid_status:
+                raise AbortError(f"炼成属性包含该装备不支持的属性: {', '.join(UnitAttribute.index2ch[eParamType(s)] for s in invalid_status)}")
+
+            top = await client.alces_top()
+            if top.pending_alces_data:
+                if top.pending_alces_data.serial_id != serial_id:
+                    raise AbortError(f"{top.pending_alces_data.serial_id}炼成属性待决定,请先自行决定")
+                await self.decide_alces(client, top.pending_alces_data, target_sub_status)
+
+            no_max_num = self.get_config('ex_equip_rainbow_enhance_no_max_num')
+            target_cnt = sum(target_sub_status.values())
+
+            consume_cnt = Counter()
+            alces_exec_cnt = 0
+            last_lock_cnt = 0
+            stop = False
+
+            self._log(f"当前彩装属性 " +
+                      f"{serial_id}: {db.get_ex_equip_name(client.data.ex_equips[serial_id].ex_equipment_id)} "
+                      f"{db.get_ex_equip_sub_status_str(client.data.ex_equips[serial_id].ex_equipment_id, client.data.ex_equips[serial_id].sub_status or [])}")
+                
+            while not stop:
+                achived_max_cnt, achived_cnt = await self.get_achived_sub_status_cnt(client, serial_id, target_sub_status)
+                if achived_max_cnt == target_cnt - no_max_num and achived_cnt == target_cnt:
+                    self._log("彩装炼成属性已达成目标")
+                    break
+
+                lock_cnt = await self.do_lock(client, serial_id, target_sub_status)
+
+                if last_lock_cnt != lock_cnt:
+                    self._log(f"L 锁定属性个数{last_lock_cnt} -> {lock_cnt}")
+                    last_lock_cnt = lock_cnt
+
+                to_consume = Counter()
+                for consume, item in db.alces_cost.items():
+                    cost = item.count
+                    cur = client.data.get_inventory(consume)
+                    cost *= lock_cnt + 1
+                    to_consume[consume] = cost
+                    if cur < cost:
+                        self._warn(f"E {db.get_inventory_name_san(consume)}数量{cur}<{cost}，无法进行究极炼成")
+                        stop = True
+
+                if stop:
+                    break
+                
+                consume_cnt += to_consume
+
+                resp = await client.alces_exec(serial_id)
+                accept = await self.decide_alces(client, resp.pending_alces_data, target_sub_status)
+                alces_exec_cnt += 1
+
+                self._log(f"{'A 接受' if accept else 'R 放弃'}炼成属性: {db.get_ex_equip_sub_status_str(client.data.ex_equips[serial_id].ex_equipment_id, resp.pending_alces_data.sub_status or [])}")
+
+            if alces_exec_cnt:
+                self._log(f"共进行了{alces_exec_cnt}次究极炼成，消耗了：")
+                for consume in consume_cnt:
+                    self._log(f"  {db.get_inventory_name_san(consume)} x {consume_cnt[consume]}")
+            self._log(f"最终彩装属性 " +
+                      f"{serial_id}: {db.get_ex_equip_name(client.data.ex_equips[serial_id].ex_equipment_id)} "
+                      f"{db.get_ex_equip_sub_status_str(client.data.ex_equips[serial_id].ex_equipment_id, client.data.ex_equips[serial_id].sub_status or [])}")
+    
+    async def do_lock(self, client: pcrclient, serial_id: int, target_sub_status: Counter):
+        current_max_sub_status = Counter()
+        lock_cnt = 0
+        for status in client.data.ex_equips[serial_id].sub_status or []:
+            to_lock = False
+            if current_max_sub_status[status.status] < target_sub_status[status.status] and status.step == 5:
+                current_max_sub_status[status.status] += 1
+                to_lock = True
+                lock_cnt += 1
+            if to_lock != status.is_lock:
+                await client.alces_lock_slot(serial_id, status.slot_number, to_lock)
+        return lock_cnt
+
+    async def decide_alces(self, client: pcrclient, alces_data: AlcesData, target_sub_status: Counter):
+        accept = False
+        target_key = target_sub_status.keys()
+        current_max_sub_status = Counter()
+        for status in alces_data.sub_status:
+            if status.is_lock:
+                current_max_sub_status[status.status] += 1
+                continue
+            if current_max_sub_status[status.status] < target_sub_status[status.status] and status.step == 5:
+                current_max_sub_status[status.status] += 1
+                accept = True
+        
+        if not accept:
+            current_score = sum(status.step for status in client.data.ex_equips[alces_data.serial_id].sub_status or [] if status.status in target_key)
+            nxt_score = sum(status.step for status in alces_data.sub_status if status.status in target_key)
+
+            if nxt_score > current_score:
+                accept = True
+
+        if accept:
+            await client.alces_fix_result(alces_data.serial_id)
+        else:
+            await client.alces_cancel_result(alces_data.serial_id)
+        return accept
+
+    async def get_achived_sub_status_cnt(self, client: pcrclient, serial_id: int, target_sub_status: Counter) -> Tuple[int, int]:
+        ex_equip = client.data.ex_equips[serial_id]
+        current_sub_status = Counter(status.status for status in ex_equip.sub_status or [])
+        max_sub_status = Counter(status.status for status in ex_equip.sub_status or [] if status.step == 5)
+
+        achived_cnt = current_sub_status & target_sub_status
+        achived_cnt = sum(achived_cnt.values())
+        achived_max_cnt = max_sub_status & target_sub_status
+        achived_max_cnt = sum(achived_max_cnt.values())
+        return achived_max_cnt, achived_cnt
 
 @name('强化EX装')
 @default(True)

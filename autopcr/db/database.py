@@ -931,6 +931,7 @@ class database():
         ret[(eInventoryType.TeamExp, 92001)] = "经验"
         ret[(eInventoryType.Jewel, 91002)] = "宝石"
         ret[(eInventoryType.Gold, 94002)] = "mana"
+        ret[(eInventoryType.Gold, 94000)] = "mana"
         ret[(eInventoryType.SeasonPassPoint, 98002)] = "祝福经验值"
         ret[(eInventoryType.SeasonPassStamina, 93002)] = "星尘体力药剂"
         return ret
@@ -1472,6 +1473,25 @@ class database():
             )
 
     @lazy_property
+    def ex_equipment_sub_status(self) -> Dict[int, Dict[int, ExEquipmentSubStatus]]:
+        with self.dbmgr.session() as db:
+            return (
+                ExEquipmentSubStatus.query(db)
+                .group_by(lambda x: x.group_id)
+                .to_dict(lambda x: x.key, lambda x: x.to_dict(
+                    lambda x: x.status, lambda x: x
+                ))
+            )
+
+    @lazy_property
+    def ex_equipment_sub_status_group(self) -> Dict[int, ExEquipmentSubStatusGroup]:
+        with self.dbmgr.session() as db:
+            return (
+                ExEquipmentSubStatusGroup.query(db)
+                .to_dict(lambda x: x.ex_equipment_id, lambda x: x)
+            )
+
+    @lazy_property
     def ex_equipment_rankup_data(self) -> Dict[int, Dict[int, ExEquipmentRankupDatum]]:
         with self.dbmgr.session() as db:
             return (
@@ -1724,6 +1744,22 @@ class database():
                 .to_dict(lambda x: x.nemesis_id, lambda x: x)
             )
 
+    @lazy_property
+    def alces_story(self) -> Dict[int, AlcesStory]:
+        with self.dbmgr.session() as db:
+            return (
+                AlcesStory.query(db)
+                .to_dict(lambda x: x.story_id, lambda x: x)
+            )
+
+    @lazy_property
+    def alces_cost(self) -> Dict[ItemType, AlcesCost]:
+        with self.dbmgr.session() as db:
+            return (
+                AlcesCost.query(db)
+                .to_dict(lambda x: (x.type, x.item_id), lambda x: x)
+            )
+
     def get_mirage_setting(self) -> MirageSetting:
         max_id = max(self.mirage_setting.keys(), default=1)
         return self.mirage_setting[max_id]
@@ -1759,14 +1795,16 @@ class database():
     def get_ex_equip_rarity_name(self, id: int) -> str:
         return self.ex_rarity_name[self.get_ex_equip_rarity(id)]
 
-    def get_ex_equip_sub_status(self, sub_status: List[ExtraEquipSubStatus]) -> Dict[int, int]:
+    def get_ex_equip_sub_status(self, ex_equip_id: int, sub_status: List[ExtraEquipSubStatus]) -> Dict[int, int]:
         data = Counter()
-        for status in sub_status:
-            data[status.status] += status.step
+        group = self.ex_equipment_sub_status_group[ex_equip_id]
+        sub_status_data = self.ex_equipment_sub_status[group.group_id]
+        for status in sub_status or []:
+            data[status.status] += sub_status_data[status.status].step_value(status.step)
         return data
 
-    def get_ex_equip_sub_status_str(self, sub_status: List[ExtraEquipSubStatus]) -> str:
-        data = self.get_ex_equip_sub_status(sub_status)
+    def get_ex_equip_sub_status_str(self, ex_equip_id: int, sub_status: List[ExtraEquipSubStatus]) -> str:
+        data = self.get_ex_equip_sub_status(ex_equip_id, sub_status)
         msg = []
         for param, count in sorted(data.items()):
             en_name = UnitAttribute.index2name.get(eParamType(param), f"unknown_param_{param}")
@@ -1778,6 +1816,8 @@ class database():
             else:
                 msg.append(f"{name}x{count}")
 
+        if not msg:
+            return '空'
         return '/'.join(msg)
 
     def get_ex_equip_rankup_cost(self, id: int, start_rank: int, end_rank: int) -> int:
@@ -2554,5 +2594,9 @@ class database():
         free_gacha_campaign = min(free_gacha_campaigns)
         return [gacha.gacha_id for gacha in self.campaign_free_gacha_data[free_gacha_campaign]]
 
+    def ex_equip_sub_status_candidate(self) -> List[int]:
+        ids = list(set(j.status for i in self.ex_equipment_sub_status.values() for j in i.values()))
+        ids.append(0)
+        return sorted(ids)
 
 db = database()

@@ -41,7 +41,8 @@ class ExEquipmentDatum(models.ExEquipmentDatum):
         min_val = UnitAttribute.load(self, pre='default_')
         max_val = UnitAttribute.load(self, pre='max_')
         max_rank = db.get_ex_equip_max_rank(self.ex_equipment_id)
-        return min_val + (max_val - min_val) * (level / db.get_ex_equip_max_star(self.ex_equipment_id, max_rank))
+        max_star = db.get_ex_equip_max_star(self.ex_equipment_id, max_rank)
+        return (min_val + (max_val - min_val) * (level / max_star)) if max_star > 0 else min_val
 
 @method
 class EquipmentDatum(models.EquipmentDatum):
@@ -241,3 +242,7 @@ class TprPanelDatum(models.TprPanelDatum):
         if self.another_parts_id_4 != 0:
             yield self.another_parts_id_4
 
+@method
+class ExEquipmentSubStatus(models.ExEquipmentSubStatus):
+    def step_value(self, step: int) -> int:
+        return getattr(self, f"value_{step}")
