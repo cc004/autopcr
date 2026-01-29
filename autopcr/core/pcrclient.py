@@ -802,6 +802,19 @@ class pcrclient(apiclient):
         req.parts_id_list = parts_id_list
         return await self.request(req)
 
+    async def abd_top(self):
+        req = SubStoryAbdTopRequest()
+        return await self.request(req)
+
+    async def read_abd_story(self, sub_story_id: int):
+        req = SubStoryAbdReadStoryRequest()
+        req.sub_story_id = sub_story_id
+        req.skip_info = StorySkipInfo(
+                skip_type = eStorySkipType.MENU_SKIP,
+                scroll_coordinate = ""
+        )
+        return await self.request(req)
+
     async def read_lss_story(self, sub_story_id: int):
         req = SubStoryLssReadStoryRequest()
         req.sub_story_id = sub_story_id
