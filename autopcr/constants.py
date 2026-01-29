@@ -81,7 +81,7 @@ IOS_HEADERS = {
 
 
 def refresh_headers(version: str = None):
-    default_ver = '10.7.1'
+    default_ver = '11.4.0'
     if version is not None:
         with open(os.path.join(CACHE_DIR, 'version.txt'), 'w', encoding='utf-8') as f:
             f.write(version)
