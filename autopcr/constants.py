@@ -8,6 +8,7 @@ SERVER_PORT = int(os.getenv("AUTOPCR_SERVER_PORT", "13200"))
 CLIENT_POOL_SIZE_MAX = 100
 CLIENT_POOL_MAX_AGE = 3600 * 24
 CLIENT_POOL_MAX_CLIENT_ALIVE = 10
+CLIENT_POOL_MAX_FARMER_CLIENT_ALIVE = 2
 SESSION_ERROR_MAX_RETRY = 2
 MAX_API_RUNNING = 8
 
@@ -80,7 +81,7 @@ IOS_HEADERS = {
 
 
 def refresh_headers(version: str = None):
-    default_ver = '10.7.1'
+    default_ver = '11.4.0'
     if version is not None:
         with open(os.path.join(CACHE_DIR, 'version.txt'), 'w', encoding='utf-8') as f:
             f.write(version)

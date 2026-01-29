@@ -15,11 +15,13 @@ class account:
     type: platform
     username: str
     password: str
+    farm: bool
     
-    def __init__(self, usr: str, pwd: str, type: platform):
+    def __init__(self, usr: str, pwd: str, type: platform, farm: bool = False):
         self.username = usr
         self.password = pwd
         self.type = type
+        self.farm = farm
 
 class sdkclient:
 

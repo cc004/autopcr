@@ -9,6 +9,7 @@ from .autopcr.http_server.httpserver import HttpServer
 from .autopcr.db.database import db
 from .autopcr.module.accountmgr import Account, AccountManager, instance as usermgr
 from .autopcr.db.dbstart import db_start
+from .autopcr.core.clientpool import instance as clientpool
 from .autopcr.util.draw import instance as drawer
 from .autopcr.util.excel_export import export_excel
 import asyncio, datetime
@@ -535,6 +536,16 @@ async def find_ghost(botev: BotEvent):
     if not msg:
         msg.append("未找到内鬼")
     await botev.finish(" ".join(msg))
+
+@sv.on_fullmatch(f"{prefix}运行状态")
+@wrap_hoshino_event
+async def service_status(botev: BotEvent):
+    sema, farm_sema = clientpool.sema_status()
+    ret = []
+    for i, (running, waiting, max_count) in enumerate([sema, farm_sema]):
+        msg = f"运行状态{i}：{running}/{max_count}正在运行，{waiting}等待中"
+        ret.append(msg)
+    await botev.send('\n'.join(ret))
 
 @sv.on_fullmatch(f"{prefix}清内鬼")
 @wrap_hoshino_event

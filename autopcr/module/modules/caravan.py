@@ -320,6 +320,17 @@ class DishEffectManager(EffectManager):
             elif (val & 2) and block_type == eBlockType.TREASURE:
                 return True
         return False
+    
+    def get_block_change(self) -> dict[eBlockType, eBlockType]:
+        effects = self.get_effect_influence(eDishEffectType.CHANGE_BLOCK_TYPE)
+        ret = {}
+        for effect in effects:
+            change_type = db.caravan_dish[effect.id].effect_value
+            if change_type == 1:
+                ret[eBlockType.MILES] = eBlockType.TREASURE
+            else:
+                raise ValueError(f"Unknown CHANGE_BLOCK_TYPE effect value: {change_type}")
+        return ret
 
 class EventEffectManager(EffectManager):
     _effect_list: List[CaravanEventEffectData]
@@ -563,6 +574,8 @@ class CaravanGame:
     async def update_rival_info(self, rival_info: RivalInfo):
         if not rival_info or (not rival_info.block_id and not rival_info.after_block_id):
             return
+        if not rival_info.spots_list and not rival_info.block_id:
+            return
         if (not self.rival_info or not self.rival_info.block_id) and rival_info.block_id:
             self._log(f"若菜出现于{rival_info.block_id}")
             self.rival_info = rival_info
@@ -730,6 +743,9 @@ class CaravanGame:
 
             block_type = eBlockType(db.caravan_map[self.current_block_id].type)
             self._log(f"当前格子 {self.current_block_id} 的类型 = {block_type.name}")
+
+            block_change = self.dish_effect_manager.get_block_change()
+            block_type = block_change.get(block_type, block_type)
 
             if block_type == eBlockType.GOAL:
                 self._log("检查点 -> GOAL")

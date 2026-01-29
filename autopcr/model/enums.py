@@ -26,8 +26,16 @@ class eInventoryType(IntEnum):
     CaravanItem = 21
     CaravanTreasure = 22
     CaravanDish = 23
+    BsmParts = 24
+    LabyrinthTicket = 25
+    LabyrinthRelic = 26
+    LabyrinthUnit = 27
+    AlphaRupee = 28
+    LabyrinthTreasureBox = 29
     EquipmentBox = 50
     SeasonPassStamina = 51
+    PaidItem = 52
+    PlayerFrame = 200
     SeasonPassPoint = 1001
     SeasonPassLevel = 1002
 
@@ -69,6 +77,10 @@ class ePromotionLevel(IntEnum):
     LEVEL_34 = 34
     LEVEL_35 = 35
     LEVEL_36 = 36
+    LEVEL_37 = 37
+    LEVEL_38 = 38
+    LEVEL_39 = 39
+    LEVEL_40 = 40
 
 class ePartyType(IntEnum):
     QUEST = 1
@@ -153,6 +165,18 @@ class ePartyType(IntEnum):
     ABYSS_BOSS_FIRST = 102
     ABYSS_BOSS_SECOND = 103
     ABYSS_BOSS_THIRD = 104
+    MIRAGE_FLOOR_QUEST = 111
+    MIRAGE_NEMESIS = 112
+    SEVEN_QUEST = 121
+    SEVEN_SCENARIO_BOSS = 122
+    SEVEN_SPECIAL_BOSS = 123
+    SEVEN_SPECIAL_PLUS_BOSS = 124
+    CROWN_QUEST = 125
+    CROWN_SCENARIO_BOSS = 126
+    LABYRINTH = 131
+    LABYRINTH_EX_1 = 132
+    LABYRINTH_EX_2 = 133
+    LABYRINTH_EX_3 = 134
 
 class eClanRole(IntEnum):
     MEMBER = 0
@@ -185,6 +209,7 @@ class eClanChatMessageType(IntEnum):
     MINI_GAME_SCORE = 15
     MINI_GAME_TAQ_RECRUITMENT = 16
     INVALID_VALUE = -1
+    MINI_GAME_BSM = 17
 
 class eClanChatPlayButtonCondition(IntEnum):
     NONE = 0
@@ -368,13 +393,36 @@ class eSystemId(IntEnum):
     DOME = 131
     ABYSS = 132
     ACN = 133
+    MIRAGE = 135
+    LABYRINTH = 136
     CONNECT_SHOP = 216
+    EX_EQUIPMENT_SPECIAL_SHOP = 217
+    ALCES = 512
     STORY_BOOKMARK = 802
+    LIMITED_MISSION = 1101
     HATSUNE_EX_PLUS_BOSS = 6013
+    SEVEN_TOP = 6111
+    SEVEN_GACHA = 6112
+    SEVEN_STORY = 6113
+    SEVEN_QUEST = 6114
+    SEVEN_SCENARIO_BOSS = 6115
+    SEVEN_SPECIAL_BOSS = 6116
+    SEVEN_SPECIAL_PLUS_BOSS = 6117
+    SEVEN_REVIVAL_TOP = 7111
+    SEVEN_REVIVAL_GACHA = 7112
+    SEVEN_REVIVAL_STORY = 7113
+    SEVEN_REVIVAL_QUEST = 7114
+    SEVEN_REVIVAL_SCENARIO_BOSS = 7115
+    SEVEN_REVIVAL_SPECIAL_BOSS = 7116
+    CROWN_TOP = 8111
+    CROWN_STORY = 8113
+    CROWN_QUEST = 8114
+    CROWN_SCENARIO_BOSS = 8115
     SEASON_PASS = 90001
     MONTHLY_GACHA = 90002
     CARAVAN_MILE_SHOP = 990001
     CARAVAN_COIN_SHOP = 990002
+    LABYRINTH_COIN_SHOP = 990003
 
 class eShopItemBannerType(IntEnum):
     NONE = 0
@@ -495,6 +543,7 @@ class eGachaDrawType(IntEnum):
     SpFesCmapaign10Shot = 10
     SpFesDiscount10Shot = 11
     INVALID_VALUE = -1
+    TicketMultiPull10 = 12
     Single_Ticket_10 = 9000
     Temp_Ticket_10 = 9003
     Monthly_Free_Single = 9005
@@ -622,9 +671,31 @@ class eCampaignCategory(IntEnum):
     GOLD_DROP_AMOUNT_TALENT_QUEST = 631
     PLAYER_EXP_AMOUNT_TALENT_QUEST = 641
     MASTER_COIN_DROP_TALENT_QUEST = 651
+    FREE_RECOVERY_TALENT_QUEST = 661
     PLAYER_EXP_AMOUNT_ABYSS = 711
     MASTER_COIN_DROP_ABYSS = 712
     MASTER_COIN_DROP_ACN = 801
+    HALF_STAMINA_SEVEN = 1011
+    ITEM_DROP_AMOUNT_SEVEN = 1021
+    GOLD_DROP_AMOUNT_SEVEN = 1031
+    MASTER_COIN_DROP_SEVEN = 1041
+    PLAYER_EXP_AMOUNT_SEVEN = 1051
+    SEVEN_CATEGORY_MIN = 1011
+    SEVEN_CATEGORY_MAX = 1051
+    HALF_STAMINA_SEVEN_REVIVAL = 1111
+    ITEM_DROP_AMOUNT_SEVEN_REVIVAL = 1121
+    GOLD_DROP_AMOUNT_SEVEN_REVIVAL = 1131
+    MASTER_COIN_DROP_SEVEN_REVIVAL = 1141
+    PLAYER_EXP_AMOUNT_SEVEN_REVIVAL = 1151
+    SEVEN_REVIVAL_CATEGORY_MIN = 1111
+    SEVEN_REVIVAL_CATEGORY_MAX = 1151
+    HALF_STAMINA_CROWN = 1211
+    ITEM_DROP_AMOUNT_CROWN = 1221
+    GOLD_DROP_AMOUNT_CROWN = 1231
+    MASTER_COIN_DROP_CROWN = 1241
+    PLAYER_EXP_AMOUNT_CROWN = 1251
+    CROWN_CATEGORY_MIN = 1211
+    CROWN_CATEGORY_MAX = 1251
 
 class eStoryVisibleType(IntEnum):
     PRE_STORYID_AND_LOVE_LEVEL = 0
@@ -642,6 +713,7 @@ class eStoryVisibleType(IntEnum):
     EVENT_SPECIAL_STORY = 12
     HIDDEN_BY_READ_CONDITION = 13
     PRE_RELEASE_STORY = 14
+    EVENT_SPECIAL_EPISODE = 15
 
 class eParamType(IntEnum):
     NONE = 0
@@ -669,11 +741,78 @@ class eParamType(IntEnum):
     PHYSICAL_DAMAGE_UP_PERCENT = 102
     MAGIC_DAMAGE_UP_PERCENT = 103
     TALENT_BONUS = 104
+    ABNORMAL_STATE_DODGE_HIT = 105
+    ABNORMAL_STATE_DODGE_RESIST = 106
+    ATTACK_ENHANCE = 107
+    BUFF_ENHANCE = 108
+    DEBUFF_ENHANCE = 109
+    HEAL_ENHANCE = 110
+    ENERGY_CHARGE = 111
+
+class eSeasonPackType(IntEnum):
+    TRAINING_PACK = 1
+    DAILY_JEWEL_PACK = 2
+    STAMINA_PACK = 3
+    EQUIPMENT_PACK = 4
+    CHARACTER_EXCHANGE_TICKET = 5
+    LIMITED_BANNER_LINKED_PACK = 6
+    BEGINNER_CHARACTER_EXCHANGE_TICKET = 7
+    TALENT_QUEST_PACK = 8
+    ALCES_PACK = 9
+    CAMPAIGN_PACK = 10
+    INVALID_VALUE = -1
+
+class eSupportType(IntEnum):
+    FRIEND = 1
+    DUNGEON = 2
+    CLAN_BATTLE = 3
+    INVALID_VALUE = -1
 
 class eStorySkipType(IntEnum):
     NO_SKIP = 1
     MENU_SKIP = 2
     ALL_TEXT_LOG_SKIP = 3
+    INVALID_VALUE = -1
+
+class eLimitedMissionCategoryStatusType(IntEnum):
+    NONE = 0
+    CATEGORY_EFFECT = 2
+    GROUP_EFFECT = 3
+    INVALID_VALUE = -1
+
+class eLabyrinthStatusType(IntEnum):
+    NONE = 0
+    SUMMON_UNIT = 1
+    SUMMON_TICKET_CHOICE = 2
+    USE_RELIC = 3
+    EVENT_CHOICE = 4
+    QUEST = 5
+    BOSS = 6
+    SHOP = 7
+    EVENT_EFFECT = 8
+    RELIC_CHOICE = 9
+    INVALID_VALUE = -1
+
+class eLabyrinthUnitType(IntEnum):
+    USER = 1
+    NPC = 2
+    INVALID_VALUE = -1
+
+class eLabyrinthShopItemStatus(IntEnum):
+    PURCHASE = 1
+    NO_SUMMON_UNITS = 2
+    OWNED_RELIC = 3
+    INVALID_VALUE = -1
+
+class eLabyrinthBlockType(IntEnum):
+    NONE = 1
+    NORMAL_QUEST = 2
+    HARD_QUEST = 3
+    TICKET = 4
+    EVENT = 5
+    RELIC = 6
+    SHOP = 7
+    BOSS_QUEST = 8
     INVALID_VALUE = -1
 
 class eFpcPeriod(IntEnum):

@@ -19,7 +19,7 @@ from ..util.draw import instance as drawer
 from ..util.logger import instance as logger
 
 APP_VERSION_MAJOR = 1
-APP_VERSION_MINOR = 6
+APP_VERSION_MINOR = 7
 
 CACHE_HTTP_DIR = os.path.join(CACHE_DIR, 'http_server')
 
@@ -192,6 +192,21 @@ class HttpServer:
         @HttpServer.wrapaccountmgr(readonly = True)
         async def get_role(accountmgr: AccountManager):
             return await accountmgr.generate_role(), 200
+
+        @self.api.route('/running_status', methods = ["GET"])
+        @HttpServer.login_required()
+        async def get_running_status():
+            from ..core.clientpool import instance as clientpool
+            sema, farm_sema = clientpool.sema_status()
+            ret = []
+            for i, (running, waiting, max_count) in enumerate([sema, farm_sema]):
+                ret.append({
+                    'name': f"运行状态{i}",
+                    'running': running,
+                    'waiting': waiting,
+                    'max_running': max_count,
+                })
+            return {'statuses': ret}, 200
 
         @self.api.route('/account', methods = ['GET'])
         @HttpServer.login_required()

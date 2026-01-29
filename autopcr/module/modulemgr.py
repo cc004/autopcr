@@ -151,6 +151,7 @@ class ModuleManager:
             )
 
         client = self.client
+        await client.activate()
         self.config["stamina_relative_not_run"] = any(db.is_campaign(campaign) for campaign in self.config.get("stamina_relative_not_run_campaign_before_one_day", []))
 
         self.config.update(config)
@@ -165,5 +166,7 @@ class ModuleManager:
             resp.result[module.key] = await module.do_from(client)
             if resp.result[module.key].status == eResultStatus.PANIC:
                 break
+
+        client.deactivate()
         return resp
 

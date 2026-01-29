@@ -182,7 +182,8 @@ class Account(ModuleManager):
         client = await clientpool.get_client(create(self.data.channel, account(
             self.data.username,
             self.data.password,
-            platform.IOS
+            platform.IOS,
+            self._parent.farmer
         )))
         return client
 
@@ -190,7 +191,8 @@ class Account(ModuleManager):
         client = await clientpool.get_client(create(self.data.channel, account(
             self.data.username,
             self.data.password,
-            platform.Android
+            platform.Android,
+            self._parent.farmer
         )))
         return client
 
@@ -324,6 +326,10 @@ class AccountManager:
             if self.secret != self.old_secret:
                 self.save_secret()
             self._lck.release()
+
+    @property
+    def farmer(self) -> bool:
+        return not self.secret.clan and self.account_count() > 10
 
     def create_account(self, account: str) -> Account:
         if not AccountManager.pathsyntax.fullmatch(account):
