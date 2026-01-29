@@ -21,6 +21,7 @@ from .tools import *
 from .travel import *
 from .unit import *
 from .talent import *
+from .mirage import *
 
 @dataclass
 class ModuleList:
@@ -68,6 +69,8 @@ daily_modules = ModuleList(
         explore_mana,
         underground_skip,
         special_underground_skip,
+        mirage_floor_receive,
+        mirage_nemesis_sweep,
         tower_cloister_sweep,
         jjc_reward,
         abyss_quest_sweep,

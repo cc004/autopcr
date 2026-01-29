@@ -1319,7 +1319,30 @@ class AbyssBossSkipResponse(responses.AbyssBossSkipResponse):
         if self.user_gold:
             mgr.gold = self.user_gold
 
+@handles
+class MirageNemesisSkipMultipleResponse(responses.MirageNemesisSkipMultipleResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.drop_reward_list:
+            for item in self.drop_reward_list:
+                mgr.update_inventory(item)
+        if self.item_list:
+            for item in self.item_list:
+                mgr.update_inventory(item)
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        if self.user_jewel:
+            mgr.jewel = self.user_jewel
 
+@handles
+class MirageReceiveRewardResponse(responses.MirageReceiveRewardResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_info:
+            for item in self.reward_info:
+                mgr.update_inventory(item)
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        if self.user_jewel:
+            mgr.jewel = self.user_jewel
 
 # 菜 就别玩
 # def custom_dict(self, *args, **kwargs):

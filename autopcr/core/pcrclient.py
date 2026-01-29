@@ -59,6 +59,22 @@ class pcrclient(apiclient):
         req.current_clan_battle_coin = self.data.get_shop_gold(eSystemId.CLAN_BATTLE_SHOP)
         return await self.request(req)
 
+    async def mirage_top(self):
+        req = MirageTopRequest()
+        return await self.request(req)
+
+    async def mirage_receive_reward(self, from_system_id: int):
+        req = MirageReceiveRewardRequest()
+        req.from_system_id = from_system_id
+        return await self.request(req)
+
+    async def mirage_nemesis_skip_multiple(self, skip_list: List[QuestSkipInfo]):
+        req = MirageNemesisSkipMultipleRequest()
+        req.skip_list = skip_list
+        req.current_skip_ticket_num = self.data.get_inventory((eInventoryType.Item, 23001))
+        req.exec_type = 0
+        return await self.request(req)
+
     async def emblem_top(self):
         req = EmblemTopRequest()
         return await self.request(req)
