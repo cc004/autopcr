@@ -21,7 +21,7 @@ from collections import Counter
 @ExEquipSubStatusConfig('ex_equip_rainbow_enchance_sub_status_1', '炼成属性1')
 @booltype('ex_equip_rainbow_enchance_view', '看状态', True)
 @texttype('ex_equip_rainbow_enchance_id', '彩装id', 0)
-@description('看状态指获取彩装id和炼成属性.非满属性指属性值不必最大,以便手动用光球强化.属性优先级指目标属性值一样时,比较其他属性决定保留或放弃.满强目标属性会自动锁住.')
+@description('看状态指获取彩装id和炼成属性.非满属性指属性值不必最大,以便手动用光球强化.属性优先级指目标属性值一样时,比较其他属性决定保留或放弃,优先级是按顺序从高到低,目标属性的优先级最高,不受属性优先级影响.满强目标属性会自动锁住.')
 class ex_equip_rainbow_enchance(Module):
 
     async def do_task(self, client: pcrclient):
