@@ -1,7 +1,7 @@
 from collections import Counter
 import random
 import typing
-from typing import List, cast
+from typing import List, cast, Dict
 
 from ...module.config import booltype, inttype
 
@@ -321,7 +321,7 @@ class DishEffectManager(EffectManager):
                 return True
         return False
     
-    def get_block_change(self) -> dict[eBlockType, eBlockType]:
+    def get_block_change(self) -> Dict[eBlockType, eBlockType]:
         effects = self.get_effect_influence(eDishEffectType.CHANGE_BLOCK_TYPE)
         ret = {}
         for effect in effects:
@@ -484,6 +484,7 @@ class CaravanGame:
         self.spots_choices_2 = resp.spots_choices_2
         self.rival_info = None
         self.shortcut_block_id = resp.shortcut_block_id or 0
+        self.is_rival_pk_turn = False
         await self.update_rival_info(resp.rival_info)
 
         items_list = db.caravan_coin_shop_lineup[resp.season_id]
@@ -667,6 +668,8 @@ class CaravanGame:
                 self.state = eState.USE_DISH
                 return
 
+            self.is_rival_pk_turn = False
+
             self.state = eState.ROLL_DICE
 
         elif self.state == eState.ROLL_DICE:
@@ -710,6 +713,8 @@ class CaravanGame:
                 self._log(f"当前格子 {self.current_block_id}，移动 {self.spots} 步")
                 self.spots_list = []
 
+            block_change = self.dish_effect_manager.get_block_change()
+
             while self.spots > 0:
                 next_blocks = db.caravan_map[self.current_block_id].get_next_blocks()
                 if self.shortcut_block_id and self.shortcut_block_id == self.current_block_id:
@@ -719,9 +724,11 @@ class CaravanGame:
                 dis = [(nxt, db.caravan_map[nxt].distance_to_goal) for nxt in next_blocks]
                 self.current_block_id = min(dis, key=lambda x: x[1])[0]
                 self.block_id_list.append(self.current_block_id)
-                if db.caravan_map[self.current_block_id].type == eBlockType.GOAL:
+                block_type = eBlockType(db.caravan_map[self.current_block_id].type)
+                block_type = block_change.get(block_type, block_type)
+                if block_type == eBlockType.GOAL:
                     break
-                elif self.dish_effect_manager.is_block_skip(db.caravan_map[self.current_block_id].type):
+                elif self.dish_effect_manager.is_block_skip(int(block_type)):
                     continue
                 else:
                     self.spots -= 1
@@ -756,6 +763,7 @@ class CaravanGame:
                 self._log("抵达若菜格子 -> RIVAL_MINI_GAME")
                 self.state = eState.RIVAL_MINI_GAME
                 self.action_bit_flag |= eFlag.IS_RIVAL_MINIGAME
+                self.is_rival_pk_turn = True
                 return
 
             elif block_type == eBlockType.SHOP:
@@ -930,7 +938,7 @@ class CaravanGame:
                     self.candidate_shop_lineup = use_resp.shop_block_lineup_list or []
                     self.dish_effect_manager.append(CaravanEffectData(CaravanDishEffectData(id=dish_to_use, effect_turn=db.caravan_dish[dish_to_use].effect_turn, effect_count=db.caravan_dish[dish_to_use].effect_times)))
                     await self.check_dishes_full(use_resp.surplus_dish_list)
-                    if not db.caravan_map[self.current_block_id].type == eBlockType.PARTY:
+                    if not db.caravan_map[self.current_block_id].type == eBlockType.PARTY or self.is_rival_pk_turn:
                         break
                 self.action_bit_flag |= eFlag.DISH_USED
                 self.state = eState.IDLE

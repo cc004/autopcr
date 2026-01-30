@@ -59,6 +59,69 @@ class pcrclient(apiclient):
         req.current_clan_battle_coin = self.data.get_shop_gold(eSystemId.CLAN_BATTLE_SHOP)
         return await self.request(req)
 
+    async def alces_top(self):
+        if not self.data.is_quest_cleared(11018002):
+            raise SkipError("究极炼成未解锁")
+        req = AlcesTopRequest()
+        return await self.request(req)
+
+    async def alces_receive_tutorial_item(self):
+        req = AlcesReceiveTutorialItemRequest()
+        return await self.request(req)
+
+    async def alces_read_story(self, story_id: int):
+        req = AlcesReadStoryRequest()
+        req.story_id = story_id
+        return await self.request(req)
+
+    async def alces_exec(self, serial_id: int):
+        req = AlcesExecRequest()
+        req.serial_id = serial_id
+        req.current_alces_point = self.data.get_inventory((eInventoryType.Item, 26202))
+        req.current_gold = self.data.get_mana()
+        return await self.request(req)
+
+    async def alces_lock_slot(self, serial_id: int, slot_number: int, is_lock: int):
+        req = AlcesLockSlotRequest()
+        req.lock_list = [
+            AlcesDataPost(
+                serial_id=serial_id,
+                sub_status=[ExtraEquipSubStatusPost(
+                    slot_number=slot_number,
+                    is_lock=is_lock
+                )]
+            )
+        ]
+        return await self.request(req)
+
+    async def alces_cancel_result(self, serial_id: int):
+        req = AlcesCancelResultRequest()
+        req.serial_id = serial_id
+        return await self.request(req)
+
+    async def alces_fix_result(self, serial_id: int):
+        req = AlcesFixResultRequest()
+        req.serial_id = serial_id
+        return await self.request(req)
+
+    async def mirage_top(self):
+        if not self.data.is_quest_cleared(11072001):
+            raise SkipError("追忆战未解锁")
+        req = MirageTopRequest()
+        return await self.request(req)
+
+    async def mirage_receive_reward(self, from_system_id: int):
+        req = MirageReceiveRewardRequest()
+        req.from_system_id = from_system_id
+        return await self.request(req)
+
+    async def mirage_nemesis_skip_multiple(self, skip_list: List[QuestSkipInfo]):
+        req = MirageNemesisSkipMultipleRequest()
+        req.skip_list = skip_list
+        req.current_skip_ticket_num = self.data.get_inventory((eInventoryType.Item, 23001))
+        req.exec_type = 2
+        return await self.request(req)
+
     async def emblem_top(self):
         req = EmblemTopRequest()
         return await self.request(req)
@@ -737,6 +800,19 @@ class pcrclient(apiclient):
         req.panel_id = panel_id
         req.correct_type = correct_type
         req.parts_id_list = parts_id_list
+        return await self.request(req)
+
+    async def abd_top(self):
+        req = SubStoryAbdTopRequest()
+        return await self.request(req)
+
+    async def read_abd_story(self, sub_story_id: int):
+        req = SubStoryAbdReadStoryRequest()
+        req.sub_story_id = sub_story_id
+        req.skip_info = StorySkipInfo(
+                skip_type = eStorySkipType.MENU_SKIP,
+                scroll_coordinate = ""
+        )
         return await self.request(req)
 
     async def read_lss_story(self, sub_story_id: int):

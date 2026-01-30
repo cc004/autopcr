@@ -1,7 +1,7 @@
 from typing import List, Dict, Set, Tuple, Union
 import typing
-from ..model.enums import eCampaignCategory
-from ..model.common import ExtraEquipInfo, UnitData, eInventoryType, RoomUserItem, InventoryInfo
+from ..model.enums import eCampaignCategory, eParamType
+from ..model.common import ExtraEquipInfo, ExtraEquipSubStatus, UnitData, eInventoryType, RoomUserItem, InventoryInfo
 from ..model.custom import ItemType, eDifficulty
 import datetime
 from collections import Counter, defaultdict
@@ -65,6 +65,7 @@ class database():
     wind_ball: ItemType = (eInventoryType.Item, 25013)
     sun_ball: ItemType = (eInventoryType.Item, 25014)
     dark_ball: ItemType = (eInventoryType.Item, 25015)
+    ex_rainbow_enhance_pt: ItemType = (eInventoryType.Item, 26202)
 
     def update(self, dbmgr):
         self.dbmgr = dbmgr
@@ -931,6 +932,7 @@ class database():
         ret[(eInventoryType.TeamExp, 92001)] = "经验"
         ret[(eInventoryType.Jewel, 91002)] = "宝石"
         ret[(eInventoryType.Gold, 94002)] = "mana"
+        ret[(eInventoryType.Gold, 94000)] = "mana"
         ret[(eInventoryType.SeasonPassPoint, 98002)] = "祝福经验值"
         ret[(eInventoryType.SeasonPassStamina, 93002)] = "星尘体力药剂"
         return ret
@@ -1264,6 +1266,14 @@ class database():
             )
 
     @lazy_property
+    def abd_story_data(self) -> Dict[int, AbdStoryDatum]:
+        with self.dbmgr.session() as db:
+            return (
+                AbdStoryDatum.query(db)
+                .to_dict(lambda x: x.sub_story_id, lambda x: x)
+            )
+
+    @lazy_property
     def lss_story_data(self) -> Dict[int, LssStoryDatum]:
         with self.dbmgr.session() as db:
             return (
@@ -1472,6 +1482,25 @@ class database():
             )
 
     @lazy_property
+    def ex_equipment_sub_status(self) -> Dict[int, Dict[int, ExEquipmentSubStatus]]:
+        with self.dbmgr.session() as db:
+            return (
+                ExEquipmentSubStatus.query(db)
+                .group_by(lambda x: x.group_id)
+                .to_dict(lambda x: x.key, lambda x: x.to_dict(
+                    lambda x: x.status, lambda x: x
+                ))
+            )
+
+    @lazy_property
+    def ex_equipment_sub_status_group(self) -> Dict[int, ExEquipmentSubStatusGroup]:
+        with self.dbmgr.session() as db:
+            return (
+                ExEquipmentSubStatusGroup.query(db)
+                .to_dict(lambda x: x.ex_equipment_id, lambda x: x)
+            )
+
+    @lazy_property
     def ex_equipment_rankup_data(self) -> Dict[int, Dict[int, ExEquipmentRankupDatum]]:
         with self.dbmgr.session() as db:
             return (
@@ -1570,6 +1599,8 @@ class database():
                 .concat(ShioriQuest.query(db))
                 .concat(TrainingQuestDatum.query(db))
                 .concat(TalentQuestDatum.query(db))
+                .concat(MirageNemesisQuestDisplay.query(db))
+                .concat(MirageFloorQuestDisplay.query(db))
                 .to_dict(lambda x: x.quest_id, lambda x: x.quest_name)
             )
         ret.update(
@@ -1593,7 +1624,8 @@ class database():
         1: '铜',
         2: '银',
         3: '金',
-        4: '粉'
+        4: '粉',
+        5: '彩'
     }
 
     @lazy_property
@@ -1686,6 +1718,61 @@ class database():
                 .to_dict(lambda x: x.talent_level, lambda x: x)
             )
 
+    @lazy_property
+    def mirage_setting(self) -> Dict[int, MirageSetting]:
+        with self.dbmgr.session() as db:
+            return (
+                MirageSetting.query(db)
+                .to_dict(lambda x: x.id, lambda x: x)
+            )
+
+    @lazy_property
+    def mirage_nemesis_quest(self) -> Dict[int, Dict[int, MirageNemesisQuest]]:
+        with self.dbmgr.session() as db:
+            return (
+                MirageNemesisQuest.query(db)
+                .group_by(lambda x: x.nemesis_id)
+                .to_dict(lambda x: x.key, lambda x: x.to_dict(
+                    lambda x: x.area_level, lambda x: x
+                ))
+            )
+
+    @lazy_property
+    def mirage_floor_setting(self) -> Dict[int, MirageFloorSetting]:
+        with self.dbmgr.session() as db:
+            return (
+                MirageFloorSetting.query(db)
+                .to_dict(lambda x: x.floor_num, lambda x: x)
+            )
+
+    @lazy_property
+    def mirage_nemesis_area(self) -> Dict[int, MirageNemesisArea]:
+        with self.dbmgr.session() as db:
+            return (
+                MirageNemesisArea.query(db)
+                .to_dict(lambda x: x.nemesis_id, lambda x: x)
+            )
+
+    @lazy_property
+    def alces_story(self) -> Dict[int, AlcesStory]:
+        with self.dbmgr.session() as db:
+            return (
+                AlcesStory.query(db)
+                .to_dict(lambda x: x.story_id, lambda x: x)
+            )
+
+    @lazy_property
+    def alces_cost(self) -> Dict[ItemType, AlcesCost]:
+        with self.dbmgr.session() as db:
+            return (
+                AlcesCost.query(db)
+                .to_dict(lambda x: (x.type, x.item_id), lambda x: x)
+            )
+
+    def get_mirage_setting(self) -> MirageSetting:
+        max_id = max(self.mirage_setting.keys(), default=1)
+        return self.mirage_setting[max_id]
+
     def get_ex_equip_star_from_pt(self, id: int, pt: int) -> int:
         rarity = self.get_ex_equip_rarity(id)
         star = max([star for star, enhancement_data in self.ex_equipment_enhance_data[rarity].items() if enhancement_data.total_point <= pt], default=0)
@@ -1716,6 +1803,31 @@ class database():
 
     def get_ex_equip_rarity_name(self, id: int) -> str:
         return self.ex_rarity_name[self.get_ex_equip_rarity(id)]
+
+    def get_ex_equip_sub_status(self, ex_equip_id: int, sub_status: List[ExtraEquipSubStatus]) -> Dict[int, int]:
+        data = Counter()
+        group = self.ex_equipment_sub_status_group[ex_equip_id]
+        sub_status_data = self.ex_equipment_sub_status[group.group_id]
+        for status in sub_status or []:
+            data[status.status] += sub_status_data[status.status].step_value(status.step)
+        return data
+
+    def get_ex_equip_sub_status_str(self, ex_equip_id: int, sub_status: List[ExtraEquipSubStatus]) -> str:
+        data = self.get_ex_equip_sub_status(ex_equip_id, sub_status)
+        msg = []
+        for param, count in sorted(data.items()):
+            en_name = UnitAttribute.index2name.get(eParamType(param), f"unknown_param_{param}")
+            name = UnitAttribute.index2ch.get(eParamType(param), f"未知属性{param}")
+            is_present = UnitAttribute.is_present.get(en_name, False)
+            if is_present:
+                count /= 100
+                msg.append(f"{name}x{count:.2f}%")
+            else:
+                msg.append(f"{name}x{count}")
+
+        if not msg:
+            return '空'
+        return '/'.join(msg)
 
     def get_ex_equip_rankup_cost(self, id: int, start_rank: int, end_rank: int) -> int:
         rarity = self.get_ex_equip_rarity(id)
@@ -2426,6 +2538,14 @@ class database():
                 ex_equip_data = ex_equips[ex_equip.serial_id]
                 star = self.get_ex_equip_star_from_pt(ex_equip_data.ex_equipment_id, ex_equip_data.enhancement_pt)
                 attr = self.ex_equipment_data[ex_equip_data.ex_equipment_id].get_unit_attribute(star)
+                if ex_equip_data.sub_status:
+                    group = self.ex_equipment_sub_status_group[ex_equip_data.ex_equipment_id]
+                    sub_status_data = db.ex_equipment_sub_status[group.group_id]
+                    for status in ex_equip_data.sub_status:
+                        value = sub_status_data[status.status].step_value(status.step)
+                        a = UnitAttribute()
+                        a.set_value(status.status, value)
+                        attr += a
                 bonus = unit_attribute.ex_equipment_mul(attr).ceil()
                 ex_attribute += bonus
         unit_attribute += ex_attribute
@@ -2491,5 +2611,9 @@ class database():
         free_gacha_campaign = min(free_gacha_campaigns)
         return [gacha.gacha_id for gacha in self.campaign_free_gacha_data[free_gacha_campaign]]
 
+    def ex_equip_sub_status_candidate(self) -> List[int]:
+        ids = list(set(j.status for i in self.ex_equipment_sub_status.values() for j in i.values()))
+        ids.append(0)
+        return sorted(ids)
 
 db = database()

@@ -223,11 +223,22 @@ class ex_equip_info(Module):
                 if not cb_only or db.ex_equipment_data[ex.ex_equipment_id].clan_battle_equip_flag).items()),
                 key=lambda x: (db.ex_equipment_data[x[0][0]].rarity, db.ex_equipment_data[x[0][0]].clan_battle_equip_flag, x[0][0], x[0][1]), reverse=True
                 )
+        rainbow_cnt = sum(1 * c for (id, rank), c in cnt if db.ex_equipment_data[id].rarity == 5)
         pink_cnt = sum(1 * c for (id, rank), c in cnt if db.ex_equipment_data[id].rarity == 4)
         history_pink_cnt = sum((rank + 1) * c for (id, rank), c in cnt if db.ex_equipment_data[id].rarity == 4)
-        self._log(f"粉装数量：{pink_cnt}/{history_pink_cnt}")
-        msg = '\n'.join(f"{db.get_ex_equip_name(id, rank)}x{c}" for (id, rank), c in cnt)
-        self._log(msg)
+        if not cb_only:
+            self._log(f"彩装数量：{rainbow_cnt}")
+            self._log(f"粉装数量：{pink_cnt}/{history_pink_cnt}")
+            if rainbow_cnt:
+                rainbow = [ex for ex in client.data.ex_equips.values() if db.ex_equipment_data[ex.ex_equipment_id].rarity == 5]
+                msg = '\n'.join(f"{db.get_ex_equip_name(ex.ex_equipment_id)}: {db.get_ex_equip_sub_status_str(ex.ex_equipment_id, ex.sub_status or [])}" for ex in rainbow)
+                self._log(msg)
+
+        no_rainbow = [ ((id, rank), c) for (id, rank), c in cnt if db.ex_equipment_data[id].rarity < 5 ]
+        if no_rainbow:
+            msg = '\n'.join(f"{db.get_ex_equip_name(id, rank)}x{c}" for (id, rank), c in no_rainbow)
+            self._log(msg)
+
 
 @description('看看你缺了什么称号')
 @name('查缺称号')
