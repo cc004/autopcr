@@ -33,7 +33,7 @@ class UnitAttribute:
     accuracy: Decimal = Decimal(0)
 
     index2ch = {
-        eParamType.HP: "HP",
+        eParamType.HP: "血量",
         eParamType.ATK: "物攻",
         eParamType.MAGIC_ATK: "魔攻",
         eParamType.DEF: "物防",

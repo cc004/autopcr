@@ -4,7 +4,7 @@ from dataclasses_json import dataclass_json
 from ..core.pcrclient import eLoginStatus, pcrclient
 from ..model.error import *
 from ..model.enums import *
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union, Any, Iterator
 from ..constants import CACHE_DIR
 from .config import Config, _wrap_init
 from enum import Enum
@@ -166,7 +166,14 @@ class Module:
             self._cache = json.load(f)
             self.cache_ready = True
 
-    def find_cache(self, key):
+    def iter_cache(self) -> Iterator[Tuple[Any, Any]]:
+        if not self.cache_ready:
+            self.init_cache()
+
+        for key in self._cache:
+            yield key, self._cache[key]
+
+    def find_cache(self, key) -> Any:
         if not self.cache_ready:
             self.init_cache()
 
