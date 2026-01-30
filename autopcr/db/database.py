@@ -65,6 +65,7 @@ class database():
     wind_ball: ItemType = (eInventoryType.Item, 25013)
     sun_ball: ItemType = (eInventoryType.Item, 25014)
     dark_ball: ItemType = (eInventoryType.Item, 25015)
+    ex_rainbow_enhance_pt: ItemType = (eInventoryType.Item, 26202)
 
     def update(self, dbmgr):
         self.dbmgr = dbmgr

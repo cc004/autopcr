@@ -12,6 +12,8 @@ from collections import Counter
 
 @name('彩装究极炼成')
 @default(True)
+@inttype('ex_equip_rainbow_enhance_pt_hold', '保留pt数(w)', 1, list(range(0, 1001)))
+@ExEquipSubStatusRankConfig('ex_equip_rainbow_enhance_rank', '属性优先级')
 @inttype('ex_equip_rainbow_enhance_no_max_num', '非满属性', 1, [0, 1, 2, 3, 4])
 @ExEquipSubStatusConfig('ex_equip_rainbow_enchance_sub_status_4', '炼成属性4')
 @ExEquipSubStatusConfig('ex_equip_rainbow_enchance_sub_status_3', '炼成属性3')
@@ -19,7 +21,7 @@ from collections import Counter
 @ExEquipSubStatusConfig('ex_equip_rainbow_enchance_sub_status_1', '炼成属性1')
 @booltype('ex_equip_rainbow_enchance_view', '看状态', True)
 @texttype('ex_equip_rainbow_enchance_id', '彩装id', 0)
-@description('看状态指获取彩装id和炼成属性,不炼成,选择最多四个属性,非满属性指属性值不必最大,以便手动用光球强化.满强目标属性会自动锁住')
+@description('看状态指获取彩装id和炼成属性.非满属性指属性值不必最大,以便手动用光球强化.属性优先级指目标属性值一样时,比较其他属性决定保留或放弃.满强目标属性会自动锁住.')
 class ex_equip_rainbow_enchance(Module):
 
     async def do_task(self, client: pcrclient):
@@ -69,9 +71,23 @@ class ex_equip_rainbow_enchance(Module):
             last_lock_cnt = 0
             stop = False
 
+            base = 1
+            self.weight = Counter()
+            rank_order = self.get_config('ex_equip_rainbow_enhance_rank')
+            for key in rank_order[::-1]:
+                if key not in target_sub_status:
+                    self.weight[key] += base
+                    base *= 30
+            for key in target_sub_status:
+                self.weight[key] += base
+
+            # self._log(f"各属性加权值: " + ', '.join(f"{UnitAttribute.index2ch[eParamType(k)]}: {v}" for k, v in self.weight.items()))
+
             self._log(f"当前彩装属性 " +
                       f"{serial_id}: {db.get_ex_equip_name(client.data.ex_equips[serial_id].ex_equipment_id)} "
                       f"{db.get_ex_equip_sub_status_str(client.data.ex_equips[serial_id].ex_equipment_id, client.data.ex_equips[serial_id].sub_status or [])}")
+
+            pt_hold = self.get_config('ex_equip_rainbow_enhance_pt_hold')
                 
             while not stop:
                 achived_max_cnt, achived_cnt = await self.get_achived_sub_status_cnt(client, serial_id, target_sub_status)
@@ -85,6 +101,10 @@ class ex_equip_rainbow_enchance(Module):
                     self._log(f"L 锁定属性个数{last_lock_cnt} -> {lock_cnt}")
                     last_lock_cnt = lock_cnt
 
+                if client.data.get_inventory(db.ex_rainbow_enhance_pt) <= pt_hold * 10000:
+                    self._warn(f"彩装究极炼成PT{client.data.get_inventory(db.ex_rainbow_enhance_pt)}<={pt_hold * 10000}，停止炼成")
+                    break
+
                 to_consume = Counter()
                 for consume, item in db.alces_cost.items():
                     cost = item.count
@@ -94,7 +114,7 @@ class ex_equip_rainbow_enchance(Module):
                     if cur < cost:
                         self._warn(f"E {db.get_inventory_name_san(consume)}数量{cur}<{cost}，无法进行究极炼成")
                         stop = True
-
+                
                 if stop:
                     break
                 
@@ -140,8 +160,9 @@ class ex_equip_rainbow_enchance(Module):
                 accept = True
         
         if not accept:
-            current_score = sum(status.step for status in client.data.ex_equips[alces_data.serial_id].sub_status or [] if status.status in target_key)
-            nxt_score = sum(status.step for status in alces_data.sub_status if status.status in target_key)
+            current_score = sum(status.step * self.weight[status.status] for status in client.data.ex_equips[alces_data.serial_id].sub_status or [])
+            nxt_score = sum(status.step * self.weight[status.status] for status in alces_data.sub_status)
+            # self._log(f"当前目标属性加权值{current_score}，新属性加权值{nxt_score}")
 
             if nxt_score > current_score:
                 accept = True

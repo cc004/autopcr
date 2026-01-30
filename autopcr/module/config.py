@@ -284,6 +284,13 @@ class ExEquipSubStatusConfig(SingleChoiceConfig):
     def candidate_display(self, status: int):
         return UnitAttribute.index2ch[eParamType(status)] if status else "任意"
 
+class ExEquipSubStatusRankConfig(MultiSearchConfig):
+    def __init__(self, key: str, desc: str):
+        super().__init__(key, desc, [12, 13, 2, 4], db.ex_equip_sub_status_candidate)
+
+    def candidate_display(self, status: int):
+        return UnitAttribute.index2ch[eParamType(status)] if status else "任意"
+
 class UnitListConfig(UnitConfigMixin, MultiSearchConfig):
     def __init__(self, key: str, desc: str):
         super().__init__(key, desc, [], db.unlock_unit_condition_candidate, short_display=True)
