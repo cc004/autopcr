@@ -1179,3 +1179,79 @@ async def ocr_team(botev: BotEvent):
             for id, team in enumerate(result)
     )
     await botev.finish(msg)
+
+@register_tool("jjc回刺", "jjc_back")
+async def jjc_back(botev: BotEvent):
+    msg = await botev.message()
+    opponent_jjc_rank = -1
+    opponent_jjc_attack_team_id = 1
+    try:
+        opponent_jjc_rank = int(msg[0])
+        del msg[0]
+    except:
+        pass
+    try:
+        opponent_jjc_attack_team_id = int(msg[0])
+        del msg[0]
+    except:
+        pass
+    config = {
+        "opponent_jjc_rank": opponent_jjc_rank,
+        "opponent_jjc_attack_team_id": opponent_jjc_attack_team_id,
+    }
+    return config
+
+@register_tool("pjjc回刺", "pjjc_back")
+async def pjjc_back(botev: BotEvent):
+    msg = await botev.message()
+    opponent_pjjc_rank = -1
+    opponent_pjjc_attack_team_id = 1
+    try:
+        opponent_pjjc_rank = int(msg[0])
+        del msg[0]
+    except:
+        pass
+    try:
+        opponent_pjjc_attack_team_id = int(msg[0])
+        del msg[0]
+    except:
+        pass
+    config = {
+        "opponent_pjjc_rank": opponent_pjjc_rank,
+        "opponent_pjjc_attack_team_id": opponent_pjjc_attack_team_id,
+    }
+    return config
+
+@register_tool("jjc透视", "jjc_info")
+async def jjc_info(botev: BotEvent):
+    use_cache = True
+    msg = await botev.message()
+    try:
+        use_cache = not is_args_exist(msg, 'flush')
+    except:
+        pass
+    config = {
+        "jjc_info_cache": use_cache,
+    }
+    return config
+
+@register_tool("pjjc透视", "pjjc_info")
+async def pjjc_info(botev: BotEvent):
+    use_cache = True
+    msg = await botev.message()
+    try:
+        use_cache = not is_args_exist(msg, 'flush')
+    except:
+        pass
+    config = {
+        "pjjc_info_cache": use_cache,
+    }
+    return config
+
+@register_tool("pjjc换防", "pjjc_def_shuffle_team")
+async def pjjc_def_shuffle_team(botev: BotEvent):
+    return {}
+
+@register_tool("pjjc换攻", "pjjc_atk_shuffle_team")
+async def pjjc_atk_shuffle_team(botev: BotEvent):
+    return {}
