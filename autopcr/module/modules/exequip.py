@@ -45,6 +45,7 @@ class ex_equip_rainbow_enchance(Module):
                 equip = int(equip)
                 self._log(f"{db.get_ex_equip_name(equip)}({total}次词条刷新)")
                 info = flow(data.items()) \
+                    .where(lambda kv: kv[0] != 'total') \
                     .select(lambda kv: (list(map(int, kv[0].split('-'))), kv[1])) \
                     .group_by(lambda kv: kv[0][0]) \
                     .to_dict(lambda g: g.key, lambda g: g.to_list())
