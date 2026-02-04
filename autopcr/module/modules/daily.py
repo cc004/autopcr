@@ -9,6 +9,7 @@ from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
 from ...util.questutils import *
+import asyncio
 
 @description('仅开启时生效，氪体数将取满足条件的最大值，禅模式指不执行体力相关的功能，仅在清日常生效，单项执行将忽略。庆典包括其倍数，加速期间的所有倍数判断均x2')
 @name("全局配置")
