@@ -113,6 +113,8 @@ class ex_equip_rainbow_enchance(Module):
             self.cache_info = self.find_cache(str(client.data.ex_equips[serial_id].ex_equipment_id))
             if not self.cache_info:
                 self.cache_info = Counter()
+            else:
+                self.cache_info = Counter(self.cache_info)
                 
             while not stop:
                 achived_max_cnt, achived_cnt = await self.get_achived_sub_status_cnt(client, serial_id, target_sub_status)
