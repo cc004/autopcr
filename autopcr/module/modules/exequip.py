@@ -76,6 +76,12 @@ class ex_equip_rainbow_enchance(Module):
             if invalid_status:
                 raise AbortError(f"炼成属性包含该装备不支持的属性: {', '.join(UnitAttribute.index2ch[eParamType(s)] for s in invalid_status)}")
 
+            self.cache_info = self.find_cache(str(client.data.ex_equips[serial_id].ex_equipment_id))
+            if not self.cache_info:
+                self.cache_info = Counter()
+            else:
+                self.cache_info = Counter(self.cache_info)
+
             top = await client.alces_top()
             if top.pending_alces_data:
                 if top.pending_alces_data.serial_id != serial_id:
@@ -110,11 +116,6 @@ class ex_equip_rainbow_enchance(Module):
                       f"{db.get_ex_equip_sub_status_str(client.data.ex_equips[serial_id].ex_equipment_id, client.data.ex_equips[serial_id].sub_status or [])}")
 
             pt_hold = self.get_config('ex_equip_rainbow_enhance_pt_hold')
-            self.cache_info = self.find_cache(str(client.data.ex_equips[serial_id].ex_equipment_id))
-            if not self.cache_info:
-                self.cache_info = Counter()
-            else:
-                self.cache_info = Counter(self.cache_info)
                 
             while not stop:
                 achived_max_cnt, achived_cnt = await self.get_achived_sub_status_cnt(client, serial_id, target_sub_status)
