@@ -432,7 +432,7 @@ class ex_equip_power_maximun(Module):
             unit_node = f"u{unit_id}"
             edges.append((st, unit_node, 3, 0))
 
-            unit_attr = db.calc_unit_attribute(client.data.unit[unit_id], read_story, client.data.ex_equips)
+            unit_attr = db.calc_unit_attribute(client.data.unit[unit_id], read_story, client.data.ex_equips, exclude_ex_equip = True)
 
             slot_data = db.unit_ex_equipment_slot[unit_id]
             for slot_id, ex_category in enumerate([slot_data.slot_category_1, slot_data.slot_category_2, slot_data.slot_category_3], start=1):

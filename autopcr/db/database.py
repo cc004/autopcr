@@ -2489,7 +2489,7 @@ class database():
     def is_unit_rank_bonus(self, unit_id: int, promotion_level: int) -> bool:
         return unit_id in self.promote_bonus and promotion_level in self.promote_bonus[unit_id]
 
-    def calc_unit_attribute(self, unit_data: UnitData, read_story: Set[int], ex_equips: Dict[int, ExtraEquipInfo]) -> UnitAttribute:
+    def calc_unit_attribute(self, unit_data: UnitData, read_story: Set[int], ex_equips: Dict[int, ExtraEquipInfo], exclude_ex_equip: bool = False) -> UnitAttribute:
         unit_id = unit_data.id
         promotion_level = unit_data.promotion_level.value
         rarity = unit_data.battle_rarity if unit_data.battle_rarity else unit_data.unit_rarity
@@ -2532,23 +2532,24 @@ class database():
         unit_attribute = base_attribute.round() + rb_attribute.round() + equip_attribute.round() + unique_equip_attribute.ceil() + kizuna_attribute.round()
 
         # EX装备
-        ex_attribute = UnitAttribute()
-        for ex_equip in unit_data.ex_equip_slot:
-            if ex_equip.serial_id:
-                ex_equip_data = ex_equips[ex_equip.serial_id]
-                star = self.get_ex_equip_star_from_pt(ex_equip_data.ex_equipment_id, ex_equip_data.enhancement_pt)
-                attr = self.ex_equipment_data[ex_equip_data.ex_equipment_id].get_unit_attribute(star)
-                if ex_equip_data.sub_status:
-                    group = self.ex_equipment_sub_status_group[ex_equip_data.ex_equipment_id]
-                    sub_status_data = db.ex_equipment_sub_status[group.group_id]
-                    for status in ex_equip_data.sub_status:
-                        value = sub_status_data[status.status].step_value(status.step)
-                        a = UnitAttribute()
-                        a.set_value(status.status, value)
-                        attr += a
-                bonus = unit_attribute.ex_equipment_mul(attr).ceil()
-                ex_attribute += bonus
-        unit_attribute += ex_attribute
+        if not exclude_ex_equip:
+            ex_attribute = UnitAttribute()
+            for ex_equip in unit_data.ex_equip_slot:
+                if ex_equip.serial_id:
+                    ex_equip_data = ex_equips[ex_equip.serial_id]
+                    star = self.get_ex_equip_star_from_pt(ex_equip_data.ex_equipment_id, ex_equip_data.enhancement_pt)
+                    attr = self.ex_equipment_data[ex_equip_data.ex_equipment_id].get_unit_attribute(star)
+                    if ex_equip_data.sub_status:
+                        group = self.ex_equipment_sub_status_group[ex_equip_data.ex_equipment_id]
+                        sub_status_data = db.ex_equipment_sub_status[group.group_id]
+                        for status in ex_equip_data.sub_status:
+                            value = sub_status_data[status.status].step_value(status.step)
+                            a = UnitAttribute()
+                            a.set_value(status.status, value)
+                            attr += a
+                    bonus = unit_attribute.ex_equipment_mul(attr).ceil()
+                    ex_attribute += bonus
+            unit_attribute += ex_attribute
 
         return unit_attribute
 
