@@ -319,6 +319,8 @@ class DishEffectManager(EffectManager):
                 return True
             elif (val & 2) and block_type == eBlockType.TREASURE:
                 return True
+            elif (val & 4) and block_type == eBlockType.DISH:
+                return True
         return False
     
     def get_block_change(self) -> Dict[eBlockType, eBlockType]:

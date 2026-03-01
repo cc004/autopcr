@@ -154,6 +154,7 @@ class hatsune_story_reading(Module):
         for story in db.event_story_detail:
             if story.story_id not in read_story and story.story_id in unlock_story:
                 if (story.visible_type == eStoryVisibleType.EVENT_SPECIAL_STORY or 
+                    story.visible_type == eStoryVisibleType.EVENT_SPECIAL_EPISODE or 
                     story.visible_type == eStoryVisibleType.HIDDEN_BY_READ_CONDITION or 
                     story.visible_type == eStoryVisibleType.PRE_RELEASE_STORY or 
                     story.visible_type == eStoryVisibleType.PRE_STORYID_AND_LOVE_LEVEL) and \
