@@ -19,3 +19,4 @@ dataclasses_json~=0.6.4
 PuLP~=2.8.0
 openpyxl~=3.1.5
 networkx
+yagmail==0.15.293

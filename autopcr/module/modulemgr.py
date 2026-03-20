@@ -11,6 +11,8 @@ from .modulebase import Module, ModuleResult, eResultStatus
 from ..core.clientpool import PoolClientWrapper
 import traceback
 import os
+from ..util.draw import instance as drawer
+from ..util.notify import MailNotifier
 
 @dataclass_json
 @dataclass
@@ -125,6 +127,11 @@ class ModuleManager:
         if any(m.status == eResultStatus.PANIC or m.status == eResultStatus.ERROR for m in resp.result.values()):
             status = eResultStatus.ERROR
         res = await self.save_daily_result(resp, status)
+        # 新增邮件通知
+        img = await drawer.draw_tasks_result(res.get_result())
+        notifyer = MailNotifier()
+        notifyer.send_html_with_image(img)
+        notifyer.close()
         return res
 
     async def do_from_key(self, config: dict, key: str, isAdminCall: bool = False) -> "ModuleResultInfo":

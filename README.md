@@ -33,6 +33,9 @@ python3 _httpserver_test.py
 | AUTOPCR_SERVER_DEBUG_LOG      | 是否输出 Debug 日志 | False            |
 | AUTOPCR_SERVER_ALLOW_REGISTER | 是否允许注册        | True             |
 | AUTOPCR_SERVER_SUPERUSER      | 设置无条件拥有管理员的用户 | （可选，设置为登录使用的 QQ） |
+| MAIL_FROM                     | 设置发信地址 | （只支持QQ,163邮箱） |
+| MAIL_PASSWORD                 | 设置发信地址的授权码 |  123456   |
+| MAIL_TO                       | 设置收信地址 | 不限制，可以和发信地址一样 |
 
 ## Credits
 - aiorequests 来自 [HoshinoBot](https://github.com/Ice-Cirno/HoshinoBot)
@@ -44,7 +47,7 @@ python3 _httpserver_test.py
 
 ## Github Action（打包镜像仅适用于HTTP服务器模式）
 打包镜像默认推送到[ghcr](https://ghcr.io),如需推送到[dockerhub](https://hub.docker.com)需要执行以下步骤
-- 添加变量`DOKCKERHUB_IMAGE_NAME`用于推送到dockerhub镜像名称,例如autopcr/autopcr
+- 添加变量`DOCKERHUB_IMAGE_NAME`用于推送到dockerhub镜像名称,例如autopcr/autopcr
 - 添加机密`DOCKERHUB_USERNAME`和`DOCKERHUB_TOKEN`用于推送到dockerhub的身份验证
 
 ## 使用 pixi
