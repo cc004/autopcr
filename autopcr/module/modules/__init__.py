@@ -79,6 +79,7 @@ daily_modules = ModuleList(
         present_receive,
         talent_sweep2,
         smart_very_hard_sweep,
+        xinsui9_sweep,
         xinsui8_sweep,
         xinsui7_sweep,
         xinsui6_sweep,

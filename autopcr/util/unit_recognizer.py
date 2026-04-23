@@ -134,6 +134,94 @@ class UnitRecognizer:
         return img.crop((x, y, x + w, y + h))
 
     @staticmethod
+    def _legacy_cutting(img: Image.Image, mode: int):
+        """
+        old_main.py 的 cutting 逻辑迁移版。
+        mode=1: 返回最大矩形区域裁剪结果与边框
+        mode=2: 返回头像框候选与被排除的其他框
+        """
+        im_grey = img.convert('L')
+        tot_area = im_grey.size[0] * im_grey.size[1]
+        im_grey = im_grey.point(lambda x: 255 if x > 210 else 0)
+        thresh = np.array(im_grey)
+
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+        areas = []
+        icon = []
+        for contour in contours:
+            area = cv2.contourArea(contour)
+            areas.append(area)
+            if area > 500 and mode == 2:
+                x, y, w, h = cv2.boundingRect(contour)
+                if h > 0 and 0.95 < (w / h) < 1.05:
+                    side = (w + h) // 2
+                    area_ratio = side * side / tot_area * 100 if tot_area > 0 else 0
+                    if area_ratio >= 0.5:
+                        icon.append([side, [x, y, w, h]])
+
+        if mode == 1:
+            if not areas:
+                raise ValueError("no contour found in legacy cutting")
+            idx = areas.index(max(areas))
+            x, y, w, h = cv2.boundingRect(contours[idx])
+            cropped = thresh[y + 2:y + h - 2, x + 2:x + w - 2]
+            return Image.fromarray(cropped), [x, y, w, h]
+
+        if mode == 2:
+            if not icon:
+                return [], []
+
+            kinds = {}
+            for side, box in icon:
+                category = -1
+                for kind in kinds:
+                    ratio = side / kind
+                    if 0.9 < ratio < 1.1:
+                        category = kind
+                        kinds[kind].append(box)
+                        break
+                if category == -1:
+                    kinds[side] = [box]
+
+            def cluster_weight(item):
+                side = item[0]
+                count = len(item[1])
+                if count == 5:
+                    return 5000000 + side
+                if count % 5 == 0:
+                    return 1000000 + side
+                return count * 10000 + side
+
+            kinds_sorted = sorted(kinds.items(), key=cluster_weight, reverse=True)
+            kind = kinds_sorted[0]
+            if len(kind[1]) % 5 == 0:
+                otherborder = []
+                for other_kind in kinds_sorted[1:]:
+                    otherborder.extend(other_kind[1])
+                return kind[1], otherborder
+            return [item[1] for item in icon], []
+
+        raise ValueError(f"unsupported legacy cutting mode: {mode}")
+
+    @staticmethod
+    def _legacy_cut(img: Image.Image, border: List[int]) -> Image.Image:
+        x, y, w, h = border
+        img_arr = np.array(img)
+        img_arr = img_arr[y + 2:y + h - 2, x + 2:x + w - 2]
+        return Image.fromarray(img_arr)
+
+    @staticmethod
+    def _legacy_split_last_col_recs(recs: List[Tuple[int, int, int, int]]) -> Tuple[List[Tuple[int, int, int, int]], List[Tuple[int, int, int, int]]]:
+        if not recs:
+            return [], []
+        recs_sorted = sorted(recs, key=lambda x: x[0], reverse=True)
+        last_col_recs = [rec for rec in recs_sorted if abs(rec[0] - recs_sorted[0][0]) < recs_sorted[0][2] / 2]
+        last_col_recs = sorted(last_col_recs, key=lambda x: x[1])
+        remaining = list(set(recs_sorted) - set(last_col_recs))
+        return remaining, last_col_recs
+
+    @staticmethod
     def _save_lru_result(cache: OrderedDict[bytes, Tuple[int, int]], key: bytes, value: Tuple[int, int], max_size: int):
         cache[key] = value
         cache.move_to_end(key)
@@ -619,87 +707,150 @@ class UnitRecognizer:
             
         return None, None
 
-    async def recognize(self, image: Image.Image, debug: bool = False, d_file: str = "") -> Tuple[List[List[int]], str]:
+    async def _detect_rows_legacy(self, image: Image.Image) -> List[List[List[int]]]:
         """
-        主入口：检测并识别图片中的所有角色
+        先使用 old_main.py 的 cutting/getPos 思路定位头像框。
+        这里只复用旧版找框逻辑，单头像识别仍走当前 recognize_unit。
         """
-        img = image.convert("RGBA")
-        current_img = img
+        current_img = image.convert("RGBA")
+        current_detect_img = current_img
         actual_offset_x = 0
         actual_offset_y = 0
-        
-        # 尝试检测循环 (自动裁剪/缩放)
-        valid_boxes = []
-        for _ in range(6): # 最多尝试6次
+
+        for attempt in range(6):
+            border, _ = self._legacy_cutting(current_detect_img, 2)
+            no_box_found = len(border) == 0
+
+            if border and len(border) >= 4:
+                recs = set(tuple(rec) for rec in border)
+                _, last_col_recs = self._legacy_split_last_col_recs(list(recs))
+                row_cnt = len(last_col_recs)
+
+                if row_cnt > 0:
+                    arr: List[List[Optional[Tuple[int, int, int, int]]]] = [[None for _ in range(5)] for _ in range(row_cnt)]
+                    last_col_recs_ypos = [rec[1] for rec in last_col_recs]
+                    working_recs = list(recs)
+
+                    for col_index in range(5):
+                        working_recs, last_col_recs = self._legacy_split_last_col_recs(working_recs)
+                        if not last_col_recs:
+                            break
+
+                        for rec in last_col_recs:
+                            cell_crop = self._icon_crop_with_pad(current_img, list(rec), pad=2)
+                            uid, _, _, _ = await self.recognize_unit(cell_crop)
+                            if uid == 0:
+                                continue
+
+                            most_near_row = 0
+                            for row_index in range(1, len(arr)):
+                                if abs(last_col_recs_ypos[row_index] - rec[1]) < abs(last_col_recs_ypos[most_near_row] - rec[1]):
+                                    most_near_row = row_index
+
+                            existing = arr[most_near_row][col_index]
+                            if existing is None or abs(last_col_recs_ypos[most_near_row] - existing[1]) > abs(last_col_recs_ypos[most_near_row] - rec[1]):
+                                arr[most_near_row][col_index] = rec
+
+                    rows = []
+                    for row in arr:
+                        none_cnt = row.count(None)
+                        if none_cnt >= 2:
+                            continue
+
+                        ordered_row = [row[4 - col_index] for col_index in range(5) if row[4 - col_index] is not None]
+                        if not ordered_row:
+                            continue
+
+                        rows.append([
+                            [x + actual_offset_x, y + actual_offset_y, w, h]
+                            for x, y, w, h in ordered_row
+                        ])
+
+                    if rows:
+                        return rows
+
+            try:
+                next_detect_img, border_rect = self._legacy_cutting(current_detect_img, 1)
+            except Exception:
+                return []
+
+            if attempt == 0 or no_box_found:
+                next_detect_img = next_detect_img.point(lambda x: 0 if x > 128 else 255)
+
+            current_img = self._legacy_cut(current_img, border_rect)
+            current_detect_img = next_detect_img
+            actual_offset_x += border_rect[0]
+            actual_offset_y += border_rect[1]
+
+        return []
+
+    def _detect_rows_modern(self, image: Image.Image) -> List[List[List[int]]]:
+        """
+        新版基于投影/Canny 的找框逻辑。
+        """
+        current_img = image.convert("RGBA")
+        actual_offset_x = 0
+        actual_offset_y = 0
+
+        for _ in range(6):
             valid_boxes, _ = self.detect_cells(current_img)
-            
             if valid_boxes:
-                break
-            
-            # 没找到则尝试裁剪内容区域继续找
+                global_boxes = [[x + actual_offset_x, y + actual_offset_y, w, h] for x, y, w, h in valid_boxes]
+                return self._group_boxes_by_y(global_boxes, 15)
+
             cropped, rect = self.detect_content_area(current_img)
-            if cropped is None:
-                break
-            
+            if cropped is None or rect is None:
+                return []
+
             current_img = cropped
-            cx, cy, cw, ch = rect
+            cx, cy, _, _ = rect
             actual_offset_x += cx
             actual_offset_y += cy
-        
-        if not valid_boxes:
-             return [], ""
 
-        # 还原全局坐标并排序
-        global_boxes = [[x + actual_offset_x, y + actual_offset_y, w, h] for x, y, w, h in valid_boxes]
-        rows = self._group_boxes_by_y(global_boxes, 15)
-        
+        return []
+
+    async def _render_recognition(self, img: Image.Image, rows: List[List[List[int]]], debug: bool = False, d_file: str = "") -> Tuple[List[List[int]], str]:
         arr_uids_final = []
-        
-        # 结果可视化准备
+
         outp_img = img.copy()
-        # 绘制半透明蒙版
         overlay = Image.new('RGBA', img.size, (0, 0, 0, 160))
         outp_img = Image.alpha_composite(outp_img, overlay)
         draw_outp = ImageDraw.Draw(outp_img)
-        
+
         row_cnt = len(rows)
         max_cols = max((len(r) for r in rows), default=0)
         icon_size = 64
-        
+
         compare_w = max(1, icon_size * max_cols + 16 * 2)
         compare_h = max(1, icon_size * 2 * row_cnt + 16 * (row_cnt + 1))
         compare_img = Image.new("RGBA", (compare_w, compare_h), (255, 255, 255, 255))
-        
+
         for r_idx, r_list in enumerate(rows):
-            r_list.sort(key=lambda b: b[0]) # 按X排序
+            r_list = sorted(r_list, key=lambda b: b[0])
             row_uids = []
-            
+
             for c_idx, rec in enumerate(r_list):
                 rx, ry, rw, rh = rec
                 cell_crop = self._icon_crop_with_pad(img, rec, pad=2)
-                
-                # 识别
+
                 uid, star, name, score = await self.recognize_unit(cell_crop)
-                
+
                 if debug:
                     print(f"Recognized: {name} (ID: {uid}), score: {score}")
-                
-                # 将原图部分贴回（去除蒙板效果）
+
                 paste_x = rx + 2 if rw > 4 else rx
                 paste_y = ry + 2 if rh > 4 else ry
                 outp_img.paste(cell_crop, (paste_x, paste_y))
-                
-                # 绘制边框
+
                 color = "red" if uid != 0 else "black"
-                draw_outp.rectangle((rx, ry, rx+rw, ry+rh), outline=color, width=3)
-                
-                # 绘制对比图
+                draw_outp.rectangle((rx, ry, rx + rw, ry + rh), outline=color, width=3)
+
                 pos_x = 16 + icon_size * c_idx
                 pos_y = 16 * (r_idx + 1) + icon_size * 2 * r_idx
-                
+
                 cell_resize = cell_crop.resize((64, 64))
                 compare_img.paste(cell_resize, (pos_x, pos_y))
-                
+
                 if uid != 0:
                     try:
                         icon_bytes = await imagemgr.unit_icon(uid, star)
@@ -708,8 +859,9 @@ class UnitRecognizer:
                             compare_img.paste(icon, (pos_x, pos_y + 64), icon)
                             row_uids.append(uid)
                     except Exception as e:
-                        if debug: print(f"Icon load failed: {e}")
-            
+                        if debug:
+                            print(f"Icon load failed: {e}")
+
             row_uids.reverse()
             arr_uids_final.append(row_uids)
 
@@ -717,7 +869,7 @@ class UnitRecognizer:
             buf = BytesIO()
             im.save(buf, format='PNG')
             return f'[CQ:image,file=base64://{base64.b64encode(buf.getvalue()).decode()}]'
-        
+
         if debug and d_file:
             try:
                 p = Path(d_file)
@@ -727,6 +879,18 @@ class UnitRecognizer:
                 pass
 
         return arr_uids_final, f'{img_to_b64(outp_img)}\n{img_to_b64(compare_img)}'
+
+    async def recognize(self, image: Image.Image, debug: bool = False, d_file: str = "") -> Tuple[List[List[int]], str]:
+        """
+        主入口：检测并识别图片中的所有角色
+        """
+        img = image.convert("RGBA")
+        rows = await self._detect_rows_legacy(img)
+        if not rows:
+            rows = self._detect_rows_modern(img)
+        if not rows:
+            return [], ""
+        return await self._render_recognition(img, rows, debug=debug, d_file=d_file)
 
 
 # Global instance
