@@ -281,7 +281,7 @@ class jjc_reward(Module):
         self._log(f"pjjc币x{info.reward_info.count}")
 
 _USER_INFO_DISPLAY_ORDER = (
-    '玛娜', '心碎', '星杯', '星幽碎片', '属性球', '大师碎片', '炼金点数',
+    '玛娜', '心碎', '星球杯', '星幽碎片', '属性球', '大师碎片', '炼金点数',
     '香水', '扫荡券', '加速券', '大师币', '连结币',
 )
 
