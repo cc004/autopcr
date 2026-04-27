@@ -363,8 +363,8 @@ def format_number(
 @name('基本信息')
 @default(True)
 @multichoice("user_info_display", "显示信息",
-    ['玛娜', '心碎', '星幽碎片', '炼金点数'],
-    ['玛娜', '心碎', '星杯', '星幽碎片', '属性球', '大师碎片', '炼金点数', '香水', '扫荡券', '加速券', '大师币', '连结币'])
+    ['心碎', '星幽碎片', '炼金点数', '香水'],
+    ['玛娜', '心碎', '星球杯', '星幽碎片', '属性球', '大师碎片', '炼金点数', '香水', '扫荡券', '加速券', '大师币', '连结币'])
 class user_info(Module):
     async def do_task(self, client: pcrclient):
         now = db.format_time(apiclient.datetime)
@@ -394,9 +394,9 @@ class user_info(Module):
             else:
                 optional_info['心碎'] = format_number(xinsui)
 
-        if '星杯' in display_items:
+        if '星球杯' in display_items:
             star_cup = client.data.get_inventory(db.xingqiubei)
-            optional_info['星杯'] = format_number(star_cup)
+            optional_info['星球杯'] = format_number(star_cup)
 
         if '星幽碎片' in display_items:
             xinyou = client.data.get_inventory(db.xinyou)
