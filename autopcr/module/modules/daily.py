@@ -344,19 +344,19 @@ def format_number(
     val: int,
     scale: Optional[Literal['k', 'm', 'b', '万', '亿']] = None,
     decimals: Optional[int] = None,
-    seperator: Literal['auto', 'no', 'yes'] = 'auto',
+    separator: Literal['auto', 'no', 'yes'] = 'auto',
 ) -> str:
     if scale is None:
         s = str(int(val))
-        return _apply_numeric_separator(s, seperator, val)
+        return _apply_numeric_separator(s, separator, val)
     dec = 2 if decimals is None else decimals
     div, suffix = _resolve_scale_unit(val, scale)
     if not suffix:
         s = str(int(val))
-        return _apply_numeric_separator(s, seperator, val)
+        return _apply_numeric_separator(s, separator, val)
     q = Decimal(val) / Decimal(div)
     coeff = _round_scaled_quotient(q, dec)
-    return _apply_numeric_separator(coeff, seperator, val) + suffix
+    return _apply_numeric_separator(coeff, separator, val) + suffix
 
 
 @description('展示基本信息，固定显示玩家名、体力、等级、钻石、母猪石、全角色战力，可自定义显示其他信息')
