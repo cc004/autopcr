@@ -384,7 +384,7 @@ class user_info(Module):
 
         if '玛娜' in display_items:
             mana = client.data.gold.gold_id_free + client.data.gold.gold_id_pay
-            optional_info['玛娜'] = format_number(mana, scale='亿', decimals=1, seperator='no')
+            optional_info['玛娜'] = format_number(mana, scale='亿', decimals=1, separator='no')
 
         if '心碎' in display_items:
             heart = client.data.get_inventory(db.heart)
@@ -420,7 +420,7 @@ class user_info(Module):
 
         if '炼金点数' in display_items:
             alces_pt = client.data.get_inventory(db.ex_rainbow_enhance_pt)
-            optional_info['炼金点数'] = format_number(alces_pt, scale='万', decimals=0, seperator='no')
+            optional_info['炼金点数'] = format_number(alces_pt, scale='万', decimals=0, separator='no')
 
         if '香水' in display_items:
             perfume = client.data.get_inventory((eInventoryType.Item, 26203))
@@ -436,7 +436,7 @@ class user_info(Module):
 
         if '大师币' in display_items:
             master_coin = client.data.get_inventory((eInventoryType.Item, 90008))
-            optional_info['大师币'] = format_number(master_coin, scale='万', decimals=1, seperator='no')
+            optional_info['大师币'] = format_number(master_coin, scale='万', decimals=1, separator='no')
 
         if '连结币' in display_items:
             link_coin = client.data.get_inventory((eInventoryType.Item, 99007))
@@ -447,7 +447,7 @@ class user_info(Module):
         #     ex_weapon = client.data.get_inventory((eInventoryType.Item, 90009))
         #     ex_armor = client.data.get_inventory((eInventoryType.Item, 90010))
         #     ex_accessory = client.data.get_inventory((eInventoryType.Item, 90011))
-        #     fmt_coin = lambda n: format_number(n, scale='万', decimals=2, seperator='no')
+        #     fmt_coin = lambda n: format_number(n, scale='万', decimals=2, separator='no')
         #     optional_info['EX装备币'] = f"{fmt_coin(ex_weapon)}/{fmt_coin(ex_armor)}/{fmt_coin(ex_accessory)}"
 
         # if '商店币' in display_items:
@@ -455,7 +455,7 @@ class user_info(Module):
         #     arena_coin = client.data.get_inventory((eInventoryType.Item, 90003))
         #     grand_arena_coin = client.data.get_inventory((eInventoryType.Item, 90004))
         #     clan_coin = client.data.get_inventory((eInventoryType.Item, 90006))
-        #     fmt_coin = lambda n: format_number(n, scale='万', decimals=2, seperator='no')
+        #     fmt_coin = lambda n: format_number(n, scale='万', decimals=2, separator='no')
         #     optional_info['商店币'] = f"{fmt_coin(dungeon_coin)}/{fmt_coin(arena_coin)}/{fmt_coin(grand_arena_coin)}/{fmt_coin(clan_coin)}"
 
         # if '原矿' in display_items:
@@ -471,21 +471,21 @@ class user_info(Module):
         #     exp_potions = [client.data.get_inventory((eInventoryType.Item, item_id))
         #                    for item_id in range(20004, 20000, -1)]
         #     optional_info['经验药剂'] = '/'.join(
-        #         format_number(cnt, scale='万', decimals=2, seperator='auto') for cnt in exp_potions)
+        #         format_number(cnt, scale='万', decimals=2, separator='auto') for cnt in exp_potions)
 
         # if '精炼石' in display_items:
         #     # 精炼石 ID: 22001-22006，按ID倒序
         #     refine_stones = [client.data.get_inventory((eInventoryType.Item, item_id))
         #                      for item_id in range(22006, 22000, -1)]
         #     optional_info['精炼石'] = '/'.join(
-        #         format_number(cnt, scale='万', decimals=2, seperator='auto') for cnt in refine_stones)
+        #         format_number(cnt, scale='万', decimals=2, separator='auto') for cnt in refine_stones)
 
         # if '好感礼物' in display_items:
         #     # 蛋糕类 ID: 50001-50003，按ID倒序
         #     cakes = [client.data.get_inventory((eInventoryType.Item, item_id))
         #              for item_id in range(50003, 50000, -1)]
         #     optional_info['好感礼物'] = '/'.join(
-        #         format_number(cnt, scale='万', decimals=2, seperator='auto') for cnt in cakes)
+        #         format_number(cnt, scale='万', decimals=2, separator='auto') for cnt in cakes)
 
         # 输出格式
         if stamina >= max_stamina:
