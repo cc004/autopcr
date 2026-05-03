@@ -47,6 +47,18 @@ def GetSubStoryReader(sub_story_data: EventSubStory, client: pcrclient) -> Union
         return constructor[sub_story_data.event_id](client)
     return None
 
+@EventId(10152)
+class rag_substory(SubStoryReader):
+
+    def is_readable(self, sub_story_id: int) -> bool:
+        return db.parse_time(db.rag_story_data[sub_story_id].condition_time) <= apiclient.datetime
+
+    def title(self, sub_story_id: int) -> str:
+        return db.rag_story_data[sub_story_id].title
+
+    async def read(self, sub_story_id: int):
+        await self.client.read_rag_story(sub_story_id)
+
 @EventId(10154)
 class abd_substory(SubStoryReader):
 

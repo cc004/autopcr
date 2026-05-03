@@ -821,6 +821,15 @@ class pcrclient(apiclient):
         req = SubStoryAbdTopRequest()
         return await self.request(req)
 
+    async def read_rag_story(self, sub_story_id: int):
+        req = SubStoryRagReadStoryRequest()
+        req.sub_story_id = sub_story_id
+        req.skip_info = StorySkipInfo(
+                skip_type = eStorySkipType.MENU_SKIP,
+                scroll_coordinate = ""
+        )
+        return await self.request(req)
+
     async def read_abd_story(self, sub_story_id: int):
         req = SubStoryAbdReadStoryRequest()
         req.sub_story_id = sub_story_id
