@@ -24,6 +24,10 @@ class find_talent_quest(Module):
             self._log(f"属性等级: {client.data.get_talent_level_info()}")
             self._log(f"属性技能: {client.data.get_talent_skill_info()}")
             self._log(f"大师技能: {client.data.get_master_skill_info()}")
+            if client.data.unit_role_list:  
+                role_info = client.data.get_unit_role_info()  
+                for role_name, slots in role_info.items():  
+                    self._log(f"{role_name}: {slots}")
 
         data = {}
         data.update({
@@ -36,6 +40,8 @@ class find_talent_quest(Module):
             "属性技能": client.data.get_talent_skill_info(),
             "大师技能": client.data.get_master_skill_info(),
         })
+        if client.data.unit_role_list:  
+            data.update(client.data.get_unit_role_info())
         header = list(data.keys())
         self._table_header(header)
         self._table(data)

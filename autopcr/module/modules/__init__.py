@@ -79,7 +79,6 @@ daily_modules = ModuleList(
         present_receive,
         talent_sweep2,
         smart_very_hard_sweep,
-        xinsui9_sweep,
         xinsui8_sweep,
         xinsui7_sweep,
         xinsui6_sweep,
@@ -209,6 +208,7 @@ tool_modules = ModuleList(
     [
         ex_equip_rainbow_enchance,
         ex_equip_power_maximun,
+        remove_cb_ex_equip,
         set_my_party2,
         find_talent_quest,
         find_clan_talent_quest,
@@ -225,7 +225,6 @@ tool_modules = ModuleList(
         missing_emblem,
         get_clan_support_unit,
         clear_my_party,
-        remove_cb_ex_equip,
         remove_cb_support,
         redeem_unit_swap,
     ]
