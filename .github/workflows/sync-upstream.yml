@@ -1,0 +1,52 @@
+name: Sync Upstream
+
+on:
+  schedule:
+    # 每天 UTC 时间 20:00 运行一次（北京时间凌晨 4:00），可按需修改
+    - cron: '0 20 * * *'
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # 需要写权限来推送分支和标签
+
+    steps:
+      - name: Checkout your fork
+        uses: actions/checkout@v4
+        with:
+          ref: main  # 你的主分支名，如果是 master 就改成 master
+          fetch-depth: 0  # 拉取完整历史，方便合并
+
+      - name: Set up Git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/cc004/autopcr.git
+          git fetch upstream
+
+      - name: Merge upstream changes
+        run: |
+          git merge upstream/main --allow-unrelated-histories -m "Auto sync from upstream"
+        continue-on-error: true  # 如果已是最新或冲突，不要中断工作流
+
+      - name: Generate new tag
+        id: tag
+        run: |
+          # 生成基于日期的标签，格式：vYYYYMMDD-N
+          DATE=$(date +'%Y%m%d')
+          # 查找当天已有的标签数量，自动递增序号
+          COUNT=$(git tag -l "v${DATE}-*" | wc -l)
+          NEW_COUNT=$((COUNT + 1))
+          NEW_TAG="v${DATE}-${NEW_COUNT}"
+          echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
+
+      - name: Push changes and tag
+        run: |
+          git push origin main
+          git tag ${{ steps.tag.outputs.tag }}
+          git push origin ${{ steps.tag.outputs.tag }}
