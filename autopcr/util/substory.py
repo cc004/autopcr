@@ -51,12 +51,29 @@ def GetSubStoryReader(sub_story_data: EventSubStory, client: pcrclient) -> Union
 class rag_substory(SubStoryReader):
 
     def is_readable(self, sub_story_id: int) -> bool:
-        return db.parse_time(db.rag_story_data[sub_story_id].condition_time) <= apiclient.datetime
+        story_data = db.rag_story_data[sub_story_id]
+        if db.parse_time(story_data.condition_time) > apiclient.datetime:
+            return False
+
+        condition_id = story_data.read_condition_sub_story_id
+        if condition_id == 0:
+            return True
+
+        event_sub_story = self.client.data.event_sub_story.get(story_data.original_event_id)#根据前置剧情判断是否可以阅读
+        return event_sub_story is not None and any(
+            info.sub_story_id == condition_id and info.status == eEventSubStoryStatus.READED
+            for info in event_sub_story.sub_story_info_list
+        )
 
     def title(self, sub_story_id: int) -> str:
         return db.rag_story_data[sub_story_id].title
 
+    async def sort_by_time(self, sub_story_ids: List[EventSubStory]) -> List[EventSubStory]:
+        return sorted(sub_story_ids, key=lambda s: db.rag_story_data[s.sub_story_id].read_condition_sub_story_id != 0)#将没有前置剧情的放在前面，优先阅读
+
     async def read(self, sub_story_id: int):
+        if sub_story_id == 5152601:
+            await self.client.story_check(sub_story_id)
         await self.client.read_rag_story(sub_story_id)
 
 @EventId(10154)
