@@ -1,5 +1,7 @@
 from re import search
 
+from ..model.error import PanicError
+
 from .base import Container
 from ..model.modelbase import *
 from asyncio import Lock
@@ -181,6 +183,9 @@ class apiclient(Container["apiclient"]):
             logger.error(f'response from {urlroot}\n')
             logger.error(json.dumps(dict(resp.headers), indent=4, ensure_ascii=False) + '\n')
             logger.error(json.dumps(response0, indent=4, ensure_ascii=False) + '\n')
+
+            if response.data_headers.result_code == 203:
+                raise PanicError(f"{response.data.server_error.message}")
 
             self.active_server = (self.active_server + 1) % len(self.servers)
 
