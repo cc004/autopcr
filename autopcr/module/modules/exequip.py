@@ -446,30 +446,18 @@ class ex_equip_power_maximun(Module):
                 for star in ex_equip_group_by_star:
                     consider_ex = set()
                     for ex in ex_equip_group_by_star[star]:
-                        is_rainbow = db.get_ex_equip_rarity(ex.ex_equipment_id) == 5
-                        if is_rainbow:
+                        if db.get_ex_equip_rarity(ex.ex_equipment_id) == 5:
                             ex_node = f"r{ex.serial_id}"
-                            attr = db.ex_equipment_data[ex.ex_equipment_id].get_unit_attribute(star)
-                            if ex.sub_status:
-                                group = db.ex_equipment_sub_status_group[ex.ex_equipment_id]
-                                sub_status_data = db.ex_equipment_sub_status[group.group_id]
-                                for status in ex.sub_status:
-                                    value = sub_status_data[status.status].step_value(status.step)
-                                    a = UnitAttribute()
-                                    a.set_value(status.status, value)
-                                    attr += a
-                            bonus = unit_attr.ex_equipment_mul(attr).ceil()
-                            power = int(bonus.get_power(coefficient) + 0.5)
-                            edges.append((unit_slot_node, ex_node, 1, -power))
                         else:
                             if ex.ex_equipment_id in consider_ex:
                                 continue
                             consider_ex.add(ex.ex_equipment_id)
                             ex_node = f"e{ex.ex_equipment_id}s{star}"
-                            attr = db.ex_equipment_data[ex.ex_equipment_id].get_unit_attribute(star)
-                            bonus = unit_attr.ex_equipment_mul(attr).ceil()
-                            power = int(bonus.get_power(coefficient) + 0.5)
-                            edges.append((unit_slot_node, ex_node, 1, -power))
+
+                        attr = db.ex_equipment_data[ex.ex_equipment_id].get_unit_attribute(star, ex.sub_status)
+                        bonus = unit_attr.ex_equipment_mul(attr).ceil()
+                        power = int(bonus.get_power(coefficient) + 0.5)
+                        edges.append((unit_slot_node, ex_node, 1, -power))
 
         rainbow_serial_ids = set()
         for ex in client.data.ex_equips.values():
@@ -477,6 +465,7 @@ class ex_equip_power_maximun(Module):
                 ex_node = f"r{ex.serial_id}"
                 edges.append((ex_node, ed, 1, 0))
                 rainbow_serial_ids.add(ex.serial_id)
+
         ex_equips_group_by_id_star = flow(client.data.ex_equips.values()) \
                 .where(lambda ex: db.get_ex_equip_rarity(ex.ex_equipment_id) != 5) \
                 .group_by(lambda ex: (ex.ex_equipment_id, db.get_ex_equip_star_from_pt(ex.ex_equipment_id, ex.enhancement_pt))) \
