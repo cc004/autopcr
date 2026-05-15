@@ -17,26 +17,20 @@ from ...util.linq import flow
 @notlogin(check_data=True)
 @name('查深域')
 class find_talent_quest(Module):
-    async def do_task(self, client: pcrclient):  
-        self._log(f"深域通关: {client.data.get_talent_quest_info()}")  
-        if client.data.princess_knight_info:  
-            self._log(f"属性等级: {client.data.get_talent_level_info()}")  
-            self._log(f"属性技能: {client.data.get_talent_skill_info()}")  
-            self._log(f"大师技能: {client.data.get_master_skill_info()}")  
-  
-        unit_role_info = client.data.unit_role_info  
-        if unit_role_info:  
-            role_logs = ["职能练度:"]  
-            for role in unit_role_info:  
-                name = db.role_names.get(role.unit_role_id, f"职能{role.unit_role_id}")
-                slots = []  
-                for i in range(1, 5):  
-                    lvl = getattr(role, f"slot_level_{i}", 0)  
-                    enh = getattr(role, f"enhance_level_{i}", -1)  
-                    slots.append("-" if enh == -1 else f"{lvl}-{enh}")  
-                role_logs.append(f"{name}[{'/'.join(slots)}]")  
-              
-            self._log("\n".join(role_logs))
+    async def do_task(self, client: pcrclient):
+        self._log(f"深域通关: {client.data.get_talent_quest_info()}")
+        if client.data.princess_knight_info:
+            self._log(f"属性等级: {client.data.get_talent_level_info()}")
+            self._log(f"属性技能: {client.data.get_talent_skill_info()}")
+            self._log(f"大师技能: {client.data.get_master_skill_info()}")
+
+        roles = client.data.unit_role_list
+    if roles:
+        role_logs = ["职能练度:"]
+        for role in roles:
+            name = db.role_names.get(role.unit_role_id, f"职能{role.unit_role_id}")
+            role_logs.append(f"{name}[{'/'.join(slots)}]")
+        self._log("\n".join(role_logs))
 
 @description('看看公会深域的通关情况，会登录！')
 @name('查公会深域')
