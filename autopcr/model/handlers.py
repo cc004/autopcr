@@ -533,6 +533,7 @@ class LoadIndexResponse(responses.LoadIndexResponse):
         mgr.campaign_list = self.campaign_list
         mgr.dispatch_units = self.dispatch_units
         mgr.princess_knight_info = self.princess_knight_info
+        mgr.unit_role_list = self.unit_role_list
 
 @handles
 class HomeIndexResponse(responses.HomeIndexResponse):
