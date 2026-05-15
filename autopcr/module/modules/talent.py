@@ -17,28 +17,27 @@ from ...util.linq import flow
 @notlogin(check_data=True)
 @name('查深域')
 class find_talent_quest(Module):
-    async def do_task(self, client: pcrclient):
-        self._log(f"深域通关: {client.data.get_talent_quest_info()}")
-        princess_knight_info = client.data.princess_knight_info
-        if princess_knight_info:
-            self._log(f"属性等级: {client.data.get_talent_level_info()}")
-            self._log(f"属性技能: {client.data.get_talent_skill_info()}")
-            self._log(f"大师技能: {client.data.get_master_skill_info()}")
-
-        data = {}
-        data.update({
-            f"{db.talents[talent_id].talent_name}深域": client.data.get_talent_quest_single(talent_id) for talent_id in sorted([area.talent_id for area in db.talent_quest_area_data.values()])
-        })
-        data.update({
-            f"{db.talents[talent_info.talent_id].talent_name}属性": client.data.get_talent_level_single(talent_info) for talent_info in client.data.princess_knight_info.talent_level_info_list
-        })
-        data.update({
-            "属性技能": client.data.get_talent_skill_info(),
-            "大师技能": client.data.get_master_skill_info(),
-        })
-        header = list(data.keys())
-        self._table_header(header)
-        self._table(data)
+    async def do_task(self, client: pcrclient):  
+        self._log(f"深域通关: {client.data.get_talent_quest_info()}")  
+        if client.data.princess_knight_info:  
+            self._log(f"属性等级: {client.data.get_talent_level_info()}")  
+            self._log(f"属性技能: {client.data.get_talent_skill_info()}")  
+            self._log(f"大师技能: {client.data.get_master_skill_info()}")  
+  
+        unit_role_info = client.data.unit_role_info  
+        if unit_role_info:  
+            role_names = {1: "攻击", 2: "破防", 3: "增益", 4: "减益", 5: "强化", 6: "治疗", 7: "坦克", 8: "干扰"}  
+            role_logs = ["职能练度:"]  
+            for role in unit_role_info:  
+                name = role_names.get(role.unit_role_id, f"职能{role.unit_role_id}")  
+                slots = []  
+                for i in range(1, 5):  
+                    lvl = getattr(role, f"slot_level_{i}", 0)  
+                    enh = getattr(role, f"enhance_level_{i}", -1)  
+                    slots.append("-" if enh == -1 else f"{lvl}-{enh}")  
+                role_logs.append(f"{name}[{'/'.join(slots)}]")  
+              
+            self._log("\n".join(role_logs))
 
 @description('看看公会深域的通关情况，会登录！')
 @name('查公会深域')

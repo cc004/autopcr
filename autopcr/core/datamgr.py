@@ -67,6 +67,7 @@ class datamgr(BaseModel, Component[apiclient]):
     talent_quest_area_info: Dict[int, TalentQuestAreaInfo] = {}
     cleared_talent_quest_ids: Dict[int, int] = {}
     princess_knight_info: PrincessKnightInfo = None
+    unit_role_list: List[UnitRoleInfo] = []
     cleared_abyss_quests: Set[int] = set()
     abyss_quest_info: Dict[int, AbyssDailyClearCountList] = {}
     alces_appear_story_flag: int = 0
