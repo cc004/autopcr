@@ -334,7 +334,7 @@ class gacha_start(Module):
                     elif any(client.data.get_inventory(gacha_ten_ticket) > 0 for gacha_ten_ticket in db.gacha_ten_tickets):
                         ticket = next((gacha_ten_ticket for gacha_ten_ticket in db.gacha_ten_tickets if client.data.get_inventory(gacha_ten_ticket)))
                         num = client.data.get_inventory(ticket)
-                        reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Ticket, num, 0, client.time, gacha_start_auto_select_pickup, pickup_min_first) # real ticket ?
+                        reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Ticket, num, 0, client.time, gacha_start_auto_select_pickup, pickup_min_first, ticket_item=ticket)
                     else:
                         reward += await client.exec_gacha_aware(target_gacha, 10, eGachaDrawType.Payment, client.data.jewel.free_jewel + client.data.jewel.jewel, 0, client.time, gacha_start_auto_select_pickup, pickup_min_first)
                 else:

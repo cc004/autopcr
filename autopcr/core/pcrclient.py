@@ -697,13 +697,13 @@ class pcrclient(apiclient):
         else:
             return False
 
-    async def exec_gacha_aware(self, target_gacha: GachaParameter, gacha_times: int, draw_type: eGachaDrawType, current_cost_num: int, campaign_id: int, last_gacha_index_time: int, auto_select_pickup: bool = True, pickup_min_first: bool = False) -> GachaReward:
+    async def exec_gacha_aware(self, target_gacha: GachaParameter, gacha_times: int, draw_type: eGachaDrawType, current_cost_num: int, campaign_id: int, last_gacha_index_time: int, auto_select_pickup: bool = True, pickup_min_first: bool = False, ticket_item: ItemType = None) -> GachaReward:
 
         if draw_type == eGachaDrawType.Payment and current_cost_num < 150 * gacha_times:
             raise AbortError(f"宝石{current_cost_num}不足{150 * gacha_times}")
 
         if draw_type == eGachaDrawType.Ticket and current_cost_num < 1:
-            raise AbortError(f"单抽券{current_cost_num}不足")
+            raise AbortError(f"抽卡券{current_cost_num}不足")
 
         if draw_type == eGachaDrawType.Temp_Ticket_10 and current_cost_num < 1:
             raise AbortError(f"限定十连券{current_cost_num}不足")
@@ -744,7 +744,7 @@ class pcrclient(apiclient):
             if tot:
                 self.data.jewel.jewel -= tot
         elif draw_type == eGachaDrawType.Ticket:
-            self.data.set_inventory(db.gacha_single_ticket, current_cost_num - 1)
+            self.data.set_inventory(ticket_item or db.gacha_single_ticket, current_cost_num - 1)
         elif draw_type == eGachaDrawType.Temp_Ticket_10:
             ticket = next((eInventoryType.Item, temp_ticket) for temp_ticket in db.get_gacha_temp_ticket() if self.data.get_inventory((eInventoryType.Item, temp_ticket)))
             self.data.set_inventory(ticket, current_cost_num - 1)
