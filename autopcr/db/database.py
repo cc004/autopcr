@@ -69,6 +69,7 @@ class database():
     sun_ball: ItemType = (eInventoryType.Item, 25014)
     dark_ball: ItemType = (eInventoryType.Item, 25015)
     ex_rainbow_enhance_pt: ItemType = (eInventoryType.Item, 26202)
+    ex_rainbow_enhance_ball: ItemType = (eInventoryType.Item, 26203)
 
     def __init__(self):
         self.dbmgr: Optional[dbmgr] = None
