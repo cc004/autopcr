@@ -9,6 +9,7 @@ from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
 from ...util.questutils import *
+from ...util.format_number import format_number
 
 @description('仅开启时生效，氪体数将取满足条件的最大值，禅模式指不执行体力相关的功能，仅在清日常生效，单项执行将忽略。庆典包括其倍数，加速期间的所有倍数判断均x2')
 @name("全局配置")
@@ -279,27 +280,130 @@ class jjc_reward(Module):
             await client.receive_grand_arena_reward()
         self._log(f"pjjc币x{info.reward_info.count}")
 
-@description('展示基本信息')
+_USER_INFO_DISPLAY_ORDER = (
+    '玛娜', '心碎', '星球杯', '星幽碎片', '属性球', '大师碎片', '炼金点数',
+    '香水', '扫荡券', '加速券', '大师币', '连结币',
+)
+
+@description('展示基本信息，固定显示玩家名、体力、等级、钻石、母猪石、全角色战力，可自定义显示其他信息')
 @name('基本信息')
 @default(True)
+@multichoice(
+    "user_info_display", "显示信息",
+    ['心碎', '星幽碎片', '炼金点数', '香水'],
+    ['玛娜', '心碎', '星球杯', '星幽碎片', '属性球', '大师碎片', '炼金点数', '香水', '扫荡券', '加速券', '大师币', '连结币']
+)
 class user_info(Module):
+    def _collect_optional_info(self, client: pcrclient, display_items: set[str]) -> dict[str, str]:
+        data = client.data
+        inv = data.get_inventory
+
+        def fmt(n: int, **kwargs) -> str:
+            return format_number(n, **kwargs)
+
+        def fmt_heart() -> str:
+            heart = inv(db.heart)
+            xinsui = inv(db.xinsui)
+            if heart > 0:
+                return f"{fmt(xinsui)}(大心 {fmt(heart)})"
+            return fmt(xinsui)
+
+        def fmt_balls() -> str:
+            items = [
+                db.fire_ball,
+                db.water_ball,
+                db.wind_ball,
+                db.sun_ball,
+                db.dark_ball,
+            ]
+            return '/'.join(fmt(inv(item)) for item in items)
+
+        def fmt_master_fragment() -> str:
+            master = inv(db.master_fragment)
+            master_f = inv(db.master_ffragment)
+            if master_f > 0:
+                return f"{master}(残片 {master_f})"
+            return str(master)
+
+        handlers = {
+            '玛娜': lambda: fmt(
+                data.gold.gold_id_free + data.gold.gold_id_pay,
+                scale='亿',
+                decimals=1,
+                separator='no',
+            ),
+            '心碎': fmt_heart,
+            '星球杯': lambda: fmt(inv(db.xingqiubei)),
+            '星幽碎片': lambda: fmt(inv(db.xinyou)),
+            '母猪石': lambda: fmt(inv((eInventoryType.Item, 90005))),
+            '属性球': fmt_balls,
+            '大师碎片': fmt_master_fragment,
+            '炼金点数': lambda: fmt(
+                inv(db.ex_rainbow_enhance_pt),
+                scale='万',
+                decimals=0,
+                separator='no',
+            ),
+            '香水': lambda: str(inv(db.ex_rainbow_enhance_ball)),
+            '扫荡券': lambda: fmt(inv((eInventoryType.Item, 23001))),
+            '加速券': lambda: str(inv(db.travel_speed_up_paper)),
+            '大师币': lambda: fmt(
+                inv((eInventoryType.Item, 90008)),
+                scale='万',
+                decimals=1,
+                separator='no',
+            ),
+            '连结币': lambda: str(inv((eInventoryType.Item, 90012))),
+        }
+
+        return {
+            key: handlers[key]()
+            for key in _USER_INFO_DISPLAY_ORDER
+            if key in display_items and key in handlers
+        }
+
+    def _log_optional_info(self, optional_info: dict[str, str], pig: int) -> None:
+        keys = [k for k in _USER_INFO_DISPLAY_ORDER if k in optional_info]
+
+        line2_items = [
+            f"{key}{optional_info[key]}"
+            for key in keys[:2]
+        ]
+        line2_items.append(f"母猪石{format_number(pig)}")
+        self._log(' '.join(line2_items))
+
+        for i in range(2, len(keys), 3):
+            line_items = [
+                f"{key}{optional_info[key]}"
+                for key in keys[i:i + 3]
+            ]
+            self._log(' '.join(line_items))
+
     async def do_task(self, client: pcrclient):
+        data = client.data
         now = db.format_time(apiclient.datetime)
-        name = client.data.user_name
-        level = client.data.team_level
-        stamina = client.data.stamina
-        max_stamina = db.team_info[client.data.team_level].max_stamina
-        jewel = client.data.jewel.free_jewel
-        mana = client.data.gold.gold_id_free
-        sweep_ticket = client.data.get_inventory((eInventoryType.Item, 23001))
-        pig = client.data.get_inventory((eInventoryType.Item, 90005))
-        tot_power = sum([client.data.get_unit_power(unit) for unit in client.data.unit])
+        display_items = set(self.get_config('user_info_display'))
+
+        name = data.user_name
+        level = data.team_level
+        stamina = data.stamina
+        max_stamina = db.team_info[level].max_stamina
+        jewel = data.jewel.free_jewel + data.jewel.jewel
+        pig = data.get_inventory((eInventoryType.Item, 90005))
+        total_power = sum(data.get_unit_power(unit) for unit in data.unit)
 
         if stamina >= max_stamina:
-            self._warn(f"体力爆了！")
-        self._log(f"{name} 体力{stamina}({max_stamina}) 等级{level} 钻石{jewel}")
-        self._log(f"玛那{mana} 扫荡券{sweep_ticket} 母猪石{pig}")
-        self._log(f"全角色战力：{tot_power}")
-        self._log(f"已氪体数：{client.data.recover_stamina_exec_count}")
+            self._warn("体力爆了！")
+
+        optional_info = self._collect_optional_info(client, display_items)
+
+        self._log(
+            f"{name} 体力{stamina}({max_stamina}) "
+            f"等级{level} 钻石{format_number(jewel)}"
+        )
+        self._log_optional_info(optional_info, pig)
+
+        self._log(f"全角色战力：{format_number(total_power)}")
+        self._log(f"已氪体数：{data.recover_stamina_exec_count}")
         self._log(f"清日常时间：{now}")
 

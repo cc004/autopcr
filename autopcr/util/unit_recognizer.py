@@ -6,7 +6,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, OrderedDict as OrderedDictType
 
 import cv2
 import numpy as np
@@ -41,7 +41,7 @@ class UnitRecognizer:
         self._hist_centered_arr: np.ndarray = np.empty((0, 0), dtype=np.float32)
         self._hist_norm_arr: np.ndarray = np.empty((0,), dtype=np.float32)
         self._template_scaled_cache: Dict[int, List[np.ndarray]] = {}
-        self._unit_result_cache: OrderedDict[bytes, Tuple[int, int]] = OrderedDict()
+        self._unit_result_cache: OrderedDictType[bytes, Tuple[int, int]] = OrderedDict()
         self._unit_result_cache_max = 4096
         self.init = False
         self.ver = None
@@ -222,7 +222,7 @@ class UnitRecognizer:
         return remaining, last_col_recs
 
     @staticmethod
-    def _save_lru_result(cache: OrderedDict[bytes, Tuple[int, int]], key: bytes, value: Tuple[int, int], max_size: int):
+    def _save_lru_result(cache: OrderedDictType[bytes, Tuple[int, int]], key: bytes, value: Tuple[int, int], max_size: int):
         cache[key] = value
         cache.move_to_end(key)
         if len(cache) > max_size:
