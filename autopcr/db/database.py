@@ -1942,6 +1942,14 @@ class database():
                 .to_dict(lambda x: (x.type, x.item_id), lambda x: x)
             )
 
+    @lazy_property
+    def role_names(self) -> Dict[int, str]:
+        with self.dbmgr.session() as db:
+            return (
+                UnitRoleType.query(db)
+                .to_dict(lambda x: x.unit_role_id, lambda x: x.unit_role_name)
+            )
+
     def get_mirage_setting(self) -> MirageSetting:
         max_id = max(self.mirage_setting.keys(), default=1)
         return self.mirage_setting[max_id]
