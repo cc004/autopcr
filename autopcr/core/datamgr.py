@@ -605,6 +605,8 @@ class datamgr(BaseModel, Component[apiclient]):
             return self.get_inventory((eInventoryType.Item, 90010))
         elif shop_id == eSystemId.EX_EQUIPMENT_ACCESSORY_SHOP: # EX饰品店
             return self.get_inventory((eInventoryType.Item, 90011))
+        elif shop_id == eSystemId.CONNECT_SHOP: # 连结商店
+            return self.get_inventory((eInventoryType.Item, 90012))
         else:
             raise ValueError(f"未知的商店{shop_id}")
 

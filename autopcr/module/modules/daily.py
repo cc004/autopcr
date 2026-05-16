@@ -353,7 +353,7 @@ class user_info(Module):
                 decimals=1,
                 separator='no',
             ),
-            '连结币': lambda: str(inv((eInventoryType.Item, 99007))),
+            '连结币': lambda: str(inv((eInventoryType.Item, 90012))),
         }
 
         return {
