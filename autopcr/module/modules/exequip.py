@@ -8,6 +8,7 @@ from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
 from collections import Counter
+from ...model.custom import UnitAttribute
 
 
 @name('彩装究极炼成')
@@ -445,16 +446,28 @@ class ex_equip_power_maximun(Module):
                 for star in ex_equip_group_by_star:
                     consider_ex = set()
                     for ex in ex_equip_group_by_star[star]:
-                        if ex.ex_equipment_id in consider_ex:
-                            continue
-                        consider_ex.add(ex.ex_equipment_id)
-                        ex_node = f"e{ex.ex_equipment_id}s{star}"
-                        attr = db.ex_equipment_data[ex.ex_equipment_id].get_unit_attribute(star)
+                        if db.get_ex_equip_rarity(ex.ex_equipment_id) == 5:
+                            ex_node = f"r{ex.serial_id}"
+                        else:
+                            if ex.ex_equipment_id in consider_ex:
+                                continue
+                            consider_ex.add(ex.ex_equipment_id)
+                            ex_node = f"e{ex.ex_equipment_id}s{star}"
+
+                        attr = db.ex_equipment_data[ex.ex_equipment_id].get_unit_attribute(star, ex.sub_status)
                         bonus = unit_attr.ex_equipment_mul(attr).ceil()
                         power = int(bonus.get_power(coefficient) + 0.5)
                         edges.append((unit_slot_node, ex_node, 1, -power))
 
+        rainbow_serial_ids = set()
+        for ex in client.data.ex_equips.values():
+            if db.get_ex_equip_rarity(ex.ex_equipment_id) == 5:
+                ex_node = f"r{ex.serial_id}"
+                edges.append((ex_node, ed, 1, 0))
+                rainbow_serial_ids.add(ex.serial_id)
+
         ex_equips_group_by_id_star = flow(client.data.ex_equips.values()) \
+                .where(lambda ex: db.get_ex_equip_rarity(ex.ex_equipment_id) != 5) \
                 .group_by(lambda ex: (ex.ex_equipment_id, db.get_ex_equip_star_from_pt(ex.ex_equipment_id, ex.enhancement_pt))) \
                 .to_dict(lambda ex: ex.key, lambda ex: ex.count())
         for (ex_id, star) in ex_equips_group_by_id_star:
@@ -469,10 +482,17 @@ class ex_equip_power_maximun(Module):
                 continue
             unit_id = int(u[1:u.index('k')])
             slot_id = int(u[u.index('k') + 1:])
-            ex_equipment_id = int(v[1:v.index('s')])
-            star = int(v[v.index('s') + 1:])
 
-            slot_strategy.append((unit_id, slot_id, ex_equipment_id, star))
+            if v.startswith("r"):
+                serial_id = int(v[1:])
+                ex_equip = client.data.ex_equips[serial_id]
+                ex_equipment_id = ex_equip.ex_equipment_id
+                star = db.get_ex_equip_star_from_pt(ex_equipment_id, ex_equip.enhancement_pt)
+                slot_strategy.append((unit_id, slot_id, ex_equipment_id, star, serial_id))
+            else:
+                ex_equipment_id = int(v[1:v.index('s')])
+                star = int(v[v.index('s') + 1:])
+                slot_strategy.append((unit_id, slot_id, ex_equipment_id, star, None))
 
         slot_strategy = flow(slot_strategy) \
                 .group_by(lambda x: x[0]) \
@@ -499,17 +519,24 @@ class ex_equip_power_maximun(Module):
             for unit_id in slot_strategy:
                 unit = client.data.unit[unit_id]
                 exchange_list = []
-                for (_, slot, ex_equipment_id, star) in slot_strategy[unit_id]:
-                    ex_candidates = flow(client.data.ex_equips.values()) \
-                            .where(lambda ex: ex.ex_equipment_id == ex_equipment_id and db.get_ex_equip_star_from_pt(ex.ex_equipment_id, ex.enhancement_pt) == star) \
-                            .where(lambda ex: ex.serial_id not in use_series_set) \
-                            .to_list()
-                    if not ex_candidates:
-                        self._warn(f"无{db.get_ex_equip_name(ex_equipment_id)}★{star}，无法装备")
-                        continue
-                    ex_to_equip = ex_candidates[0]
-                    use_series_set.add(ex_to_equip.serial_id)
-                    exchange_list.append(ExtraEquipChangeSlot(slot=slot, serial_id=ex_to_equip.serial_id))
+                for (_, slot, ex_equipment_id, star, serial_id) in slot_strategy[unit_id]:
+                    if serial_id is not None:
+                        if serial_id in use_series_set:
+                            self._warn(f"彩装{db.get_ex_equip_name(ex_equipment_id)}(serial:{serial_id})已被使用")
+                            continue
+                        use_series_set.add(serial_id)
+                        exchange_list.append(ExtraEquipChangeSlot(slot=slot, serial_id=serial_id))
+                    else:
+                        ex_candidates = flow(client.data.ex_equips.values()) \
+                                .where(lambda ex: ex.ex_equipment_id == ex_equipment_id and db.get_ex_equip_star_from_pt(ex.ex_equipment_id, ex.enhancement_pt) == star) \
+                                .where(lambda ex: ex.serial_id not in use_series_set) \
+                                .to_list()
+                        if not ex_candidates:
+                            self._warn(f"无{db.get_ex_equip_name(ex_equipment_id)}★{star}，无法装备")
+                            continue
+                        ex_to_equip = ex_candidates[0]
+                        use_series_set.add(ex_to_equip.serial_id)
+                        exchange_list.append(ExtraEquipChangeSlot(slot=slot, serial_id=ex_to_equip.serial_id))
                 if exchange_list:
                     await client.unit_equip_ex([ExtraEquipChangeUnit(
                             unit_id=unit_id, 
@@ -518,8 +545,13 @@ class ex_equip_power_maximun(Module):
 
         for unit_id in slot_strategy:
             msg = []
-            for (_, slot, ex_equipment_id, star) in slot_strategy[unit_id]:
-                msg.append(f"{db.get_ex_equip_name(ex_equipment_id)}★{star}")
+            for (_, slot, ex_equipment_id, star, serial_id) in slot_strategy[unit_id]:
+                name = db.get_ex_equip_name(ex_equipment_id)
+                if serial_id is not None:
+                    sub_str = db.get_ex_equip_sub_status_str(ex_equipment_id, client.data.ex_equips[serial_id].sub_status or [])
+                    msg.append(f"{name}★{star}({sub_str})")
+                else:
+                    msg.append(f"{name}★{star}")
             msg = ','.join(msg)
             self._log(f"{db.get_unit_name(unit_id)} 装备 {msg}")
 
