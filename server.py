@@ -801,6 +801,10 @@ async def find_memory(botev: BotEvent):
 async def find_pure_memory(botev: BotEvent):
     return {}
 
+@register_tool("查sp碎片", "get_need_sp_memory")
+async def find_sp_memory(botev: BotEvent):
+    return {}
+
 @register_tool(f"来发十连", "gacha_start")
 @require_super_admin
 async def shilian(botev: BotEvent):

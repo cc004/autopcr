@@ -537,6 +537,37 @@ class get_need_pure_memory(Module):
         self._table_header(header)
         self._table(data)
 
+@description('去除升级突破满专需求后，专一SP所需纯净碎片减去库存的结果')
+@name('获取SP碎片缺口')
+@notlogin(check_data = True)
+@default(True)
+class get_need_sp_memory(Module):
+    async def do_task(self, client: pcrclient):
+        from .autosweep import UniqueEquip1SPMemory
+        memory_gap = client.data.get_memory_demand_gap()
+        target = Counter()
+        header = []
+        data = {}
+        for _type in UniqueEquip1SPMemory.Type:
+            if _type == 0: continue
+            need_list = []
+            type_desc = UniqueEquip1SPMemory.typeName[_type]
+            for unit in UniqueEquip1SPMemory.get_unit_demand(_type):
+                token = (eInventoryType.Item, db.unit_to_memory[unit])
+                target[token] += 300
+                need_list.append((token, target[token] + memory_gap[token]))
+
+                token_name = f"{db.get_inventory_name_san(token)}({type_desc})"
+                header.append(token_name)
+                data[token_name] = target[token] + memory_gap[token]
+
+            msg = '\n'.join([f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片' for item in need_list])
+            self._log(f"=={type_desc}==")
+            self._log(msg)
+
+        self._table_header(header)
+        self._table(data)
+
 @description('根据每个角色开专、升级至当前最高专所需的心碎减去库存的结果，大心转换成10心碎')
 @name('获取心碎缺口')
 @notlogin(check_data = True)

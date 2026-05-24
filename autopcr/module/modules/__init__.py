@@ -152,6 +152,7 @@ planning_modules = ModuleList(
         get_normal_quest_recommand,
         get_need_memory,
         get_need_pure_memory,
+        get_need_sp_memory,
         get_need_xinsui,
     ],
     hidden_in_batch=True,

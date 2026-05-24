@@ -503,7 +503,7 @@ class UnitController(Module):
         unique_rank = db.get_unique_equip_rank_from_level(1, unique_level)
 
         token = (eInventoryType.Item, self.memory_id)
-        demand = client.data.get_unit_memory_demand(self.unit_id, star, unique_rank, exceed_state)
+        demand = client.data.get_unit_memory_demand(self.unit_id, star, unique_rank, exceed_state, False)
 
         gap = demand - client.data.get_inventory(token)
         self._log(f"{db.get_inventory_name_san(token)}需求{demand}，库存{client.data.get_inventory(token)}，将购买{max(0, gap)}")
@@ -1077,7 +1077,7 @@ class unit_exceed(UnitController):
 
             client = self.client
             token = (eInventoryType.Item, self.memory_id)
-            all_memory_demand = client.data.get_unit_memory_demand(self.unit_id)
+            all_memory_demand = client.data.get_unit_memory_demand(self.unit_id, to_max_demand=False)
             exceed_memory_demand = db.exceed_level_unit_required[unit_id].consume_num_1
             exceed_mana_demand = db.exceed_level_unit_required[unit_id].consume_num_2
             memory_inventory = client.data.get_inventory(token)
@@ -1151,7 +1151,7 @@ class unit_evolution(UnitController):
             client = self.client
             token = (eInventoryType.Item, self.memory_id)
             required_dict = db.rarity_up_required[unit_id]
-            all_memory_demand = client.data.get_unit_memory_demand(self.unit_id)
+            all_memory_demand = client.data.get_unit_memory_demand(self.unit_id, to_max_demand=False)
             memory_demand = {
                 i: sum(
                     required_dict[i][token]
