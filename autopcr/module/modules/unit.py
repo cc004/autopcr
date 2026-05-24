@@ -1286,8 +1286,8 @@ class SetMyParty(UnitController):
                                    target_skill_s1_level = max_level,
                                    target_skill_s2_level = max_level,
                                    target_skill_ex_level = max_level,
-                                   target_unique1_level = db.unique_equipment_max_level[0] if len(self.unit.unique_equip_slot) > 0 else 0,
-                                   target_unique2_level = db.unique_equipment_max_level[1] if len(self.unit.unique_equip_slot) > 1 else -1)
+                                   target_unique1_level = db.unique_equipment_max_level[1] if len(self.unit.unique_equip_slot) > 0 else 0,
+                                   target_unique2_level = db.unique_equipment_max_level[2] if len(self.unit.unique_equip_slot) > 1 else -1)
 
 @description('从指定面板的指定队开始设置，并调整星级。一行一个队伍，如\nD1 3小小甜心 星栞 4咲哈哈 琉璃 龙安')
 @booltype("set_my_party2_to_max", "拉满", False)
