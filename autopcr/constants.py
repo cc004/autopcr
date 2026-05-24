@@ -1,5 +1,8 @@
 import os
-from distutils.util import strtobool
+try:
+    from distutils.util import strtobool
+except ImportError:
+    from setuptools._distutils.util import strtobool
 import uuid
 import logging
 
