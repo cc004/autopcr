@@ -70,6 +70,7 @@ class database():
     dark_ball: ItemType = (eInventoryType.Item, 25015)
     ex_rainbow_enhance_pt: ItemType = (eInventoryType.Item, 26202)
     ex_rainbow_enhance_ball: ItemType = (eInventoryType.Item, 26203)
+    unit_role_gach_ticket: ItemType = (eInventoryType.Item, 23003)
 
     def __init__(self):
         self.dbmgr: Optional[dbmgr] = None
@@ -1943,11 +1944,11 @@ class database():
             )
 
     @lazy_property
-    def role_names(self) -> Dict[int, str]:
+    def unit_role_type(self) -> Dict[int, UnitRoleType]:
         with self.dbmgr.session() as db:
             return (
                 UnitRoleType.query(db)
-                .to_dict(lambda x: x.unit_role_id, lambda x: x.unit_role_name)
+                .to_dict(lambda x: x.unit_role_id, lambda x: x)
             )
 
     def get_mirage_setting(self) -> MirageSetting:

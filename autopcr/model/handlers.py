@@ -1562,6 +1562,17 @@ class AlcesLockSlotResponse(responses.AlcesLockSlotResponse):
             for data in self.alces_data_list:
                 mgr.ex_equips[data.serial_id].sub_status = data.sub_status
 
+@handles
+class UnitRoleGachaIndexResponse(responses.UnitRoleGachaIndexResponse):
+    async def update(self, mgr: datamgr, request):
+        mgr.unit_role_gacha_exec_count = self.exec_count
+
+@handles
+class UnitRoleGachaExecResponse(responses.UnitRoleGachaExecResponse):
+    async def update(self, mgr: datamgr, request):
+        mgr.unit_role_gacha_exec_count = self.exec_count
+
+
 # 菜 就别玩
 # def custom_dict(self, *args, **kwargs):
 #     original_dict = super(TravelStartRequest, self).dict(*args, **kwargs)

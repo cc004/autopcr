@@ -61,7 +61,7 @@ class datamgr(BaseModel, Component[apiclient]):
     cleared_byway_quest_id_set: Set[int] = set({})
     return_fes_info_list: List[ReturnFesInfo] = None
     data_time: int = 0
-    version: int = 6
+    version: int = 7
     caravan_dishes: typing.Counter[int] = Counter()
     user_clan_battle_ex_equip_restriction: Dict[int, RestrictionExtraEquip] = {}
     talent_quest_area_info: Dict[int, TalentQuestAreaInfo] = {}
@@ -72,6 +72,7 @@ class datamgr(BaseModel, Component[apiclient]):
     abyss_quest_info: Dict[int, AbyssDailyClearCountList] = {}
     alces_appear_story_flag: int = 0
     alces_receive_tutorial_item_flag: int = 0
+    unit_role_gacha_exec_count: int = 0
 
     @staticmethod
     async def try_update_database(ver: int):
@@ -665,6 +666,20 @@ class datamgr(BaseModel, Component[apiclient]):
         for talent_info in self.princess_knight_info.talent_level_info_list:
             msg.append(f"{db.talents[talent_info.talent_id].talent_name}{self.get_talent_level_single(talent_info)}")
         return "/".join(msg)
+
+    def get_role_level_single(self, role_info : UnitRoleInfo) -> str:
+        slots = []
+        for i in range(1, 5):
+            lvl = getattr(role_info, f"slot_level_{i}", 0)
+            enh = getattr(role_info, f"enhance_level_{i}", -1)
+            slots.append("-" if enh == -1 else f"{lvl}-{enh}")
+        return '/'.join(slots)
+
+    def get_role_level_info(self) -> str:
+        msg = []
+        for role_info in self.unit_role_list:
+            msg.append(f"{db.unit_role_type[role_info.unit_role_id].unit_role_name}{self.get_role_level_single(role_info)}")
+        return "\n".join(msg)
 
     def get_talent_skill_info(self) -> str:
         page = 0 if not self.princess_knight_info.talent_skill_last_enhanced_page_node_list else db.talent_skill_node[self.princess_knight_info.talent_skill_last_enhanced_page_node_list[0].node_id].page_num
