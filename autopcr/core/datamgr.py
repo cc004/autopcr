@@ -349,7 +349,8 @@ class datamgr(BaseModel, Component[apiclient]):
     def get_unit_memory_demand(self, unit_id: int, target_rarity: int = 999, target_unique_rank: int = -1, exceed_level: bool = True, to_max_demand: bool = True) -> int:
         memory_id = db.unit_to_memory[unit_id]
         token = (eInventoryType.Item, memory_id)
-        need = self.get_rarity_memory_demand(unit_id, token, 2, target_rarity) + self.get_unique_equip_memory_demand(unit_id, token, target_unique_rank) + self.get_exceed_level_unit_demand(unit_id, token) * exceed_level + (370 - db.unique_equipment_max_level[1]) // 10 * 5 * to_max_demand
+        need = self.get_rarity_memory_demand(unit_id, token, 2, target_rarity) + self.get_unique_equip_memory_demand(unit_id, token, target_unique_rank) + self.get_exceed_level_unit_demand(unit_id, token) * exceed_level + (370 - db.unique_equipment_max_level[1]) // 10 * 5 * to_max_demand * (unit_id in db.unit_unique_equip[1])
+
         return need
 
     def get_memory_demand(self) -> typing.Counter[ItemType]:
