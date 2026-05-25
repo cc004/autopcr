@@ -1274,14 +1274,14 @@ class SetMyParty(UnitController):
                 tab_number += 1
                 party_number = 1
 
-        if self.is_to_max():
+        if await self.is_to_max():
             self.client = client
             for unit in relative_unit:
                 self.unit_id = unit
                 max_level = db.team_max_level + 10 * self.unit.exceed_stage
                 await self.promote(target_level = max_level,
                                    target_promote_rank = db.equip_max_rank,
-                                   target_equip_star = db.equip_max_rank_equip_num,
+                                   target_equip_star = db.equip_max_rank_equip_star,
                                    target_skill_ub_level = max_level,
                                    target_skill_s1_level = max_level,
                                    target_skill_s2_level = max_level,

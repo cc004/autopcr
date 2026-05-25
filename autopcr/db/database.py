@@ -454,6 +454,11 @@ class database():
         ][self.equip_max_rank_equip_num - 3]
 
     @lazy_property
+    def equip_max_rank_equip_star(self) -> List[int]:
+        slot = self.equip_max_rank_equip_slot
+        return [-1 if not i else 5 for i in slot] # now it always 5 star
+
+    @lazy_property
     def unique_equipment_max_rank(self) -> Dict[int, int]:
         return {
                 equip_slot: max(self.unique_equip_rank[equip_slot].keys()) for equip_slot in self.unique_equip_rank
