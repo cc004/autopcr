@@ -571,6 +571,22 @@ class database():
                 )
 
     @lazy_property
+    def unit_role_data(self) -> Dict[int, int]:
+        with self.dbmgr.session() as db:
+            return (
+                UnitRoleDatum.query(db)
+                .to_dict(lambda x: x.unit_id, lambda x: x.unit_role_id)
+            )
+
+    @lazy_property
+    def unit_role_gacha_level(self) -> Dict[int, UnitRoleGachaLevel]:
+        with self.dbmgr.session() as db:
+            return (
+                UnitRoleGachaLevel.query(db)
+                .to_dict(lambda x: x.gacha_level, lambda x: x)
+            )
+
+    @lazy_property
     def unique_equipment_enhance_data(self) -> Dict[int, Dict[int, UniqueEquipmentEnhanceDatum]]:
         with self.dbmgr.session() as db:
             return (
