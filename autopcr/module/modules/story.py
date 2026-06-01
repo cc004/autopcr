@@ -233,7 +233,7 @@ class seven_obtent_reading(Module):
             condition = db.seven_contents_condition.get((event.event_id, 4))
             if condition and \
                 (not condition.condition_story or condition.condition_story not in read_story) and \
-                (not condition.condition_boss or condition.condition_boss in killed_boss):
+                (not condition.condition_boss or condition.condition_boss not in killed_boss):
                 self._log(f"{db.event_name.get(event.event_id, event.event_id)}未解锁活动子剧情")
                 continue
 
