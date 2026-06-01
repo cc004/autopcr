@@ -95,8 +95,9 @@ class search_unit(Module):
 @unitlist("box_unit", "查询角色")
 @booltype("box_all_unit", "附加所有角色", False)
 @multichoice("box_unit_info", "角色信息", ['星级', '等级', '品级', '装备', 'UB', 'S1', 'S2', 'EX', '剧情', '专武1', '专武2', '普碎数', '金碎数'], ['星级', '等级', '品级', '装备', 'UB', 'S1', 'S2', 'EX', '剧情', '专武1', '专武2', '普碎数', '金碎数'])
-@multichoice("box_user_info", "用户信息", ['名字', '钻石', '母猪石', '星球杯', '心碎', 'mana'], ['名字', '钻石', '母猪石', '星球杯', '心碎', 'mana'])
+@multichoice("box_role_info", "职能信息", ['职能券', '攻击型', '破防型', '增益型', '减益型', '强化型', '治疗型', '坦克型', '干扰型'], ['职能券', '攻击型', '破防型', '增益型', '减益型', '强化型', '治疗型', '坦克型', '干扰型'])
 @multichoice("box_talent_info", "属性信息", ['火深域', '水深域', '风深域', '光深域', '暗深域', '火属性', '水属性', '风属性', '光属性', '暗属性', '属性技能', '大师技能'], ['火深域', '水深域', '风深域', '光深域', '暗深域', '火属性', '水属性', '风属性', '光属性', '暗属性', '属性技能', '大师技能'])
+@multichoice("box_user_info", "用户信息", ['名字', '钻石', '母猪石', '星球杯', '心碎', 'mana'], ['名字', '钻石', '母猪石', '星球杯', '心碎', 'mana'])
 class get_box_table(Module):
     async def _prepare_user_data(self, client: pcrclient, user_info: Set[str]) -> Dict:
         """准备用户基本信息"""
@@ -117,6 +118,12 @@ class get_box_table(Module):
         ret.update({
             "属性技能": client.data.get_talent_skill_info(),
             "大师技能": client.data.get_master_skill_info(),
+        })
+        ret.update({
+            "职能券": client.data.unit_role_gacha_exec_count + client.data.get_inventory(db.unit_role_gach_ticket),
+        })
+        ret.update({
+            db.unit_role_type[role.unit_role_id].unit_role_name: client.data.get_role_level_single(role) for role in client.data.unit_role_list
         })
         ret = {key : ret[key] for key in ret if key in user_info}
         return ret
@@ -143,7 +150,7 @@ class get_box_table(Module):
         if not filtered_units:
             raise AbortError("没有找到符合条件的角色")
 
-        user_info = set(self.get_config('box_user_info')) | set(self.get_config('box_talent_info'))
+        user_info = set(self.get_config('box_user_info')) | set(self.get_config('box_talent_info')) | set(self.get_config('box_role_info'))
         box_unit_info = set(self.get_config('box_unit_info'))
         
         header = []

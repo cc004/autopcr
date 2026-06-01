@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Set
 
 from ...model.common import InventoryInfo
 from ..modulebase import *
@@ -294,7 +294,7 @@ _USER_INFO_DISPLAY_ORDER = (
     ['玛娜', '心碎', '星球杯', '星幽碎片', '属性球', '大师碎片', '炼金点数', '香水', '扫荡券', '加速券', '大师币', '连结币']
 )
 class user_info(Module):
-    def _collect_optional_info(self, client: pcrclient, display_items: set[str]) -> dict[str, str]:
+    def _collect_optional_info(self, client: pcrclient, display_items: Set[str]) -> Dict[str, str]:
         data = client.data
         inv = data.get_inventory
 
@@ -362,7 +362,7 @@ class user_info(Module):
             if key in display_items and key in handlers
         }
 
-    def _log_optional_info(self, optional_info: dict[str, str], pig: int) -> None:
+    def _log_optional_info(self, optional_info: Dict[str, str], pig: int) -> None:
         keys = [k for k in _USER_INFO_DISPLAY_ORDER if k in optional_info]
 
         line2_items = [

@@ -71,7 +71,7 @@ sv_help = f"""
 - {prefix}公会支援 查询公会支援角色配置
 - {prefix}卡池 查看当前卡池
 - {prefix}编队 1 1 春妈 蝶妈 狗妈 水妈 礼妈 便捷设置编队
-- {prefix}一键编队 1 1 队名1 星级角色1 星级角色2 ... 星级角色5 队名2 星级角色1 星级角色2 END 设置多队编队，队伍不足5人以END结尾
+- {prefix}一键编队 1 1 [拉满] 队名1 星级角色1 星级角色2 ... 星级角色5 队名2 星级角色1 星级角色2 设置多队编队，一行一个队伍
 - {prefix}半月刊 查看半月刊
 - {prefix}识图 [图片] 识别图片中的角色，返回一键编队文本
 - {prefix}免费十连 <卡池id> 卡池id来自【{prefix}卡池】
@@ -801,6 +801,10 @@ async def find_memory(botev: BotEvent):
 async def find_pure_memory(botev: BotEvent):
     return {}
 
+@register_tool("查sp碎片", "get_need_sp_memory")
+async def find_sp_memory(botev: BotEvent):
+    return {}
+
 @register_tool(f"来发十连", "gacha_start")
 @require_super_admin
 async def shilian(botev: BotEvent):
@@ -1050,6 +1054,7 @@ async def set_my_party_multi(botev: BotEvent):
     msg = await botev.message()
     party_start_num = 1
     tab_start_num = 1
+    is_to_max = False
     try:
         tab_start_num = int(msg[0])
         del msg[0]
@@ -1060,12 +1065,17 @@ async def set_my_party_multi(botev: BotEvent):
         del msg[0]
     except:
         pass
+    try:
+        is_to_max = is_args_exist(msg, '拉满')
+    except:
+        pass
 
     teams_text = recover_text_by_tokens(raw_msg, msg)
     config = {
         "tab_start_num2": tab_start_num,
         "party_start_num2": party_start_num,
         "set_my_party_text2": teams_text,
+        "set_my_party2_to_max": is_to_max,
     }
     del msg[:]
     return config

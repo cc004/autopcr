@@ -122,6 +122,9 @@ class sessionmgr(Component[apiclient]):
                     req.is_check_by_term_normal_gacha = 0
                     await next.request(req)
 
+                req = UnitRoleGachaIndexRequest()
+                resp = await next.request(req)
+
                 self._logged = True
                 break
             except ApiException as e:

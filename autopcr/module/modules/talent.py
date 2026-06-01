@@ -24,19 +24,9 @@ class find_talent_quest(Module):
             self._log(f"属性技能: {client.data.get_talent_skill_info()}")
             self._log(f"大师技能: {client.data.get_master_skill_info()}")
         roles = client.data.unit_role_list
-        role_logs = ["职能练度:"]
-        if roles:
-            for role in roles:
-                name = db.role_names.get(role.unit_role_id, f"职能{role.unit_role_id}")
-                slots = []
-                for i in range(1, 5):
-                    lvl = getattr(role, f"slot_level_{i}", 0)
-                    enh = getattr(role, f"enhance_level_{i}", -1)
-                    slots.append("-" if enh == -1 else f"{lvl}-{enh}")
-                role_str = "/".join(slots)
-                role_logs.append(f"{name}[{role_str}]")
-
-            self._log("\n".join(role_logs))
+        role_ticket_num = client.data.unit_role_gacha_exec_count + client.data.get_inventory(db.unit_role_gach_ticket)
+        role_logs = [f"职能练度({role_ticket_num}):", client.data.get_role_level_info()]
+        self._log("\n".join(role_logs))
         data = {}
         data.update({
             f"{db.talents[talent_id].talent_name}深域": client.data.get_talent_quest_single(talent_id)
@@ -52,14 +42,11 @@ class find_talent_quest(Module):
                 "大师技能": client.data.get_master_skill_info(),
             }) 
         if roles:
-            for role in roles:
-                name = db.role_names.get(role.unit_role_id, f"职能{role.unit_role_id}")
-                slots = []
-                for i in range(1, 5):
-                    lvl = getattr(role, f"slot_level_{i}", 0)
-                    enh = getattr(role, f"enhance_level_{i}", -1)
-                    slots.append("-" if enh == -1 else f"{lvl}-{enh}")
-                data[f"{name}职能"] = "/".join(slots)
+            data["职能券"] = f"{role_ticket_num}"
+            data.update({
+                    f"{db.unit_role_type[role.unit_role_id].unit_role_name}": client.data.get_role_level_single(role)
+                    for role in roles
+                })
 
         header = list(data.keys())
         self._table_header(header)

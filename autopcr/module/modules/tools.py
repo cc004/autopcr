@@ -13,7 +13,6 @@ from ...core.apiclient import apiclient
 from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
-from ...util.pcr_data import get_id_from_name
 import random
 import itertools
 from collections import Counter
@@ -537,6 +536,37 @@ class get_need_pure_memory(Module):
         self._table_header(header)
         self._table(data)
 
+@description('去除升级突破满专需求后，专一SP所需纯净碎片减去库存的结果')
+@name('获取SP碎片缺口')
+@notlogin(check_data = True)
+@default(True)
+class get_need_sp_memory(Module):
+    async def do_task(self, client: pcrclient):
+        from .autosweep import UniqueEquip1SPMemory
+        memory_gap = client.data.get_memory_demand_gap()
+        target = Counter()
+        header = []
+        data = {}
+        for _type in UniqueEquip1SPMemory.Type:
+            if _type == 0: continue
+            need_list = []
+            type_desc = UniqueEquip1SPMemory.typeName[_type]
+            for unit in UniqueEquip1SPMemory.get_unit_demand(_type):
+                token = (eInventoryType.Item, db.unit_to_memory[unit])
+                target[token] += 300
+                need_list.append((token, target[token] + memory_gap[token]))
+
+                token_name = f"{db.get_inventory_name_san(token)}({type_desc})"
+                header.append(token_name)
+                data[token_name] = target[token] + memory_gap[token]
+
+            msg = '\n'.join([f'{db.get_inventory_name_san(item[0])}: {"缺少" if item[1] > 0 else "盈余"}{abs(item[1])}片' for item in need_list])
+            self._log(f"=={type_desc}==")
+            self._log(msg)
+
+        self._table_header(header)
+        self._table(data)
+
 @description('根据每个角色开专、升级至当前最高专所需的心碎减去库存的结果，大心转换成10心碎')
 @name('获取心碎缺口')
 @notlogin(check_data = True)
@@ -681,150 +711,6 @@ class clear_my_party(Module):
 
             self._log(f"清除了{tab_number}面板{party_number}队伍")
             await client.clear_my_party(tab_number, party_number)
-
-
-class SetMyParty(Module):
-    async def get_teams(self) -> List[Tuple[str, List[int], List[int]]]: ...
-    async def get_tab_party_number(self) -> Tuple[int, int]: ...
-
-    async def do_task(self, client: pcrclient):
-        tab_number, party_number = await self.get_tab_party_number()
-        teams = await self.get_teams()
-
-        for title, units, stars in teams:
-
-            if tab_number >= 6:
-                raise AbortError("队伍数量超过上限")
-
-            if len(units) > 5:
-                self._warn(f"{title}角色数超过5个，忽略该队伍")
-                continue
-            if len(units) < 1:
-                self._warn(f"{title}角色数小于1个，忽略该队伍")
-                continue
-            if len(set(units)) != len(units):
-                self._warn(f"{title}角色重复，忽略该队伍")
-                continue
-
-            not_own_unit = [u for u in units if int(u) not in client.data.unit]
-            if not_own_unit:
-                self._warn(f"{title}未持有：{', '.join([db.get_unit_name(int(u)) for u in not_own_unit])}")
-
-            change_rarity_list = []
-            unit_list = []
-            for unit, star in zip(units, stars):
-                unit = int(unit)
-                star = int(star)
-                if unit not in client.data.unit:
-                    continue
-                unit_data = client.data.unit[unit]
-                can_change_star = unit_data.unit_rarity == 5
-                now_star = unit_data.battle_rarity if unit_data.battle_rarity else unit_data.unit_rarity
-                if can_change_star and star != now_star:
-                    if star >= 3 and star <= 5 and now_star >= 3 and now_star <= 5:
-                        change_rarity = ChangeRarityUnit(unit_id=unit, battle_rarity=star)
-                        change_rarity_list.append(change_rarity)
-                    else:
-                        self._warn(f"{title}：{db.get_unit_name(unit)}星级无法{now_star} -> {star}")
-                unit_list.append(unit)
-
-            if change_rarity_list:
-                await client.unit_change_rarity(change_rarity_list)
-            if not unit_list:
-                self._warn(f"{title}没有可用的角色")
-            else:
-                await client.set_my_party(tab_number, party_number, 4, title, unit_list, change_rarity_list)
-                self._log(f"设置了{title}")
-
-            party_number += 1
-            if party_number == 21:
-                tab_number += 1
-                party_number = 1
-
-@description('从指定面板的指定队开始设置，并调整星级。一行一个队伍，如\nD1 3小小甜心 星栞 4咲哈哈 琉璃 龙安')
-@texttype("set_my_party_text2", "队伍阵容", "")
-@inttype("party_start_num2", "初始队伍", 1, [i for i in range(1, 21)])
-@inttype("tab_start_num2", "初始面板", 1, [i for i in range(1, 7)])
-@name('一键编队')
-class set_my_party2(SetMyParty):
-
-    async def get_tab_party_number(self) -> Tuple[int, int]:
-        return self.get_config('tab_start_num2'), self.get_config('party_start_num2')
-
-    async def get_teams(self):
-        set_my_party_text: str = self.get_config('set_my_party_text2')
-        lines = set_my_party_text.splitlines()
-
-        unknown_units = []
-        token = []
-
-        for line in lines:
-            msg = line.strip().split()
-            if get_id_from_name(msg[0]) or msg[0][0].isdigit() and get_id_from_name(msg[0][1:]):
-                title = "自定义编队"
-            else:
-                title = msg[0]
-                del msg[0]
-            units = []
-            stars = []
-            while msg:
-                try:
-                    unit_name = msg[0]
-
-                    unit = get_id_from_name(unit_name)
-                    if unit:
-                        units.append(unit * 100 + 1)
-                        stars.append(6 if unit * 100+1 in db.unit_to_pure_memory else 5)
-                    else:
-                        if unit_name[0].isdigit():
-                            star = int(unit_name[0])
-                            unit = get_id_from_name(unit_name[1:])
-                            if unit:
-                                units.append(unit * 100 + 1)
-                                stars.append(star)
-                            else:
-                                unknown_units.append(unit_name)
-                        else:
-                            unknown_units.append(unit_name)
-                    del msg[0]
-                except:
-                    unknown_units.append(msg[0])
-                    del msg[0]
-            token.append( (title, units, stars) )
-
-        if unknown_units:
-            raise AbortError(f"未知昵称{', '.join(unknown_units)}")
-        if not token:
-            raise AbortError("无法识别任何编队")
-
-        return token
-
-@description('从指定面板的指定队开始设置，并调整星级。若干行重复，标题+若干行角色ID	角色名字	角色等级	角色星级\n忽略角色名字和角色等级')
-@texttype("set_my_party_text", "队伍阵容", "")
-@inttype("party_start_num", "初始队伍", 1, [i for i in range(1, 21)])
-@inttype("tab_start_num", "初始面板", 1, [i for i in range(1, 7)])
-@name('设置编队')
-class set_my_party(SetMyParty):
-
-    async def get_tab_party_number(self) -> Tuple[int, int]:
-        return self.get_config('tab_start_num'), self.get_config('party_start_num')
-
-    async def get_teams(self):
-        set_my_party_text: str = self.get_config('set_my_party_text')
-        party = set_my_party_text.splitlines()
-        title_id = [i for i, text in enumerate(party) if len(text.strip().split()) == 1]
-        title_id.append(len(party))
-        token = []
-        for i in range(len(title_id) - 1):
-            st = title_id[i]
-            ed = title_id[i + 1]
-            title = party[st].strip()
-            unit_list = [u.split() for u in party[st + 1 : ed]]
-            units = [u[0] for u in unit_list]
-            stars = [u[3] for u in unit_list]
-            token.append( (title, units, stars) )
-
-        return token
 
 @description('计算等级同步返钻数量')
 @name('返钻计算')

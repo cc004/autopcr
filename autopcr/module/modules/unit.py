@@ -1,4 +1,5 @@
 from collections import Counter
+from typing import Set
 
 from ...util.linq import flow
 from ...util.logger import instance as logger
@@ -11,7 +12,8 @@ from ...model.error import *
 from ...db.database import db
 from ...db.models import GrowthParameter, GrowthParameterUnique
 from ...model.enums import *
-from ...model.common import ExtraEquipChangeSlot, ExtraEquipChangeUnit, GrowthParameterList, InventoryInfoPost, SkillLevelInfo, SkillLevelUpDetail, UnitData
+from ...util.pcr_data import get_id_from_name
+from ...model.common import ChangeRarityUnit, ExtraEquipChangeSlot, ExtraEquipChangeUnit, GrowthParameterList, InventoryInfoPost, SkillLevelInfo, SkillLevelUpDetail, UnitData
 
 class UnitController(Module):
 
@@ -503,7 +505,7 @@ class UnitController(Module):
         unique_rank = db.get_unique_equip_rank_from_level(1, unique_level)
 
         token = (eInventoryType.Item, self.memory_id)
-        demand = client.data.get_unit_memory_demand(self.unit_id, star, unique_rank, exceed_state)
+        demand = client.data.get_unit_memory_demand(self.unit_id, star, unique_rank, exceed_state, False)
 
         gap = demand - client.data.get_inventory(token)
         self._log(f"{db.get_inventory_name_san(token)}需求{demand}，库存{client.data.get_inventory(token)}，将购买{max(0, gap)}")
@@ -1077,7 +1079,7 @@ class unit_exceed(UnitController):
 
             client = self.client
             token = (eInventoryType.Item, self.memory_id)
-            all_memory_demand = client.data.get_unit_memory_demand(self.unit_id)
+            all_memory_demand = client.data.get_unit_memory_demand(self.unit_id, to_max_demand=False)
             exceed_memory_demand = db.exceed_level_unit_required[unit_id].consume_num_1
             exceed_mana_demand = db.exceed_level_unit_required[unit_id].consume_num_2
             memory_inventory = client.data.get_inventory(token)
@@ -1151,7 +1153,7 @@ class unit_evolution(UnitController):
             client = self.client
             token = (eInventoryType.Item, self.memory_id)
             required_dict = db.rarity_up_required[unit_id]
-            all_memory_demand = client.data.get_unit_memory_demand(self.unit_id)
+            all_memory_demand = client.data.get_unit_memory_demand(self.unit_id, to_max_demand=False)
             memory_demand = {
                 i: sum(
                     required_dict[i][token]
@@ -1207,3 +1209,173 @@ class unit_evolution(UnitController):
                 current_memory_piece_num=memory_inventory,
             )
             self._log(f"{self.unit_name}升星至{to_rarity}星")
+
+
+class SetMyParty(UnitController):
+    async def get_teams(self) -> List[Tuple[str, List[int], List[int]]]: ...
+    async def get_tab_party_number(self) -> Tuple[int, int]: ...
+    async def is_to_max(self) -> bool:
+        return False
+
+    async def do_task(self, client: pcrclient):
+        tab_number, party_number = await self.get_tab_party_number()
+        teams = await self.get_teams()
+
+        relative_unit: Set[int] = set()
+
+        for title, units, stars in teams:
+
+            if tab_number >= 6:
+                raise AbortError("队伍数量超过上限")
+
+            if len(units) > 5:
+                self._warn(f"{title}角色数超过5个，忽略该队伍")
+                continue
+            if len(units) < 1:
+                self._warn(f"{title}角色数小于1个，忽略该队伍")
+                continue
+            if len(set(units)) != len(units):
+                self._warn(f"{title}角色重复，忽略该队伍")
+                continue
+
+            not_own_unit = [u for u in units if int(u) not in client.data.unit]
+            if not_own_unit:
+                self._warn(f"{title}未持有：{', '.join([db.get_unit_name(int(u)) for u in not_own_unit])}")
+
+            change_rarity_list = []
+            unit_list = []
+            for unit, star in zip(units, stars):
+                unit = int(unit)
+                star = int(star)
+                if unit not in client.data.unit:
+                    continue
+                unit_data = client.data.unit[unit]
+                can_change_star = unit_data.unit_rarity == 5
+                now_star = unit_data.battle_rarity if unit_data.battle_rarity else unit_data.unit_rarity
+                if can_change_star and star != now_star:
+                    if star >= 3 and star <= 5 and now_star >= 3 and now_star <= 5:
+                        change_rarity = ChangeRarityUnit(unit_id=unit, battle_rarity=star)
+                        change_rarity_list.append(change_rarity)
+                    else:
+                        self._warn(f"{title}：{db.get_unit_name(unit)}星级无法{now_star} -> {star}")
+                relative_unit.add(unit)
+                unit_list.append(unit)
+
+            if change_rarity_list:
+                await client.unit_change_rarity(change_rarity_list)
+            if not unit_list:
+                self._warn(f"{title}没有可用的角色")
+            else:
+                await client.set_my_party(tab_number, party_number, 4, title, unit_list, change_rarity_list)
+                self._log(f"设置了{title}")
+
+            party_number += 1
+            if party_number == 21:
+                tab_number += 1
+                party_number = 1
+
+        if await self.is_to_max():
+            self.client = client
+            for unit in relative_unit:
+                self.unit_id = unit
+                max_level = db.team_max_level + 10 * self.unit.exceed_stage
+                await self.promote(target_level = max_level,
+                                   target_promote_rank = db.equip_max_rank,
+                                   target_equip_star = db.equip_max_rank_equip_star,
+                                   target_skill_ub_level = max_level,
+                                   target_skill_s1_level = max_level,
+                                   target_skill_s2_level = max_level,
+                                   target_skill_ex_level = max_level,
+                                   target_unique1_level = db.unique_equipment_max_level[1] if len(self.unit.unique_equip_slot) > 0 else 0,
+                                   target_unique2_level = db.unique_equipment_max_level[2] if len(self.unit.unique_equip_slot) > 1 else -1)
+
+@description('从指定面板的指定队开始设置，并调整星级。一行一个队伍，如\nD1 3小小甜心 星栞 4咲哈哈 琉璃 龙安')
+@booltype("set_my_party2_to_max", "拉满", False)
+@texttype("set_my_party_text2", "队伍阵容", "")
+@inttype("party_start_num2", "初始队伍", 1, [i for i in range(1, 21)])
+@inttype("tab_start_num2", "初始面板", 1, [i for i in range(1, 7)])
+@name('一键编队')
+class set_my_party2(SetMyParty):
+
+    async def is_to_max(self) -> bool:
+        return self.get_config('set_my_party2_to_max')
+
+    async def get_tab_party_number(self) -> Tuple[int, int]:
+        return self.get_config('tab_start_num2'), self.get_config('party_start_num2')
+
+    async def get_teams(self):
+        set_my_party_text: str = self.get_config('set_my_party_text2')
+        lines = set_my_party_text.splitlines()
+
+        unknown_units = []
+        token = []
+
+        for line in lines:
+            msg = line.strip().split()
+            if get_id_from_name(msg[0]) or msg[0][0].isdigit() and get_id_from_name(msg[0][1:]):
+                title = "自定义编队"
+            else:
+                title = msg[0]
+                del msg[0]
+            units = []
+            stars = []
+            while msg:
+                try:
+                    unit_name = msg[0]
+
+                    unit = get_id_from_name(unit_name)
+                    if unit:
+                        units.append(unit * 100 + 1)
+                        stars.append(6 if unit * 100+1 in db.unit_to_pure_memory else 5)
+                    else:
+                        if unit_name[0].isdigit():
+                            star = int(unit_name[0])
+                            unit = get_id_from_name(unit_name[1:])
+                            if unit:
+                                units.append(unit * 100 + 1)
+                                stars.append(star)
+                            else:
+                                unknown_units.append(unit_name)
+                        else:
+                            unknown_units.append(unit_name)
+                    del msg[0]
+                except:
+                    unknown_units.append(msg[0])
+                    del msg[0]
+            token.append( (title, units, stars) )
+
+        if unknown_units:
+            raise AbortError(f"未知昵称{', '.join(unknown_units)}")
+        if not token:
+            raise AbortError("无法识别任何编队")
+
+        return token
+
+@description('从指定面板的指定队开始设置，并调整星级。若干行重复，标题+若干行角色ID	角色名字	角色等级	角色星级\n忽略角色名字和角色等级')
+@texttype("set_my_party_text", "队伍阵容", "")
+@inttype("party_start_num", "初始队伍", 1, [i for i in range(1, 21)])
+@inttype("tab_start_num", "初始面板", 1, [i for i in range(1, 7)])
+@name('设置编队')
+class set_my_party(SetMyParty):
+
+    async def get_tab_party_number(self) -> Tuple[int, int]:
+        return self.get_config('tab_start_num'), self.get_config('party_start_num')
+
+    async def get_teams(self):
+        set_my_party_text: str = self.get_config('set_my_party_text')
+        party = set_my_party_text.splitlines()
+        title_id = [i for i, text in enumerate(party) if len(text.strip().split()) == 1]
+        title_id.append(len(party))
+        token = []
+        for i in range(len(title_id) - 1):
+            st = title_id[i]
+            ed = title_id[i + 1]
+            title = party[st].strip()
+            unit_list = [u.split() for u in party[st + 1 : ed]]
+            units = [u[0] for u in unit_list]
+            stars = [u[3] for u in unit_list]
+            token.append( (title, units, stars) )
+
+        return token
+
+

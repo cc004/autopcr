@@ -70,6 +70,7 @@ class database():
     dark_ball: ItemType = (eInventoryType.Item, 25015)
     ex_rainbow_enhance_pt: ItemType = (eInventoryType.Item, 26202)
     ex_rainbow_enhance_ball: ItemType = (eInventoryType.Item, 26203)
+    unit_role_gach_ticket: ItemType = (eInventoryType.Item, 23003)
 
     def __init__(self):
         self.dbmgr: Optional[dbmgr] = None
@@ -451,6 +452,11 @@ class database():
                 [False, True, False, True, True, True],
                 [False, True, True, True, True, True],
         ][self.equip_max_rank_equip_num - 3]
+
+    @lazy_property
+    def equip_max_rank_equip_star(self) -> List[int]:
+        slot = self.equip_max_rank_equip_slot
+        return [-1 if not i else 5 for i in slot] # now it always 5 star
 
     @lazy_property
     def unique_equipment_max_rank(self) -> Dict[int, int]:
@@ -1943,11 +1949,11 @@ class database():
             )
 
     @lazy_property
-    def role_names(self) -> Dict[int, str]:
+    def unit_role_type(self) -> Dict[int, UnitRoleType]:
         with self.dbmgr.session() as db:
             return (
                 UnitRoleType.query(db)
-                .to_dict(lambda x: x.unit_role_id, lambda x: x.unit_role_name)
+                .to_dict(lambda x: x.unit_role_id, lambda x: x)
             )
 
     def get_mirage_setting(self) -> MirageSetting:
