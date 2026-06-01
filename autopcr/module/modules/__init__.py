@@ -116,6 +116,7 @@ daily_modules = ModuleList(
         mission_receive_last,
         seasonpass_accept,
         seasonpass_reward,
+        role_gacha,
 
         normal_shop,
         limit_shop,

@@ -50,6 +50,16 @@ class pcrclient(apiclient):
         await self.session.clear_session()
         self.need_refresh = False
 
+    async def unit_role_gacha_index(self):
+        req = UnitRoleGachaIndexRequest()
+        return await self.request(req)
+
+    async def unit_role_gacha_exec(self, gacha_times: int, current_cost_num: int):
+        req = UnitRoleGachaExecRequest()
+        req.gacha_times = gacha_times
+        req.current_cost_num = current_cost_num
+        return await self.request(req)
+
     async def clan_battle_top(self):
         if not self.data.clan:
             raise AbortError("未加入公会")
