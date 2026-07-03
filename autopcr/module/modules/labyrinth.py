@@ -5,7 +5,7 @@ from ..config import *
 from ...core.pcrclient import pcrclient
 from ...model.requests import (
     LabyrinthTopRequest, LabyrinthEnterRequest,
-    LabyrinthRetireRequest,
+    LabyrinthRetireRequest, LabyrinthResumeRequest,
 )
 from ...model.enums import eLabyrinthBlockType, eInventoryType
 from ...db.database import db
@@ -205,12 +205,72 @@ class LabyrinthBossMultiConfig(MultiChoiceConfig):
 
 # --- Modules ---
 
-@description('''进入黎明界，检查区域3和区域5的 Boss 是否符合设定。
+def _check_ex_path(map_list, area: int) -> bool:
+    """Check if all EX (HARD_QUEST) blocks in an area can be reached via a single path.
+    Returns True if OK, False if map needs reroll."""
+    area_blocks = [b for b in map_list if b.area == area]
+    ex_blocks = [b for b in area_blocks if b.block_type == eLabyrinthBlockType.HARD_QUEST]
+    if len(ex_blocks) <= 1:
+        return True  # 0 or 1 EX block is trivially OK
+
+    block_map = {b.block_id: b for b in area_blocks}
+    ex_ids = [b.block_id for b in ex_blocks]
+
+    # BFS from first EX block to find all reachable blocks
+    reachable = set()
+    queue = [ex_ids[0]]
+    while queue:
+        bid = queue.pop(0)
+        if bid in reachable:
+            continue
+        reachable.add(bid)
+        block = block_map.get(bid)
+        if block and block.next_block_id_list:
+            for nid in block.next_block_id_list:
+                if nid not in reachable:
+                    queue.append(nid)
+
+    # All other EX blocks must be reachable from the first one
+    for ex_id in ex_ids[1:]:
+        if ex_id not in reachable:
+            return False
+    return True
+
+
+def _check_relic_path(map_list, area: int, allowed_types: set) -> bool:
+    """Check if the block immediately before the first EX in area 2/5 is of an allowed type.
+    Returns True if OK, False if map needs reroll."""
+    area_blocks = [b for b in map_list if b.area == area]
+    if not area_blocks:
+        return True
+
+    block_map = {b.block_id: b for b in area_blocks}
+
+    # Find all EX blocks in this area
+    ex_ids = {b.block_id for b in area_blocks if b.block_type == eLabyrinthBlockType.HARD_QUEST}
+    if not ex_ids:
+        return True
+
+    # Find blocks that point directly to an EX block (predecessors of EX)
+    for b in area_blocks:
+        if b.next_block_id_list:
+            for nid in b.next_block_id_list:
+                if nid in ex_ids:
+                    # b is the block immediately before an EX
+                    if b.block_type not in allowed_types:
+                        return False
+    return True
+
+
+@description('''进入黎明界，检查区域3和区域5的 Boss 是否符合设定，
 不符合则放弃重试，直到刷出符合设定的开局。
-可多选 Boss，只要实际 Boss 在勾选列表中即视为匹配。''')
+可多选 Boss。开启「刷EX路径」后检查极难战斗是否在一条可达路径上。
+「刷遗物」可设置区域2/5第一个EX格前只允许的格子类型。''')
 @name("黎明界刷开局")
 @LabyrinthBossMultiConfig("labyrinth_reset_boss_area5", "区域5 Boss", area=5)
 @LabyrinthBossMultiConfig("labyrinth_reset_boss_area3", "区域3 Boss", area=3)
+@singlechoice("labyrinth_reset_relic", "刷遗物", "关闭", ["关闭", "遗物", "事件", "任意"])
+@booltype("labyrinth_reset_ex_path", "刷EX路径", False)
 @LabyrinthGuildConfig("labyrinth_reset_guild", "公会")
 @LabyrinthDifficultyConfig("labyrinth_reset_difficulty", "难度")
 class labyrinth_reset(Module):
@@ -238,15 +298,78 @@ class labyrinth_reset(Module):
         self._log(f"  区域3 Boss: {names3}")
         self._log(f"  区域5 Boss: {names5}")
 
+        # Build checker for map conditions
+        def _check_map(map_list):
+            boss_blocks = [b for b in map_list if b.block_type == eLabyrinthBlockType.BOSS_QUEST]
+            area3_boss = [b for b in boss_blocks if b.area == 3]
+            area5_boss = [b for b in boss_blocks if b.area == 5]
+            if not area3_boss or not area5_boss:
+                return False, None, None
+            a3_uid = _get_boss_unit_id(area3_boss[0].quest_id)
+            a5_uid = _get_boss_unit_id(area5_boss[0].quest_id)
+            if a3_uid not in target_bosses_area3 or a5_uid not in target_bosses_area5:
+                return False, a3_uid, a5_uid
+            if self.get_config("labyrinth_reset_ex_path"):
+                for area in set(b.area for b in map_list):
+                    ex_cnt = sum(1 for b in map_list if b.area == area and b.block_type == eLabyrinthBlockType.HARD_QUEST)
+                    if ex_cnt > 1 and not _check_ex_path(map_list, area):
+                        return False, a3_uid, a5_uid
+            relic_mode = self.get_config("labyrinth_reset_relic")
+            if relic_mode != "关闭":
+                allowed_map = {
+                    "遗物": {eLabyrinthBlockType.NONE, eLabyrinthBlockType.RELIC},
+                    "事件": {eLabyrinthBlockType.NONE, eLabyrinthBlockType.EVENT},
+                    "任意": {eLabyrinthBlockType.NONE, eLabyrinthBlockType.RELIC, eLabyrinthBlockType.EVENT},
+                }
+                allowed = allowed_map[relic_mode]
+                for area in (2, 5):
+                    if not _check_relic_path(map_list, area, allowed):
+                        return False, a3_uid, a5_uid
+            return True, a3_uid, a5_uid
+
         top = await client.request(LabyrinthTopRequest())
         if top.enter_id:
-            raise AbortError(
-                f"当前有进行中的黎明界 (enter_id={top.enter_id}, "
-                f"公会={top.guild_id}, 难度={top.difficulty})。\n"
-                f"请先通过网页端【放弃黎明界】或游戏内手动放弃后，再使用刷开局功能。"
-            )
+            # Resume to check if we're at the first block
+            resume = await client.request(LabyrinthResumeRequest(enter_id=top.enter_id))
+            entry_block = None
+            all_ids = {b.block_id for b in resume.map_list}
+            nexted = set()
+            for b in resume.map_list:
+                if b.next_block_id_list:
+                    for nid in b.next_block_id_list:
+                        nexted.add(nid)
+            entry_ids = all_ids - nexted
+            entry_block = next((b for b in resume.map_list if b.block_id in entry_ids and b.area == 1), None)
 
-        max_attempts = 50
+            if entry_block and resume.block_id == entry_block.block_id:
+                self._log(f"检测到进行中的黎明界 (enter_id={top.enter_id})，当前在第一格")
+                ok, a3, a5 = _check_map(resume.map_list)
+                if ok:
+                    self._log(f"  当前开局符合条件，无需重刷")
+                    self._log(f"  enter_id: {top.enter_id}")
+                    self._log(f"  难度: {top.difficulty}")
+                    self._log(f"  公会: {top.guild_id}")
+                    self._log(f"  区域3 Boss: {_get_boss_display_name(a3)} ✓")
+                    self._log(f"  区域5 Boss: {_get_boss_display_name(a5)} ✓")
+                    self._table({
+                        "结果": "成功（复用已有）",
+                        "enter_id": str(top.enter_id),
+                        "难度": str(top.difficulty),
+                        "公会": str(top.guild_id),
+                        "区域3 Boss": _get_boss_display_name(a3),
+                        "区域5 Boss": _get_boss_display_name(a5),
+                    })
+                    return
+                else:
+                    self._log(f"  当前开局不符合条件，放弃重来...")
+                    await client.request(LabyrinthRetireRequest(enter_id=top.enter_id))
+            else:
+                raise AbortError(
+                    f"当前有进行中的黎明界 (enter_id={top.enter_id})，且不在第一格。\n"
+                    f"请先通过网页端【放弃黎明界】或游戏内手动放弃后，再使用刷开局功能。"
+                )
+
+        max_attempts = 100
         for attempt in range(1, max_attempts + 1):
             self._log(f"--- 第{attempt}次尝试 ---")
 
@@ -257,44 +380,10 @@ class labyrinth_reset(Module):
             enter_id = enter_resp.enter_id
             self._log(f"进入黎明界 enter_id={enter_id}")
 
-            boss_blocks = [
-                b for b in enter_resp.map_list
-                if b.block_type == eLabyrinthBlockType.BOSS_QUEST
-            ]
-
-            area3_boss_blocks = [b for b in boss_blocks if b.area == 3]
-            area5_boss_blocks = [b for b in boss_blocks if b.area == 5]
-
-            area3_ok = False
-            area5_ok = False
-            actual3_name = "?"
-            actual5_name = "?"
-
-            if area3_boss_blocks:
-                for b in area3_boss_blocks:
-                    boss_unit_id = _get_boss_unit_id(b.quest_id)
-                    actual3_name = _get_boss_display_name(boss_unit_id)
-                    if boss_unit_id in target_bosses_area3:
-                        self._log(f"  ✓ 区域3 Boss匹配: {actual3_name}")
-                        area3_ok = True
-                    else:
-                        self._log(f"  ✗ 区域3 Boss不匹配: {actual3_name}")
-            else:
-                self._log("  ! 区域3 未找到Boss格")
-
-            if area5_boss_blocks:
-                for b in area5_boss_blocks:
-                    boss_unit_id = _get_boss_unit_id(b.quest_id)
-                    actual5_name = _get_boss_display_name(boss_unit_id)
-                    if boss_unit_id in target_bosses_area5:
-                        self._log(f"  ✓ 区域5 Boss匹配: {actual5_name}")
-                        area5_ok = True
-                    else:
-                        self._log(f"  ✗ 区域5 Boss不匹配: {actual5_name}")
-            else:
-                self._log("  ! 区域5 未找到Boss格")
-
-            if area3_ok and area5_ok:
+            map_ok, a3_uid, a5_uid = _check_map(enter_resp.map_list)
+            if map_ok:
+                actual3_name = _get_boss_display_name(a3_uid)
+                actual5_name = _get_boss_display_name(a5_uid)
                 self._log("")
                 self._log(f"🎉 在第{attempt}次尝试后刷到符合设定的开局！")
                 self._log(f"  enter_id: {enter_id}")

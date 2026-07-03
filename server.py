@@ -1084,8 +1084,19 @@ async def set_my_party_multi(botev: BotEvent):
 
 @register_tool("黎明界刷开局", "labyrinth_reset")
 async def labyrinth_reset_tool(botev: BotEvent):
-    # 直接使用 web 端已保存的配置，无需额外参数
-    return {}
+    from .autopcr.module.modules.labyrinth import _load_guild_list
+    msg = await botev.message()
+    config = {}
+    if msg:
+        guild_name = msg[0]
+        guilds = _load_guild_list()
+        guild_map = {name.lower(): gid for gid, name in guilds}
+        gid = guild_map.get(guild_name.lower())
+        if not gid:
+            available = ', '.join(name for _, name in guilds)
+            await botev.finish(f"未找到公会【{guild_name}】。可用: {available}")
+        config["labyrinth_reset_guild"] = gid
+    return config
 
 @register_tool("放弃黎明界", "labyrinth_retire")
 async def labyrinth_retire_tool(botev: BotEvent):
