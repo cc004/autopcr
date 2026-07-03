@@ -1087,6 +1087,10 @@ async def labyrinth_reset_tool(botev: BotEvent):
     # 直接使用 web 端已保存的配置，无需额外参数
     return {}
 
+@register_tool("放弃黎明界", "labyrinth_retire")
+async def labyrinth_retire_tool(botev: BotEvent):
+    return {}
+
 # @register_tool("获取导入", "get_library_import_data")
 # async def get_library_import(botev: BotEvent):
     # return {}
