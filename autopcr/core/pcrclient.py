@@ -51,6 +51,8 @@ class pcrclient(apiclient):
         self.need_refresh = False
 
     async def labyrinth_top(self):
+        if not self.data.is_quest_cleared(11065001):
+            raise SkipError("迷宫未解锁")
         req = LabyrinthTopRequest()
         return await self.request(req)
 
