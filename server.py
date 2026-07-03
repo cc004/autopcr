@@ -76,6 +76,8 @@ sv_help = f"""
 - {prefix}识图 [图片] 识别图片中的角色，返回一键编队文本
 - {prefix}免费十连 <卡池id> 卡池id来自【{prefix}卡池】
 - {prefix}来发十连 <卡池id> [抽到出] [单抽券|单抽] [编号小优先] [开抽] 赛博抽卡，谨慎使用。卡池id来自【{prefix}卡池】，[抽到出]表示抽到出货或达天井，默认十连，[单抽券]表示仅用厕纸，[单抽]表示宝石单抽，[标号小优先]指智能pickup时优先选择编号小的角色，[开抽]表示确认抽卡。已有up也可再次触发。
+- {prefix}黎明界刷开局 使用web端保存的配置（难度/公会/区域3&5 Boss）自动刷取黎明界开局
+- {prefix}放弃黎明界 放弃当前进行中的黎明界探索，不进行结算
 """.strip()
 
 if address is None:
@@ -1079,6 +1081,11 @@ async def set_my_party_multi(botev: BotEvent):
     }
     del msg[:]
     return config
+
+@register_tool("黎明界刷开局", "labyrinth_reset")
+async def labyrinth_reset_tool(botev: BotEvent):
+    # 直接使用 web 端已保存的配置，无需额外参数
+    return {}
 
 # @register_tool("获取导入", "get_library_import_data")
 # async def get_library_import(botev: BotEvent):

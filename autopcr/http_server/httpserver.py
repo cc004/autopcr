@@ -365,7 +365,12 @@ class HttpServer:
         async def do_single(mgr: Account):
             data = await request.get_json()
             order = data.get("order", "")
-            await mgr.do_from_key(deepcopy(mgr.config), order, mgr._parent.secret.clan)
+            config = deepcopy(mgr.config)
+            # Merge config values from request body (frontend may send inline config)
+            for k, v in data.items():
+                if k != "order":
+                    config[k] = v
+            await mgr.do_from_key(config, order, mgr._parent.secret.clan)
             resp = mgr.get_single_result_list(order)
             resp = [r.response('/daily/api/account/{}' + f'/single_result/{order}/{r.key}') for r in resp]
             return resp, 200

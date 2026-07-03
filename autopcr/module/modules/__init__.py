@@ -22,6 +22,7 @@ from .travel import *
 from .unit import *
 from .talent import *
 from .mirage import *
+from .labyrinth import *
 
 @dataclass
 class ModuleList:
@@ -231,5 +232,7 @@ tool_modules = ModuleList(
         remove_cb_ex_equip,
         remove_cb_support,
         redeem_unit_swap,
+        labyrinth_reset,
+        labyrinth_retire,
     ]
 )
