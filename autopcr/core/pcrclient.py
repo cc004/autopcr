@@ -50,6 +50,21 @@ class pcrclient(apiclient):
         await self.session.clear_session()
         self.need_refresh = False
 
+    async def labyrinth_top(self):
+        req = LabyrinthTopRequest()
+        return await self.request(req)
+
+    async def labyrinth_enter(self, guild_id: int, difficulty: int):
+        req = LabyrinthEnterRequest()
+        req.guild_id = guild_id
+        req.difficulty = difficulty
+        return await self.request(req)
+
+    async def labyrinth_retire(self, enter_id: int):
+        req = LabyrinthRetireRequest()
+        req.enter_id = enter_id
+        return await self.request(req)
+
     async def unit_role_gacha_index(self):
         req = UnitRoleGachaIndexRequest()
         return await self.request(req)

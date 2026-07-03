@@ -451,6 +451,13 @@ class AbyssBossConfig(SingleChoiceConfig):
     def candidate_display(self, difficulty: int):
         return (eDifficulty)(difficulty).name
 
+class LabyrinthGuildConfig(SingleChoiceConfig):
+    def __init__(self, key: str, desc: str, default: int):
+        super().__init__(key, desc, default, lambda: db.labyrinth_enter_guild)
+
+    def candidate_display(self, guild_id: int):
+        return db.labyrinth_enter_guild[guild_id].guild_name
+
 # Compatible with the old version
 def booltype(key: str, desc: str, default: bool):
     return BoolConfig(key, desc, default)

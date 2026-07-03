@@ -995,6 +995,24 @@ async def half_schedule(botev: BotEvent):
 # async def return_jewel(botev: BotEvent):
     # return {}
 
+@register_tool("黎明界开局", "labyrinth_start_reroll")
+async def labyrinth_start_reroll(botev: BotEvent):
+    guild_id = 0
+    msg = await botev.message()
+    try:
+        for guild in db.labyrinth_enter_guild.values():
+            if msg[0] in guild.guild_name.replace(r"\n", ""):
+                guild_id = guild.guild_id
+                del msg[0]
+                break
+    except:
+        pass
+    if guild_id == 0:
+        await botev.finish(f"未找到公会，请输入包含以下公会名字：" + "\n".join([guild.guild_name.replace(r"\n", "") for guild in db.labyrinth_enter_guild.values()]))
+    return {
+            "labyrinth_reroll_guild_id": guild_id,
+    }
+
 @register_tool("查深域", "find_talent_quest")
 async def find_talent_quest(botev: BotEvent):
     return {}

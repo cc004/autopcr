@@ -11,6 +11,7 @@ from .daily import *
 from .exequip import *
 from .gacha import *
 from .hatsune import *
+from .labyrint import *
 from .room import *
 from .shiori import *
 from .shop import *
@@ -211,6 +212,7 @@ tool_modules = ModuleList(
     '工具',
     'tool',
     [
+        labyrinth_start_reroll,
         ex_equip_rainbow_enchance,
         ex_equip_power_maximun,
         set_my_party2,
