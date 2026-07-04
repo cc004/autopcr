@@ -262,15 +262,48 @@ def _check_relic_path(map_list, area: int, allowed_types: set) -> bool:
     return True
 
 
+def _check_ticket_path(map_list) -> bool:
+    """Check if both TICKET blocks in area 1 are on the same reachable path.
+    Returns True if OK, False if map needs reroll."""
+    area1_blocks = [b for b in map_list if b.area == 1]
+    ticket_blocks = [b for b in area1_blocks if b.block_type == eLabyrinthBlockType.TICKET]
+    if len(ticket_blocks) < 2:
+        return True  # less than 2 tickets, trivially OK
+
+    block_map = {b.block_id: b for b in area1_blocks}
+    ticket_ids = [b.block_id for b in ticket_blocks]
+
+    # Check if all ticket blocks are reachable from the first one
+    reachable = set()
+    queue = [ticket_ids[0]]
+    while queue:
+        bid = queue.pop(0)
+        if bid in reachable:
+            continue
+        reachable.add(bid)
+        block = block_map.get(bid)
+        if block and block.next_block_id_list:
+            for nid in block.next_block_id_list:
+                if nid not in reachable:
+                    queue.append(nid)
+
+    for tid in ticket_ids[1:]:
+        if tid not in reachable:
+            return False
+    return True
+
+
 @description('''进入黎明界，检查区域3和区域5的 Boss 是否符合设定，
 不符合则放弃重试，直到刷出符合设定的开局。
 可多选 Boss。开启「刷EX路径」后检查极难战斗是否在一条可达路径上。
-「刷遗物」可设置区域2/5第一个EX格前只允许的格子类型。''')
+「刷EX路径」检查极难格是否在同一路径，「刷角色」检查区域1
+两个角色格是否可达，「刷遗物」设置区域2/5 EX前一格类型。''')
 @name("黎明界刷开局")
 @LabyrinthBossMultiConfig("labyrinth_reset_boss_area5", "区域5 Boss", area=5)
 @LabyrinthBossMultiConfig("labyrinth_reset_boss_area3", "区域3 Boss", area=3)
 @singlechoice("labyrinth_reset_relic", "刷遗物", "关闭", ["关闭", "遗物", "事件", "任意"])
 @booltype("labyrinth_reset_ex_path", "刷EX路径", False)
+@booltype("labyrinth_reset_ticket", "刷角色", False)
 @LabyrinthGuildConfig("labyrinth_reset_guild", "公会")
 @LabyrinthDifficultyConfig("labyrinth_reset_difficulty", "难度")
 class labyrinth_reset(Module):
@@ -314,6 +347,9 @@ class labyrinth_reset(Module):
                     ex_cnt = sum(1 for b in map_list if b.area == area and b.block_type == eLabyrinthBlockType.HARD_QUEST)
                     if ex_cnt > 1 and not _check_ex_path(map_list, area):
                         return False, a3_uid, a5_uid
+            if self.get_config("labyrinth_reset_ticket"):
+                if not _check_ticket_path(map_list):
+                    return False, a3_uid, a5_uid
             relic_mode = self.get_config("labyrinth_reset_relic")
             if relic_mode != "关闭":
                 allowed_map = {
