@@ -202,10 +202,10 @@ class labyrinth_reset(Module):
                 for area in set(b.area for b in map_list):
                     ex_cnt = sum(1 for b in map_list if b.area == area and b.block_type == eLabyrinthBlockType.HARD_QUEST)
                     if ex_cnt > 1 and not _check_ex_path(map_list, area):
-                        return False, a3_uid, a5_uid
+                        return False, a3_unit_ids, a5_unit_ids
             if self.get_config("labyrinth_reset_ticket"):
                 if not _check_ticket_path(map_list):
-                    return False, a3_uid, a5_uid
+                    return False, a3_unit_ids, a5_unit_ids
             relic_mode = self.get_config("labyrinth_reset_relic")
             if relic_mode != "关闭" and difficulty >= 4:
                 allowed_map = {
@@ -216,8 +216,8 @@ class labyrinth_reset(Module):
                 allowed = allowed_map[relic_mode]
                 for area in (2, 5):
                     if not _check_relic_path(map_list, area, allowed):
-                        return False, a3_uid, a5_uid
-            return True, a3_uid, a5_uid
+                        return False, a3_unit_ids, a5_unit_ids
+            return True, a3_unit_ids, a5_unit_ids
 
         if top.enter_id:
             resume = await client.labyrinth_resume(enter_id=top.enter_id)
