@@ -1571,6 +1571,9 @@ class UnitRoleGachaIndexResponse(responses.UnitRoleGachaIndexResponse):
 class UnitRoleGachaExecResponse(responses.UnitRoleGachaExecResponse):
     async def update(self, mgr: datamgr, request):
         mgr.unit_role_gacha_exec_count = self.exec_count
+        if self.reward_info_list:
+            for item in self.reward_info_list:
+                mgr.update_inventory(item)
 
 
 # 菜 就别玩

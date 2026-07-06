@@ -50,6 +50,38 @@ class pcrclient(apiclient):
         await self.session.clear_session()
         self.need_refresh = False
 
+    async def labyrinth_top(self):
+        if not self.data.is_quest_cleared(11065001):
+            raise SkipError("迷宫未解锁")
+        req = LabyrinthTopRequest()
+        return await self.request(req)
+
+    async def labyrinth_enter(self, guild_id: int, difficulty: int):
+        req = LabyrinthEnterRequest()
+        req.guild_id = guild_id
+        req.difficulty = difficulty
+        return await self.request(req)
+
+    async def labyrinth_retire(self, enter_id: int):
+        req = LabyrinthRetireRequest()
+        req.enter_id = enter_id
+        return await self.request(req)
+
+    async def labyrinth_resume(self, enter_id: int):
+        req = LabyrinthResumeRequest()
+        req.enter_id = enter_id
+        return await self.request(req)
+
+    async def unit_role_gacha_index(self):
+        req = UnitRoleGachaIndexRequest()
+        return await self.request(req)
+
+    async def unit_role_gacha_exec(self, gacha_times: int, current_cost_num: int):
+        req = UnitRoleGachaExecRequest()
+        req.gacha_times = gacha_times
+        req.current_cost_num = current_cost_num
+        return await self.request(req)
+
     async def clan_battle_top(self):
         if not self.data.clan:
             raise AbortError("未加入公会")

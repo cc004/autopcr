@@ -1084,19 +1084,19 @@ async def set_my_party_multi(botev: BotEvent):
 
 @register_tool("黎明界刷开局", "labyrinth_reset")
 async def labyrinth_reset_tool(botev: BotEvent):
-    from .autopcr.module.modules.labyrinth import _load_guild_list
+    from .autopcr.db.database import db
     msg = await botev.message()
     config = {}
     if msg:
         guild_name = msg[0]
-        guilds = _load_guild_list()
+        guilds = list(db.labyrinth_enter_guild.items())
         if guild_name.isdigit() and 1 <= int(guild_name) <= 5:
             config["labyrinth_reset_guild"] = int(guild_name)
         else:
-            guild_map = {name.lower(): gid for gid, name in guilds}
+            guild_map = {g.guild_name.lower(): gid for gid, g in guilds}
             gid = guild_map.get(guild_name.lower())
             if not gid:
-                available = ', '.join(f'{gid}-{name}' for gid, name in guilds)
+                available = ', '.join(f'{gid}-{g.guild_name}' for gid, g in guilds)
                 await botev.finish(f"未找到公会【{guild_name}】。可用: {available}")
             config["labyrinth_reset_guild"] = gid
     return config

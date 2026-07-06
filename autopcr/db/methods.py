@@ -256,3 +256,12 @@ class TprPanelDatum(models.TprPanelDatum):
 class ExEquipmentSubStatus(models.ExEquipmentSubStatus):
     def step_value(self, step: int) -> int:
         return getattr(self, f"value_{step}")
+
+@method
+class LabyrinthWaveGroupDatum(models.LabyrinthWaveGroupDatum):
+    def get_enemy_ids(self) -> Iterator[int]:
+        yield self.enemy_id_1
+        yield self.enemy_id_2
+        yield self.enemy_id_3
+        yield self.enemy_id_4
+        yield self.enemy_id_5

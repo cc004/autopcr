@@ -152,6 +152,38 @@ class database():
                 self._cache_cleanup_task = None
 
     @lazy_property
+    def labyrinth_enter_guild(self) -> Dict[int, LabyrinthEnterGuild]:
+        with self.dbmgr.session() as db:
+            return (
+                LabyrinthEnterGuild.query(db)
+                .to_dict(lambda x: x.guild_id, lambda x: x)
+            )
+
+    @lazy_property
+    def labyrinth_quest_data(self) -> Dict[int, LabyrinthQuestDatum]:
+        with self.dbmgr.session() as db:
+            return (
+                LabyrinthQuestDatum.query(db)
+                .to_dict(lambda x: x.quest_id, lambda x: x)
+            )
+
+    @lazy_property
+    def labyrinth_wave_group_data(self) -> Dict[int, LabyrinthWaveGroupDatum]:
+        with self.dbmgr.session() as db:
+            return (
+                LabyrinthWaveGroupDatum.query(db)
+                .to_dict(lambda x: x.wave_group_id, lambda x: x)
+            )
+
+    @lazy_property
+    def labyrinth_enemy_parameter(self) -> Dict[int, LabyrinthEnemyParameter]:
+        with self.dbmgr.session() as db:
+            return (
+                LabyrinthEnemyParameter.query(db)
+                .to_dict(lambda x: x.enemy_id, lambda x: x)
+            )
+
+    @lazy_property
     def redeem_unit(self) -> Dict[int, Dict[int, RedeemUnit]]:
         with self.dbmgr.session() as db:
             return (
@@ -569,6 +601,22 @@ class database():
                     .to_dict(lambda x: x.key, lambda x: 
                         x.to_dict(lambda x: x.unit_id, lambda x: x))
                 )
+
+    @lazy_property
+    def unit_role_data(self) -> Dict[int, int]:
+        with self.dbmgr.session() as db:
+            return (
+                UnitRoleDatum.query(db)
+                .to_dict(lambda x: x.unit_id, lambda x: x.unit_role_id)
+            )
+
+    @lazy_property
+    def unit_role_gacha_level(self) -> Dict[int, UnitRoleGachaLevel]:
+        with self.dbmgr.session() as db:
+            return (
+                UnitRoleGachaLevel.query(db)
+                .to_dict(lambda x: x.gacha_level, lambda x: x)
+            )
 
     @lazy_property
     def unique_equipment_enhance_data(self) -> Dict[int, Dict[int, UniqueEquipmentEnhanceDatum]]:
