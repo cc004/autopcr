@@ -474,6 +474,54 @@ class get_clan_support_unit(Module):
             info = f'{unit_name}({owner_name}): {"满中满" if strongest else "非满警告！"}\n{unit_info}\n'
             self._log(info)
 
+class ArenaInfo(Module):
+
+    @property
+    def use_cache(self) -> bool: ...
+    
+    async def get_rank_info(self, client: pcrclient, num: int, page: int) -> List[Union[GrandArenaSearchOpponent, RankingSearchOpponent]]: ...
+    
+    async def get_user_info(self, client: pcrclient, viewer_id: int) -> str: 
+        user_name = self.find_cache(str(viewer_id))
+        if user_name is None or not self.use_cache:
+            user_name = (await client.get_profile(viewer_id)).user_info.user_name
+            self.save_cache(str(viewer_id), user_name)
+        return user_name
+
+    async def do_task(self, client: pcrclient):
+        time = db.format_time(apiclient.datetime)
+        self._log(f"时间：{time}")
+        for page in range(1, 4):
+            ranking = await self.get_rank_info(client, 20, page)
+            for info in ranking:
+                if info.rank > 51:
+                    break
+                user_name = await self.get_user_info(client, info.viewer_id)
+                you = " <--- 你" if info.viewer_id == client.data.uid else ""
+                self._log(f"{info.rank:02}: ({info.viewer_id}){user_name}{you}")
+
+@booltype("jjc_info_cache", "使用缓存信息", True)
+@description('jjc透视前51名玩家的名字')
+@name('jjc透视')
+@default(True)
+class jjc_info(ArenaInfo):
+    @property
+    def use_cache(self) -> bool: return self.get_config("jjc_info_cache")
+
+    async def get_rank_info(self, client: pcrclient, num: int, page: int) -> List[RankingSearchOpponent]:
+        return (await client.arena_rank(num, page)).ranking
+
+@booltype("pjjc_info_cache", "使用缓存信息", True)
+@description('pjjc透视前51名玩家的名字')
+@name('pjjc透视')
+@default(True)
+class pjjc_info(ArenaInfo):
+    @property
+    def use_cache(self) -> bool: return self.get_config("pjjc_info_cache")
+
+    async def get_rank_info(self, client: pcrclient, num: int, page: int) -> List[GrandArenaSearchOpponent]:
+        return (await client.grand_arena_rank(num, page)).ranking
+
 @description('获得可导入到兰德索尔图书馆的账号数据')
 @name('兰德索尔图书馆导入数据')
 @default(True)

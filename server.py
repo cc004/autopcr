@@ -783,6 +783,32 @@ async def clan_support(botev: BotEvent):
 async def find_xinsui(botev: BotEvent):
     return {}
 
+@register_tool("jjc透视", "jjc_info")
+async def jjc_info(botev: BotEvent):
+    use_cache = True
+    msg = await botev.message()
+    try:
+        use_cache = not is_args_exist(msg, 'flush')
+    except:
+        pass
+    config = {
+        "jjc_info_cache": use_cache,
+    }
+    return config
+
+@register_tool("pjjc透视", "pjjc_info")
+async def pjjc_info(botev: BotEvent):
+    use_cache = True
+    msg = await botev.message()
+    try:
+        use_cache = not is_args_exist(msg, 'flush')
+    except:
+        pass
+    config = {
+        "pjjc_info_cache": use_cache,
+    }
+    return config
+
 @register_tool("查记忆碎片", "get_need_memory")
 async def find_memory(botev: BotEvent):
     memory_demand_consider_unit = '所有'
