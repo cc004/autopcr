@@ -421,28 +421,51 @@ class ex_equip_rank_up(Module):
             raise SkipError("没有可合成的EX装")
 
 
+class ex_equip_state_base(Module):
+    cache_key = 'state'
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        from os.path import join
+        self.cache_path = join(CACHE_DIR, "modules", "ex_equip_state", self._parent.id + ".json")
+
+    @staticmethod
+    def normal_ex_equip_state(client: pcrclient):
+        return {
+            str(unit_id): {str(ex_slot.slot): ex_slot.serial_id for ex_slot in unit.ex_equip_slot}
+            for unit_id, unit in client.data.unit.items()
+        }
+
+    @staticmethod
+    def group_ex_equip_changes(changes):
+        grouped = {}
+        for unit_id, slot, serial_id in changes:
+            grouped.setdefault(unit_id, []).append(ExtraEquipChangeSlot(slot=slot, serial_id=serial_id))
+        return [ExtraEquipChangeUnit(unit_id=unit_id, ex_equip_slot=slots, cb_ex_equip_slot=None) for unit_id, slots in grouped.items()]
+
+
 @name('保存ex状态')
 @default(True)
-@description('保存所有角色当前穿戴的普通EX装备状态，供恢复ex状态使用。数据保存在cache/modules/目录下，不影响账号配置。')
-class save_ex_equip_state(Module):
+@description('保存所有角色当前穿戴的普通EX装备状态，供恢复ex状态使用。不影响账号配置。')
+class save_ex_equip_state(ex_equip_state_base):
     async def do_task(self, client: pcrclient):
-        state = _normal_ex_equip_state(client)
+        state = self.normal_ex_equip_state(client)
         equipped_cnt = sum(1 for slots in state.values() for serial_id in slots.values() if serial_id)
         unit_cnt = sum(1 for slots in state.values() if any(slots.values()))
-        _save_ex_equip_state_cache(self, state)
+        self.save_cache(self.cache_key, state)
         self._log(f"已保存{unit_cnt}个角色的{equipped_cnt}件普通EX装备状态")
 
 
 @name('恢复ex状态')
 @default(True)
 @description('恢复之前保存的普通EX装备穿戴状态，需先执行保存ex状态。只处理有差异的部分，不会全部卸载。')
-class restore_ex_equip_state(Module):
+class restore_ex_equip_state(save_ex_equip_state):
     async def do_task(self, client: pcrclient):
-        state = _load_ex_equip_state_cache(self)
+        state = self.find_cache(self.cache_key)
         if not state:
             raise AbortError("未找到已保存的EX装备状态，请先执行保存ex状态")
 
-        current_state = _normal_ex_equip_state(client)
+        current_state = self.normal_ex_equip_state(client)
         current_position = {
             serial_id: (int(unit_id), int(slot))
             for unit_id, slots in current_state.items()
@@ -486,9 +509,9 @@ class restore_ex_equip_state(Module):
             raise SkipError("当前普通EX装备状态与保存状态一致")
 
         if remove_changes:
-            await client.unit_equip_ex(_group_ex_equip_changes(remove_changes))
+            await client.unit_equip_ex(self.group_ex_equip_changes(remove_changes))
         if apply_changes:
-            await client.unit_equip_ex(_group_ex_equip_changes(apply_changes))
+            await client.unit_equip_ex(self.group_ex_equip_changes(apply_changes))
 
         self._log(f"恢复了{len(apply_changes)}个普通EX装备槽位")
 
@@ -661,4 +684,3 @@ class ex_equip_power_maximun(Module):
                     msg.append(f"{name}★{star}")
             msg = ','.join(msg)
             self._log(f"{db.get_unit_name(unit_id)} 装备 {msg}")
-
