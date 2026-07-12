@@ -222,7 +222,7 @@ class labyrinth_start_reroll(Module):
         area5_bosses: Set[int] = set(self.get_config('labyrinth_reroll_area5_boss'))
         third_block_type: str = self.get_config('labyrinth_reroll_third_block_type')
         perfect_start: bool = self.get_config('labyrinth_reroll_perfect_start')
-        max_count: int = 100
+        max_count: int = 300
 
         top = await client.labyrinth_top()
         max_unlocked_difficulty = self._max_unlocked_difficulty(top)
@@ -236,9 +236,13 @@ class labyrinth_start_reroll(Module):
 
         last_reason = ""
         for attempt in range(1, max_count + 1):
+            if attempt % 10 == 0:
+                print(f"【黎明界刷开局】第 {attempt}/{max_count} 次尝试中...", flush=True)
+
             enter = await client.labyrinth_enter(guild_id, difficulty)
             routes, reason = self._find_routes(enter.map_list or [], difficulty, area3_bosses, area5_bosses, third_block_type, perfect_start)
             if routes:
+                print(f"✅ 成功刷到{'完美' if perfect_start else '目标'}路线！总共尝试 {attempt} 次", flush=True)
                 self._log(f"刷到{'完美' if perfect_start else ''}路线，总尝试次数：{attempt}")
                 for area in sorted(routes):
                     self._log(self._format_route(area, routes[area], enter.map_list or [], area3_bosses, area5_bosses))
@@ -249,4 +253,5 @@ class labyrinth_start_reroll(Module):
                 await client.labyrinth_retire(enter.enter_id)
             await client.labyrinth_top()
 
+        print(f"❌ 重开 {max_count} 次仍未刷到目标路线，最后失败原因：{last_reason}", flush=True)
         raise AbortError(f"重开{max_count}次仍未刷到目标路线，最后失败原因：{last_reason}")
