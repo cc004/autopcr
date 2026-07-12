@@ -11,6 +11,41 @@ from collections import Counter
 from ...model.custom import UnitAttribute
 
 
+def _normal_ex_equip_state(client: pcrclient):
+    return {
+        str(unit_id): {str(ex_slot.slot): ex_slot.serial_id for ex_slot in unit.ex_equip_slot}
+        for unit_id, unit in client.data.unit.items()
+    }
+
+def _group_ex_equip_changes(changes):
+    grouped = {}
+    for unit_id, slot, serial_id in changes:
+        grouped.setdefault(unit_id, []).append(ExtraEquipChangeSlot(slot=slot, serial_id=serial_id))
+    return [ExtraEquipChangeUnit(unit_id=unit_id, ex_equip_slot=slots, cb_ex_equip_slot=None) for unit_id, slots in grouped.items()]
+
+def _ex_equip_state_cache_path(module: Module):
+    from os.path import join
+    return join(CACHE_DIR, "modules", "ex_equip_state", module._parent.id + ".json")
+
+def _save_ex_equip_state_cache(module: Module, state):
+    from os import makedirs
+    from os.path import dirname
+    import json
+    cache_path = _ex_equip_state_cache_path(module)
+    makedirs(dirname(cache_path), exist_ok=True)
+    with open(cache_path, "w") as f:
+        json.dump(state, f)
+
+def _load_ex_equip_state_cache(module: Module):
+    from os.path import exists
+    import json
+    cache_path = _ex_equip_state_cache_path(module)
+    if not exists(cache_path):
+        return None
+    with open(cache_path, "r") as f:
+        return json.load(f)
+
+
 @name('彩装究极炼成')
 @default(True)
 @inttype('ex_equip_rainbow_enhance_pt_hold', '保留pt数(w)', 10, list(range(0, 1001)))
