@@ -55,7 +55,7 @@ class LabyrinthBossConfig(MultiChoiceConfig):
 @LabyrinthBossConfig('labyrinth_reroll_area5_boss', '区域5Boss', LABYRINTH_AREA5_BOSSES)
 @LabyrinthBossConfig('labyrinth_reroll_area3_boss', '区域3Boss', LABYRINTH_AREA3_BOSSES)
 @singlechoice('labyrinth_reroll_third_block_type', '区域3/5第3格', '两者都行', ['必须遗物', '必须事件', '两者都行'])
-@singlechoice('labyrinth_reroll_max_count', '最多重开次数（完美开局）', 100, [100, 1000, 2000])
+@singlechoice('labyrinth_reroll_max_count', '重开上限', 100, [100, 500, 1000, 2000])
 @booltype('labyrinth_reroll_perfect_start', '完美开局', False)
 @LabyrinthGuildConfig('labyrinth_reroll_guild_id', '公会', 5)
 @singlechoice('labyrinth_reroll_difficulty', '难度', 5, [1, 2, 3, 4, 5])
@@ -223,7 +223,7 @@ class labyrinth_start_reroll(Module):
         area5_bosses: Set[int] = set(self.get_config('labyrinth_reroll_area5_boss'))
         third_block_type: str = self.get_config('labyrinth_reroll_third_block_type')
         perfect_start: bool = self.get_config('labyrinth_reroll_perfect_start')
-        max_count: int = self.get_config('labyrinth_reroll_max_count') if perfect_start else 100
+        max_count: int = self.get_config('labyrinth_reroll_max_count')
 
         top = await client.labyrinth_top()
         max_unlocked_difficulty = self._max_unlocked_difficulty(top)
