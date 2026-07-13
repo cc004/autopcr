@@ -28,8 +28,15 @@ class ex_equip_rainbow_enchance(Module):
     async def do_task(self, client: pcrclient):
         ex_equip_rainbow_enchance_action = self.get_config('ex_equip_rainbow_enchance_action')
         if ex_equip_rainbow_enchance_action == '看属性':
-            msg = flow(client.data.ex_equips.values()) \
+            items = flow(client.data.ex_equips.values()) \
                 .where(lambda ex: db.get_ex_equip_rarity(ex.ex_equipment_id) == 5) \
+                .to_list()
+            # 按「装备类型(category)-名称」排序，使同类型彩装归在一起
+            items.sort(key=lambda ex: (
+                db.ex_equipment_data[ex.ex_equipment_id].category,
+                db.get_ex_equip_name(ex.ex_equipment_id),
+            ))
+            msg = flow(items) \
                 .select(lambda ex: f"{ex.serial_id}: {db.get_ex_equip_name(ex.ex_equipment_id)} "
                                   f"{db.get_ex_equip_sub_status_str(ex.ex_equipment_id, ex.sub_status or [])}") \
                 .to_list()
