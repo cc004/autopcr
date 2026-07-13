@@ -71,6 +71,7 @@ class database():
     ex_rainbow_enhance_pt: ItemType = (eInventoryType.Item, 26202)
     ex_rainbow_enhance_ball: ItemType = (eInventoryType.Item, 26203)
     unit_role_gach_ticket: ItemType = (eInventoryType.Item, 23003)
+    labyrinth_ticket: ItemType = (eInventoryType.Item, 99013)
 
     def __init__(self):
         self.dbmgr: Optional[dbmgr] = None
