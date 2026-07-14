@@ -126,9 +126,15 @@ def _check_ticket_path(map_list) -> bool:
                 if nid not in reachable:
                     queue.append(nid)
 
+    # All ticket blocks must be on the same path
     for tid in ticket_ids[1:]:
         if tid not in reachable:
             return False
+
+    # At least one EX block must be reachable from the ticket blocks
+    ex_blocks = [b for b in area1_blocks if b.block_type == eLabyrinthBlockType.HARD_QUEST]
+    if ex_blocks and not any(b.block_id in reachable for b in ex_blocks):
+        return False
     return True
 
 
