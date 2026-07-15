@@ -4,17 +4,74 @@
 
 from typing import Optional
 
-from sqlalchemy import Integer, REAL, Text, UniqueConstraint
+from sqlalchemy import Integer, REAL, Text, UniqueConstraint, inspect, select
 from sqlalchemy.orm import Session, DeclarativeBase, Mapped, mapped_column
 from typing import Generic, TypeVar
+from weakref import WeakKeyDictionary
 from ..util.linq import flow
 
 T = TypeVar('T')
+_SCHEMA_COLUMNS = WeakKeyDictionary()
 
 class Base(DeclarativeBase, Generic[T]):
     @classmethod
     def query(cls, session: Session) -> flow[T]:
-        return flow(session.query(cls).all())
+        """Query models against both current and older regional schemas.
+
+        TW master data can legitimately lack columns/tables introduced on CN.
+        SQLAlchemy's normal ORM query selects every mapped column and therefore
+        fails in that case.  Select the intersection and supply neutral values
+        for absent historical columns.
+        """
+        bind = session.get_bind()
+        table_name = cls.__tablename__
+        schema = _SCHEMA_COLUMNS.setdefault(bind, {})
+        if table_name not in schema:
+            inspector = inspect(bind)
+            schema[table_name] = (
+                frozenset(
+                    column['name']
+                    for column in inspector.get_columns(table_name)
+                )
+                if inspector.has_table(table_name)
+                else None
+            )
+
+        existing = schema[table_name]
+        if existing is None:
+            return flow([])
+        mapped = list(cls.__table__.columns)
+        if any(
+            column.primary_key and column.name not in existing
+            for column in mapped
+        ):
+            # Never synthesize an identity: callers use these values as dict
+            # keys and a neutral PK would silently merge unrelated rows.
+            return flow([])
+        if all(column.name in existing for column in mapped):
+            return flow(session.query(cls).all())
+
+        available = [column for column in mapped if column.name in existing]
+        rows = session.execute(select(*available)).all()
+        result = []
+        for row in rows:
+            values = {}
+            for column in mapped:
+                # ORM constructor keywords are mapper property names, which
+                # can differ from database names (for example def_ -> def).
+                property_name = cls.__mapper__.get_property_by_column(
+                    column
+                ).key
+                if column.name in existing:
+                    values[property_name] = row._mapping[column]
+                elif isinstance(column.type, Text):
+                    values[property_name] = ''
+                elif isinstance(column.type, (Integer, REAL)):
+                    values[property_name] = 0
+                else:
+                    values[property_name] = None
+            result.append(cls(**values))
+        return flow(result)
 
 
 class AbdStoryDatum(Base):
@@ -9057,6 +9114,13 @@ class SeasonPackOverwrite(Base):
     shop_category: Mapped[int] = mapped_column(Integer, nullable=False)
     icon_id: Mapped[int] = mapped_column(Integer, nullable=False)
     name: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class BattlepassSeason(Base):
+    __tablename__ = 'battlepass_season'
+
+    season_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    next_level_point: Mapped[int] = mapped_column(Integer, nullable=False)
 
 
 class SeasonpassFoundation(Base):

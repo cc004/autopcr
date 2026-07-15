@@ -3,11 +3,37 @@ from typing import List
 from ..util import aiorequests
 from ..util.logger import instance as logger
 from ..constants import CACHE_DIR
-import os, pydantic
+import asyncio, os, pydantic
 import UnityPy
 from UnityPy.enums import ClassIDType
-from ..util.logger import instance as logger
+from .twasset import UNITYPY_LOCK
 UnityPy.config.FALLBACK_UNITY_VERSION = "2021.3.20f1"
+
+
+def _load_database(payload: bytes) -> bytes:
+    with UNITYPY_LOCK:
+        ab = UnityPy.load(payload)
+        asset = ab.objects[0].read()
+        script = getattr(
+            asset,
+            "m_Script",
+            getattr(asset, "script", None),
+        )
+        if isinstance(script, str):
+            return script.encode("utf-8", "surrogateescape")
+        if script is not None:
+            return bytes(script)
+        raise ValueError("master TextAsset contains no script payload")
+
+
+def _load_texture(payload: bytes):
+    with UNITYPY_LOCK:
+        ab = UnityPy.load(payload)
+        for obj in ab.objects:
+            if obj.type == ClassIDType.Texture2D:
+                asset = obj.read()
+                return asset.image
+    return None
 
 class content(pydantic.BaseModel):
     url: str = None
@@ -101,25 +127,22 @@ class assetmgr:
         return await content.download(genHash)
  
     async def db(self) -> bytes:
-        ab = UnityPy.load(await self.download('a/masterdata_master.unity3d'))
-        asset = ab.objects[0].read()
-        return asset.script
+        payload = await self.download('a/masterdata_master.unity3d')
+        return await asyncio.get_running_loop().run_in_executor(
+            None, _load_database, payload
+        )
 
     async def unit_icon(self, unit_id: int) -> bytes:
-        ab = UnityPy.load(await self.download(f'a/unit_icon_unit_{unit_id}.unity3d'))
-        for object in ab.objects:
-            if object.type == ClassIDType.Texture2D:
-                asset = object.read()
-                return asset.image
-        return None
+        payload = await self.download(f'a/unit_icon_unit_{unit_id}.unity3d')
+        return await asyncio.get_running_loop().run_in_executor(
+            None, _load_texture, payload
+        )
 
     async def ex_equip_icon(self, equip_id: int) -> bytes:
-        ab = UnityPy.load(await self.download(f'a/icon_icon_extra_equip_{equip_id}.unity3d'))
-        for object in ab.objects:
-            if object.type == ClassIDType.Texture2D:
-                asset = object.read()
-                return asset.image
-        return None
+        payload = await self.download(f'a/icon_icon_extra_equip_{equip_id}.unity3d')
+        return await asyncio.get_running_loop().run_in_executor(
+            None, _load_texture, payload
+        )
 
 
 # should lock before use

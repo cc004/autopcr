@@ -331,6 +331,8 @@ class ShopBuyMultipleResponse(responses.ShopBuyMultipleResponse):
         if self.item_data:
             for item in self.item_data:
                 mgr.update_inventory(item)
+        if self.user_jewel:
+            mgr.jewel = self.user_jewel
 
 @handles
 class ShopBuyBulkResponse(responses.ShopBuyBulkResponse):
@@ -538,6 +540,21 @@ class LoadIndexResponse(responses.LoadIndexResponse):
 @handles
 class HomeIndexResponse(responses.HomeIndexResponse):
     async def update(self, mgr: datamgr, request):
+        if self.direct_reward_list:
+            for item in self.direct_reward_list:
+                mgr.update_inventory(item)
+        if self.battlepass_info_list is not None:
+            mgr.battlepass_info = {
+                info.season_id: info for info in self.battlepass_info_list
+            }
+        if self.is_battlepass_mission_receive_auto is not None:
+            mgr.is_battlepass_mission_receive_auto = (
+                self.is_battlepass_mission_receive_auto
+            )
+        if self.is_battlepass_level_receive_auto is not None:
+            mgr.is_battlepass_level_receive_auto = (
+                self.is_battlepass_level_receive_auto
+            )
         mgr.finishedQuest |= set(([q.quest_id for q in self.quest_list if q.result_type > 0 and q.clear_flg == 3] if self.quest_list else []) + ([q.quest_id for q in self.shiori_quest_info.quest_list if q.result_type > 0 and q.clear_flg == 3] if self.shiori_quest_info and self.shiori_quest_info.quest_list else []))
         if self.cleared_byway_quest_id_list:
             mgr.cleared_byway_quest_id_set |= set(self.cleared_byway_quest_id_list)
@@ -560,13 +577,18 @@ class HomeIndexResponse(responses.HomeIndexResponse):
         if self.missions:
             mgr.missions = self.missions
         shiori_dict = {q.quest_id: q for q in self.shiori_quest_info.quest_list} if self.shiori_quest_info and self.shiori_quest_info.quest_list else {}
+        if mgr.quest_dict is None:
+            mgr.quest_dict = {}
         mgr.quest_dict.update(shiori_dict)
 
         if request.is_first:
             mgr.talent_quest_area_info = {
-                v.talent_id: v for v in self.talent_quest_area_info
+                v.talent_id: v for v in (self.talent_quest_area_info or [])
             }
-            mgr.cleared_talent_quest_ids = {db.get_talent_id_from_quest_id(qid): qid for qid in self.cleared_talent_quest_id_list}
+            mgr.cleared_talent_quest_ids = {
+                db.get_talent_id_from_quest_id(qid): qid
+                for qid in (self.cleared_talent_quest_id_list or [])
+            }
             mgr.alces_appear_story_flag = self.alces_appear_story_flag
             mgr.alces_receive_tutorial_item_flag = self.alces_receive_tutorial_item_flag
 
@@ -737,6 +759,10 @@ class GachaExecResponse(responses.GachaExecResponse):
         if self.gacha_point_info:
             mgr.gacha_point[self.gacha_point_info.exchange_id] = self.gacha_point_info
 
+        if self.exchange_point_bonus_reward_list:
+            for item in self.exchange_point_bonus_reward_list:
+                mgr.update_inventory(item)
+
 
 @handles
 class EventGachaExecResponse(responses.EventGachaExecResponse):
@@ -890,6 +916,33 @@ class SeasonPassMissionAcceptResponse(responses.SeasonPassMissionAcceptResponse)
         if self.exchange_rewards:
             for reward in self.exchange_rewards:
                 mgr.update_inventory(reward)
+
+@handles
+class BattlepassReceiveMissionRewardResponse(responses.BattlepassReceiveMissionRewardResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_list:
+            for reward in self.reward_list:
+                mgr.update_inventory(reward)
+
+@handles
+class BattlepassReceiveLevelRewardResponse(responses.BattlepassReceiveLevelRewardResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.reward_list:
+            for reward in self.reward_list:
+                mgr.update_inventory(reward)
+        if self.user_jewel:
+            mgr.jewel = self.user_jewel
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        if self.stamina_info:
+            mgr.stamina = self.stamina_info.user_stamina
+            mgr.stamina_full_recovery_time = (
+                self.stamina_info.stamina_full_recovery_time
+            )
+        info = mgr.battlepass_info.get(request.season_id)
+        if info:
+            for line in info.line_received_level_list or []:
+                line.level = request.target_level
 
 @handles
 class SubStoryRagReadStoryResponse(responses.SubStoryRagReadStoryResponse):

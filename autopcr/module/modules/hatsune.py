@@ -213,8 +213,6 @@ class hatsune_gacha_exchange(Module):
                     self._log(f"当前{ticket}张，一键交换{exchange_times}次")
                     await client.exec_event_gacha(event.event_id, exchange_times, ticket)
                     ticket -= exchange_times
-                res = await client.get_event_gacha_index(event.event_id)
-                self._log(f"已交换至" + (f"第{res.event_gacha_info.gacha_step}轮" if res.event_gacha_info.gacha_step < 6 else "第六轮及以上"))
                 client.data.set_inventory((eInventoryType.Item, exchange_ticket_id), ticket)
                 continue
             while(True):

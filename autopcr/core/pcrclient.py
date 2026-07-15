@@ -2,7 +2,7 @@ from ..model.models import *
 from .apiclient import apiclient
 from .sdkclient import sdkclient
 from .sessionmgr import sessionmgr
-from .misc import errorhandler, mutexhandler
+from .misc import errorhandler, mutexhandler, regionhandler
 from .datamgr import datamgr
 from ..db.database import db
 from typing import Callable, Tuple, Union
@@ -25,6 +25,7 @@ class pcrclient(apiclient):
         self.register(self.data)
         self.register(self.session)
         self.register(mutexhandler())
+        self.register(regionhandler(sdk.region))
 
     def set_config(self, config: dict):
         self._base_keys = config
@@ -75,7 +76,16 @@ class pcrclient(apiclient):
         return await self.request(req)
 
     async def alces_exec(self, serial_id: int):
-        req = AlcesExecRequest()
+        # Request construction happens before the regional request handler
+        # enters its ContextVar scope, so use the client's SDK directly.
+        if self._sdk.is_tw:
+            req = TwAlcesExecRequest()
+            # TW 5.7.0 uses 1 for a fresh roll and 2 when replacing a pending
+            # result.  This client always fixes/cancels the pending result
+            # before the next roll, so ex_equip_rainbow_enchance is type 1.
+            req.exec_type = 1
+        else:
+            req = AlcesExecRequest()
         req.serial_id = serial_id
         req.current_alces_point = self.data.get_inventory((eInventoryType.Item, 26202))
         req.current_gold = self.data.get_mana()
@@ -313,6 +323,21 @@ class pcrclient(apiclient):
         req = SeasonPassMissionAcceptRequest()
         req.season_id = season_id
         req.mission_id = mission_id
+        return await self.request(req)
+
+    async def battlepass_top(self):
+        return await self.request(BattlepassTopRequest())
+
+    async def battlepass_receive_mission_reward(self, season_id: int, mission_id_list: List[int]):
+        req = BattlepassReceiveMissionRewardRequest()
+        req.season_id = season_id
+        req.mission_id_list = mission_id_list
+        return await self.request(req)
+
+    async def battlepass_receive_level_reward(self, season_id: int, target_level: int):
+        req = BattlepassReceiveLevelRewardRequest()
+        req.season_id = season_id
+        req.target_level = target_level
         return await self.request(req)
 
     async def unit_unlock_redeem_unit(self, unit_id: int):

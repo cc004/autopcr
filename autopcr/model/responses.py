@@ -684,6 +684,7 @@ class GachaExecResponse(ResponseBase):
     exec_bonus_reward_info_list: List[InventoryInfo] = None
     connect_coin_info: InventoryInfo = None
     remain_limit_count_bonus_list: List[RemainLimitCountBonusData] = None
+    exchange_point_bonus_reward_list: List[InventoryInfo] = None
 class GachaIndexResponse(ResponseBase):
     gacha_info: List[GachaParameter] = None
     nngtime: int = None
@@ -1063,6 +1064,13 @@ class HomeIndexResponse(ResponseBase):
     season_pack_campaign_info_list: List[SeasonPackCampaignInfo] = None
     limited_mission_progress_list: List[UserMissionProgressInfo] = None
     limited_mission_category_list: List[UserLimitedMissionCategoryInfo] = None
+    tw_season_pack_name: str = None
+    mirage_info: MirageInfoFromHomeIndex = None
+    mre_schedule_id_list: List[int] = None
+    battlepass_info_list: List[UserBattlepassInfo] = None
+    is_battlepass_mission_receive_auto: bool = None
+    is_battlepass_level_receive_auto: bool = None
+    direct_reward_list: List[InventoryInfo] = None
 class ItemETicketExchangeResponse(ResponseBase):
     reward_list: List[InventoryInfo] = None
     item_data: List[InventoryInfo] = None
@@ -1323,6 +1331,8 @@ class LoadIndexResponse(ResponseBase):
     unlocked_topic_talk_event_id_list: List[int] = None
     seven_story_list: List[SevenStory] = None
     gtm: int = None
+    mre_story_list: List[MreStory] = None
+    crcb: int = None
 class LoadNextDayIndexResponse(ResponseBase):
     daily_reset_time: int = None
     login_bonus_list: LoginBonusList = None
@@ -1373,6 +1383,7 @@ class LoadNextDayIndexResponse(ResponseBase):
     sdlb: int = None
     cbslf: int = None
     gtm: int = None
+    crcb: int = None
 class MirokuBattleFinishResponse(ResponseBase):
     damage_result: int = None
     attack_count: int = None
@@ -1410,6 +1421,7 @@ class MissionAcceptResponse(ResponseBase):
     release_contents: List[ReleaseContentData] = None
     room_item_level_mission: List[int] = None
     season_pack_mission_id_list: List[int] = None
+    season_pack_mission_info_list: List[SeasonPackMissionInfo] = None
 class MissionIndexResponse(ResponseBase):
     missions: List[UserMissionInfo] = None
     season_pack: List[UserSeasonPackInfo] = None
@@ -1485,9 +1497,11 @@ class PkbTopResponse(ResponseBase):
     simple_ranking_info: PkbRankingInfo = None
 class PresentHistoryResponse(ResponseBase):
     present_history: List[PresentHistoryInfo] = None
+    gift_message: List[GiftMessageParameter] = None
 class PresentIndexResponse(ResponseBase):
     present_info_list: List[PresentParameter] = None
     present_count: int = None
+    gift_message: List[GiftMessageParameter] = None
 class PresentReceiveAllResponse(ResponseBase):
     rewards: List[InventoryInfo] = None
     stamina_info: UserStaminaInfo = None
@@ -1980,6 +1994,7 @@ class ShopBuyMultipleResponse(ResponseBase):
     purchase_list: List[InventoryInfo] = None
     item_data: List[InventoryInfo] = None
     user_gold: UserGold = None
+    user_jewel: UserJewel = None
 class ShopBuyResponse(ResponseBase):
     purchase_list: List[InventoryInfo] = None
     item_data: List[InventoryInfo] = None
@@ -2400,6 +2415,7 @@ class TowerExBattleFinishResponse(ResponseBase):
     clan_point: ClanPoint = None
     clan_member_info: List[TowerClanMemberInfo] = None
     is_joined_clan: int = None
+    reward_list: List[InventoryInfo] = None
 class TowerExBattleRetireResponse(ResponseBase):
     pass
 class TowerExBattleStartResponse(ResponseBase):
@@ -2945,6 +2961,16 @@ class AlcesUseStoneResponse(ResponseBase):
     fixed_alces_data: ExtraEquipInfo = None
     current_alces_stone: InventoryInfo = None
     play_effect_id: int = None
+class BattlepassReceiveLevelRewardResponse(ResponseBase):
+    reward_list: List[InventoryInfo] = None
+    user_jewel: UserJewel = None
+    user_gold: UserGold = None
+    stamina_info: UserStaminaInfo = None
+    add_present_count: int = None
+class BattlepassReceiveMissionRewardResponse(ResponseBase):
+    reward_list: List[InventoryInfo] = None
+class BattlepassTopResponse(ResponseBase):
+    line_list: List[UserBattlepassLineInfo] = None
 class AsmFinishResponse(ResponseBase):
     score_result: AsmScoreResult = None
     present_reward_list: List[AsmRewardInfo] = None
@@ -3603,6 +3629,8 @@ class LabyrinthUseRelicResponse(ResponseBase):
     reward_list: List[InventoryInfo] = None
 class LimitedMissionReadCategoryAnimationResponse(ResponseBase):
     reward_list: List[InventoryInfo] = None
+    mission_progress_list: List[UserMissionProgressInfo] = None
+    category_info: UserLimitedMissionCategoryInfo = None
     add_present_count: int = None
 class LimitedMissionReadGroupAnimationResponse(ResponseBase):
     reward_list: List[InventoryInfo] = None

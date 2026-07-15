@@ -1,3 +1,17 @@
 .vscode/
 .github/
 .dockerignore
+.git/
+.pixi/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+*.log
+cache/
+result/
+log/
+*tw.sonet.princessconnect*.playerprefs.xml
+*.autopcrcfg
+/tw570.json

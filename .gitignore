@@ -18,5 +18,14 @@ autopcr/http_server/ClientApp/index.html
 autopcr/http_server/client_version
 # pixi environments
 .pixi
+.env
+.env.*
+!.env.example
+
+# TW account exports contain reusable game-session credentials.  The supplied
+# rainbow table is copied to data/rainbow_tw.json; keep the root source copy out.
+*tw.sonet.princessconnect*.playerprefs.xml
+*.autopcrcfg
+/tw570.json
 
 .vscode/

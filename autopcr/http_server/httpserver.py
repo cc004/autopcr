@@ -12,7 +12,7 @@ from quart_compress import Compress
 from quart_rate_limiter import RateLimiter, rate_limit, RateLimitExceeded
 
 from .validator import validate_dict, ValidateInfo, validate_ok_dict, enable_manual_validator
-from ..constants import CACHE_DIR, ALLOW_REGISTER, SUPERUSER
+from ..constants import CACHE_DIR, ALLOW_REGISTER, SUPERUSER, CHANNEL_OPTION
 from ..module.accountmgr import Account, AccountManager, instance as usermgr, AccountException, UserData, \
     PermissionLimitedException, UserDisabledException, UserException
 from ..util.draw import instance as drawer
@@ -299,7 +299,24 @@ class HttpServer:
                 if 'password' in data and data['password'] != '*' * 8:
                     account.data.password = data['password']
                 if 'channel' in data:
+                    if data['channel'] not in CHANNEL_OPTION:
+                        return "未知服务器", 400
                     account.data.channel = data['channel']
+                if 'viewer_id' in data:
+                    viewer_id = str(data['viewer_id'] or '')
+                    if viewer_id and not viewer_id.isdigit():
+                        return "VIEWER_ID 必须是数字", 400
+                    account.data.viewer_id = viewer_id
+                if 'server_id' in data:
+                    try:
+                        server_id = int(data['server_id'] or 0)
+                    except (TypeError, ValueError):
+                        return "TW_SERVER_ID 必须是 1、2、3 或 4", 400
+                    if server_id not in (0, 1, 2, 3, 4):
+                        return "TW_SERVER_ID 必须是 1、2、3 或 4", 400
+                    account.data.server_id = server_id
+                if 'app_version' in data:
+                    account.data.app_version = str(data['app_version'] or '')
                 if 'batch_accounts' in data:
                     account.data.batch_accounts = data['batch_accounts']
                 return "保存账户信息成功", 200

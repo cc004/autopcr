@@ -3894,6 +3894,31 @@ class AlcesExecRequest(Request[AlcesExecResponse]):
     @property
     def url(self) -> str:
         return "alces/exec"
+class TwAlcesExecRequest(Request[AlcesExecResponse]):
+    """TW 5.7.0 alces request; kept separate to preserve the CN wire body."""
+    serial_id: int = None
+    current_alces_point: int = None
+    current_gold: int = None
+    exec_type: int = None
+    @property
+    def url(self) -> str:
+        return "alces/exec"
+class BattlepassReceiveLevelRewardRequest(Request[BattlepassReceiveLevelRewardResponse]):
+    season_id: int = None
+    target_level: int = None
+    @property
+    def url(self) -> str:
+        return "battlepass/receive_level_reward"
+class BattlepassReceiveMissionRewardRequest(Request[BattlepassReceiveMissionRewardResponse]):
+    season_id: int = None
+    mission_id_list: List[int] = None
+    @property
+    def url(self) -> str:
+        return "battlepass/receive_mission_reward"
+class BattlepassTopRequest(Request[BattlepassTopResponse]):
+    @property
+    def url(self) -> str:
+        return "battlepass/top"
 class AlcesFixResultRequest(Request[AlcesFixResultResponse]):
     serial_id: int = None
     @property

@@ -17,11 +17,16 @@ class account:
     password: str
     farm: bool
     
-    def __init__(self, usr: str, pwd: str, type: platform, farm: bool = False):
+    def __init__(self, usr: str, pwd: str, type: platform, farm: bool = False,
+                 viewer_id: str = "", server_id: int = 0,
+                 app_version: str = ""):
         self.username = usr
         self.password = pwd
         self.type = type
         self.farm = farm
+        self.viewer_id = str(viewer_id or "")
+        self.server_id = int(server_id or 0)
+        self.app_version = app_version or ""
 
 class sdkclient:
 
@@ -86,6 +91,27 @@ class sdkclient:
     @property
     def account(self):
         return self._account.username
+
+    @property
+    def region(self) -> str:
+        return 'cn'
+
+    @property
+    def is_tw(self) -> bool:
+        return False
+
+    @property
+    def initial_uid(self):
+        return None
+
+    @property
+    def session_id(self) -> str:
+        # Preserve the existing CN cache name so current sessions stay valid.
+        return hashlib.md5(self.account.encode('utf-8')).hexdigest()
+
+    @property
+    def pool_key(self):
+        return self.account, type(self).__name__
 
     @property
     def id(self):

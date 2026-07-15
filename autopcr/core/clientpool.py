@@ -4,7 +4,7 @@ from .sdkclient import sdkclient
 from .datamgr import datamgr
 from .sessionmgr import sessionmgr
 from ..model.error import PanicError
-from .misc import errorhandler, mutexhandler
+from .misc import errorhandler, mutexhandler, regionhandler
 from .base import Component, Request, TResponse, RequestHandler
 from ..model.sdkrequests import ToolSdkLoginRequest
 from typing import Dict, Tuple
@@ -52,7 +52,7 @@ class SessionErrorHandler(Component[apiclient]):
                 self.retry += 1
                 await self._container.logout()
                 return await self.request(request, next)
-            if "回到标题界面" in str(e):
+            if any(word in str(e) for word in ("回到标题界面", "回到標題畫面")):
                 await self._container.logout()
             raise
         finally:
@@ -68,7 +68,7 @@ class PoolClientWrapper(pcrclient):
         self.need_refresh = False
         self.session = sessionmgr(sdk)
         self.pool = pool
-        self.uid: str = None
+        self.uid: str = str(sdk.initial_uid) if sdk.initial_uid is not None else None
         self.last_access = int(time.time())
         self._sema_acquired = False
         self.register(errorhandler())
@@ -78,6 +78,7 @@ class PoolClientWrapper(pcrclient):
         self.register(PreSessionHandler(pool))
         self.register(SessionErrorHandler(pool))
         self.register(mutexhandler())
+        self.register(regionhandler(sdk.region))
 
     @property
     def logged(self) -> eLoginStatus:
@@ -177,8 +178,8 @@ class CountingSemaphore:
 
 class ClientPool:
     def __init__(self):
-        self.active_uids: Dict[str, int] = dict()
-        self._pool: Dict[Tuple[str, str], PoolClientWrapper] = dict()
+        self.active_uids: Dict[Tuple[str, str], int] = dict()
+        self._pool: Dict[tuple, PoolClientWrapper] = dict()
         os.makedirs(os.path.join(CACHE_DIR, 'pool'), exist_ok=True)
 
         self._sema = CountingSemaphore(CLIENT_POOL_MAX_CLIENT_ALIVE)
@@ -186,21 +187,23 @@ class ClientPool:
 
     def _on_sdk_login(self, client: PoolClientWrapper):
         client_key = id(client)
-        if self.active_uids.get(client.uid, client_key) != client_key:
+        uid_key = (client.session.sdk.region, str(client.uid))
+        if self.active_uids.get(uid_key, client_key) != client_key:
             raise PanicError('用户的另一项请求正在进行中')
-        self.active_uids[client.uid] = client_key
+        self.active_uids[uid_key] = client_key
 
     def _put_in_pool(self, client: PoolClientWrapper):
         client_key = id(client)
-        if self.active_uids.get(client.uid, -1) != client_key:
+        uid_key = (client.session.sdk.region, str(client.uid))
+        if self.active_uids.get(uid_key, -1) != client_key:
             logger.debug("Client key mismatch, discard client %s", client.uid)
             return
-        self.active_uids.pop(client.uid)
+        self.active_uids.pop(uid_key)
         if client.logged == eLoginStatus.NOT_LOGGED: 
             logger.debug("Client %s session expired", client.uid)
             return
 
-        pool_key = (client.session.sdk.account, type(client.session.sdk).__name__)
+        pool_key = client.session.sdk.pool_key
 
         if len(self._pool) >= CLIENT_POOL_SIZE_MAX:
             now = int(time.time())
@@ -231,14 +234,22 @@ class ClientPool:
         return self._sema.status(), self._farm_sema.status()
 
     async def get_client(self, sdk: sdkclient) -> PoolClientWrapper:
-        pool_key = (sdk.account, type(sdk).__name__)
+        pool_key = sdk.pool_key
         if pool_key in self._pool:
             client = self._pool.pop(pool_key)
+            # The pooled client still owns a live authenticated session.
+            # Preserve its dynamic SID, resource/manifest versions, routed
+            # servers and migrated viewer id; rebuilding headers while keeping
+            # session._logged would send the first refresh with stale defaults.
+            client._sdk = sdk
+            client.session.sdk = sdk
+            client.session.id = sdk.session_id
             self._on_sdk_login(client)
             client.need_refresh = True
-            client.session.sdk = sdk
         else:
             client = PoolClientWrapper(self, sdk)
+            if sdk.initial_uid is not None:
+                self._on_sdk_login(client)
         return client
 
 instance = ClientPool()

@@ -1,10 +1,14 @@
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
-from ...core.apiclient import apiclient
+from ...core.apiclient import ApiException, apiclient
 from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
+from ...core.region import REGION_TW, get_region
+
+_ROOM_LIKE_DAILY_LIMIT = 10
+_ROOM_LIKE_ATTEMPT_LIMIT = 30
 
 @description('包括mana体力等等哦')
 @name('收取家园产物')
@@ -56,15 +60,25 @@ class room_like_back(Module):
         like_user = []
         like_history = await client.room_like_history()
         cnt = like_history.today_like_count
+        be_liked_history = like_history.be_liked_history or []
+        be_liked_count = min(
+            like_history.today_be_liked_count,
+            len(be_liked_history),
+        )
         pos = 0
-        if cnt >= 10:
+        attempts = 0
+        if cnt >= _ROOM_LIKE_DAILY_LIMIT:
             raise SkipError(f"今日已点赞{cnt}次")
-        while pos < like_history.today_be_liked_count or cnt < 10:
+        while (
+            cnt < _ROOM_LIKE_DAILY_LIMIT
+            and attempts < _ROOM_LIKE_ATTEMPT_LIMIT
+        ):
             viewer_id = 0
-            if pos < like_history.today_be_liked_count:
-                viewer_id = like_history.be_liked_history[pos].viewer_id
+            if pos < be_liked_count:
+                viewer_id = be_liked_history[pos].viewer_id
+                pos += 1
+            attempts += 1
             user = await client.room_visit(viewer_id)
-            pos += 1
             if user.room_user_info.today_like_flag:
                 continue
             try:
@@ -73,10 +87,25 @@ class room_like_back(Module):
                 like_user.append(user.room_user_info.name)
                 cnt += 1
             except Exception as e:
-                if str(e).startswith("此玩家未读取的点赞数"):
+                if (
+                    (
+                        isinstance(e, ApiException)
+                        and get_region() == REGION_TW
+                        and (
+                            e.result_code == 3114
+                            or e.status == 5
+                        )
+                    )
+                    or str(e).startswith("此玩家未读取的点赞数")
+                ):
                     continue
                 else:
                     raise(e)
+
+        if cnt < _ROOM_LIKE_DAILY_LIMIT:
+            self._warn(
+                f"访问{attempts}次后仍只点赞{cnt}次，停止继续尝试"
+            )
 
         result = await client.serialize_reward_summary(result)
         self._log(f"为【{'|'.join(like_user)}】点赞，获得了:\n" + result)

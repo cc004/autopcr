@@ -22,10 +22,29 @@ class ToolSdkLoginRequest(Request[ToolSdkLoginResponse]):
 
 class CheckGameStartResponse(ResponseBase):
     now_tutorial: bool = False
+    bundle_ver: str = None
 class CheckGameStartRequest(Request[CheckGameStartResponse]):
     apptype: int = None
     campaign_data: str = None
     campaign_user: int = None
+    @property
+    def url(self) -> str:
+        return "check/game_start"
+
+class TwCheckGameStartRequest(Request[CheckGameStartResponse]):
+    # TW 5.7.0's Cute.GameStartCheckTask.CheckParams schema.  TW login leaves
+    # these business fields unset: the server accepts the transport-only
+    # payload, and fabricating attribution/anti-tamper values is less faithful
+    # than omitting them.
+    app_type: int = None
+    campaign_data: str = None
+    campaign_sign: str = None
+    campaign_user: int = None
+    adid: str = None
+    endpointArn: str = None
+    countrycode: str = None
+    FOXYOROKOBINODANCE: str = None
+    FOXYOROKOBINOMAI: str = None
     @property
     def url(self) -> str:
         return "check/game_start"

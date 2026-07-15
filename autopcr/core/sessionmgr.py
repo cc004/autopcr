@@ -5,7 +5,6 @@ import json, os, random
 from ..model.models import *
 from ..constants import CACHE_DIR
 from ..util.logger import instance as logger
-import hashlib
 
 class sessionmgr(Component[apiclient]):
     def __init__(self, sdk: sdkclient):
@@ -16,7 +15,7 @@ class sessionmgr(Component[apiclient]):
         self.auto_relogin = True
         self._sdkaccount = None
         self.session_expire_time = 0
-        self.id = hashlib.md5(self.sdk.account.encode('utf-8')).hexdigest()
+        self.id = self.sdk.session_id
         if not os.path.exists(self.cacheDir):
             os.makedirs(self.cacheDir)
 
@@ -79,13 +78,21 @@ class sessionmgr(Component[apiclient]):
             await self.sdk.invoke_post_login()
 
     async def _login(self, next: RequestHandler):
+        if self.sdk.is_tw:
+            await self._login_tw(next)
+            return
+
         if os.path.exists(self.cacheFile):
             with open(self.cacheFile, 'r') as fp:
                 self._sdkaccount = json.load(fp)
         for _ in range(5):
             try:
                 current = self._container.servers[self._container.active_server]
-                self._container.servers = [f'https://{server}'.replace('\t', '') for server in (await next.request(SourceIniIndexRequest())).server]
+                self._container.servers = [
+                    (server if server.startswith(('http://', 'https://')) else f'https://{server}')
+                    .replace('\t', '').rstrip('/') + '/'
+                    for server in (await next.request(SourceIniIndexRequest())).server
+                ]
                 try:
                     self._container.active_server = self._container.servers.index(current)
                 except ValueError:
@@ -128,11 +135,73 @@ class sessionmgr(Component[apiclient]):
                 self._logged = True
                 break
             except ApiException as e:
-                if "维护" in str(e):
+                if any(word in str(e) for word in ("维护", "維護")):
                     raise PanicError(str(e))
                 pass
         else:
             raise PanicError("登录失败")
+
+    async def _login_tw(self, next: RequestHandler):
+        """Login flow used by So-net Taiwan accounts.
+
+        TW has no source_ini or tool/sdk_login handshake.  The credentials in
+        PlayerPrefs are sent directly through the normal encrypted API.
+        """
+        from ..db.dbstart import ensure_database
+
+        try:
+            await next.request(CheckAgreementRequest())
+
+            # Current TW clients send no CN campaign fields here.
+            game_start = await next.request(TwCheckGameStartRequest())
+            if getattr(game_start, 'bundle_ver', None):
+                self._container._headers['BUNDLE-VER'] = str(
+                    game_start.bundle_ver
+                )
+            if not game_start.now_tutorial:
+                raise PanicError("账号未完成教程")
+            # API responses carry the authoritative resource revision.  Use it
+            # for the official manifest/master bundle before response handlers
+            # begin consulting regional master data.  The database revision is
+            # never copied back into the transport's RES-VER header.
+            await ensure_database(
+                self.sdk.region,
+                self._container._headers.get('RES-VER'),
+            )
+            req = LoadIndexRequest()
+            req.carrier = 'Android'
+            load_index = await next.request(req)
+            self.session_expire_time = (
+                load_index.daily_reset_time
+                or self._container.time + 24 * 60 * 60
+            )
+
+            req = HomeIndexRequest()
+            req.message_id = 1
+            req.gold_history = 0
+            req.is_first = 1
+            req.tips_id_list = []
+            resp = await next.request(req)
+
+            if (resp.quest_list and any(
+                quest.quest_id == 11008001
+                and quest.result_type == eMissionStatusType.AlreadyReceive
+                for quest in resp.quest_list
+            )):
+                req = DailyTaskTopRequest()
+                req.setting_alchemy_count = 1
+                req.is_check_by_term_normal_gacha = 0
+                await next.request(req)
+
+            self._logged = True
+        except ApiException as ex:
+            if any(word in str(ex) for word in ("维护", "維護")):
+                raise PanicError(str(ex)) from ex
+            raise PanicError(
+                f"台服登录失败，请检查凭证、区服和 APP 版本：{ex}"
+            ) from ex
+        finally:
+            await self.sdk.invoke_post_login()
 
     @property
     def is_session_expired(self):
