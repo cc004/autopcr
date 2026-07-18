@@ -185,6 +185,36 @@ class database():
             )
 
     @lazy_property
+    def labyrinth_boss_info(self) -> Dict[int, Dict[int, str]]:
+        boss_info: Dict[int, Dict[int, str]] = {}
+        for quest in self.labyrinth_quest_data.values():
+            area = quest.quest_id // 100000 % 10
+            if quest.quest_type != 3:
+                continue
+
+            area_info = boss_info.setdefault(area, {})
+
+            wave_group = self.labyrinth_wave_group_data.get(quest.wave_group_id)
+            if not wave_group:
+                continue
+
+            enemies = [
+                self.labyrinth_enemy_parameter.get(enemy_id)
+                for enemy_id in wave_group.get_enemy_ids()
+            ]
+            enemies = [enemy for enemy in enemies if enemy]
+            if not enemies:
+                continue
+
+            boss = max(enemies, key=lambda enemy: enemy.hp)
+            area_info[boss.unit_id] = boss.name
+
+        return {
+            area: dict(sorted(area_info.items()))
+            for area, area_info in boss_info.items()
+        }
+
+    @lazy_property
     def redeem_unit(self) -> Dict[int, Dict[int, RedeemUnit]]:
         with self.dbmgr.session() as db:
             return (
