@@ -1910,12 +1910,6 @@ class pcrclient(apiclient):
     def is_stamina_get_not_run(self):
         return self._get_key('stamina_get_not_run', False)
 
-    def is_star_cup_sweep_not_run(self):
-        return self._get_key('star_cup_sweep_not_run', False)
-
-    def is_heart_sweep_not_run(self):
-        return self._get_key('heart_sweep_not_run', False)
-
     def is_cron_run(self):
         return self._get_key('cron_run', False)
 
@@ -1927,12 +1921,6 @@ class pcrclient(apiclient):
 
     def set_stamina_get_not_run(self):
         self._keys['stamina_get_not_run'] = True
-
-    def set_star_cup_sweep_not_run(self):
-        self._keys['star_cup_sweep_not_run'] = True
-
-    def set_heart_sweep_not_run(self):
-        self._keys['heart_sweep_not_run'] = True
 
     def set_cron_run(self):
         self._keys['cron_run'] = True

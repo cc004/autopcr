@@ -1,4 +1,4 @@
-from typing import List, Dict, Set, Tuple, Union, Optional
+from typing import Callable, List, Dict, Set, Tuple, Union, Optional
 import typing
 import asyncio
 from ..model.enums import eCampaignCategory, eParamType
@@ -851,6 +851,25 @@ class database():
                 .concat(AbyssQuestDatum.query(db))
                 .to_dict(lambda x: x.quest_id, lambda x: x)
             )
+
+    def _get_current_investigation_quests(self, quest_filter: Callable[[int], bool], reward_id: int) -> List[QuestDatum]:
+        now = apiclient.datetime
+        return sorted(
+            [quest for quest in self.quest_info.values()
+             if quest_filter(quest.quest_id)
+             and quest.reward_image_1 == reward_id
+             and self.parse_time(quest.start_time) <= now < self.parse_time(quest.end_time)],
+            key=lambda quest: quest.quest_id,
+            reverse=True,
+        )
+
+    @lazy_property
+    def heart_piece_quest(self) -> List[QuestDatum]:
+        return self._get_current_investigation_quests(self.is_heart_piece_quest, self.xinsui[1])
+
+    @lazy_property
+    def star_cup_quest(self) -> List[QuestDatum]:
+        return self._get_current_investigation_quests(self.is_star_cup_quest, self.xingqiubei[1])
 
     @lazy_property
     def abyss_quest_info(self) -> Dict[int, List[AbyssQuestDatum]]:

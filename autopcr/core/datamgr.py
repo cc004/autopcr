@@ -416,7 +416,13 @@ class datamgr(BaseModel, Component[apiclient]):
             if need:
                 cnt += need
                 result.append((token, need))
-        return result, cnt 
+        return result, cnt
+
+    def get_xingqiubei_demand(self) -> int:
+        return sum(
+            self.get_rarity_memory_demand(unit_id, db.xingqiubei, 2)
+            for unit_id in self.unit
+        )
 
     def get_unique_equip_memory_demand(self, unit_id: int, token: ItemType, target_rank: int = -1) -> int:
         return self.get_unique_equip_material_demand(1, unit_id, token, target_rank)
