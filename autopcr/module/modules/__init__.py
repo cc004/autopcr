@@ -73,6 +73,7 @@ daily_modules = ModuleList(
         mirage_floor_receive,
         mirage_nemesis_sweep,
         tower_cloister_sweep,
+        labyrinth_sweep,
         jjc_reward,
         abyss_quest_sweep,
         abyss_boss_sweep,

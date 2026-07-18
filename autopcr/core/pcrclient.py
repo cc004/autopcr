@@ -67,6 +67,12 @@ class pcrclient(apiclient):
         req.enter_id = enter_id
         return await self.request(req)
 
+    async def labyrinth_skip(self, guild_id: int, skip_count: int):
+        req = LabyrinthSkipRequest()
+        req.skip_list = [LabyrinthSkipData(guild_id=guild_id, skip_count=skip_count)]
+        req.current_passport_num = self.data.get_inventory(db.labyrinth_ticket)
+        return await self.request(req)
+
     async def unit_role_gacha_index(self):
         req = UnitRoleGachaIndexRequest()
         return await self.request(req)

@@ -574,6 +574,18 @@ class HomeIndexResponse(responses.HomeIndexResponse):
 
 
 @handles
+class LabyrinthSkipResponse(responses.LabyrinthSkipResponse):
+    async def update(self, mgr: datamgr, request: LabyrinthSkipRequest):
+        for reward_list in (
+            self.skip_reward_list,
+            self.treasure_box_reward_list,
+            self.item_list,
+        ):
+            for item in reward_list or []:
+                mgr.update_inventory(item)
+
+
+@handles
 class HatsuneQuestTopResponse(responses.HatsuneQuestTopResponse):
     async def update(self, mgr: datamgr, request):
         mgr.hatsune_quest_dict[request.event_id] = {q.quest_id: q for q in (self.quest_list or [])}
