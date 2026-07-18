@@ -53,6 +53,8 @@ class pcrclient(apiclient):
     async def labyrinth_top(self):
         if not self.data.is_quest_cleared(11065001):
             raise SkipError("迷宫未解锁")
+        if 4013001 not in self.data.read_story_ids:
+            await self.read_story(4013001)
         req = LabyrinthTopRequest()
         return await self.request(req)
 

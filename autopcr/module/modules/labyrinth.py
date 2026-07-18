@@ -287,7 +287,7 @@ class labyrinth_start_reroll(Module):
 @name('黎明界扫荡')
 @inttype('labyrinth_sweep_ticket_hold', '保留黎明界票数', 96, list(range(100)))
 @LabyrinthGuildConfig('labyrinth_sweep_guild_id', '公会', 5)
-@default(False)
+@default(True)
 class labyrinth_sweep(Module):
     def _max_cleared_difficulty(self, top, guild_id: int) -> Optional[int]:
         cleared = [

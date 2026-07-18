@@ -292,10 +292,10 @@ def _star_cup_book_candidates() -> List[int]:
 @description('按心碎关卡从高到低扫荡。配置刷取关卡数，超过当前关卡数则从最高本重置刷下一轮，需求已满足时不刷。')
 @name('心碎扫荡')
 @conditional_not_execution('force_stop_heart_sweep', [], desc='不刷心碎庆典')
-@inttype('xinsui_sweep_no_campaign_books', '无庆典刷前几本', 0, _heart_book_candidates)
-@inttype('xinsui_sweep_2x_campaign_books', '2倍庆典刷前几本', 0, _heart_book_candidates)
-@inttype('xinsui_sweep_3x_campaign_books', '3倍及以上庆典刷前几本', 0, _heart_book_candidates)
-@default(False)
+@inttype('xinsui_sweep_no_campaign_books', '无庆典刷前几本', 2, _heart_book_candidates)
+@inttype('xinsui_sweep_2x_campaign_books', '2倍庆典刷前几本', 2, _heart_book_candidates)
+@inttype('xinsui_sweep_3x_campaign_books', '3倍及以上庆典刷前几本', 2, _heart_book_candidates)
+@default(True)
 @tag_stamina_consume
 class xinsui_sweep(investigate_sweep):
     def quest_data(self) -> List[QuestDatum]:
