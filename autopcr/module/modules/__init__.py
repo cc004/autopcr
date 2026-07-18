@@ -11,7 +11,7 @@ from .daily import *
 from .exequip import *
 from .gacha import *
 from .hatsune import *
-from .labyrint import *
+from .labyrinth import *
 from .room import *
 from .shiori import *
 from .shop import *
