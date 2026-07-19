@@ -275,7 +275,6 @@ class labyrinth_start_reroll(Module):
                     self._log(self._format_route(area, routes[area], enter.map_list or [], area3_bosses, area5_bosses))
                 return
 
-            print(_)
             if enter.enter_id:
                 await client.labyrinth_retire(enter.enter_id)
             await client.labyrinth_top()
