@@ -47,8 +47,8 @@ class UnitAttribute:
         eParamType.MAGIC_PENETRATE: "法贯",
         eParamType.LIFE_STEAL: "吸血",
         eParamType.HP_RECOVERY_RATE: "hp_recovery_rate",
-        eParamType.ENERGY_RECOVERY_RATE: "物爆提升",
-        eParamType.ENERGY_REDUCE_RATE: "法爆提升",
+        eParamType.ENERGY_RECOVERY_RATE: "TP上升",
+        eParamType.ENERGY_REDUCE_RATE: "TP减轻",
         eParamType.ACCURACY: "命中"
     }
 
