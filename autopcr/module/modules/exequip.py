@@ -13,7 +13,7 @@ from ...model.custom import UnitAttribute
 
 @name('彩装究极炼成')
 @default(True)
-@inttype('ex_equip_rainbow_enhance_pt_hold', '保留pt数(w)', 10, list(range(0, 1001)))
+@inttype('ex_equip_rainbow_enhance_pt_hold', '保留pt数(w)', 10, list(range(0, 10000)))
 @ExEquipSubStatusRankConfig('ex_equip_rainbow_enhance_rank', '属性优先级')
 @inttype('ex_equip_rainbow_enhance_no_max_num', '非满属性个数', 1, [0, 1, 2, 3, 4])
 @ExEquipSubStatusConfig('ex_equip_rainbow_enchance_sub_status_4', '炼成属性4')
@@ -28,8 +28,12 @@ class ex_equip_rainbow_enchance(Module):
     async def do_task(self, client: pcrclient):
         ex_equip_rainbow_enchance_action = self.get_config('ex_equip_rainbow_enchance_action')
         if ex_equip_rainbow_enchance_action == '看属性':
-            msg = flow(client.data.ex_equips.values()) \
+            items = flow(client.data.ex_equips.values()) \
                 .where(lambda ex: db.get_ex_equip_rarity(ex.ex_equipment_id) == 5) \
+                .to_list()
+            # 装备 ID 编码了类型和元素/名称，直接按 ID 排序即可同时实现分组+元素排序，无需查表
+            items.sort(key=lambda ex: ex.ex_equipment_id)
+            msg = flow(items) \
                 .select(lambda ex: f"{ex.serial_id}: {db.get_ex_equip_name(ex.ex_equipment_id)} "
                                   f"{db.get_ex_equip_sub_status_str(ex.ex_equipment_id, ex.sub_status or [])}") \
                 .to_list()

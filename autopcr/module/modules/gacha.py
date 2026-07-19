@@ -128,3 +128,18 @@ class free_gacha(Module):
             cnt -= 1
 
         self._log(await client.serlize_gacha_reward(gacha_reward, target_gacha.id))
+
+@description('抽取职能精通券')
+@name('精通券扭蛋')
+@default(True)
+class role_gacha(Module):
+    async def do_task(self, client: pcrclient):
+        resp = await client.unit_role_gacha_index()
+        current_ticket_cnt = client.data.get_inventory(db.unit_role_gach_ticket)
+        cnt = 0
+        while current_ticket_cnt > 0:
+            times = min(client.data.settings.unit_role.gacha_exec_limit, current_ticket_cnt, (db.unit_role_gacha_level[resp.gacha_level + 1].exec_count - resp.exec_count) if resp.gacha_level in db.unit_role_gacha_level else current_ticket_cnt)
+            resp = await client.unit_role_gacha_exec(times, current_ticket_cnt)
+            current_ticket_cnt -= times
+            cnt += times
+        self._log(f"使用了{cnt}张{db.get_inventory_name_san(db.unit_role_gach_ticket)}\n当前卡池等级{resp.gacha_level}/{resp.exec_count}")

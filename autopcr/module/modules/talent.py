@@ -27,6 +27,7 @@ class find_talent_quest(Module):
         role_ticket_num = client.data.unit_role_gacha_exec_count + client.data.get_inventory(db.unit_role_gach_ticket)
         role_logs = [f"职能练度({role_ticket_num}):", client.data.get_role_level_info()]
         self._log("\n".join(role_logs))
+        self._log(f"黎明界票: {client.data.get_inventory(db.labyrinth_ticket)}")
         data = {}
         data.update({
             f"{db.talents[talent_id].talent_name}深域": client.data.get_talent_quest_single(talent_id)
@@ -47,6 +48,7 @@ class find_talent_quest(Module):
                     f"{db.unit_role_type[role.unit_role_id].unit_role_name}": client.data.get_role_level_single(role)
                     for role in roles
                 })
+        data['黎明界票'] = client.data.get_inventory(db.labyrinth_ticket)
 
         header = list(data.keys())
         self._table_header(header)
