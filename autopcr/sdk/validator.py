@@ -22,7 +22,7 @@ async def localValidator():
         n = 3
         for _ in range(n):
             try:
-                _type = gt_obj.get_type(gt, challenge)
+                _type = gt_obj.get_type(gt, challenge, None)
                 break
             except Exception as e:
                 pass
