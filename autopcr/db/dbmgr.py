@@ -1,10 +1,16 @@
-import os, json
-from typing import List
+import os, json, re
+from typing import Dict, Pattern, Tuple
 from ..constants import CACHE_DIR, DATA_DIR
 from .assetmgr import assetmgr
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from ..util.logger import instance as logger
+
+# rainbow 表项中指向真实表名的特殊键
+TABLE_NAME_KEY = "--table_name"
+
+# 哈希名的形态：表名 = 'v1_' + sha256 十六进制，列名 = sha256 十六进制
+HASHED_NAME = re.compile(r"(?:v1_)?[0-9a-f]{64}")
 
 class dbmgr:
     def __init__(self):
@@ -17,8 +23,23 @@ class dbmgr:
         self._dbpath = os.path.join(CACHE_DIR, 'db', f'{ver}.db')
         if not os.path.exists(self._dbpath):
             data = await mgr.db()
-            with open(self._dbpath, 'wb') as f:
-                f.write(data)
+            # 先写临时文件再原子改名，避免中途被打断时在最终路径上留下半截库
+            # 后缀不能是 .db，否则会被 db_start 的 glob 当成一个可用版本挑走
+            tmppath = f'{self._dbpath}.{os.getpid()}.tmp'
+            try:
+                with open(tmppath, 'wb') as f:
+                    f.write(data)
+                    f.flush()
+                    os.fsync(f.fileno())
+                os.replace(tmppath, self._dbpath)
+            except OSError:
+                # 并发下别的进程可能已经落好同一版本，有完整的库可用就不必失败
+                if not os.path.exists(self._dbpath):
+                    raise
+                logger.warning(f'db version {ver} was provided by another process')
+            finally:
+                if os.path.exists(tmppath):
+                    os.remove(tmppath)
             logger.info(f'db version {ver} updated')
         self._engine = create_engine(f'sqlite:///{self._dbpath}')
         self.ver = ver
@@ -28,74 +49,90 @@ class dbmgr:
         return Session(self._engine)
 
     @staticmethod
-    def get_create_table(session: Session, table_name: str):
-        result = session.execute(text(f"SELECT sql FROM sqlite_master WHERE type='table' AND name='{table_name}'")).fetchone()
-        return result[0] if result else None
+    def _build_replacer(rainbow: dict) -> Tuple[Dict[str, str], Pattern]:
+        # 表名与列名可以合并进同一个映射：哈希名全局唯一
+        mapping: Dict[str, str] = {}
+        for hashed_table, cols in rainbow.items():
+            intact_table = cols.get(TABLE_NAME_KEY)
+            if intact_table:
+                mapping[hashed_table] = intact_table
+            for hashed_col, intact_col in cols.items():
+                if hashed_col != TABLE_NAME_KEY:
+                    mapping[hashed_col] = intact_col
+        mapping = {hashed: intact for hashed, intact in mapping.items() if hashed != intact}
 
-    @staticmethod
-    def get_table_columns(session: Session, table_name: str):
-        result = session.execute(text(f"PRAGMA table_info({table_name})")).fetchall()
-        return [row[1] for row in result]
-
-    @staticmethod
-    def exec_transaction(session: Session, commands: List[str]) -> bool:
-        try:
-            for cmd in commands:
-                session.execute(text(cmd))
-            session.commit()
-            return True
-        except Exception as e:
-            logger.error(f"Transaction failed: {e}")
-            session.rollback()
-            return False
+        # 定长正则扫描 + 查表比上万个字面量拼成的 alternation 快两个数量级，形态不符则退回后者
+        if all(HASHED_NAME.fullmatch(hashed) for hashed in mapping):
+            return mapping, HASHED_NAME
+        pattern = "|".join(sorted((re.escape(hashed) for hashed in mapping), key=len, reverse=True))
+        return mapping, re.compile(pattern)
 
     def unhash(self):
         rainbow_json = os.path.join(DATA_DIR, 'rainbow.json')
         if not os.path.exists(rainbow_json):
             logger.error("Rainbow table not found, unhashing skipped.")
-        else:
-            json_object = json.load(open(rainbow_json, 'r'))
-            logger.info("Start Unhashing DB.")
+            return
 
-            with self.session() as session:
-                for hashed_table_name, cols_dict in json_object.items():
-                    intact_table_name = cols_dict.get("--table_name")
-                    create_table_statement = self.get_create_table(session, hashed_table_name)
-                    create_dec_table_statement = self.get_create_table(session, intact_table_name)
+        with open(rainbow_json, 'r') as f:
+            mapping, pattern = self._build_replacer(json.load(f))
 
-                    if create_table_statement is None:
-                        if not create_dec_table_statement:
-                            logger.warning(f"CreateTableStatement for '{intact_table_name}' not found.")
-                        continue
+        def restore(text):
+            if not text:
+                return text
+            return pattern.sub(lambda m: mapping.get(m.group(0), m.group(0)), text)
 
-                    hashed_cols = []
-                    intact_cols = []
+        logger.info("Start Unhashing DB.")
+        with self._engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+            schema_version = conn.exec_driver_sql("PRAGMA schema_version").scalar()
+            rows = conn.exec_driver_sql(
+                "SELECT rowid, type, name, tbl_name, sql FROM sqlite_master"
+            ).fetchall()
 
-                    for hashed_col_name, intact_col_name in cols_dict.items():
-                        if hashed_col_name != "--table_name":
-                            hashed_cols.append(hashed_col_name)
-                            intact_cols.append(intact_col_name)
+            # 只改 schema 文本，不搬运数据行，故索引、触发器、视图原样保留；
+            # rainbow 未覆盖的表/列不在映射里，自然保持原名
+            updates = []
+            renamed_tables = 0
+            unresolved_tables = 0
+            for rowid, type_, name, tbl_name, sql in rows:
+                restored = (restore(name), restore(tbl_name), restore(sql))
+                if type_ == 'table' and HASHED_NAME.fullmatch(restored[0]):
+                    unresolved_tables += 1
+                if restored == (name, tbl_name, sql):
+                    continue
+                updates.append((*restored, rowid))
+                if type_ == 'table' and restored[0] != name:
+                    renamed_tables += 1
 
-                        create_table_statement = create_table_statement.replace(
-                            hashed_table_name if hashed_col_name == "--table_name" else hashed_col_name,
-                            intact_table_name if hashed_col_name == "--table_name" else intact_col_name
-                        )
+            if unresolved_tables:
+                logger.warning(f"{unresolved_tables} tables missing from rainbow table, left hashed.")
 
-                    for hashed_col_name in self.get_table_columns(session, hashed_table_name):
-                        if hashed_col_name not in hashed_cols:
-                            hashed_cols.append(hashed_col_name)
-                            intact_cols.append(hashed_col_name)
+            if not updates:
+                logger.info("DB is already unhashed, nothing to do.")
+                return
 
-                    insert_statement = f"INSERT INTO {intact_table_name} (`{'`, `'.join(intact_cols)}`) SELECT `{'`, `'.join(hashed_cols)}` FROM {hashed_table_name}"
-                    drop_table_statement = f"DROP TABLE {hashed_table_name}"
+            try:
+                conn.exec_driver_sql("PRAGMA writable_schema=ON")
+                conn.exec_driver_sql("BEGIN")
+                conn.exec_driver_sql(
+                    "UPDATE sqlite_master SET name=?, tbl_name=?, sql=? WHERE rowid=?", updates
+                )
+                conn.exec_driver_sql("COMMIT")
+                # 直改 sqlite_master 不会更新库头的 schema cookie，手动 +1 让后续连接重载 schema
+                conn.exec_driver_sql(f"PRAGMA schema_version={schema_version + 1}")
+                # RESET 让当前连接立刻重载，需要 SQLite >= 3.32，老版本报错也无妨
+                try:
+                    conn.exec_driver_sql("PRAGMA writable_schema=RESET")
+                except Exception:
+                    pass
+            finally:
+                conn.exec_driver_sql("PRAGMA writable_schema=OFF")
 
-                    transaction_cmd = [create_table_statement, insert_statement, drop_table_statement]
+            # sqlite_stat1 里记的还是旧哈希名，统计已失效，按真实名重建
+            conn.exec_driver_sql("ANALYZE")
 
-                    if not self.exec_transaction(session, transaction_cmd):
-                        logger.error(f"Failed when executing a transaction for '{intact_table_name}' ({hashed_table_name}). Transaction: {transaction_cmd}")
-                        continue
-
-            logger.info("Unhashing complete.")
+        # 连接池里可能还留着 schema 已过期的连接
+        self._engine.dispose()
+        logger.info(f"Unhashing complete, {renamed_tables} tables restored.")
 
 
 instance = dbmgr()
