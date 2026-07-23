@@ -550,6 +550,33 @@ class remove_cb_ex_equip(Module):
             raise SkipError("所有会战EX装备均已撤下")
 
 
+@name('撤下普通EX装')
+@default(True)
+@description('')
+class remove_normal_ex_equip(Module):
+    async def do_task(self, client: pcrclient):
+        ex_cnt = 0
+        unit_cnt = 0
+        for unit_id in client.data.unit:
+            unit = client.data.unit[unit_id]
+            exchange_list = []
+            for ex_equip in unit.ex_equip_slot:
+                if ex_equip.serial_id != 0:
+                    exchange_list.append(ExtraEquipChangeSlot(slot=ex_equip.slot, serial_id=0))
+                    ex_cnt += 1
+
+            if exchange_list:
+                unit_cnt += 1
+                await client.unit_equip_ex([ExtraEquipChangeUnit(
+                        unit_id=unit_id,
+                        ex_equip_slot=exchange_list,
+                        cb_ex_equip_slot=None)])
+        if ex_cnt:
+            self._log(f"撤下了{unit_cnt}个角色的{ex_cnt}个普通EX装备")
+        else:
+            raise SkipError("所有普通EX装备均已撤下")
+
+
 @name('EX装战力最高搭配')
 @default(True)
 @description('理论最优，执行装备将撤下所有EX装备，然后再进行最优搭配')
