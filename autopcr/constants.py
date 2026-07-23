@@ -19,8 +19,9 @@ MAX_API_RUNNING = 8
 BSDK = '官服'
 QSDK = '渠道服'
 BSDKNOLOGIN = '官服免登录'
+TWSDK = '台服'
 
-CHANNEL_OPTION = [BSDK, QSDK, BSDKNOLOGIN]
+CHANNEL_OPTION = [BSDK, QSDK, BSDKNOLOGIN, TWSDK]
 
 DEBUG_LOG = strtobool(os.getenv("AUTOPCR_SERVER_DEBUG_LOG", "false"))
 
@@ -85,6 +86,41 @@ IOS_HEADERS = {
     # 'RES-KEY': 'ab00a0a6dd915a052a2ef7fd649083e5',
     'RES-VER': '10002200',
     'SHORT-UDID': '0'
+}
+
+# Taiwan uses a different transport profile.  APP-VER is intentionally kept
+# separate from the CN version cache; it can be updated without affecting CN
+# accounts.  RES-VER is refreshed from data_headers.required_res_ver after the
+# first successful TW request.
+TW_UNITY_VERSION = os.getenv('AUTOPCR_TW_UNITY_VERSION', '6000.0.58f2')
+TW_CURL_VERSION = os.getenv('AUTOPCR_TW_CURL_VERSION', '8.10.1-DEV')
+TW_USE_SYSTEM_PROXY = os.getenv(
+    'AUTOPCR_TW_USE_SYSTEM_PROXY', 'false'
+).strip().lower() in {'1', 'true', 'yes', 'on'}
+TW_HEADERS = {
+    'Accept-Encoding': 'deflate, gzip',
+    'User-Agent': f'UnityPlayer/{TW_UNITY_VERSION} (UnityWebRequest/1.0, libcurl/{TW_CURL_VERSION})',
+    'Content-Type': 'application/octet-stream',
+    'Expect': '100-continue',
+    'X-Unity-Version': TW_UNITY_VERSION,
+    'APP-VER': os.getenv('AUTOPCR_TW_APP_VERSION', '5.7.0'),
+    'BATTLE-LOGIC-VERSION': '4',
+    'BUNDLE-VER': '',
+    'DEVICE': '2',
+    # Empty means derive a stable per-account value from the TW UDID.  An
+    # explicit override remains available for migrated installations.
+    'DEVICE-ID': os.getenv('AUTOPCR_TW_DEVICE_ID', '').strip(),
+    'DEVICE-NAME': 'OPPO PCRM00',
+    'GRAPHICS-DEVICE-NAME': 'Adreno (TM) 640',
+    'IP-ADDRESS': '10.0.2.15',
+    'KEYCHAIN': '',
+    'LOCALE': 'Jpn',
+    'PLATFORM-OS-VERSION': 'Android OS 5.1.1 / API-22 (LMY48Z/rel.se.infra.20200612.100533)',
+    'REGION-CODE': '',
+    # RES-VER is the asset/resource revision used by the HTTP protocol.  It is
+    # independent from the master_tw.db revision published by database mirrors.
+    'RES-VER': os.getenv('AUTOPCR_TW_RES_VERSION', '00500030'),
+    'platform': '2',
 }
 
 

@@ -26,6 +26,7 @@ class ResponseHeader(BaseModel):
     servertime: int = 0
     result_code: int = -1
     short_udid: str = None
+    required_res_ver: str = None
 
 class Response(GenericModel, Generic[TResponse]):
     data_headers: ResponseHeader = None

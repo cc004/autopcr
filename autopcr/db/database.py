@@ -17,6 +17,7 @@ from ..core.apiclient import apiclient
 from typing import TypeVar, Generic
 from ..util.pcr_data import CHARA_NICKNAME
 from ..util.logger import instance as logger
+from ..core.region import get_region
 
 T = TypeVar("T")
 
@@ -35,7 +36,10 @@ class lazy_property(Generic[T]):
         dbmgr = getattr(instance, "dbmgr", None)
         if dbmgr is None:
             raise ValueError("数据库未初始化完成，请稍等片刻")
-        current_version = dbmgr.ver
+        # A regional official DB and a mirror can legitimately share the same
+        # numeric version.  Generation changes on every load, so switching
+        # source/path cannot reuse lazy values produced by the previous engine.
+        current_version = (dbmgr.ver, dbmgr.generation)
         cached = getattr(instance, self.attr_name, None)
         cached_version = getattr(instance, self.version_attr, None)
 
@@ -329,6 +333,14 @@ class database():
             return (
                 SeasonpassLevelReward.query(db)
                 .to_dict(lambda x: x.level_id, lambda x: x)
+            )
+
+    @lazy_property
+    def battlepass_season(self) -> Dict[int, BattlepassSeason]:
+        with self.dbmgr.session() as db:
+            return (
+                BattlepassSeason.query(db)
+                .to_dict(lambda x: x.season_id, lambda x: x)
             )
 
     @lazy_property
@@ -2975,4 +2987,20 @@ class database():
         ids.append(0)
         return sorted(ids)
 
-db = database()
+class DatabaseRouter:
+    """Context-local database facade for concurrently running regions."""
+
+    def __init__(self):
+        self._databases: Dict[str, database] = {'cn': database()}
+
+    def get(self, region: Optional[str] = None) -> database:
+        region = region or get_region()
+        if region not in self._databases:
+            self._databases[region] = database()
+        return self._databases[region]
+
+    def __getattr__(self, name):
+        return getattr(self.get(), name)
+
+
+db = DatabaseRouter()

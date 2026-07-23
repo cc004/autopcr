@@ -1,9 +1,14 @@
-from typing import List, Set
+from typing import Dict, List, Optional, Set, Tuple
 
-from ...model.common import InventoryInfo
+from ...model.common import (
+    InventoryInfo,
+    UserBattlepassInfo,
+    UserBattlepassLineInfo,
+)
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
+from ...core.region import REGION_TW, get_region
 from ...core.apiclient import apiclient
 from ...model.error import *
 from ...db.database import db
@@ -106,6 +111,33 @@ class mission_receive_last(mission_receive):
 @default(True)
 class seasonpass_accept(Module):
     async def do_task(self, client: pcrclient):
+        if get_region() == REGION_TW:
+            # Other daily modules and automatic mission updates may have
+            # changed progress since login; claim from current Home state.
+            await client.refresh()
+            rewards = []
+            received_any = False
+            for info in client.data.battlepass_info.values():
+                mission_ids = [
+                    mission.mission_id
+                    for mission in info.mission_progress_list or []
+                    if mission.status == eMissionStatusType.EnableReceive
+                ]
+                if mission_ids:
+                    received_any = True
+                    resp = await client.battlepass_receive_mission_reward(
+                        info.season_id, mission_ids
+                    )
+                    rewards.extend(resp.reward_list or [])
+            if not received_any:
+                raise SkipError("没有可领取的赛季通行证任务奖励")
+            if rewards:
+                reward = await client.serialize_reward_summary(rewards)
+                self._log(f"领取了赛季通行证任务奖励，获得了{reward}")
+            else:
+                self._log("领取了赛季通行证任务奖励")
+            return
+
         seasonpasses = db.get_active_seasonpass()
         if not seasonpasses:
             raise SkipError("目前无进行中的女神祭")
@@ -139,7 +171,130 @@ class seasonpass_reward(Module):
         ret.status = [((status >> i) & 1) for i in range(3)]
         return ret
 
+    @staticmethod
+    def _tw_safe_target_level(
+        info: UserBattlepassInfo,
+        line_by_id: Dict[int, UserBattlepassLineInfo],
+        current_level: int,
+    ) -> Tuple[int, bool]:
+        """Return the highest prefix that contains no unreceived stamina."""
+        received_lines = info.line_received_level_list or []
+        if not received_lines:
+            return 0, True
+
+        next_stamina_levels = []
+        for received in received_lines:
+            line = line_by_id.get(received.line_id)
+            if line is None or line.level_list is None:
+                return 0, True
+            for reward in line.level_list:
+                if reward.level is None or reward.type is None:
+                    return 0, True
+                if (
+                    received.level < reward.level <= current_level
+                    and db.is_stamina_type(reward.type)
+                ):
+                    next_stamina_levels.append(reward.level)
+
+        if next_stamina_levels:
+            target = min(current_level, min(next_stamina_levels) - 1)
+            if target < max(line.level for line in received_lines):
+                # The endpoint advances every open line together.  A lagging
+                # line cannot be claimed safely past its stamina reward when
+                # another line is already further ahead.
+                target = min(line.level for line in received_lines)
+            return target, False
+        return current_level, False
+
+    @staticmethod
+    def _tw_current_level(info: UserBattlepassInfo) -> Optional[int]:
+        season = db.battlepass_season.get(info.season_id)
+        if (
+            season is None
+            or info.point is None
+            or season.next_level_point <= 0
+        ):
+            return None
+        # BattlepassUtility.GetCurrentLevel in the TW client uses this exact
+        # formula.  max_level is a separate server field and is not the claim
+        # target sent by the official client.
+        return info.point // season.next_level_point + 1
+
+    async def _do_tw(self, client: pcrclient):
+        # Mission rewards can raise the pass level without returning updated
+        # user state.  Refresh Home before deciding the claim target.
+        await client.refresh()
+        battlepasses = list(client.data.battlepass_info.values())
+        if not battlepasses:
+            raise SkipError("目前无进行中的赛季通行证")
+
+        exclude_stamina = self.get_config('seasonpass_reward_stamina_exclude')
+        line_by_id = {}
+        if exclude_stamina:
+            top = await client.battlepass_top()
+            line_by_id = {line.line_id: line for line in top.line_list or []}
+
+        rewards = []
+        claimed_any = False
+        blocked_by_stamina = False
+        incomplete_line_data = False
+        incomplete_master_data = False
+        for info in battlepasses:
+            received_lines = info.line_received_level_list or []
+            if not received_lines:
+                incomplete_line_data = True
+                continue
+
+            current_level = self._tw_current_level(info)
+            if current_level is None:
+                incomplete_master_data = True
+                continue
+
+            target_level = current_level
+            if exclude_stamina:
+                target_level, incomplete = self._tw_safe_target_level(
+                    info, line_by_id, current_level
+                )
+                if incomplete:
+                    incomplete_line_data = True
+                    continue
+                blocked_by_stamina |= (
+                    target_level < current_level
+                    and any(
+                        line.level < current_level
+                        for line in received_lines
+                    )
+                )
+
+            if any(line.level < target_level for line in received_lines):
+                claimed_any = True
+                resp = await client.battlepass_receive_level_reward(
+                    info.season_id, target_level
+                )
+                rewards.extend(resp.reward_list or [])
+
+        if incomplete_line_data:
+            self._warn("通行证奖励线数据不完整，已跳过以避免误领体力")
+        if incomplete_master_data:
+            self._warn("通行证等级主数据不完整，已跳过奖励领取")
+        if blocked_by_stamina:
+            self._warn("下一个未领取区间包含体力，已停在该等级之前")
+        if claimed_any:
+            if rewards:
+                reward = await client.serialize_reward_summary(rewards)
+                self._log(f"领取了赛季通行证奖励，获得了:\n{reward}")
+            else:
+                self._log("领取了赛季通行证奖励")
+            return
+        if self.is_warn:
+            return
+        raise SkipError("没有可领取的赛季通行证奖励")
+
     async def do_task(self, client: pcrclient):
+        if get_region() == REGION_TW:
+            await self._do_tw(client)
+            return
+
         receive_all = not self.get_config('seasonpass_reward_stamina_exclude')
         seasonpasses = db.get_open_seasonpass()
         if not seasonpasses:

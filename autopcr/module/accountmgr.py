@@ -10,7 +10,8 @@ from ..core.sdkclient import account, platform
 from .modulemgr import ModuleManager, TaskResult, ModuleResult, eResultStatus, TaskResultInfo, ModuleResultInfo, ResultInfo
 import os, re, shutil
 from typing import Any, Dict, Iterator, List, Tuple, Union
-from ..constants import CLAN_BATTLE_FORBID_PATH, CONFIG_PATH, OLD_CONFIG_PATH, RESULT_DIR, BSDK, CHANNEL_OPTION, SUPERUSER
+from ..constants import CLAN_BATTLE_FORBID_PATH, CONFIG_PATH, OLD_CONFIG_PATH, RESULT_DIR, BSDK, TWSDK, CHANNEL_OPTION, SUPERUSER
+from ..core.region import REGION_CN, REGION_TW, set_region, reset_region
 from asyncio import Lock
 import json
 from copy import deepcopy
@@ -18,6 +19,7 @@ import hashlib
 from ..db.database import db
 import datetime
 import traceback
+from contextvars import ContextVar
 from ..core.clientpool import instance as clientpool, PoolClientWrapper
 from ..sdk.sdkclients import create
 from ..util.logger import instance as logger
@@ -37,6 +39,9 @@ class AccountData:
     username: str = ""
     password: str = ""
     channel: str = BSDK
+    viewer_id: str = ""
+    server_id: int = 0
+    app_version: str = ""
     config: Dict[str, Any] = field(default_factory=dict)
     daily_result: List[TaskResultInfo] = field(default_factory=list)
     single_result: Dict[str, List[ModuleResultInfo]] = field(default_factory=dict)
@@ -77,25 +82,58 @@ class Account(ModuleManager):
         self.qq = qid
         self.alias = account
         self.token = f"{self.qq}_{self.alias}"
+        self._region_token_stack: ContextVar[tuple] = ContextVar(
+            f'account_region_tokens_{id(self)}', default=()
+        )
         super().__init__(deepcopy(self.data.config))
 
     async def _do_aenter(self):
-        if not self.readonly:
-            logger.debug(f"Acquire lock {self._filename}")
-            await self._lck.acquire()
-            await super().__aenter__()
-        return self
+        region = REGION_TW if self.data.channel == TWSDK else REGION_CN
+        acquired = False
+        region_token = None
+        try:
+            if not self.readonly:
+                logger.debug(f"Acquire lock {self._filename}")
+                await self._lck.acquire()
+                acquired = True
+
+            region_token = set_region(region)
+            self._region_token_stack.set(
+                self._region_token_stack.get() + (region_token,)
+            )
+            if not self.readonly:
+                await super().__aenter__()
+            return self
+        except BaseException:
+            if acquired:
+                self._lck.release()
+            if region_token is not None:
+                tokens = self._region_token_stack.get()
+                if tokens and tokens[-1] is region_token:
+                    self._region_token_stack.set(tokens[:-1])
+                reset_region(region_token)
+            raise
 
     async def __aenter__(self):
         return await self._do_aenter()
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        if not self.readonly:
-            await super().__aexit__(exc_type, exc_val, exc_tb)
-            if self.data != self.old_data:
-                await self.save_data()
-            self._lck.release()
-            logger.debug(f"Release lock {self._filename}")
+        try:
+            if not self.readonly:
+                try:
+                    await super().__aexit__(exc_type, exc_val, exc_tb)
+                    if self.data != self.old_data:
+                        await self.save_data()
+                finally:
+                    if self._lck.locked():
+                        self._lck.release()
+                        logger.debug(f"Release lock {self._filename}")
+        finally:
+            tokens = self._region_token_stack.get()
+            if tokens:
+                region_token = tokens[-1]
+                self._region_token_stack.set(tokens[:-1])
+                reset_region(region_token)
 
     async def save_data(self):
         with open(self._filename, 'w') as f:
@@ -183,7 +221,10 @@ class Account(ModuleManager):
             self.data.username,
             self.data.password,
             platform.IOS,
-            self._parent.farmer
+            self._parent.farmer,
+            self.data.viewer_id,
+            self.data.server_id,
+            self.data.app_version,
         )))
         return client
 
@@ -192,7 +233,10 @@ class Account(ModuleManager):
             self.data.username,
             self.data.password,
             platform.Android,
-            self._parent.farmer
+            self._parent.farmer,
+            self.data.viewer_id,
+            self.data.server_id,
+            self.data.app_version,
         )))
         return client
 
@@ -210,6 +254,9 @@ class Account(ModuleManager):
             'password': 8 * "*" if self.data.password else "",
             'channel': self.data.channel,
             'channel_option': CHANNEL_OPTION,
+            'viewer_id': self.data.viewer_id,
+            'server_id': self.data.server_id,
+            'app_version': self.data.app_version,
             'area': super().generate_tab(clan = self._parent.secret.clan)
         }
 
@@ -323,9 +370,12 @@ class AccountManager:
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if not self.readonly:
-            if self.secret != self.old_secret:
-                self.save_secret()
-            self._lck.release()
+            try:
+                if self.secret != self.old_secret:
+                    self.save_secret()
+            finally:
+                if self._lck.locked():
+                    self._lck.release()
 
     @property
     def farmer(self) -> bool:
@@ -404,7 +454,7 @@ class AccountManager:
         for line in tsv.splitlines():
             if not line:
                 continue
-            alias, username, password, *channel = line.split('\t')
+            alias, username, password, *extra = line.split('\t')
 
             if not AccountManager.pathsyntax.fullmatch(alias):
                 ok = False
@@ -412,19 +462,40 @@ class AccountManager:
             if alias in exist_accounts:
                 ok = False
                 msg.append(f'昵称重复{alias}')
-            channel = channel[0] if channel else BSDK
+            channel = extra[0] if extra else BSDK
             if channel not in CHANNEL_OPTION:
                 ok = False
                 msg.append(f'未知服务器{channel}')
 
+            viewer_id = extra[1] if len(extra) > 1 else ''
+            try:
+                server_id = int(extra[2]) if len(extra) > 2 and extra[2] else 0
+            except ValueError:
+                server_id = -1
+            app_version = extra[3] if len(extra) > 3 else ''
+            if channel == TWSDK:
+                if viewer_id and not viewer_id.isdigit():
+                    ok = False
+                    msg.append(f'{alias}的 VIEWER_ID 无效')
+                if server_id not in (0, 1, 2, 3, 4):
+                    ok = False
+                    msg.append(f'{alias}的 TW_SERVER_ID 无效')
+
             exist_accounts.add(alias)
-            acc.append((alias, username, password, channel))
+            acc.append((alias, username, password, channel, viewer_id, server_id, app_version))
         if not ok:
             return False, '\n'.join(msg)
 
-        for alias, username, password, channel in acc:
+        for alias, username, password, channel, viewer_id, server_id, app_version in acc:
             with open(self.path(alias), 'w') as f:
-                f.write(AccountData(username = username, password = password, channel = channel).to_json())
+                f.write(AccountData(
+                    username=username,
+                    password=password,
+                    channel=channel,
+                    viewer_id=viewer_id,
+                    server_id=server_id,
+                    app_version=app_version,
+                ).to_json())
         return True, f'成功导入{len(acc)}个账号'
 
     async def generate_info(self):

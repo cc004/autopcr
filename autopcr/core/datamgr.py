@@ -8,15 +8,18 @@ from ..model.common import *
 from ..model.custom import EffectiveUnitData, ItemType
 import json, base64, gzip
 from ..db.assetmgr import instance as assetmgr
-from ..db.dbmgr import instance as dbmgr
+from ..db.dbmgr import get_dbmgr
 from ..db.database import db
 from ..db.models import ItemDatum, TrainingQuestDatum
 from ..util.linq import flow
 from asyncio import Lock
+from .region import get_region
+from pydantic import PrivateAttr
 
 _data_lck = Lock()
 
 class datamgr(BaseModel, Component[apiclient]):
+    _container: apiclient = PrivateAttr(default=None)
     ready: bool = False
     settings: IniSetting = None
     stamina_full_recovery_time: int = 0
@@ -73,15 +76,25 @@ class datamgr(BaseModel, Component[apiclient]):
     alces_appear_story_flag: int = 0
     alces_receive_tutorial_item_flag: int = 0
     unit_role_gacha_exec_count: int = 0
+    battlepass_info: Dict[int, UserBattlepassInfo] = {}
+    is_battlepass_mission_receive_auto: bool = False
+    is_battlepass_level_receive_auto: bool = False
 
     @staticmethod
-    async def try_update_database(ver: int):
+    async def try_update_database(ver: int, region: str = None):
+        region = region or get_region()
         async with _data_lck:
+            manager = get_dbmgr(region)
+            if region != 'cn':
+                # Regional mirror databases are loaded by dbstart.ensure_database.
+                if manager.ver:
+                    db.get(region).update(manager)
+                return
             if not assetmgr.ver or assetmgr.ver < ver:
                 await assetmgr.init(ver)
-            if not dbmgr.ver or dbmgr.ver < assetmgr.ver: 
-                await dbmgr.update_db(assetmgr)
-                db.update(dbmgr)
+            if not manager.ver or manager.ver < assetmgr.ver:
+                await manager.update_db(assetmgr)
+                db.get(region).update(manager)
 
     def update_stamina_recover(self):
         max_stamina = db.team_info[self.team_level].max_stamina
@@ -130,7 +143,20 @@ class datamgr(BaseModel, Component[apiclient]):
         return campaign_list[campaign]()
 
     def get_campaign_times(self, condition_func) -> int:
-        times = [db.get_campaign_times(campaign_id) for campaign_id in self.campaign_list if condition_func(campaign_id) and db.is_level_effective_scope_in_campaign(self.team_level, campaign_id)]
+        # The live server can advertise a newly opened campaign before the
+        # regional master-data mirror publishes its campaign_schedule row.
+        # Unknown campaigns have no trustworthy category or multiplier, so
+        # ignore them conservatively instead of failing every campaign check.
+        campaign_schedule = db.campaign_schedule
+        times = [
+            db.get_campaign_times(campaign_id)
+            for campaign_id in (self.campaign_list or [])
+            if campaign_id in campaign_schedule
+            and condition_func(campaign_id)
+            and db.is_level_effective_scope_in_campaign(
+                self.team_level, campaign_id
+            )
+        ]
         if not times:
             return 0
         times = max(times)

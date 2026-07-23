@@ -138,8 +138,21 @@ class ModuleManager:
         return res
 
     async def do_task(self, config: dict, modules: List[Module], isAdminCall: bool = False) -> TaskResult:
-        await db.enter_cache_scope()
+        # TW learns the authoritative resource version during login.  Complete
+        # that handshake before any campaign/calendar query consults regional
+        # master data; merely opening an account/config context stays offline.
+        from ..core.region import get_region, REGION_TW
+        client = self.client
+        activated = False
+        cache_scope = False
         try:
+            if get_region() == REGION_TW:
+                await client.activate()
+                activated = True
+                await client.login()
+
+            await db.enter_cache_scope()
+            cache_scope = True
             if db.is_clan_battle_time() and self.is_clan_battle_forbidden() and not isAdminCall:
                 key = 'clan_battle' if not modules else modules[0].key
                 return TaskResult(
@@ -152,30 +165,29 @@ class ModuleManager:
                     }
                 )
 
-            client = self.client
-            activated = False
-            await client.activate()
-            activated = True
-            try:
-                self.config["stamina_relative_not_run"] = any(db.is_campaign(campaign) for campaign in self.config.get("stamina_relative_not_run_campaign_before_one_day", []))
+            if not activated:
+                await client.activate()
+                activated = True
 
-                self.config.update(config)
+            self.config["stamina_relative_not_run"] = any(db.is_campaign(campaign) for campaign in self.config.get("stamina_relative_not_run_campaign_before_one_day", []))
 
-                resp: TaskResult = TaskResult(
-                        order = [],
-                        result = {}
-                )
+            self.config.update(config)
 
-                for module in modules:
-                    resp.order.append(module.key)
-                    resp.result[module.key] = await module.do_from(client)
-                    if resp.result[module.key].status == eResultStatus.PANIC:
-                        break
+            resp: TaskResult = TaskResult(
+                    order = [],
+                    result = {}
+            )
 
-                return resp
-            finally:
-                if activated:
-                    client.deactivate()
+            for module in modules:
+                resp.order.append(module.key)
+                resp.result[module.key] = await module.do_from(client)
+                if resp.result[module.key].status == eResultStatus.PANIC:
+                    break
+
+            return resp
         finally:
-            await db.exit_cache_scope()
+            if activated:
+                client.deactivate()
+            if cache_scope:
+                await db.exit_cache_scope()
 
