@@ -53,7 +53,7 @@ cron_modules = ModuleList(
 daily_modules = ModuleList(
     '日常',
     'daily',
-    [
+    [        
         global_config,
         chara_fortune,
         mission_receive_first,
@@ -118,6 +118,8 @@ daily_modules = ModuleList(
         clanbattle_shop,
         master_shop_talent,
         master_shop,
+        caravan_play,
+        caravan_shop_buy,
 
         clan_equip_request,
         love_up,
@@ -147,6 +149,7 @@ planning_modules = ModuleList(
         get_need_pure_memory,
         get_need_sp_memory,
         get_need_xinsui,
+        half_schedule,
     ],
     hidden_in_batch=True,
 )
@@ -205,26 +208,25 @@ tool_modules = ModuleList(
     [
         labyrinth_start_reroll,
         ex_equip_rainbow_enchance,
-        ex_equip_power_maximun,
         set_my_party2,
+        clear_my_party,
         find_talent_quest,
         find_clan_talent_quest,
         # return_jewel,
         # cook_pudding,
+        ex_equip_info,
         ex_equip_rank_up,
         ex_equip_enhance_up,
+        ex_equip_power_maximun,
         ex_equip_state,
-        half_schedule,
         caravan_play,
         caravan_shop_buy,
         clan_battle_knive,
-        ex_equip_info,
-        travel_team_view,
-        missing_emblem,
         get_clan_support_unit,
-        clear_my_party,
         remove_cb_ex_equip,
         remove_cb_support,
         redeem_unit_swap,
+        travel_team_view,
+        missing_emblem,
     ]
 )
