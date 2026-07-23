@@ -23,8 +23,23 @@ class dbmgr:
         self._dbpath = os.path.join(CACHE_DIR, 'db', f'{ver}.db')
         if not os.path.exists(self._dbpath):
             data = await mgr.db()
-            with open(self._dbpath, 'wb') as f:
-                f.write(data)
+            # 先写临时文件再原子改名，避免中途被打断时在最终路径上留下半截库
+            # 后缀不能是 .db，否则会被 db_start 的 glob 当成一个可用版本挑走
+            tmppath = f'{self._dbpath}.{os.getpid()}.tmp'
+            try:
+                with open(tmppath, 'wb') as f:
+                    f.write(data)
+                    f.flush()
+                    os.fsync(f.fileno())
+                os.replace(tmppath, self._dbpath)
+            except OSError:
+                # 并发下别的进程可能已经落好同一版本，有完整的库可用就不必失败
+                if not os.path.exists(self._dbpath):
+                    raise
+                logger.warning(f'db version {ver} was provided by another process')
+            finally:
+                if os.path.exists(tmppath):
+                    os.remove(tmppath)
             logger.info(f'db version {ver} updated')
         self._engine = create_engine(f'sqlite:///{self._dbpath}')
         self.ver = ver
