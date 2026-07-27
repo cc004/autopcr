@@ -114,15 +114,11 @@ class ex_equip_recycle(Module):
             if serial_ids:
                 gap = client.data.settings.ex_equip.ex_equip_limit_consume_num
                 if ex_equip_show_detail:
-                    self._log(f"  开始分解 {category}，共{len(serial_ids)}件")
+                    self._log(f"  分解 {category}，共{len(serial_ids)}件")
                 
                 for i in range(0, len(serial_ids), gap):
                     ret = await client.item_recycle_ex(serial_ids[i:i+gap])
                     rewards.extend(ret.item_list)
-                    
-                    if ex_equip_show_detail:
-                        progress = min(i + gap, len(serial_ids))
-                        self._log(f"  进度: {progress}/{len(serial_ids)}")
             
             return total_decompose
 
