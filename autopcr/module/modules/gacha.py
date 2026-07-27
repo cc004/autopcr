@@ -138,7 +138,7 @@ class role_gacha(Module):
         current_ticket_cnt = client.data.get_inventory(db.unit_role_gach_ticket)
         cnt = 0
         while current_ticket_cnt > 0:
-            times = min(client.data.settings.unit_role.gacha_exec_limit, current_ticket_cnt, (db.unit_role_gacha_level[resp.gacha_level + 1].exec_count - resp.exec_count) if resp.gacha_level in db.unit_role_gacha_level else current_ticket_cnt)
+            times = min(client.data.settings.unit_role.gacha_exec_limit, current_ticket_cnt, (db.unit_role_gacha_level[resp.gacha_level + 1].exec_count - resp.exec_count) if resp.gacha_level + 1 in db.unit_role_gacha_level else current_ticket_cnt)
             resp = await client.unit_role_gacha_exec(times, current_ticket_cnt)
             current_ticket_cnt -= times
             cnt += times
