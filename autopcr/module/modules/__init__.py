@@ -118,8 +118,6 @@ daily_modules = ModuleList(
         clanbattle_shop,
         master_shop_talent,
         master_shop,
-        caravan_play,
-        caravan_shop_buy,
 
         clan_equip_request,
         love_up,
@@ -219,6 +217,7 @@ tool_modules = ModuleList(
         ex_equip_enhance_up,
         ex_equip_power_maximun,
         ex_equip_state,
+        ex_equip_recycle,
         caravan_play,
         caravan_shop_buy,
         clan_battle_knive,
