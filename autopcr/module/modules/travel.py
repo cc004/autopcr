@@ -72,9 +72,6 @@ class ex_equip_recycle(Module):
 
             if ex_equip_show_detail:
                 self._log(f"\n【{category}】当前可分解装备:")
-                for equip_id, count in sorted(equip_count.items()):
-                    equip_name = db.get_ex_equip_name(equip_id)
-                    self._log(f"  {equip_name}: {count}件")
 
             to_decompose = []
             total_decompose = 0
