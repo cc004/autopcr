@@ -14,9 +14,10 @@ import random
 import time
 
 @description('''
+@description('''
 分解对应的EX装备，不分解已锁或已装备的EX装备
 '''.strip())
-@multichoice("ex_equip_recycle_category", "稀有度", ['普通铜', '普通银'], ['普通铜', '普通银', '会战银'])
+@multichoice("ex_equip_recycle_category", "稀有度", ['普通铜', '普通银', '普通金'], ['普通铜', '普通银', '会战银', '普通金', '会战金'])
 @name("EX装备分解")
 @default(True)
 class ex_equip_recycle(Module):
@@ -24,6 +25,8 @@ class ex_equip_recycle(Module):
         '普通铜': lambda ex_id: db.ex_equipment_data[ex_id].rarity == 1 and db.ex_equipment_data[ex_id].clan_battle_equip_flag == 0,
         '普通银': lambda ex_id: db.ex_equipment_data[ex_id].rarity == 2 and db.ex_equipment_data[ex_id].clan_battle_equip_flag == 0,
         '会战银': lambda ex_id: db.ex_equipment_data[ex_id].rarity == 2 and db.ex_equipment_data[ex_id].clan_battle_equip_flag == 1,
+        '普通金': lambda ex_id: db.ex_equipment_data[ex_id].rarity == 3 and db.ex_equipment_data[ex_id].clan_battle_equip_flag == 0,
+        '会战金': lambda ex_id: db.ex_equipment_data[ex_id].rarity == 3 and db.ex_equipment_data[ex_id].clan_battle_equip_flag == 1,
     }
 
     async def do_task(self, client: pcrclient):
