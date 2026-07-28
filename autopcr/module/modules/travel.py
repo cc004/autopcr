@@ -158,17 +158,10 @@ class ex_equip_recycle(Module):
             await resolve_with_keep(self.task[category], keep_count, category)
 
         if cnt:
-            if ex_equip_show_detail:
-                self._log(f"\n{'='*40}")
-            
-            decompose_msg = ' '.join(f"{category}x{count}" for category, count in cnt.items())
-            self._log("分解完成！")
-            self._log(f"分解了 {decompose_msg}")
-            
-            if rewards:
-                reward_summary = await client.serialize_reward_summary(rewards)
-                if reward_summary and reward_summary.strip('无'):
-                    self._log(f"获得了:\n{reward_summary.strip('无')}")
+            msg = "分解了" + ' '.join(f"{category}x{cnt}" for category, cnt in cnt.items())
+            self._log(msg)
+            msg = "获得了:\n" + (await client.serialize_reward_summary(rewards)).strip('无')
+            self._log(msg)
                 else:
                     self._log("获得了: 无")
         else:
