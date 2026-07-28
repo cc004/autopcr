@@ -19,6 +19,7 @@ import time
 开启"分解未满星装备"后，会将所有未满5星的装备纳入分解范围。
 '''.strip())
 @multichoice("ex_equip_recycle_category", "分解稀有度", ['普通铜', '普通银', '会战银'], ['普通铜', '普通银', '会战银', '普通金', '会战金'])
+@booltype("ex_equip_preview_only", "看消耗", False)
 @inttype("ex_equip_normal_gold_keep", "普通金保留数量", 9, list(range(100)))
 @inttype("ex_equip_clan_gold_keep", "会战金保留数量", 9, list(range(100)))
 @booltype("ex_equip_enable_keep", "启用保留数量限制", False)
@@ -42,9 +43,11 @@ class ex_equip_recycle(Module):
         ex_equip_clan_gold_keep: int = self.get_config("ex_equip_clan_gold_keep")
         ex_equip_include_not_max_star: bool = self.get_config("ex_equip_include_not_max_star")
         ex_equip_show_detail: bool = self.get_config("ex_equip_show_detail")
+        ex_equip_preview_only: bool = self.get_config("ex_equip_preview_only")  
         
         cnt = Counter()
         rewards = []
+        preview_details = {}  # 存储预览详情
 
         # 获取已装备的EX装备
         slot_ex = set(ex.serial_id for unit in client.data.unit.values() for ex in unit.ex_equip_slot if ex.serial_id) | \
@@ -63,16 +66,13 @@ class ex_equip_recycle(Module):
             """分解装备，保留指定数量"""
             
             # 1. 先统计所有符合条件的装备
-            all_equips = []
-            target_equips = []  # 要处理的装备
+            target_equips = []
             
             for ex in client.data.ex_equips.values():
                 if not (filter_func(ex.ex_equipment_id) and \
                    ex.protection_flag != 2 and \
                    ex.serial_id not in slot_ex):
                     continue
-                
-                all_equips.append(ex)
                 
                 # 判断是否应该纳入分解范围
                 should_include = False
@@ -101,31 +101,18 @@ class ex_equip_recycle(Module):
                 equip_id = ex.ex_equipment_id
                 equip_count[equip_id] = equip_count.get(equip_id, 0) + 1
             
-            if ex_equip_show_detail:
-                status_text = "未满星" if ex_equip_include_not_max_star else "未强化"
-                self._log(f"\n【{category}】{status_text}装备统计:")
-                total_target = 0
-                for equip_id, count in sorted(equip_count.items()):
-                    equip_name = db.get_ex_equip_name(equip_id)
-                    self._log(f"  {equip_name}: {count}件（{status_text}）")
-                    total_target += count
-                self._log(f"  总计: {total_target}件{status_text}装备")
-                
-                if keep_count > 0:
-                    self._log(f"  保留设置: 每种保留{keep_count}件")
-                else:
-                    self._log(f"  保留设置: 全部分解")
             
             # 3. 计算每种装备需要分解的数量
             to_decompose_serial_ids = []
             total_decompose = 0
+            category_details = []
             
             for equip_id, count in equip_count.items():
                 equip_name = db.get_ex_equip_name(equip_id)
                 
                 # 如果总数 <= 保留数量，全部保留
                 if count <= keep_count:
-                    if ex_equip_show_detail:
+                    if ex_equip_show_detail or ex_equip_preview_only:
                         self._log(f"  {equip_name}: {count}件 ≤ 保留{keep_count}件，全部保留")
                     continue
                 
@@ -134,7 +121,16 @@ class ex_equip_recycle(Module):
                 total_decompose += decompose_count
                 cnt[category] += decompose_count
                 
-                if ex_equip_show_detail:
+                # 记录预览详情
+                category_details.append({
+                    'name': equip_name,
+                    'total': count,
+                    'keep': keep_count,
+                    'decompose': decompose_count,
+                    'equip_id': equip_id
+                })
+                
+                if ex_equip_show_detail or ex_equip_preview_only:
                     self._log(f"  {equip_name}: {count}件，保留{keep_count}件，分解{decompose_count}件")
                 
                 # 获取该装备的serial_id列表
@@ -150,13 +146,21 @@ class ex_equip_recycle(Module):
                 # 取需要分解的数量
                 to_decompose_serial_ids.extend(equip_serial_ids_sorted[:decompose_count])
             
+            # 存储预览详情
+            if ex_equip_preview_only:
+                preview_details[category] = {
+                    'details': category_details,
+                    'total_count': total_decompose,
+                    'serial_ids': to_decompose_serial_ids.copy()
+                }
+            
             if not to_decompose_serial_ids:
                 if ex_equip_show_detail:
                     self._log(f"  {category}: 无需分解")
                 return
             
-            # 4. 批量分解
-            if to_decompose_serial_ids:
+            # 4. 批量分解（仅在非预览模式下执行）
+            if to_decompose_serial_ids and not ex_equip_preview_only:
                 gap = client.data.settings.ex_equip.ex_equip_limit_consume_num
                 if ex_equip_show_detail:
                     self._log(f"  分解了 {category}，共{len(to_decompose_serial_ids)}件")
@@ -164,7 +168,10 @@ class ex_equip_recycle(Module):
                 for i in range(0, len(to_decompose_serial_ids), gap):
                     ret = await client.item_recycle_ex(to_decompose_serial_ids[i:i+gap])
                     rewards.extend(ret.item_list)
-                    
+            elif ex_equip_preview_only:
+                # 预览模式下，记录将要分解的数量
+                if ex_equip_show_detail:
+                    self._log(f"  将分解 {category}，共{len(to_decompose_serial_ids)}件")
 
         # 执行分解
         for category in ex_equip_recycle_category:
@@ -174,17 +181,38 @@ class ex_equip_recycle(Module):
             
             keep_count = keep_config.get(category, 0)
             
-            if ex_equip_show_detail:
+            if ex_equip_show_detail or ex_equip_preview_only:
                 self._log(f"\n{'='*40}")
                 status_text = "未满星" if ex_equip_include_not_max_star else "未强化"
+                preview_text = "【看消耗】" if ex_equip_preview_only else ""
                 if ex_equip_enable_keep and category in ['普通金', '会战金']:
-                    self._log(f"处理 {category}（{status_text}，保留数量: {keep_count}件）")
+                    self._log(f"{preview_text}处理 {category}（{status_text}，保留数量: {keep_count}件）")
                 else:
-                    self._log(f"处理 {category}（{status_text}，全部分解）")
+                    self._log(f"{preview_text}处理 {category}（{status_text}，全部分解）")
             
             await resolve_with_keep(self.task[category], keep_count, category)
 
         # 输出结果
+        if ex_equip_preview_only:
+            # 预览模式：只显示预览信息，不执行分解
+            self._log(f"\n{'='*40}")
+            self._log("以下装备将被分解：")
+            
+            total_preview = 0
+            for category, info in preview_details.items():
+                if info['details']:
+                    self._log(f"\n{category}:")
+                    for detail in info['details']:
+                        self._log(f"  {detail['name']}: {detail['decompose']}件")
+                        total_preview += detail['decompose']
+            
+            if total_preview > 0:
+                self._log(f"\n总计将分解 {total_preview} 件装备")
+            else:
+                self._log("没有需要分解的装备")
+            return  # 预览模式直接返回
+        
+        # 正常执行模式
         if cnt:
             if ex_equip_show_detail:
                 self._log(f"\n{'='*40}")
@@ -198,6 +226,8 @@ class ex_equip_recycle(Module):
                     self._log(f"获得了:\n{reward_summary.strip('无')}")
                 else:
                     self._log("获得了: 无")
+            else:
+                self._log("获得了: 无")
         else:
             raise SkipError("没有可分解的装备")
             
