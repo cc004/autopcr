@@ -16,7 +16,7 @@ import time
 @description('''
 分解对应的EX装备，不分解已锁或已装备的EX装备,可设置每种金装保留数量，只分解未强化的装备
 '''.strip())
-@multichoice("ex_equip_recycle_category", "分解稀有度", ['普通铜', '普通银', '普通金'], ['普通铜', '普通银', '会战银', '普通金', '会战金'])
+@multichoice("ex_equip_recycle_category", "分解稀有度", ['普通铜', '普通银', '会战银'], ['普通铜', '普通银', '会战银', '普通金', '会战金'])
 @inttype("ex_equip_clan_gold_keep", "会战金保留数量", 9, list(range(100)))
 @inttype("ex_equip_normal_gold_keep", "普通金保留数量", 9, list(range(100)))
 @booltype("ex_equip_enable_keep", "启用保留数量限制", False)
