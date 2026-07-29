@@ -14,15 +14,15 @@ import random
 import time
 
 @description('''
-分解对应的EX装备，不分解已锁或已装备的EX装备。
+分解对应的EX装备，不分解已锁或已装备或5星的EX装备。
 可设置每种金装保留数量，只分解未强化的装备。
-开启"分解未满星装备"后，会将所有未满5星的装备纳入分解范围。
+开启"分解未满星装备"后，会将所有已强化但未满5星的装备纳入分解范围。
 '''.strip())
 @multichoice("ex_equip_recycle_category", "分解稀有度", ['普通铜', '普通银', '会战银'], ['普通铜', '普通银', '会战银', '普通金', '会战金'])
 @booltype("ex_equip_preview_only", "看消耗", False)
-@inttype("ex_equip_normal_gold_keep", "普通金保留数量", 9, list(range(100)))
-@inttype("ex_equip_clan_gold_keep", "会战金保留数量", 9, list(range(100)))
-@booltype("ex_equip_enable_keep", "启用保留数量限制", False)
+@inttype("ex_equip_normal_gold_keep", "可分解普通金保留数量", 30, list(range(100)))
+@inttype("ex_equip_clan_gold_keep", "可分解会战金保留数量", 30, list(range(100)))
+@booltype("ex_equip_enable_keep", "启用保留数量限制", True)
 @booltype("ex_equip_include_not_max_star", "分解未满星装备", False) 
 @booltype("ex_equip_show_detail", "显示详细分解信息", False)
 @name("EX装备分解")
