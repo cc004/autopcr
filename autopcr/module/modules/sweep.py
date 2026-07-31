@@ -1,4 +1,7 @@
 from abc import abstractmethod
+from typing import List
+
+from ...db.models import QuestDatum
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
@@ -212,151 +215,139 @@ class special_underground_skip(Module):
             raise SkipError("今日已扫荡特别地下城")
 
 
-@tag_stamina_consume
 class investigate_sweep(Module):
     @abstractmethod
-    def quest_id(self) -> int: ...
+    def quest_data(self) -> List[QuestDatum]: ...
     @abstractmethod
-    def is_double_drop(self, client: pcrclient) -> bool: ...
+    def campaign_times(self, client: pcrclient) -> int: ...
     @abstractmethod
-    def target_item(self) -> ItemType: ...
+    def required_count(self, client: pcrclient) -> int: ...
     @abstractmethod
-    def value(self, campaign: bool) -> int: ...
+    def stored_count(self, client: pcrclient) -> int: ...
     @abstractmethod
-    def force_stop(self, client: pcrclient) -> bool: ...
+    def material_name(self) -> str: ...
+    @abstractmethod
+    def config_key(self, campaign_times: int) -> str: ...
 
     async def do_task(self, client: pcrclient):
-        if self.force_stop(client):
-            raise SkipError("今日强制不刷取")
-        times = self.value(self.is_double_drop(client))
-        try:
-            result, clear_count, no_stamina = await client.quest_skip_aware(self.quest_id(), times, True, True)
-        except AbortError as e:
-            raise e
-        if no_stamina:
-            raise SkipError(f"{db.get_quest_name(self.quest_id())}体力不足")
+        book_count = self.get_config(self.config_key(self.campaign_times(client)))
+        if book_count <= 0:
+            raise SkipError(f"{self.material_name()}扫荡本数为0")
 
-        msg = await client.serialize_reward_summary(result)
-        self._log(f"重置{clear_count // 5 - 1}次，刷取了{clear_count}次，获得了{msg}")
+        if self.stored_count(client) >= self.required_count(client):
+            raise SkipError(f"{self.material_name()}需求已满足")
 
+        quests = [quest for quest in self.quest_data() if client.data.is_quest_sweepable(quest.quest_id)]
+        if not quests:
+            raise SkipError(f"没有已通关的{self.material_name()}关卡")
+
+        max_book_count = len(quests) * 4
+        planned_count = min(book_count, max_book_count)
+        if planned_count < book_count:
+            self._log(f"当前只有{len(quests)}本已通关，扫荡本数由{book_count}调整为{planned_count}")
+
+        target_count = {}
+        rewards = []
+        clear_count = 0
+        no_stamina = False
+        for index in range(planned_count):
+            if self.stored_count(client) >= self.required_count(client):
+                break
+
+            quest = quests[index % len(quests)]
+            daily_limit = max(1, quest.daily_limit)
+            target_count[quest.quest_id] = target_count.get(quest.quest_id, 0) + daily_limit
+            try:
+                result, current_clear_count, no_stamina = await client.quest_skip_aware(
+                    quest.quest_id,
+                    target_count[quest.quest_id],
+                    recover=True,
+                    is_total=True,
+                )
+            except SkipError:
+                continue
+
+            rewards.extend(result)
+            clear_count += current_clear_count
+            if no_stamina:
+                break
+
+        if not clear_count:
+            if no_stamina:
+                raise SkipError(f"{self.material_name()}关卡体力不足")
+            raise SkipError(f"没有可扫荡的{self.material_name()}关卡次数")
+
+        msg = await client.serialize_reward_summary(rewards)
+        self._log(f"按高到低扫荡{planned_count}本（含重置轮次），实际刷取{clear_count}次，获得了{msg}")
+
+
+def _heart_book_candidates() -> List[int]:
+    return list(range(len(db.heart_piece_quest) * 4 + 1))
+
+
+def _star_cup_book_candidates() -> List[int]:
+    return list(range(len(db.star_cup_quest) * 4 + 1))
+
+
+@description('按心碎关卡从高到低扫荡。配置刷取关卡数，超过当前关卡数则从最高本重置刷下一轮，需求已满足时不刷。')
+@name('心碎扫荡')
+@conditional_not_execution('force_stop_heart_sweep', [], desc='不刷心碎庆典')
+@inttype('xinsui_sweep_no_campaign_books', '无庆典刷前几本', 2, _heart_book_candidates)
+@inttype('xinsui_sweep_2x_campaign_books', '2倍庆典刷前几本', 2, _heart_book_candidates)
+@inttype('xinsui_sweep_3x_campaign_books', '3倍及以上庆典刷前几本', 2, _heart_book_candidates)
+@default(True)
+@tag_stamina_consume
 class xinsui_sweep(investigate_sweep):
-    def is_double_drop(self, client: pcrclient) -> bool:
-        return client.data.is_heart_piece_campaign()
-    def target_item(self) -> ItemType:
-        return db.xinsui
-    def force_stop(self, client: pcrclient) -> bool:
-        return client.is_heart_sweep_not_run()
-    def value(self, campaign: bool):
-        if not campaign:
-            return self.get_config(f'heart{self.quest_id() % 10}_sweep_times')
-        else:
-            return self.get_config(f'heart{self.quest_id() % 10}_sweep_campaign_times')
+    def quest_data(self) -> List[QuestDatum]:
+        return db.heart_piece_quest
 
+    def campaign_times(self, client: pcrclient) -> int:
+        return client.data.get_heart_piece_campaign_times()
+
+    def required_count(self, client: pcrclient) -> int:
+        return client.data.get_suixin_demand()[1]
+
+    def stored_count(self, client: pcrclient) -> int:
+        return client.data.get_inventory(db.xinsui) + client.data.get_inventory(db.heart) * 10
+
+    def material_name(self) -> str:
+        return '心碎'
+
+    def config_key(self, campaign_times: int) -> str:
+        if campaign_times <= 1:
+            return 'xinsui_sweep_no_campaign_books'
+        if campaign_times == 2:
+            return 'xinsui_sweep_2x_campaign_books'
+        return 'xinsui_sweep_3x_campaign_books'
+
+
+@description('按星球杯关卡从高到低扫荡。配置值为关卡本数，超过当前本数后继续从最高本开始下一轮，最多支持3次重置。需求已满足时不刷。')
+@name('星球杯扫荡')
+@conditional_not_execution('force_stop_star_cup_sweep', [], desc='不刷星球杯庆典')
+@inttype('starcup_sweep_no_campaign_books', '无庆典刷前几本', 0, _star_cup_book_candidates)
+@inttype('starcup_sweep_2x_campaign_books', '2倍庆典刷前几本', 0, _star_cup_book_candidates)
+@inttype('starcup_sweep_3x_campaign_books', '3倍及以上庆典刷前几本', 0, _star_cup_book_candidates)
+@default(False)
+@tag_stamina_consume
 class starcup_sweep(investigate_sweep):
-    def is_double_drop(self, client: pcrclient) -> bool:
-        return client.data.is_star_cup_campaign()
-    def target_item(self) -> ItemType:
-        return db.xingqiubei
-    def force_stop(self, client: pcrclient) -> bool:
-        return client.is_star_cup_sweep_not_run()
-    def value(self, campaign: bool):
-        if not campaign:
-            return self.get_config(f'starcup{self.quest_id() % 10}_sweep_times')
-        else:
-            return self.get_config(f'starcup{self.quest_id() % 10}_sweep_campaign_times')
+    def quest_data(self) -> List[QuestDatum]:
+        return db.star_cup_quest
 
-@singlechoice("heart9_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
-@singlechoice("heart9_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
-@name('刷取心碎9')
-@default(False)
-class xinsui9_sweep(xinsui_sweep):
-    def quest_id(self) -> int:
-        return 18001009
+    def campaign_times(self, client: pcrclient) -> int:
+        return client.data.get_star_cup_campaign_times()
 
-@singlechoice("heart8_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
-@singlechoice("heart8_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
-@name('刷取心碎8')
-@default(False)
-class xinsui8_sweep(xinsui_sweep):
-    def quest_id(self) -> int:
-        return 18001008
+    def required_count(self, client: pcrclient) -> int:
+        return client.data.get_xingqiubei_demand()
 
-@singlechoice("heart7_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
-@singlechoice("heart7_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
-@name('刷取心碎7')
-@default(False)
-class xinsui7_sweep(xinsui_sweep):
-    def quest_id(self) -> int:
-        return 18001007
+    def stored_count(self, client: pcrclient) -> int:
+        return client.data.get_inventory(db.xingqiubei)
 
-@singlechoice("heart6_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
-@singlechoice("heart6_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
-@name('刷取心碎6')
-@default(False)
-class xinsui6_sweep(xinsui_sweep):
-    def quest_id(self) -> int:
-        return 18001006
+    def material_name(self) -> str:
+        return '星球杯'
 
-@singlechoice("heart5_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
-@singlechoice("heart5_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
-@name('刷取心碎5')
-@default(False)
-class xinsui5_sweep(xinsui_sweep):
-    def quest_id(self) -> int:
-        return 18001005
-
-@singlechoice("heart4_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
-@singlechoice("heart4_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
-@name('刷取心碎4')
-@default(False)
-class xinsui4_sweep(xinsui_sweep):
-    def quest_id(self) -> int:
-        return 18001004
-
-@singlechoice("heart3_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
-@singlechoice("heart3_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
-@name('刷取心碎3')
-@default(False)
-class xinsui3_sweep(xinsui_sweep):
-    def quest_id(self) -> int:
-        return 18001003
-
-@singlechoice("heart2_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
-@singlechoice("heart2_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
-@name('刷取心碎2')
-@default(False)
-class xinsui2_sweep(xinsui_sweep):
-    def quest_id(self) -> int:
-        return 18001002
-
-@singlechoice("heart1_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
-@singlechoice("heart1_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
-@name('刷取心碎1')
-@default(False)
-class xinsui1_sweep(xinsui_sweep):
-    def quest_id(self) -> int:
-        return 18001001
-
-@singlechoice("starcup3_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
-@singlechoice("starcup3_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
-@name('刷取星球杯3')
-@default(False)
-class starcup3_sweep(starcup_sweep):
-    def quest_id(self) -> int:
-        return 19001003
-
-@singlechoice("starcup2_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
-@singlechoice("starcup2_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
-@name('刷取星球杯2')
-@default(False)
-class starcup2_sweep(starcup_sweep):
-    def quest_id(self) -> int:
-        return 19001002
-
-@singlechoice("starcup1_sweep_campaign_times", "庆典次数", 5, [0, 5, 10, 15, 20])
-@singlechoice("starcup1_sweep_times", "非庆典次数", 5, [0, 5, 10, 15, 20])
-@name('刷取星球杯1')
-@default(False)
-class starcup1_sweep(starcup_sweep):
-    def quest_id(self) -> int:
-        return 19001001
+    def config_key(self, campaign_times: int) -> str:
+        if campaign_times <= 1:
+            return 'starcup_sweep_no_campaign_books'
+        if campaign_times == 2:
+            return 'starcup_sweep_2x_campaign_books'
+        return 'starcup_sweep_3x_campaign_books'

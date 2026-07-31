@@ -4,40 +4,38 @@ import asyncio
 from ..util import aiorequests
 from ..util.logger import instance as logger
 
+_gtlv_client = None
+_gtlv_client_lock = asyncio.Lock()
+
+async def _get_gtlv_client():
+    # 复用同一个 Client：它在首次遇到点选验证码时加载识别模型，这项开销只应付出一次。
+    global _gtlv_client
+    if _gtlv_client is None:
+        async with _gtlv_client_lock:
+            if _gtlv_client is None:
+                from gtlv import Client
+                _gtlv_client = Client(max_attempts=3)
+    return _gtlv_client
+
 async def localValidator():
     logger.info('use local validator')
 
     from .bsgamesdk import captch
     cap = await captch()
-    challenge = cap['challenge']
-    gt = cap['gt']
-    userid = cap['gt_user_id']
 
-    import bili_ticket_gt_python
-    gt_obj = bili_ticket_gt_python.ClickPy()
-    _type = None
     info = None
-
     try:
-        n = 3
-        for _ in range(n):
-            try:
-                _type = gt_obj.get_type(gt, challenge)
-                break
-            except Exception as e:
-                pass
-
-        if _type == 'click':
-            (c, s, args) = gt_obj.get_new_c_s_args(gt, challenge)
-            cor = asyncio.sleep(2)
-            w = gt_obj.generate_w(gt_obj.calculate_key(args), gt, challenge, str(c), s, "abcdefghijklmnop")
-            await cor
-            (msg, validate) = gt_obj.verify(gt, challenge, w)
-            info = {
-                "challenge": challenge,
-                "gt_user_id": userid,
-                "validate": validate
-            }
+        client = await _get_gtlv_client()
+        # 必须沿用 start_captcha 下发的这一组 gt/challenge：登录接口不提交 gt，
+        # 服务端按自己的 gt 校验 (challenge, validate)，另行登记得到的 validate 不被接受。
+        result = await client.solve(cap['gt'], cap['challenge'])
+        info = {
+            # 滑动流程会换用新的 challenge，须提交 result.challenge 而非传入的那个。
+            "challenge": result.challenge,
+            "gt_user_id": cap['gt_user_id'],
+            "validate": result.validate
+        }
+        logger.info(f'local validator solved a {result.captcha_type} captcha')
     except Exception as e:
         logger.error(f'local validator error: {e}')
 

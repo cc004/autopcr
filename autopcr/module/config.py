@@ -200,6 +200,19 @@ class MultiChoiceConfig(Config):
         else:
             return []
 
+class LabyrinthBossConfig(MultiChoiceConfig):
+    def __init__(self, key: str, desc: str, area: int, default: List[int] = []):
+        self.area = area
+        super().__init__(
+            key,
+            desc,
+            default,
+            lambda: list(db.labyrinth_boss_info.get(self.area, {})),
+        )
+
+    def candidate_display(self, unit_id: int):
+        return db.labyrinth_boss_info.get(self.area, {}).get(unit_id, str(unit_id))
+
 class TimeConfig(Config):
     @property
     def config_type(self):

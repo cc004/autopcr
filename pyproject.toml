@@ -21,7 +21,7 @@ dependencies = [
     "quart-compress>=0.2.1,<0.3",
     "dataclasses-json>=0.6.4,<0.7",
     "pulp>=2.8.0,<3",
-    "bili-ticket-gt-python>=0.2.7,<0.4"
+    "gtlv>=0.1.2,<0.2"
 ]
 
 [build-system]

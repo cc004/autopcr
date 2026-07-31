@@ -53,6 +53,8 @@ class pcrclient(apiclient):
     async def labyrinth_top(self):
         if not self.data.is_quest_cleared(11065001):
             raise SkipError("迷宫未解锁")
+        if 4013001 not in self.data.read_story_ids:
+            await self.read_story(4013001)
         req = LabyrinthTopRequest()
         return await self.request(req)
 
@@ -65,6 +67,12 @@ class pcrclient(apiclient):
     async def labyrinth_retire(self, enter_id: int):
         req = LabyrinthRetireRequest()
         req.enter_id = enter_id
+        return await self.request(req)
+
+    async def labyrinth_skip(self, guild_id: int, skip_count: int):
+        req = LabyrinthSkipRequest()
+        req.skip_list = [LabyrinthSkipData(guild_id=guild_id, skip_count=skip_count)]
+        req.current_passport_num = self.data.get_inventory(db.labyrinth_ticket)
         return await self.request(req)
 
     async def unit_role_gacha_index(self):
@@ -1904,12 +1912,6 @@ class pcrclient(apiclient):
     def is_stamina_get_not_run(self):
         return self._get_key('stamina_get_not_run', False)
 
-    def is_star_cup_sweep_not_run(self):
-        return self._get_key('star_cup_sweep_not_run', False)
-
-    def is_heart_sweep_not_run(self):
-        return self._get_key('heart_sweep_not_run', False)
-
     def is_cron_run(self):
         return self._get_key('cron_run', False)
 
@@ -1921,12 +1923,6 @@ class pcrclient(apiclient):
 
     def set_stamina_get_not_run(self):
         self._keys['stamina_get_not_run'] = True
-
-    def set_star_cup_sweep_not_run(self):
-        self._keys['star_cup_sweep_not_run'] = True
-
-    def set_heart_sweep_not_run(self):
-        self._keys['heart_sweep_not_run'] = True
 
     def set_cron_run(self):
         self._keys['cron_run'] = True
