@@ -244,6 +244,16 @@ class labyrinth_start_reroll(Module):
             if routes:
                 print(f"✅ 成功刷到{'完美' if perfect_start else '目标'}路线！总共尝试 {attempt} 次", flush=True)
                 self._log(f"刷到{'完美' if perfect_start else ''}路线，总尝试次数：{attempt}")
+
+                try:
+                    import winsound
+                    winsound.Beep(800, 200)
+                    winsound.Beep(1000, 150)
+                    winsound.Beep(1200, 300)
+                except:
+                    print("🔔 刷取完成！（音效不可用）", flush=True)                
+
+
                 for area in sorted(routes):
                     self._log(self._format_route(area, routes[area], enter.map_list or [], area3_bosses, area5_bosses))
                 return
