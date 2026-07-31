@@ -668,7 +668,6 @@ class GachaExchangePointResponse(ResponseBase):
     growth_unit_info: GachaGrowthUnitInfo = None
     remain_limit_count_bonus: int = None
     bonus_reward_info_list: GachaBonusResultList = None
-    remain_limit_count_bonus_list: List[RemainLimitCountBonusData] = None
 class GachaExecResponse(ResponseBase):
     reward_info_list: List[InventoryInfo] = None
     prize_reward_info: PrizeRewardInfo = None
@@ -683,7 +682,7 @@ class GachaExecResponse(ResponseBase):
     remain_exec_gacha_bonus: int = None
     exec_bonus_reward_info_list: List[InventoryInfo] = None
     connect_coin_info: InventoryInfo = None
-    remain_limit_count_bonus_list: List[RemainLimitCountBonusData] = None
+    exchange_point_bonus_reward_list: List[InventoryInfo] = None
 class GachaIndexResponse(ResponseBase):
     gacha_info: List[GachaParameter] = None
     nngtime: int = None
@@ -1054,7 +1053,6 @@ class HomeIndexResponse(ResponseBase):
     acn_unknown_battle_finish_flag: bool = None
     alces_appear_story_flag: int = None
     alces_receive_tutorial_item_flag: int = None
-    mirage_reward_full_time: int = None
     is_pending_external_purchase: int = None
     is_pending_serial_code: int = None
     crown_quest_list: List[CrownHardQuestInfo] = None
@@ -1063,6 +1061,8 @@ class HomeIndexResponse(ResponseBase):
     season_pack_campaign_info_list: List[SeasonPackCampaignInfo] = None
     limited_mission_progress_list: List[UserMissionProgressInfo] = None
     limited_mission_category_list: List[UserLimitedMissionCategoryInfo] = None
+    mirage_info: MirageInfoFromHomeIndex = None
+    mre_schedule_id_list: List[int] = None
 class ItemETicketExchangeResponse(ResponseBase):
     reward_list: List[InventoryInfo] = None
     item_data: List[InventoryInfo] = None
@@ -1323,6 +1323,8 @@ class LoadIndexResponse(ResponseBase):
     unlocked_topic_talk_event_id_list: List[int] = None
     seven_story_list: List[SevenStory] = None
     gtm: int = None
+    mre_story_list: List[MreStory] = None
+    tier_pack_info: TierPackInfo = None
 class LoadNextDayIndexResponse(ResponseBase):
     daily_reset_time: int = None
     login_bonus_list: LoginBonusList = None
@@ -1409,7 +1411,7 @@ class MissionAcceptResponse(ResponseBase):
     add_present_count: int = None
     release_contents: List[ReleaseContentData] = None
     room_item_level_mission: List[int] = None
-    season_pack_mission_id_list: List[int] = None
+    season_pack_mission_info_list: List[SeasonPackMissionInfo] = None
 class MissionIndexResponse(ResponseBase):
     missions: List[UserMissionInfo] = None
     season_pack: List[UserSeasonPackInfo] = None
@@ -2400,6 +2402,7 @@ class TowerExBattleFinishResponse(ResponseBase):
     clan_point: ClanPoint = None
     clan_member_info: List[TowerClanMemberInfo] = None
     is_joined_clan: int = None
+    reward_list: List[InventoryInfo] = None
 class TowerExBattleRetireResponse(ResponseBase):
     pass
 class TowerExBattleStartResponse(ResponseBase):
@@ -2917,17 +2920,22 @@ class AcnUnknownBattleStartResponse(ResponseBase):
     battle_log_id: int = None
     seed: int = None
     enemy_unit_list: List[AcnUnknownEnemyUnit] = None
-class AlcesCancelResultResponse(ResponseBase):
+class AlcesCancelSubStatusResultResponse(ResponseBase):
     serial_id: int = None
-class AlcesExecResponse(ResponseBase):
-    pending_alces_data: AlcesData = None
+class AlcesExecSubStatusAutoResponse(ResponseBase):
+    sub_status_result_list: List[AlcesSubStatusResult] = None
+    after_alces_point: InventoryInfo = None
+    user_gold: UserGold = None
+    play_effect_id: int = None
+class AlcesExecSubStatusResponse(ResponseBase):
+    pending_alces_data: AlcesSubStatusResult = None
     current_alces_point: InventoryInfo = None
     user_gold: UserGold = None
     play_effect_id: int = None
-class AlcesFixResultResponse(ResponseBase):
+class AlcesFixSubStatusResultResponse(ResponseBase):
     fixed_alces_data: ExtraEquipInfo = None
 class AlcesLockSlotResponse(ResponseBase):
-    alces_data_list: List[AlcesData] = None
+    alces_data_list: List[AlcesSubStatusResult] = None
 class AlcesReadStoryResponse(ResponseBase):
     reward_list: List[InventoryInfo] = None
     add_present_count: int = None
@@ -2940,8 +2948,9 @@ class AlcesReceiveTutorialItemResponse(ResponseBase):
 class AlcesTopResponse(ResponseBase):
     read_story_id_list: List[int] = None
     appear_story_id: int = None
-    pending_alces_data: AlcesData = None
-class AlcesUseStoneResponse(ResponseBase):
+    pending_alces_data: AlcesSubStatusResult = None
+    sub_status_result_list: List[AlcesSubStatusResult] = None
+class AlcesUseStoneSubStatusResponse(ResponseBase):
     fixed_alces_data: ExtraEquipInfo = None
     current_alces_stone: InventoryInfo = None
     play_effect_id: int = None
@@ -3353,6 +3362,8 @@ class DomeTopResponse(ResponseBase):
     quest_challenge_status_list: List[DomeQuestChallengeStatus] = None
     acceptable_mission_count: int = None
     last_clear_round: int = None
+class EmblemPossessionResponse(ResponseBase):
+    emblem_possession_list: List[EmblemPossessionStructure] = None
 class EnhanceTalentLevelResponse(ResponseBase):
     princess_knight_rank_exp: int = None
     item_list: List[InventoryInfo] = None
@@ -3383,6 +3394,10 @@ class GachaMonthlyIndexResponse(ResponseBase):
     exchange_num: int = None
     max_exchange_num: int = None
     free_gacha_info: MonthlyFreeGachaInfo = None
+class GetClearedUnitListResponse(ResponseBase):
+    cleared_unit_list: List[SupportUnitStatus] = None
+class GetMreBossSupportListResponse(ResponseBase):
+    npc_support_unit_list: List[SupportUnitStatus] = None
 class GetReusableSupportListResponse(ResponseBase):
     support_unit_list: List[SupportUnitStatus] = None
 class GetSevenScenarioBossSupportListResponse(ResponseBase):
@@ -3674,6 +3689,65 @@ class MirageTopResponse(ResponseBase):
     nemesis_progress: List[MirageNemesisProgress] = None
     reward_full_time: int = None
     clear_count_reset_time: int = None
+class MreBattleFinishResponse(ResponseBase):
+    result_type: int = None
+    after_target_boss_info: MreBossInfo = None
+    unlock_story_id_list: List[int] = None
+    first_clear_reward_list: List[InventoryInfo] = None
+    clear_reward_list: List[InventoryInfo] = None
+    challenge_reward_list: List[InventoryInfo] = None
+    item_list: List[InventoryInfo] = None
+    user_jewel: UserJewel = None
+    user_gold: UserGold = None
+    add_present_count: int = None
+    upper_limit_flag: bool = None
+class MreBattleRetireResponse(ResponseBase):
+    pass
+class MreBattleSkipResponse(ResponseBase):
+    after_target_boss_info: MreBossInfo = None
+    clear_reward_list: List[InventoryInfo] = None
+    challenge_reward_list: List[InventoryInfo] = None
+    user_jewel: UserJewel = None
+    user_gold: UserGold = None
+    add_present_count: int = None
+class MreBattleStartResponse(ResponseBase):
+    seed: int = None
+    battle_log_id: int = None
+    current_raid_hp: int = None
+    before_target_boss_info: MreBossInfo = None
+class MreGachaExecMultipleResponse(ResponseBase):
+    draw_result: List[EventBoxGachaHitRewardInfo] = None
+    reward_info_list: List[InventoryInfo] = None
+    add_present_count: int = None
+class MreGachaExecResponse(ResponseBase):
+    draw_result: List[EventBoxGachaHitRewardInfo] = None
+    reward_info_list: List[InventoryInfo] = None
+    add_present_count: int = None
+class MreGachaIndexResponse(ResponseBase):
+    event_gacha_info: EventGachaInfo = None
+class MreGachaLineupResponse(ResponseBase):
+    event_gacha_lineup: List[EventBoxGachaSet] = None
+class MreGachaResetResponse(ResponseBase):
+    event_gacha_info: EventGachaInfo = None
+class MreMissionAcceptResponse(ResponseBase):
+    reward_list: List[InventoryInfo] = None
+    add_present_count: int = None
+class MreMissionIndexResponse(ResponseBase):
+    missions: List[UserMissionInfo] = None
+    daily_reset_time: int = None
+class MreReceiveRewardAfterEventResponse(ResponseBase):
+    gacha_reward_info_list: List[InventoryInfo] = None
+    raid_hp_reward_list: List[InventoryInfo] = None
+    add_present_count: int = None
+class MreTopResponse(ResponseBase):
+    current_raid_hp: int = None
+    boss_info_list: List[MreBossInfo] = None
+    mission_list: MreUserMissionInfoAndResetTime = None
+    unlock_story_id_list: List[int] = None
+    login_bonus: MreLoginBonus = None
+    raid_hp_reward_list: List[InventoryInfo] = None
+    add_present_count: int = None
+    deck_clear_flag: bool = None
 class NbbFinishResponse(ResponseBase):
     emblem_list: List[int] = None
     score_reward_list: List[InventoryInfo] = None
@@ -3692,6 +3766,28 @@ class PrincessKnightMissionAcceptResponse(ResponseBase):
     add_present_count: int = None
 class PrincessKnightMissionIndexResponse(ResponseBase):
     missions: List[UserMissionInfo] = None
+class ProfilePictureFrameShopBuyBulkResponse(ResponseBase):
+    purchase_list: List[InventoryInfo] = None
+    item_data: List[InventoryInfo] = None
+    purchase_count_list: List[ProfilePictureFrameShopPurchaseCount] = None
+    add_present_count: int = None
+class ProfilePictureFrameShopBuyCoinResponse(ResponseBase):
+    purchase_list: List[InventoryInfo] = None
+    item_data: List[InventoryInfo] = None
+    user_jewel: UserJewel = None
+class ProfilePictureFrameShopBuyResponse(ResponseBase):
+    purchase_list: List[InventoryInfo] = None
+    item_data: List[InventoryInfo] = None
+    box_open: List[ProfilePictureFrameShopBoxOpenResult] = None
+    purchase_count: int = None
+    sold: int = None
+    is_unlimited_stock: int = None
+    add_present_count: int = None
+class ProfilePictureFrameShopIndexResponse(ResponseBase):
+    currency_item_id: int = None
+    jewel_count_per_coin: int = None
+    period_lineup_list: List[ProfilePictureFrameShopLineup] = None
+    static_lineup_list: List[ProfilePictureFrameShopLineup] = None
 class ProfileSetPictureFrameResponse(ResponseBase):
     frame_id: int = None
 class SeasonPassBuyLevelResponse(ResponseBase):

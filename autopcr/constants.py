@@ -49,7 +49,7 @@ DEFAULT_HEADERS = {
     'Accept-Encoding': 'gzip',
     'User-Agent': 'Dalvik/2.1.0 (Linux, U, Android 5.1.1, PCRT00 Build/LMY48Z)',
     'X-Unity-Version': '2021.3.20f1c1',
-    'APP-VER': "11.7.1",
+    'APP-VER': "11.7.2",
     'BATTLE-LOGIC-VERSION': '4',
     'BUNDLE-VER': '',
     'DEVICE': '2',
@@ -70,7 +70,7 @@ IOS_HEADERS = {
     'Accept-Encoding': 'gzip',
     'User-Agent': 'priconne/24 CFNetwork/1492.0.1 Darwin/23.3.0',
     'X-Unity-Version': '2021.3.20f1c1',
-    'APP-VER': "11.7.1",
+    'APP-VER': "11.7.2",
     'BATTLE-LOGIC-VERSION': '4',
     'BUNDLE-VER': '',
     'DEVICE': '1',
@@ -89,7 +89,7 @@ IOS_HEADERS = {
 
 
 def refresh_headers(version: str = None):
-    default_ver = '11.4.0'
+    default_ver = '11.7.2'
     if version is not None:
         with open(os.path.join(CACHE_DIR, 'version.txt'), 'w', encoding='utf-8') as f:
             f.write(version)
