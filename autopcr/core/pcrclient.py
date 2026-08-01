@@ -117,7 +117,7 @@ class pcrclient(apiclient):
         req.exec_type = exec_type
         return await self.request(req)
 
-    async def alces_exec_auto(self, serial_id: int, exec_count: int, target_status_list: list[int], target_step: int = 5):
+    async def alces_exec_auto(self, serial_id: int, exec_count: int, target_status_list: List[int], target_step: int = 5):
         req = AlcesExecSubStatusAutoRequest()
         req.serial_id = serial_id
         req.exec_count = exec_count
