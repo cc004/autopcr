@@ -3667,9 +3667,7 @@ class AbyssBossFinishRequest(Request[AbyssBossFinishResponse]):
     damage: int = None
     unit_hp_list: List[UnitHpInfo] = None
     auto_clear: int = None
-    owner_viewer_id: int = None
-    support_position: int = None
-    is_friend: int = None
+    support_unit_info: RentalSupportUnitInfo = None
     @property
     def url(self) -> str:
         return "abyss/boss_finish"
@@ -3695,10 +3693,7 @@ class AbyssBossStartRequest(Request[AbyssBossStartResponse]):
     boss_id: int = None
     enemy_index: int = None
     token: str = None
-    owner_viewer_id: int = None
-    support_unit_id: int = None
-    is_friend: int = None
-    support_battle_rarity: int = None
+    support_unit_info: RentalSupportUnitInfo = None
     current_boss_ticket_num: int = None
     @property
     def url(self) -> str:
@@ -3709,9 +3704,7 @@ class AbyssQuestFinishRequest(Request[AbyssQuestFinishResponse]):
     remain_time: int = None
     unit_hp_list: List[UnitHpInfo] = None
     auto_clear: int = None
-    owner_viewer_id: int = None
-    support_position: int = None
-    is_friend: int = None
+    support_unit_info: RentalSupportUnitInfo = None
     @property
     def url(self) -> str:
         return "abyss/quest_finish"
@@ -3733,10 +3726,7 @@ class AbyssQuestStartRequest(Request[AbyssQuestStartResponse]):
     abyss_id: int = None
     quest_id: int = None
     token: str = None
-    owner_viewer_id: int = None
-    support_unit_id: int = None
-    is_friend: int = None
-    support_battle_rarity: int = None
+    support_unit_info: RentalSupportUnitInfo = None
     @property
     def url(self) -> str:
         return "abyss/quest_start"
@@ -3748,9 +3738,7 @@ class AbyssRehearsalBossFinishRequest(Request[AbyssRehearsalBossFinishResponse])
     damage: int = None
     unit_hp_list: List[UnitHpInfo] = None
     auto_clear: int = None
-    owner_viewer_id: int = None
-    support_position: int = None
-    is_friend: int = None
+    support_unit_info: RentalSupportUnitInfo = None
     is_actual_boss_status: int = None
     @property
     def url(self) -> str:
@@ -3767,10 +3755,7 @@ class AbyssRehearsalBossStartRequest(Request[AbyssRehearsalBossStartResponse]):
     boss_id: int = None
     enemy_index: int = None
     token: str = None
-    owner_viewer_id: int = None
-    support_unit_id: int = None
-    is_friend: int = None
-    support_battle_rarity: int = None
+    support_unit_info: RentalSupportUnitInfo = None
     is_actual_boss_status: int = None
     @property
     def url(self) -> str:
@@ -3882,25 +3867,35 @@ class AcnUnknownBattleStartRequest(Request[AcnUnknownBattleStartResponse]):
     @property
     def url(self) -> str:
         return "acn/unknown_battle_start"
-class AlcesCancelResultRequest(Request[AlcesCancelResultResponse]):
+class AlcesCancelSubStatusResultRequest(Request[AlcesCancelSubStatusResultResponse]):
     serial_id: int = None
     @property
     def url(self) -> str:
         return "alces/cancel_result"
-class AlcesExecRequest(Request[AlcesExecResponse]):
+class AlcesExecSubStatusAutoRequest(Request[AlcesExecSubStatusAutoResponse]):
+    serial_id: int = None
+    exec_count: int = None
+    current_alces_point: int = None
+    current_gold: int = None
+    target_sub_status: AlcesAutoTargetSubStatus = None
+    @property
+    def url(self) -> str:
+        return "alces/exec_auto"
+class AlcesExecSubStatusRequest(Request[AlcesExecSubStatusResponse]):
     serial_id: int = None
     current_alces_point: int = None
     current_gold: int = None
+    exec_type: int = None
     @property
     def url(self) -> str:
         return "alces/exec"
-class AlcesFixResultRequest(Request[AlcesFixResultResponse]):
+class AlcesFixSubStatusResultRequest(Request[AlcesFixSubStatusResultResponse]):
     serial_id: int = None
     @property
     def url(self) -> str:
         return "alces/fix_result"
 class AlcesLockSlotRequest(Request[AlcesLockSlotResponse]):
-    lock_list: List[AlcesDataPost] = None
+    lock_list: List[AlcesSubStatusResultPost] = None
     @property
     def url(self) -> str:
         return "alces/lock_slot"
@@ -3917,7 +3912,7 @@ class AlcesTopRequest(Request[AlcesTopResponse]):
     @property
     def url(self) -> str:
         return "alces/top"
-class AlcesUseStoneRequest(Request[AlcesUseStoneResponse]):
+class AlcesUseStoneSubStatusRequest(Request[AlcesUseStoneSubStatusResponse]):
     serial_id: int = None
     apply_slot_number: int = None
     current_alces_stone: int = None
@@ -4438,6 +4433,11 @@ class DomeTopRequest(Request[DomeTopResponse]):
     @property
     def url(self) -> str:
         return "dome/top"
+class EmblemPossessionRequest(Request[EmblemPossessionResponse]):
+    emblem_id_list: List[int] = None
+    @property
+    def url(self) -> str:
+        return "emblem/possession"
 class EnhanceTalentLevelRequest(Request[EnhanceTalentLevelResponse]):
     enhance_info_list: List[TalentLevelInfo] = None
     item_list: List[ItemInfo] = None
@@ -4476,6 +4476,17 @@ class GachaMonthlyIndexRequest(Request[GachaMonthlyIndexResponse]):
     @property
     def url(self) -> str:
         return "gacha/resident"
+class GetClearedUnitListRequest(Request[GetClearedUnitListResponse]):
+    battle_content_id: eBattleContentSupportPostType = None
+    quest_id: int = None
+    @property
+    def url(self) -> str:
+        return ""
+class GetMreBossSupportListRequest(Request[GetMreBossSupportListResponse]):
+    mre_id: int = None
+    @property
+    def url(self) -> str:
+        return ""
 class GetReusableSupportListRequest(Request[GetReusableSupportListResponse]):
     support_group: eSupportType = None
     @property
@@ -4815,8 +4826,7 @@ class MirageFloorQuestFinishRequest(Request[MirageFloorQuestFinishResponse]):
     remain_time: int = None
     unit_hp_list: List[UnitHpInfo] = None
     auto_clear: int = None
-    owner_viewer_id: int = None
-    support_position: int = None
+    support_unit_info: RentalSupportUnitInfo = None
     @property
     def url(self) -> str:
         return "mirage/floor_quest_finish"
@@ -4828,9 +4838,7 @@ class MirageFloorQuestRetireRequest(Request[MirageFloorQuestRetireResponse]):
 class MirageFloorQuestStartRequest(Request[MirageFloorQuestStartResponse]):
     quest_id: int = None
     token: str = None
-    owner_viewer_id: int = None
-    support_unit_id: int = None
-    support_battle_rarity: int = None
+    support_unit_info: RentalSupportUnitInfo = None
     @property
     def url(self) -> str:
         return "mirage/floor_quest_start"
@@ -4839,8 +4847,7 @@ class MirageNemesisFinishRequest(Request[MirageNemesisFinishResponse]):
     remain_time: int = None
     unit_hp_list: List[UnitHpInfo] = None
     auto_clear: int = None
-    owner_viewer_id: int = None
-    support_position: int = None
+    support_unit_info: RentalSupportUnitInfo = None
     @property
     def url(self) -> str:
         return "mirage/nemesis_finish"
@@ -4859,9 +4866,7 @@ class MirageNemesisSkipMultipleRequest(Request[MirageNemesisSkipMultipleResponse
 class MirageNemesisStartRequest(Request[MirageNemesisStartResponse]):
     quest_id: int = None
     token: str = None
-    owner_viewer_id: int = None
-    support_unit_id: int = None
-    support_battle_rarity: int = None
+    support_unit_info: RentalSupportUnitInfo = None
     @property
     def url(self) -> str:
         return "mirage/nemesis_start"
@@ -4874,6 +4879,94 @@ class MirageTopRequest(Request[MirageTopResponse]):
     @property
     def url(self) -> str:
         return "mirage/top"
+class MreBattleFinishRequest(Request[MreBattleFinishResponse]):
+    schedule_id: int = None
+    quest_id: int = None
+    remain_time: int = None
+    damage: int = None
+    user_unit: BossBattleFinishUnit = None
+    enemy_info: List[EventEnemyInfo] = None
+    auto_clear: int = None
+    support_unit_id_list: List[int] = None
+    is_rehearsal: int = None
+    @property
+    def url(self) -> str:
+        return "mre/battle_finish"
+class MreBattleRetireRequest(Request[MreBattleRetireResponse]):
+    schedule_id: int = None
+    quest_id: int = None
+    is_rehearsal: int = None
+    @property
+    def url(self) -> str:
+        return "mre/battle_retire"
+class MreBattleSkipRequest(Request[MreBattleSkipResponse]):
+    schedule_id: int = None
+    quest_id: int = None
+    exec_skip_num: int = None
+    current_boss_ticket_num: int = None
+    @property
+    def url(self) -> str:
+        return "mre/battle_skip"
+class MreBattleStartRequest(Request[MreBattleStartResponse]):
+    schedule_id: int = None
+    quest_id: int = None
+    token: str = None
+    support_unit_id_list: List[int] = None
+    is_rehearsal: int = None
+    @property
+    def url(self) -> str:
+        return "mre/battle_start"
+class MreGachaExecMultipleRequest(Request[MreGachaExecMultipleResponse]):
+    schedule_id: int = None
+    gacha_times: int = None
+    current_cost_num: int = None
+    @property
+    def url(self) -> str:
+        return "mre/gacha_exec_multiple"
+class MreGachaExecRequest(Request[MreGachaExecResponse]):
+    schedule_id: int = None
+    gacha_times: int = None
+    current_cost_num: int = None
+    @property
+    def url(self) -> str:
+        return "mre/gacha_exec"
+class MreGachaIndexRequest(Request[MreGachaIndexResponse]):
+    schedule_id: int = None
+    @property
+    def url(self) -> str:
+        return "mre/gacha_index"
+class MreGachaLineupRequest(Request[MreGachaLineupResponse]):
+    schedule_id: int = None
+    @property
+    def url(self) -> str:
+        return "mre/gacha_lineup"
+class MreGachaResetRequest(Request[MreGachaResetResponse]):
+    schedule_id: int = None
+    gacha_step: int = None
+    @property
+    def url(self) -> str:
+        return "mre/gacha_reset"
+class MreMissionAcceptRequest(Request[MreMissionAcceptResponse]):
+    schedule_id: int = None
+    mission_id_list: List[int] = None
+    @property
+    def url(self) -> str:
+        return "mre/mission_accept"
+class MreMissionIndexRequest(Request[MreMissionIndexResponse]):
+    schedule_id: int = None
+    @property
+    def url(self) -> str:
+        return "mre/mission_index"
+class MreReceiveRewardAfterEventRequest(Request[MreReceiveRewardAfterEventResponse]):
+    schedule_id: int = None
+    @property
+    def url(self) -> str:
+        return "mre/receive_reward_after_event"
+class MreTopRequest(Request[MreTopResponse]):
+    schedule_id: int = None
+    @property
+    def url(self) -> str:
+        return "mre/top"
 class NbbFinishRequest(Request[NbbFinishResponse]):
     play_id: int = None
     kill_score: int = None
@@ -4906,6 +4999,32 @@ class PrincessKnightMissionIndexRequest(Request[PrincessKnightMissionIndexRespon
     @property
     def url(self) -> str:
         return "princess_knight/mission_index"
+class ProfilePictureFrameShopBuyBulkRequest(Request[ProfilePictureFrameShopBuyBulkResponse]):
+    viewer_id: int = None
+    buy_item_list: List[ProfilePictureFrameShopBuyBulkItem] = None
+    @property
+    def url(self) -> str:
+        return "profile_picture_frame_shop/buy_bulk"
+class ProfilePictureFrameShopBuyCoinRequest(Request[ProfilePictureFrameShopBuyCoinResponse]):
+    viewer_id: int = None
+    coin_count: int = None
+    current_currency_num: int = None
+    @property
+    def url(self) -> str:
+        return "profile_picture_frame_shop/buy_coin"
+class ProfilePictureFrameShopBuyRequest(Request[ProfilePictureFrameShopBuyResponse]):
+    viewer_id: int = None
+    lineup_type: int = None
+    slot_id: int = None
+    buy_count: int = None
+    @property
+    def url(self) -> str:
+        return "profile_picture_frame_shop/buy"
+class ProfilePictureFrameShopIndexRequest(Request[ProfilePictureFrameShopIndexResponse]):
+    viewer_id: int = None
+    @property
+    def url(self) -> str:
+        return "profile_picture_frame_shop/index"
 class ProfileSetPictureFrameRequest(Request[ProfileSetPictureFrameResponse]):
     frame_id: int = None
     @property
@@ -5314,9 +5433,7 @@ class TalentQuestFinishRequest(Request[TalentQuestFinishResponse]):
     remain_time: int = None
     unit_hp_list: List[UnitHpInfo] = None
     auto_clear: int = None
-    owner_viewer_id: int = None
-    support_position: int = None
-    is_friend: int = None
+    support_unit_info: RentalSupportUnitInfo = None
     @property
     def url(self) -> str:
         return "talent_quest/finish"
@@ -5341,10 +5458,7 @@ class TalentQuestSkipRequest(Request[TalentQuestSkipResponse]):
 class TalentQuestStartRequest(Request[TalentQuestStartResponse]):
     quest_id: int = None
     token: str = None
-    owner_viewer_id: int = None
-    support_unit_id: int = None
-    support_battle_rarity: int = None
-    is_friend: int = None
+    support_unit_info: RentalSupportUnitInfo = None
     @property
     def url(self) -> str:
         return "talent_quest/start"

@@ -1,6 +1,6 @@
 from ...util.linq import flow
 from ...util.ilp_solver import ex_equip_power_max_cost_flow
-from ...model.common import ExtraEquipChangeSlot, ExtraEquipChangeUnit, InventoryInfoPost, AlcesData, ExtraEquipSubStatus
+from ...model.common import ExtraEquipChangeSlot, ExtraEquipChangeUnit, InventoryInfoPost, AlcesSubStatusResult, ExtraEquipSubStatus
 from ..modulebase import *
 from ..config import *
 from ...core.pcrclient import pcrclient
@@ -9,6 +9,8 @@ from ...db.database import db
 from ...model.enums import *
 from collections import Counter
 from ...model.custom import UnitAttribute
+
+ALCES_AUTO_EXEC_COUNT = 100
 
 
 def _normal_ex_equip_state(client: pcrclient):
@@ -134,17 +136,25 @@ class ex_equip_rainbow_enchance(Module):
 
             # self._log(f"各属性加权值: " + ', '.join(f"{UnitAttribute.index2ch[eParamType(k)]}: {v}" for k, v in self.weight.items()))
 
-            top = await client.alces_top()
-            if top.pending_alces_data:
-                if top.pending_alces_data.serial_id != serial_id:
-                    raise AbortError(f"{top.pending_alces_data.serial_id}炼成属性待决定,请先自行决定")
-                await self.decide_alces(client, top.pending_alces_data, target_sub_status)
-
             no_max_num = self.get_config('ex_equip_rainbow_enhance_no_max_num')
             target_cnt = sum(target_sub_status.values())
 
             if no_max_num > target_cnt:
                 raise AbortError(f"非满属性个数{no_max_num}不能大于非任意的目标属性个数{target_cnt}")
+
+            top = await client.alces_top()
+            if top.pending_alces_data:
+                if top.pending_alces_data.serial_id != serial_id:
+                    raise AbortError(f"{top.pending_alces_data.serial_id}炼成属性待决定,请先自行决定")
+                _, pending_target_step = self.get_alces_auto_target(
+                    client, serial_id, target_sub_status, no_max_num
+                )
+                await self.decide_alces(
+                    client,
+                    top.pending_alces_data,
+                    target_sub_status,
+                    target_step=pending_target_step,
+                )
 
             consume_cnt = Counter()
             alces_exec_cnt = 0
@@ -173,26 +183,60 @@ class ex_equip_rainbow_enchance(Module):
                     self._warn(f"彩装究极炼成PT{client.data.get_inventory(db.ex_rainbow_enhance_pt)}<={pt_hold * 10000}，停止炼成")
                     break
 
-                to_consume = Counter()
+                per_exec_consume = Counter()
+                exec_count = ALCES_AUTO_EXEC_COUNT
                 for consume, item in db.alces_cost.items():
                     cost = item.count
                     cur = client.data.get_inventory(consume)
                     cost *= lock_cnt + 1
-                    to_consume[consume] = cost
+                    per_exec_consume[consume] = cost
                     if cur < cost:
                         self._warn(f"E {db.get_inventory_name_san(consume)}数量{cur}<{cost}，无法进行究极炼成")
                         stop = True
+                        continue
+
+                    affordable_count = cur // cost
+                    if consume == db.ex_rainbow_enhance_pt:
+                        reserve = pt_hold * 10000
+                        # 与原单次逻辑一致：只要开始执行时高于保留值，至少允许本轮执行一次。
+                        affordable_count = max(1, (cur - reserve) // cost)
+                    exec_count = min(exec_count, affordable_count)
                 
                 if stop:
                     break
-                
-                consume_cnt += to_consume
 
-                resp = await client.alces_exec(serial_id)
-                accept = await self.decide_alces(client, resp.pending_alces_data, target_sub_status)
-                alces_exec_cnt += 1
+                auto_target_status, auto_target_step = self.get_alces_auto_target(
+                    client, serial_id, target_sub_status, no_max_num
+                )
+                resp = await client.alces_exec_auto(
+                    serial_id,
+                    exec_count,
+                    auto_target_status,
+                    auto_target_step,
+                )
+                result_list = resp.sub_status_result_list or []
+                if not result_list:
+                    raise AbortError("批量究极炼成未返回属性结果")
 
-                self._log(f"{'A 接受' if accept else 'R 放弃'}炼成属性: {db.get_ex_equip_sub_status_str(client.data.ex_equips[serial_id].ex_equipment_id, resp.pending_alces_data.sub_status or [])}")
+                for result_index, alces_data in enumerate(result_list, start=1):
+                    self.record_alces_result(alces_data)
+                    if result_index < len(result_list):
+                        self._log(f"批量炼成的第{result_index}次炼成属性: {db.get_ex_equip_sub_status_str(client.data.ex_equips[serial_id].ex_equipment_id, alces_data.sub_status or [])}")
+
+                pending_alces_data = result_list[-1]
+                accept = await self.decide_alces(
+                    client,
+                    pending_alces_data,
+                    target_sub_status,
+                    record_result=False,
+                    target_step=auto_target_step,
+                )
+                actual_exec_count = len(result_list)
+                alces_exec_cnt += actual_exec_count
+                for consume, cost in per_exec_consume.items():
+                    consume_cnt[consume] += cost * actual_exec_count
+
+                self._log(f"{'A 接受' if accept else 'R 放弃'}批量炼成的第{len(result_list)}次炼成属性: {db.get_ex_equip_sub_status_str(client.data.ex_equips[serial_id].ex_equipment_id, pending_alces_data.sub_status or [])}")
 
             if alces_exec_cnt:
                 self._log(f"共进行了{alces_exec_cnt}次究极炼成，消耗了：")
@@ -218,16 +262,50 @@ class ex_equip_rainbow_enchance(Module):
                 await client.alces_lock_slot(serial_id, status.slot_number, to_lock)
         return lock_cnt
 
-    async def decide_alces(self, client: pcrclient, alces_data: AlcesData, target_sub_status: Counter):
+    def get_alces_auto_target(self, client: pcrclient, serial_id: int, target_sub_status: Counter, no_max_num: int) -> Tuple[List[int], int]:
+        current_sub_status = Counter(
+            status.status
+            for status in client.data.ex_equips[serial_id].sub_status or []
+        )
+        current_max_sub_status = Counter(
+            status.status
+            for status in client.data.ex_equips[serial_id].sub_status or []
+            if status.step == 5
+        )
+
+        required_max_cnt = sum(target_sub_status.values()) - no_max_num
+        achieved_max_cnt = sum((current_max_sub_status & target_sub_status).values())
+        if achieved_max_cnt < required_max_cnt:
+            current_target_sub_status = current_max_sub_status
+            target_step = 5
+        else:
+            current_target_sub_status = current_sub_status
+            target_step = 1
+
+        target_status = [
+            status
+            for status, count in target_sub_status.items()
+            if current_target_sub_status[status] < count
+        ]
+        return target_status, target_step
+
+    def record_alces_result(self, alces_data: AlcesSubStatusResult):
+        for status in alces_data.sub_status:
+            if not status.is_lock:
+                self.cache_info[f"{status.status}-{status.step}"] += 1
+
+    async def decide_alces(self, client: pcrclient, alces_data: AlcesSubStatusResult, target_sub_status: Counter, record_result: bool = True, target_step: int = 5):
         accept = False
         current_max_sub_status = Counter()
+
+        if record_result:
+            self.record_alces_result(alces_data)
 
         for status in alces_data.sub_status:
             if status.is_lock:
                 current_max_sub_status[status.status] += 1
                 continue
-            self.cache_info[f"{status.status}-{status.step}"] += 1
-            if current_max_sub_status[status.status] < target_sub_status[status.status] and status.step == 5:
+            if current_max_sub_status[status.status] < target_sub_status[status.status] and status.step >= target_step:
                 current_max_sub_status[status.status] += 1
                 accept = True
         

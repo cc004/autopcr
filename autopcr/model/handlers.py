@@ -1555,7 +1555,7 @@ class AlcesReadStoryResponse(responses.AlcesReadStoryResponse):
         mgr.alces_appear_story_flag = 0
 
 @handles
-class AlcesExecResponse(responses.AlcesExecResponse):
+class AlcesExecSubStatusResponse(responses.AlcesExecSubStatusResponse):
     async def update(self, mgr: datamgr, request):
         if self.current_alces_point:
             mgr.update_inventory(self.current_alces_point)
@@ -1563,7 +1563,15 @@ class AlcesExecResponse(responses.AlcesExecResponse):
             mgr.gold = self.user_gold
 
 @handles
-class AlcesFixResultResponse(responses.AlcesFixResultResponse):
+class AlcesExecSubStatusAutoResponse(responses.AlcesExecSubStatusAutoResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.after_alces_point:
+            mgr.update_inventory(self.after_alces_point)
+        if self.user_gold:
+            mgr.gold = self.user_gold
+
+@handles
+class AlcesFixSubStatusResultResponse(responses.AlcesFixSubStatusResultResponse):
     async def update(self, mgr: datamgr, request):
         mgr.ex_equips[self.fixed_alces_data.serial_id] = self.fixed_alces_data
 

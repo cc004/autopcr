@@ -109,17 +109,30 @@ class pcrclient(apiclient):
         req.story_id = story_id
         return await self.request(req)
 
-    async def alces_exec(self, serial_id: int):
-        req = AlcesExecRequest()
+    async def alces_exec(self, serial_id: int, exec_type: int = 1):
+        req = AlcesExecSubStatusRequest()
         req.serial_id = serial_id
         req.current_alces_point = self.data.get_inventory((eInventoryType.Item, 26202))
         req.current_gold = self.data.get_mana()
+        req.exec_type = exec_type
+        return await self.request(req)
+
+    async def alces_exec_auto(self, serial_id: int, exec_count: int, target_status_list: List[int], target_step: int = 5):
+        req = AlcesExecSubStatusAutoRequest()
+        req.serial_id = serial_id
+        req.exec_count = exec_count
+        req.current_alces_point = self.data.get_inventory((eInventoryType.Item, 26202))
+        req.current_gold = self.data.get_mana()
+        req.target_sub_status = AlcesAutoTargetSubStatus(
+            status_list=target_status_list,
+            step=target_step,
+        )
         return await self.request(req)
 
     async def alces_lock_slot(self, serial_id: int, slot_number: int, is_lock: int):
         req = AlcesLockSlotRequest()
         req.lock_list = [
-            AlcesDataPost(
+            AlcesSubStatusResultPost(
                 serial_id=serial_id,
                 sub_status=[ExtraEquipSubStatusPost(
                     slot_number=slot_number,
@@ -130,12 +143,12 @@ class pcrclient(apiclient):
         return await self.request(req)
 
     async def alces_cancel_result(self, serial_id: int):
-        req = AlcesCancelResultRequest()
+        req = AlcesCancelSubStatusResultRequest()
         req.serial_id = serial_id
         return await self.request(req)
 
     async def alces_fix_result(self, serial_id: int):
-        req = AlcesFixResultRequest()
+        req = AlcesFixSubStatusResultRequest()
         req.serial_id = serial_id
         return await self.request(req)
 
