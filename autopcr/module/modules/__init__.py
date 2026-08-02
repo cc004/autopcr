@@ -224,6 +224,7 @@ tool_modules = ModuleList(
         get_clan_support_unit,
         clear_my_party,
         remove_cb_ex_equip,
+        remove_normal_ex_equip,
         remove_cb_support,
         redeem_unit_swap,
     ]
