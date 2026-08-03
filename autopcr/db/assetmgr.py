@@ -3,13 +3,14 @@ from typing import List
 from ..util import aiorequests
 from ..util.logger import instance as logger
 from ..constants import CACHE_DIR
-import os, pydantic
+from ..model.modelbase import GameBaseModel
+import os
 import UnityPy
 from UnityPy.enums import ClassIDType
 from ..util.logger import instance as logger
 UnityPy.config.FALLBACK_UNITY_VERSION = "2021.3.20f1"
 
-class content(pydantic.BaseModel):
+class content(GameBaseModel):
     url: str = None
     md5: str = None
     type: str = None
@@ -76,8 +77,9 @@ class assetmgr:
         os.makedirs(os.path.join(CACHE_DIR, 'manifest'), exist_ok=True)
         cacheFile = os.path.join(CACHE_DIR, 'manifest', f'{ver}.json')
         try:
-            self.root = content.parse_file(cacheFile)
-            
+            with open(cacheFile, 'r') as f:
+                self.root = content.model_validate_json(f.read())
+
             logger.info(f'manifest version {ver} loaded from cache')
         except:
             self.root = content(
@@ -87,7 +89,7 @@ class assetmgr:
                 children=await content.from_url(f'{self.manifest}/AssetBundles/Android/{ver}/', 'manifest/manifest_assetmanifest', 'AssetBundles/Android')
             )
             with open(cacheFile, 'w') as f:
-                f.write(self.root.json())
+                f.write(self.root.model_dump_json())
 
         self.ver = ver
         self.root.register_to(self)

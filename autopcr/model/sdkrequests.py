@@ -11,7 +11,7 @@ class ToolSdkLoginRequest(Request[ToolSdkLoginResponse]):
     platform: str = None
     channel_id: str = None
     challenge: str = None
-    validate_: Optional[str] = Field(alias='validate')
+    validate_: Optional[str] = Field(default=None, alias='validate')
     seccode: str = None
     captcha_type: str = None
     image_token: str = None

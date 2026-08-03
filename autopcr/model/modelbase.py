@@ -1,10 +1,50 @@
-#type: ignore
-from re import T
+# type: ignore
+import typing
 from typing import Generic, TypeVar, Optional
 from pydantic import BaseModel
-from pydantic.generics import GenericModel
+from pydantic._internal._model_construction import ModelMetaclass
+from pydantic.fields import FieldInfo
 
-class ErrorInfo(BaseModel):
+
+def _is_optional(annotation) -> bool:
+    origin = typing.get_origin(annotation)
+    if origin is typing.Union:
+        return type(None) in typing.get_args(annotation)
+    return annotation is type(None) or annotation is typing.Any
+
+
+class ImplicitOptionalMeta(ModelMetaclass):
+    """adapter"""
+    def __new__(mcs, name, bases, namespace, **kwargs):
+        annotations = namespace.get('__annotations__', {})
+        for field_name in list(annotations.keys()):
+            if field_name.startswith('_'):
+                annotations.pop(field_name, None)
+                namespace.pop(field_name, None)
+                continue
+
+            annotation = annotations[field_name]
+            if isinstance(annotation, str):
+                # is humanwrite annotation, skip it
+                continue
+
+            default = namespace.get(field_name, ...)
+            is_none_default = default is None
+            if isinstance(default, FieldInfo):
+                is_none_default = default.default is None
+
+            if is_none_default and not _is_optional(annotation):
+                annotations[field_name] = Optional[annotation]
+
+        namespace['__annotations__'] = annotations
+        return super().__new__(mcs, name, bases, namespace, **kwargs)
+
+
+class GameBaseModel(BaseModel, metaclass=ImplicitOptionalMeta):
+    pass
+
+
+class ErrorInfo(GameBaseModel):
     title: str = None
     message: str = None
     status: int = 0
@@ -12,14 +52,14 @@ class ErrorInfo(BaseModel):
     def __str__(self) -> str:
         return f'{self.title}: {self.message} (code={self.status})'
 
-class ResponseBase(BaseModel):
+class ResponseBase(GameBaseModel):
     server_error: ErrorInfo = None
     update_bank_gold: int = None
     async def update(self, mgr: "datamgr", request): ...
 
 TResponse = TypeVar('TResponse', bound=ResponseBase, covariant=True)
 
-class ResponseHeader(BaseModel):
+class ResponseHeader(GameBaseModel):
     sid: str = None
     request_id: str = None
     viewer_id: str = None
@@ -27,36 +67,16 @@ class ResponseHeader(BaseModel):
     result_code: int = -1
     short_udid: str = None
 
-class Response(GenericModel, Generic[TResponse]):
+class Response(GameBaseModel, Generic[TResponse]):
     data_headers: ResponseHeader = None
     data: Optional[TResponse] = None
 
-from pydantic.main import validate_model, object_setattr
-from typing import Any
-
-class Request(Generic[TResponse], BaseModel):
+class Request(Generic[TResponse], GameBaseModel):
     viewer_id: str = None
-    
+
     @property
     def crypted(self) -> bool: return True
 
     @property
     def url(self) -> str:
         raise NotImplementedError()
-    
-    def __init__(__pydantic_self__, **data: Any) -> None:
-        """
-        Create a new model by parsing and validating input data from keyword arguments.
-
-        Raises ValidationError if the input data cannot be parsed to form a valid model.
-        """
-        # Uses something other than `self` the first arg to allow "self" as a settable attribute
-        values, fields_set, validation_error = validate_model(__pydantic_self__.__class__, data)
-        try:
-            object_setattr(__pydantic_self__, '__dict__', values)
-        except TypeError as e:
-            raise TypeError(
-                'Model values must be a dict; you may not have returned a dictionary from a root validator'
-            ) from e
-        object_setattr(__pydantic_self__, '__fields_set__', fields_set)
-        __pydantic_self__._init_private_attributes()

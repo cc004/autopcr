@@ -1,6 +1,4 @@
-from pydantic.class_validators import make_generic_validator
-from pydantic.fields import ModelField
-from pydantic.validators import int_validator
+from pydantic.fields import FieldInfo
 
 from ..model.custom import TalentQuestData
 from . import responses, sdkrequests
@@ -1604,49 +1602,19 @@ class UnitRoleGachaExecResponse(responses.UnitRoleGachaExecResponse):
 #     return original_dict
 # TravelStartRequest.dict = custom_dict
 
-HatsuneTopResponse.__annotations__['event_status'] = HatsuneEventStatus
-HatsuneTopResponse.__fields__['event_status'].type_ = Optional[HatsuneEventStatus]
-HatsuneTopResponse.__fields__['event_status'].outer_type_ = Optional[HatsuneEventStatus]
-HatsuneTopResponse.__fields__['event_status'].annotation = HatsuneEventStatus
-HatsuneTopResponse.__fields__['event_status'].shape = 1 # singleton
+def _patch_field(cls, name: str, annotation, default=None):
+    """patch field like pydantic v1 usage"""
+    annotation = Optional[annotation]
+    cls.__annotations__[name] = annotation
+    cls.model_fields[name] = FieldInfo(annotation=annotation, default=default)
+    setattr(cls, name, default)
+    cls.model_rebuild(force=True)
 
-DungeonUnit.__annotations__['skill_limit_counter'] = int
-DungeonUnit.__fields__['skill_limit_counter'].type_ = Optional[int]
-DungeonUnit.__fields__['skill_limit_counter'].outer_type_ = Optional[int]
-DungeonUnit.__fields__['skill_limit_counter'].validators = [make_generic_validator(int_validator)] # singleton
-DungeonUnit.__fields__['skill_limit_counter'].annotation = int
-DungeonUnit.__fields__['skill_limit_counter'].sub_fields = None 
-DungeonUnit.__fields__['skill_limit_counter'].shape = 1 # singleton
+_patch_field(HatsuneTopResponse, 'event_status', HatsuneEventStatus)
 
-CaravanCoinShopData.__annotations__['season_id'] = Optional[int]
-field = ModelField.infer(
-    name='season_id',
-    value=None,
-    annotation=int,
-    class_validators=None,
-    config=CaravanCoinShopData.__config__,
-)
-CaravanCoinShopData.__fields__['season_id'] = field
-setattr(CaravanCoinShopData, 'season_id', None)
+_patch_field(DungeonUnit, 'skill_limit_counter', int)
 
-ExtraEquipSlot.__annotations__['slot'] = Optional[int]
-field = ModelField.infer(
-    name='slot',
-    value=None,
-    annotation=int,
-    class_validators=None,
-    config=ExtraEquipSlot.__config__,
-)
-ExtraEquipSlot.__fields__['slot'] = field
-setattr(ExtraEquipSlot, 'slot', None)
-
-ProfileQuestInfo.__annotations__['talent_quest'] = Optional[List[TalentQuestData]]
-field = ModelField.infer(
-    name='talent_quest',
-    value=None,
-    annotation=List[TalentQuestData],
-    class_validators=None,
-    config=ProfileQuestInfo.__config__,
-)
-ProfileQuestInfo.__fields__['talent_quest'] = field
+_patch_field(CaravanCoinShopData, 'season_id', int)
+_patch_field(ExtraEquipSlot, 'slot', int)
+_patch_field(ProfileQuestInfo, 'talent_quest', List[TalentQuestData])
 setattr(ProfileQuestInfo, 'talent_quest', None)

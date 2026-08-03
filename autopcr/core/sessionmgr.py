@@ -55,7 +55,7 @@ class sessionmgr(Component[apiclient]):
                                     platform=str(self.sdk.platform_id),
                                     channel_id=str(self.sdk.channel),
                                     challenge=captch_done['challenge'],
-                                    validate_=captch_done['validate'],
+                                    validate=captch_done['validate'],
                                     seccode=captch_done['validate']+"|jordan",
                                     captcha_type='1',
                                     image_token='',

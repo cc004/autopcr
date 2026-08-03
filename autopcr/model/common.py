@@ -1,6 +1,7 @@
 from typing import List, Dict
 from .enums import *
-from pydantic import BaseModel, Field
+from .modelbase import GameBaseModel as BaseModel
+from pydantic import Field
 
 class SkillLevelInfo(BaseModel):
     skill_id: int = None
