@@ -112,8 +112,8 @@ class apiclient(Container["apiclient"]):
         urlroot = self.servers[self.active_server]
         
         try:
-            resp = await aiorequests.post(urlroot + request.url, data=apiclient._pack(request.dict(by_alias=True), key) if request.crypted else
-                request.json(by_alias=True).encode('utf8'), headers=self._headers, timeout=10)
+            resp = await aiorequests.post(urlroot + request.url, data=apiclient._pack(request.model_dump(by_alias=True), key) if request.crypted else
+                request.model_dump_json(by_alias=True).encode('utf8'), headers=self._headers, timeout=10)
 
             if resp.status_code != 200:
                 raise NetworkException
@@ -133,16 +133,16 @@ class apiclient(Container["apiclient"]):
             with open('req.log', 'a') as fp:
                 fp.write(f'{self.user_name} requested {request.__class__.__name__} at /{request.url}\n')
                 fp.write(json.dumps(self._headers, indent=4, ensure_ascii=False) + '\n')
-                fp.write(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
+                fp.write(json.dumps(json.loads(request.model_dump_json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
                 fp.write(f'response from {urlroot}\n')
                 fp.write(json.dumps(dict(resp.headers), indent=4, ensure_ascii=False) + '\n')
                 fp.write(json.dumps(response0, indent=4, ensure_ascii=False) + '\n')
 
-        response: Response[TResponse] = Response[cls].parse_obj(response1)
+        response: Response[TResponse] = Response[cls].model_validate(response1)
 
         # with open('req.log', 'a') as fp:
            # fp.write(f'{self.name} requested {request.__class__.__name__} at /{request.url}\n')
-           # fp.write(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
+           # fp.write(json.dumps(json.loads(request.model_dump_json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
            # fp.write(json.dumps(json.loads(response.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
 
         if response.data_headers.servertime:
@@ -179,7 +179,7 @@ class apiclient(Container["apiclient"]):
             logger.error(f'pcrclient: /{request.url} api failed={response.data_headers.result_code} {response.data.server_error}')
             logger.error(f'{self.user_name} requested {request.__class__.__name__} at /{request.url}\n')
             logger.error(json.dumps(self._headers, indent=4, ensure_ascii=False) + '\n')
-            logger.error(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
+            logger.error(json.dumps(json.loads(request.model_dump_json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
             logger.error(f'response from {urlroot}\n')
             logger.error(json.dumps(dict(resp.headers), indent=4, ensure_ascii=False) + '\n')
             logger.error(json.dumps(response0, indent=4, ensure_ascii=False) + '\n')

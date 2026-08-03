@@ -256,7 +256,7 @@ class ArenaQueryData(BaseModel):
 class ArenaQueryResponse(BaseModel):
     code: int 
     message: str
-    data: Optional[ArenaQueryData]
+    data: Optional[ArenaQueryData] = None
     version: str
 
 class eRedeemUnitUnlockCondition(IntEnum):
@@ -272,8 +272,8 @@ class eRedeemUnitUnlockCondition(IntEnum):
     EQUIP_MATERIAL = 9
 
 class TalentQuestData(BaseModel):
-    talent_id: int = None
-    clear_count: int = None
+    talent_id: Optional[int] = None
+    clear_count: Optional[int] = None
 
 class eDifficulty(IntEnum):
     NONE = 0
