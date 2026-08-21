@@ -19,8 +19,8 @@ import time
 开启"分解未满星装备"后，会将所有已强化但未满5星的装备纳入分解范围。
 '''.strip())
 @inttype("ex_equip_clan_gold_keep", "可分解会战金保留数量", 30, list(range(100)))
-@@inttype("ex_equip_normal_gold_keep", "可分解普通金保留数量", 30, list(range(100)))
-booltype("ex_equip_enable_keep", "启用保留数量限制", True)
+@inttype("ex_equip_normal_gold_keep", "可分解普通金保留数量", 30, list(range(100)))
+@booltype("ex_equip_enable_keep", "启用保留数量限制", True)
 @booltype("ex_equip_include_not_max_star", "分解未满星装备", False) 
 @booltype("ex_equip_show_detail", "显示详细分解信息", False)
 @booltype("ex_equip_preview_only", "不分解，看消耗", False)
