@@ -128,6 +128,7 @@ class ModuleManager:
         if any(m.status == eResultStatus.PANIC or m.status == eResultStatus.ERROR for m in resp.result.values()):
             status = eResultStatus.ERROR
         res = await self.save_daily_result(resp, status)
+        await self.report_result(resp, status)
         return res
 
     async def do_from_key(self, config: dict, key: str, isAdminCall: bool = False) -> "ModuleResultInfo":
