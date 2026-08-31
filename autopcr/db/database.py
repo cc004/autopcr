@@ -650,6 +650,72 @@ class database():
             )
 
     @lazy_property
+    def unit_role_mastery_id(self) -> Dict[int, Dict[int, UnitRoleMasteryId]]:
+        with self.dbmgr.session() as db:
+            return (
+                UnitRoleMasteryId.query(db)
+                .group_by(lambda x: x.unit_role_id)
+                .to_dict(
+                    lambda x: x.key,
+                    lambda x: x.to_dict(lambda x: x.slot_id, lambda x: x),
+                )
+            )
+
+    @lazy_property
+    def unit_role_mastery_slot_data(self) -> Dict[int, Dict[int, UnitRoleMasterySlotDatum]]:
+        with self.dbmgr.session() as db:
+            return (
+                UnitRoleMasterySlotDatum.query(db)
+                .group_by(lambda x: x.mastery_id)
+                .to_dict(
+                    lambda x: x.key,
+                    lambda x: x.to_dict(lambda x: x.slot_level, lambda x: x),
+                )
+            )
+
+    @lazy_property
+    def unit_role_mastery_enhance_data(self) -> Dict[int, Dict[Tuple[int, int], UnitRoleMasteryEnhanceDatum]]:
+        with self.dbmgr.session() as db:
+            return (
+                UnitRoleMasteryEnhanceDatum.query(db)
+                .group_by(lambda x: x.mastery_id)
+                .to_dict(
+                    lambda x: x.key,
+                    lambda x: x.to_dict(
+                        lambda x: (x.slot_level, x.enhance_level),
+                        lambda x: x,
+                    ),
+                )
+            )
+
+    @lazy_property
+    def unit_role_mastery_level(self) -> Dict[int, Dict[Tuple[int, int], UnitRoleMasteryLevel]]:
+        with self.dbmgr.session() as db:
+            return (
+                UnitRoleMasteryLevel.query(db)
+                .group_by(lambda x: x.mastery_id)
+                .to_dict(
+                    lambda x: x.key,
+                    lambda x: x.to_dict(
+                        lambda x: (x.slot_level, x.enhance_level),
+                        lambda x: x,
+                    ),
+                )
+            )
+
+    @lazy_property
+    def unit_role_mastery_item_data(self) -> Dict[int, Dict[int, UnitRoleMasteryItemDatum]]:
+        with self.dbmgr.session() as db:
+            return (
+                UnitRoleMasteryItemDatum.query(db)
+                .group_by(lambda x: x.mastery_id)
+                .to_dict(
+                    lambda x: x.key,
+                    lambda x: x.to_dict(lambda x: x.slot_level, lambda x: x),
+                )
+            )
+
+    @lazy_property
     def unique_equipment_enhance_data(self) -> Dict[int, Dict[int, UniqueEquipmentEnhanceDatum]]:
         with self.dbmgr.session() as db:
             return (

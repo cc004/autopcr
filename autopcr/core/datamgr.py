@@ -16,6 +16,25 @@ from asyncio import Lock
 
 _data_lck = Lock()
 
+UNIT_ROLE_MASTERY_PARAM_NAMES = {
+    1: "生命值",
+    2: "攻击力",
+    3: "物理防御力",
+    4: "魔法防御力",
+    5: "暴击",
+    6: "暴击伤害",
+    7: "造成伤害",
+    8: "异常状态命中",
+    9: "异常状态抵抗",
+    10: "普通攻击",
+    11: "增益效果",
+    12: "减益效果",
+    13: "回复效果",
+    14: "技能值充能",
+}
+
+UNIT_ROLE_MASTERY_UNIVERSAL_ITEM_BASE_ID = 80000
+
 class datamgr(BaseModel, Component[apiclient]):
     ready: bool = False
     settings: IniSetting = None
@@ -686,6 +705,259 @@ class datamgr(BaseModel, Component[apiclient]):
         for role_info in self.unit_role_list:
             msg.append(f"{db.unit_role_type[role_info.unit_role_id].unit_role_name}{self.get_role_level_single(role_info)}")
         return "\n".join(msg)
+
+    def get_unit_role_mastery_attributes(
+        self,
+        mastery_id: int,
+        slot_level: int,
+        enhance_level: int,
+        enhance_data=None,
+    ) -> typing.Counter[int]:
+        if enhance_data is None:
+            enhance_data = db.unit_role_mastery_enhance_data
+        row = enhance_data.get(mastery_id, {}).get((slot_level, enhance_level))
+        attributes = Counter()
+        if not row:
+            return attributes
+
+        for index in range(1, 3):
+            param_type = getattr(row, f"role_param_type_{index}", 0)
+            value = getattr(row, f"enhance_value_{index}", 0)
+            if param_type:
+                attributes[param_type] += value
+        return attributes
+
+    @staticmethod
+    def format_unit_role_mastery_attributes(attributes: typing.Counter[int]) -> str:
+        msg = []
+        for param_type, value in sorted(attributes.items()):
+            name = UNIT_ROLE_MASTERY_PARAM_NAMES.get(param_type, f"未知属性{param_type}")
+            sign = "-" if value < 0 else "+"
+            value = abs(value)
+            # 技能值充能以 0.1 TP 记录，其余精通属性以 0.01% 记录。
+            scale = 10 if param_type == 14 else 100
+            integer, decimal = divmod(value, scale)
+            formatted_value = str(integer)
+            if decimal:
+                precision = 1 if scale == 10 else 2
+                formatted_value += f".{decimal:0{precision}d}".rstrip("0")
+            suffix = "" if param_type == 14 else "%"
+            msg.append(f"{name}{sign}{formatted_value}{suffix}")
+        return "/".join(msg) or "-"
+
+    def get_unit_role_mastery_upgrade_cost(
+        self,
+        mastery_id: int,
+        slot_level: int,
+        enhance_level: int,
+        mastery_level=None,
+        item_data=None,
+    ) -> typing.Optional[Dict[str, typing.Any]]:
+        if mastery_level is None:
+            mastery_level = db.unit_role_mastery_level
+        if item_data is None:
+            item_data = db.unit_role_mastery_item_data
+
+        level = mastery_level.get(mastery_id, {}).get((slot_level, enhance_level))
+        item = item_data.get(mastery_id, {}).get(slot_level)
+        if not level or not item:
+            return None
+
+        token = (eInventoryType.Item, item.item_id_1)
+        universal_token = (
+            eInventoryType.Item,
+            UNIT_ROLE_MASTERY_UNIVERSAL_ITEM_BASE_ID + slot_level,
+        )
+        need = level.num
+        stock = self.get_inventory(token)
+        universal_stock = self.get_inventory(universal_token)
+        return {
+            "item": token,
+            "item_name": db.get_inventory_name_san(token),
+            "need": need,
+            "stock": stock,
+            "universal_item": universal_token,
+            "universal_item_name": db.get_inventory_name_san(universal_token),
+            "universal_stock": universal_stock,
+            "gap": max(need - stock - universal_stock, 0),
+        }
+
+    @staticmethod
+    def _unit_role_mastery_slot_name(slot_data, slot_id: int) -> str:
+        if not slot_data:
+            return f"槽位{slot_id}"
+        name = slot_data[min(slot_data)].name
+        if name.startswith("【") and "】" in name:
+            name = name.split("】", 1)[1]
+        marker = name.rfind("Lv")
+        if marker >= 0 and name[marker + 2:].isdigit():
+            name = name[:marker]
+        return name or f"槽位{slot_id}"
+
+    def get_unit_role_mastery_details(self) -> List[Dict[str, typing.Any]]:
+        role_infos = {
+            role_info.unit_role_id: role_info
+            for role_info in (getattr(self, "unit_role_list", None) or [])
+            if getattr(role_info, "unit_role_id", 0) > 0
+        }
+        try:
+            role_types = db.unit_role_type
+        except Exception:
+            role_types = {}
+
+        tables_ready = True
+        try:
+            mastery_ids = db.unit_role_mastery_id
+            slot_data = db.unit_role_mastery_slot_data
+            enhance_data = db.unit_role_mastery_enhance_data
+            mastery_level = db.unit_role_mastery_level
+            item_data = db.unit_role_mastery_item_data
+        except Exception:
+            tables_ready = False
+            mastery_ids = {}
+            slot_data = {}
+            enhance_data = {}
+            mastery_level = {}
+            item_data = {}
+
+        role_ids = sorted({
+            role_id
+            for role_id in set(role_types) | set(role_infos) | set(mastery_ids)
+            if role_id > 0
+        })
+        details = []
+        for role_id in role_ids:
+            role_type = role_types.get(role_id)
+            role_name = (
+                role_type.unit_role_name
+                if role_type and getattr(role_type, "unit_role_name", None)
+                else f"未知职能({role_id})"
+            )
+            role_info = role_infos.get(role_id)
+            role_mastery_ids = mastery_ids.get(role_id, {})
+
+            for slot_id in range(1, 5):
+                current_slot_level = getattr(role_info, f"slot_level_{slot_id}", None) if role_info else None
+                current_enhance_level = getattr(role_info, f"enhance_level_{slot_id}", None) if role_info else None
+                current_level = (
+                    f"{current_slot_level}-{current_enhance_level}"
+                    if current_slot_level is not None
+                    and current_enhance_level is not None
+                    and current_enhance_level >= 0
+                    else "-"
+                )
+                detail = {
+                    "unit_role_id": role_id,
+                    "role_name": role_name,
+                    "slot_id": slot_id,
+                    "mastery_id": None,
+                    "name": f"槽位{slot_id}",
+                    "status": "数据不可用" if not tables_ready else "数据缺失",
+                    "current_level": current_level,
+                    "attributes": Counter(),
+                    "attribute_text": "-",
+                    "next_level": "-",
+                    "item": None,
+                    "item_name": "-",
+                    "need": None,
+                    "stock": None,
+                    "universal_item": None,
+                    "universal_item_name": "-",
+                    "universal_stock": None,
+                    "gap": None,
+                }
+                if not tables_ready:
+                    details.append(detail)
+                    continue
+
+                mastery = role_mastery_ids.get(slot_id)
+                if not mastery:
+                    details.append(detail)
+                    continue
+
+                mastery_id = mastery.mastery_id
+                detail["mastery_id"] = mastery_id
+                mastery_slots = slot_data.get(mastery_id, {})
+                mastery_enhance = enhance_data.get(mastery_id, {})
+                mastery_levels = mastery_level.get(mastery_id, {})
+                mastery_items = item_data.get(mastery_id, {})
+                detail["name"] = self._unit_role_mastery_slot_name(mastery_slots, slot_id)
+
+                if (
+                    not mastery_slots
+                    or not mastery_enhance
+                    or not mastery_levels
+                    or not mastery_items
+                ):
+                    details.append(detail)
+                    continue
+
+                if role_info is None or current_enhance_level is None or current_enhance_level < 0:
+                    detail["status"] = "未解锁"
+                    details.append(detail)
+                    continue
+
+                current = (current_slot_level, current_enhance_level)
+                current_enhance = mastery_enhance.get(current)
+                if current_slot_level not in mastery_slots or not current_enhance:
+                    details.append(detail)
+                    continue
+
+                attributes = self.get_unit_role_mastery_attributes(
+                    mastery_id,
+                    current_slot_level,
+                    current_enhance_level,
+                    enhance_data,
+                )
+                detail["attributes"] = attributes
+                detail["attribute_text"] = self.format_unit_role_mastery_attributes(attributes)
+
+                states = sorted(mastery_enhance)
+                current_index = states.index(current)
+                if current_index == len(states) - 1:
+                    is_complete_max = (
+                        current_slot_level == max(mastery_slots)
+                        and current in mastery_levels
+                        and current_slot_level in mastery_items
+                        and set(mastery_enhance) == set(mastery_levels)
+                        and set(mastery_slots) == set(mastery_items)
+                    )
+                    detail["status"] = "满级" if is_complete_max else "数据缺失"
+                    details.append(detail)
+                    continue
+
+                next_level = states[current_index + 1]
+                if next_level[0] == current_slot_level:
+                    is_adjacent = next_level[1] == current_enhance_level + 1
+                else:
+                    next_slot_levels = [
+                        state[1] for state in states if state[0] == next_level[0]
+                    ]
+                    is_adjacent = (
+                        next_level[0] == current_slot_level + 1
+                        and next_level[1] == min(next_slot_levels)
+                    )
+                if not is_adjacent or next_level[0] not in mastery_slots:
+                    details.append(detail)
+                    continue
+
+                cost = self.get_unit_role_mastery_upgrade_cost(
+                    mastery_id,
+                    current_slot_level,
+                    current_enhance_level,
+                    mastery_level,
+                    item_data,
+                )
+                if not cost:
+                    details.append(detail)
+                    continue
+
+                detail.update(cost)
+                detail["status"] = "可升级"
+                detail["next_level"] = f"{next_level[0]}-{next_level[1]}"
+                details.append(detail)
+
+        return details
 
     def get_talent_skill_info(self) -> str:
         page = 0 if not self.princess_knight_info.talent_skill_last_enhanced_page_node_list else db.talent_skill_node[self.princess_knight_info.talent_skill_last_enhanced_page_node_list[0].node_id].page_num

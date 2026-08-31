@@ -109,3 +109,55 @@ class find_clan_talent_quest(Module):
             data['顶关未通'] = "√" if flag else ""
             self._log(member_progress)
             self._table(data)
+
+@description('查看各职能的四个精通槽位、当前属性和下一级材料，普通碎片与万能碎片分开显示，不会进行强化')
+@notlogin(check_data=True)
+@name('查职能精通')
+class find_unit_role_mastery(Module):
+    HEADERS = [
+        '职能',
+        '槽位',
+        '名称',
+        '状态',
+        '当前等级',
+        '属性',
+        '下一级材料',
+        '需要',
+        '普通碎片',
+        '万能碎片',
+        '缺口',
+    ]
+
+    async def do_task(self, client: pcrclient):
+        details = client.data.get_unit_role_mastery_details()
+        self._table_header(self.HEADERS.copy())
+
+        if not details:
+            self._warn('未找到职能精通数据，请登录刷新缓存或更新主数据库')
+            for slot_id in range(1, 5):
+                row = {header: '-' for header in self.HEADERS}
+                row['槽位'] = slot_id
+                row['状态'] = '数据不可用'
+                self._table(row)
+            return
+
+        if not (getattr(client.data, 'unit_role_list', None) or []):
+            self._log('缓存中暂无已解锁职能；以下槽位按未解锁展示')
+        if any(detail['status'] in ('数据不可用', '数据缺失') for detail in details):
+            self._warn('部分职能精通主数据不可用，请更新主数据库后重试')
+        self._log('缺口按普通碎片与万能碎片的合计库存计算；万能碎片由同等级槽位共享')
+
+        for detail in details:
+            self._table({
+                '职能': detail['role_name'],
+                '槽位': detail['slot_id'],
+                '名称': detail['name'],
+                '状态': detail['status'],
+                '当前等级': detail['current_level'],
+                '属性': detail['attribute_text'],
+                '下一级材料': detail['item_name'],
+                '需要': detail['need'] if detail['need'] is not None else '-',
+                '普通碎片': detail['stock'] if detail['stock'] is not None else '-',
+                '万能碎片': detail['universal_stock'] if detail['universal_stock'] is not None else '-',
+                '缺口': detail['gap'] if detail['gap'] is not None else '-',
+            })
