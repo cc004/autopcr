@@ -110,22 +110,81 @@ class find_clan_talent_quest(Module):
             self._log(member_progress)
             self._table(data)
 
-@description('查看各职能的四个精通槽位、当前属性和下一级碎片，普通碎片与万能碎片分开显示，不会进行强化')
+@description('查看并导出各职能精通槽位的完整库存数据和最高可达等级，不会进行强化')
 @notlogin(check_data=True)
 @name('查职能精通')
 class find_unit_role_mastery(Module):
+    EXPORT_SCHEMA_VERSION = 1
     HEADERS = [
-        '职能',
-        '槽位',
-        '名称',
+        '格式版本',
+        '玩家ID',
+        '玩家名',
+        '公会ID',
+        '主数据库版本',
+        '数据完整',
+        '职能ID',
+        '职能名称',
+        '槽位ID',
+        '精通ID',
+        '精通名称',
+        '是否解锁',
         '状态',
+        '当前阶段',
+        '当前强化等级',
         '当前等级',
-        '属性',
-        '需要',
-        '普通碎片',
-        '万能碎片',
-        '缺口',
+        '普通T1',
+        '普通T2',
+        '普通T3',
+        '普通T4',
+        '普通T5',
+        '万能T1',
+        '万能T2',
+        '万能T3',
+        '万能T4',
+        '万能T5',
+        '仅普通可达',
+        '含万能单项可达',
     ]
+
+    def _build_row(
+        self,
+        client: pcrclient,
+        detail: Dict,
+        universal_stocks: Dict[int, int],
+        complete: bool,
+    ) -> Dict:
+        unlocked = (
+            detail['current_enhance_level'] is not None
+            and detail['current_enhance_level'] >= 0
+        )
+        return {
+            '格式版本': self.EXPORT_SCHEMA_VERSION,
+            '玩家ID': str(client.data.uid),
+            '玩家名': client.data.user_name or '',
+            '公会ID': str(client.data.clan) if client.data.clan else '',
+            '主数据库版本': getattr(getattr(db, 'dbmgr', None), 'ver', '') or '',
+            '数据完整': '是' if complete else '否',
+            '职能ID': detail['unit_role_id'],
+            '职能名称': detail['role_name'],
+            '槽位ID': detail['slot_id'],
+            '精通ID': detail['mastery_id'],
+            '精通名称': detail['name'],
+            '是否解锁': '是' if unlocked else '否',
+            '状态': detail['status'],
+            '当前阶段': detail['current_slot_level'] if unlocked else None,
+            '当前强化等级': detail['current_enhance_level'] if unlocked else None,
+            '当前等级': detail['current_level'],
+            **{
+                f'普通T{level}': detail['ordinary_stocks'][level]
+                for level in range(1, 6)
+            },
+            **{
+                f'万能T{level}': universal_stocks[level]
+                for level in range(1, 6)
+            },
+            '仅普通可达': detail['reachable_without_universal'],
+            '含万能单项可达': detail['reachable_with_universal'],
+        }
 
     async def do_task(self, client: pcrclient):
         details = client.data.get_unit_role_mastery_details()
@@ -133,29 +192,23 @@ class find_unit_role_mastery(Module):
 
         if not details:
             self._warn('未找到职能精通数据，请登录刷新缓存或更新主数据库')
-            for slot_id in range(1, 5):
-                row = {header: '-' for header in self.HEADERS}
-                row['槽位'] = slot_id
-                row['状态'] = '数据不可用'
-                self._table(row)
             return
 
         if not (getattr(client.data, 'unit_role_list', None) or []):
             self._log('缓存中暂无已解锁职能；以下槽位按未解锁展示')
-        if any(detail['status'] in ('数据不可用', '数据缺失') for detail in details):
+        complete = not any(
+            detail['status'] in ('数据不可用', '数据缺失')
+            for detail in details
+        )
+        if not complete:
             self._warn('部分职能精通主数据不可用，请更新主数据库后重试')
-        self._log('缺口按普通碎片与万能碎片的合计库存计算；万能碎片由同等级槽位共享')
+        self._log('普通与万能碎片按 T1-T5 分列；含万能可达为各槽位独立投入的单项上限')
 
+        universal_stocks = client.data.get_unit_role_mastery_universal_stocks()
         for detail in details:
-            self._table({
-                '职能': detail['role_name'],
-                '槽位': detail['slot_id'],
-                '名称': detail['name'],
-                '状态': detail['status'],
-                '当前等级': detail['current_level'],
-                '属性': detail['attribute_text'],
-                '需要': detail['need'] if detail['need'] is not None else '-',
-                '普通碎片': detail['stock'] if detail['stock'] is not None else '-',
-                '万能碎片': detail['universal_stock'] if detail['universal_stock'] is not None else '-',
-                '缺口': detail['gap'] if detail['gap'] is not None else '-',
-            })
+            self._table(self._build_row(
+                client,
+                detail,
+                universal_stocks,
+                complete,
+            ))

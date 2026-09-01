@@ -16,24 +16,8 @@ from asyncio import Lock
 
 _data_lck = Lock()
 
-UNIT_ROLE_MASTERY_PARAM_NAMES = {
-    1: "生命值",
-    2: "攻击力",
-    3: "物理防御力",
-    4: "魔法防御力",
-    5: "暴击",
-    6: "暴击伤害",
-    7: "造成伤害",
-    8: "异常状态命中",
-    9: "异常状态抵抗",
-    10: "普通攻击",
-    11: "增益效果",
-    12: "减益效果",
-    13: "回复效果",
-    14: "技能值充能",
-}
-
 UNIT_ROLE_MASTERY_UNIVERSAL_ITEM_BASE_ID = 80000
+UNIT_ROLE_MASTERY_LEVELS = tuple(range(1, 6))
 
 class datamgr(BaseModel, Component[apiclient]):
     ready: bool = False
@@ -706,45 +690,6 @@ class datamgr(BaseModel, Component[apiclient]):
             msg.append(f"{db.unit_role_type[role_info.unit_role_id].unit_role_name}{self.get_role_level_single(role_info)}")
         return "\n".join(msg)
 
-    def get_unit_role_mastery_attributes(
-        self,
-        mastery_id: int,
-        slot_level: int,
-        enhance_level: int,
-        enhance_data=None,
-    ) -> typing.Counter[int]:
-        if enhance_data is None:
-            enhance_data = db.unit_role_mastery_enhance_data
-        row = enhance_data.get(mastery_id, {}).get((slot_level, enhance_level))
-        attributes = Counter()
-        if not row:
-            return attributes
-
-        for index in range(1, 3):
-            param_type = getattr(row, f"role_param_type_{index}", 0)
-            value = getattr(row, f"enhance_value_{index}", 0)
-            if param_type:
-                attributes[param_type] += value
-        return attributes
-
-    @staticmethod
-    def format_unit_role_mastery_attributes(attributes: typing.Counter[int]) -> str:
-        msg = []
-        for param_type, value in sorted(attributes.items()):
-            name = UNIT_ROLE_MASTERY_PARAM_NAMES.get(param_type, f"未知属性{param_type}")
-            sign = "-" if value < 0 else "+"
-            value = abs(value)
-            # 技能值充能以 0.1 TP 记录，其余精通属性以 0.01% 记录。
-            scale = 10 if param_type == 14 else 100
-            integer, decimal = divmod(value, scale)
-            formatted_value = str(integer)
-            if decimal:
-                precision = 1 if scale == 10 else 2
-                formatted_value += f".{decimal:0{precision}d}".rstrip("0")
-            suffix = "" if param_type == 14 else "%"
-            msg.append(f"{name}{sign}{formatted_value}{suffix}")
-        return "/".join(msg) or "-"
-
     def get_unit_role_mastery_upgrade_cost(
         self,
         mastery_id: int,
@@ -781,6 +726,93 @@ class datamgr(BaseModel, Component[apiclient]):
             "universal_stock": universal_stock,
             "gap": max(need - stock - universal_stock, 0),
         }
+
+    def get_unit_role_mastery_universal_stocks(self) -> Dict[int, int]:
+        return {
+            slot_level: self.get_inventory((
+                eInventoryType.Item,
+                UNIT_ROLE_MASTERY_UNIVERSAL_ITEM_BASE_ID + slot_level,
+            ))
+            for slot_level in UNIT_ROLE_MASTERY_LEVELS
+        }
+
+    @staticmethod
+    def _is_unit_role_mastery_next_level(
+        current: Tuple[int, int],
+        next_level: Tuple[int, int],
+        states: List[Tuple[int, int]],
+    ) -> bool:
+        if next_level[0] == current[0]:
+            return next_level[1] == current[1] + 1
+        next_enhance_levels = [
+            state[1] for state in states if state[0] == next_level[0]
+        ]
+        return (
+            bool(next_enhance_levels)
+            and next_level[0] == current[0] + 1
+            and next_level[1] == min(next_enhance_levels)
+        )
+
+    def get_unit_role_mastery_reachable_level(
+        self,
+        mastery_id: int,
+        slot_level: int,
+        enhance_level: int,
+        use_universal: bool,
+        enhance_data=None,
+        mastery_level=None,
+        item_data=None,
+    ) -> typing.Optional[Tuple[int, int]]:
+        if enhance_data is None:
+            enhance_data = db.unit_role_mastery_enhance_data
+        if mastery_level is None:
+            mastery_level = db.unit_role_mastery_level
+        if item_data is None:
+            item_data = db.unit_role_mastery_item_data
+
+        states = sorted(enhance_data.get(mastery_id, {}))
+        level_costs = mastery_level.get(mastery_id, {})
+        mastery_items = item_data.get(mastery_id, {})
+        current = (slot_level, enhance_level)
+        if current not in states or not level_costs or not mastery_items:
+            return None
+
+        ordinary_stocks = {
+            level: self.get_inventory((eInventoryType.Item, item.item_id_1))
+            for level, item in mastery_items.items()
+        }
+        universal_stocks = self.get_unit_role_mastery_universal_stocks()
+
+        current_index = states.index(current)
+        while current_index < len(states) - 1:
+            next_level = states[current_index + 1]
+            if not self._is_unit_role_mastery_next_level(current, next_level, states):
+                return None
+
+            cost_data = level_costs.get(current)
+            if not cost_data or current[0] not in mastery_items:
+                return None
+
+            need = cost_data.num
+            ordinary_used = min(ordinary_stocks.get(current[0], 0), need)
+            universal_need = need - ordinary_used
+            if universal_need and (
+                not use_universal
+                or universal_stocks.get(current[0], 0) < universal_need
+            ):
+                break
+
+            ordinary_stocks[current[0]] -= ordinary_used
+            if universal_need:
+                universal_stocks[current[0]] -= universal_need
+            current = next_level
+            current_index += 1
+
+        return current
+
+    @staticmethod
+    def format_unit_role_mastery_level(level: typing.Optional[Tuple[int, int]]) -> str:
+        return f"Lv{level[0]}.{level[1]}" if level else "-"
 
     @staticmethod
     def _unit_role_mastery_slot_name(slot_data, slot_id: int) -> str:
@@ -840,7 +872,7 @@ class datamgr(BaseModel, Component[apiclient]):
                 current_slot_level = getattr(role_info, f"slot_level_{slot_id}", None) if role_info else None
                 current_enhance_level = getattr(role_info, f"enhance_level_{slot_id}", None) if role_info else None
                 current_level = (
-                    f"{current_slot_level}-{current_enhance_level}"
+                    f"Lv{current_slot_level}.{current_enhance_level}"
                     if current_slot_level is not None
                     and current_enhance_level is not None
                     and current_enhance_level >= 0
@@ -853,9 +885,9 @@ class datamgr(BaseModel, Component[apiclient]):
                     "mastery_id": None,
                     "name": f"槽位{slot_id}",
                     "status": "数据不可用" if not tables_ready else "数据缺失",
+                    "current_slot_level": current_slot_level,
+                    "current_enhance_level": current_enhance_level,
                     "current_level": current_level,
-                    "attributes": Counter(),
-                    "attribute_text": "-",
                     "next_level": "-",
                     "item": None,
                     "item_name": "-",
@@ -865,6 +897,11 @@ class datamgr(BaseModel, Component[apiclient]):
                     "universal_item_name": "-",
                     "universal_stock": None,
                     "gap": None,
+                    "ordinary_stocks": {
+                        level: None for level in UNIT_ROLE_MASTERY_LEVELS
+                    },
+                    "reachable_without_universal": "-",
+                    "reachable_with_universal": "-",
                 }
                 if not tables_ready:
                     details.append(detail)
@@ -882,6 +919,14 @@ class datamgr(BaseModel, Component[apiclient]):
                 mastery_levels = mastery_level.get(mastery_id, {})
                 mastery_items = item_data.get(mastery_id, {})
                 detail["name"] = self._unit_role_mastery_slot_name(mastery_slots, slot_id)
+                detail["ordinary_stocks"] = {
+                    level: (
+                        self.get_inventory((eInventoryType.Item, mastery_items[level].item_id_1))
+                        if level in mastery_items
+                        else None
+                    )
+                    for level in UNIT_ROLE_MASTERY_LEVELS
+                }
 
                 if (
                     not mastery_slots
@@ -903,14 +948,28 @@ class datamgr(BaseModel, Component[apiclient]):
                     details.append(detail)
                     continue
 
-                attributes = self.get_unit_role_mastery_attributes(
-                    mastery_id,
-                    current_slot_level,
-                    current_enhance_level,
-                    enhance_data,
+                detail["reachable_without_universal"] = self.format_unit_role_mastery_level(
+                    self.get_unit_role_mastery_reachable_level(
+                        mastery_id,
+                        current_slot_level,
+                        current_enhance_level,
+                        False,
+                        enhance_data,
+                        mastery_level,
+                        item_data,
+                    )
                 )
-                detail["attributes"] = attributes
-                detail["attribute_text"] = self.format_unit_role_mastery_attributes(attributes)
+                detail["reachable_with_universal"] = self.format_unit_role_mastery_level(
+                    self.get_unit_role_mastery_reachable_level(
+                        mastery_id,
+                        current_slot_level,
+                        current_enhance_level,
+                        True,
+                        enhance_data,
+                        mastery_level,
+                        item_data,
+                    )
+                )
 
                 states = sorted(mastery_enhance)
                 current_index = states.index(current)
@@ -927,16 +986,9 @@ class datamgr(BaseModel, Component[apiclient]):
                     continue
 
                 next_level = states[current_index + 1]
-                if next_level[0] == current_slot_level:
-                    is_adjacent = next_level[1] == current_enhance_level + 1
-                else:
-                    next_slot_levels = [
-                        state[1] for state in states if state[0] == next_level[0]
-                    ]
-                    is_adjacent = (
-                        next_level[0] == current_slot_level + 1
-                        and next_level[1] == min(next_slot_levels)
-                    )
+                is_adjacent = self._is_unit_role_mastery_next_level(
+                    current, next_level, states
+                )
                 if not is_adjacent or next_level[0] not in mastery_slots:
                     details.append(detail)
                     continue
@@ -954,7 +1006,7 @@ class datamgr(BaseModel, Component[apiclient]):
 
                 detail.update(cost)
                 detail["status"] = "可升级"
-                detail["next_level"] = f"{next_level[0]}-{next_level[1]}"
+                detail["next_level"] = f"Lv{next_level[0]}.{next_level[1]}"
                 details.append(detail)
 
         return details
