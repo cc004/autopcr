@@ -110,7 +110,7 @@ class find_clan_talent_quest(Module):
             self._log(member_progress)
             self._table(data)
 
-@description('查看各职能的四个精通槽位、当前属性和下一级材料，普通碎片与万能碎片分开显示，不会进行强化')
+@description('查看各职能的四个精通槽位、当前属性和下一级碎片，普通碎片与万能碎片分开显示，不会进行强化')
 @notlogin(check_data=True)
 @name('查职能精通')
 class find_unit_role_mastery(Module):
@@ -121,7 +121,6 @@ class find_unit_role_mastery(Module):
         '状态',
         '当前等级',
         '属性',
-        '下一级材料',
         '需要',
         '普通碎片',
         '万能碎片',
@@ -155,7 +154,6 @@ class find_unit_role_mastery(Module):
                 '状态': detail['status'],
                 '当前等级': detail['current_level'],
                 '属性': detail['attribute_text'],
-                '下一级材料': detail['item_name'],
                 '需要': detail['need'] if detail['need'] is not None else '-',
                 '普通碎片': detail['stock'] if detail['stock'] is not None else '-',
                 '万能碎片': detail['universal_stock'] if detail['universal_stock'] is not None else '-',
