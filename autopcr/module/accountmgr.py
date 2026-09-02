@@ -501,11 +501,14 @@ class UserManager:
     def qid_path(self, qid: str) -> str:
         return os.path.join(self.root, qid)
 
-    def create(self, qid: str, password: str) -> AccountManager:
+    def validate_create(self, qid: str):
         if not UserManager.pathsyntax.fullmatch(qid):
             raise UserException('无效的QQ号')
         if qid in self.qids():
             raise UserException('QQ号已存在')
+
+    def create(self, qid: str, password: str) -> AccountManager:
+        self.validate_create(qid)
         os.makedirs(self.qid_path(qid))
         with open(self.qid_path(qid) + '/secret', 'w') as f:
             f.write(UserData(password=password).to_json())
