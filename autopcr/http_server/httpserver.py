@@ -551,7 +551,6 @@ data: {ret}\n\n'''
                     return "无效的QQ", 400
             qq = str(qq)
             password = str(password)
-            usermgr.validate_create(qq)
             self.consume_register_rate_limit()
             usermgr.create(qq, password)
             login_user(AuthUser(qq))
