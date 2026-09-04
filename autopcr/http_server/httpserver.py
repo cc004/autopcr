@@ -1,5 +1,6 @@
 import os
 import secrets
+import math
 from copy import deepcopy
 from datetime import timedelta
 from typing import Callable, Coroutine, Any
@@ -41,6 +42,7 @@ class HttpServer:
         self.quart = quart.Quart(__name__)
         QuartAuth(self.quart, cookie_secure=False)
         RateLimiter(self.quart)
+        self.register_cooldowns = {}
         Compress(self.quart)
         self.quart.secret_key = secrets.token_urlsafe(16)
 
@@ -57,6 +59,14 @@ class HttpServer:
         self.app.after_request(self.log_request_info)
 
         enable_manual_validator()
+
+    def consume_register_rate_limit(self):
+        key = request.access_route[0]
+        now = asyncio.get_running_loop().time()
+        retry_after = self.register_cooldowns.get(key, now) - now
+        if retry_after > 0:
+            raise RateLimitExceeded(math.ceil(retry_after))
+        self.register_cooldowns[key] = now + timedelta(minutes=1).total_seconds()
 
     def log_request_info(self, response):
         logger.info(
@@ -138,7 +148,8 @@ class HttpServer:
 
         @self.api_limit.errorhandler(RateLimitExceeded)
         async def handle_rate_limit_exceeded_error(error):
-            return "您冲得太快了，休息一下吧", 429
+            retry_after = max(1, error.retry_after)
+            return "您冲得太快了，休息一下吧", 429, {"Retry-After": str(retry_after)}
 
         @self.api.errorhandler(Unauthorized)
         async def redirect_to_login(*_: Exception):
@@ -525,7 +536,6 @@ data: {ret}\n\n'''
             return "欢迎回来，" + qq, 200
 
         @self.api_limit.route('/register', methods = ['POST'])
-        @rate_limit(1, timedelta(minutes=1))
         async def register():
             if not ALLOW_REGISTER:
                 return "当前禁止注册，请联系管理员", 400
@@ -539,7 +549,10 @@ data: {ret}\n\n'''
                 from ...server import is_valid_qq
                 if not await is_valid_qq(qq):
                     return "无效的QQ", 400
-            usermgr.create(str(qq), str(password))
+            qq = str(qq)
+            password = str(password)
+            self.consume_register_rate_limit()
+            usermgr.create(qq, password)
             login_user(AuthUser(qq))
             return "欢迎回来，" + qq, 200
 
