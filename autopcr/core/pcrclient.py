@@ -1066,6 +1066,17 @@ class pcrclient(apiclient):
         req = ShopItemListRequest()
         return await self.request(req)
 
+    async def profile_picture_frame_shop_index(self):
+        req = ProfilePictureFrameShopIndexRequest()
+        return await self.request(req)
+
+    async def profile_picture_frame_shop_buy(self, lineup_type: int, slot_id: int, buy_count: int):
+        req = ProfilePictureFrameShopBuyRequest()
+        req.lineup_type = lineup_type
+        req.slot_id = slot_id
+        req.buy_count = buy_count
+        return await self.request(req)
+
     async def shop_buy(self, shop_id: int, slot_id: int, number: int, total_price: int):
         req = ShopBuyRequest()
         req.system_id = shop_id

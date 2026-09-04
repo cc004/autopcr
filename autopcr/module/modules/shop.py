@@ -287,10 +287,34 @@ class master_shop(master_shop_buyer):
 
 @description('购买大师币商店里的属性材料')
 @name('属性材料购买')
-@default(False)
+@default(True)
 class master_shop_talent(master_shop_buyer):
     def get_buy_items(self, shop: ShopInfo, client: pcrclient) -> List:
         items = [item for item in shop.item_list if db.is_talent_material((item.type, item.item_id)) and not item.sold]
         if not items:
             raise SkipError("属性材料已售罄")
         return items
+
+
+@description('购买探险商店中的白金扭蛋券购买')
+@name('探险商店购买')
+@default(True)
+class travel_shop(Module):
+    async def do_task(self, client: pcrclient):
+        shop = await client.profile_picture_frame_shop_index()
+        ticket = next((item for item in (shop.period_lineup_list or [])
+                       if item.slot_id == 9), None)
+        if not ticket or ticket.sold:
+            raise SkipError('白金扭蛋券已售罄')
+
+        stock_count = ticket.stock_count or 0
+        purchase_count = ticket.purchase_count or 0
+        coin = client.data.get_inventory((eInventoryType.Item, shop.currency_item_id)) or 0
+        remaining_count = max(0, stock_count - purchase_count)
+        buy_count = min(remaining_count, coin // ticket.price)
+        if buy_count <= 0:
+            raise SkipError(f'探险币{coin}不足购买一张白金扭蛋券所需的{ticket.price}')
+
+        res = await client.profile_picture_frame_shop_buy(1, ticket.slot_id, buy_count)
+        msg = await client.serialize_reward_summary(res.purchase_list)
+        self._log(f'购买了{buy_count}张白金扭蛋券:\n{msg}')

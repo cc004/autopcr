@@ -118,6 +118,7 @@ daily_modules = ModuleList(
         clanbattle_shop,
         master_shop_talent,
         master_shop,
+        travel_shop,
 
         clan_equip_request,
         love_up,
