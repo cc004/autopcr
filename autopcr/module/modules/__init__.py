@@ -23,6 +23,7 @@ from .travel import *
 from .unit import *
 from .talent import *
 from .mirage import *
+from .notify import *
 
 @dataclass
 class ModuleList:
@@ -228,4 +229,14 @@ tool_modules = ModuleList(
         remove_cb_support,
         redeem_unit_swap,
     ]
+)
+
+notify_modules = ModuleList(
+    '通知',
+    'notify',
+    [
+        email_notify
+
+    ],
+    visible_in_clan=True,
 )

@@ -1,5 +1,5 @@
 from typing import Dict, List, Callable, Any
-from .modules import cron_modules, daily_modules, clan_modules, danger_modules, tool_modules, ModuleList, Module, CronModule, planning_modules, unit_modules, table_modules
+from .modules import cron_modules, daily_modules, clan_modules, danger_modules, tool_modules, ModuleList, Module, CronModule, planning_modules, unit_modules, table_modules, notify_modules, NotifyModule
 from .modulemgr import ModuleManager
 
 class ModuleListManager:
@@ -13,6 +13,7 @@ class ModuleListManager:
         table_modules.key: table_modules,
         clan_modules.key: clan_modules,
         danger_modules.key: danger_modules,
+        notify_modules.key: notify_modules,
     }
     name_to_modules: Dict[str, Callable] = {m.__name__: m for ml in modules.values() for m in ml.modules}
 
@@ -27,6 +28,11 @@ class ModuleListManager:
     def cron_modules(self) -> List[CronModule]:
         return self.get_modules_list('cron')
 
+    @property
+    def notify_modules(self) -> List[NotifyModule]:
+        """获取通知模块列表"""
+        return self.get_modules_list('notify')
+    
     def get_module_from_key(self, key: str) -> Module:
         if key not in self.name_to_modules:
             raise ValueError(f"模块{key}未找到")

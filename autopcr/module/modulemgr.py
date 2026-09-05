@@ -4,6 +4,8 @@ from dataclasses_json import dataclass_json
 from typing import List, Dict
 from abc import abstractmethod, abstractproperty
 
+from ..util.logger import instance as logger
+from ..util.draw import instance as drawer
 from ..model.error import *
 from ..model.enums import *
 from ..db.database import db
@@ -11,6 +13,7 @@ from .modulebase import Module, ModuleResult, eResultStatus
 from ..core.clientpool import PoolClientWrapper
 import traceback
 import os
+import base64
 
 @dataclass_json
 @dataclass
@@ -125,6 +128,7 @@ class ModuleManager:
         if any(m.status == eResultStatus.PANIC or m.status == eResultStatus.ERROR for m in resp.result.values()):
             status = eResultStatus.ERROR
         res = await self.save_daily_result(resp, status)
+        await self.report_result(resp, status)
         return res
 
     async def do_from_key(self, config: dict, key: str, isAdminCall: bool = False) -> "ModuleResultInfo":
@@ -179,3 +183,38 @@ class ModuleManager:
         finally:
             await db.exit_cache_scope()
 
+
+    async def report_result(self, resp: TaskResult, status: eResultStatus) -> None:
+        """任务执行完成后发送邮件报告"""
+        try:
+            # 使用 Drawer 绘制图片            
+            img = await drawer.draw_tasks_result(resp)
+            
+            # 转为 Base64
+            img_byte_arr = await drawer.img2bytesio(img, format='PNG')
+            img_base64 = base64.b64encode(img_byte_arr.getvalue()).decode('utf-8')
+            
+            # 构建 HTML
+            html_body = f"""
+            <html>
+                <body>
+                    <h2>📊 任务执行报告</h2>
+                    <p>状态: {status.value}</p>
+                    <img src="data:image/png;base64,{img_base64}" style="max-width: 100%;">
+                </body>
+            </html>
+            """
+            
+            # 发送邮件
+            notify_list = self.modules_list.notify_modules
+            for notify in notify_list:
+                
+                if notify.is_configured():
+                    await notify.send_notification(
+                        subject=f"【AutoPCR】任务报告 - {status.value}",
+                        body=html_body,
+                        is_html=True
+                    )
+                    
+        except Exception:
+            logger.exception("发送邮件报告失败: ")
