@@ -1,4 +1,4 @@
-from PIL import Image, ImageFont, ImageDraw
+from PIL import Image, ImageFont, ImageDraw, __version__ as pillow_version
 from collections import namedtuple
 from io import BytesIO
 import base64
@@ -11,10 +11,13 @@ def outp_b64(outp_img):
     base64_str = f'base64://{base64.b64encode(buf.getvalue()).decode()}'
     return f'[CQ:image,file={base64_str}]'
 
-def text_size(draw, text, font):
-    text = str(text).replace('\t', ' ')
-    bbox = draw.textbbox((0, 0), text, font=font)
-    return bbox[2] - bbox[0], bbox[3] - bbox[1]
+if int(pillow_version.split('.')[0]) >= 10:
+    def text_size(draw, text, font):
+        bbox = draw.textbbox((0, 0), str(text).replace('\t', ' '), font=font)
+        return bbox[2] - bbox[0], bbox[3] - bbox[1]
+else:
+    def text_size(draw, text, font):
+        return draw.textsize(str(text).replace('\t', ' '), font=font)
 
 
 def position_tuple(*args):
