@@ -216,12 +216,13 @@ class half_schedule(Module):
         ]
 
     async def do_task(self, _: pcrclient):
+        # 结构化数据单一来源：db.schedule_entries()（字段化供 API/通知复用），这里只做渲染
         schedules = defaultdict(list)
-        for table, factory in self.schedule_sources():
-            for row in table.values():
-                schedule = factory(row)
-                if schedule.enabled:
-                    schedules[(db.format_date(db.parse_time(schedule.start_time)), db.format_date(db.parse_time(schedule.end_time)))].append(schedule.get_description())
+        for entry in db.schedule_entries():
+            msg = entry['description']
+            if msg.startswith('fes|'):
+                msg = msg[4:]  # 剥离 fes 标记（通知侧契约），半月刊渲染保持 parity
+            schedules[(entry['start_time'], entry['end_time'])].append(msg)
         times = sorted(schedules.keys())
         mirai = False
         for time in times:
