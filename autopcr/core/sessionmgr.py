@@ -122,10 +122,16 @@ class sessionmgr(Component[apiclient]):
                     req.is_check_by_term_normal_gacha = 0
                     await next.request(req)
 
-                req = UnitRoleGachaIndexRequest()
-                resp = await next.request(req)
-
-                self._logged = True
+                req = UnitRoleGachaIndexRequest()  
+                resp = await next.request(req)  
+  
+                # 新增：登录时拉取黎明界数据写入缓存；未解锁/异常时忽略，不影响登录  
+                try:  
+                    await next.request(LabyrinthTopRequest())  
+                except Exception:  
+                    pass  
+  
+                self._logged = True  
                 break
             except ApiException as e:
                 if "维护" in str(e):

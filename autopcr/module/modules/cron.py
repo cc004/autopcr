@@ -103,41 +103,64 @@ class cron4(NormalCronModule):
         return self.get_config("clanbattle_run_cron4")
     def get_module_exclude_type(self) -> List[str]:
         return self.get_config("module_exclude_type_cron4")
-
-@conditional_execution2('run_condition_cron5', [], desc='执行庆典', check=False)
-@timetype("time_cron5", "执行时间", "00:00")
-@description('该定时任务不执行体力消耗的操作')
-@name("特别定时任务1")
+        
+@multichoice("module_exclude_type_cron10", "不执行日常模块", [], ['体力获取', '体力消耗'])
+@booltype("clanbattle_run_cron10", "会战期间执行", False)
+@timetype("time_cron10", "执行时间", "00:00")
+@description('定时执行')
+@name("定时任务10")
 @default(False)
 @notrunnable
-class cron5(CronModule):
+class cron10(NormalCronModule):
     def get_cron_time(self) -> str:
-        return self.get_config("time_cron5")
-
-    async def is_cron_condition(self) -> bool:
-        condition = self.get_config_instance("run_condition_cron5")
-        ok, _ = await condition.do_check()
-        return ok
-
-    async def update_client(self, client: pcrclient):
-        await super().update_client(client)
-        client.set_stamina_consume_not_run()
-
-@conditional_execution2('run_condition_cron6', [], desc='执行庆典', check=False)
-@timetype("time_cron6", "执行时间", "00:00")
-@description('该定时任务不执行体力获取的操作')
-@name("特别定时任务2")
+        return self.get_config("time_cron10")
+    def get_clanbattle_run_status(self) -> bool:
+        return self.get_config("clanbattle_run_cron10")
+    def get_module_exclude_type(self) -> List[str]:
+        return self.get_config("module_exclude_type_cron10")        
+         
+@multichoice("module_exclude_type_cron9", "不执行日常模块", [], ['体力获取', '体力消耗'])
+@booltype("clanbattle_run_cron9", "会战期间执行", False)
+@timetype("time_cron9", "执行时间", "00:00")
+@description('定时执行')
+@name("定时任务9")
 @default(False)
 @notrunnable
-class cron6(CronModule):
+class cron9(NormalCronModule):
     def get_cron_time(self) -> str:
-        return self.get_config("time_cron6")
-
-    async def is_cron_condition(self) -> bool:
-        condition = self.get_config_instance("run_condition_cron6")
-        ok, _ = await condition.do_check()
-        return ok
-
-    async def update_client(self, client: pcrclient):
-        await super().update_client(client)
-        client.set_stamina_get_not_run()
+        return self.get_config("time_cron9")
+    def get_clanbattle_run_status(self) -> bool:
+        return self.get_config("clanbattle_run_cron9")
+    def get_module_exclude_type(self) -> List[str]:
+        return self.get_config("module_exclude_type_cron9")        
+         
+@multichoice("module_exclude_type_cron7", "不执行日常模块", [], ['体力获取', '体力消耗'])
+@booltype("clanbattle_run_cron7", "会战期间执行", False)
+@timetype("time_cron7", "执行时间", "00:00")
+@description('定时执行')
+@name("定时任务7")
+@default(False)
+@notrunnable
+class cron7(NormalCronModule):
+    def get_cron_time(self) -> str:
+        return self.get_config("time_cron7")
+    def get_clanbattle_run_status(self) -> bool:
+        return self.get_config("clanbattle_run_cron7")
+    def get_module_exclude_type(self) -> List[str]:
+        return self.get_config("module_exclude_type_cron7")        
+         
+@multichoice("module_exclude_type_cron8", "不执行日常模块", [], ['体力获取', '体力消耗'])
+@booltype("clanbattle_run_cron8", "会战期间执行", False)
+@timetype("time_cron8", "执行时间", "00:00")
+@description('定时执行')
+@name("定时任务8")
+@default(False)
+@notrunnable
+class cron8(NormalCronModule):
+    def get_cron_time(self) -> str:
+        return self.get_config("time_cron8")
+    def get_clanbattle_run_status(self) -> bool:
+        return self.get_config("clanbattle_run_cron8")
+    def get_module_exclude_type(self) -> List[str]:
+        return self.get_config("module_exclude_type_cron8")        
+        

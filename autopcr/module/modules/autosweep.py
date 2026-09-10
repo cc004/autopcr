@@ -402,8 +402,11 @@ unique_equip_2_pure_memory_id = [
         116901, # 电子龙
         107601, # 水妈
         107801, # 水黑
+        115601, # 礼田
         115501, # 礼妈
-        115601, # 礼衣
+        117301, # 水千
+        117201, # 水望
+        117401, # 水裁
 ]
 @conditional_execution1("very_hard_sweep_run_time", ["vh庆典"])
 @description('储备专二需求的150碎片' + ','.join(db.get_unit_name(unit_id) for unit_id in unique_equip_2_pure_memory_id))
@@ -504,7 +507,7 @@ class UniqueEquip1SPMemory():
 
 @conditional_not_execution("mirai_sp1_h_sweep_not_run_time", [])
 @conditional_execution1("mirai_sp1_h_sweep_run_time", ["h庆典"])
-@description('储备专一SP需求的300碎片' + ','.join(db.get_unit_name(unit_id) for unit_id in UniqueEquip1SPMemory.get_unit_demand(UniqueEquip1SPMemory.Type.Sweep)))
+@description('储备专一SP需求的320碎片' + ','.join(db.get_unit_name(unit_id) for unit_id in UniqueEquip1SPMemory.get_unit_demand(UniqueEquip1SPMemory.Type.Sweep)))
 @name('专一SP碎片储备(H本)')
 @default(False)
 @tag_stamina_consume
@@ -516,7 +519,7 @@ class mirai_sp1_h_sweep(simple_demand_sweep_base):
         need_list = []
         for unit in UniqueEquip1SPMemory.get_unit_demand(UniqueEquip1SPMemory.Type.Sweep):
             token = (eInventoryType.Item, db.unit_to_memory[unit])
-            target[unit] += 300
+            target[unit] += 320
             if -memory_gap[token] < target[unit]:
                 need_list.append((token, target[unit] - memory_gap[token]))
         if not need_list:
@@ -531,7 +534,7 @@ class mirai_sp1_h_sweep(simple_demand_sweep_base):
 
 @conditional_not_execution("mirai_sp1_shiori_sweep_not_run_time", ["n3", 'n4及以上'])
 @conditional_execution1("mirai_sp1_shiori_sweep_run_time", ["无庆典"])
-@description('储备专一SP需求的300碎片' + ','.join(db.get_unit_name(unit_id) for unit_id in UniqueEquip1SPMemory.get_unit_demand(UniqueEquip1SPMemory.Type.Sweep)))
+@description('储备专一SP需求的320碎片' + ','.join(db.get_unit_name(unit_id) for unit_id in UniqueEquip1SPMemory.get_unit_demand(UniqueEquip1SPMemory.Type.Sweep)))
 @name('专一SP碎片储备(外传)')
 @default(False)
 @tag_stamina_consume
@@ -543,7 +546,7 @@ class mirai_sp1_shiori_sweep(simple_demand_sweep_base):
         need_list = []
         for unit in UniqueEquip1SPMemory.get_unit_demand(UniqueEquip1SPMemory.Type.Sweep):
             token = (eInventoryType.Item, db.unit_to_memory[unit])
-            target[unit] += 300
+            target[unit] += 320
             if -memory_gap[token] < target[unit]:
                 need_list.append((token, target[unit] - memory_gap[token]))
         if not need_list:

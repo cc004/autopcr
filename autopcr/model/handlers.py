@@ -51,9 +51,18 @@ class CaravanTopResponse(responses.CaravanTopResponse):
                 mgr.update_inventory(item)
         if self.reset_reward:
             for item in self.reset_reward:
-                mgr.update_inventory(item)
-
-@handles
+                mgr.update_inventory(item)  
+  
+@handles  
+class LabyrinthTopResponse(responses.LabyrinthTopResponse):  
+    async def update(self, mgr: datamgr, request):  
+        mgr.labyrinth_point = self.labyrinth_point or 0  
+        mgr.labyrinth_enhance_point = self.labyrinth_enhance_point or 0  
+        mgr.labyrinth_reward_received_point = self.labyrinth_reward_received_point or 0  
+        mgr.labyrinth_guild_cleared_difficulty_list = self.guild_cleared_difficulty_list or []  
+        mgr.labyrinth_cached = True  
+  
+@handles  
 class TravelResultRoundEventResponse(responses.TravelResultRoundEventResponse):
     async def update(self, mgr: datamgr, request):
         if self.current_round_result and self.current_round_result.reward_list:
@@ -538,6 +547,7 @@ class LoadIndexResponse(responses.LoadIndexResponse):
             num = mgr.get_inventory(db.labyrinth_ticket)
             mgr.set_inventory(db.labyrinth_ticket, num + self.receive_labyrinth_passport_count)
 
+
 @handles
 class HomeIndexResponse(responses.HomeIndexResponse):
     async def update(self, mgr: datamgr, request):
@@ -687,6 +697,13 @@ class HatsuneBossBattleSkipResponse(responses.HatsuneBossBattleSkipResponse):
                     mgr.update_inventory(item)
         if self.user_gold:
             mgr.gold = self.user_gold
+
+@handles  
+class MusicBuyResponse(responses.MusicBuyResponse):  
+    async def update(self, mgr: datamgr, request):  
+        if self.item_data:  
+            for item in self.item_data:  
+                mgr.update_inventory(item)
 
 
 @handles

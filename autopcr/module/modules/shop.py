@@ -148,7 +148,7 @@ class limit_shop(shop_buyer):
     def reset_count(self) -> int: return 0
     def buy_kind(self) -> List[str]: return self.get_config('limit_shop_buy_kind')
 
-@singlechoice('underground_shop_buy_memory_count_limit', "记忆碎片盈余值", 0, [0, 10, 20, 120, 270, 9900])
+@singlechoice('underground_shop_buy_memory_count_limit', "记忆碎片盈余值", 0, [0, 10, 20, 120, 270, 300, 9900])
 @singlechoice('underground_shop_buy_equip_count_limit', "装备盈余值", 0, [0, 20, 50, 100, 200, 500, 9900])
 @singlechoice('underground_shop_buy_coin_limit', "货币阈值", 10000, [0, 10000, 50000, 100000, 200000])
 @singlechoice("underground_shop_buy_equip_consider_unit_rank", "角色起始品级", "所有", ["所有", "最高", "次高", "次次高"])
@@ -170,7 +170,7 @@ class underground_shop(shop_buyer):
     def require_equip_units_fav(self) -> bool: return self.get_config('underground_shop_buy_equip_consider_unit_fav')
     def require_equip_units_rank(self) -> str: return self.get_config('underground_shop_buy_equip_consider_unit_rank')
 
-@singlechoice('jjc_shop_buy_memory_count_limit', "记忆碎片盈余值", 0, [0, 10, 20, 120, 270, 9900])
+@singlechoice('jjc_shop_buy_memory_count_limit', "记忆碎片盈余值", 0, [0, 10, 20, 120, 270, 300, 9900])
 @singlechoice('jjc_shop_buy_equip_count_limit', "装备盈余值", 0, [0, 20, 50, 100, 200, 500, 9900])
 @singlechoice('jjc_shop_buy_coin_limit', "货币阈值", 10000, [0, 10000, 50000, 100000, 200000])
 @singlechoice("jjc_shop_buy_equip_consider_unit_rank", "角色起始品级", "所有", ["所有", "最高", "次高", "次次高"])
@@ -192,7 +192,7 @@ class jjc_shop(shop_buyer):
     def require_equip_units_fav(self) -> bool: return self.get_config('jjc_shop_buy_equip_consider_unit_fav')
     def require_equip_units_rank(self) -> str: return self.get_config('jjc_shop_buy_equip_consider_unit_rank')
 
-@singlechoice('pjjc_shop_buy_memory_count_limit', "记忆碎片盈余值", 0, [0, 10, 20, 120, 270, 9900])
+@singlechoice('pjjc_shop_buy_memory_count_limit', "记忆碎片盈余值", 0, [0, 10, 20, 120, 270, 300, 9900])
 @singlechoice('pjjc_shop_buy_equip_count_limit', "装备盈余值", 0, [0, 20, 50, 100, 200, 500, 9900])
 @singlechoice('pjjc_shop_buy_coin_limit', "货币阈值", 10000, [0, 10000, 50000, 100000, 200000])
 @singlechoice("pjjc_shop_buy_equip_consider_unit_rank", "角色起始品级", "所有", ["所有", "最高", "次高", "次次高"])
@@ -215,7 +215,7 @@ class pjjc_shop(shop_buyer):
     def require_equip_units_rank(self) -> str: return self.get_config('pjjc_shop_buy_equip_consider_unit_rank')
 
 
-@singlechoice('clanbattle_shop_buy_memory_count_limit', "记忆碎片盈余值", 0, [0, 10, 20, 120, 270, 9900])
+@singlechoice('clanbattle_shop_buy_memory_count_limit', "记忆碎片盈余值", 0, [0, 10, 20, 120, 270, 300, 9900])
 @singlechoice('clanbattle_shop_buy_equip_count_limit', "装备盈余值", 0, [0, 20, 50, 100, 200, 500, 9900])
 @singlechoice('clanbattle_shop_buy_coin_limit', "货币阈值", 10000, [0, 10000, 50000, 100000, 200000])
 @singlechoice("clanbattle_shop_buy_equip_consider_unit_rank", "角色起始品级", "所有", ["所有", "最高", "次高", "次次高"])
@@ -253,8 +253,8 @@ class master_shop_buyer(Module):
         items = self.get_buy_items(master_shop, client)
         cost = sum((item.stock_count - item.purchase_count) * item.price.currency_num for item in items)
         golds = client.data.get_shop_gold(shop_id)
-        if cost > golds:
-            raise AbortError(f"大师币不足{golds}<{cost}")
+        if cost > golds:  
+            raise SkipError(f"大师币不足{golds}<{cost}")
 
         buy = Counter({item.slot_id: item.stock_count - item.purchase_count
             for item in items
@@ -264,10 +264,10 @@ class master_shop_buyer(Module):
         msg = await client.serlize_reward(ret.purchase_list)
         self._log(f"花费{cost}大师币购买了:\n{msg}")
 
-@singlechoice('master_shop_buy_memory_count_limit', "记忆碎片盈余值", 0, [0, 10, 20, 40, 120])
+@singlechoice('master_shop_buy_memory_count_limit', "记忆碎片盈余值", 0, [0, 10, 20, 40, 120 ,320])
 @LimitUnitListConfig('master_shop_buy_memory_ids', "记忆碎片")
 @description('购买大师币商店的指定记忆碎片，直到碎片盈余超过阈值')
-@name('记忆碎片购买')
+@name('大师币商店记忆碎片购买')
 @default(False)
 class master_shop(master_shop_buyer):
     def get_buy_items(self, shop: ShopInfo, client: pcrclient) -> List:

@@ -327,3 +327,48 @@ class labyrinth_sweep(Module):
             rewards.extend(reward_list or [])
         if rewards:
             self._log(await client.serialize_reward_summary(rewards))
+        
+@description('从缓存中查询黎明界积分，不会登录！任意登录可更新缓存。')  
+@notlogin(check_data=True)  
+@name('黎明界积分查询')  
+class labyrinth_point_query(Module):  
+    async def do_task(self, client: pcrclient):  
+        # 未解锁 / 从未缓存过黎明界数据  
+        if not client.data.is_quest_cleared(11065001) or not client.data.labyrinth_cached:  
+            data = {  
+                "黎明界点数": "未解锁",  
+                "已领取积分": "未解锁",  
+                "强化点数": "未解锁",  
+                "持有通行证": "未解锁",  
+                "公会最高难度": "未解锁",  
+            }  
+            self._log("迷宫未解锁或尚未缓存（请先登录一次刷新缓存）")  
+            self._table_header(list(data.keys()))  
+            self._table(data)  
+            return  
+  
+        point = client.data.labyrinth_point or 0  
+        received = client.data.labyrinth_reward_received_point or 0  
+        enhance = client.data.labyrinth_enhance_point or 0  
+        cleared = client.data.labyrinth_guild_cleared_difficulty_list or []  
+        pass_num = client.data.get_inventory((eInventoryType.Item, 99013))  
+  
+        self._log(f"黎明界积分（点数）：{point}")  
+        self._log(f"已领取奖励积分：{received}")  
+        self._log(f"强化点数：{enhance}")  
+        self._log(f"持有通行证：{pass_num}/99")  
+        if cleared:  
+            for info in cleared:  
+                self._log(f"公会{info.guild_id} 已通关最高难度：{info.difficulty}")  
+        else:  
+            self._log("暂无公会通关记录")  
+  
+        data = {  
+            "黎明界点数": str(point),  
+            "已领取积分": str(received),  
+            "强化点数": str(enhance),  
+            "持有通行证": f"{pass_num}/99",  
+            "公会最高难度": (" / ".join(f"公会{i.guild_id}:{i.difficulty}" for i in cleared) if cleared else "无"),  
+        }  
+        self._table_header(list(data.keys()))  
+        self._table(data)

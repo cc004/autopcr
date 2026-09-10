@@ -246,31 +246,69 @@ class investigate_sweep(Module):
         if planned_count < book_count:
             self._log(f"当前只有{len(quests)}本已通关，扫荡本数由{book_count}调整为{planned_count}")
 
-        target_count = {}
-        rewards = []
-        clear_count = 0
-        no_stamina = False
-        for index in range(planned_count):
-            if self.stored_count(client) >= self.required_count(client):
-                break
-
-            quest = quests[index % len(quests)]
-            daily_limit = max(1, quest.daily_limit)
-            target_count[quest.quest_id] = target_count.get(quest.quest_id, 0) + daily_limit
-            try:
-                result, current_clear_count, no_stamina = await client.quest_skip_aware(
-                    quest.quest_id,
-                    target_count[quest.quest_id],
-                    recover=True,
-                    is_total=True,
-                )
-            except SkipError:
-                continue
-
-            rewards.extend(result)
-            clear_count += current_clear_count
-            if no_stamina:
-                break
+        target_count = {}  
+        rewards = []  
+        clear_count = 0  
+        no_stamina = False  
+        remaining = planned_count  
+  
+        # 阶段1（不变）：按高→低把每本各刷一次日常次数  
+        for quest in quests:  
+            if remaining <= 0:  
+                break  
+            if self.stored_count(client) >= self.required_count(client):  
+                break  
+  
+            daily_limit = max(1, quest.daily_limit)  
+            target_count[quest.quest_id] = target_count.get(quest.quest_id, 0) + daily_limit  
+            try:  
+                result, current_clear_count, no_stamina = await client.quest_skip_aware(  
+                    quest.quest_id,  
+                    target_count[quest.quest_id],  
+                    recover=True,  
+                    is_total=True,  
+                )  
+            except SkipError:  
+                continue  
+  
+            rewards.extend(result)  
+            clear_count += current_clear_count  
+            remaining -= 1  
+            if no_stamina:  
+                break  
+  
+        # 阶段2（改动）：回到最高本，把该本反复重置刷到用尽，再降到下一本  
+        if not no_stamina:  
+            for quest in quests:  
+                if remaining <= 0:  
+                    break  
+                if self.stored_count(client) >= self.required_count(client):  
+                    break  
+  
+                daily_limit = max(1, quest.daily_limit)  
+                while remaining > 0:  
+                    if self.stored_count(client) >= self.required_count(client):  
+                        break  
+  
+                    target_count[quest.quest_id] = target_count.get(quest.quest_id, 0) + daily_limit  
+                    try:  
+                        result, current_clear_count, no_stamina = await client.quest_skip_aware(  
+                            quest.quest_id,  
+                            target_count[quest.quest_id],  
+                            recover=True,  
+                            is_total=True,  
+                        )  
+                    except SkipError:  
+                        break  # 该本已达最大重置次数，换下一本  
+  
+                    rewards.extend(result)  
+                    clear_count += current_clear_count  
+                    remaining -= 1  
+                    if no_stamina:  
+                        break  
+  
+                if no_stamina:  
+                    break
 
         if not clear_count:
             if no_stamina:
@@ -295,7 +333,8 @@ def _star_cup_book_candidates() -> List[int]:
 @inttype('xinsui_sweep_no_campaign_books', '无庆典刷前几本', 2, _heart_book_candidates)
 @inttype('xinsui_sweep_2x_campaign_books', '2倍庆典刷前几本', 2, _heart_book_candidates)
 @inttype('xinsui_sweep_3x_campaign_books', '3倍及以上庆典刷前几本', 2, _heart_book_candidates)
-@default(True)
+@singlechoice('xinsui_sweep_reserve_per_unit', '每个专武角色额外屯心碎', 0, [0, 5, 10, 20,100])
+@default(False)
 @tag_stamina_consume
 class xinsui_sweep(investigate_sweep):
     def quest_data(self) -> List[QuestDatum]:
@@ -304,8 +343,13 @@ class xinsui_sweep(investigate_sweep):
     def campaign_times(self, client: pcrclient) -> int:
         return client.data.get_heart_piece_campaign_times()
 
-    def required_count(self, client: pcrclient) -> int:
-        return client.data.get_suixin_demand()[1]
+    def required_count(self, client: pcrclient) -> int:  
+        reserve = self.get_config('xinsui_sweep_reserve_per_unit')  
+        unit_count = sum(  
+            1 for unit in client.data.unit.values()  
+            if unit.unique_equip_slot and unit.unique_equip_slot[0].is_slot  
+        )  
+        return client.data.get_suixin_demand()[1] + reserve * unit_count
 
     def stored_count(self, client: pcrclient) -> int:
         return client.data.get_inventory(db.xinsui) + client.data.get_inventory(db.heart) * 10

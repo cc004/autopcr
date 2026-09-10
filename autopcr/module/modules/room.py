@@ -5,6 +5,7 @@ from ...core.apiclient import apiclient
 from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
+from ...core.apiclient import ApiException  
 
 @description('包括mana体力等等哦')
 @name('收取家园产物')
@@ -101,3 +102,62 @@ class love_up(Module):
 
         if not self.log:
             raise SkipError("所有角色均已亲密度满级")
+            
+@description('自动购买小屋中可购买的背景音乐')  
+@name('小屋歌曲购买')  
+@default(False)  
+class music_buy_all(Module):  
+    async def do_task(self, client: pcrclient):  
+        await client.room_start()  
+  
+        music_top = await client.music_top()  
+        purchased_ids = set()  
+        if music_top.music_list_purchased:  
+            purchased_ids = {m.music_id for m in music_top.music_list_purchased}  
+  
+        read_story_ids = set(client.data.read_story_ids or [])  
+        now = apiclient.datetime  
+        buyable = []  
+        for music_id, music in db.music_list.items():  
+            if music_id in purchased_ids:  
+                continue  
+            if music.cost_item_num <= 0:  
+                continue  
+            # 检查剧情前置条件  
+            if music.story_id > 0 and music.story_id not in read_story_ids:  
+                continue  
+            try:  
+                shop_start = db.parse_time(music.shop_start)  
+                if now < shop_start:  
+                    continue  
+            except:  
+                pass  
+            try:  
+                shop_end = db.parse_time(music.shop_end)  
+                if now > shop_end:  
+                    continue  
+            except:  
+                pass  
+            buyable.append(music)  
+  
+        if not buyable:  
+            raise SkipError("没有可购买的歌曲")  
+  
+        for music in sorted(buyable, key=lambda x: x.sort):  
+            room_coin = client.data.get_shop_gold(eSystemId.GOLD_SHOP)  
+            if room_coin < music.cost_item_num:  
+                self._warn(f"小屋币不足({room_coin} < {music.cost_item_num})，无法购买「{music.list_name}」")  
+                continue  
+            try:  
+                await client.music_buy(music.music_id)  
+                self._log(f"购买了歌曲「{music.list_name}」，花费小屋币 {music.cost_item_num}")  
+            except ApiException as e:  
+                if "回到标题界面" in str(e):  
+                    self._warn(f"购买「{music.list_name}」时会话失效: {e}，停止购买")  
+                    break  
+                self._warn(f"购买「{music.list_name}」失败: {e}")  
+            except Exception as e:  
+                self._warn(f"购买「{music.list_name}」失败: {e}")  
+  
+        if not self.log:  
+            raise SkipError("小屋币不足，无法购买任何歌曲")

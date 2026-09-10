@@ -856,4 +856,3 @@ class eRoundEventResultType(IntEnum):
     FAILURE = 2
     END = 3
     INVALID_VALUE = -1
-

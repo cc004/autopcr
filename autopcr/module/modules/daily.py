@@ -1,5 +1,5 @@
 from typing import List, Set
-
+import asyncio
 from ...model.common import InventoryInfo
 from ..modulebase import *
 from ..config import *
@@ -50,6 +50,7 @@ class global_config(Module):
         self._log(f"今日" + '，'.join([desc for _, desc in stamina_hit]) + f"氪体数{today_recover_stamina}")
         client.set_stamina_recover_cnt(today_recover_stamina)
 
+        
         if client.is_stamina_get_not_run():
             self._log("体力获取不执行")
         elif client.is_stamina_consume_not_run():
@@ -280,7 +281,7 @@ _USER_INFO_DISPLAY_ORDER = (
     ['玛娜', '心碎', '星球杯', '星幽碎片', '属性球', '大师碎片', '炼金点数', '香水', '扫荡券', '加速券', '大师币', '连结币']
 )
 class user_info(Module):
-    def _collect_optional_info(self, client: pcrclient, display_items: Set[str]) -> Dict[str, str]:
+    def _collect_optional_info(self, client: pcrclient, display_items: set[str]) -> dict[str, str]:
         data = client.data
         inv = data.get_inventory
 
@@ -348,7 +349,7 @@ class user_info(Module):
             if key in display_items and key in handlers
         }
 
-    def _log_optional_info(self, optional_info: Dict[str, str], pig: int) -> None:
+    def _log_optional_info(self, optional_info: dict[str, str], pig: int) -> None:
         keys = [k for k in _USER_INFO_DISPLAY_ORDER if k in optional_info]
 
         line2_items = [
@@ -378,6 +379,7 @@ class user_info(Module):
         pig = data.get_inventory((eInventoryType.Item, 90005))
         total_power = sum(data.get_unit_power(unit) for unit in data.unit)
 
+
         if stamina >= max_stamina:
             self._warn("体力爆了！")
 
@@ -392,3 +394,59 @@ class user_info(Module):
         self._log(f"全角色战力：{format_number(total_power)}")
         self._log(f"已氪体数：{data.recover_stamina_exec_count}")
         self._log(f"清日常时间：{now}")
+
+@description('仅进攻，不结算，会消耗次数')
+@name('完成每日jjc任务')
+@default(False)
+class jjc_daily(Module):
+    async def do_task(self, client: pcrclient):
+        if client.data.is_empty_deck(ePartyType.ARENA):
+            raise AbortError("未设置进攻队伍，请设置") # AUTO SET TODO
+
+        info = await client.get_arena_info()
+        if info.arena_info.battle_number != info.arena_info.max_battle_number:
+            raise SkipError("今日jjc任务已完成")
+
+        for _ in range(3):
+            if info.search_opponent: break
+            await asyncio.sleep(2)
+            info = await client.get_arena_info()
+
+        if not info.search_opponent:
+            raise AbortError("无法搜到可攻击对手，请稍后再试")
+        opponent = info.search_opponent[0]
+        await client.arena_apply(opponent.viewer_id, opponent.rank)
+        token = create_battle_start_token()
+        await client.arena_start(token, opponent.viewer_id, info.arena_info.battle_number, 1)
+        await client.logout()
+        await asyncio.sleep(2)
+        self._log(f"当前排名{info.arena_info.rank}，进攻第{opponent.rank}名的【{opponent.user_name}】")
+
+@description('仅进攻，不结算，会消耗次数')
+@name('完成每日pjjc任务')
+@default(False)
+class pjjc_daily(Module):
+    async def do_task(self, client: pcrclient):
+        if client.data.is_empty_deck(ePartyType.GRAND_ARENA_1) or \
+        client.data.is_empty_deck(ePartyType.GRAND_ARENA_2) or \
+        client.data.is_empty_deck(ePartyType.GRAND_ARENA_3):
+            raise AbortError("未设置进攻队伍，请设置") # AUTO SET TODO
+
+        info = await client.get_grand_arena_info()
+        if info.grand_arena_info.battle_number != info.grand_arena_info.max_battle_number:
+            raise SkipError("今日pjjc任务已完成")
+
+        for _ in range(3):
+            if info.search_opponent: break
+            await asyncio.sleep(2)
+            info = await client.get_grand_arena_info()
+
+        if not info.search_opponent:
+            raise AbortError("无法搜到可攻击对手，请稍后再试")
+        opponent = info.search_opponent[0]
+        await client.grand_arena_apply(opponent.viewer_id, opponent.rank)
+        token = create_battle_start_token()
+        await client.grand_arena_start(token, opponent.viewer_id, info.grand_arena_info.battle_number, 1)
+        await client.logout()
+        await asyncio.sleep(2)
+        self._log(f"当前排名{info.grand_arena_info.rank}，进攻第{opponent.rank}名的【{opponent.user_name}】")

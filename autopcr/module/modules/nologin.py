@@ -192,44 +192,91 @@ class LoginBonusDatum(ISchedule):
 @default(True)
 @notlogin()
 class half_schedule(Module):
-    @staticmethod
-    def schedule_sources():
-        # Defer DB property access until execution to keep import-time memory lower.
-        return [
-            (db.clan_battle_period, lambda x: ClanBattlePeriod(x.start_time, x.end_time, "公会战")),
-            (db.clan_battle_period, lambda x: ClanBattlePeriod(x.result_start, x.result_end, "公会战排名公示")),
-            (db.secret_dungeon_schedule, lambda x: SecretDungeonSchedule(x.start_time, x.end_time, "特别地下城")),
-            (db.seasonpass_foundation, lambda x: SeasonpassFoundation(x.name, x.start_time, x.end_time, "季卡")),
-            (db.gacha_data, lambda x: GachaDatum(x.gacha_id, x.exchange_id, x.start_time, x.end_time, "扭蛋")),
-            (db.campaign_schedule, lambda x: CampaignSchedule(x.id, x.campaign_category, x.value, x.start_time, x.end_time, "庆典")),
-            (db.campaign_free_gacha, lambda x: CampaignFreegacha(x.campaign_id, x.start_time, x.end_time, "免费十连")),
-            (db.hatsune_schedule, lambda x: HatsuneSchedule(x.event_id, x.start_time, x.end_time, "活动")),
-            (db.seven_schedule, lambda x: HatsuneSchedule(x.event_id, x.start_time, x.end_time, "活动")),
-            (db.tower_schedule, lambda x: TowerSchedule(x.start_time, x.end_time, "露娜塔")),
-            (db.tdf_schedule, lambda x: TdfSchedule(x.start_time, x.end_time, "次元断层")),
-            (db.chara_fortune_schedule, lambda x: CharaFortuneSchedule(x.name, x.start_time, x.end_time, "赛马")),
-            (db.login_bonus_data, lambda x: LoginBonusDatum(x.name, x.start_time, x.end_time, "登录奖励")),
-            (db.colosseum_schedule_data, lambda x: ColosseumScheduleData(x.start_time, x.end_time, "斗技场")),
-            (db.caravan_schedule, lambda x: CaravanSchedule(x.season_id, x.start_time, x.end_time, "驾车游")),
-            (db.dome_schedule_data, lambda x: DomeScheduleData(x.start_time, x.end_time, "新斗技场")),
-            (db.abyss_schedule, lambda x: AbyssSchedule(x.talent_id, x.start_time, x.end_time, "深渊讨伐战")),
-        ]
+    schedules = [
+        (db.clan_battle_period, lambda x: ClanBattlePeriod(x.start_time, x.end_time, "公会战")),
+        (db.clan_battle_period, lambda x: ClanBattlePeriod(x.result_start, x.result_end, "公会战排名公示")),
+        (db.secret_dungeon_schedule, lambda x: SecretDungeonSchedule(x.start_time, x.end_time, "特别地下城")),
+        (db.seasonpass_foundation, lambda x: SeasonpassFoundation(x.name, x.start_time, x.end_time, "季卡")),
+        (db.gacha_data, lambda x: GachaDatum(x.gacha_id, x.exchange_id, x.start_time, x.end_time, "扭蛋")),
+        (db.campaign_schedule, lambda x: CampaignSchedule(x.id, x.campaign_category, x.value, x.start_time, x.end_time, "庆典")),
+        (db.campaign_free_gacha, lambda x: CampaignFreegacha(x.campaign_id, x.start_time, x.end_time, "免费十连")),
+        (db.hatsune_schedule, lambda x: HatsuneSchedule(x.event_id, x.start_time, x.end_time, "活动")),
+        (db.seven_schedule, lambda x: HatsuneSchedule(x.event_id, x.start_time, x.end_time, "活动")),
+        (db.tower_schedule, lambda x: TowerSchedule(x.start_time, x.end_time, "露娜塔")),
+        (db.tdf_schedule, lambda x: TdfSchedule(x.start_time, x.end_time, "次元断层")),
+        (db.chara_fortune_schedule, lambda x: CharaFortuneSchedule(x.name, x.start_time, x.end_time, "赛马")),
+        (db.login_bonus_data, lambda x: LoginBonusDatum(x.name, x.start_time, x.end_time, "登录奖励")),
+        (db.colosseum_schedule_data, lambda x: ColosseumScheduleData(x.start_time, x.end_time, "斗技场")),
+        (db.caravan_schedule, lambda x: CaravanSchedule(x.season_id, x.start_time, x.end_time, "驾车游")),
+        (db.dome_schedule_data, lambda x: DomeScheduleData(x.start_time, x.end_time, "新斗技场")),
+        (db.abyss_schedule, lambda x: AbyssSchedule(x.talent_id, x.start_time, x.end_time, "深渊讨伐战")),
+    ]
 
     async def do_task(self, _: pcrclient):
-        schedules = defaultdict(list)
-        for table, factory in self.schedule_sources():
-            for row in table.values():
-                schedule = factory(row)
-                if schedule.enabled:
-                    schedules[(db.format_date(db.parse_time(schedule.start_time)), db.format_date(db.parse_time(schedule.end_time)))].append(schedule.get_description())
-        times = sorted(schedules.keys())
-        mirai = False
-        for time in times:
-            st = time[0]
-            ed = time[1]
-            if not mirai and db.parse_time(st) > datetime.now():
-                mirai = True
-                self._log("\n====未来日程====")
-            self._log(f"{st} - {ed}")
-            for msg in schedules[time]:
+        def fmt_time(t):  
+            return db.parse_time(t).strftime("%Y/%m/%d %H:%M")  
+      
+        def abbrev_campaign(desc: str) -> str:  
+            MAP = {  
+                "vh": "VH",  
+                "normal": "N",  
+                "hard": "H",  
+                "normal&hard": "NH",  
+                "圣迹": "圣迹",  
+                "神殿": "神殿",  
+                "探索": "探索",  
+            }  
+            pattern = r'^(' + '|'.join(re.escape(k) for k in MAP) + r') 掉落\*(\d+(?:\.\d+)?)$'  
+            m = re.match(pattern, desc)  
+            if m:  
+                prefix = MAP[m.group(1)]  
+                mult = float(m.group(2))  
+                mult_str = str(int(mult)) if mult == int(mult) else str(mult)  
+                return f"{prefix}{mult_str}"  
+            return desc  
+      
+        FILTER_KEYWORDS = ["*2.0", "玩家经验", "活动normal", "活动hard", "mana"]  
+      
+        schedules = defaultdict(list)  
+        for table, factory in self.schedules:  
+            for row in table.values():  
+                schedule = factory(row)  
+                if schedule.enabled:  
+                    desc = schedule.get_description()  
+                    if any(kw in desc for kw in FILTER_KEYWORDS):  
+                        continue  
+                    desc = abbrev_campaign(desc)  
+                    # 免费十连只保留标签，不显示角色列表  
+                    if desc.startswith("免费十连"):  
+                        desc = "免费十连"  
+                    key = (fmt_time(schedule.start_time), fmt_time(schedule.end_time))  
+                    schedules[key].append(desc)  
+      
+        # 对每个时间段，把所有大师币条目合并成一条  
+        master_coin_pattern = re.compile(r'^.+ 大师币\*(\d+(?:\.\d+)?)$')  
+        for key in schedules:  
+            msgs = schedules[key]  
+            master_coin_mult = None  
+            new_msgs = []  
+            for msg in msgs:  
+                mc = master_coin_pattern.match(msg)  
+                if mc:  
+                    master_coin_mult = float(mc.group(1))  
+                else:  
+                    new_msgs.append(msg)  
+            if master_coin_mult is not None:  
+                mult_str = str(int(master_coin_mult)) if master_coin_mult == int(master_coin_mult) else str(master_coin_mult)  
+                new_msgs.append(f"大师币{mult_str}")  
+            schedules[key] = new_msgs  
+      
+        times = sorted(schedules.keys())  
+        mirai = False  
+        for time in times:  
+            st = time[0]  
+            ed = time[1]  
+            if not mirai and db.parse_time(st) > datetime.now():  
+                mirai = True  
+                self._log("\n====未来日程====")  
+            self._log(f"{st} - {ed}")  
+            for msg in schedules[time]:  
                 self._log(f"    {msg}")

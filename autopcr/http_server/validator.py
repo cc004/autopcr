@@ -30,9 +30,7 @@ def create_validator(qq):
 
 async def Validator(qq):
     info = None
-    # 本地求解在进程内完成，无需外部服务，故排在最前；remoteValidator 是排队制的第三方农场，
-    # 单次可耗时数十秒，退居其后作兜底。
-    for validator in [localValidator, remoteValidator, lambda: manualValidator(qq)]:
+    for validator in [remoteValidator, localValidator, lambda: manualValidator(qq)]:
         try:
             info = await validator()
             if info:

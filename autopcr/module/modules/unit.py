@@ -1377,5 +1377,3 @@ class set_my_party(SetMyParty):
             token.append( (title, units, stars) )
 
         return token
-
-

@@ -32,24 +32,24 @@ class UnitAttribute:
     energy_reduce_rate: Decimal = Decimal(0)
     accuracy: Decimal = Decimal(0)
 
-    index2ch = {
-        eParamType.HP: "血量",
-        eParamType.ATK: "物攻",
-        eParamType.MAGIC_ATK: "魔攻",
-        eParamType.DEF: "物防",
-        eParamType.MAGIC_DEF: "魔防",
-        eParamType.PHYSICAL_CRITICAL: "物爆",
-        eParamType.MAGIC_CRITICAL: "法爆",
-        eParamType.WAVE_HP_RECOVERY: "wave_hp_recovery",
-        eParamType.WAVE_ENERGY_RECOVERY: "wave_energy_recovery",
-        eParamType.DODGE: "闪避",
-        eParamType.PHYSICAL_PENETRATE: "物贯",
-        eParamType.MAGIC_PENETRATE: "法贯",
-        eParamType.LIFE_STEAL: "吸血",
-        eParamType.HP_RECOVERY_RATE: "hp_recovery_rate",
-        eParamType.ENERGY_RECOVERY_RATE: "TP上升",
-        eParamType.ENERGY_REDUCE_RATE: "TP减轻",
-        eParamType.ACCURACY: "命中"
+    index2ch = {  
+        eParamType.HP: "血量",  
+        eParamType.ATK: "物攻",  
+        eParamType.MAGIC_ATK: "魔攻",  
+        eParamType.DEF: "物防",  
+        eParamType.MAGIC_DEF: "魔防",  
+        eParamType.PHYSICAL_CRITICAL: "物爆",  
+        eParamType.MAGIC_CRITICAL: "法爆",  
+        eParamType.WAVE_HP_RECOVERY: "回复量",         
+        eParamType.WAVE_ENERGY_RECOVERY: "TP回复",     
+        eParamType.DODGE: "闪避",  
+        eParamType.PHYSICAL_PENETRATE: "物贯",  
+        eParamType.MAGIC_PENETRATE: "法贯",  
+        eParamType.LIFE_STEAL: "吸血",  
+        eParamType.HP_RECOVERY_RATE: "回复量上升",     
+        eParamType.ENERGY_RECOVERY_RATE: "TP上升",      
+        eParamType.ENERGY_REDUCE_RATE: "TP消费减少",    
+        eParamType.ACCURACY: "命中"  
     }
 
     index2name = {

@@ -13,43 +13,67 @@ import math
 import random
 import time
 
-@description('''
-分解对应的EX装备，不分解已锁或已装备的EX装备
+@description('''  
+分解对应的EX装备，不分解已锁或已装备的EX装备  
+金装保留数指每种金色EX装（普通金/会战金）保留的件数，0表示不保留  
 '''.strip())
-@multichoice("ex_equip_recycle_category", "稀有度", ['普通铜', '普通银'], ['普通铜', '普通银', '会战银'])
+@multichoice("ex_equip_recycle_category", "稀有度", ['普通铜', '普通银'], ['普通铜', '普通银', '会战银', '普通金', '会战金'])
+@inttype("ex_equip_recycle_gold_keep", "金装保留数", 3, list(range(0, 51)))
 @name("EX装备分解")
 @default(True)
 class ex_equip_recycle(Module):
-    task = {
-        '普通铜': lambda ex_id: db.ex_equipment_data[ex_id].rarity == 1 and db.ex_equipment_data[ex_id].clan_battle_equip_flag == 0,
-        '普通银': lambda ex_id: db.ex_equipment_data[ex_id].rarity == 2 and db.ex_equipment_data[ex_id].clan_battle_equip_flag == 0,
-        '会战银': lambda ex_id: db.ex_equipment_data[ex_id].rarity == 2 and db.ex_equipment_data[ex_id].clan_battle_equip_flag == 1,
+    task = {  
+        '普通铜': lambda ex_id: db.ex_equipment_data[ex_id].rarity == 1 and db.ex_equipment_data[ex_id].clan_battle_equip_flag == 0,  
+        '普通银': lambda ex_id: db.ex_equipment_data[ex_id].rarity == 2 and db.ex_equipment_data[ex_id].clan_battle_equip_flag == 0,  
+        '会战银': lambda ex_id: db.ex_equipment_data[ex_id].rarity == 2 and db.ex_equipment_data[ex_id].clan_battle_equip_flag == 1,  
+        '普通金': lambda ex_id: db.ex_equipment_data[ex_id].rarity == 3 and db.ex_equipment_data[ex_id].clan_battle_equip_flag == 0,  
+        '会战金': lambda ex_id: db.ex_equipment_data[ex_id].rarity == 3 and db.ex_equipment_data[ex_id].clan_battle_equip_flag == 1,  
     }
 
     async def do_task(self, client: pcrclient):
         ex_equip_resolve_category: List[str] = self.get_config("ex_equip_recycle_category")
+        gold_keep_num = self.get_config("ex_equip_recycle_gold_keep")
         cnt = Counter()
         rewards = []
+        
 
         slot_ex = set(ex.serial_id for unit in client.data.unit.values() for ex in unit.ex_equip_slot if ex.serial_id) | set(ex.serial_id for unit in client.data.unit.values() for ex in unit.cb_ex_equip_slot if ex.serial_id)
 
-        async def resolve(filter: Callable[[int], bool]):
-            serial_ids = [ex.serial_id for ex in client.data.ex_equips.values() if 
-                          filter(ex.ex_equipment_id) and 
-                          ex.protection_flag != 2 and 
-                          ex.serial_id not in slot_ex]
-            if serial_ids:
-                gap = client.data.settings.ex_equip.ex_equip_limit_consume_num
-                cnt[category] = len(serial_ids)
-                for i in range(0, len(serial_ids), gap):
-                    ret = await client.item_recycle_ex(serial_ids[i:i+gap])
+        async def resolve(filter: Callable[[int], bool], is_gold: bool = False):  
+            candidates = [ex for ex in client.data.ex_equips.values() if   
+                          filter(ex.ex_equipment_id) and   
+                          ex.protection_flag != 2 and   
+                          ex.serial_id not in slot_ex]  
+              
+            if is_gold and gold_keep_num > 0:  
+                # 按 ex_equipment_id 分组，每组保留 gold_keep_num 件  
+                from collections import defaultdict  
+                groups = defaultdict(list)  
+                for ex in candidates:  
+                    groups[ex.ex_equipment_id].append(ex)  
+                  
+                serial_ids = []  
+                for ex_id, group in groups.items():  
+                    # 按 rank 降序、enhancement_pt 降序排序，保留前 gold_keep_num 件  
+                    group.sort(key=lambda e: (e.rank, e.enhancement_pt), reverse=True)  
+                    to_recycle = group[gold_keep_num:]  
+                    serial_ids.extend(e.serial_id for e in to_recycle)  
+            else:  
+                serial_ids = [ex.serial_id for ex in candidates]  
+              
+            if serial_ids:  
+                gap = client.data.settings.ex_equip.ex_equip_limit_consume_num  
+                cnt[category] = len(serial_ids)  
+                for i in range(0, len(serial_ids), gap):  
+                    ret = await client.item_recycle_ex(serial_ids[i:i+gap])  
                     rewards.extend(ret.item_list)
 
-        for category in ex_equip_resolve_category:
-            if category not in self.task:
-                self._warn(f"未知的稀有度{category}")
-            else:
-                await resolve(self.task[category])
+        for category in ex_equip_resolve_category:  
+            if category not in self.task:  
+                self._warn(f"未知的稀有度{category}")  
+            else:  
+                is_gold = category in ('普通金', '会战金')  
+                await resolve(self.task[category], is_gold=is_gold)
 
         if cnt:
             msg = "分解了" + ' '.join(f"{category}x{cnt}" for category, cnt in cnt.items())
@@ -115,7 +139,7 @@ ManaTravelEventRemain = set({eEventReward.Coin, eEventReward.EquipStone, eEventR
 @TravelQuestConfig("travel_speed_up_target", "加速地图", [11002001, 11002004])
 @singlechoice('travel_quest_gold_event_strategy', "代币事件策略", '赌狗', ['保守','赌狗','随机'])
 @singlechoice('travel_quest_equip_event_strategy', "装备事件策略", '赌狗', ['保守','赌狗','随机'])
-@inttype('travel_quest_speed_up_paper_hold', "加速券保留", 12, list(range(3001)))
+@inttype('travel_quest_speed_up_paper_hold', "加速券保留", 12, list(range(30001)))
 @name("探险续航")
 @default(True)
 class travel_quest_sweep(Module):

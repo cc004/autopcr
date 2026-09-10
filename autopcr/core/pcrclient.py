@@ -29,6 +29,11 @@ class pcrclient(apiclient):
     def set_config(self, config: dict):
         self._base_keys = config
         self._keys = {}
+ 
+    async def send_friend_request(self, target_viewer_id: int):  
+        req = FriendRequestRequest()  
+        req.target_viewer_id = target_viewer_id  
+        return await self.request(req)
 
     @property
     def id(self) -> str:
@@ -53,8 +58,6 @@ class pcrclient(apiclient):
     async def labyrinth_top(self):
         if not self.data.is_quest_cleared(11065001):
             raise SkipError("迷宫未解锁")
-        if 4013001 not in self.data.read_story_ids:
-            await self.read_story(4013001)
         req = LabyrinthTopRequest()
         return await self.request(req)
 
@@ -67,12 +70,6 @@ class pcrclient(apiclient):
     async def labyrinth_retire(self, enter_id: int):
         req = LabyrinthRetireRequest()
         req.enter_id = enter_id
-        return await self.request(req)
-
-    async def labyrinth_skip(self, guild_id: int, skip_count: int):
-        req = LabyrinthSkipRequest()
-        req.skip_list = [LabyrinthSkipData(guild_id=guild_id, skip_count=skip_count)]
-        req.current_passport_num = self.data.get_inventory(db.labyrinth_ticket)
         return await self.request(req)
 
     async def unit_role_gacha_index(self):
@@ -745,13 +742,13 @@ class pcrclient(apiclient):
         else:
             return False
 
-    async def exec_gacha_aware(self, target_gacha: GachaParameter, gacha_times: int, draw_type: eGachaDrawType, current_cost_num: int, campaign_id: int, last_gacha_index_time: int, auto_select_pickup: bool = True, pickup_min_first: bool = False, ticket_item: ItemType = None) -> GachaReward:
+    async def exec_gacha_aware(self, target_gacha: GachaParameter, gacha_times: int, draw_type: eGachaDrawType, current_cost_num: int, campaign_id: int, last_gacha_index_time: int, auto_select_pickup: bool = True, pickup_min_first: bool = False) -> GachaReward:
 
         if draw_type == eGachaDrawType.Payment and current_cost_num < 150 * gacha_times:
             raise AbortError(f"宝石{current_cost_num}不足{150 * gacha_times}")
 
         if draw_type == eGachaDrawType.Ticket and current_cost_num < 1:
-            raise AbortError(f"抽卡券{current_cost_num}不足")
+            raise AbortError(f"单抽券{current_cost_num}不足")
 
         if draw_type == eGachaDrawType.Temp_Ticket_10 and current_cost_num < 1:
             raise AbortError(f"限定十连券{current_cost_num}不足")
@@ -792,7 +789,7 @@ class pcrclient(apiclient):
             if tot:
                 self.data.jewel.jewel -= tot
         elif draw_type == eGachaDrawType.Ticket:
-            self.data.set_inventory(ticket_item or db.gacha_single_ticket, current_cost_num - 1)
+            self.data.set_inventory(db.gacha_single_ticket, current_cost_num - 1)
         elif draw_type == eGachaDrawType.Temp_Ticket_10:
             ticket = next((eInventoryType.Item, temp_ticket) for temp_ticket in db.get_gacha_temp_ticket() if self.data.get_inventory((eInventoryType.Item, temp_ticket)))
             self.data.set_inventory(ticket, current_cost_num - 1)
@@ -1582,60 +1579,88 @@ class pcrclient(apiclient):
             result.append(f"{db.get_inventory_name_san(target)}x0({self.data.get_inventory(target)})")
         return '\n'.join(result) if result else "无"
 
-    def unit_info_to_dict(self, unit_id: int) -> Dict:
-        unit_data = {
-            "星级": "无",
-            "等级": "无",
-            "品级": "无",
-            "装备": "无",
-            "UB": 0,
-            "S1": 0,
-            "S2": 0,
-            "EX": 0,
-            "剧情": "无",
-            "专武1": "无",
-            "专武2": "无",
-            "普碎数": "无",
-            "金碎数": "无",
-        }
-
-        read_story = set(self.data.read_story_ids)
-        if unit_id in self.data.unit:
-            unitinfo = self.data.unit[unit_id]
-            rank = f"R{unitinfo.promotion_level}"
-            equip = ''.join('-' if not solt.is_slot else str(solt.enhancement_level) for solt in unitinfo.equip_slot)
-            kizuna_unit = set()
-            for story in db.chara2story[unit_id]:
-                if story.story_id in db.story_detail:
-                    kizuna_unit.add(db.story_detail[story.story_id].requirement_id)
-
-            love = []
-            for other in kizuna_unit:
-                if other not in db.unlock_unit_condition: continue
-                unit_name = db.get_unit_name(other)
-                other_id = other // 100
-                love_level = self.data.unit_love_data[other_id].love_level if other_id in self.data.unit_love_data else 0
-                unit_story = [story.story_id for story in db.unit_story if story.story_group_id == other_id]
-                total_storys = len(unit_story)
-                read_storys = len([story for story in unit_story if story in read_story])
-                love.append(f"{unit_name}好感{love_level}({read_storys}/{total_storys})")
-            love_str = '\n'.join(love) if love else "无"
-
-            unit_data.update({
-                "星级": f"{unitinfo.unit_rarity}★",
-                "等级": unitinfo.unit_level,
-                "品级": rank,
-                "装备": equip,
-                "UB": unitinfo.union_burst[0].skill_level if unitinfo.union_burst else "无",
-                "S1": unitinfo.main_skill[0].skill_level if unitinfo.main_skill else "无",
-                "S2": unitinfo.main_skill[1].skill_level if len(unitinfo.main_skill) > 1 else "无",
-                "EX": unitinfo.ex_skill[0].skill_level if unitinfo.ex_skill else "无",
-                "剧情": love_str,
-                "专武1": "未实装" if not unitinfo.unique_equip_slot else "无" if not unitinfo.unique_equip_slot[0].is_slot else unitinfo.unique_equip_slot[0].enhancement_level,
-                "专武2": "未实装" if len(unitinfo.unique_equip_slot) < 2 else "无" if not unitinfo.unique_equip_slot[1].is_slot else unitinfo.unique_equip_slot[1].enhancement_level,
-                "普碎数": self.data.get_inventory((eInventoryType.Item, db.unit_to_memory[unit_id])) if unit_id in db.unit_to_memory else "无",
-                "金碎数": self.data.get_inventory((eInventoryType.Item, db.unit_to_pure_memory[unit_id])) if unit_id in db.unit_to_pure_memory else "无",
-            })
+    def unit_info_to_dict(self, unit_id: int) -> Dict:  
+        unit_data = {  
+            "星级": "无",  
+            "等级": "无",  
+            "品级": "无",  
+            "装备": "无",  
+            "UB": 0,  
+            "S1": 0,  
+            "S2": 0,  
+            "EX": 0,  
+            "剧情": "无",  
+            "专武1": "无",  
+            "专武2": "无",  
+            "普碎数": "无",  
+            "金碎数": "无",  
+            "EX装备": "无",  
+            "会战EX装备": "无",  
+        }  
+  
+        read_story = set(self.data.read_story_ids)  
+        if unit_id in self.data.unit:  
+            unitinfo = self.data.unit[unit_id]  
+            rank = f"R{unitinfo.promotion_level}"  
+            equip = ''.join('-' if not solt.is_slot else str(solt.enhancement_level) for solt in unitinfo.equip_slot)  
+            kizuna_unit = set()  
+            for story in db.chara2story[unit_id]:  
+                if story.story_id in db.story_detail:  
+                    kizuna_unit.add(db.story_detail[story.story_id].requirement_id)  
+  
+            love = []  
+            for other in kizuna_unit:  
+                if other not in db.unlock_unit_condition: continue  
+                unit_name = db.get_unit_name(other)  
+                other_id = other // 100  
+                love_level = self.data.unit_love_data[other_id].love_level if other_id in self.data.unit_love_data else 0  
+                unit_story = [story.story_id for story in db.unit_story if story.story_group_id == other_id]  
+                total_storys = len(unit_story)  
+                read_storys = len([story for story in unit_story if story in read_story])  
+                love.append(f"{unit_name}好感{love_level}({read_storys}/{total_storys})")  
+            love_str = '\n'.join(love) if love else "无"  
+  
+            # 普通EX装备  
+            normal_ex_info = []  
+            for ex_slot in unitinfo.ex_equip_slot:  
+                if not ex_slot.serial_id:  
+                    normal_ex_info.append("-")  
+                else:  
+                    ex = self.data.ex_equips[ex_slot.serial_id]  
+                    rarity = db.get_ex_equip_rarity_name(ex.ex_equipment_id)  
+                    star = db.get_ex_equip_star_from_pt(ex.ex_equipment_id, ex.enhancement_pt)  
+                    name = db.get_ex_equip_name(ex.ex_equipment_id)  
+                    normal_ex_info.append(f"{name}★{star}")  
+  
+            # 会战EX装备  
+            cb_ex_info = []  
+            for cb_ex in unitinfo.cb_ex_equip_slot:  
+                if not cb_ex.serial_id:  
+                    cb_ex_info.append("-")  
+                else:  
+                    ex = self.data.ex_equips[cb_ex.serial_id]  
+                    rarity = db.get_ex_equip_rarity_name(ex.ex_equipment_id)  
+                    star = db.get_ex_equip_star_from_pt(ex.ex_equipment_id, ex.enhancement_pt)  
+                    name = db.get_ex_equip_name(ex.ex_equipment_id)  
+                    cb_ex_info.append(f"{name}★{star}")  
+  
+            unit_data.update({  
+                "星级": f"{unitinfo.unit_rarity}★",  
+                "等级": unitinfo.unit_level,  
+                "品级": rank,  
+                "装备": equip,  
+                "UB": unitinfo.union_burst[0].skill_level if unitinfo.union_burst else "无",  
+                "S1": unitinfo.main_skill[0].skill_level if unitinfo.main_skill else "无",  
+                "S2": unitinfo.main_skill[1].skill_level if len(unitinfo.main_skill) > 1 else "无",  
+                "EX": unitinfo.ex_skill[0].skill_level if unitinfo.ex_skill else "无",  
+                "剧情": love_str,  
+                "专武1": "未实装" if not unitinfo.unique_equip_slot else "无" if not unitinfo.unique_equip_slot[0].is_slot else unitinfo.unique_equip_slot[0].enhancement_level,  
+                "专武2": "未实装" if len(unitinfo.unique_equip_slot) < 2 else "无" if not unitinfo.unique_equip_slot[1].is_slot else unitinfo.unique_equip_slot[1].enhancement_level,  
+                "普碎数": self.data.get_inventory((eInventoryType.Item, db.unit_to_memory[unit_id])) if unit_id in db.unit_to_memory else "无",  
+                "金碎数": self.data.get_inventory((eInventoryType.Item, db.unit_to_pure_memory[unit_id])) if unit_id in db.unit_to_pure_memory else "无",  
+                "EX装备": "/".join(normal_ex_info),  
+                "会战EX装备": "/".join(cb_ex_info),  
+            })  
 
         return unit_data
 
@@ -1782,13 +1807,18 @@ class pcrclient(apiclient):
 
         return result, clear_count, no_stamina
 
-    async def refresh(self):
-        req = HomeIndexRequest()
-        req.message_id = 1
-        req.gold_history = 0
-        req.is_first = 0
-        req.tips_id_list = []
-        await self.request(req)
+    async def refresh(self):  
+        req = HomeIndexRequest()  
+        req.message_id = 1  
+        req.gold_history = 0  
+        req.is_first = 0  
+        req.tips_id_list = []  
+        await self.request(req)  
+        # 新增：刷新 box 时顺带更新黎明界缓存；未解锁/异常时忽略  
+        try:  
+            await self.labyrinth_top()  
+        except Exception:  
+            pass  
         self.need_refresh = False
     
     async def reset_dungeon(self):
@@ -1925,6 +1955,12 @@ class pcrclient(apiclient):
     def is_stamina_get_not_run(self):
         return self._get_key('stamina_get_not_run', False)
 
+    def is_star_cup_sweep_not_run(self):
+        return self._get_key('star_cup_sweep_not_run', False)
+
+    def is_heart_sweep_not_run(self):
+        return self._get_key('heart_sweep_not_run', False)
+
     def is_cron_run(self):
         return self._get_key('cron_run', False)
 
@@ -1937,5 +1973,53 @@ class pcrclient(apiclient):
     def set_stamina_get_not_run(self):
         self._keys['stamina_get_not_run'] = True
 
+    def set_star_cup_sweep_not_run(self):
+        self._keys['star_cup_sweep_not_run'] = True
+
+    def set_heart_sweep_not_run(self):
+        self._keys['heart_sweep_not_run'] = True
+
     def set_cron_run(self):
         self._keys['cron_run'] = True
+    
+    async def bsm_top(self) -> BsmTopResponse:
+        req = BsmTopRequest()
+        req.from_system_id = 6001
+        return await self.request(req)
+
+    async def bsm_rival_battle_prepare(self) -> BsmRivalBattlePrepareResponse:
+        req = BsmRivalBattlePrepareRequest()
+        req.from_system_id = 6001
+        return await self.request(req)
+
+    async def bsm_battle_start(self, type: int, enemy_viewer_id: int, machine_id: int, token: str) -> BsmBattleStartResponse:
+        req = BsmBattleStartRequest()
+        req.type = type
+        req.enemy_viewer_id = enemy_viewer_id
+        req.machine_id = machine_id
+        req.token = token
+        req.from_system_id = 6001
+        return await self.request(req)
+
+    async def bsm_battle_finish(self, battle_result: int, token: str) -> BsmBattleFinishResponse:
+        req = BsmBattleFinishRequest()
+        req.battle_result = battle_result
+        req.token = token
+        req.from_system_id = 6001
+        return await self.request(req)
+
+    async def music_top(self) -> MusicTopResponse:  
+        req = MusicTopRequest()  
+        return await self.request(req)  
+      
+    async def music_buy(self, music_id: int) -> MusicBuyResponse:  
+        req = MusicBuyRequest()  
+        req.music_id = music_id  
+        req.room_coin = self.data.get_shop_gold(eSystemId.GOLD_SHOP)  
+        return await self.request(req)
+    
+    async def bsm_mission_accept(self, mission_id: int) -> BsmMissionAcceptResponse:
+        req = BsmMissionAcceptRequest()
+        req.mission_id = mission_id
+        req.from_system_id = 6001
+        return await self.request(req)    

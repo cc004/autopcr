@@ -37,7 +37,7 @@ def notlogin(check_data = False):
             if not ok: 
                 return ok, msg
             if check_data and not client.data.ready:
-                return False, '无缓存，请登录'
+                return False, '无缓存，先发送#刷新box'
             return True, ''
         self.do_check = new_do_check
         if check_data:

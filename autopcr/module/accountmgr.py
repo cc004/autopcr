@@ -1,5 +1,3 @@
-# 名字需要斟酌一下
-
 import asyncio
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
@@ -63,16 +61,23 @@ class Account(ModuleManager):
         self.readonly = readonly
         self._id = hashlib.md5(account.encode('utf-8')).hexdigest()
 
-        if not os.path.exists(self._filename):
-            if account == BATCHINFO:
-                with open(self._filename, 'w') as f:
-                    f.write(AccountData().to_json())
+        #有修改
+        if not os.path.exists(self._filename):  
+            if account == BATCHINFO:  
+                self._atomic_write(AccountData().to_json())
             else:
                 raise AccountException("账号不存在")
 
-        with open(self._filename, 'r') as f:
-            self.data: AccountData = AccountData.from_json(f.read())
-            self.old_data: AccountData = deepcopy(self.data)
+        try:  
+            with open(self._filename, 'r') as f:  
+                content = f.read()  
+            if not content.strip():  
+                raise ValueError("空文件")  
+            self.data: AccountData = AccountData.from_json(content)  
+        except (json.JSONDecodeError, ValueError) as e:  
+            logger.error(f"账号数据文件损坏/为空，跳过该账号: {self._filename} ({e})")  
+            raise AccountException(f"账号数据文件损坏: {account}")  
+        self.old_data: AccountData = deepcopy(self.data)
 
         self.qq = qid
         self.alias = account
@@ -97,12 +102,19 @@ class Account(ModuleManager):
             self._lck.release()
             logger.debug(f"Release lock {self._filename}")
 
-    async def save_data(self):
-        with open(self._filename, 'w') as f:
-            f.write(self.data.to_json())
+    def _atomic_write(self, content: str):  
+        tmp = self._filename + ".tmp"  
+        with open(tmp, 'w') as f:  
+            f.write(content)  
+            f.flush()  
+            os.fsync(f.fileno())  
+        os.replace(tmp, self._filename)  
+  
+    async def save_data(self):  
+        self._atomic_write(self.data.to_json())
 
     async def push_result(self, result_list: List[Any], result: ResultInfo) -> List[Any]:
-        while len(result_list) >= 4:
+        while len(result_list) >= 12:
             result_list.pop().delete_result()
         return [result] + result_list
 

@@ -5,9 +5,9 @@ except ImportError:
     from setuptools._distutils.util import strtobool
 import uuid
 import logging
-
+# 每账号自定义「清日常」顺序在 config 中的保留 key  只加了这下面一行
+DAILY_ORDER_KEY = "__daily_order__"
 SERVER_PORT = int(os.getenv("AUTOPCR_SERVER_PORT", "13200"))
-SERVER_HOST = os.getenv("AUTOPCR_SERVER_HOST", "0.0.0.0")
 
 CLIENT_POOL_SIZE_MAX = 100
 CLIENT_POOL_MAX_AGE = 3600 * 24
@@ -24,7 +24,7 @@ CHANNEL_OPTION = [BSDK, QSDK, BSDKNOLOGIN]
 
 DEBUG_LOG = strtobool(os.getenv("AUTOPCR_SERVER_DEBUG_LOG", "false"))
 
-ALLOW_REGISTER = strtobool(os.getenv("AUTOPCR_SERVER_ALLOW_REGISTER", 'true'))
+ALLOW_REGISTER = strtobool(os.getenv("AUTOPCR_SERVER_ALLOW_REGISTER", 'false'))
 SUPERUSER = str(os.getenv("AUTOPCR_SERVER_SUPERUSER", ""))
 
 ROOT_DIR = os.path.join(os.path.dirname(__file__), '..')
@@ -39,10 +39,6 @@ LOG_PATH = os.path.join(ROOT_DIR, 'log/')
 LOG_LEVEL = logging.INFO
 
 UUID_NAMESPACE = uuid.UUID("83a3e9e1-2690-4ff2-88bb-075ba6a6743c")
-
-# Public access address for QQ bot messages (e.g., "example.com" or "1.2.3.4:13200")
-PUBLIC_ADDRESS = os.getenv("AUTOPCR_PUBLIC_ADDRESS", "")
-USE_HTTPS = strtobool(os.getenv("AUTOPCR_USE_HTTPS", "false"))
 
 # Headers
 DEFAULT_HEADERS = {

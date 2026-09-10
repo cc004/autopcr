@@ -41,14 +41,18 @@ class imagemgr:
             unit_id //= 100
         star = next((s for s in [6, 3, 1] if s <= star), 3)
         unit = unit_id * 100 + star * 10 + 1
-        path = self.get_image_path("unit_icon", f"unit_{unit}.png")
-        if path.exists():
-            return Image.open(path)
-        try:
-            image = await assetmgr.unit_icon(unit)
-        except Exception:
-            return None
-        image.save(path)
+        path = self.get_image_path("unit_icon", f"unit_{unit}.png")  
+        if path.exists():  
+            return Image.open(path)  
+        # 优先从 HoshinoBot priconne 本地资源目录读取  
+        hoshino_path = Path(r"C:\Resources\img\priconne\unit") / f"icon_unit_{unit}.png"  
+        if hoshino_path.exists():  
+            return Image.open(hoshino_path)  
+        try:  
+            image = await assetmgr.unit_icon(unit)  
+        except Exception:  
+            return None  
+        image.save(path)  
         return image
 
     async def ex_equip_icon(self, equip_id: int) -> Image:

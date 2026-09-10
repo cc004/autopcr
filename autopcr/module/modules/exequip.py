@@ -8,69 +8,29 @@ from ...model.error import *
 from ...db.database import db
 from ...model.enums import *
 from collections import Counter
-from ...model.custom import UnitAttribute
 
 ALCES_AUTO_EXEC_COUNT = 100
 
-
-def _normal_ex_equip_state(client: pcrclient):
-    return {
-        str(unit_id): {str(ex_slot.slot): ex_slot.serial_id for ex_slot in unit.ex_equip_slot}
-        for unit_id, unit in client.data.unit.items()
-    }
-
-def _group_ex_equip_changes(changes):
-    grouped = {}
-    for unit_id, slot, serial_id in changes:
-        grouped.setdefault(unit_id, []).append(ExtraEquipChangeSlot(slot=slot, serial_id=serial_id))
-    return [ExtraEquipChangeUnit(unit_id=unit_id, ex_equip_slot=slots, cb_ex_equip_slot=None) for unit_id, slots in grouped.items()]
-
-def _ex_equip_state_cache_path(module: Module):
-    from os.path import join
-    return join(CACHE_DIR, "modules", "ex_equip_state", module._parent.id + ".json")
-
-def _save_ex_equip_state_cache(module: Module, state):
-    from os import makedirs
-    from os.path import dirname
-    import json
-    cache_path = _ex_equip_state_cache_path(module)
-    makedirs(dirname(cache_path), exist_ok=True)
-    with open(cache_path, "w") as f:
-        json.dump(state, f)
-
-def _load_ex_equip_state_cache(module: Module):
-    from os.path import exists
-    import json
-    cache_path = _ex_equip_state_cache_path(module)
-    if not exists(cache_path):
-        return None
-    with open(cache_path, "r") as f:
-        return json.load(f)
-
-
 @name('彩装究极炼成')
 @default(True)
-@inttype('ex_equip_rainbow_enhance_pt_hold', '保留pt数(w)', 10, list(range(0, 10000)))
+@inttype('ex_equip_rainbow_enhance_pt_hold', '保留pt数(w)', 10, list(range(0, 10001)))
 @ExEquipSubStatusRankConfig('ex_equip_rainbow_enhance_rank', '属性优先级')
-@inttype('ex_equip_rainbow_enhance_no_max_num', '非满属性个数', 1, [0, 1, 2, 3, 4])
+@inttype('ex_equip_rainbow_enhance_no_max_num', '不需要满属性的词条个数', 1, [0, 1, 2, 3, 4])
+@inttype('ex_equip_rainbow_enchance_target_sum', '需求的属性总值', 0, range(0, 21))
 @ExEquipSubStatusConfig('ex_equip_rainbow_enchance_sub_status_4', '炼成属性4')
 @ExEquipSubStatusConfig('ex_equip_rainbow_enchance_sub_status_3', '炼成属性3')
 @ExEquipSubStatusConfig('ex_equip_rainbow_enchance_sub_status_2', '炼成属性2')
 @ExEquipSubStatusConfig('ex_equip_rainbow_enchance_sub_status_1', '炼成属性1')
-@texttype('ex_equip_rainbow_enchance_id', '彩装id', 0)
 @singlechoice('ex_equip_rainbow_enchance_action', '做什么', '看属性', ['看属性', '炼成', '看概率'])
+@texttype('ex_equip_rainbow_enchance_id', '彩装id（记得按回车顺便刷新）', 0)
 @description('看属性指获取彩装id和炼成属性,炼成则进行究极炼成,看概率指根据炼成记录统计各属性概率,非满属性指属性值不必最大,以便手动用光球强化.属性优先级指目标属性值一样时,比较其他属性决定保留或放弃,优先级是按顺序从高到低,目标属性的优先级最高,不受属性优先级影响.满强目标属性会自动锁住.')
 class ex_equip_rainbow_enchance(Module):
 
     async def do_task(self, client: pcrclient):
         ex_equip_rainbow_enchance_action = self.get_config('ex_equip_rainbow_enchance_action')
         if ex_equip_rainbow_enchance_action == '看属性':
-            items = flow(client.data.ex_equips.values()) \
+            msg = flow(client.data.ex_equips.values()) \
                 .where(lambda ex: db.get_ex_equip_rarity(ex.ex_equipment_id) == 5) \
-                .to_list()
-            # 装备 ID 编码了类型和元素/名称，直接按 ID 排序即可同时实现分组+元素排序，无需查表
-            items.sort(key=lambda ex: ex.ex_equipment_id)
-            msg = flow(items) \
                 .select(lambda ex: f"{ex.serial_id}: {db.get_ex_equip_name(ex.ex_equipment_id)} "
                                   f"{db.get_ex_equip_sub_status_str(ex.ex_equipment_id, ex.sub_status or [])}") \
                 .to_list()
@@ -124,6 +84,11 @@ class ex_equip_rainbow_enchance(Module):
             else:
                 self.cache_info = Counter(self.cache_info)
 
+
+            target_sum = self.get_config('ex_equip_rainbow_enchance_target_sum')
+            if target_sum > 0:
+                self._log(f"属性总值阈值: {target_sum}")
+
             base = 1
             self.weight = Counter()
             rank_order = self.get_config('ex_equip_rainbow_enhance_rank')
@@ -133,15 +98,7 @@ class ex_equip_rainbow_enchance(Module):
                     base *= 30
             for key in target_sub_status:
                 self.weight[key] += base
-
-            # self._log(f"各属性加权值: " + ', '.join(f"{UnitAttribute.index2ch[eParamType(k)]}: {v}" for k, v in self.weight.items()))
-
-            no_max_num = self.get_config('ex_equip_rainbow_enhance_no_max_num')
-            target_cnt = sum(target_sub_status.values())
-
-            if no_max_num > target_cnt:
-                raise AbortError(f"非满属性个数{no_max_num}不能大于非任意的目标属性个数{target_cnt}")
-
+                
             top = await client.alces_top()
             if top.pending_alces_data:
                 if top.pending_alces_data.serial_id != serial_id:
@@ -156,10 +113,20 @@ class ex_equip_rainbow_enchance(Module):
                     target_step=pending_target_step,
                 )
 
+            no_max_num = self.get_config('ex_equip_rainbow_enhance_no_max_num')
+            target_cnt = sum(target_sub_status.values())
+
+            if no_max_num > target_cnt:
+                raise AbortError(f"非满属性个数{no_max_num}不能大于非任意的目标属性个数{target_cnt}")
+
             consume_cnt = Counter()
             alces_exec_cnt = 0
             last_lock_cnt = 0
             stop = False
+            
+
+
+            # self._log(f"各属性加权值: " + ', '.join(f"{UnitAttribute.index2ch[eParamType(k)]}: {v}" for k, v in self.weight.items()))
 
             self._log(f"当前彩装属性 " +
                       f"{serial_id}: {db.get_ex_equip_name(client.data.ex_equips[serial_id].ex_equipment_id)} "
@@ -168,6 +135,13 @@ class ex_equip_rainbow_enchance(Module):
             pt_hold = self.get_config('ex_equip_rainbow_enhance_pt_hold')
                 
             while not stop:
+                if target_sum > 0:
+                    current_total = await self.get_current_target_value(client, serial_id, target_sub_status)
+                    self._log(f"当前目标属性值: {current_total}")
+                    if current_total >= target_sum:
+                        self._log(f"当前目标属性值{current_total} ≥ 阈值{target_sum}，停止洗练")
+                        break
+                
                 achived_max_cnt, achived_cnt = await self.get_achived_sub_status_cnt(client, serial_id, target_sub_status)
                 if achived_max_cnt >= target_cnt - no_max_num and achived_cnt >= target_cnt:
                     self._log("彩装炼成属性已达成目标")
@@ -201,10 +175,9 @@ class ex_equip_rainbow_enchance(Module):
                         # 与原单次逻辑一致：只要开始执行时高于保留值，至少允许本轮执行一次。
                         affordable_count = max(1, (cur - reserve) // cost)
                     exec_count = min(exec_count, affordable_count)
-                
+
                 if stop:
                     break
-
                 auto_target_status, auto_target_step = self.get_alces_auto_target(
                     client, serial_id, target_sub_status, no_max_num
                 )
@@ -236,12 +209,17 @@ class ex_equip_rainbow_enchance(Module):
                 for consume, cost in per_exec_consume.items():
                     consume_cnt[consume] += cost * actual_exec_count
 
-                self._log(f"{'A 接受' if accept else 'R 放弃'}批量炼成的第{len(result_list)}次炼成属性: {db.get_ex_equip_sub_status_str(client.data.ex_equips[serial_id].ex_equipment_id, pending_alces_data.sub_status or [])}")
+                # self._log(f"{'A 接受' if accept else 'R 放弃'}批量炼成的第{len(result_list)}次炼成属性: {db.get_ex_equip_sub_status_str(client.data.ex_equips[serial_id].ex_equipment_id, pending_alces_data.sub_status or [])}")
 
             if alces_exec_cnt:
                 self._log(f"共进行了{alces_exec_cnt}次究极炼成，消耗了：")
                 for consume in consume_cnt:
                     self._log(f"  {db.get_inventory_name_san(consume)} x {consume_cnt[consume]}")
+            
+            if target_sum > 0:
+                final_total = await self.get_current_target_value(client, serial_id, target_sub_status)
+                self._log(f"最终目标属性值: {final_total}")
+            
             self.save_cache(str(client.data.ex_equips[serial_id].ex_equipment_id), self.cache_info)
             self._log(f"最终彩装属性 " +
                       f"{serial_id}: {db.get_ex_equip_name(client.data.ex_equips[serial_id].ex_equipment_id)} "
@@ -333,6 +311,29 @@ class ex_equip_rainbow_enchance(Module):
         achived_max_cnt = max_sub_status & target_sub_status
         achived_max_cnt = sum(achived_max_cnt.values())
         return achived_max_cnt, achived_cnt
+    
+    async def get_current_target_value(self, client: pcrclient, serial_id: int, target_sub_status: Counter) -> int:
+        ex_equip = client.data.ex_equips[serial_id]
+        attr_str = db.get_ex_equip_sub_status_str(ex_equip.ex_equipment_id, ex_equip.sub_status or [])
+        
+        target_value = 0
+        target_keys = target_sub_status.keys()
+        
+        for target_key in target_keys:
+            attr_name = UnitAttribute.index2ch[eParamType(target_key)] if hasattr(UnitAttribute, 'index2ch') else str(target_key)
+            
+            if attr_name in attr_str:
+                import re
+                pattern = rf'{attr_name}[×x](\d+(?:\.\d+)?)'
+                match = re.search(pattern, attr_str)
+                if match:
+                    try:
+                        value = float(match.group(1))
+                        target_value += value
+                    except:
+                        pass
+        
+        return int(target_value) if target_value == int(target_value) else target_value
 
 @name('强化EX装')
 @default(True)
@@ -503,99 +504,6 @@ class ex_equip_rank_up(Module):
             raise SkipError("没有可合成的EX装")
 
 
-@name('EX状态保存/恢复')
-@default(False)
-@singlechoice('ex_equip_state_action', '行为', '保存', ['保存', '恢复'])
-@description('保存或恢复所有角色当前穿戴的普通EX装备状态。不影响账号配置，恢复时只处理有差异的部分，不会全部卸载。')
-class ex_equip_state(Module):
-    cache_key = 'state'
-
-    @staticmethod
-    def normal_ex_equip_state(client: pcrclient):
-        return {
-            str(unit_id): {str(ex_slot.slot): ex_slot.serial_id for ex_slot in unit.ex_equip_slot}
-            for unit_id, unit in client.data.unit.items()
-        }
-
-    @staticmethod
-    def group_ex_equip_changes(changes):
-        grouped = {}
-        for unit_id, slot, serial_id in changes:
-            grouped.setdefault(unit_id, []).append(ExtraEquipChangeSlot(slot=slot, serial_id=serial_id))
-        return [ExtraEquipChangeUnit(unit_id=unit_id, ex_equip_slot=slots, cb_ex_equip_slot=None) for unit_id, slots in grouped.items()]
-
-    async def do_task(self, client: pcrclient):
-        action = self.get_config('ex_equip_state_action')
-        if action == '保存':
-            await self.save_state(client)
-        elif action == '恢复':
-            await self.restore_state(client)
-        else:
-            raise AbortError(f"未知操作{action}")
-
-    async def save_state(self, client: pcrclient):
-        state = self.normal_ex_equip_state(client)
-        equipped_cnt = sum(1 for slots in state.values() for serial_id in slots.values() if serial_id)
-        unit_cnt = sum(1 for slots in state.values() if any(slots.values()))
-        self.save_cache(self.cache_key, state)
-        self._log(f"已保存{unit_cnt}个角色的{equipped_cnt}件普通EX装备状态")
-
-    async def restore_state(self, client: pcrclient):
-        state = self.find_cache(self.cache_key)
-        if not state:
-            raise AbortError("未找到已保存的EX装备状态，请先执行保存")
-
-        current_state = self.normal_ex_equip_state(client)
-        current_position = {
-            serial_id: (int(unit_id), int(slot))
-            for unit_id, slots in current_state.items()
-            for slot, serial_id in slots.items()
-            if serial_id
-        }
-
-        remove_changes = []
-        apply_changes = []
-        skipped_missing = []
-        touched = set()
-
-        for unit_id in sorted(state.keys(), key=int):
-            if unit_id not in current_state:
-                continue
-            for slot in sorted(state[unit_id].keys(), key=int):
-                if slot not in current_state[unit_id]:
-                    continue
-                target_serial_id = state[unit_id][slot] or 0
-                current_serial_id = current_state[unit_id][slot] or 0
-                slot_no = int(slot)
-                if current_serial_id == target_serial_id:
-                    continue
-                if target_serial_id and target_serial_id not in client.data.ex_equips:
-                    skipped_missing.append(target_serial_id)
-                    continue
-                if target_serial_id and target_serial_id in current_position:
-                    occupy_unit_id, occupy_slot = current_position[target_serial_id]
-                    if occupy_unit_id != int(unit_id) or occupy_slot != slot_no:
-                        key = (occupy_unit_id, occupy_slot)
-                        if key not in touched:
-                            remove_changes.append((occupy_unit_id, occupy_slot, 0))
-                            touched.add(key)
-                apply_changes.append((int(unit_id), slot_no, target_serial_id))
-
-        if skipped_missing:
-            skipped = ', '.join(map(str, sorted(set(skipped_missing))))
-            self._warn(f"跳过{len(set(skipped_missing))}件已不存在的EX装备(serial_id: {skipped})")
-
-        if not remove_changes and not apply_changes:
-            raise SkipError("当前普通EX装备状态与保存状态一致")
-
-        if remove_changes:
-            await client.unit_equip_ex(self.group_ex_equip_changes(remove_changes))
-        if apply_changes:
-            await client.unit_equip_ex(self.group_ex_equip_changes(apply_changes))
-
-        self._log(f"恢复了{len(apply_changes)}个普通EX装备槽位")
-
-
 @name('撤下会战EX装')
 @default(True)
 @description('')
@@ -627,6 +535,31 @@ class remove_cb_ex_equip(Module):
         else:
             raise SkipError("所有会战EX装备均已撤下")
 
+@name('撤下普通EX装')
+@default(True)
+@description('')
+class remove_normal_ex_equip(Module):
+    async def do_task(self, client: pcrclient):
+        ex_cnt = 0
+        unit_cnt = 0
+        for unit_id in client.data.unit:
+            unit = client.data.unit[unit_id]
+            exchange_list = []
+            for ex_equip in unit.ex_equip_slot:
+                if ex_equip.serial_id != 0:
+                    exchange_list.append(ExtraEquipChangeSlot(slot=ex_equip.slot, serial_id=0))
+                    ex_cnt += 1
+
+            if exchange_list:
+                unit_cnt += 1
+                await client.unit_equip_ex([ExtraEquipChangeUnit(
+                        unit_id=unit_id, 
+                        ex_equip_slot=exchange_list,
+                        cb_ex_equip_slot=None)])
+        if ex_cnt:
+            self._log(f"撤下了{unit_cnt}个角色的{ex_cnt}个普通EX装备")
+        else:
+            raise SkipError("所有普通EX装备均已撤下")
 
 @name('EX装战力最高搭配')
 @default(True)
@@ -764,3 +697,241 @@ class ex_equip_power_maximun(Module):
                     msg.append(f"{name}★{star}")
             msg = ','.join(msg)
             self._log(f"{db.get_unit_name(unit_id)} 装备 {msg}")
+           
+# ---- 通用穿EX装备辅助函数 ----  
+async def _equip_ex_by_serial(module: Module, client: pcrclient,   
+                               config_unit_key: str, config_serial_key: str,  
+                               target_rarity: int, rarity_name: str):  
+    """通用穿EX装备逻辑，供彩/粉/金装共用"""  
+    unit_id = int(module.get_config(config_unit_key))  
+    serial_id_str = module.get_config(config_serial_key)  
+  
+    if not serial_id_str or not str(serial_id_str).strip().isdigit():  
+        raise AbortError(f"请输入有效的{rarity_name}装ID（数字）")  
+    serial_id = int(serial_id_str)  
+  
+    if unit_id not in client.data.unit:  
+        raise AbortError(f"未拥有角色{db.get_unit_name(unit_id)}")  
+  
+    if serial_id not in client.data.ex_equips:  
+        raise AbortError(f"{rarity_name}装ID {serial_id} 不存在")  
+  
+    ex_equip = client.data.ex_equips[serial_id]  
+    actual_rarity = db.get_ex_equip_rarity(ex_equip.ex_equipment_id)  
+    if actual_rarity != target_rarity:  
+        raise AbortError(f"ID {serial_id} 不是{rarity_name}装（实际稀有度: {db.ex_rarity_name.get(actual_rarity, actual_rarity)}）")  
+  
+    equip_category = db.ex_equipment_data[ex_equip.ex_equipment_id].category  
+    equip_name = db.get_ex_equip_name(ex_equip.ex_equipment_id)  
+    unit_name = db.get_unit_name(unit_id)  
+  
+    # 检查装备是否已被其他角色装备，先撤下  
+    for uid, u in client.data.unit.items():  
+        for slot_idx, ex_slot in enumerate(u.ex_equip_slot):  
+            if ex_slot.serial_id == serial_id and uid != unit_id:  
+                module._log(f"{equip_name}当前装备在{db.get_unit_name(uid)}的槽{slot_idx + 1}上，将先撤下")  
+                await client.unit_equip_ex([ExtraEquipChangeUnit(  
+                    unit_id=uid,  
+                    ex_equip_slot=[ExtraEquipChangeSlot(slot=slot_idx + 1, serial_id=0)],  
+                    cb_ex_equip_slot=None  
+                )])  
+                break  
+  
+    # 根据装备类别找到角色匹配的槽位  
+    slot_data = db.unit_ex_equipment_slot[unit_id]  
+    target_slot = None  
+    for slot_id, cat in enumerate(  
+        [slot_data.slot_category_1, slot_data.slot_category_2, slot_data.slot_category_3], start=1  
+    ):  
+        if cat == equip_category:  
+            target_slot = slot_id  
+            break  
+  
+    if target_slot is None:  
+        raise AbortError(f"{unit_name}没有匹配{equip_name}类别的EX装备槽")  
+  
+    # 检查是否已装备  
+    unit = client.data.unit[unit_id]  
+    current_slot = unit.ex_equip_slot[target_slot - 1]  
+    if current_slot.serial_id == serial_id:  
+        raise SkipError(f"{unit_name}的槽{target_slot}已装备该{rarity_name}装")  
+  
+    # 装备  
+    exchange_list = [ExtraEquipChangeSlot(slot=target_slot, serial_id=serial_id)]  
+    await client.unit_equip_ex([ExtraEquipChangeUnit(  
+        unit_id=unit_id,  
+        ex_equip_slot=exchange_list,  
+        cb_ex_equip_slot=None  
+    )])  
+  
+    module._log(f"已为{unit_name}装备{equip_name}（槽{target_slot}）")  
+  
+@name('穿ex彩装')  
+@default(True)  
+@texttype('equip_rainbow_serial_id', '彩装ID', '')  
+@unitchoice('equip_rainbow_unit_id', '角色')  
+@description('将指定彩装(serial_id)穿到指定角色的普通EX装备栏')  
+class equip_rainbow_ex(Module):  
+    async def do_task(self, client: pcrclient):  
+        await _equip_ex_by_serial(self, client, 'equip_rainbow_unit_id', 'equip_rainbow_serial_id', 5, '彩')
+        
+@name('穿ex粉装')  
+@default(True)  
+@texttype('equip_pink_serial_id', '粉装ID', '')  
+@unitchoice('equip_pink_unit_id', '角色')  
+@description('将指定粉装(serial_id)穿到指定角色的普通EX装备栏')  
+class equip_pink_ex(Module):  
+    async def do_task(self, client: pcrclient):  
+        await _equip_ex_by_serial(self, client, 'equip_pink_unit_id', 'equip_pink_serial_id', 4, '粉')  
+  
+  
+@name('穿ex金装')  
+@default(True)  
+@texttype('equip_gold_serial_id', '金装ID', '')  
+@unitchoice('equip_gold_unit_id', '角色')  
+@description('将指定金装(serial_id)穿到指定角色的普通EX装备栏')  
+class equip_gold_ex(Module):  
+    async def do_task(self, client: pcrclient):  
+        await _equip_ex_by_serial(self, client, 'equip_gold_unit_id', 'equip_gold_serial_id', 3, '金')   
+        
+# ---- 保存/恢复EX装备状态 ----  
+  
+@name('保存ex状态')  
+@default(True)  
+@description('保存所有角色当前穿戴的普通EX装备状态，供恢复ex状态使用。数据保存在cache/modules/目录下，不影响账号配置。')  
+class save_ex_state(Module):  
+    async def do_task(self, client: pcrclient):  
+        state = {}  
+        total_ex = 0  
+        for unit_id in client.data.unit:  
+            unit = client.data.unit[unit_id]  
+            slots = []  
+            for ex_slot in unit.ex_equip_slot:  
+                slots.append(ex_slot.serial_id)  
+            if any(s != 0 for s in slots):  
+                state[str(unit_id)] = slots  
+                # 记录日志  
+                unit_name = db.get_unit_name(unit_id)  
+                slot_info = []  
+                for i, sid in enumerate(slots):  
+                    if sid != 0:  
+                        total_ex += 1  
+                        if sid in client.data.ex_equips:  
+                            ex = client.data.ex_equips[sid]  
+                            slot_info.append(f"槽{i+1}: {db.get_ex_equip_name(ex.ex_equipment_id)}(id:{sid})")  
+                        else:  
+                            slot_info.append(f"槽{i+1}: 未知装备(id:{sid})")  
+                self._log(f"{unit_name}: {', '.join(slot_info)}")  
+  
+        if not state:  
+            raise SkipError("没有角色穿戴普通EX装备，无需保存")  
+  
+        self.save_cache("ex_state", state)  
+        self._log(f"共保存了{len(state)}个角色的{total_ex}件普通EX装备状态")  
+  
+  
+@name('恢复ex状态')  
+@default(True)  
+@description('恢复之前保存的普通EX装备穿戴状态，需先执行保存ex状态。只处理有差异的部分，不会全部卸载。')  
+class restore_ex_state(Module):  
+    async def do_task(self, client: pcrclient):  
+        from os.path import join, exists  
+        import json  
+        save_cache_path = join(CACHE_DIR, "modules", "save_ex_state", self._parent.id + ".json")  
+        if not exists(save_cache_path):  
+            raise AbortError("未找到保存的EX状态，请先执行「#保存ex状态」")  
+        with open(save_cache_path, "r") as f:  
+            cache = json.load(f)  
+        state = cache.get("ex_state", None)  
+        if not state:  
+            raise AbortError("保存的EX状态数据为空，请重新执行「#保存ex状态」")  
+  
+        # 1. 构建当前 serial_id -> (unit_id, slot) 映射  
+        current_owner = {}  
+        for unit_id in client.data.unit:  
+            unit = client.data.unit[unit_id]  
+            for ex_slot in unit.ex_equip_slot:  
+                if ex_slot.serial_id != 0:  
+                    current_owner[ex_slot.serial_id] = (unit_id, ex_slot.slot)  
+  
+        # 2. 找出所有需要变更的 (unit_id, slot_num, target_serial_id)  
+        changes = []  
+        skip_cnt = 0  
+        for unit_id_str, slots in state.items():  
+            unit_id = int(unit_id_str)  
+            if unit_id not in client.data.unit:  
+                self._warn(f"角色{unit_id}已不存在，跳过")  
+                skip_cnt += 1  
+                continue  
+            unit = client.data.unit[unit_id]  
+            for i, saved_serial_id in enumerate(slots):  
+                if i >= len(unit.ex_equip_slot):  
+                    continue  
+                current_serial = unit.ex_equip_slot[i].serial_id  
+                if current_serial == saved_serial_id:  
+                    continue  # 已经一致，跳过  
+                # 检查目标装备是否还存在  
+                if saved_serial_id != 0 and saved_serial_id not in client.data.ex_equips:  
+                    unit_name = db.get_unit_name(unit_id)  
+                    self._warn(f"{unit_name} 槽{i+1}: 装备(id:{saved_serial_id})已不存在，跳过")  
+                    skip_cnt += 1  
+                    continue  
+                slot_num = unit.ex_equip_slot[i].slot  
+                changes.append((unit_id, slot_num, saved_serial_id))  
+  
+        if not changes:  
+            if skip_cnt:  
+                self._warn(f"所有保存的装备均无法恢复（{skip_cnt}项跳过）")  
+                return  
+            raise SkipError("当前EX装备状态与保存的一致，无需恢复")  
+  
+        # 3. 找出需要先释放的 serial_id（目标装备当前在别的角色身上）  
+        need_free = {}  # serial_id -> (owner_uid, owner_slot)  
+        for (unit_id, slot_num, target_serial) in changes:  
+            if target_serial != 0 and target_serial in current_owner:  
+                owner_uid, owner_slot = current_owner[target_serial]  
+                if owner_uid != unit_id or owner_slot != slot_num:  
+                    need_free[target_serial] = (owner_uid, owner_slot)  
+  
+        # 4. 按角色分组，卸载需要释放的槽位（合并同角色多槽位到一次请求）  
+        unequip_by_unit = {}  
+        for serial_id, (owner_uid, owner_slot) in need_free.items():  
+            unequip_by_unit.setdefault(owner_uid, []).append(  
+                ExtraEquipChangeSlot(slot=owner_slot, serial_id=0))  
+          
+        unequip_cnt = 0  
+        for uid, exchange_list in unequip_by_unit.items():  
+            await client.unit_equip_ex([ExtraEquipChangeUnit(  
+                unit_id=uid, ex_equip_slot=exchange_list, cb_ex_equip_slot=None)])  
+            unequip_cnt += len(exchange_list)  
+        if unequip_cnt:  
+            self._log(f"释放了{len(unequip_by_unit)}个角色的{unequip_cnt}件装备")  
+  
+        # 5. 按角色分组，穿戴有差异的槽位（合并同角色多槽位到一次请求）  
+        equip_by_unit = {}  
+        for (unit_id, slot_num, target_serial) in changes:  
+            equip_by_unit.setdefault(unit_id, []).append(  
+                ExtraEquipChangeSlot(slot=slot_num, serial_id=target_serial))  
+  
+        equip_unit_cnt = 0  
+        equip_ex_cnt = 0  
+        for uid, exchange_list in equip_by_unit.items():  
+            await client.unit_equip_ex([ExtraEquipChangeUnit(  
+                unit_id=uid, ex_equip_slot=exchange_list, cb_ex_equip_slot=None)])  
+            unit_name = db.get_unit_name(uid)  
+            slot_info = []  
+            for slot_change in exchange_list:  
+                if slot_change.serial_id != 0:  
+                    ex = client.data.ex_equips[slot_change.serial_id]  
+                    slot_info.append(f"槽{slot_change.slot}: {db.get_ex_equip_name(ex.ex_equipment_id)}")  
+                    equip_ex_cnt += 1  
+                else:  
+                    slot_info.append(f"槽{slot_change.slot}: 卸下")  
+            equip_unit_cnt += 1  
+            self._log(f"{unit_name}: {', '.join(slot_info)}")  
+  
+        msg = f"共变更了{equip_unit_cnt}个角色的装备"  
+        if skip_cnt:  
+            msg += f"（{skip_cnt}项因角色或装备不存在而跳过）"  
+        self._log(msg)       
+       
