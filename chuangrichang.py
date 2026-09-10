@@ -287,7 +287,7 @@ async def create_daily_config(user_id, username=None, password=None, filename=No
         else:  
             # 文件已存在（重复发送者）：不重置密码，只返回地址和修改密码提示  
             public_ip = get_public_ip()  
-            login_url = f"http://{public_ip}:8040/daily/login" if public_ip else "无法获取公网IP，请手动配置"  
+            login_url = f"http://{public_ip}:8080/daily/login" if public_ip else "无法获取公网IP，请手动配置"  
             return f'''【清日常配置已存在】  
 🌐 清日常地址: {login_url}  
 🔑 如需修改密码，请发送：清日常重置密码'''
@@ -331,7 +331,7 @@ async def create_daily_config(user_id, username=None, password=None, filename=No
                 file_msg += f"，⚠️ 未找到桌面上的账号文件，请手动放入：\n{user_dir}"
         
         public_ip = get_public_ip()
-        login_url = f"http://{public_ip}:8040/daily/login" if public_ip else "无法获取公网IP，请手动配置"
+        login_url = f"http://{public_ip}:8080/daily/login" if public_ip else "无法获取公网IP，请手动配置"
         
         return f'''【清日常配置创建完成】
 {file_msg}

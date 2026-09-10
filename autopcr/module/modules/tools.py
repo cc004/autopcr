@@ -886,8 +886,8 @@ class ArenaInfo(Module):
                 self._log(f"{info.rank:02}: {user_name}{you}\n bd{info.viewer_id}")
 
 @booltype("jjc_info_cache", "使用缓存信息", True)
-@description('jjc透视前51名玩家的名字')
-@name('jjc透视')
+@description('jjc前51名玩家的名字')
+@name('jjc排名')
 @default(True)
 class jjc_info(ArenaInfo):
     @property
@@ -897,8 +897,8 @@ class jjc_info(ArenaInfo):
         return (await client.arena_rank(num, page)).ranking
 
 @booltype("pjjc_info_cache", "使用缓存信息", True)
-@description('pjjc透视前51名玩家的名字')
-@name('pjjc透视')
+@description('pjjc前51名玩家的名字')
+@name('pjjc排名')
 @default(True)
 class pjjc_info(ArenaInfo):
     @property

@@ -38,121 +38,8 @@ import socket
 from typing import Optional
 import inspect  # 新增这一行
 from hoshino import log  # 确保 log 模块已导入
-logger = log.new_logger('auto_pcr')  # 初始化日志记录器
-def get_public_ip() -> str:
-    """获取服务器的公网IP（多重备选方案）"""
-    # 备选公网IP查询API列表
-    ip_apis = [
-        "https://api.ipify.org?format=json",
-        "https://ipinfo.io/json",
-        "http://ip-api.com/json",
-        "https://ifconfig.me/all.json",
-    ]
-    
-    # 尝试所有可用的API
-    for api_url in ip_apis:
-        try:
-            response = requests.get(api_url, timeout=5)
-            if response.status_code == 200:
-                data = response.json()
-                # 不同API返回的字段可能不同
-                if "ip" in data:
-                    return data["ip"]
-                elif "ip_addr" in data:
-                    return data["ip_addr"]
-        except:
-            continue  # 如果当前API失败，尝试下一个
-    
-    # 如果所有API都失败，尝试最后的手段（可能返回内网IP）
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        local_ip = s.getsockname()[0]
-        s.close()
-        return local_ip  # 警告：可能是内网IP
-    except Exception as e:
-        raise ValueError(f"所有公网IP获取方法均失败，请手动填写！最后错误: {str(e)}")
 
-
-
-def get_hoshino_port() -> int:
-    """获取当前运行的HoshinoBot实际使用的端口号"""
-    try:
-        # 尝试从HoshinoBot配置文件中获取端口
-        from hoshino.config import __bot__ as bot_config
-        port = bot_config.PORT
-        print(f"ℹ️ 从HoshinoBot配置中获取到端口: {port}")
-        return port
-    except ImportError:
-        print("⚠️ 无法导入hoshino.config.__bot__，尝试从进程获取端口")
-    except AttributeError:
-        print("⚠️ 配置中没有PORT属性，尝试从进程获取端口")
-    
-    # 如果从配置文件获取失败，回退到原来的进程检测方法
-    try:
-        # 获取当前进程ID
-        current_pid = os.getpid()
-        
-        # 查找可能是HoshinoBot的Python进程
-        for proc in psutil.process_iter(['pid', 'name', 'cmdline', 'connections']):
-            try:
-                # 排除当前进程和非Python进程
-                if proc.info['pid'] == current_pid or 'python' not in proc.info['name'].lower():
-                    continue
-                
-                # 检查命令行参数是否包含hoshino相关字样
-                cmdline = ' '.join(proc.info['cmdline'] or [])
-                if 'hoshino' not in cmdline.lower():
-                    continue
-                
-                # 获取该进程监听的端口
-                for conn in proc.info['connections'] or []:
-                    if conn.status == 'LISTEN' and conn.laddr:
-                        return conn.laddr.port
-                        
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                continue
-                
-    except Exception as e:
-        print(f"⚠️ 无法从进程获取端口，使用默认8040。错误: {e}")
-    
-    return 8040  # 默认端口
-
-def generate_address() -> str:
-    """生成 address，格式 '公网IP:端口'"""
-    try:
-        public_ip = get_public_ip()
-        # 检查是否是明显的私有IP
-        if public_ip.startswith(("10.", "172.", "192.168.")) or public_ip == "127.0.0.1":
-            raise ValueError(f"获取到内网IP: {public_ip}，请检查网络配置！")
-        
-        port = get_hoshino_port()
-        print(f"ℹ️ 检测到运行中HoshinoBot使用的端口: {port}")  # 添加调试信息
-        return f"{public_ip}:{port}"
-    except ValueError as e:
-        print(f"❌ 错误: {e}")
-        return "请手动填写公网IP:端口"  # 获取失败时的占位文本
-
-# ===== 自动获取 address =====
-address = generate_address()
-print(f"ℹ️ 当前address: {address}")
-
-# 如果获取失败，建议手动填写
-if "手动填写" in address:
-    print("请手动修改下方address变量为你的公网IP和端口！")
-
-useHttps = False  # 默认HTTP
-
-server = HttpServer(qq_mod=True)
-app = nonebot.get_bot().server_app
-QuartAuth(app, cookie_secure=False)
-RateLimiter(app)
-Compress(app)
-app.secret_key = secrets.token_urlsafe(16)  # cookie expires when reboot
-app.register_blueprint(server.app)
-# 自动换防停止事件字典，key: sender_qq, value: asyncio.Event  
-_auto_def_stop_events = {}
-
+address:"1"
 prefix = '#'
 
 sv_help = f"""
@@ -179,8 +66,8 @@ sv_help = f"""
 - {prefix}半月刊
 - {prefix}刷新box
 - {prefix}查缺称号 查看缺少的称号
-- {prefix}jjc透视 查前51名
-- {prefix}pjjc透视 查前51名
+- {prefix}jjc排名 查前51名
+- {prefix}pjjc排名 查前51名
 - {prefix}jjc回刺 比如 #jjc回刺 19 2 就是打19 选择阵容2进攻
 - {prefix}pjjc回刺 比如 #pjjc回刺 -1（或者不填） 就是打记录里第一条 
 - {prefix}pjjc换防 将pjjc防守阵容随机错排
@@ -235,7 +122,7 @@ sv_help = f"""
 - {prefix}恢复ex状态 恢复之前保存的普通EX装备穿戴状态
 - {prefix}黎明界刷开局 公会名
 - {prefix}清日常排序 5 1 3  (把1、3挪到5后面)
-- {prefix}黎明界积分 查询黎明界累计积分/强化点数
+- {prefix}查黎明界 查询黎明界累计积分/强化点数
 - {prefix}我的支援 查询支援情况
 """.strip()
 
@@ -1398,7 +1285,7 @@ async def pjjc_back(botev: BotEvent):
     }
     return config
 
-@register_tool("jjc透视", "jjc_info")
+@register_tool("jjc排名", "jjc_info")
 async def jjc_info(botev: BotEvent):
     use_cache = True
     msg = await botev.message()
@@ -1412,7 +1299,7 @@ async def jjc_info(botev: BotEvent):
     }
     return config
 
-@register_tool("pjjc透视", "pjjc_info")
+@register_tool("pjjc排名", "pjjc_info")
 async def pjjc_info(botev: BotEvent):
     use_cache = True
     msg = await botev.message()
@@ -3405,7 +3292,7 @@ async def pjjc_stop_auto_def(botev: BotEvent):
     else:  
         await botev.send("当前没有正在运行的自动换防任务")
         
-@register_tool("黎明界刷开局", "labyrinth_start_reroll")
+@register_tool("黎明界开局", "labyrinth_start_reroll")
 async def labyrinth_start_reroll(botev: BotEvent):
     await botev.send("请稍等1-8分钟，过整点需要重新发送")  
     guild_id = 0
@@ -3424,7 +3311,7 @@ async def labyrinth_start_reroll(botev: BotEvent):
             "labyrinth_reroll_guild_id": guild_id,
     }
 
-@register_tool("黎明界积分", "labyrinth_point_query")  
+@register_tool("查黎明界", "labyrinth_point_query")  
 async def labyrinth_point_query(botev: BotEvent):  
     await botev.send("请稍等1-8分钟，过整点需要重新发送")  
     return {}

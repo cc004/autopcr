@@ -330,7 +330,7 @@ class labyrinth_sweep(Module):
         
 @description('从缓存中查询黎明界积分，不会登录！任意登录可更新缓存。')  
 @notlogin(check_data=True)  
-@name('黎明界积分查询')  
+@name('查黎明界')  
 class labyrinth_point_query(Module):  
     async def do_task(self, client: pcrclient):  
         # 未解锁 / 从未缓存过黎明界数据  
