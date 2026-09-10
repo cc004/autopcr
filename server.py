@@ -39,7 +39,19 @@ from typing import Optional
 import inspect  # 新增这一行
 from hoshino import log  # 确保 log 模块已导入
 
-address:"1"
+address = ''  # 填你的公网IP或域名，不填则会自动尝试获取
+useHttps = False
+
+server = HttpServer(qq_mod=True)
+app = nonebot.get_bot().server_app
+QuartAuth(app, cookie_secure=False)
+RateLimiter(app)
+Compress(app)
+app.secret_key = secrets.token_urlsafe(16) # cookie expires when reboot
+app.register_blueprint(server.app)
+# 自动换防停止事件字典，key: sender_qq, value: asyncio.Event  
+_auto_def_stop_events = {}
+
 prefix = '#'
 
 sv_help = f"""
