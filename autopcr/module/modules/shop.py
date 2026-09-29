@@ -303,7 +303,7 @@ class travel_shop(Module):
     async def do_task(self, client: pcrclient):
         shop = await client.profile_picture_frame_shop_index()
         ticket = next((item for item in (shop.period_lineup_list or [])
-                       if item.slot_id == 9), None)
+                       if item.reward_id == db.gacha_single_ticket[1]), None)
         if not ticket or ticket.sold:
             raise SkipError('白金扭蛋券已售罄')
 
