@@ -51,11 +51,14 @@ class role_mission_get(Module):
             raise ValueError("未找到职能券任务！")
         top = await client.mission_index()
         missions = [m for m in top.missions if m.mission_id == mission_data.daily_mission_id]
-        if len(missions) != 1:
-            raise ValueError("未找到职能券任务！")
-        mission = missions[0]
-        remain = mission_data.condition_num - mission.clear_num
-        if mission.mission_status != eMissionStatusType.NoClear or remain <= 0:
+        if len(missions) == 0:
+            mission = None
+        elif len(missions) > 1:
+            raise ValueError("职能券任务不唯一！")
+        else:
+            mission = missions[0]
+        remain = (mission_data.condition_num - mission.clear_num) if mission else mission_data.condition_num
+        if mission and (mission.mission_status != eMissionStatusType.NoClear or remain <= 0):
             raise SkipError("职能券任务已完成")
 
         with client.override_config({
