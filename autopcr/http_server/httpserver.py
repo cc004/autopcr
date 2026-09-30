@@ -20,7 +20,7 @@ from ..util.draw import instance as drawer
 from ..util.logger import instance as logger
 
 APP_VERSION_MAJOR = 1
-APP_VERSION_MINOR = 8
+APP_VERSION_MINOR = 9
 
 CACHE_HTTP_DIR = os.path.join(CACHE_DIR, 'http_server')
 
