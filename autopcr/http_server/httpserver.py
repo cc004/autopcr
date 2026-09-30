@@ -14,7 +14,6 @@ from quart_rate_limiter import RateLimiter, rate_limit, RateLimitExceeded
 
 from .validator import validate_dict, ValidateInfo, validate_ok_dict, enable_manual_validator
 from ..constants import CACHE_DIR, ALLOW_REGISTER, SUPERUSER
-from ..db.database import db
 from ..module.accountmgr import Account, AccountManager, instance as usermgr, AccountException, UserData, \
     PermissionLimitedException, UserDisabledException, UserException
 from ..util.draw import instance as drawer
@@ -202,6 +201,7 @@ class HttpServer:
         @self.api.route('/schedule', methods = ["GET"])
         async def get_schedule():
             """半月刊结构化日程（字段化，无账号依赖）。网页端通知与本 module 渲染共用数据源。"""
+            from ..db.database import db
             return db.schedule_entries(), 200
 
         @self.api.route('/role', methods = ["GET"])
