@@ -23,6 +23,7 @@ from .travel import *
 from .unit import *
 from .talent import *
 from .mirage import *
+from .VIP import *
 
 @dataclass
 class ModuleList:
@@ -75,6 +76,7 @@ daily_modules = ModuleList(
         tower_cloister_sweep,
         labyrinth_sweep,
         jjc_reward,
+        role_mission_get,
         abyss_quest_sweep,
         abyss_boss_sweep,
         talent_sweep,
@@ -118,6 +120,7 @@ daily_modules = ModuleList(
         clanbattle_shop,
         master_shop_talent,
         master_shop,
+        travel_shop,
 
         clan_equip_request,
         love_up,

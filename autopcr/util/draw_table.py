@@ -1,4 +1,4 @@
-from PIL import Image, ImageFont, ImageDraw
+from PIL import Image, ImageFont, ImageDraw, __version__ as pillow_version
 from collections import namedtuple
 from io import BytesIO
 import base64
@@ -10,6 +10,15 @@ def outp_b64(outp_img):
     outp_img.save(buf, format='JPEG')
     base64_str = f'base64://{base64.b64encode(buf.getvalue()).decode()}'
     return f'[CQ:image,file={base64_str}]'
+
+if int(pillow_version.split('.')[0]) >= 10:
+    def text_size(draw, text, font):
+        bbox = draw.textbbox((0, 0), str(text).replace('\t', ' '), font=font)
+        return bbox[2] - bbox[0], bbox[3] - bbox[1]
+else:
+    def text_size(draw, text, font):
+        return draw.textsize(str(text).replace('\t', ' '), font=font)
+
 
 def position_tuple(*args):
     Position = namedtuple('Position', ['top', 'right', 'bottom', 'left'])
@@ -61,8 +70,9 @@ def draw_table(table, header=[], font=ImageFont.load_default(), cell_pad=(20, 10
     draw = ImageDraw.Draw(tab)
     for i in range(len(table)):
         for j in range(len(table[i])):
-            col_max_wid[j] = max(draw.textsize(table[i][j], font)[0], col_max_wid[j])
-            row_max_hei[i] = max(draw.textsize(table[i][j], font)[1], row_max_hei[i])
+            width, height = text_size(draw, table[i][j], font)
+            col_max_wid[j] = max(width, col_max_wid[j])
+            row_max_hei[i] = max(height, row_max_hei[i])
     tab_width = sum(col_max_wid) + len(col_max_wid) * 2 * cell_pad[0]
     tab_heigh = sum(row_max_hei) + len(row_max_hei) * 2 * cell_pad[1]
 
@@ -93,13 +103,14 @@ def draw_table(table, header=[], font=ImageFont.load_default(), cell_pad=(20, 10
                     bg_left, bg_top = left - cell_pad[0], top - cell_pad[1]
                     draw.rectangle([(bg_left, bg_top), (bg_left + col_max_wid[j] + cell_pad[0] * 2, bg_top + row_max_hei[i] + cell_pad[1] * 2)], 
                                    fill=bg_color, width=0)
+            text_width, text_height = text_size(draw, table[i][j], font)
             _left = left
             if (align and align[j] == 'c') or (header and i == 0):
-                _left += (col_max_wid[j] - draw.textsize(table[i][j], font)[0]) // 2
+                _left += (col_max_wid[j] - text_width) // 2
             elif align and align[j] == 'r':
-                _left += col_max_wid[j] - draw.textsize(table[i][j], font)[0]
-            _top = top 
-            _top += (row_max_hei[i] - draw.textsize(table[i][j], font)[1]) // 2 # always vertical center
+                _left += col_max_wid[j] - text_width
+            _top = top
+            _top += (row_max_hei[i] - text_height) // 2 # always vertical center
             draw.text((_left, _top), table[i][j].replace('\t', ' '), font=font, fill=color)
             left += col_max_wid[j] + cell_pad[0] * 2
         top += row_max_hei[i] + cell_pad[1] * 2

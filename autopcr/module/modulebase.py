@@ -53,10 +53,12 @@ def notlogin(check_data = False):
 
     return lambda cls: _wrap_init(cls, setter)
 
-def tag_stamina_consume(cls):
+def tag_stamina_consume(cls=None, *, do_check: bool = True):
     def setter(self):
         self.tags.append("体力消耗")
         self.stamina_relative = True
+        if not do_check:
+            return
         old_do_check = self.do_check
         async def new_do_check(client: pcrclient) -> Tuple[bool, str]:
             ok, msg = await old_do_check(client)
@@ -67,6 +69,8 @@ def tag_stamina_consume(cls):
             return True, ''
         self.do_check = new_do_check
 
+    if cls is None:
+        return lambda cls: _wrap_init(cls, setter)
     return _wrap_init(cls, setter)
 
 def tag_stamina_get(cls):
@@ -138,6 +142,7 @@ class Module:
         self.stamina_relative: bool = False
         self.description: str = self.name
         self.config: Dict[str, Config] = {}
+        self.config_overrides: Dict[str, Any] = {}
         self.implmented = True
         self.need_login = True
         from .modulemgr import ModuleManager
@@ -249,6 +254,8 @@ class Module:
         return None
 
     def _get_raw_config(self, key, default = None):
+        if key in self.config_overrides:
+            return self.config_overrides[key]
         return self._parent.get_config(key, default)
 
     def get_config_str(self, key) -> str:

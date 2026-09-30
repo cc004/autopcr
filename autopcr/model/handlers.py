@@ -345,6 +345,16 @@ class ShopBuyBulkResponse(responses.ShopBuyBulkResponse):
                 mgr.update_inventory(item)
 
 @handles
+class ProfilePictureFrameShopBuyResponse(responses.ProfilePictureFrameShopBuyResponse):
+    async def update(self, mgr: datamgr, request):
+        if self.purchase_list:
+            for item in self.purchase_list:
+                mgr.update_inventory(item)
+        if self.item_data:
+            for item in self.item_data:
+                mgr.update_inventory(item)
+
+@handles
 class RoomReceiveItemAllResponse(responses.RoomReceiveItemAllResponse):
     async def update(self, mgr: datamgr, request):
         if self.stamina_info:
