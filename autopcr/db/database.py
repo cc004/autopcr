@@ -1203,6 +1203,14 @@ class database():
                 .to_dict(lambda x: x.daily_mission_id, lambda x: x)
             )
 
+    @property
+    def VIP_mission(self) -> Optional[DailyMissionDatum]:
+        return next((
+            mission for mission in self.daily_mission_data.values()
+            if mission.system_id == 101 and mission.condition_num == 20
+            and self.parse_time(mission.start_time) <= apiclient.datetime < self.parse_time(mission.end_time)
+        ), None)
+
     @lazy_property
     def season_pack(self) -> Dict[int, SeasonPack]:
         with self.dbmgr.session() as db:

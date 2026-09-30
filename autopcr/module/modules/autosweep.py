@@ -695,6 +695,16 @@ class last_normal_quest_sweep(DIY_sweep):
         quest: List[Tuple[int, int]] = [(id, last_sweep_quests_count) for id in last_sweep_quests]
         return quest
 
+@description('''
+这是兜底的设置，刷取1-1关卡，直到体力耗尽
+'''.strip())
+@name("刷1-1")
+@default(True)
+@tag_stamina_consume
+class oldest_normal_quest_sweep(DIY_sweep):
+    async def get_loop_quest(self, client: pcrclient) -> List[Tuple[int, int]]:
+        return [(11001001, 1)]
+
 class TalentSweep(DIY_sweep):
     def get_recovery_areas(self) -> List[int]: ...
     def get_no_max_no_sweep_areas(self) -> List[int]: ...
