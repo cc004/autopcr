@@ -44,7 +44,23 @@ class HttpServer:
         RateLimiter(self.quart)
         self.register_cooldowns = {}
         Compress(self.quart)
-        self.quart.secret_key = secrets.token_urlsafe(16)
+        # 会话签名密钥持久化到 cache 卷：进程每次启动随机生成会让重启/崩溃后所有登录 cookie 失效（用户被莫名登出）
+        secret_path = os.path.join(CACHE_DIR, '.secret_key')
+        secret_key = ''
+        try:
+            with open(secret_path, 'r') as f:
+                secret_key = f.read().strip()
+        except Exception:
+            pass
+        if not secret_key:
+            secret_key = secrets.token_urlsafe(32)
+            try:
+                os.makedirs(CACHE_DIR, exist_ok=True)
+                with open(secret_path, 'w') as f:
+                    f.write(secret_key)
+            except Exception:
+                pass  # 写不进则退回进程内随机：仅重启掉登录，不影响服务
+        self.quart.secret_key = secret_key
 
         self.app.register_blueprint(self.web)
         self.app.register_blueprint(self.api)
