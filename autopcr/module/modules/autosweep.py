@@ -3,7 +3,8 @@ from ..config import *
 from ...core.pcrclient import pcrclient
 from ...model.custom import ItemType
 from ...db.models import QuestDatum, ShioriQuest
-from typing import List, Dict, Tuple
+import datetime
+from typing import List, Dict, Tuple, Set
 import typing
 from ...model.error import *
 from ...db.database import db
@@ -695,8 +696,9 @@ class last_normal_quest_sweep(DIY_sweep):
         quest: List[Tuple[int, int]] = [(id, last_sweep_quests_count) for id in last_sweep_quests]
         return quest
 
-@description('确保每日任务“通关主线或活动关卡20次吧”完成，未完成时循环刷取最新的3个主线关卡')
+@description('确保每日任务“通关主线或活动关卡20次吧”完成。未完成时循环刷取最新的3个主线关卡')
 @name("完成每日关卡任务")
+@booltype('daily_quest_mission_dusk_only', "傍晚(17:00)之后执行", True)
 @default(True)
 class daily_quest_mission(Module):
     mission_description = "通关主线或活动关卡20次吧"
@@ -739,6 +741,14 @@ class daily_quest_mission(Module):
         remain = max(self.target_clear_count - (mission.clear_num or 0), 0)
         if remain == 0:
             raise SkipError("每日关卡任务已完成")
+
+        # 那配置之后才真正刷取和警告，避免早上处理
+        dusk_only = self.get_config('daily_quest_mission_dusk_only')
+        dusk_time = db.get_today_start_time() + datetime.timedelta(hours = 12)
+        is_dusk = apiclient.datetime >= dusk_time
+
+        if dusk_only and not is_dusk:
+            raise SkipError(f"每日关卡任务尚需通关{remain}次，傍晚之后才刷取")
 
         if client.is_stamina_consume_not_run():
             self._warn(f"禅模式下每日关卡任务未完成，尚需通关{remain}次")
