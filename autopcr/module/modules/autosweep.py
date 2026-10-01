@@ -3,7 +3,8 @@ from ..config import *
 from ...core.pcrclient import pcrclient
 from ...model.custom import ItemType
 from ...db.models import QuestDatum, ShioriQuest
-from typing import List, Dict, Tuple
+import datetime
+from typing import List, Dict, Tuple, Set
 import typing
 from ...model.error import *
 from ...db.database import db
@@ -695,6 +696,100 @@ class last_normal_quest_sweep(DIY_sweep):
         quest: List[Tuple[int, int]] = [(id, last_sweep_quests_count) for id in last_sweep_quests]
         return quest
 
+@description('确保每日任务“通关主线或活动关卡20次吧”完成。未完成时循环刷取最新的3个主线关卡')
+@name("完成每日关卡任务")
+@booltype('daily_quest_mission_dusk_only', "傍晚(17:00)之后执行", True)
+@default(True)
+class daily_quest_mission(Module):
+    mission_description = "通关主线或活动关卡20次吧"
+    sweep_count = 3
+    target_clear_count = 20
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        # 禅模式下仍需进入 do_task 提示任务未完成，不能使用 tag_stamina_consume。
+        self.tags.append("体力消耗")
+        self.stamina_relative = True
+
+    def _get_mission_ids(self) -> Set[int]:
+        return {
+            mission.daily_mission_id
+            for mission in db.daily_mission_data.values()
+            if mission.condition_num == self.target_clear_count
+            and self.mission_description in mission.description
+        }
+
+    async def do_task(self, client: pcrclient):
+        mission_ids = self._get_mission_ids()
+        if not mission_ids:
+            raise AbortError(f"主数据中未找到每日任务：{self.mission_description}")
+
+        missions = await client.mission_index()
+        mission = next(
+            (mission for mission in missions.missions or [] if mission.mission_id in mission_ids),
+            None,
+        )
+        if mission is None:
+            raise SkipError("当前账号没有每日关卡任务，无需补刷")
+
+        if mission.mission_status in (
+            eMissionStatusType.EnableReceive,
+            eMissionStatusType.AlreadyReceive,
+        ):
+            raise SkipError("每日关卡任务已完成")
+
+        remain = max(self.target_clear_count - (mission.clear_num or 0), 0)
+        if remain == 0:
+            raise SkipError("每日关卡任务已完成")
+
+        # 那配置之后才真正刷取和警告，避免早上处理
+        dusk_only = self.get_config('daily_quest_mission_dusk_only')
+        dusk_time = db.get_today_start_time() + datetime.timedelta(hours = 12)
+        is_dusk = apiclient.datetime >= dusk_time
+
+        if dusk_only and not is_dusk:
+            raise SkipError(f"每日关卡任务尚需通关{remain}次，傍晚之后才刷取")
+
+        if client.is_stamina_consume_not_run():
+            self._warn(f"禅模式下每日关卡任务未完成，尚需通关{remain}次")
+            return
+
+        quests = db.last_normal_quest()[:3]
+        if not quests:
+            raise AbortError("主数据中没有可供补刷的普通主线关卡")
+
+        result = []
+        clean_cnt = Counter()
+        no_stamina = False
+        while remain > 0:
+            for quest_id in quests:
+                count = min(self.sweep_count, remain)
+                reward, clear_count, no_stamina = await client.quest_skip_aware(
+                    quest_id, count, True, True
+                )
+                result += reward
+                if clear_count:
+                    clean_cnt[quest_id] += clear_count
+                    remain -= clear_count
+                if no_stamina or remain <= 0:
+                    break
+            if no_stamina:
+                break
+
+        if clean_cnt:
+            self._log('\n'.join(
+                f"{db.get_quest_name(quest)}: 刷取{count}次"
+                for quest, count in clean_cnt.items()
+            ))
+            self._log("---------")
+            if result:
+                self._log(await client.serialize_reward_summary(result))
+
+        if remain > 0:
+            self._warn(f"体力不足，每日关卡任务尚需通关{remain}次")
+        else:
+            self._log("每日关卡任务已完成")
+            
 @description('''
 这是兜底的设置，刷取1-1关卡，直到体力耗尽
 '''.strip())
@@ -704,6 +799,7 @@ class last_normal_quest_sweep(DIY_sweep):
 class oldest_normal_quest_sweep(DIY_sweep):
     async def get_loop_quest(self, client: pcrclient) -> List[Tuple[int, int]]:
         return [(11001001, 1)]
+
 
 class TalentSweep(DIY_sweep):
     def get_recovery_areas(self) -> List[int]: ...
