@@ -577,7 +577,14 @@ data: {ret}\n\n'''
             if os.path.exists(os.path.join(str(self.web.static_folder), path)):
                 return await send_from_directory(str(self.web.static_folder), path, mimetype=("text/javascript" if path.endswith(".js") else None))
             else:
-                return await send_from_directory(str(self.web.static_folder), 'index.html')
+                # index.html 是前端唯一无内容哈希的入口。Quart 默认 SEND_FILE_MAX_AGE_DEFAULT=12h 会把它缓存住：
+                # 前端更新后用户最长 12 小时还在跑旧 JS，且被版本校验拒绝（「后端期望前端版本为X.Y，请更新」）。
+                # no-cache 强制每次回源校验；send_from_directory 自带 ETag/条件请求，未变化直接 304，无额外开销。
+                # 带哈希的静态资源（上一个分支）不受影响，仍走默认长缓存。
+                response = await send_from_directory(str(self.web.static_folder), 'index.html')
+                response.cache_control.no_cache = True
+                response.cache_control.max_age = 0
+                return response
 
     def run_forever(self, loop):
         self.quart.register_blueprint(self.app)
