@@ -44,7 +44,23 @@ class HttpServer:
         RateLimiter(self.quart)
         self.register_cooldowns = {}
         Compress(self.quart)
-        self.quart.secret_key = secrets.token_urlsafe(16)
+        # 会话签名密钥持久化到 cache 卷：进程每次启动随机生成会让重启/崩溃后所有登录 cookie 失效（用户被莫名登出）
+        secret_path = os.path.join(CACHE_DIR, '.secret_key')
+        secret_key = ''
+        try:
+            with open(secret_path, 'r') as f:
+                secret_key = f.read().strip()
+        except Exception:
+            pass
+        if not secret_key:
+            secret_key = secrets.token_urlsafe(32)
+            try:
+                os.makedirs(CACHE_DIR, exist_ok=True)
+                with open(secret_path, 'w') as f:
+                    f.write(secret_key)
+            except Exception:
+                pass  # 写不进则退回进程内随机：仅重启掉登录，不影响服务
+        self.quart.secret_key = secret_key
 
         self.app.register_blueprint(self.web)
         self.app.register_blueprint(self.api)
@@ -588,4 +604,6 @@ data: {ret}\n\n'''
 
     def run_forever(self, loop):
         self.quart.register_blueprint(self.app)
-        self.quart.run(host=self.host, port=self.port, loop=loop)
+        # use_reloader=False：Quart 默认 use_reloader=True，热重载器在生产容器里监听全部文件
+        # （含 cache/result 卷），数据更新触发重启且 execv 失败会崩掉整个服务（OSError: Exec format error）
+        self.quart.run(host=self.host, port=self.port, loop=loop, use_reloader=False)
