@@ -18,6 +18,7 @@ from ..module.accountmgr import Account, AccountManager, instance as usermgr, Ac
     PermissionLimitedException, UserDisabledException, UserException
 from ..util.draw import instance as drawer
 from ..util.logger import instance as logger
+from ..util.mastery import build_mastery_payload
 
 APP_VERSION_MAJOR = 1
 APP_VERSION_MINOR = 9
@@ -304,6 +305,54 @@ class HttpServer:
         async def get_account(account: Account):
             return account.generate_info(), 200
 
+        @self.api.route('/account/<string:acc>/mastery', methods=['GET'])
+        @HttpServer.login_required()
+        @HttpServer.wrapaccountmgr(readonly=True)
+        @HttpServer.wrapaccount()
+        async def get_mastery(account: Account):
+            """Read the standard client-pool cache without logging into the game."""
+            from ..db.database import db
+
+            await db.enter_cache_scope()
+            activated = False
+            try:
+                client = account.client
+                await client.activate()
+                activated = True
+                if not client.data.ready:
+                    return {"cached": False}, 200, {"Cache-Control": "no-store"}
+                payload = build_mastery_payload(client, account.alias)
+                return {**payload, "cached": True}, 200, {"Cache-Control": "no-store"}
+            finally:
+                if activated:
+                    client.deactivate()
+                await db.exit_cache_scope()
+
+        @self.api.route('/account/<string:acc>/mastery', methods=['POST'])
+        @HttpServer.login_required()
+        @HttpServer.wrapaccountmgr(readonly=True)
+        @HttpServer.wrapaccount()
+        async def refresh_mastery(account: Account):
+            """Explicitly reload game data; normal client teardown saves the pool cache."""
+            from ..core.pcrclient import eLoginStatus
+            from ..db.database import db
+            await db.enter_cache_scope()
+            activated = False
+            try:
+                client = account.client
+                await client.activate()
+                activated = True
+                # HomeIndex alone does not reload inventory or role-mastery levels.
+                if client.logged != eLoginStatus.NOT_LOGGED:
+                    await client.logout()
+                await client.login()
+                payload = build_mastery_payload(client, account.alias)
+                return {**payload, "cached": False}, 200, {"Cache-Control": "no-store"}
+            finally:
+                if activated:
+                    client.deactivate()
+                await db.exit_cache_scope()
+
         @self.api.route('/account/<string:acc>', methods = ["PUT", "DELETE"])
         @HttpServer.login_required()
         @HttpServer.wrapaccountmgr()
@@ -569,6 +618,13 @@ data: {ret}\n\n'''
         async def logout(accountmgr: AccountManager):
             logout_user()
             return "再见, " + accountmgr.qid, 200
+
+        @self.web.route('/mastery')
+        async def mastery_page():
+            response = await send_from_directory(os.path.join(PATH, 'pages'), 'mastery.html',
+                                                 cache_timeout=0, conditional=False)
+            response.headers['Cache-Control'] = 'no-store'
+            return response
 
         # frontend
         @self.web.route("/", defaults={"path": ""})

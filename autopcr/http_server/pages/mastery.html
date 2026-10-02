@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>autopcr 角色专精模拟器</title>
+  <style>
+    :root{--bg:#f5f7fb;--card:#fff;--text:#26324a;--muted:#72809a;--line:#e5eaf2;--blue:#4c7cf3;--blue2:#6f5de7;--pink:#e85d9e;--green:#27a977;--shadow:0 10px 30px rgba(39,56,96,.10)}
+    *{box-sizing:border-box}body{margin:0;background:linear-gradient(145deg,#eef4ff 0,#faf7ff 45%,#f7fbff 100%);color:var(--text);font:14px/1.55 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;min-height:100vh}
+    button,select,input{font:inherit}.top{background:linear-gradient(120deg,#497ef2,#7661e8);color:#fff;padding:26px 20px 58px}.top-inner,.page{max-width:1220px;margin:auto}.top h1{margin:0;font-size:28px}.top p{margin:5px 0 0;opacity:.86}.back{float:right;color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.45);padding:6px 12px;border-radius:10px}
+    .page{margin-top:-36px;padding:0 18px 50px}.toolbar,.summary,.panel,.role{background:var(--card);border:1px solid rgba(223,228,241,.8);box-shadow:var(--shadow);border-radius:16px}.toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:16px}.toolbar label{font-weight:700}.toolbar select{min-width:180px}.toolbar select,.toolbar button,.btn{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:10px;padding:8px 12px}.toolbar button,.btn{cursor:pointer;font-weight:700}.toolbar button:hover,.btn:hover{border-color:#9bb3f5;background:#f4f7ff}.toolbar button.primary,.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}.toolbar button:disabled,.btn:disabled{opacity:.42;cursor:not-allowed}.switch{display:flex;align-items:center;gap:7px;margin-left:auto;font-weight:600!important}.switch input{width:18px;height:18px}.stamp{color:var(--muted)}
+    .status{padding:22px;text-align:center;color:var(--muted)}.status.error{color:#b9355f;background:#fff0f5;border-radius:14px;margin-top:14px}.summary{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0;padding:14px}.chip{padding:8px 12px;border-radius:999px;background:#eef4ff;color:#315fac}.chip.pink{background:#fff0f7;color:#b83a78}.chip.green{background:#eaf9f3;color:#18805a}.chip b{font-size:16px}
+    .section-head{display:flex;align-items:center;justify-content:space-between;margin:24px 2px 10px}.section-head h2{margin:0;font-size:20px}.section-head span{color:var(--muted)}.roles{display:grid;gap:16px}.role{padding:16px}.role-title{font-size:18px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:9px}.role-dot{width:11px;height:11px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--pink))}.slots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.slot{border:1px solid var(--line);border-radius:13px;padding:13px;background:linear-gradient(180deg,#fff,#fafbff)}.slot.changed{border-color:#aebff7;background:#f7f9ff}.slot.maxed{border-color:#87d5ba;background:#f3fcf8}.slot-name{font-weight:800;min-height:42px}.levels{display:flex;align-items:center;gap:8px;margin:7px 0 12px}.from{color:var(--muted)}.arrow{color:#a3adc0}.to{font-weight:800;color:#315fac}.stars{color:#f4af25;letter-spacing:1px}.stars .off{color:#d9deea}.actions{display:flex;gap:6px;flex-wrap:wrap}.actions .btn{padding:6px 9px;font-size:13px}.cost-hint{min-height:22px;color:var(--muted);font-size:12px;margin-top:8px}
+    details.panel{margin-top:18px;padding:0 16px}details summary{cursor:pointer;font-weight:800;padding:15px 0}.inventory{overflow:auto;padding-bottom:16px}.inventory table{border-collapse:collapse;width:100%;min-width:840px}.inventory th,.inventory td{border:1px solid var(--line);padding:7px;text-align:center}.inventory th{background:#f6f8fc}.inventory input{width:70px;border:1px solid var(--line);border-radius:7px;padding:5px;text-align:right}.universal-edit{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}.universal-edit label{background:#f4f1ff;padding:8px 10px;border-radius:9px}.cost-table{max-width:720px;margin-bottom:16px}.notice{color:var(--muted);margin:0 0 12px}.footer{text-align:center;color:var(--muted);padding:28px 0}
+    .cost-table table{min-width:0;table-layout:fixed}
+    @media(max-width:900px){.slots{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.top{padding-top:20px}.top h1{font-size:23px}.back{float:none;display:inline-block;margin-bottom:14px}.page{padding:0 10px 35px}.switch{margin-left:0}.slots{grid-template-columns:1fr}.slot-name{min-height:0}}
+  </style>
+</head>
+<body>
+  <header class="top"><div class="top-inner"><a class="back" href="/daily/account/">返回 autopcr</a><h1>角色专精模拟器</h1><p>读取账号当前进度，在本地模拟碎片合成与强化；不会向游戏提交强化操作。</p></div></header>
+  <main class="page">
+    <section class="toolbar">
+      <label for="account">账号</label><select id="account"></select>
+      <button id="reload" class="primary">读取最新数据</button>
+      <button id="max-exclusive" disabled>仅用专属碎片拉满</button>
+      <button id="max-all" disabled>按当前设置拉满</button>
+      <button id="reset-all" disabled>全部还原</button>
+      <label class="switch"><input id="use-universal" type="checkbox" disabled>不足时使用万能碎片</label>
+      <span id="stamp" class="stamp"></span>
+    </section>
+    <div id="status" class="status">正在读取账号列表……</div>
+    <section id="app" hidden>
+      <div id="summary" class="summary"></div>
+      <div class="section-head"><h2>专精进度</h2><span>碎片会优先按 3:1 从低等级向上合成</span></div>
+      <div id="roles" class="roles"></div>
+      <details class="panel"><summary>调整碎片库存</summary><p class="notice">修改库存会还原全部模拟结果，仅影响本页面。</p><div id="inventory" class="inventory"></div></details>
+      <details class="panel"><summary>每步碎片消耗</summary><div id="costs" class="inventory cost-table"></div></details>
+      <div class="footer">模拟结果仅供规划，不会消耗游戏内资源。</div>
+    </section>
+  </main>
+  <script>
+  (() => {
+    'use strict';
+    const $ = (id) => document.getElementById(id);
+    const apiHeaders = {'X-App-Version':'1.9.0'};
+    let data=null, meta=null, starts={}, sim={}, consumed={}, originalStock={}, stock={};
+    const keys=[];
+    const fmt=(n)=>Number(n||0).toLocaleString('zh-CN');
+    const esc=(s)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const clone=(v)=>JSON.parse(JSON.stringify(v));
+    const keyOf=(role,slot)=>`${role}-${slot}`;
+    const useUniversal=()=>$('use-universal').checked;
+    function setSimulationEnabled(enabled){['max-exclusive','max-all','reset-all','use-universal'].forEach(id=>$(id).disabled=!enabled)}
+    function showStatus(message,error=false){$('status').textContent=message;$('status').className='status'+(error?' error':'');$('status').hidden=false;$('app').hidden=true;setSimulationEnabled(false)}
+    function validMetadata(payload){const m=payload?.metadata,isObject=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);return isObject(m)&&['roles','mastery','universal'].every(key=>isObject(m[key]))&&Array.isArray(m.costs)&&m.costs.length===6&&m.costs.every(n=>Number.isFinite(Number(n))&&Number(n)>0)}
+    async function api(path,method='GET'){const r=await fetch(path,{method,headers:apiHeaders,credentials:'same-origin',cache:'no-store'});if(!r.ok){const t=await r.text();throw new Error(r.status===401?'尚未登录，请先返回 autopcr 登录':t||`请求失败 (${r.status})`)}return r.json()}
+    async function loadAccounts(){try{const info=await api('api/account');const list=info.accounts||[];$('account').innerHTML=list.map(a=>`<option value="${esc(a.name)}">${esc(a.name)}</option>`).join('');if(!list.length)throw new Error('当前 QQ 下没有可用账号');const saved=localStorage.getItem('autopcr-mastery-account');if(saved&&list.some(a=>a.name===saved))$('account').value=saved;await loadMastery()}catch(e){showStatus(e.message,true)}}
+    async function loadMastery(refresh=false){
+      const account=$('account').value;if(!account||$('reload').disabled)return;
+      const previous=data&&data.account===account?data:null;
+      if(!previous){data=null;meta=null;$('stamp').textContent=''}
+      $('reload').disabled=true;$('account').disabled=true;
+      showStatus(refresh?`正在登录并读取「${account}」的最新专精数据……`:`正在读取「${account}」的缓存……`);
+      try{
+        const payload=await api(`api/account/${encodeURIComponent(account)}/mastery`,refresh?'POST':'GET');
+        localStorage.setItem('autopcr-mastery-account',account);
+        if(!refresh&&payload?.cached===false&&!payload.metadata){showStatus('此账号暂无缓存，请点击「读取最新数据」获取。');return}
+        if(!validMetadata(payload))throw new Error('专精数据不完整，请更新并重启后端、强制刷新页面后，再点击「读取最新数据」。');
+        data=payload;meta=data.metadata;initialize();
+        $('stamp').textContent=`${payload.cached?'缓存':'最新'}数据时间：${data.data_time}`;
+        render();$('status').hidden=true;$('app').hidden=false;setSimulationEnabled(true);
+      }catch(e){showStatus(e.message,true);if(previous){$('status').textContent+='（已保留上次数据）';$('app').hidden=false;setSimulationEnabled(true)}}
+      finally{$('reload').disabled=false;$('account').disabled=false}
+    }
+    function initialize(){keys.length=0;starts={};sim={};consumed={};originalStock=clone(data.stocks||{});stock=clone(originalStock);const byRole={};(data.unit_role_list||[]).forEach(r=>byRole[String(r.unit_role_id)]=r);Object.keys(meta.roles||{}).sort((a,b)=>a-b).forEach(role=>{Object.keys(meta.mastery[role]||{}).sort((a,b)=>a-b).forEach(slot=>{const key=keyOf(role,slot),r=byRole[role]||{};keys.push(key);starts[key]={level:Math.min(5,Math.max(1,Number(r[`slot_level_${slot}`])||1)),stars:Math.min(5,Math.max(0,Number(r[`enhance_level_${slot}`])||0))};sim[key]=0;consumed[key]=[]})})}
+    function stepsFor(key){let {level,stars}=starts[key],steps=[];while(level<5||stars<5){if(stars<5){steps.push({level,cost:Number(meta.costs[stars+1])});stars++}else{level++;stars=0;steps.push({level,cost:Number(meta.costs[0])})}}return steps}
+    function stateAt(key,count=sim[key]){const s={...starts[key]};stepsFor(key).slice(0,count).forEach(step=>{if(step.level===s.level)s.stars++;else{s.level=step.level;s.stars=0}});return s}
+    function merge(target,parts){for(const p of parts){const old=target.find(x=>x.item===p.item&&x.converted===p.converted&&x.universal===p.universal);old?old.count+=p.count:target.push({...p})}}
+    function takeCategory(work,itemAt,level,need,universal){
+      // Count equivalent Lv1 fragments, then consume in batches from low to high.
+      // This preserves the original lower-level-first 3:1 conversion order.
+      const items=[],available=[];
+      let equivalent=0;
+      for(let lv=1;lv<=level;lv++){
+        const id=itemAt(lv);
+        items[lv]=id?String(id):null;
+        equivalent+=(items[lv]?work[items[lv]]||0:0)*3**(lv-1);
+        available[lv]=Math.floor(equivalent/3**(lv-1));
+      }
+      const supplied=Math.min(need,available[level]),takes=[];
+      function consume(lv,count){
+        if(!count)return;
+        const converted=lv>1?Math.min(count,Math.floor(available[lv-1]/3)):0;
+        if(converted)consume(lv-1,converted*3);
+        const direct=count-converted,item=items[lv];
+        if(direct){work[item]-=direct;takes.push({item,count:direct,converted:lv<level,universal})}
+      }
+      consume(level,supplied);
+      return{takes,supplied};
+    }
+    function planStep(key,step,allowUniversal=useUniversal()){const [role,slot]=key.split('-'),slotMeta=meta.mastery[role][slot],work={...stock},takes=[];let need=step.cost;const specific=takeCategory(work,lvl=>slotMeta.items[String(lvl)],step.level,need,false);merge(takes,specific.takes);need-=specific.supplied;if(allowUniversal&&need>0){const universal=takeCategory(work,lvl=>meta.universal[String(lvl)],step.level,need,true);merge(takes,universal.takes);need-=universal.supplied}return{takes,missing:need}}
+    function applyPlan(key,plan){consumed[key].push(plan);plan.takes.forEach(t=>stock[t.item]=(stock[t.item]||0)-t.count)}
+    function refund(key){const plan=consumed[key].pop();if(!plan)return false;plan.takes.forEach(t=>stock[t.item]=(stock[t.item]||0)+t.count);return true}
+    function setSteps(key,target,allowUniversal=useUniversal()){const steps=stepsFor(key);while(sim[key]<target&&sim[key]<steps.length){const plan=planStep(key,steps[sim[key]],allowUniversal);if(plan.missing)break;applyPlan(key,plan);sim[key]++}while(sim[key]>target&&refund(key))sim[key]--;return sim[key]}
+    function stars(n){return `<span class="stars">${'<span>★</span>'.repeat(n)}<span class="off">${'★'.repeat(5-n)}</span></span>`}
+    function nextHint(key){const steps=stepsFor(key),step=steps[sim[key]];if(!step)return '已达到最高等级';const p=planStep(key,step);return p.missing?`下一步需 Lv${step.level} 碎片 ${step.cost}（缺 ${p.missing}）`:`下一步需 Lv${step.level} 碎片 ${step.cost}`}
+    function renderSummary(){let total=0,converted=0,universal=0;keys.forEach(k=>consumed[k].forEach(p=>p.takes.forEach(t=>{total+=t.count;if(t.converted)converted+=t.count;if(t.universal)universal+=t.count})));const uni=Object.keys(meta.universal).map(l=>`Lv${l} ×${fmt(stock[String(meta.universal[l])]||0)}`).join(' · ');$('summary').innerHTML=`<span class="chip pink">消耗碎片 <b>${fmt(total)}</b>${converted?` · 合成投入 ${fmt(converted)}`:''}</span><span class="chip">消耗万能碎片 <b>${fmt(universal)}</b></span><span class="chip green">万能剩余 ${esc(uni)}</span>`}
+    function renderRoles(){$('roles').innerHTML=Object.keys(meta.roles).sort((a,b)=>a-b).map(role=>{const slots=Object.keys(meta.mastery[role]||{}).sort((a,b)=>a-b).map(slot=>{const key=keyOf(role,slot),from=starts[key],to=stateAt(key),max=sim[key]>=stepsFor(key).length,changed=sim[key]>0;return `<article class="slot ${changed?'changed':''} ${max?'maxed':''}" data-key="${key}"><div class="slot-name">${esc(meta.mastery[role][slot].name)}</div><div class="levels"><span class="from">Lv${from.level} ${stars(from.stars)}</span><span class="arrow">→</span><span class="to">Lv${to.level} ${stars(to.stars)}</span></div><div class="actions"><button class="btn primary" data-action="step" ${max?'disabled':''}>强化一步</button><button class="btn" data-action="max" ${max?'disabled':''}>拉满</button><button class="btn" data-action="reset" ${changed?'':'disabled'}>还原</button></div><div class="cost-hint">${esc(nextHint(key))}</div></article>`}).join('');return `<section class="role"><div class="role-title"><i class="role-dot"></i>${esc(meta.roles[role])}</div><div class="slots">${slots}</div></section>`}).join('')}
+    function editStock(item,value){resetSimulations();originalStock[String(item)]=Math.max(0,Number(value)||0);stock=clone(originalStock);render()}
+    function renderInventory(){const universals=Object.keys(meta.universal).map(l=>`<label>万能 Lv${l} <input type="number" min="0" data-item="${meta.universal[l]}" value="${originalStock[String(meta.universal[l])]||0}"></label>`).join('');const rows=[];Object.keys(meta.roles).sort((a,b)=>a-b).forEach(role=>Object.keys(meta.mastery[role]||{}).sort((a,b)=>a-b).forEach(slot=>{const m=meta.mastery[role][slot];rows.push(`<tr><th>${esc(meta.roles[role])}</th><td>${esc(m.name)}</td>${[1,2,3,4,5].map(l=>{const id=m.items[String(l)];return `<td><input type="number" min="0" data-item="${id}" value="${originalStock[String(id)]||0}"></td>`}).join('')}</tr>`)}));$('inventory').innerHTML=`<div class="universal-edit">${universals}</div><table><thead><tr><th>职能</th><th>专精</th>${[1,2,3,4,5].map(l=>`<th>Lv${l} 碎片</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`}
+    function renderCosts(){$('costs').innerHTML=`<table><thead><tr><th>强化阶段</th><th>碎片等级</th><th>消耗</th></tr></thead><tbody>${[0,1,2,3,4,5].map(i=>`<tr><td>${i===0?'5★ → 下一 Lv':`${i-1}★ → ${i}★`}</td><td>${i===0?'下一 Lv':'当前 Lv'}</td><td>${fmt(meta.costs[i])}</td></tr>`).join('')}</tbody></table>`}
+    function render(){renderSummary();renderRoles();renderInventory();renderCosts()}
+    function renderSimulation(changedKeys=keys){
+      renderSummary();
+      for(const key of changedKeys){
+        const cell=$('roles').querySelector(`[data-key="${key}"]`);
+        if(!cell)continue;
+        const to=stateAt(key),max=sim[key]>=stepsFor(key).length,changed=sim[key]>0;
+        cell.classList.toggle('changed',changed);
+        cell.classList.toggle('maxed',max);
+        cell.querySelector('.to').innerHTML=`Lv${to.level} ${stars(to.stars)}`;
+        cell.querySelector('[data-action="step"]').disabled=max;
+        cell.querySelector('[data-action="max"]').disabled=max;
+        cell.querySelector('[data-action="reset"]').disabled=!changed;
+      }
+      // Shared universal stock can affect every slot's next-step hint.
+      for(const key of keys){
+        const hint=$('roles').querySelector(`[data-key="${key}"] .cost-hint`),text=nextHint(key);
+        if(hint&&hint.textContent!==text)hint.textContent=text;
+      }
+    }
+    function resetSimulations(){keys.forEach(k=>{sim[k]=0;consumed[k]=[]});stock=clone(originalStock)}
+    $('roles').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b||b.disabled)return;const key=b.closest('[data-key]').dataset.key,act=b.dataset.action;if(act==='step')setSteps(key,sim[key]+1);if(act==='max')setSteps(key,stepsFor(key).length);if(act==='reset')setSteps(key,0);renderSimulation([key])});
+    $('inventory').addEventListener('change',e=>{if(e.target.matches('input[data-item]'))editStock(e.target.dataset.item,e.target.value)});
+    $('reload').addEventListener('click',()=>loadMastery(true));$('account').addEventListener('change',()=>loadMastery());$('use-universal').addEventListener('change',()=>{if(meta)renderSimulation([])});
+    $('reset-all').addEventListener('click',()=>{resetSimulations();renderSimulation()});
+    $('max-exclusive').addEventListener('click',()=>{resetSimulations();keys.forEach(k=>setSteps(k,stepsFor(k).length,false));renderSimulation()});
+    $('max-all').addEventListener('click',()=>{resetSimulations();keys.forEach(k=>setSteps(k,stepsFor(k).length,useUniversal()));renderSimulation()});
+    loadAccounts();
+  })();
+  </script>
+</body>
+</html>
