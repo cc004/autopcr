@@ -41,6 +41,14 @@ def load_mastery_cache(account) -> Optional[Dict[str, Any]]:
             ("metadata", dict), ("stocks", dict), ("unit_role_list", list),
         )):
             return None
+        metadata = payload["metadata"]
+        if not all(isinstance(metadata.get(key), dict) for key in ("roles", "mastery", "universal")):
+            return None
+        costs = metadata.get("costs")
+        if not isinstance(costs, list) or len(costs) != 6 or not all(
+            isinstance(cost, (int, float)) and cost > 0 for cost in costs
+        ):
+            return None
         return payload
     except (OSError, ValueError, AttributeError):
         return None

@@ -610,7 +610,10 @@ data: {ret}\n\n'''
 
         @self.web.route('/mastery')
         async def mastery_page():
-            return await send_from_directory(os.path.join(PATH, 'pages'), 'mastery.html')
+            response = await send_from_directory(os.path.join(PATH, 'pages'), 'mastery.html',
+                                                 cache_timeout=0, conditional=False)
+            response.headers['Cache-Control'] = 'no-store'
+            return response
 
         # frontend
         @self.web.route("/", defaults={"path": ""})

@@ -22,10 +22,10 @@
     <section class="toolbar">
       <label for="account">账号</label><select id="account"></select>
       <button id="reload" class="primary">读取最新数据</button>
-      <button id="max-exclusive">仅用专属碎片拉满</button>
-      <button id="max-all">按当前设置拉满</button>
-      <button id="reset-all">全部还原</button>
-      <label class="switch"><input id="use-universal" type="checkbox">不足时使用万能碎片</label>
+      <button id="max-exclusive" disabled>仅用专属碎片拉满</button>
+      <button id="max-all" disabled>按当前设置拉满</button>
+      <button id="reset-all" disabled>全部还原</button>
+      <label class="switch"><input id="use-universal" type="checkbox" disabled>不足时使用万能碎片</label>
       <span id="stamp" class="stamp"></span>
     </section>
     <div id="status" class="status">正在读取账号列表……</div>
@@ -50,7 +50,9 @@
     const clone=(v)=>JSON.parse(JSON.stringify(v));
     const keyOf=(role,slot)=>`${role}-${slot}`;
     const useUniversal=()=>$('use-universal').checked;
-    function showStatus(message,error=false){$('status').textContent=message;$('status').className='status'+(error?' error':'');$('status').hidden=false;$('app').hidden=true}
+    function setSimulationEnabled(enabled){['max-exclusive','max-all','reset-all','use-universal'].forEach(id=>$(id).disabled=!enabled)}
+    function showStatus(message,error=false){$('status').textContent=message;$('status').className='status'+(error?' error':'');$('status').hidden=false;$('app').hidden=true;setSimulationEnabled(false)}
+    function validMetadata(payload){const m=payload?.metadata,isObject=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);return isObject(m)&&['roles','mastery','universal'].every(key=>isObject(m[key]))&&Array.isArray(m.costs)&&m.costs.length===6&&m.costs.every(n=>Number.isFinite(Number(n))&&Number(n)>0)}
     async function api(path,method='GET'){const r=await fetch(path,{method,headers:apiHeaders,credentials:'same-origin',cache:'no-store'});if(!r.ok){const t=await r.text();throw new Error(r.status===401?'尚未登录，请先返回 autopcr 登录':t||`请求失败 (${r.status})`)}return r.json()}
     async function loadAccounts(){try{const info=await api('api/account');const list=info.accounts||[];$('account').innerHTML=list.map(a=>`<option value="${esc(a.name)}">${esc(a.name)}</option>`).join('');if(!list.length)throw new Error('当前 QQ 下没有可用账号');const saved=localStorage.getItem('autopcr-mastery-account');if(saved&&list.some(a=>a.name===saved))$('account').value=saved;await loadMastery()}catch(e){showStatus(e.message,true)}}
     async function loadMastery(refresh=false){
@@ -62,11 +64,12 @@
       try{
         const payload=await api(`api/account/${encodeURIComponent(account)}/mastery`,refresh?'POST':'GET');
         localStorage.setItem('autopcr-mastery-account',account);
-        if(!payload.metadata){showStatus('此账号暂无缓存，请点击「读取最新数据」获取。');return}
+        if(!refresh&&payload?.cached===false&&!payload.metadata){showStatus('此账号暂无缓存，请点击「读取最新数据」获取。');return}
+        if(!validMetadata(payload))throw new Error('专精数据不完整，请更新并重启后端、强制刷新页面后，再点击「读取最新数据」。');
         data=payload;meta=data.metadata;initialize();
         $('stamp').textContent=`${payload.cached?'缓存':'最新'}数据时间：${data.data_time}`;
-        $('status').hidden=true;$('app').hidden=false;render();
-      }catch(e){showStatus(e.message,true);if(previous){$('status').textContent+='（已保留上次数据）';$('app').hidden=false}}
+        render();$('status').hidden=true;$('app').hidden=false;setSimulationEnabled(true);
+      }catch(e){showStatus(e.message,true);if(previous){$('status').textContent+='（已保留上次数据）';$('app').hidden=false;setSimulationEnabled(true)}}
       finally{$('reload').disabled=false;$('account').disabled=false}
     }
     function initialize(){keys.length=0;starts={};sim={};consumed={};originalStock=clone(data.stocks||{});stock=clone(originalStock);const byRole={};(data.unit_role_list||[]).forEach(r=>byRole[String(r.unit_role_id)]=r);Object.keys(meta.roles||{}).sort((a,b)=>a-b).forEach(role=>{Object.keys(meta.mastery[role]||{}).sort((a,b)=>a-b).forEach(slot=>{const key=keyOf(role,slot),r=byRole[role]||{};keys.push(key);starts[key]={level:Math.min(5,Math.max(1,Number(r[`slot_level_${slot}`])||1)),stars:Math.min(5,Math.max(0,Number(r[`enhance_level_${slot}`])||0))};sim[key]=0;consumed[key]=[]})})}
