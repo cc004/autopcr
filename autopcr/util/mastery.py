@@ -1,6 +1,13 @@
 from collections import defaultdict
 from datetime import datetime
-from typing import Any, Dict, List
+import hashlib
+import json
+import os
+from pathlib import Path
+import tempfile
+from typing import Any, Dict, List, Optional
+
+from ..constants import CACHE_DIR
 
 from ..db.models import (
     UnitRoleMasteryId,
@@ -14,6 +21,45 @@ from ..model.enums import eInventoryType
 
 UNIVERSAL_MASTERY_ITEMS = {level: 80000 + level for level in range(1, 6)}
 DEFAULT_MASTERY_COSTS = [20, 40, 50, 60, 70, 90]
+
+
+def _mastery_cache_path(account) -> Path:
+    identity = [account.qq, account.alias, account.data.username, account.data.channel]
+    key = hashlib.sha256(json.dumps(identity, ensure_ascii=False).encode("utf-8")).hexdigest()
+    return Path(CACHE_DIR) / "mastery" / f"{key}.json"
+
+
+def load_mastery_cache(account) -> Optional[Dict[str, Any]]:
+    """Read the last explicit fetch without creating or activating a game client."""
+    try:
+        with _mastery_cache_path(account).open(encoding="utf-8") as stream:
+            cached = json.load(stream)
+        payload = cached.get("data")
+        if cached.get("version") != 1 or not isinstance(payload, dict):
+            return None
+        if not all(isinstance(payload.get(key), kind) for key, kind in (
+            ("metadata", dict), ("stocks", dict), ("unit_role_list", list),
+        )):
+            return None
+        return payload
+    except (OSError, ValueError, AttributeError):
+        return None
+
+
+def save_mastery_cache(account, payload: Dict[str, Any]) -> None:
+    """Atomically replace a snapshot only after fetching succeeded."""
+    path = _mastery_cache_path(account)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent,
+                                         suffix=".tmp", delete=False) as stream:
+            temporary = stream.name
+            json.dump({"version": 1, "data": payload}, stream, ensure_ascii=False)
+        os.replace(temporary, path)
+    finally:
+        if temporary is not None and os.path.exists(temporary):
+            os.remove(temporary)
 
 
 def _mastery_metadata() -> Dict[str, Any]:

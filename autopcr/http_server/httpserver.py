@@ -18,7 +18,7 @@ from ..module.accountmgr import Account, AccountManager, instance as usermgr, Ac
     PermissionLimitedException, UserDisabledException, UserException
 from ..util.draw import instance as drawer
 from ..util.logger import instance as logger
-from ..util.mastery import build_mastery_payload
+from ..util.mastery import build_mastery_payload, load_mastery_cache, save_mastery_cache
 
 APP_VERSION_MAJOR = 1
 APP_VERSION_MINOR = 9
@@ -308,9 +308,20 @@ class HttpServer:
         @self.api.route('/account/<string:acc>/mastery', methods=['GET'])
         @HttpServer.login_required()
         @HttpServer.wrapaccountmgr(readonly=True)
-        @HttpServer.wrapaccount()
+        @HttpServer.wrapaccount(readonly=True)
         async def get_mastery(account: Account):
-            """Return live role-mastery levels and fragment inventory for the simulator."""
+            """Return only the last explicitly fetched snapshot, including cache misses."""
+            payload = load_mastery_cache(account)
+            return ({**payload, "cached": True} if payload else {"cached": False}), 200, {
+                "Cache-Control": "no-store",
+            }
+
+        @self.api.route('/account/<string:acc>/mastery', methods=['POST'])
+        @HttpServer.login_required()
+        @HttpServer.wrapaccountmgr(readonly=True)
+        @HttpServer.wrapaccount()
+        async def refresh_mastery(account: Account):
+            """Explicitly fetch fresh game data and persist the calculator snapshot."""
             from ..core.pcrclient import eLoginStatus
             from ..db.database import db
             await db.enter_cache_scope()
@@ -319,11 +330,13 @@ class HttpServer:
                 client = account.client
                 await client.activate()
                 activated = True
-                if client.logged == eLoginStatus.NOT_LOGGED or not client.data.ready:
-                    await client.login()
-                elif client.logged == eLoginStatus.NEED_REFRESH:
-                    await client.refresh()
-                return build_mastery_payload(client, account.alias), 200
+                # HomeIndex alone does not reload inventory or role-mastery levels.
+                if client.logged != eLoginStatus.NOT_LOGGED:
+                    await client.logout()
+                await client.login()
+                payload = build_mastery_payload(client, account.alias)
+                save_mastery_cache(account, payload)
+                return {**payload, "cached": False}, 200, {"Cache-Control": "no-store"}
             finally:
                 if activated:
                     client.deactivate()
