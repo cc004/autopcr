@@ -67,6 +67,7 @@ sv_help = f"""
 - {prefix}查装备 [<rank>] [fav] 查询缺口装备，rank为数字，只查询>=rank的角色缺口装备，fav表示只查询favorite的角色
 - {prefix}查深域 查询深域通关情况
 - {prefix}查公会深域 查询公会深域通关情况
+- {prefix}专精计算器 打开角色专精模拟计算器
 - {prefix}黎明界开局 <美食殿堂|破晓之星|咲恋救济院|王宫骑士团|拉比林斯> 可以只打部分字
 - {prefix}刷图推荐 [<rank>] [fav] 查询缺口装备的刷图推荐，格式同上
 - {prefix}公会支援 查询公会支援角色配置
@@ -714,6 +715,11 @@ async def cron_statistic(botev: BotEvent):
 @wrap_hoshino_event
 async def config_clear_daily(botev: BotEvent):
     await botev.finish(address + "login")
+
+@sv.on_fullmatch(f"{prefix}专精计算器")
+@wrap_hoshino_event
+async def role_mastery_calculator(botev: BotEvent):
+    await botev.finish(address + "mastery")
 
 @sv.on_prefix(f"{prefix}")
 @wrap_hoshino_event
