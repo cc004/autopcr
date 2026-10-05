@@ -6,6 +6,7 @@ from .box import *
 from .nologin import *
 from .caravan import *
 from .clan import *
+from .clanprep import *
 from .cron import *
 from .daily import *
 from .exequip import *
@@ -221,6 +222,9 @@ tool_modules = ModuleList(
         caravan_play,
         caravan_shop_buy,
         clan_battle_knive,
+        clan_prep_star5,
+        clan_prep_max_promote,
+        clan_prep_cb_ex,
         ex_equip_info,
         travel_team_view,
         missing_emblem,
