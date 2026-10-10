@@ -143,6 +143,7 @@ planning_modules = ModuleList(
     '规划',
     'planning',
     [
+        role_mastery_calculation,
         get_library_import_data,
         get_need_equip,
         get_normal_quest_recommand,

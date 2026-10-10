@@ -65,6 +65,7 @@ sv_help = f"""
 - {prefix}查纯净碎片 查询缺口纯净碎片，国服六星+日服二专需求
 - {prefix}查记忆碎片 [可刷取|大师币] 查询缺口记忆碎片，可按地图可刷取或大师币商店过滤
 - {prefix}查装备 [<rank>] [fav] 查询缺口装备，rank为数字，只查询>=rank的角色缺口装备，fav表示只查询favorite的角色
+- {prefix}职阶计算 <职能-节点-等级.星级> [...] 例如：攻击型-4-4.2 治疗型-所有-4.2
 - {prefix}查深域 查询深域通关情况
 - {prefix}查公会深域 查询公会深域通关情况
 - {prefix}黎明界开局 <美食殿堂|破晓之星|咲恋救济院|王宫骑士团|拉比林斯> 可以只打部分字
@@ -805,6 +806,17 @@ async def find_pure_memory(botev: BotEvent):
 @register_tool("查sp碎片", "get_need_sp_memory")
 async def find_sp_memory(botev: BotEvent):
     return {}
+
+@register_tool("职阶计算", "role_mastery_calculation")
+async def role_mastery_calculation_config(botev: BotEvent):
+    msg = await botev.message()
+    targets = " ".join(msg)
+    del msg[:]
+    if not targets:
+        await botev.finish("请提供职阶要求，例如：#职阶计算 攻击型-4-4.2 治疗型-所有-4.2")
+    return {
+        "role_mastery_targets": targets,
+    }
 
 @register_tool(f"来发十连", "gacha_start")
 @require_super_admin

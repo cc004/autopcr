@@ -1,4 +1,4 @@
-from typing import List, Set
+from typing import Dict, List, Set
 
 from ...util.ilp_solver import memory_use_average
 
@@ -15,6 +15,7 @@ from ...db.database import db
 from ...model.enums import *
 import random
 import itertools
+import re
 from collections import Counter
 
 @name('撤下会战助战')
@@ -591,6 +592,128 @@ class get_need_xinsui(Module):
         msg = [tot] + msg
         msg = '\n'.join(msg)
         self._log(msg)
+
+@description(
+    "按顺序计算职能节点强化目标是否可由当前专用材料和全能精通材料满足。"
+    "格式：攻击型-4-4.2 治疗型-所有-4.2"
+)
+@name("职阶计算")
+@texttype("role_mastery_targets", "强化目标", "")
+@notlogin(check_data=True)
+@default(True)
+class role_mastery_calculation(Module):
+    @staticmethod
+    def parse_role_mastery_targets(text: str, catalog: Dict) -> List[Dict]:
+        tokens = str(text or "").split()
+        if not tokens:
+            raise ValueError("请提供职阶要求，例如：攻击型-4-4.2 治疗型-所有-4.2")
+
+        targets = []
+        for token in tokens:
+            parts = token.split("-")
+            if len(parts) != 3:
+                raise ValueError(f"要求【{token}】格式错误，应为：职能-节点-等级.星级")
+
+            role_name, slot_text, state_text = parts
+            if role_name not in catalog["role_ids_by_name"]:
+                available = "、".join(
+                    catalog["role_names"][role_id]
+                    for role_id in sorted(catalog["role_names"])
+                )
+                raise ValueError(f"未知职能【{role_name}】，可用职能：{available}")
+
+            role_id = catalog["role_ids_by_name"][role_name]
+            available_slots = catalog["role_slots"][role_id]
+            if slot_text == "所有":
+                slot_ids = available_slots
+            else:
+                try:
+                    slot_ids = (int(slot_text),)
+                except ValueError as exc:
+                    raise ValueError(
+                        f"未知节点【{slot_text}】，节点应为数字或“所有”"
+                    ) from exc
+
+            if not slot_ids or any(
+                slot_id not in available_slots
+                for slot_id in slot_ids
+            ):
+                available = "、".join(map(str, available_slots))
+                raise ValueError(
+                    f"{role_name}不存在节点【{slot_text}】，可用节点：{available}"
+                )
+
+            state_match = re.fullmatch(r"(\d+)\.(\d+)", state_text)
+            if not state_match:
+                raise ValueError(
+                    f"目标【{state_text}】格式错误，应为：等级.星级，例如 4.2"
+                )
+            state = tuple(map(int, state_match.groups()))
+
+            for slot_id in slot_ids:
+                node = catalog["nodes"][(role_id, slot_id)]
+                if state not in node["state_costs"]:
+                    states = sorted(node["state_costs"])
+                    min_state = states[0]
+                    max_state = states[-1]
+                    raise ValueError(
+                        f"{role_name}{slot_id}号节点不支持目标{state_text}，"
+                        f"可用范围为{min_state[0]}.{min_state[1]}"
+                        f"至{max_state[0]}.{max_state[1]}"
+                    )
+
+            targets.append({
+                "source": token,
+                "role_id": role_id,
+                "role_name": role_name,
+                "slot_ids": slot_ids,
+                "state": state,
+            })
+        return targets
+
+    @staticmethod
+    def format_role_mastery_shortage(missing: Dict[int, int]) -> str:
+        return " ".join(
+            f"万能{tier}级x{count}"
+            for tier, count in sorted(missing.items())
+            if count > 0
+        )
+
+    async def do_task(self, client: pcrclient):
+        try:
+            catalog = db.unit_role_mastery_catalog
+            targets = self.parse_role_mastery_targets(
+                self.get_config("role_mastery_targets"),
+                catalog,
+            )
+            results = client.data.calculate_role_mastery_requirements(
+                targets,
+                catalog=catalog,
+            )
+        except ValueError as exc:
+            raise AbortError(str(exc)) from exc
+
+        first_shortage_found = False
+        headers = []
+        row = {}
+        for result in results:
+            target = result["target"]
+            if result["satisfied"]:
+                status = "满足"
+                line = f"{target['source']}：满足"
+            else:
+                shortage = self.format_role_mastery_shortage(
+                    result["cumulative_missing"],
+                )
+                prefix = "累计缺" if first_shortage_found else "缺"
+                status = f"缺{shortage}"
+                line = f"{target['source']}：{prefix}{shortage}"
+                first_shortage_found = True
+            self._log(line)
+            headers.append(target["source"])
+            row[target["source"]] = status
+        self._table_header(headers)
+        self._table(row)
 
 @description('统计考虑角色拉满品级所需的装备减去库存的结果，不考虑仓库中的大件装备')
 @name('获取装备缺口')

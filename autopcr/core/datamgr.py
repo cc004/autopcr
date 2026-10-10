@@ -673,6 +673,258 @@ class datamgr(BaseModel, Component[apiclient]):
             msg.append(f"{db.talents[talent_info.talent_id].talent_name}{self.get_talent_level_single(talent_info)}")
         return "/".join(msg)
 
+    def build_current_role_mastery_states(
+        self,
+        catalog: typing.Optional[Dict[str, typing.Any]] = None,
+    ) -> Dict[Tuple[int, int], Tuple[int, int]]:
+        catalog = catalog or db.unit_role_mastery_catalog
+        states = {
+            node_key: (0, -1)
+            for node_key in catalog["nodes"]
+        }
+        for role_info in self.unit_role_list or []:
+            role_id = role_info.unit_role_id or 0
+            slot_states = (
+                (1, role_info.slot_level_1, role_info.enhance_level_1),
+                (2, role_info.slot_level_2, role_info.enhance_level_2),
+                (3, role_info.slot_level_3, role_info.enhance_level_3),
+                (4, role_info.slot_level_4, role_info.enhance_level_4),
+            )
+            for slot_id, slot_level, enhance_level in slot_states:
+                node_key = (role_id, slot_id)
+                if node_key not in states:
+                    continue
+                slot_level = slot_level or 0
+                enhance_level = -1 if enhance_level is None else enhance_level
+                states[node_key] = (
+                    (0, -1)
+                    if slot_level <= 0 or enhance_level < 0
+                    else (slot_level, enhance_level)
+                )
+        return states
+
+    def get_role_mastery_demand(
+        self,
+        node: Dict[str, typing.Any],
+        current_state: Tuple[int, int],
+        target_state: Tuple[int, int],
+    ) -> typing.Counter[ItemType]:
+        demand: typing.Counter[ItemType] = Counter()
+        if current_state >= target_state:
+            return demand
+
+        for state, cost in node["state_costs"].items():
+            if current_state < state <= target_state:
+                material_tier = (
+                    state[0] - 1
+                    if state[0] > 1 and state[1] == 0
+                    else state[0]
+                )
+                token = (
+                    eInventoryType.Item,
+                    node["material_item_ids"][material_tier],
+                )
+                demand[token] += cost
+        return demand
+
+    @staticmethod
+    def _consume_role_mastery_exact(
+        stock: typing.Counter[ItemType],
+        material_item_ids: Dict[int, int],
+        tier: int,
+        amount: int,
+        convert_rates: typing.Sequence[int],
+    ) -> bool:
+        if amount <= 0:
+            return True
+
+        snapshot = stock.copy()
+        token = (eInventoryType.Item, material_item_ids[tier])
+        direct = min(stock[token], amount)
+        stock[token] -= direct
+        remaining = amount - direct
+        if remaining == 0:
+            return True
+        if tier <= 1:
+            stock.clear()
+            stock.update(snapshot)
+            return False
+
+        lower_amount = remaining * convert_rates[tier - 2]
+        if datamgr._consume_role_mastery_exact(
+            stock,
+            material_item_ids,
+            tier - 1,
+            lower_amount,
+            convert_rates,
+        ):
+            return True
+
+        stock.clear()
+        stock.update(snapshot)
+        return False
+
+    @staticmethod
+    def _consume_role_mastery_up_to(
+        stock: typing.Counter[ItemType],
+        material_item_ids: Dict[int, int],
+        tier: int,
+        amount: int,
+        convert_rates: typing.Sequence[int],
+    ) -> int:
+        token = (eInventoryType.Item, material_item_ids[tier])
+        direct = min(stock[token], amount)
+        stock[token] -= direct
+        remaining = amount - direct
+        if tier <= 1:
+            return remaining
+
+        while remaining > 0:
+            if not datamgr._consume_role_mastery_exact(
+                stock,
+                material_item_ids,
+                tier - 1,
+                convert_rates[tier - 2],
+                convert_rates,
+            ):
+                break
+            remaining -= 1
+        return remaining
+
+    def get_role_mastery_demand_gap(
+        self,
+        demand: typing.Counter[ItemType],
+        inventory: typing.Counter[ItemType],
+        material_item_ids: Dict[int, int],
+        convert_rates: typing.Sequence[int],
+    ) -> Tuple[
+        typing.Counter[ItemType],
+        typing.Counter[ItemType],
+    ]:
+        remaining_inventory = inventory.copy()
+        item_tiers = {
+            (eInventoryType.Item, item_id): tier
+            for tier, item_id in material_item_ids.items()
+        }
+        gap: typing.Counter[ItemType] = Counter()
+        for token, amount in sorted(
+            demand.items(),
+            key=lambda item: item_tiers[item[0]],
+        ):
+            tier = item_tiers[token]
+            unmet = self._consume_role_mastery_up_to(
+                remaining_inventory,
+                material_item_ids,
+                tier,
+                amount,
+                convert_rates,
+            )
+            if unmet:
+                gap[token] += unmet
+        return remaining_inventory, gap
+
+    def calculate_role_mastery_requirements(
+        self,
+        targets: typing.Sequence[Dict[str, typing.Any]],
+        catalog: typing.Optional[Dict[str, typing.Any]] = None,
+    ) -> List[Dict[str, typing.Any]]:
+        catalog = catalog or db.unit_role_mastery_catalog
+        material_tiers = {
+            tier
+            for node in catalog["nodes"].values()
+            for tier in node["material_item_ids"]
+        }
+        max_tier = max(
+            material_tiers | set(catalog["universal_item_ids"]),
+            default=0,
+        )
+        if not self.settings or not self.settings.unit_role:
+            raise ValueError("账号数据缺少职能强化设置")
+        convert_rates = tuple(
+            int(rate)
+            for rate in (self.settings.unit_role.mastery_convert_rate_list or [])
+        )
+        if len(convert_rates) < max(0, max_tier - 1):
+            raise ValueError(f"精通材料合成比例不足，需要至少{max_tier - 1}项")
+        if any(rate <= 0 for rate in convert_rates[:max_tier - 1]):
+            raise ValueError("精通材料合成比例必须为正整数")
+
+        simulated_states = self.build_current_role_mastery_states(catalog)
+        role_mastery_item_ids = {
+            item_id
+            for node in catalog["nodes"].values()
+            for item_id in node["material_item_ids"].values()
+        } | set(catalog["universal_item_ids"].values())
+        simulated_inventory: typing.Counter[ItemType] = Counter({
+            (eInventoryType.Item, item_id): max(
+                0,
+                self.get_inventory((eInventoryType.Item, item_id)),
+            )
+            for item_id in role_mastery_item_ids
+        })
+        universal_item_ids = catalog["universal_item_ids"]
+        universal_item_tiers = {
+            (eInventoryType.Item, item_id): tier
+            for tier, item_id in universal_item_ids.items()
+        }
+        cumulative_missing: typing.Counter[int] = Counter()
+        results: List[Dict[str, typing.Any]] = []
+
+        for target in targets:
+            missing_before = cumulative_missing.copy()
+            target_state = target["state"]
+            for slot_id in target["slot_ids"]:
+                node_key = (target["role_id"], slot_id)
+                node = catalog["nodes"][node_key]
+                current_state = simulated_states[node_key]
+                demand = self.get_role_mastery_demand(
+                    node,
+                    current_state,
+                    target_state,
+                )
+                simulated_inventory, dedicated_gap = (
+                    self.get_role_mastery_demand_gap(
+                        demand,
+                        simulated_inventory,
+                        node["material_item_ids"],
+                        convert_rates,
+                    )
+                )
+                node_item_tiers = {
+                    (eInventoryType.Item, item_id): tier
+                    for tier, item_id in node["material_item_ids"].items()
+                }
+                universal_demand: typing.Counter[ItemType] = Counter({
+                    (
+                        eInventoryType.Item,
+                        universal_item_ids[node_item_tiers[token]],
+                    ): amount
+                    for token, amount in dedicated_gap.items()
+                })
+                simulated_inventory, universal_gap = (
+                    self.get_role_mastery_demand_gap(
+                        universal_demand,
+                        simulated_inventory,
+                        universal_item_ids,
+                        convert_rates,
+                    )
+                )
+                cumulative_missing += Counter({
+                    universal_item_tiers[token]: amount
+                    for token, amount in universal_gap.items()
+                })
+                if current_state < target_state:
+                    simulated_states[node_key] = target_state
+
+            newly_missing = cumulative_missing - missing_before
+            results.append({
+                "target": target,
+                "satisfied": not cumulative_missing,
+                "newly_missing": dict(sorted(newly_missing.items())),
+                "cumulative_missing": dict(sorted(cumulative_missing.items())),
+            })
+        return results
+
     def get_role_level_single(self, role_info : UnitRoleInfo) -> str:
         slots = []
         for i in range(1, 5):
