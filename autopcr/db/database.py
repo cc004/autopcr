@@ -565,6 +565,11 @@ class database():
             return MreSchedule.query(db).to_dict(lambda x: x.schedule_id, lambda x: x)
 
     @lazy_property
+    def mre_setting(self) -> Dict[int, MreSetting]:
+        with self.dbmgr.session() as db:
+            return MreSetting.query(db).to_dict(lambda x: x.mre_id, lambda x: x)
+
+    @lazy_property
     def mre_quest_data(self) -> Dict[int, List[MreQuestDatum]]:
         with self.dbmgr.session() as db:
             result = defaultdict(list)

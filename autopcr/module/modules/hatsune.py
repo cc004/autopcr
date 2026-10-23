@@ -9,6 +9,10 @@ from ...model.enums import *
 def get_event_name(event_id: int) -> str:
     return db.event_name.get(event_id, str(event_id))
 
+def get_mre_name(schedule) -> str:
+    setting = db.mre_setting.get(schedule.mre_id)
+    return setting.title if setting else str(schedule.mre_id)
+
 async def prepare_event_quest(client: pcrclient, event_id: int):
     await client.get_event_top(event_id)
     await client.get_event_quest_top(event_id)
@@ -118,6 +122,8 @@ class hatsune_vhboss_sweep(Module):
                 self._log(f"{str(e)}")
         for schedule in db.get_active_mre_schedules():
             event_active = True
+            mre_name = get_mre_name(schedule)
+            self._log(f"{schedule.schedule_id}:{mre_name}：")
             vh_quests = sorted(
                 (
                     quest for quest in db.mre_quest_data.get(schedule.mre_id, [])
@@ -126,7 +132,7 @@ class hatsune_vhboss_sweep(Module):
                 key=lambda quest: quest.quest_id,
             )
             if not vh_quests:
-                self._log(f"MRE活动{schedule.schedule_id}没有VH难度Boss，不扫荡其他难度")
+                self._log("没有VH难度Boss，不扫荡其他难度")
                 continue
 
             top = await client.mre_top(schedule.schedule_id)
@@ -158,11 +164,11 @@ class hatsune_vhboss_sweep(Module):
 
             ticket = client.data.get_inventory((eInventoryType.Item, schedule.boss_ticket_id))
             if ticket <= 0:
-                self._log(f"MRE活动{schedule.schedule_id}没有boss券")
+                self._log("没有boss券")
                 continue
             max_skip_num = client.data.settings.max_boss_battle_skip_num
             if max_skip_num <= 0:
-                raise ValueError(f"MRE活动{schedule.schedule_id}Boss扫荡次数上限无效: {max_skip_num}")
+                raise ValueError(f"{mre_name} Boss扫荡次数上限无效: {max_skip_num}")
             times = min(ticket, max_skip_num)
 
             response = await client.mre_battle_skip(schedule.schedule_id, vh_quest.quest_id, times, ticket)
@@ -305,16 +311,18 @@ class hatsune_gacha_exchange(Module):
 
         for schedule in db.get_active_mre_schedules():
             event_active = True
+            mre_name = get_mre_name(schedule)
+            self._log(f"{schedule.schedule_id}:{mre_name}：")
             await client.mre_gacha_index(schedule.schedule_id)
             ticket_item = (eInventoryType.Item, schedule.gacha_ticket_id)
             ticket = client.data.get_inventory(ticket_item)
             if ticket <= 0:
-                self._log(f"MRE活动{schedule.schedule_id}没有讨伐证")
+                self._log("没有讨伐证")
                 continue
 
             batch_limit = client.data.settings.loop_box_multi_gacha_count
             if batch_limit <= 0:
-                raise ValueError(f"MRE活动{schedule.schedule_id}讨伐证批量兑换设置无效: {batch_limit}")
+                raise ValueError(f"{mre_name}讨伐证批量兑换设置无效: {batch_limit}")
 
             do_exchange = True
             rewards = []
@@ -340,13 +348,13 @@ class hatsune_gacha_exchange(Module):
                 )
                 rewards.extend(response.reward_info_list or [])
                 if ticket >= current_ticket:
-                    raise ValueError(f"MRE活动{schedule.schedule_id}兑换后讨伐证数量未减少")
+                    raise ValueError(f"{mre_name}兑换后讨伐证数量未减少")
                 client.data.set_inventory(ticket_item, ticket)
-                self._log(f"MRE活动{schedule.schedule_id}讨伐证兑换{exchange_times}次，剩余{ticket}张")
+                self._log(f"讨伐证兑换{exchange_times}次，剩余{ticket}张")
 
             if rewards:
                 reward_summary = await client.serialize_reward_summary(rewards)
-                self._log(f"MRE活动{schedule.schedule_id}讨伐证兑换掉落：\n{reward_summary}")
+                self._log(f"讨伐证兑换掉落：\n{reward_summary}")
 
         if not event_active:
             raise SkipError("当前无可进入的活动")
@@ -396,6 +404,8 @@ class hatsune_mission_accept_base(Module):
 
         for schedule in db.get_active_mre_schedules():
             event_active = True
+            mre_name = get_mre_name(schedule)
+            self._log(f"{schedule.schedule_id}:{mre_name}：")
             missions = await client.mre_mission_index(schedule.schedule_id)
             mission_ids = [
                 mission.mission_id for mission in missions.missions or []
@@ -406,7 +416,7 @@ class hatsune_mission_accept_base(Module):
 
             response = await client.mre_mission_receive(schedule.schedule_id, mission_ids)
             reward = await client.serialize_reward_summary(response.reward_list or [])
-            self._log(f"MRE活动{schedule.schedule_id}领取了任务奖励，获得了:\n{reward}")
+            self._log(f"领取了任务奖励，获得了:\n{reward}")
             is_skip = False
 
         if not event_active: raise SkipError("当前无进行中的活动")

@@ -690,6 +690,11 @@ class MreTopResponse(responses.MreTopResponse):
                         story_id=story_id,
                         status=eEventSubStoryStatus.UNREAD,
                     )
+        if self.login_bonus:
+            for item in self.login_bonus.rewards or []:
+                mgr.update_inventory(item)
+        for item in self.raid_hp_reward_list or []:
+            mgr.update_inventory(item)
 
 @handles
 class SevenStoryTopResponse(responses.SevenStoryTopResponse):
