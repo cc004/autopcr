@@ -2,7 +2,7 @@
 import asyncio
 import json
 import os
-from typing import Dict, Set, Tuple
+from typing import Dict, Optional, Set, Tuple
 
 import msgpack
 import UnityPy
@@ -20,6 +20,12 @@ AssetRegistry = Dict[str, AssetEntry]
 COMPACT_MANIFEST_FORMAT = 1
 MANIFEST_CATEGORY = "AssetBundles/Android"
 ROOT_MANIFEST = "manifest/manifest_assetmanifest"
+
+MASTERDATA_ASSET_URL = "a/masterdata_master.unity3d"
+MASTERDATA_MANIFEST_CANDIDATES = (
+    "manifest/masterdata_assetmanifest_s",
+    "manifest/masterdata_assetmanifest",
+)
 
 
 class assetmgr:
@@ -265,8 +271,43 @@ class assetmgr:
         download_url = f'{self.pool}/{category}/{md5[:2]}/{md5}'
         return await (await aiorequests.get(download_url)).content
 
+    @staticmethod
+    def _parse_masterdata_pool_key(line: str) -> Optional[str]:
+        fields = line.strip().split(',')
+        if len(fields) < 2 or fields[0] != MASTERDATA_ASSET_URL:
+            return None
+        pool_key = fields[2] if len(fields) > 5 else fields[1]
+        return pool_key or None
+
+    async def _resolve_masterdata_pool_key(self, ver: int) -> str:
+        urlroot = f'{self.manifest}/{MANIFEST_CATEGORY}/{ver}/'
+        for manifest_url in MASTERDATA_MANIFEST_CANDIDATES:
+            try:
+                response = await aiorequests.get(f'{urlroot}{manifest_url}')
+            except Exception as e:
+                logger.warning(f'failed to fetch {manifest_url} for version {ver}: {e}')
+                continue
+            if response.status_code != 200:
+                logger.warning(f'failed to fetch {manifest_url} for version {ver}: HTTP {response.status_code}')
+                continue
+            for line in (await response.text).splitlines():
+                pool_key = self._parse_masterdata_pool_key(line)
+                if pool_key:
+                    return pool_key
+            logger.warning(f'{manifest_url} for version {ver} has no entry for {MASTERDATA_ASSET_URL}')
+        raise ValueError(f'masterdata asset manifest not found for version {ver}')
+
+    async def download_masterdata(self) -> bytes:
+        if self.ver is None:
+            raise RuntimeError('asset manifest version is not set')
+        logger.info(f"resolving {MASTERDATA_ASSET_URL} for version {self.ver}...")
+
+        pool_key = await self._resolve_masterdata_pool_key(self.ver)
+        download_url = f'{self.pool}/{MANIFEST_CATEGORY}/{pool_key[:2]}/{pool_key}'
+        return await (await aiorequests.get(download_url)).content
+
     async def db(self) -> bytes:
-        ab = UnityPy.load(await self.download('a/masterdata_master.unity3d'))
+        ab = UnityPy.load(await self.download_masterdata())
         asset = ab.objects[0].read()
         return asset.script
 
