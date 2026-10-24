@@ -284,6 +284,25 @@ class StoryViewingResponse(responses.StoryViewingResponse):
                     )
 
 
+        mre_story = db.mre_story_data.get(request.story_id)
+        if mre_story:
+            mgr.mre_story_list = mgr.mre_story_list or {}
+            mgr.mre_story_list.setdefault(mre_story.mre_id, {})
+            mgr.mre_story_list[mre_story.mre_id][request.story_id] = SevenStoryInfo(
+                story_id=request.story_id,
+                status=eEventSubStoryStatus.READED,
+            )
+            for story_id in self.unlock_story_ids or []:
+                unlocked_story = db.mre_story_data.get(story_id)
+                if unlocked_story and unlocked_story.mre_id == mre_story.mre_id:
+                    mgr.mre_story_list[mre_story.mre_id].setdefault(
+                        story_id,
+                        SevenStoryInfo(
+                            story_id=story_id,
+                            status=eEventSubStoryStatus.UNREAD,
+                        )
+                    )
+
 @handles
 class ShopResetResponse(responses.ShopResetResponse):
     async def update(self, mgr: datamgr, request):
@@ -529,10 +548,19 @@ class LoadIndexResponse(responses.LoadIndexResponse):
             story.event_id: {info.story_id: info for info in (story.story_info or [])}
             for story in (self.seven_story_list or [])
         }
+        mgr.mre_story_list = {
+            story.mre_id: {info.story_id: info for info in (story.story_info or [])}
+            for story in (self.mre_story_list or [])
+        }
         mgr.read_story_ids = list(dict.fromkeys(
             (self.read_story_ids or []) + [
                 info.story_id
                 for story in mgr.seven_story_list.values()
+                for info in story.values()
+                if info.status == eEventSubStoryStatus.READED
+            ] + [
+                info.story_id
+                for story in mgr.mre_story_list.values()
                 for info in story.values()
                 if info.status == eEventSubStoryStatus.READED
             ]
@@ -645,6 +673,29 @@ class SevenTopResponse(responses.SevenTopResponse):
             for item in self.login_bonus.rewards or []:
                 mgr.update_inventory(item)
 
+
+
+
+@handles
+class MreTopResponse(responses.MreTopResponse):
+    async def update(self, mgr: datamgr, request: MreTopRequest):
+        schedule = db.mre_schedule_by_id[request.schedule_id]
+        mgr.mre_story_list = mgr.mre_story_list or {}
+        story_list = mgr.mre_story_list.setdefault(schedule.mre_id, {})
+        for story_id in self.unlock_story_id_list or []:
+            story = db.mre_story_data.get(story_id)
+            if story and story.mre_id == schedule.mre_id:
+                if story_id not in story_list or story_list[story_id].status != eEventSubStoryStatus.READED:
+                    story_list[story_id] = SevenStoryInfo(
+                        story_id=story_id,
+                        status=eEventSubStoryStatus.UNREAD,
+                    )
+        if self.login_bonus:
+            for item in self.login_bonus.rewards or []:
+                mgr.update_inventory(item)
+        for item in self.raid_hp_reward_list or []:
+            mgr.update_inventory(item)
+
 @handles
 class SevenStoryTopResponse(responses.SevenStoryTopResponse):
     async def update(self, mgr: datamgr, request):
@@ -680,6 +731,23 @@ class SevenMissionAcceptResponse(responses.SevenMissionAcceptResponse):
         if self.rewards:
             for item in self.rewards:
                 mgr.update_inventory(item)
+
+@handles
+class MreBattleSkipResponse(responses.MreBattleSkipResponse):
+    async def update(self, mgr: datamgr, request):
+        for reward_list in (self.item_list, self.clear_reward_list, self.challenge_reward_list):
+            for item in reward_list or []:
+                mgr.update_inventory(item)
+        if self.user_gold:
+            mgr.gold = self.user_gold
+        if self.user_jewel:
+            mgr.jewel = self.user_jewel
+
+@handles
+class MreMissionAcceptResponse(responses.MreMissionAcceptResponse):
+    async def update(self, mgr: datamgr, request):
+        for item in self.reward_list or []:
+            mgr.update_inventory(item)
 
 @handles
 class HatsuneBossBattleSkipResponse(responses.HatsuneBossBattleSkipResponse):
@@ -786,6 +854,12 @@ class SevenGachaExecMultipleResponse(responses.SevenGachaExecMultipleResponse):
             for item in self.reward_info_list:
                 mgr.update_inventory(item)
 
+
+@handles
+class MreGachaExecMultipleResponse(responses.MreGachaExecMultipleResponse):
+    async def update(self, mgr: datamgr, request):
+        for item in self.reward_info_list or []:
+            mgr.update_inventory(item)
 
 @handles
 class SevenGachaExecMultipleAutoResponse(responses.SevenGachaExecMultipleAutoResponse):

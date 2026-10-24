@@ -204,11 +204,52 @@ class hatsune_story_reading(Module):
                 title = f"{story.title}-{story.sub_title}" if story.sub_title else story.title
                 self._log(f"阅读了{title}")
 
+        mre_story_list = client.data.mre_story_list if client.data.mre_story_list is not None else {}
+        for schedule in db.get_active_mre_schedules():
+            top = await client.mre_top(schedule.schedule_id)
+            while True:
+                story_infos = mre_story_list.get(schedule.mre_id, {})
+                unlocked_story_ids = set(top.unlock_story_id_list or [])
+                unlocked_story_ids.update(
+                    story_id for story_id, info in story_infos.items()
+                    if info.status == eEventSubStoryStatus.UNREAD
+                )
+                stories = sorted(
+                    (
+                        db.mre_story_data[story_id]
+                        for story_id in unlocked_story_ids
+                        if story_id in db.mre_story_data
+                        and db.mre_story_data[story_id].mre_id == schedule.mre_id
+                    ),
+                    key=lambda story: story.story_index,
+                )
+                story = next(
+                    (
+                        story for story in stories
+                        if story.story_id not in read_story
+                        and (
+                            story.story_id not in story_infos
+                            or story_infos[story.story_id].status == eEventSubStoryStatus.UNREAD
+                        )
+                    ),
+                    None,
+                )
+                if not story:
+                    break
+
+                resp = await client.read_story(story.story_id)
+                read_story.add(story.story_id)
+                self.update_unlock_story(unlock_story, resp)
+                mre_story_list = client.data.mre_story_list or mre_story_list
+                title = f"{story.title}-{story.sub_title}" if story.sub_title else story.title
+                self._log(f"阅读了{title}")
+
         if not self.log:
             raise SkipError("不存在未阅读的活动剧情")
         client.data.read_story_ids = list(read_story)
         client.data.unlock_story_ids = list(unlock_story)
         client.data.seven_story_list = seven_story_list
+        client.data.mre_story_list = mre_story_list
         self._log(f"共{len(self.log)}篇")
 
 @description('阅读新活动的额外剧情')
