@@ -32,7 +32,7 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 # 安装依赖
 COPY ./requirements.txt .
 
-RUN pip install --upgrade pip && \
+RUN pip install --upgrade "pip>=26.2.2" && \
     pip install --no-cache-dir -r requirements.txt
 # 阶段3：最终镜像
 FROM python:3.10-slim
@@ -41,10 +41,13 @@ ENV PYTHONIOENCODING=utf-8
 
 # 设置时区
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends tzdata && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends ca-certificates tzdata && \
     cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
     echo "Asia/Shanghai" > /etc/timezone && \
     rm -rf /var/lib/apt-get/lists/*
+
+RUN python -m pip install --no-cache-dir --upgrade "pip>=26.2.2"
 
 WORKDIR /app
 
