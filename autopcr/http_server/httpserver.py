@@ -1,9 +1,10 @@
 import os
 import secrets
 import math
+import time
 from copy import deepcopy
 from datetime import timedelta
-from typing import Callable, Coroutine, Any
+from typing import Callable, Coroutine, Any, Dict
 
 import asyncio
 import quart
@@ -27,6 +28,11 @@ CACHE_HTTP_DIR = os.path.join(CACHE_DIR, 'http_server')
 PATH = os.path.dirname(os.path.abspath(__file__))
 static_path = os.path.join(PATH, 'ClientApp')
 
+# clan_prep响应缓存：key -> (monotonic_ts, ttl_or_None, resp)。
+# 成功响应无TTL永久有效（更新只由"重拉box/重拉作业"按钮refresh=1与会战日自动链路触发）；
+# 登录失败响应短TTL自愈（修完密码后不用手动清）。条目量=账号数，内存几MB无界风险可忽略。
+_clan_prep_cache: Dict[str, tuple] = {}
+
 
 class HttpServer:
     def __init__(self, host = '0.0.0.0', port = 2, qq_mod = False):
@@ -44,7 +50,23 @@ class HttpServer:
         RateLimiter(self.quart)
         self.register_cooldowns = {}
         Compress(self.quart)
-        self.quart.secret_key = secrets.token_urlsafe(16)
+        # 会话签名密钥持久化到 cache 卷：进程每次启动随机生成会让重启/崩溃后所有登录 cookie 失效（用户被莫名登出）
+        secret_path = os.path.join(CACHE_DIR, '.secret_key')
+        secret_key = ''
+        try:
+            with open(secret_path, 'r') as f:
+                secret_key = f.read().strip()
+        except Exception:
+            pass
+        if not secret_key:
+            secret_key = secrets.token_urlsafe(32)
+            try:
+                os.makedirs(CACHE_DIR, exist_ok=True)
+                with open(secret_path, 'w') as f:
+                    f.write(secret_key)
+            except Exception:
+                pass  # 写不进则退回进程内随机：仅重启掉登录，不影响服务
+        self.quart.secret_key = secret_key
 
         self.app.register_blueprint(self.web)
         self.app.register_blueprint(self.api)
@@ -303,6 +325,163 @@ class HttpServer:
         @HttpServer.wrapaccount(readonly=True)
         async def get_account(account: Account):
             return account.generate_info(), 200
+
+        @self.api.route('/account/<string:acc>/clan_prep', methods = ['GET'])
+        @HttpServer.login_required()
+        @HttpServer.wrapaccountmgr(readonly = True)
+        @HttpServer.wrapaccount(readonly=True)
+        async def get_clan_prep(account: Account):
+            # 响应缓存：refresh=1/force=1强制重建；账号名跨用户不唯一，key带用户id
+            key = f'{current_user.auth_id}:{account.alias}'
+            refresh = request.args.get('refresh') == '1' or request.args.get('force') == '1'
+            force = request.args.get('force') == '1'
+            # 顺手清扫带TTL的过期条目（登录失败的自愈项）
+            now_mono = time.monotonic()
+            for k in [k for k, (ts, ttl, _) in _clan_prep_cache.items() if ttl is not None and now_mono - ts >= ttl]:
+                del _clan_prep_cache[k]
+            cached = _clan_prep_cache.get(key)
+            if cached and not refresh:
+                _, ttl, resp = cached
+                if ttl is None or now_mono - cached[0] < ttl:
+                    return resp, 200
+            # 延迟导入：httpserver 在容器入口早期加载，顶部导入 db 会循环导入炸启动
+            from ..db.database import db
+            from ..core.pcrclient import eLoginStatus
+            from ..model.enums import eSystemId
+            from ..util.caimogu import fetch_latest, parse_battle
+            try:
+                battle = parse_battle(await fetch_latest(force = force))
+            except Exception as e:
+                # 唯一没有兜底的失败路径：作业数据彻底不可用时给可读错误，让前端走"拉取失败"提示而非500
+                return f'踩蘑菇作业数据不可用: {e}', 503
+            # 池化客户端必须 async with 归还：否则本临时实例会一直占用SDK登录uid，
+            # 后续模块登录将报「用户的另一项请求正在进行中」
+            client = await account.get_client()
+            async with client:
+                # 与模块执行框架同样时序：activate -> 按需登录 -> finally deactivate
+                await client.activate()
+                try:
+                    # 缓存可用就直接用；登录失败(凭证失效等)降级为无box数据，不炸500
+                    login_error = ''
+                    try:
+                        if client.logged == eLoginStatus.NEED_REFRESH:
+                            client.data.update_stamina_recover()
+                            await client.refresh()
+                        elif client.logged == eLoginStatus.NOT_LOGGED or not client.data.ready:
+                            await client.login()
+                    except Exception as e:
+                        if not client.data.ready:
+                            login_error = str(e) or e.__class__.__name__
+
+                    box_ready = bool(client.data.unit)
+                    owned = {}
+                    if box_ready:
+                        for game_id, unit in client.data.unit.items():
+                            base = game_id // 100
+                            cur = owned.get(base)
+                            if cur is None or unit.unit_rarity > cur[0] or (unit.unit_rarity == cur[0] and unit.unit_level > cur[1]):
+                                owned[base] = (unit.unit_rarity, unit.unit_level)
+
+                    # 每角色按刀型的统计(尾刀口径已在caimogu定死进knife)，供前端按刀型筛选名单表；
+                    # 名单口径=全阶段对照(含A面)，与推荐刀的B/C/DE口径不同
+                    comp_stat: Dict[int, Dict[str, Dict]] = {}
+                    for c in battle['comps']:
+                        ktype = c['knife']
+                        for uid in c['unit']:
+                            st = comp_stat.setdefault(uid, {}).setdefault(ktype, {'usage': 0, 'best': 0, 'bosses': set()})
+                            st['usage'] += 1
+                            st['best'] = max(st['best'], c['damage'])
+                            st['bosses'].add(c['boss'])
+
+                    # 每阶段各boss位的分数倍率表，供前端图例（从全量comp聚合，不受截取影响）
+                    stage_rates: Dict[str, Dict] = {}
+                    for c in battle['comps']:
+                        sk = c['stage_key']
+                        if sk is None or c['rate'] is None or c['boss_idx'] is None:
+                            continue
+                        stage_rates.setdefault(sk, {}).setdefault(c['boss_idx'], c['rate'])
+
+                    # 支援名单：与box同一次客户端会话拉取，随本响应一起缓存（更新box=更新会战支援，
+                    # 非会战期支援名单为空就按空算，当天下次更新box前不再单独请求）。
+                    # 会战支援一次只能借1人：缺超过1人，或缺的人不在支援名单里 → 该作业不可行，不下发。
+                    support_ids: Dict[int, str] = {}
+                    if box_ready:
+                        try:
+                            await client.get_clan_battle_top(1, client.data.get_shop_gold(eSystemId.CLAN_BATTLE_SHOP))
+                            support = await client.get_clan_battle_support_unit_list()
+                            for su in support.support_unit_list:
+                                support_ids.setdefault(su.unit_data.id // 100, su.owner_name)
+                        except Exception as e:
+                            logger.warning(f"拉取公会支援列表失败，按无支援处理: {e}")
+                    owned_base = set(owned.keys())
+                    knife_rows = []
+                    if box_ready:
+                        seen_sns = set()
+                        for c in battle['comps']:
+                            stage = c['stage_key']
+                            if stage is None or c['sn'] in seen_sns:
+                                continue
+                            seen_sns.add(c['sn'])
+                            not_owned = [uid for uid in c['unit'] if uid not in owned_base]
+                            borrow = len(not_owned) == 1 and not_owned[0] in support_ids
+                            if not_owned and not borrow:
+                                continue
+                            names = []
+                            for uid in c['unit']:
+                                name = db.get_unit_name(uid * 100 + 1)
+                                if name.startswith('未知角色') and uid in battle['unit_names']:
+                                    name = battle['unit_names'][uid]
+                                names.append(f'{name}(借)' if uid in support_ids and uid not in owned_base else name)
+                            # 链接只放行http(s)（第三方数据防javascript:注入）
+                            links = [{'text': v['text'], 'url': v['url']} for v in c['videos']
+                                     if v['url'].startswith(('http://', 'https://'))]
+                            knife_rows.append({
+                                'sn': c['sn'],
+                                'stage': stage,
+                                'boss': c['boss_idx'],
+                                'knife': c['knife'],
+                                'damage': c['damage'],
+                                'rate': c['rate'],
+                                'names': names,
+                                'members': c['unit'],
+                                'borrow': borrow,
+                                'text': c['text'],
+                                'links': links,
+                            })
+
+                    units = []
+                    for base_id, usage in sorted(battle['unit_usage'].items(), key=lambda kv: (-kv[1], int(kv[0]))):
+                        base_id = int(base_id)
+                        own = owned.get(base_id)
+                        if own is None:
+                            continue  # 响应瘦身：只保留已拥有且本期被用到的角色
+                        name = db.get_unit_name(base_id * 100 + 1)
+                        if name.startswith('未知角色') and base_id in battle['unit_names']:
+                            name = battle['unit_names'][base_id]
+                        units.append({
+                            'unit_id': base_id,
+                            'name': name,
+                            # 顶层不再重复usage/best/bosses：前端聚合只按by_knife，按刀型筛选后即可得出
+                            'by_knife': {t: {'usage': s['usage'], 'best': s['best'], 'bosses': sorted(s['bosses'])}
+                                         for t, s in comp_stat.get(base_id, {}).items()},
+                            'star': own[0],
+                        })
+
+                    resp = {
+                        'updated_at': battle['fetched_at'],
+                        'stale': battle['stale'],
+                        'period': battle.get('period', ''),
+                        'box_ready': box_ready,
+                        'login_error': login_error,
+                        'units': units,
+                        'stage_rates': {sk: {str(b): r for b, r in sorted(bd.items())} for sk, bd in stage_rates.items()},
+                        'knife_rows': knife_rows,
+                    }
+                    # 写缓存：登录失败时box数据不全，用短TTL让它尽快自愈
+                    _clan_prep_cache[key] = (time.monotonic(), 60 if login_error else None, resp)
+                    return resp, 200
+                finally:
+                    client.deactivate()
 
         @self.api.route('/account/<string:acc>', methods = ["PUT", "DELETE"])
         @HttpServer.login_required()
@@ -577,7 +756,14 @@ data: {ret}\n\n'''
             if os.path.exists(os.path.join(str(self.web.static_folder), path)):
                 return await send_from_directory(str(self.web.static_folder), path, mimetype=("text/javascript" if path.endswith(".js") else None))
             else:
-                return await send_from_directory(str(self.web.static_folder), 'index.html')
+                # index.html 是前端唯一无内容哈希的入口。Quart 默认 SEND_FILE_MAX_AGE_DEFAULT=12h 会把它缓存住：
+                # 前端更新后用户最长 12 小时还在跑旧 JS，且被版本校验拒绝（「后端期望前端版本为X.Y，请更新」）。
+                # no-cache 强制每次回源校验；send_from_directory 自带 ETag/条件请求，未变化直接 304，无额外开销。
+                # 带哈希的静态资源（上一个分支）不受影响，仍走默认长缓存。
+                response = await send_from_directory(str(self.web.static_folder), 'index.html')
+                response.cache_control.no_cache = True
+                response.cache_control.max_age = 0
+                return response
 
     def run_forever(self, loop):
         self.quart.register_blueprint(self.app)
