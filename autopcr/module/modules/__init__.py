@@ -97,6 +97,7 @@ daily_modules = ModuleList(
         lazy_normal_sweep,
 
         all_in_hatsune,
+        daily_quest_mission,
 
         hatsune_vhboss_sweep,
         hatsune_hboss_sweep,
