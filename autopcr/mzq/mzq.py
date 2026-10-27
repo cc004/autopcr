@@ -466,9 +466,9 @@ class MzqServer:
                         stats = item.get("Stats")
                         if isinstance(stats, dict) and "TotalDamage" in stats:
                             compact["Stats"] = {"TotalDamage": stats["TotalDamage"]}
-                        result = BattleSimulationResultDTO.parse_obj(compact)
+                        result = BattleSimulationResultDTO.model_validate(compact)
                     else:
-                        result = BattleSimulationResultDTO.parse_obj(item)
+                        result = BattleSimulationResultDTO.model_validate(item)
                     if not pending.future.done():
                         pending.future.set_result(result)
                     ok_count += 1
@@ -599,7 +599,7 @@ class MzqServer:
             RepeatCount=repeat_count,
         )
 
-        data = req_dto.dict()
+        data = req_dto.model_dump()
         if self.debug_mode:
             logging.debug("Request: %s", data)
         result = await self._enqueue_request(data)

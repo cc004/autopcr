@@ -1,6 +1,8 @@
 from typing import List, Dict
 from .enums import *
-from pydantic import BaseModel, Field
+from pydantic import Field
+from .modelbase import BaseModel
+from .custom import TalentQuestData
 
 class SkillLevelInfo(BaseModel):
     skill_id: int = None
@@ -23,7 +25,7 @@ class ExchangePointMilestoneData(BaseModel):
 class StatusParam(BaseModel):
     hp: int = None
     atk: int = None
-    _def: int = Field(alias='def')
+    def_: int = Field(default=None, alias='def')
     magic_str: int = None
     magic_def: int = None
     physical_critical: int = None
@@ -44,7 +46,7 @@ class UnitParam(BaseModel):
 class StatusParamShort(BaseModel):
     hp: int = None
     atk: int = None
-    _def: int = Field(alias='def')
+    def_: int = Field(default=None, alias='def')
     matk: int = None
     mdef: int = None
     crt: int = None
@@ -78,6 +80,7 @@ class ExtraEquipSubStatus(BaseModel):
     step: int = None
     is_lock: bool = None
 class ExtraEquipSlot(BaseModel):
+    slot: int = None
     serial_id: int = None
     ex_equipment_id: int = None
     enhancement_pt: int = None
@@ -755,7 +758,7 @@ class DungeonUnit(BaseModel):
     unit_id: int = None
     hp: int = None
     energy: int = None
-    skill_limit_counter: List[SkillLimitCounter] = None
+    skill_limit_counter: int = None
     max_hp: int = None
     power: int = None
     level: int = None
@@ -1541,7 +1544,7 @@ class BattleLogType(BaseModel):
     give_value_multiply: int = None
     wave_end_hp: int = None
     wave_end_damage_amount: int = None
-    _break: int = Field(alias='break')
+    break_: int = Field(default=None, alias='break')
     suspend_count: int = None
     suspend: int = None
 class NormalGachaTerm(BaseModel):
@@ -1755,7 +1758,7 @@ class UserBirthDayVoice(BaseModel):
     birthday: int = None
     birthday_period: int = None
 class MaintenanceStatus(BaseModel):
-    _from: int = Field(alias='from')
+    from_: int = Field(default=None, alias='from')
     to: int = None
     FromDateTime: int = None
     ToDateTime: int = None
@@ -1817,7 +1820,7 @@ class EventSubStory(BaseModel):
     sub_story_info_list: List[EventSubStoryInfo] = None
 class PartMaintenanceStatus(BaseModel):
     maintenance_id: int = None
-    _from: int = Field(alias='from')
+    from_: int = Field(default=None, alias='from')
     to: int = None
 class RedeemUnitSlotInfo(BaseModel):
     slot_id: int = None
@@ -1993,6 +1996,7 @@ class ProfileUserInfo(BaseModel):
     princess_knight_rank_total_exp: int = None
     my_profile_picture_frame: int = None
 class ProfileQuestInfo(BaseModel):
+    talent_quest: List[TalentQuestData] = None
     normal_quest: List[int] = None
     hard_quest: List[int] = None
     very_hard_quest: List[int] = None
@@ -2886,6 +2890,7 @@ class CaravanTreasureData(BaseModel):
     id: int = None
     stock: int = None
 class CaravanCoinShopData(BaseModel):
+    season_id: int = None
     slot_id: int = None
     purchase_count: int = None
 class CaravanResetTreasureData(BaseModel):
