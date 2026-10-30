@@ -268,7 +268,8 @@ class assetmgr:
     async def db(self) -> bytes:
         ab = UnityPy.load(await self.download('a/masterdata_master.unity3d'))
         asset = ab.objects[0].read()
-        return asset.script
+        script = asset.script if hasattr(asset, "script") else asset.m_Script
+        return script.encode("utf-8", "surrogateescape") if isinstance(script, str) else script
 
     async def unit_icon(self, unit_id: int) -> bytes:
         ab = UnityPy.load(await self.download(f'a/unit_icon_unit_{unit_id}.unity3d'))
