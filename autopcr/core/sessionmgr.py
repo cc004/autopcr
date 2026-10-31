@@ -5,12 +5,16 @@ import random
 from ..model.models import *
 from ..util.logger import instance as logger
 from ..openbao import instance as openbao
+from ..openbao_audit import OpenBaoAuditContext
 import hashlib
 
 class sessionmgr(Component[apiclient]):
-    def __init__(self, sdk: sdkclient):
+    def __init__(
+        self, sdk: sdkclient, audit_context: OpenBaoAuditContext | None = None
+    ):
         super().__init__()
         self.sdk = sdk
+        self.audit_context = audit_context
         self._logged = False
         self.auto_relogin = True
         self._sdkaccount = None
@@ -19,7 +23,15 @@ class sessionmgr(Component[apiclient]):
 
     async def _bililogin(self):
         uid, access_key = await self.sdk.login()
-        await openbao.write_game_session(self.sdk.id, uid, access_key)
+        await openbao.write_game_session(
+            self.sdk.id,
+            uid,
+            access_key,
+            audit_qq=self.audit_context.qq if self.audit_context else None,
+            audit_display_name=(
+                self.audit_context.display_name if self.audit_context else None
+            ),
+        )
         self._sdkaccount = {"uid": str(uid), "access_key": access_key}
 
     async def _ensure_token(self, next: RequestHandler):
@@ -68,7 +80,13 @@ class sessionmgr(Component[apiclient]):
             await self.sdk.invoke_post_login()
 
     async def _login(self, next: RequestHandler):
-        self._sdkaccount = await openbao.read_game_session(self.sdk.id)
+        self._sdkaccount = await openbao.read_game_session(
+            self.sdk.id,
+            audit_qq=self.audit_context.qq if self.audit_context else None,
+            audit_display_name=(
+                self.audit_context.display_name if self.audit_context else None
+            ),
+        )
         for _ in range(5):
             try:
                 current = self._container.servers[self._container.active_server]

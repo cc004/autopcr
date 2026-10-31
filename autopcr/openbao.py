@@ -2,7 +2,7 @@ import asyncio
 import logging
 import re
 import time
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 import requests
 
@@ -18,6 +18,7 @@ from .constants import (
     OPENBAO_SECRET_ID_FILE,
     OPENBAO_TOKEN_FILE,
 )
+from .openbao_audit import record as audit_record
 from .util import aiorequests
 
 
@@ -54,8 +55,8 @@ class OpenBaoClient:
         try:
             with open(self.token_file, "r") as token_file:
                 token = token_file.read().strip()
-        except OSError as error:
-            raise OpenBaoError("OpenBao application token is unavailable") from error
+        except OSError:
+            raise OpenBaoError("OpenBao application token is unavailable") from None
         if not token:
             raise OpenBaoError("OpenBao application token is empty")
         return token
@@ -64,8 +65,8 @@ class OpenBaoClient:
         try:
             with open(self.secret_id_file, "r") as secret_id_file:
                 secret_id = secret_id_file.read().strip()
-        except OSError as error:
-            raise OpenBaoError("OpenBao AppRole secret ID is unavailable") from error
+        except OSError:
+            raise OpenBaoError("OpenBao AppRole secret ID is unavailable") from None
         if not secret_id:
             raise OpenBaoError("OpenBao AppRole secret ID is empty")
         return secret_id
@@ -76,8 +77,8 @@ class OpenBaoClient:
         try:
             with open(self.role_id_file, "r") as role_id_file:
                 role_id = role_id_file.read().strip()
-        except OSError as error:
-            raise OpenBaoError("OpenBao AppRole role ID is unavailable") from error
+        except OSError:
+            raise OpenBaoError("OpenBao AppRole role ID is unavailable") from None
         if not role_id:
             raise OpenBaoError("OpenBao AppRole role ID is empty")
         return role_id
@@ -86,16 +87,26 @@ class OpenBaoClient:
         try:
             with open(self.kubernetes_jwt_file, "r") as jwt_file:
                 jwt = jwt_file.read().strip()
-        except OSError as error:
-            raise OpenBaoError("Kubernetes ServiceAccount JWT is unavailable") from error
+        except OSError:
+            raise OpenBaoError("Kubernetes ServiceAccount JWT is unavailable") from None
         if not jwt:
             raise OpenBaoError("Kubernetes ServiceAccount JWT is empty")
         return jwt
 
-    async def _send(self, method: str, path: str, payload=None, token=None):
+    async def _send(
+        self,
+        method: str,
+        path: str,
+        payload=None,
+        token=None,
+        allow_missing=False,
+        audit_actor=None,
+    ):
         headers = {"X-Vault-Token": token} if token else {}
+        started_at = time.monotonic()
+        safe_path = self._audit_path(path)
         try:
-            return await aiorequests.request(
+            response = await aiorequests.request(
                 method,
                 f"{self.address}/v1/{path}",
                 json=payload,
@@ -103,19 +114,82 @@ class OpenBaoClient:
                 timeout=15,
             )
         except requests.RequestException as error:
-            raise OpenBaoError(f"OpenBao request failed for {path}") from error
+            audit_record(
+                "request",
+                method=method,
+                path=safe_path,
+                outcome="network_error",
+                error_type=type(error).__name__,
+                duration_ms=round((time.monotonic() - started_at) * 1000),
+                **(audit_actor or {}),
+            )
+            raise OpenBaoError(f"OpenBao request failed for {safe_path}") from None
+        audit_record(
+            "request",
+            method=method,
+            path=safe_path,
+            outcome=(
+                "success"
+                if response.ok
+                else (
+                    "not_found"
+                    if allow_missing and response.status_code == 404
+                    else "http_error"
+                )
+            ),
+            status=response.status_code,
+            duration_ms=round((time.monotonic() - started_at) * 1000),
+            **(audit_actor or {}),
+        )
+        return response
 
     async def _response_json(self, response, path):
         if not response.ok:
             raise OpenBaoError(
-                f"OpenBao request failed for {path}: HTTP {response.status_code}"
+                f"OpenBao request failed for {self._audit_path(path)}: "
+                f"HTTP {response.status_code}"
             )
         if response.status_code == 204:
             return {}
         try:
             return await response.json()
-        except (ValueError, requests.RequestException) as error:
-            raise OpenBaoError(f"OpenBao returned invalid JSON for {path}") from error
+        except (ValueError, requests.RequestException):
+            raise OpenBaoError(
+                f"OpenBao returned invalid JSON for {self._audit_path(path)}"
+            ) from None
+
+    @staticmethod
+    def _audit_path(path):
+        parts = path.strip("/").split("/")
+        if (
+            len(parts) > 3
+            and parts[0] == "autopcr"
+            and parts[1] in ("data", "metadata", "delete", "undelete", "destroy")
+        ):
+            if parts[2] == "game-sessions":
+                return f"{parts[0]}/{parts[1]}/game-sessions/<redacted>"
+            return f"{parts[0]}/{parts[1]}/game-credentials"
+        if len(parts) > 3 and parts[0] == "auth":
+            return "/".join(parts[:3]) + "/<redacted>"
+        return "/".join(parts)
+
+    @staticmethod
+    def _audit_actor(path, audit_qq=None, audit_display_name=None):
+        parts = path.strip("/").split("/")
+        if (
+            len(parts) > 3
+            and parts[0] == "autopcr"
+            and parts[1] in ("data", "metadata", "delete", "undelete", "destroy")
+            and parts[2] != "game-sessions"
+        ):
+            audit_qq = audit_qq or unquote(parts[2])
+            audit_display_name = audit_display_name or unquote(parts[3])
+        actor = {}
+        if audit_qq:
+            actor["actor_qq"] = audit_qq
+        if audit_display_name:
+            actor["actor_display_name"] = audit_display_name
+        return actor
 
     async def _auth_login(self):
         if self.auth_method == "approle":
@@ -182,21 +256,32 @@ class OpenBaoClient:
     async def connect(self):
         if self._connected:
             return
-        if self.auth_method == "token":
-            token = self._read_token_file()
-            response = await self._send(
-                "GET",
-                "auth/token/lookup-self",
-                token=token,
+        audit_record("connect", auth_method=self.auth_method, outcome="started")
+        try:
+            if self.auth_method == "token":
+                token = self._read_token_file()
+                response = await self._send(
+                    "GET",
+                    "auth/token/lookup-self",
+                    token=token,
+                )
+                await self._response_json(response, "auth/token/lookup-self")
+            elif self.auth_method in ("approle", "kubernetes"):
+                await self._auth_login()
+            else:
+                raise OpenBaoError(
+                    f"Unsupported OpenBao authentication method: {self.auth_method}"
+                )
+        except Exception as error:
+            audit_record(
+                "connect",
+                auth_method=self.auth_method,
+                outcome="failed",
+                error_type=type(error).__name__,
             )
-            await self._response_json(response, "auth/token/lookup-self")
-        elif self.auth_method in ("approle", "kubernetes"):
-            await self._auth_login()
-        else:
-            raise OpenBaoError(
-                f"Unsupported OpenBao authentication method: {self.auth_method}"
-            )
+            raise
         self._connected = True
+        audit_record("connect", auth_method=self.auth_method, outcome="success")
         logger.info("Connected to OpenBao using %s authentication", self.auth_method)
 
     def start_background_tasks(self):
@@ -291,13 +376,35 @@ class OpenBaoClient:
             self._last_forbidden_reauth_at = now
             return await self._login_with_cooldown()
 
-    async def _request(self, method: str, path: str, payload=None, allow_missing=False):
+    async def _request(
+        self,
+        method: str,
+        path: str,
+        payload=None,
+        allow_missing=False,
+        audit_qq=None,
+        audit_display_name=None,
+    ):
         token = await self._token()
-        response = await self._send(method, path, payload, token)
+        response = await self._send(
+            method,
+            path,
+            payload,
+            token,
+            allow_missing=allow_missing,
+            audit_actor=self._audit_actor(path, audit_qq, audit_display_name),
+        )
         if response.status_code == 403 and self.auth_method in ("approle", "kubernetes"):
             token = await self._reauthenticate_after_forbidden(token)
             if token is not None:
-                response = await self._send(method, path, payload, token)
+                response = await self._send(
+                    method,
+                    path,
+                    payload,
+                    token,
+                    allow_missing=allow_missing,
+                    audit_actor=self._audit_actor(path, audit_qq, audit_display_name),
+                )
         if allow_missing and response.status_code == 404:
             return None
         return await self._response_json(response, path)
@@ -312,11 +419,15 @@ class OpenBaoClient:
             raise OpenBaoError("Invalid game session identifier")
         return f"autopcr/data/game-sessions/{session_id}"
 
-    async def read_game_session(self, session_id: str):
+    async def read_game_session(
+        self, session_id: str, audit_qq=None, audit_display_name=None
+    ):
         result = await self._request(
             "GET",
             self._session_path(session_id),
             allow_missing=True,
+            audit_qq=audit_qq,
+            audit_display_name=audit_display_name,
         )
         if result is None:
             return None
@@ -332,7 +443,14 @@ class OpenBaoClient:
             raise OpenBaoError("OpenBao returned invalid game session credentials")
         return {"uid": uid, "access_key": access_key}
 
-    async def write_game_session(self, session_id: str, uid: str, access_key: str):
+    async def write_game_session(
+        self,
+        session_id: str,
+        uid: str,
+        access_key: str,
+        audit_qq=None,
+        audit_display_name=None,
+    ):
         if (
             not isinstance(uid, (str, int))
             or isinstance(uid, bool)
@@ -343,6 +461,8 @@ class OpenBaoClient:
             "POST",
             self._session_path(session_id),
             {"data": {"uid": str(uid), "access_key": access_key}},
+            audit_qq=audit_qq,
+            audit_display_name=audit_display_name,
         )
 
     async def read_game_credentials(self, qid: str, account: str):

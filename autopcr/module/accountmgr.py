@@ -26,6 +26,7 @@ from ..core.clientpool import instance as clientpool, PoolClientWrapper
 from ..sdk.sdkclients import create
 from ..util.logger import instance as logger
 from ..openbao import instance as openbao, OpenBaoError
+from ..openbao_audit import OpenBaoAuditContext
 
 class AccountException(Exception):
     pass
@@ -250,12 +251,18 @@ class Account(ModuleManager):
 
     async def get_ios_client(self) -> PoolClientWrapper: # Header TODO
         await self._ensure_credentials()
-        client = await clientpool.get_client(create(self.data.channel, account(
-            self.data.username,
-            self.data.password,
-            platform.IOS,
-            self._parent.farmer
-        )))
+        client = await clientpool.get_client(
+            create(
+                self.data.channel,
+                account(
+                    self.data.username,
+                    self.data.password,
+                    platform.IOS,
+                    self._parent.farmer,
+                ),
+            ),
+            audit_context=OpenBaoAuditContext(self.qq, self.alias),
+        )
         return client
 
     async def _ensure_credentials(self):
@@ -268,12 +275,18 @@ class Account(ModuleManager):
 
     async def get_android_client(self) -> PoolClientWrapper:
         await self._ensure_credentials()
-        client = await clientpool.get_client(create(self.data.channel, account(
-            self.data.username,
-            self.data.password,
-            platform.Android,
-            self._parent.farmer
-        )))
+        client = await clientpool.get_client(
+            create(
+                self.data.channel,
+                account(
+                    self.data.username,
+                    self.data.password,
+                    platform.Android,
+                    self._parent.farmer,
+                ),
+            ),
+            audit_context=OpenBaoAuditContext(self.qq, self.alias),
+        )
         return client
 
     def generate_info(self):

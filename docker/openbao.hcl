@@ -13,3 +13,10 @@ listener "tcp" {
   cluster_address = "0.0.0.0:8201"
   tls_disable     = true
 }
+
+audit "file" "audit-log" {
+  description = "File audit device for the docker-compose deployment"
+  options = {
+    file_path = "/openbao/audit/audit.log"
+  }
+}

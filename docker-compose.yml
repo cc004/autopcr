@@ -20,6 +20,7 @@ services:
     volumes:
       - ./docker/openbao.hcl:/openbao/config.hcl:ro
       - autopcr_openbao_data:/openbao/file
+      - autopcr_openbao_audit:/openbao/audit
     healthcheck:
       test:
         - CMD-SHELL
@@ -109,6 +110,7 @@ services:
       - autopcr_cache:/app/cache
       - autopcr_result:/app/result
       - autopcr_log:/app/log
+      - autopcr_audit:/app/audit
       - autopcr_openbao_token:/run/openbao:ro
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:${AUTOPCR_SERVER_PORT:-13200}/daily/login')"]
@@ -125,6 +127,10 @@ volumes:
   autopcr_openbao_bootstrap:
     driver: local
   autopcr_openbao_token:
+    driver: local
+  autopcr_openbao_audit:
+    driver: local
+  autopcr_audit:
     driver: local
   autopcr_cache:
     driver: local

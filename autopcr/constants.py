@@ -37,6 +37,7 @@ CLAN_BATTLE_FORBID_PATH = os.path.join(CONFIG_PATH, 'clan_battle_forbidden.txt')
 
 LOG_PATH = os.path.join(ROOT_DIR, 'log/')
 LOG_LEVEL = logging.INFO
+AUDIT_DIR = os.path.join(ROOT_DIR, "audit/")
 
 UUID_NAMESPACE = uuid.UUID("83a3e9e1-2690-4ff2-88bb-075ba6a6743c")
 

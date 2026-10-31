@@ -80,12 +80,13 @@ AUTOPCR_OPENBAO_K8S_JWT_FILE = "/var/run/secrets/kubernetes.io/serviceaccount/to
 | `autopcr_cache` | `/app/cache` | 用户身份数据库、游戏账号配置、游戏数据库；不存储游戏登录 session |
 | `autopcr_result` | `/app/result` | 任务执行结果 |
 | `autopcr_log` | `/app/log` | 应用日志 |
+| `autopcr_audit` | `/app/audit` | AutoPCR OpenBao 操作日志 |
 
 ### (1)使用本机 Openbao 的 Compose 部署
 
 #### 启动
 
-单机 Compose 由三个服务组成：OpenBao 服务端、负责持续检查/解封的 `openbao-init` supervisor，以及一次性配置 KV 引擎、策略和 AppRole 凭据的 `openbao-bootstrap`。bootstrap 成功退出后，日常解封由 `openbao-init` 负责；AutoPCR 使用 AppRole 获取并续租登录 token。OpenBao API 不对宿主机发布端口。
+单机 Compose 包含 OpenBao 服务端、负责持续检查/解封的 `openbao-init` supervisor，以及配置 KV 引擎/策略/AppRole 凭据的一次性 `openbao-bootstrap`。OpenBao 使用原生 file audit device 记录 API 请求和响应，bootstrap 成功退出后，日常解封由 `openbao-init` 负责；AutoPCR 使用 AppRole 获取并续租登录 token。OpenBao API 不对宿主机发布端口。
 
 启动服务：
 

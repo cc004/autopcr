@@ -3,6 +3,7 @@ from .apiclient import apiclient, ApiException
 from .sdkclient import sdkclient
 from .datamgr import datamgr
 from .sessionmgr import sessionmgr
+from ..openbao_audit import OpenBaoAuditContext
 from ..model.error import PanicError
 from .misc import errorhandler, mutexhandler
 from .base import Component, Request, TResponse, RequestHandler
@@ -59,14 +60,19 @@ class SessionErrorHandler(Component[apiclient]):
             self.retry = 0
 
 class PoolClientWrapper(pcrclient):
-    def __init__(self, pool: 'ClientPool', sdk: sdkclient):
+    def __init__(
+        self,
+        pool: 'ClientPool',
+        sdk: sdkclient,
+        audit_context: OpenBaoAuditContext | None = None,
+    ):
         apiclient.__init__(self, sdk)
         self._base_keys = {}
         self._keys = {}
         self.data = datamgr()
         self._data_wrapper = ComponentWrapper(self.data)
         self.need_refresh = False
-        self.session = sessionmgr(sdk)
+        self.session = sessionmgr(sdk, audit_context)
         self.pool = pool
         self.uid: str = None
         self.last_access = int(time.time())
@@ -230,15 +236,20 @@ class ClientPool:
     def sema_status(self):
         return self._sema.status(), self._farm_sema.status()
 
-    async def get_client(self, sdk: sdkclient) -> PoolClientWrapper:
+    async def get_client(
+        self,
+        sdk: sdkclient,
+        audit_context: OpenBaoAuditContext | None = None,
+    ) -> PoolClientWrapper:
         pool_key = (sdk.account, type(sdk).__name__)
         if pool_key in self._pool:
             client = self._pool.pop(pool_key)
             self._on_sdk_login(client)
             client.need_refresh = True
             client.session.sdk = sdk
+            client.session.audit_context = audit_context
         else:
-            client = PoolClientWrapper(self, sdk)
+            client = PoolClientWrapper(self, sdk, audit_context)
         return client
 
 instance = ClientPool()
