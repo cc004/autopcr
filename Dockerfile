@@ -61,4 +61,4 @@ EXPOSE 13200
 
 VOLUME ["/app/result", "/app/cache", "/app/log"]
 
-CMD ["python3", "_httpserver_test.py"]
+CMD ["python3", "httpserver_standalone.py"]

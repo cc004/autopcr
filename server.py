@@ -1,3 +1,7 @@
+import os
+
+os.environ["AUTOPCR_HOSHINO_PLUGIN_MODE"] = "true"
+
 from collections import Counter
 from typing import Any, Callable, Coroutine, Dict, List, Tuple, Union
 from pathlib import Path
@@ -11,6 +15,7 @@ from .autopcr.http_server.httpserver import HttpServer
 from .autopcr.db.database import db
 from .autopcr.util.unit_recognizer import instance as unit_recognizer
 from .autopcr.module.accountmgr import Account, AccountManager, instance as usermgr
+from .autopcr.openbao import instance as openbao
 from .autopcr.db.dbstart import db_start
 from .autopcr.core.clientpool import instance as clientpool
 from .autopcr.util.draw import instance as drawer
@@ -114,7 +119,10 @@ sv = Service(
 
 @on_startup
 async def init():
+    await openbao.connect()
+    openbao.start_background_tasks()
     await db_start()
+    await usermgr.migrate_game_credentials()
     from .autopcr.module.crons import queue_crons
     queue_crons()
 
@@ -569,7 +577,7 @@ async def clean_ghost(botev: BotEvent):
         msg.append("未找到内鬼")
     else:
         for qq in msg:
-            usermgr.delete(qq)
+            await usermgr.delete(qq)
         msg = [f"已清除{len(msg)}个内鬼:"] + msg
     await botev.finish(" ".join(msg))
 

@@ -1,0 +1,24 @@
+"""Copy this file to Hoshino's config/autopcr.py and edit the values."""
+
+# AutoPCR connects to this OpenBao service; the Hoshino plugin does not
+# start or unseal OpenBao. The service may run locally or on another host.
+AUTOPCR_OPENBAO_ADDR = "https://openbao.example.com:8200"
+
+# Basic static token authentication. Manage token rotation and expiration externally.
+AUTOPCR_OPENBAO_AUTH_METHOD = "token"
+AUTOPCR_OPENBAO_TOKEN_FILE = "/path/to/openbao/app-token"
+
+# To use AppRole instead, configure these and set AUTH_METHOD to "approle".
+# Store the Secret ID in a protected file readable only by the Hoshino
+# process. Do not put the Secret ID directly in this file.
+# AUTOPCR_OPENBAO_AUTH_METHOD = "approle"
+# AUTOPCR_OPENBAO_ROLE_ID = "replace-with-role-id"
+# AUTOPCR_OPENBAO_SECRET_ID_FILE = "/path/to/openbao/secret-id"
+# AUTOPCR_OPENBAO_APPROLE_MOUNT = "approle"
+
+# For Kubernetes deployments, mount the ServiceAccount JWT and configure
+# the corresponding Kubernetes auth role in OpenBao.
+# AUTOPCR_OPENBAO_AUTH_METHOD = "kubernetes"
+# AUTOPCR_OPENBAO_K8S_ROLE = "autopcr"
+# AUTOPCR_OPENBAO_K8S_MOUNT = "kubernetes"
+# AUTOPCR_OPENBAO_K8S_JWT_FILE = "/var/run/secrets/kubernetes.io/serviceaccount/token"

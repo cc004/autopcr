@@ -1,37 +1,26 @@
 from .base import Component, RequestHandler
 from .apiclient import apiclient, ApiException
 from .sdkclient import sdkclient
-import json, os, random
+import random
 from ..model.models import *
-from ..constants import CACHE_DIR
 from ..util.logger import instance as logger
+from ..openbao import instance as openbao
 import hashlib
 
 class sessionmgr(Component[apiclient]):
     def __init__(self, sdk: sdkclient):
         super().__init__()
-        self.cacheDir = os.path.join(CACHE_DIR, 'token')
         self.sdk = sdk
         self._logged = False
         self.auto_relogin = True
         self._sdkaccount = None
         self.session_expire_time = 0
         self.id = hashlib.md5(self.sdk.account.encode('utf-8')).hexdigest()
-        if not os.path.exists(self.cacheDir):
-            os.makedirs(self.cacheDir)
-
-    @property
-    def cacheFile(self):
-        return os.path.join(self.cacheDir, self.sdk.id)
 
     async def _bililogin(self):
         uid, access_key = await self.sdk.login()
-        self._sdkaccount = {
-                'uid': uid,
-                'access_key': access_key
-        }
-        with open(self.cacheFile, 'w') as fp:
-            json.dump(self._sdkaccount, fp)
+        await openbao.write_game_session(self.sdk.id, uid, access_key)
+        self._sdkaccount = {"uid": str(uid), "access_key": access_key}
 
     async def _ensure_token(self, next: RequestHandler):
         try:
@@ -79,9 +68,7 @@ class sessionmgr(Component[apiclient]):
             await self.sdk.invoke_post_login()
 
     async def _login(self, next: RequestHandler):
-        if os.path.exists(self.cacheFile):
-            with open(self.cacheFile, 'r') as fp:
-                self._sdkaccount = json.load(fp)
+        self._sdkaccount = await openbao.read_game_session(self.sdk.id)
         for _ in range(5):
             try:
                 current = self._container.servers[self._container.active_server]
