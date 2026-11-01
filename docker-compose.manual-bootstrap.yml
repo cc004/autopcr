@@ -1,0 +1,31 @@
+services:
+  openbao:
+    profiles:
+      - disabled
+
+  openbao-init:
+    profiles:
+      - disabled
+
+  openbao-bootstrap:
+    profiles:
+      - disabled
+
+  autopcr:
+    environment:
+      - AUTOPCR_OPENBAO_ADDR=${AUTOPCR_OPENBAO_ADDR:?Set AUTOPCR_OPENBAO_ADDR to the external OpenBao URL}
+      - AUTOPCR_OPENBAO_AUTH_METHOD=${AUTOPCR_OPENBAO_AUTH_METHOD:-approle}
+      - AUTOPCR_OPENBAO_TOKEN_FILE=${AUTOPCR_OPENBAO_TOKEN_FILE:-/run/openbao/app-token}
+      - AUTOPCR_OPENBAO_ROLE_ID=${AUTOPCR_OPENBAO_ROLE_ID:-}
+      - AUTOPCR_OPENBAO_ROLE_ID_FILE=/run/openbao/role-id
+      - AUTOPCR_OPENBAO_SECRET_ID_FILE=/run/openbao/secret-id
+      - AUTOPCR_OPENBAO_APPROLE_MOUNT=${AUTOPCR_OPENBAO_APPROLE_MOUNT:-approle}
+    volumes: !override
+      - autopcr_cache:/app/cache
+      - autopcr_result:/app/result
+      - autopcr_log:/app/log
+      - autopcr_audit:/app/audit
+      - type: bind
+        source: ${AUTOPCR_OPENBAO_AUTH_DIR:?Set AUTOPCR_OPENBAO_AUTH_DIR to a directory containing OpenBao authentication credentials}
+        target: /run/openbao
+        read_only: true

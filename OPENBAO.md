@@ -1,8 +1,8 @@
 # 使用外部自定义 OpenBao
 
-使用外部 OpenBao 时，初始化、解封和密钥托管由 OpenBao 服务端负责。服务需启用 KV v2 的 `autopcr/` 引擎，并为 AutoPCR 配置受限身份（`autopcr/data/*` 具备 create/read/update/delete，`autopcr/metadata/*` 具备 read/delete；AppRole/Kubernetes 登录 token 需要 `auth/token/renew-self` 的 update 权限）。支持静态 token 文件、AppRole 和 Kubernetes auth。
+使用外部 OpenBao 时，初始化、解封和密钥托管由 OpenBao 服务端负责。手动配置时需启用 KV v2 的 `autopcr/` 引擎并配置受限身份；使用 `docker-compose.auto-bootstrap` 时，这些 KV、策略和 AppRole 配置由 bootstrap 自动创建。支持静态 token 文件、AppRole 和 Kubernetes auth。
 
-## OpenBao 初始化
+## (1)OpenBao 初始化
 
 如果 OpenBao 集群尚未初始化，先在 OpenBao 服务器上设置 `BAO_ADDR`，使 `bao` CLI 指向该集群。此时尚无 root token，因此先不要设置 `BAO_TOKEN`：
 
@@ -21,7 +21,7 @@ bao operator init -key-shares=5 -key-threshold=3 -format=json > openbao-init-res
 
 `operator init` 初始化完成后，使用 Shamir seal 的 OpenBao 仍处于封存状态，因此首次初始化后必须立即解封一次。解封后，OpenBao 会保持解封，直到服务重启、被管理员手动封存，或存储层遇到不可恢复错误；正常运行期间不需要重复执行解封命令。
 
-首次初始化后，或上述情况导致 OpenBao 再次封存时，使用 `openbao-init-result.json` 中任意 **3 份不同的** `unseal_keys_b64` 解封。每次执行命令后，在交互提示中输入一份 key；不要把 key 直接写在命令参数或 shell 历史中：
+使用 `openbao-init-result.json` 中任意 **3 份不同的** `unseal_keys_b64` 解封。每次执行命令后，在交互提示中输入一份 key；不要把 key 直接写在命令参数或 shell 历史中：
 
 ```sh
 bao operator unseal
@@ -41,7 +41,98 @@ bao status
 export BAO_TOKEN="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["root_token"])' openbao-init-result.json)"
 ```
 
-执行后续配置命令的机器需安装 `bao` CLI，并已设置指向 OpenBao 的 `BAO_ADDR` 及管理员身份 `BAO_TOKEN`。管理员身份只用于初始化和获取凭据，绝不填入 AutoPCR 配置。以下步骤分为共同的 OpenBao 初始化和任选一种凭据取得方法；相关 `autopcr/` 路径及认证配置应为新建，重复执行 enable 命令会报“已存在”。
+不要直接使用 root token 。先用上一步导出的 root token 创建一个专用、受策略限制的 `admin_token`，之后只读取这个 token。以下策略仅允许 bootstrap 管理 `autopcr/` KV、自己的策略和 AppRole，并检查/撤销它创建的 AppRole 登录 token；默认 AppRole mount 为 `approle`。如果设置了自定义 `AUTOPCR_OPENBAO_APPROLE_MOUNT`，需同步替换策略中的 `sys/auth/approle` 和 `auth/approle/` 路径。
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+: "${BAO_ADDR:?Set BAO_ADDR to the external OpenBao URL}"
+: "${BAO_TOKEN:?Use the initial root token only to create this restricted token}"
+: "${AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR:?Set a secure directory for the admin-token file}"
+
+umask 077
+mkdir -p "$AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR"
+rm -f "$AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR/ready"
+STATUS="$(bao status -format=json || true)"
+if ! printf '%s' "$STATUS" | python3 -c '
+import json, sys
+status = json.load(sys.stdin)
+sys.exit(0 if status.get("initialized") is True and status.get("sealed") is False else 1)
+'; then
+  echo "OpenBao must already be initialized and unsealed" >&2
+  exit 1
+fi
+
+POLICY_FILE="$(mktemp)"
+TOKEN_TEMP="$(mktemp "$AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR/admin-token.tmp.XXXXXX")"
+trap 'rm -f "$POLICY_FILE" "$TOKEN_TEMP"' EXIT
+
+cat > "$POLICY_FILE" <<'HCL'
+path "sys/mounts" {
+  capabilities = ["read", "sudo"]
+}
+
+path "sys/mounts/autopcr" {
+  capabilities = ["create", "update", "sudo"]
+}
+
+path "sys/policies/acl/autopcr" {
+  capabilities = ["create", "update", "sudo"]
+}
+
+path "sys/auth" {
+  capabilities = ["read", "sudo"]
+}
+
+path "sys/auth/approle" {
+  capabilities = ["create", "update", "sudo"]
+}
+
+path "auth/approle/role/autopcr" {
+  capabilities = ["create", "update"]
+}
+
+path "auth/approle/role/autopcr/role-id" {
+  capabilities = ["read"]
+}
+
+path "auth/approle/role/autopcr/secret-id" {
+  capabilities = ["update"]
+}
+
+path "auth/token/lookup" {
+  capabilities = ["update", "sudo"]
+}
+
+path "auth/token/revoke" {
+  capabilities = ["update", "sudo"]
+}
+HCL
+
+bao policy write autopcr-bootstrap "$POLICY_FILE"
+bao token create -format=json -policy=autopcr-bootstrap -no-default-policy -orphan |
+  python3 -c 'import json,sys; print(json.load(sys.stdin)["auth"]["client_token"])' \
+  > "$TOKEN_TEMP"
+chmod 600 "$TOKEN_TEMP"
+mv "$TOKEN_TEMP" "$AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR/admin-token"
+: > "$AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR/ready"
+chmod 600 "$AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR/ready"
+unset BAO_TOKEN
+printf 'Restricted admin_token and OpenBao readiness marker saved to %s\n' "$AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR"
+```
+
+**Openbao初始化后，autopcr的bootstrap可以按需采用自动或者手动的方式**
+
+## (2)(a)自动bootstrap并自提供凭据 
+
+将 `AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR` 指向包含 `admin-token` 和 `ready` 的目录提供给外部 Compose 配置。上面的 shell 会先验证 OpenBao 已初始化且未封存，成功创建 token 后才写入 `ready`；Compose bootstrap 以该文件作为启动前置检查。管理员 token 目录只挂载给一次性 bootstrap 容器，AutoPCR 本身只获得 bootstrap 创建的 AppRole 凭据。妥善保护该目录，并确保 token 在 bootstrap 需要运行时仍有效；如 token 过期，重新签发后再运行 bootstrap。
+
+## (2)(b)手动bootstrap并手动取得凭据
+
+### 手动 bootstrap
+
+执行命令的机器需安装 `bao` CLI，并已设置指向 OpenBao 的 `BAO_ADDR` 及管理员身份 `BAO_TOKEN`。管理员身份只用于初始化和获取凭据，绝不填入 AutoPCR 配置。以下步骤分为共同的 OpenBao 初始化和任选一种凭据取得方法；相关 `autopcr/` 路径及认证配置应为新建，重复执行 enable 命令会报“已存在”。
 
 以下共同步骤启用 AutoPCR 专用 KV v2 引擎并创建基础最小权限策略。AppRole 所需的 token 自续租权限会在对应的凭据取得步骤中追加。
 
@@ -69,11 +160,11 @@ bao secrets enable -path=autopcr kv-v2
 bao policy write autopcr "$POLICY_FILE"
 ```
 
-## OpenBao 凭据取得
+### 手动 OpenBao 取得凭据
 
-完成上面的共同初始化后，按认证方式**二选一**执行以下步骤，取得 AutoPCR 连接 OpenBao 所需凭据。
+完成上面的手动bootstrap后，按认证方式**二选一**执行以下步骤，取得 AutoPCR 连接 OpenBao 所需凭据。
 
-### AppRole（推荐用于服务部署）
+#### (a)AppRole（推荐用于服务部署）
 
 AppRole 使用 Role ID 和 Secret ID 登录，AutoPCR 自动缓存并续租周期 token。Secret ID 保存在文件中；本步骤生成的 Secret ID 不过期，需妥善保护并由管理员按需轮换。
 
@@ -132,7 +223,7 @@ AutoPCR 配置正确的 `AUTOPCR_OPENBAO_ADDR`、`AUTOPCR_OPENBAO_AUTH_METHOD=ap
 
 **凭据备份提醒：** OpenBao 不会再次显示已生成的静态 Token 或 Secret ID。请把 AutoPCR 实际使用的凭据文件纳入安全备份；丢失时需由管理员重新生成凭据并更新 AutoPCR 配置。切勿将 token、Secret ID 或管理员 token 上传到代码仓库。
 
-### 静态 Token（设置简单，但需要频繁轮转）
+#### (b)静态 Token（设置简单，但需要频繁轮转）
 
 静态 Token 仅从文件读取，AutoPCR 不会自动续期。以下步骤创建一个只允许访问 AutoPCR 密钥、有效期为 30 天且不可续期的 token，并将其安全写入文件；token 到期前需由管理员生成新 token 并替换文件。
 

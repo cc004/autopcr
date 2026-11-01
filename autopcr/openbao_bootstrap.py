@@ -8,8 +8,8 @@ import requests
 ADDRESS = os.getenv("AUTOPCR_OPENBAO_ADDR", "http://openbao:8200").rstrip("/")
 APP_DIR = Path(os.getenv("AUTOPCR_OPENBAO_TOKEN_DIR", "/run/openbao"))
 INIT_READY_FILE = Path(os.getenv("AUTOPCR_OPENBAO_INIT_READY_FILE", "/vault-bootstrap/ready"))
-ROOT_TOKEN_FILE = Path(
-    os.getenv("AUTOPCR_OPENBAO_ROOT_TOKEN_FILE", "/vault-bootstrap/root-token")
+BOOTSTRAP_TOKEN_FILE = Path(
+    os.getenv("AUTOPCR_OPENBAO_BOOTSTRAP_TOKEN_FILE", "/vault-bootstrap/root-token")
 )
 APPROLE_ROLE_ID_FILE = APP_DIR / "role-id"
 APPROLE_SECRET_ID_FILE = APP_DIR / "secret-id"
@@ -55,8 +55,8 @@ def api(method: str, path: str, token=None, payload=None):
     return response.json()
 
 
-def configure_secrets_engine(root_token: str):
-    mount_response = api("GET", "sys/mounts", token=root_token)
+def configure_secrets_engine(bootstrap_token: str):
+    mount_response = api("GET", "sys/mounts", token=bootstrap_token)
     if not isinstance(mount_response, dict):
         raise RuntimeError("OpenBao returned an invalid secrets mount list")
     mounts = mount_response.get("data")
@@ -68,7 +68,7 @@ def configure_secrets_engine(root_token: str):
         api(
             "POST",
             "sys/mounts/autopcr",
-            token=root_token,
+            token=bootstrap_token,
             payload={"type": "kv", "options": {"version": "2"}},
         )
     else:
@@ -103,11 +103,11 @@ path "auth/token/renew-self" {
     api(
         "PUT",
         "sys/policies/acl/autopcr",
-        token=root_token,
+        token=bootstrap_token,
         payload={"policy": policy},
     )
 
-    auth_response = api("GET", "sys/auth", token=root_token)
+    auth_response = api("GET", "sys/auth", token=bootstrap_token)
     if not isinstance(auth_response, dict):
         raise RuntimeError("OpenBao returned an invalid auth method list")
     auth_methods = auth_response.get("data")
@@ -118,7 +118,7 @@ path "auth/token/renew-self" {
         api(
             "POST",
             f"sys/auth/{APPROLE_MOUNT}",
-            token=root_token,
+            token=bootstrap_token,
             payload={"type": "approle"},
         )
     elif not isinstance(approle_mount, dict) or approle_mount.get("type") != "approle":
@@ -129,7 +129,7 @@ path "auth/token/renew-self" {
     api(
         "POST",
         f"auth/{APPROLE_MOUNT}/role/{APPROLE_NAME}",
-        token=root_token,
+        token=bootstrap_token,
         payload={
             "token_policies": ["autopcr"],
             "token_no_default_policy": True,
@@ -140,11 +140,11 @@ path "auth/token/renew-self" {
     )
 
 
-def ensure_approle_credentials(root_token: str):
+def ensure_approle_credentials(bootstrap_token: str):
     role_response = api(
         "GET",
         f"auth/{APPROLE_MOUNT}/role/{APPROLE_NAME}/role-id",
-        token=root_token,
+        token=bootstrap_token,
     )
     role_id = role_response.get("data", {}).get("role_id")
     if not isinstance(role_id, str) or not role_id:
@@ -170,7 +170,7 @@ def ensure_approle_credentials(root_token: str):
                 token_lookup = api(
                     "POST",
                     "auth/token/lookup",
-                    token=root_token,
+                    token=bootstrap_token,
                     payload={"token": client_token},
                 )
                 token_data = token_lookup.get("data", {})
@@ -188,7 +188,7 @@ def ensure_approle_credentials(root_token: str):
                 api(
                     "POST",
                     "auth/token/revoke",
-                    token=root_token,
+                    token=bootstrap_token,
                     payload={"token": client_token},
                 )
                 return
@@ -197,7 +197,7 @@ def ensure_approle_credentials(root_token: str):
     response = api(
         "POST",
         f"auth/{APPROLE_MOUNT}/role/{APPROLE_NAME}/secret-id",
-        token=root_token,
+        token=bootstrap_token,
         payload={},
     )
     secret_id = response.get("data", {}).get("secret_id")
@@ -209,11 +209,11 @@ def ensure_approle_credentials(root_token: str):
 def bootstrap():
     if not INIT_READY_FILE.is_file():
         raise RuntimeError("OpenBao init/unseal service is not ready")
-    root_token = ROOT_TOKEN_FILE.read_text(encoding="utf-8").strip()
-    if not root_token:
-        raise RuntimeError("OpenBao root token file is empty")
-    configure_secrets_engine(root_token)
-    ensure_approle_credentials(root_token)
+    bootstrap_token = BOOTSTRAP_TOKEN_FILE.read_text(encoding="utf-8").strip()
+    if not bootstrap_token:
+        raise RuntimeError("OpenBao bootstrap token file is empty")
+    configure_secrets_engine(bootstrap_token)
+    ensure_approle_credentials(bootstrap_token)
     logger.info("OpenBao configuration reconciled")
     atomic_write(READY_FILE, "ready")
 

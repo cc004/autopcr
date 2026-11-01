@@ -15,10 +15,3 @@ AUTOPCR_OPENBAO_TOKEN_FILE = "/path/to/openbao/app-token"
 # AUTOPCR_OPENBAO_ROLE_ID = "replace-with-role-id"
 # AUTOPCR_OPENBAO_SECRET_ID_FILE = "/path/to/openbao/secret-id"
 # AUTOPCR_OPENBAO_APPROLE_MOUNT = "approle"
-
-# For Kubernetes deployments, mount the ServiceAccount JWT and configure
-# the corresponding Kubernetes auth role in OpenBao.
-# AUTOPCR_OPENBAO_AUTH_METHOD = "kubernetes"
-# AUTOPCR_OPENBAO_K8S_ROLE = "autopcr"
-# AUTOPCR_OPENBAO_K8S_MOUNT = "kubernetes"
-# AUTOPCR_OPENBAO_K8S_JWT_FILE = "/var/run/secrets/kubernetes.io/serviceaccount/token"

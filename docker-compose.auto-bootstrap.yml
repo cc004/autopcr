@@ -1,0 +1,27 @@
+services:
+  openbao:
+    profiles:
+      - disabled
+
+  openbao-init:
+    profiles:
+      - disabled
+
+  openbao-bootstrap:
+    environment:
+      - AUTOPCR_OPENBAO_ADDR=${AUTOPCR_OPENBAO_ADDR:?Set AUTOPCR_OPENBAO_ADDR to the external OpenBao URL}
+      - AUTOPCR_OPENBAO_INIT_READY_FILE=/run/openbao-admin/ready
+      - AUTOPCR_OPENBAO_BOOTSTRAP_TOKEN_FILE=/run/openbao-admin/admin-token
+      - AUTOPCR_OPENBAO_TOKEN_DIR=/run/openbao
+      - AUTOPCR_OPENBAO_APPROLE_MOUNT=${AUTOPCR_OPENBAO_APPROLE_MOUNT:-approle}
+    volumes: !override
+      - autopcr_openbao_token:/run/openbao
+      - type: bind
+        source: ${AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR:?Set AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR to a directory containing an OpenBao admin token}
+        target: /run/openbao-admin
+        read_only: true
+    depends_on: !reset []
+
+  autopcr:
+    environment:
+      - AUTOPCR_OPENBAO_ADDR=${AUTOPCR_OPENBAO_ADDR:?Set AUTOPCR_OPENBAO_ADDR to the external OpenBao URL}

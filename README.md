@@ -25,7 +25,7 @@ bug反馈/意见/交流群: 885228564
 
 ### (1)Hoshino 插件模式
 
-请使用最新版 Hoshino，并更新通用配置文件 `config/__bot__.py`。OpenBao 设置可写入 `config/autopcr.py`，也可通过环境变量提供；配置文件优先于环境变量，未设置时使用默认值。配置文件模板见 [`autopcr.py.example`](./autopcr.py.example)。
+请使用最新版 Hoshino，并更新通用配置文件 `config/__bot__.py`。填写OpenBao设置项在Hoshino配置目录下的 `autopcr.py`，也可通过环境变量提供；配置文件优先于环境变量，未设置时使用默认值。配置文件模板见 [`autopcr.py.example`](./autopcr.py.example)。
 
 ### (2)单Web服务模式
 
@@ -84,7 +84,7 @@ AUTOPCR_OPENBAO_K8S_JWT_FILE = "/var/run/secrets/kubernetes.io/serviceaccount/to
 
 ### (1)使用本机 Openbao 的 Compose 部署
 
-#### 启动
+#### 一键启动
 
 单机 Compose 包含 OpenBao 服务端、负责持续检查/解封的 `openbao-init` supervisor，以及配置 KV 引擎/策略/AppRole 凭据的一次性 `openbao-bootstrap`。OpenBao 使用原生 file audit device 记录 API 请求和响应，bootstrap 成功退出后，日常解封由 `openbao-init` 负责；AutoPCR 使用 AppRole 获取并续租登录 token。OpenBao API 不对宿主机发布端口。
 
@@ -137,13 +137,34 @@ docker compose up -d
 
 ### (2)使用外部 OpenBao 的 Compose 配置
 
-设置 `AUTOPCR_OPENBAO_ADDR` 为外部地址，并令 `AUTOPCR_OPENBAO_EXTERNAL_CREDENTIALS_DIR` 指向宿主机凭据目录。token 模式在目录中提供 `app-token`；AppRole 模式设置 `AUTOPCR_OPENBAO_AUTH_METHOD=approle`，并在目录中提供 `role-id`、`secret-id`，也可通过 `AUTOPCR_OPENBAO_ROLE_ID` 直接设置 Role ID。请限制凭据文件的宿主机读权限，然后运行：
+#### 自动 bootstrap 并取得凭据
+
+外部 OpenBao 需已完成初始化并处于解封状态。按[外部 OpenBao 教程](./OPENBAO.md)创建专用于 bootstrap 的 `admin_token`，不要直接使用 root token。教程脚本会先检查 OpenBao 已初始化且未封存，再生成 `admin-token` 和 `ready`；将包含这两个文件的目录提供给 `AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR`：
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.external.yml up -d
+export AUTOPCR_OPENBAO_ADDR="https://openbao.example.com:8200"
+export AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR="/secure/path/openbao-admin"
+docker compose -f docker-compose.yml -f docker-compose.auto-bootstrap up -d
 ```
 
-该覆盖会禁用本地 OpenBao 与 bootstrap 服务，并将凭据目录只读挂载给 AutoPCR。token 模式只读取 `app-token`，不自动续期；Token 到期或轮换时，管理员需生成新 token 并更新文件。AppRole 模式提供 `role-id` 和 `secret-id` 文件，或通过环境变量直接提供 Role ID；AppRole Secret ID 轮换由外部 OpenBao 管理方负责，替换文件后新登录会使用新 Secret ID。
+该覆盖不会启动本地 OpenBao 或初始化/解封服务；一次性 bootstrap 容器会只读挂载该目录，从 `admin-token` 读取 `admin_token`，并检查 `ready` 标记。之后它会在外部 OpenBao 上创建 `autopcr/` KV v2、最小权限策略及 AppRole，再把 AutoPCR 专用凭据和运行就绪标记写入 Docker 命名卷。AutoPCR 只使用 AppRole 凭据，不会接触 `admin_token`。外部 OpenBao 必须在启动 Compose 前已可访问且已解封；本地数据卷会保留生成的 AppRole 凭据。
+
+#### 手动 bootstrap 并提供凭据
+
+外部 OpenBao 需已完成初始化并处于解封状态。按 [外部 OpenBao 教程](./OPENBAO.md)的手动配置部分完成 OpenBao 配置，并按选择的认证方式准备应用凭据：AppRole 需要 Secret ID（文件）和 Role ID（文件或环境变量）；静态 Token 需要 token 文件。将凭据文件放入同一宿主机目录后，设置 OpenBao 地址及凭据目录，并用手动配置的 Compose 文件启动：
+
+```bash
+export AUTOPCR_OPENBAO_ADDR="https://openbao.example.com:8200"
+export AUTOPCR_OPENBAO_AUTH_DIR="/secure/path/autopcr-openbao"
+# AppRole 为默认认证方式；如改用静态 Token，取消下一行注释
+# export AUTOPCR_OPENBAO_AUTH_METHOD="token"
+# Role ID 可由 /secure/path/autopcr-openbao/role-id 文件提供；
+# 也可取消下一行注释，直接通过环境变量设置
+# export AUTOPCR_OPENBAO_ROLE_ID="your-role-id"
+docker compose -f docker-compose.yml -f docker-compose.manual-bootstrap.yml up -d
+```
+
+使用 AppRole 时，凭据目录需包含 `secret-id`，Role ID 可放在同目录的 `role-id` 文件中，或通过 `AUTOPCR_OPENBAO_ROLE_ID` 提供。使用静态 Token 时，目录需包含 `app-token` 文件。手动配置默认使用 `approle` mount；如使用自定义 mount，启动 Compose 时需设置相同的 `AUTOPCR_OPENBAO_APPROLE_MOUNT`。保护好凭据文件；管理员 token 不需要提供给 AutoPCR。
 
 ### (3)使用Kubenetes集群
 
@@ -198,7 +219,7 @@ Kubernetes 模式使用 Pod ServiceAccount JWT 登录 OpenBao。OpenBao 管理�
 | HOST_PORT | 宿主机映射端口 | 13200 |
 | TZ | 容器时区 | Asia/Shanghai |
 | RESTART_POLICY | 容器重启策略 | unless-stopped |
-| AUTOPCR_OPENBAO_EXTERNAL_CREDENTIALS_DIR | 使用外部 OpenBao 的 Compose 覆盖时，宿主机凭据目录，按认证模式含 `app-token` 或 `role-id`/`secret-id` | `./secrets/openbao` |
+| AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR | 使用外部 OpenBao 的 Compose 覆盖时，包含 `admin-token` 和 `ready` 文件的宿主机目录；仅挂载给一次性 bootstrap 容器 | 必填 |
 
 ## Credits
 - aiorequests 来自 [HoshinoBot](https://github.com/Ice-Cirno/HoshinoBot)

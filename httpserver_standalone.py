@@ -17,9 +17,9 @@ def main():
     parser.add_argument("--openbao-role-id-file")
     parser.add_argument("--openbao-secret-id-file")
     parser.add_argument("--openbao-approle-mount")
-    parser.add_argument("--openbao-k8s-role")
-    parser.add_argument("--openbao-k8s-mount")
-    parser.add_argument("--openbao-k8s-jwt-file")
+    # parser.add_argument("--openbao-k8s-role")
+    # parser.add_argument("--openbao-k8s-mount")
+    # parser.add_argument("--openbao-k8s-jwt-file")
     args = parser.parse_args()
 
     os.environ["AUTOPCR_HOSHINO_PLUGIN_MODE"] = "false"
@@ -37,12 +37,12 @@ def main():
         os.environ["AUTOPCR_OPENBAO_SECRET_ID_FILE"] = args.openbao_secret_id_file
     if args.openbao_approle_mount is not None:
         os.environ["AUTOPCR_OPENBAO_APPROLE_MOUNT"] = args.openbao_approle_mount
-    if args.openbao_k8s_role is not None:
-        os.environ["AUTOPCR_OPENBAO_K8S_ROLE"] = args.openbao_k8s_role
-    if args.openbao_k8s_mount is not None:
-        os.environ["AUTOPCR_OPENBAO_K8S_MOUNT"] = args.openbao_k8s_mount
-    if args.openbao_k8s_jwt_file is not None:
-        os.environ["AUTOPCR_OPENBAO_K8S_JWT_FILE"] = args.openbao_k8s_jwt_file
+    # if args.openbao_k8s_role is not None:
+    #     os.environ["AUTOPCR_OPENBAO_K8S_ROLE"] = args.openbao_k8s_role
+    # if args.openbao_k8s_mount is not None:
+    #     os.environ["AUTOPCR_OPENBAO_K8S_MOUNT"] = args.openbao_k8s_mount
+    # if args.openbao_k8s_jwt_file is not None:
+    #     os.environ["AUTOPCR_OPENBAO_K8S_JWT_FILE"] = args.openbao_k8s_jwt_file
 
     importlib.import_module("autopcr.http_server.httpserver_standalone")
 
