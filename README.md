@@ -104,13 +104,11 @@ docker compose logs -f
 docker compose down
 ```
 
-#### 导出recovery文件
-
 OpenBao 使用 Shamir 5 份、阈值 3 的初始化密钥。`openbao-init` 会将完整初始化结果一次性保存为 `recovery.json`，并在每次解封时逐份提交 key，达到 3 份阈值后停止。Raft 数据、初始化恢复文件、root token 交接文件、应用凭据分别保存在 `autopcr_openbao_data`、`autopcr_openbao_keys`、`autopcr_openbao_bootstrap`、`autopcr_openbao_token` 卷中。完整的 5 份 key 都保存在 `recovery.json`，所以本机自动解封方便，但 3/5 阈值本身不构成对 Docker 宿主机或密钥卷失陷的额外保护。只有 `openbao-init` 挂载密钥卷；root token 交接卷只读挂载给 `openbao-bootstrap`；应用容器只读挂载应用凭据卷。
 
 **首次启动后请立即导出并妥善保存 recovery 文件**：其中包含全部 5 份解封密钥和初始 root token。将文件加密后保存到密码管理器或其他主机/离线介质，再删除导出的明文副本。它不是 Raft 数据备份，完整灾难恢复仍需与之匹配的 Raft 数据备份。
 
-导出恢复文件:
+#### 导出恢复文件:
 
 ```bash
 sh docker/openbao-recovery.sh export ./openbao-recovery.json
@@ -139,7 +137,7 @@ docker compose up -d
 
 #### 自动 bootstrap 并取得凭据
 
-外部 OpenBao 需已完成初始化并处于解封状态。按[外部 OpenBao 教程](./OPENBAO.md)创建专用于 bootstrap 的 `admin_token`，不要直接使用 root token。教程脚本会先检查 OpenBao 已初始化且未封存，再生成 `admin-token` 和 `ready`；将包含这两个文件的目录提供给 `AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR`：
+外部 OpenBao 需已完成初始化并处于解封状态。按[外部 OpenBao 教程](./OPENBAO.md)运行第一个脚本，创建专用于 bootstrap 的 `admin-token` 和 `ready` 标记；不要直接使用 root token。管理机器需安装 OpenBao CLI（`bao`）和 Python 3。将包含这两个文件的目录提供给 `AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR`：
 
 ```bash
 export AUTOPCR_OPENBAO_ADDR="https://openbao.example.com:8200"
@@ -151,7 +149,7 @@ docker compose -f docker-compose.yml -f docker-compose.auto-bootstrap up -d
 
 #### 手动 bootstrap 并提供凭据
 
-外部 OpenBao 需已完成初始化并处于解封状态。按 [外部 OpenBao 教程](./OPENBAO.md)的手动配置部分完成 OpenBao 配置，并按选择的认证方式准备应用凭据：AppRole 需要 Secret ID（文件）和 Role ID（文件或环境变量）；静态 Token 需要 token 文件。将凭据文件放入同一宿主机目录后，设置 OpenBao 地址及凭据目录，并用手动配置的 Compose 文件启动：
+外部 OpenBao 需已完成初始化并处于解封状态。按 [外部 OpenBao 教程](./OPENBAO.md)的手动配置部分完成 OpenBao 配置，并按选择的认证方式准备应用凭据：AppRole 需要 Secret ID（文件）和 Role ID（文件或环境变量）；静态 Token 需要 token 文件。第三个脚本把 AppRole 凭据和 `ready` 写入 `AUTOPCR_OPENBAO_APP_TOKEN_DIR`；这个目录中的 `ready` 表示应用凭据已就绪，与 admin token 目录中的 bootstrap `ready` 含义不同。只将 AutoPCR 应用凭据放入单独的宿主机目录，不要把包含 `admin-token` 的目录挂载给 AutoPCR。设置 OpenBao 地址及凭据目录，并用手动配置的 Compose 文件启动：
 
 ```bash
 export AUTOPCR_OPENBAO_ADDR="https://openbao.example.com:8200"

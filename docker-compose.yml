@@ -18,7 +18,7 @@ services:
     security_opt:
       - no-new-privileges:true
     volumes:
-      - ./docker/openbao.hcl:/openbao/config.hcl:ro
+      - ./openbao/openbao.hcl:/openbao/config.hcl:ro
       - autopcr_openbao_data:/openbao/file
       - autopcr_openbao_logs:/openbao/logs
     healthcheck:
@@ -43,7 +43,7 @@ services:
     volumes:
       - autopcr_openbao_keys:/openbao/keys
       - autopcr_openbao_bootstrap:/vault-bootstrap
-      - ./docker/openbao-init-and-unseal.sh:/openbao/scripts/init-and-unseal.sh:ro
+      - ./openbao/openbao-init-and-unseal.sh:/openbao/scripts/init-and-unseal.sh:ro
     depends_on:
       openbao:
         condition: service_healthy

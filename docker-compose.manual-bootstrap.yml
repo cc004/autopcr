@@ -20,6 +20,7 @@ services:
       - AUTOPCR_OPENBAO_ROLE_ID_FILE=/run/openbao/role-id
       - AUTOPCR_OPENBAO_SECRET_ID_FILE=/run/openbao/secret-id
       - AUTOPCR_OPENBAO_APPROLE_MOUNT=${AUTOPCR_OPENBAO_APPROLE_MOUNT:-approle}
+    depends_on: !reset []
     volumes: !override
       - autopcr_cache:/app/cache
       - autopcr_result:/app/result
