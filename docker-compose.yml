@@ -20,7 +20,7 @@ services:
     volumes:
       - ./docker/openbao.hcl:/openbao/config.hcl:ro
       - autopcr_openbao_data:/openbao/file
-      - autopcr_openbao_audit:/openbao/audit
+      - autopcr_openbao_logs:/openbao/logs
     healthcheck:
       test:
         - CMD-SHELL
@@ -138,7 +138,7 @@ volumes:
     driver: local
   autopcr_openbao_token:
     driver: local
-  autopcr_openbao_audit:
+  autopcr_openbao_logs:
     driver: local
   autopcr_audit:
     driver: local

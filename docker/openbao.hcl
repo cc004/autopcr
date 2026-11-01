@@ -17,6 +17,6 @@ listener "tcp" {
 audit "file" "audit-log" {
   description = "File audit device for the docker-compose deployment"
   options = {
-    file_path = "/openbao/audit/audit.log"
+    file_path = "/openbao/logs/audit.log"
   }
 }

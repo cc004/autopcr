@@ -61,11 +61,19 @@ BATCHINFO = "BATCH_RUNNER"
 class Account(ModuleManager):
     _account_locks: Dict[str, Lock] = dict()
 
-    def __init__(self, parent: 'AccountManager', qid: str, account: str, readonly: bool = False):
+    def __init__(
+        self,
+        parent: 'AccountManager',
+        qid: str,
+        account: str,
+        readonly: bool = False,
+        load_credentials: bool = True,
+    ):
         self._filename = parent.path(account)
         self._lck = Account._account_locks.setdefault(self._filename, Lock())
         self._parent = parent
         self.readonly = readonly
+        self.load_credentials = load_credentials
         self._id = hashlib.md5(account.encode('utf-8')).hexdigest()
 
         if account == BATCHINFO:
@@ -99,7 +107,7 @@ class Account(ModuleManager):
             logger.debug(f"Acquire lock {self._filename}")
             await self._lck.acquire()
         try:
-            if self.alias != BATCHINFO:
+            if self.alias != BATCHINFO and self.load_credentials:
                 credentials = await openbao.read_game_credentials(self.qq, self.alias)
                 if credentials is not None:
                     username = credentials.get("username", "")
@@ -456,7 +464,13 @@ class AccountManager:
     def validate_password(self, password: str) -> bool:
         return self._parent.validate_password(self.qid, password)
 
-    def load(self, account: str = "", readonly = False, force_use_all: bool = False) -> Account:
+    def load(
+        self,
+        account: str = "",
+        readonly=False,
+        force_use_all: bool = False,
+        load_credentials: bool = True,
+    ) -> Account:
         if not AccountManager.pathsyntax.fullmatch(account):
             raise AccountException(f'非法账户名{account}')
         if account == BATCHINFO:
@@ -469,7 +483,13 @@ class AccountManager:
             raise AccountException('No default account')
         if account not in self.accounts():
             raise AccountException("账号不存在")
-        return Account(self, self.qid, account, readonly)
+        return Account(
+            self,
+            self.qid,
+            account,
+            readonly,
+            load_credentials=load_credentials,
+        )
 
     def path(self, account: str) -> str:
         return os.path.join(self.root, account + '.json')
