@@ -41,7 +41,7 @@ bao status
 export BAO_TOKEN="$(sed -n 's/.*"root_token"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' /tmp/openbao-init-result.json)"
 ```
 
-不要将 root token 交给 AutoPCR 或 Compose。使用仓库脚本 [`01-create-admin-token.sh`](./autopcr/openbao/custom/01-create-admin-token.sh)创建专用的受限 `admin_token`。
+不要将 root token 交给 AutoPCR 或 Compose。使用仓库脚本 [`01-create-admin-token.sh`](./openbao/custom/01-create-admin-token.sh)创建专用的受限 `admin_token`。
 
 运行脚本的管理机器需安装 OpenBao CLI（`bao`）和 Python 3，并能连接已初始化且已解封的 OpenBao。设置 `BAO_ADDR`、`BAO_TOKEN`（初始 root token）和 `AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR` 后运行脚本。脚本会检查 OpenBao 状态并在该目录生成 `admin-token` 和 `ready`；`ready` 表示 admin token 已生成，供自动 bootstrap 检查。脚本不会覆盖已有的 admin token。
 
@@ -55,13 +55,13 @@ export BAO_TOKEN="$(sed -n 's/.*"root_token"[[:space:]]*:[[:space:]]*"\([^"]*\)"
 
 ### (a)自动bootstrap并自提供凭据 
 
-只需运行 [`01-create-admin-token.sh`](./autopcr/openbao/custom/01-create-admin-token.sh)。该脚本生成 `admin-token` 和 `ready`；`ready` 表示 admin token 已准备好，Compose bootstrap 会检查该标记。 bootstrap 容器会自行配置 KV、策略和 AppRole。管理员 token 目录只挂载给该容器；AutoPCR 本身只获得 bootstrap 写入 Docker 命名卷的 AppRole 凭据。妥善保护该目录，并确保 token 在 bootstrap 需要运行时仍有效。
+只需运行 [`01-create-admin-token.sh`](./openbao/custom/01-create-admin-token.sh)。该脚本生成 `admin-token` 和 `ready`；`ready` 表示 admin token 已准备好，Compose bootstrap 会检查该标记。 bootstrap 容器会自行配置 KV、策略和 AppRole。管理员 token 目录只挂载给该容器；AutoPCR 本身只获得 bootstrap 写入 Docker 命名卷的 AppRole 凭据。妥善保护该目录，并确保 token 在 bootstrap 需要运行时仍有效。
 
 ### (b)手动bootstrap并手动取得凭据
 
 #### 1.手动 bootstrap
 
-先按上文运行 [`01-create-admin-token.sh`](./autopcr/openbao/custom/01-create-admin-token.sh) 创建 `admin-token` 和 admin token 的 `ready` 标记，然后运行 [`02-setup-autopcr-kv.sh`](./autopcr/openbao/custom/02-setup-autopcr-kv.sh) 创建或校验 `autopcr/` KV v2 mount 并配置应用策略。它从 `AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR/admin-token` 读取受限 admin token，不需要再设置 root token。
+先按上文运行 [`01-create-admin-token.sh`](./openbao/custom/01-create-admin-token.sh) 创建 `admin-token` 和 admin token 的 `ready` 标记，然后运行 [`02-setup-autopcr-kv.sh`](./openbao/custom/02-setup-autopcr-kv.sh) 创建或校验 `autopcr/` KV v2 mount 并配置应用策略。它从 `AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR/admin-token` 读取受限 admin token，不需要再设置 root token。
 
 #### 2.从 OpenBao 取得凭据
 
@@ -69,7 +69,7 @@ export BAO_TOKEN="$(sed -n 's/.*"root_token"[[:space:]]*:[[:space:]]*"\([^"]*\)"
 
 ##### AppRole 方式（推荐用于服务部署）
 
-AppRole 使用 Role ID 和 Secret ID 登录，AutoPCR 自动缓存并续租周期 token。运行 [`03-setup-autopcr-approle.sh`](./autopcr/openbao/custom/03-setup-autopcr-approle.sh) 启用/校验默认的 `approle` mount、配置角色并取得应用凭据。设置 `AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR` 指向含 `admin-token` 的目录，并将 `AUTOPCR_OPENBAO_APP_TOKEN_DIR` 指向独立的应用凭据目录。脚本从前者读取 admin token，把 Role ID、Secret ID 和 `ready` 写入后者。admin 目录的 `ready` 由第一步创建，表示 admin token 已生成；app 目录的 `ready` 由第三步创建，表示 AppRole 凭据已准备好。Secret ID 不过期，应妥善保护并由管理员按需轮换。
+AppRole 使用 Role ID 和 Secret ID 登录，AutoPCR 自动缓存并续租周期 token。运行 [`03-setup-autopcr-approle.sh`](./openbao/custom/03-setup-autopcr-approle.sh) 启用/校验默认的 `approle` mount、配置角色并取得应用凭据。设置 `AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR` 指向含 `admin-token` 的目录，并将 `AUTOPCR_OPENBAO_APP_TOKEN_DIR` 指向独立的应用凭据目录。脚本从前者读取 admin token，把 Role ID、Secret ID 和 `ready` 写入后者。admin 目录的 `ready` 由第一步创建，表示 admin token 已生成；app 目录的 `ready` 由第三步创建，表示 AppRole 凭据已准备好。Secret ID 不过期，应妥善保护并由管理员按需轮换。
 
 将 `AUTOPCR_OPENBAO_APP_TOKEN_DIR` 设为手动 Compose 的 `AUTOPCR_OPENBAO_AUTH_DIR`，这样 `role-id` 和 `secret-id` 可直接供 AutoPCR 使用。不要把包含 `admin-token` 的目录挂载给 AutoPCR。Role ID 本身不是密码；Secret ID 是密码，应妥善保管。初始化管理员 token 不需要、也不应提供给 AutoPCR。
 
@@ -77,30 +77,6 @@ AppRole 使用 Role ID 和 Secret ID 登录，AutoPCR 自动缓存并续租周�
 
 ##### 静态 Token 方式（设置简单，但需要频繁轮转）
 
-静态 Token 仅从文件读取，AutoPCR 不会自动续期。使用 `AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR/admin-token` 设置 `BAO_TOKEN` 后，以下步骤创建一个只允许访问 AutoPCR 密钥、有效期为 30 天且不可续期的 token，并将其安全写入文件；token 到期前需由管理员生成新 token 并替换文件。
+静态 Token 仅从文件读取，AutoPCR 不会自动续期。[`04-create-autopcr-static-token.sh`](./openbao/custom/04-create-autopcr-static-token.sh)。该脚本使用 `BAO_TOKEN` 中的 root token 创建仅附加 `autopcr` 策略、有效期为 30 天且不可续期的 token，并以仅当前用户可读的权限写入 `AUTOPCR_OPENBAO_TOKEN_FILE` 指定的文件。只在管理端使用 root token，不要把它提供给 AutoPCR；脚本不会覆盖已有 token 文件。
 
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-: "${AUTOPCR_OPENBAO_TOKEN_FILE:?Set a secure path for the generated token}"
-
-umask 077
-mkdir -p "$(dirname "$AUTOPCR_OPENBAO_TOKEN_FILE")"
-TOKEN_TEMP="$(mktemp "${AUTOPCR_OPENBAO_TOKEN_FILE}.tmp.XXXXXX")"
-trap 'rm -f "$TOKEN_TEMP"' EXIT
-
-bao write -format=json auth/token/create \
-  policies=autopcr \
-  no_default_policy=true \
-  ttl=720h \
-  renewable=false |
-  python3 -c 'import json,sys; print(json.load(sys.stdin)["auth"]["client_token"])' \
-  > "$TOKEN_TEMP"
-chmod 600 "$TOKEN_TEMP"
-mv "$TOKEN_TEMP" "$AUTOPCR_OPENBAO_TOKEN_FILE"
-
-printf 'Token saved to: %s\n' "$AUTOPCR_OPENBAO_TOKEN_FILE"
-```
-
-AutoPCR 配置正确的 `AUTOPCR_OPENBAO_ADDR`、`AUTOPCR_OPENBAO_AUTH_METHOD=token`，将 `AUTOPCR_OPENBAO_TOKEN_FILE` 指向脚本生成的文件。Token 文件是敏感凭据，要限制读取权限；Token 到期或怀疑泄露时，由管理员生成新 token 并替换文件，必要时撤销旧 token。
+配置 AutoPCR 使用 `AUTOPCR_OPENBAO_AUTH_METHOD=token`，并将 `AUTOPCR_OPENBAO_TOKEN_FILE` 指向生成的文件。Token 文件是敏感凭据；到期或怀疑泄露时，由管理员撤销旧 token、重新签发并替换文件。

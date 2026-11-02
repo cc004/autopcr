@@ -27,6 +27,8 @@ bug反馈/意见/交流群: 885228564
 
 请使用最新版 Hoshino，并更新通用配置文件 `config/__bot__.py`。填写OpenBao设置项在Hoshino配置目录下的 `autopcr.py`，也可通过环境变量提供；配置文件优先于环境变量，未设置时使用默认值。配置文件模板见 [`autopcr.py.example`](./autopcr.py.example)。
 
+**插件模式下** 配置文件方式配置`*_FILE` 文件路径配置支持相对路径，注意相对于 **Hoshino 进程的当前工作目录**，不是相对 `config/autopcr.py` 或插件目录。例如，若 Hoshino 工作目录为 `D:\hoshino`，则 `secrets/openbao/token` 指向 `D:\hoshino\secrets\openbao\token`。
+
 ### (2)单Web服务模式
 
 直接运行 HTTP 服务时，使用以下命令启动：
@@ -58,7 +60,7 @@ AUTOPCR_OPENBAO_APPROLE_MOUNT = "approle"  # AppRole auth method 的挂载名称
 ```python
 AUTOPCR_OPENBAO_ADDR = "https://openbao.example.com:8200"  # OpenBao 服务地址
 AUTOPCR_OPENBAO_AUTH_METHOD = "token"  # 认证方式：静态 Token
-AUTOPCR_OPENBAO_TOKEN_FILE = "/path/to/openbao/app-token"  # 存放 Token 的受限权限文件
+AUTOPCR_OPENBAO_TOKEN_FILE = "secrets/openbao/token"  # 存放 Token 的受限权限文件
 ```
 
 **Kubernetes**
