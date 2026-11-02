@@ -119,12 +119,18 @@ sv = Service(
 
 @on_startup
 async def init():
-    await openbao.connect()
-    openbao.start_background_tasks()
-    await db_start()
-    await usermgr.migrate_game_credentials()
-    from .autopcr.module.crons import queue_crons
-    queue_crons()
+    try:
+        await openbao.connect()
+        openbao.start_background_tasks()
+        await db_start()
+        await usermgr.migrate_game_credentials()
+        from .autopcr.module.crons import queue_crons
+        queue_crons()
+    except Exception:
+        sv.logger.error(
+            "AutoPCR Hoshino plugin initialization failed!",
+            exc_info=True,
+        )
 
 class BotEvent:
     def __init__(self): ...
