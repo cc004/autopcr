@@ -3,7 +3,7 @@ set -euo pipefail
 
 : "${BAO_ADDR:?Set BAO_ADDR to the external OpenBao URL}"
 : "${BAO_TOKEN:?Set BAO_TOKEN to an administrator token allowed to create application tokens}"
-: "${AUTOPCR_OPENBAO_TOKEN_FILE:?Set the output path for the AutoPCR token file}"
+: "${AUTOPCR_OPENBAO_TOKEN_FILE:=/run/openbao-app-token}"
 
 TOKEN_FILE="$AUTOPCR_OPENBAO_TOKEN_FILE"
 TOKEN_DIR="$(dirname "$TOKEN_FILE")"
