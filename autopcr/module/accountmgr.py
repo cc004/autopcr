@@ -620,8 +620,15 @@ class UserManager:
         os.makedirs(self.root, exist_ok=True)
         self._initialize_auth_db()
         self._migrate_legacy_users()
-        self._initialize_account_mapping()
-        self._migrate_batch_runner_data()
+        for description, migration in (
+            ("account mappings", self._initialize_account_mapping),
+            ("batch-runner data", self._migrate_batch_runner_data),
+        ):
+            try:
+                migration()
+            except Exception:
+                logger.exception("Startup migration failed for %s", description)
+                raise
         self.load_clan_battle_forbidden()
 
     @contextmanager
@@ -676,47 +683,88 @@ class UserManager:
         return salt, password_hash
 
     def _migrate_legacy_users(self):
-        for qid in os.listdir(self.root):
-            user_root = self.qid_path(qid)
-            legacy_path = os.path.join(user_root, 'secret')
-            if not os.path.isdir(user_root) or not os.path.isfile(legacy_path):
-                continue
+        legacy_users = [
+            qid for qid in os.listdir(self.root)
+            if os.path.isdir(self.qid_path(qid))
+            and os.path.isfile(os.path.join(self.qid_path(qid), 'secret'))
+        ]
+        if not legacy_users:
+            return
 
-            with self._connect() as connection:
-                connection.execute("BEGIN IMMEDIATE")
-                existing = connection.execute(
-                    "SELECT 1 FROM users WHERE qid = ?", (qid,)
-                ).fetchone()
-                if existing is None:
-                    with open(legacy_path, 'r') as legacy_file:
-                        legacy_data = UserData.from_json(legacy_file.read())
-                    salt, password_hash = self._hash_password(legacy_data.password)
-                    connection.execute(
-                        """
-                        INSERT INTO users (
-                            qid, password_hash, password_salt, password_iterations,
-                            default_account, clan, admin, disabled
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                        """,
-                        (
-                            qid,
-                            password_hash,
-                            salt,
-                            self.PASSWORD_ITERATIONS,
-                            legacy_data.default_account,
-                            int(legacy_data.clan or qid.startswith('g')),
-                            int(legacy_data.admin),
-                            int(legacy_data.disabled),
-                        ),
-                    )
+        logger.info(
+            "Found %d legacy plaintext user credential files; migrating to SQLite",
+            len(legacy_users),
+        )
+        migrated_users = 0
+        removed_legacy_files = 0
+        for qid in legacy_users:
+            legacy_path = os.path.join(self.qid_path(qid), 'secret')
 
             try:
+                migrated = False
+                with self._connect() as connection:
+                    connection.execute("BEGIN IMMEDIATE")
+                    existing = connection.execute(
+                        "SELECT 1 FROM users WHERE qid = ?", (qid,)
+                    ).fetchone()
+                    if existing is None:
+                        with open(legacy_path, 'r') as legacy_file:
+                            legacy_data = UserData.from_json(legacy_file.read())
+                        salt, password_hash = self._hash_password(legacy_data.password)
+                        connection.execute(
+                            """
+                            INSERT INTO users (
+                                qid, password_hash, password_salt, password_iterations,
+                                default_account, clan, admin, disabled
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                            """,
+                            (
+                                qid,
+                                password_hash,
+                                salt,
+                                self.PASSWORD_ITERATIONS,
+                                legacy_data.default_account,
+                                int(legacy_data.clan or qid.startswith('g')),
+                                int(legacy_data.admin),
+                                int(legacy_data.disabled),
+                            ),
+                        )
+                        migrated = True
+
+                if migrated:
+                    migrated_users += 1
+                    logger.info(
+                        "Migrated legacy user credentials to SQLite for user %s",
+                        qid,
+                    )
+                else:
+                    logger.info(
+                        "SQLite credentials already exist for user %s; "
+                        "removing the legacy plaintext file",
+                        qid,
+                    )
+
                 os.remove(legacy_path)
+                removed_legacy_files += 1
             except FileNotFoundError:
                 # Another server process may have completed this migration.
                 pass
+            except Exception:
+                logger.exception(
+                    "Failed to migrate legacy user credentials for user %s",
+                    qid,
+                )
+                raise
+
+        logger.info(
+            "Finished legacy user credential migration: %d users imported, "
+            "%d plaintext files removed",
+            migrated_users,
+            removed_legacy_files,
+        )
 
     def _initialize_account_mapping(self):
+        migrated_accounts = 0
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             table_exists = connection.execute(
@@ -770,6 +818,11 @@ class UserManager:
                     connection.execute(
                         "ALTER TABLE user_accounts_new RENAME TO user_accounts"
                     )
+                    logger.info(
+                        "Migrated the legacy user_accounts schema to SQLite "
+                        "for %d accounts",
+                        len(rows),
+                    )
                     return
                 if columns != {'qid', 'display_name'}:
                     raise UserException(
@@ -812,6 +865,13 @@ class UserManager:
                         """,
                         (qid, display_name),
                     )
+                    migrated_accounts += 1
+
+        if migrated_accounts:
+            logger.info(
+                "Migrated %d account mappings from existing account JSON files to SQLite",
+                migrated_accounts,
+            )
 
     @staticmethod
     def _parse_batch_accounts(value) -> List[str]:
@@ -871,6 +931,12 @@ class UserManager:
 
         for temporary, path in staged_files:
             os.replace(temporary, path)
+        if staged_files:
+            logger.info(
+                "Migrated batch-runner settings for %d users; removed legacy "
+                "credentials from the JSON files",
+                len(staged_files),
+            )
 
     def load_batch_runner_data(self, qid: str) -> AccountData:
         path = os.path.join(self.qid_path(qid), f"{BATCHINFO}.json")
@@ -910,7 +976,17 @@ class UserManager:
             raise UserException('用户不存在')
 
     async def migrate_game_credentials(self, qid: Optional[str] = None):
+        try:
+            await self._migrate_game_credentials(qid)
+        except Exception:
+            logger.exception("Failed to migrate legacy game credentials and sessions")
+            raise
+
+    async def _migrate_game_credentials(self, qid: Optional[str] = None):
         user_ids = [qid] if qid is not None else list(self.qids())
+        migrated_credentials = 0
+        existing_credentials = 0
+        cleaned_configs = 0
         for user_id in user_ids:
             for account in self.account_names(user_id):
                 account_path = os.path.join(
@@ -934,6 +1010,9 @@ class UserManager:
                     existing = await openbao.read_game_credentials(user_id, account)
                     if existing != {"username": data.username, "password": data.password}:
                         await openbao.write_game_credentials(user_id, account, data.username, data.password)
+                        migrated_credentials += 1
+                    else:
+                        existing_credentials += 1
                 data.username = ""
                 data.password = ""
                 temporary = account_path + ".tmp"
@@ -942,13 +1021,36 @@ class UserManager:
                     account_file.flush()
                     os.fsync(account_file.fileno())
                 os.replace(temporary, account_path)
+                cleaned_configs += 1
+                if credentials_present:
+                    logger.info(
+                        "Migrated legacy game credentials to OpenBao for account %s/%s",
+                        user_id,
+                        account,
+                    )
+                elif obsolete_batch_field:
+                    logger.info(
+                        "Removed obsolete batch_accounts field from account config %s/%s",
+                        user_id,
+                        account,
+                    )
         await self.migrate_game_sessions()
+        if cleaned_configs:
+            logger.info(
+                "Finished legacy game credential migration: %d credentials copied "
+                "to OpenBao, %d already present, %d account configs cleaned",
+                migrated_credentials,
+                existing_credentials,
+                cleaned_configs,
+            )
 
     async def migrate_game_sessions(self):
         token_dir = os.path.join(CACHE_DIR, "token")
         if not os.path.isdir(token_dir):
             return
 
+        migrated_sessions = 0
+        existing_sessions = 0
         for entry in os.scandir(token_dir):
             if (
                 not entry.is_file(follow_symlinks=False)
@@ -976,7 +1078,17 @@ class UserManager:
             existing = await openbao.read_game_session(entry.name)
             if existing is None:
                 await openbao.write_game_session(entry.name, str(uid), access_key)
+                migrated_sessions += 1
+            else:
+                existing_sessions += 1
             os.remove(entry.path)
+        if migrated_sessions or existing_sessions:
+            logger.info(
+                "Migrated legacy game login sessions to OpenBao: %d copied, "
+                "%d already present; removed local cache files",
+                migrated_sessions,
+                existing_sessions,
+            )
 
     def account_names(self, qid: str) -> List[str]:
         with self._connect() as connection:
@@ -1186,7 +1298,13 @@ class UserManager:
                 moved.append((source, destination))
             if migrations:
                 self.register_accounts(qid, [alias for _, _, alias in migrations])
+                logger.info(
+                    "Migrated %d legacy account configs for user %s",
+                    len(migrations),
+                    qid,
+                )
         except Exception:
+            logger.exception("Failed to migrate legacy account configs for user %s", qid)
             for source, destination in reversed(moved):
                 os.rename(destination, source)
             raise

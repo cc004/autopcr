@@ -26,6 +26,15 @@ class Logger:
         formatter = logging.Formatter('%(asctime)s - [%(levelname)s]: %(message)s')
         handler.setFormatter(formatter)
 
+        if not any(
+            isinstance(existing, logging.StreamHandler)
+            and not isinstance(existing, logging.FileHandler)
+            for existing in self.logger.handlers
+        ):
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(formatter)
+            self.logger.addHandler(console_handler)
+
         self.logger.addHandler(handler)
 
     def get_logger(self):
