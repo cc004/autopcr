@@ -893,10 +893,13 @@ class UserManager:
             raise AccountException(f'{BATCHINFO}.json 格式错误') from error
         if not isinstance(raw_data, dict):
             raise AccountException(f'{BATCHINFO}.json 格式错误')
-        batch_accounts = cls._parse_batch_accounts(
-            raw_data.pop('batch_accounts', [])
+        has_legacy_batch_accounts = 'batch_accounts' in raw_data
+        batch_accounts = cls._parse_batch_accounts(raw_data.pop('batch_accounts', []))
+        return (
+            AccountData.from_json(json.dumps(raw_data)),
+            batch_accounts,
+            has_legacy_batch_accounts,
         )
-        return AccountData.from_json(json.dumps(raw_data)), batch_accounts
 
     def _migrate_batch_runner_data(self):
         staged_files = []
@@ -908,10 +911,15 @@ class UserManager:
                 path = os.path.join(self.qid_path(row['qid']), f"{BATCHINFO}.json")
                 if os.path.isfile(path):
                     with open(path, 'r', encoding='utf-8') as batch_file:
-                        data, file_accounts = self._parse_batch_runner_data(
-                            batch_file.read()
+                        (
+                            data,
+                            file_accounts,
+                            has_legacy_batch_accounts,
+                        ) = self._parse_batch_runner_data(batch_file.read())
+                        current_batch_accounts = self._parse_batch_accounts(
+                            row['batch_account']
                         )
-                        if not self._parse_batch_accounts(row['batch_account']):
+                        if not current_batch_accounts and file_accounts:
                             connection.execute(
                                 "UPDATE users SET batch_account = ? WHERE qid = ?",
                                 (
@@ -920,21 +928,23 @@ class UserManager:
                                 ),
                             )
 
-                    data.username = ""
-                    data.password = ""
-                    temporary = path + ".tmp"
-                    with open(temporary, 'w', encoding='utf-8') as batch_file:
-                        batch_file.write(data.to_json())
-                        batch_file.flush()
-                        os.fsync(batch_file.fileno())
-                    staged_files.append((temporary, path))
+                        if has_legacy_batch_accounts or data.username or data.password:
+                            data.username = ""
+                            data.password = ""
+                            temporary = path + ".tmp"
+                            with open(
+                                temporary, 'w', encoding='utf-8'
+                            ) as batch_file:
+                                batch_file.write(data.to_json())
+                                batch_file.flush()
+                                os.fsync(batch_file.fileno())
+                            staged_files.append((temporary, path))
 
         for temporary, path in staged_files:
             os.replace(temporary, path)
         if staged_files:
             logger.info(
-                "Migrated batch-runner settings for %d users; removed legacy "
-                "credentials from the JSON files",
+                "Migrated legacy batch-runner JSON for %d users",
                 len(staged_files),
             )
 
@@ -942,7 +952,7 @@ class UserManager:
         path = os.path.join(self.qid_path(qid), f"{BATCHINFO}.json")
         if os.path.isfile(path):
             with open(path, 'r', encoding='utf-8') as batch_file:
-                data, _ = self._parse_batch_runner_data(batch_file.read())
+                data, _, _ = self._parse_batch_runner_data(batch_file.read())
         else:
             data = AccountData()
         data.username = ""

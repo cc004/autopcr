@@ -77,6 +77,18 @@ path "auth/approle/role/autopcr/secret-id" {
 path "auth/token/lookup-self" {
   capabilities = ["read"]
 }
+
+path "auth/token/renew-self" {
+  capabilities = ["update"]
+}
+
+path "auth/token/lookup" {
+  capabilities = ["update"]
+}
+
+path "auth/token/revoke" {
+  capabilities = ["update"]
+}
 HCL
 
 bao policy write autopcr-bootstrap "$POLICY_FILE"
