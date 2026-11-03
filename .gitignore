@@ -3,6 +3,7 @@ __pycache__/
 *.log
 result/
 cache/
+secrets/
 clan_scanner.py
 .DS_Store
 _clan_iter.py

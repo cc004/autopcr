@@ -3,8 +3,8 @@
 set -euo pipefail
 
 : "${BAO_ADDR:?Set BAO_ADDR to the external OpenBao URL}"
-: "${AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR:=/run/openbao}"
-: "${AUTOPCR_OPENBAO_APP_TOKEN_DIR:=/run/openbao-app}"
+: "${AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR:=/run/openbao/admin}"
+: "${AUTOPCR_OPENBAO_APP_TOKEN_DIR:=/run/openbao/app}"
 
 umask 077
 ADMIN_TOKEN_DIR="$(cd "$AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR" && pwd -P)"

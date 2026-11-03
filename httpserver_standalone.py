@@ -9,6 +9,11 @@ def main():
     )
     parser.add_argument("--openbao-addr")
     parser.add_argument(
+        "--openbao-enabled",
+        action="store_true",
+        help="Use OpenBao instead of the default local JSON credential/session files",
+    )
+    parser.add_argument(
         "--openbao-auth-method",
         choices=("token", "approle", "kubernetes"),
     )
@@ -23,6 +28,8 @@ def main():
     args = parser.parse_args()
 
     os.environ["AUTOPCR_HOSHINO_PLUGIN_MODE"] = "false"
+    if args.openbao_enabled:
+        os.environ["AUTOPCR_OPENBAO_ENABLED"] = "true"
     if args.openbao_addr is not None:
         os.environ["AUTOPCR_OPENBAO_ADDR"] = args.openbao_addr
     if args.openbao_auth_method is not None:

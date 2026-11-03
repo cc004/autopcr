@@ -64,6 +64,18 @@ def _openbao_setting(environment_name, config_name, default=""):
     return os.getenv(environment_name, default)
 
 
+OPENBAO_ENABLED = bool(
+    strtobool(
+        str(
+            _openbao_setting(
+                "AUTOPCR_OPENBAO_ENABLED",
+                "AUTOPCR_OPENBAO_ENABLED",
+                "false",
+            )
+        )
+    )
+)
+
 OPENBAO_ADDR = str(
     _openbao_setting(
         "AUTOPCR_OPENBAO_ADDR",
@@ -126,13 +138,13 @@ OPENBAO_K8S_JWT_FILE = str(
         "/var/run/secrets/kubernetes.io/serviceaccount/token",
     )
 ).strip()
-if OPENBAO_AUTH_METHOD not in ("token", "approle", "kubernetes"):
+if OPENBAO_ENABLED and OPENBAO_AUTH_METHOD not in ("token", "approle", "kubernetes"):
     raise ValueError(
         "AUTOPCR_OPENBAO_AUTH_METHOD must be 'token', 'approle', or 'kubernetes'"
     )
-if OPENBAO_AUTH_METHOD == "token" and not OPENBAO_TOKEN_FILE:
+if OPENBAO_ENABLED and OPENBAO_AUTH_METHOD == "token" and not OPENBAO_TOKEN_FILE:
     raise ValueError("Token authentication requires AUTOPCR_OPENBAO_TOKEN_FILE")
-if OPENBAO_AUTH_METHOD == "approle" and not (
+if OPENBAO_ENABLED and OPENBAO_AUTH_METHOD == "approle" and not (
     (OPENBAO_ROLE_ID or OPENBAO_ROLE_ID_FILE) and OPENBAO_SECRET_ID_FILE
 ):
     raise ValueError(
@@ -140,11 +152,11 @@ if OPENBAO_AUTH_METHOD == "approle" and not (
         "AUTOPCR_OPENBAO_ROLE_ID_FILE and "
         "AUTOPCR_OPENBAO_SECRET_ID_FILE"
     )
-if OPENBAO_AUTH_METHOD == "approle" and not OPENBAO_APPROLE_MOUNT:
+if OPENBAO_ENABLED and OPENBAO_AUTH_METHOD == "approle" and not OPENBAO_APPROLE_MOUNT:
     raise ValueError("AppRole authentication requires a non-empty auth mount")
-if OPENBAO_AUTH_METHOD == "kubernetes" and not OPENBAO_K8S_ROLE:
+if OPENBAO_ENABLED and OPENBAO_AUTH_METHOD == "kubernetes" and not OPENBAO_K8S_ROLE:
     raise ValueError("Kubernetes authentication requires AUTOPCR_OPENBAO_K8S_ROLE")
-if OPENBAO_AUTH_METHOD == "kubernetes" and not OPENBAO_K8S_MOUNT:
+if OPENBAO_ENABLED and OPENBAO_AUTH_METHOD == "kubernetes" and not OPENBAO_K8S_MOUNT:
     raise ValueError("Kubernetes authentication requires a non-empty auth mount")
 # Headers
 DEFAULT_HEADERS = {

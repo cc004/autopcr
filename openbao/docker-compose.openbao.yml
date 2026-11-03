@@ -1,0 +1,29 @@
+services:
+  openbao-hoshino:
+    image: openbao/openbao:2.7.2
+    container_name: openbao-hoshino
+    restart: unless-stopped
+    command: ["server", "-config=/openbao/config.hcl"]
+    environment:
+      BAO_ADDR: http://0.0.0.0:8200
+    cap_add:
+      - IPC_LOCK
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
+      - CHOWN
+      - FOWNER
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "8200:8200"
+    volumes:
+      - ./config/openbao.hcl:/openbao/config.hcl:ro
+      - data:/openbao/file
+      - logs:/openbao/logs
+
+volumes:
+  data:
+  logs:

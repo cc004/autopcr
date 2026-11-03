@@ -1,98 +1,8 @@
 services:
-  openbao:
-    image: openbao/openbao:2.7.2
-    container_name: autopcr-openbao
-    restart: ${RESTART_POLICY:-unless-stopped}
-    command: ["server", "-config=/openbao/config.hcl"]
-    environment:
-      BAO_ADDR: http://0.0.0.0:8200
-    cap_add:
-      - IPC_LOCK
-      - SETUID
-      - SETGID
-      - DAC_OVERRIDE
-      - CHOWN
-      - FOWNER
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
-    volumes:
-      - ./openbao/openbao.hcl:/openbao/config.hcl:ro
-      - autopcr_openbao_data:/openbao/file
-      - autopcr_openbao_logs:/openbao/logs
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - 'rc=0; bao status >/dev/null 2>&1 || rc=$$?; [ "$$rc" = "0" ] || [ "$$rc" = "2" ]'
-      interval: 5s
-      timeout: 5s
-      retries: 30
-      start_period: 10s
-
-  openbao-init:
-    image: openbao/openbao:2.7.2
-    container_name: autopcr-openbao-init
-    restart: ${RESTART_POLICY:-unless-stopped}
-    user: "0:0"
-    entrypoint: ["/bin/sh", "/openbao/scripts/init-and-unseal.sh"]
-    environment:
-      BAO_ADDR: http://openbao:8200
-      AUTOPCR_OPENBAO_KEY_DIR: /openbao/keys
-      AUTOPCR_OPENBAO_BOOTSTRAP_DIR: /vault-bootstrap
-    volumes:
-      - autopcr_openbao_keys:/openbao/keys
-      - autopcr_openbao_bootstrap:/vault-bootstrap
-      - ./openbao/openbao-init-and-unseal.sh:/openbao/scripts/init-and-unseal.sh:ro
-    depends_on:
-      openbao:
-        condition: service_healthy
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "test -f /vault-bootstrap/ready && test -s /vault-bootstrap/root-token",
-        ]
-      interval: 5s
-      timeout: 3s
-      retries: 60
-      start_period: 30s
-    cap_add:
-      - SETUID
-      - SETGID
-      - DAC_OVERRIDE
-      - CHOWN
-      - FOWNER
-    cap_drop:
-      - ALL
-    security_opt:
-      - no-new-privileges:true
-
-  openbao-bootstrap:
-    image: ghcr.io/cc004/autopcr:latest
-    container_name: autopcr-openbao-bootstrap
-    restart: on-failure
-    command: ["python3", "-m", "autopcr.openbao_bootstrap"]
-    environment:
-      - AUTOPCR_OPENBAO_ADDR=http://openbao:8200
-      - AUTOPCR_OPENBAO_INIT_READY_FILE=/vault-bootstrap/ready
-      - AUTOPCR_OPENBAO_BOOTSTRAP_TOKEN_FILE=/vault-bootstrap/root-token
-      - AUTOPCR_OPENBAO_TOKEN_DIR=/run/openbao
-      - AUTOPCR_OPENBAO_APPROLE_MOUNT=${AUTOPCR_OPENBAO_APPROLE_MOUNT:-approle}
-    volumes:
-      - autopcr_openbao_bootstrap:/vault-bootstrap:ro
-      - autopcr_openbao_token:/run/openbao
-    depends_on:
-      openbao-init:
-        condition: service_healthy
-
   autopcr:
     image: ghcr.io/cc004/autopcr:latest
     container_name: autopcr
     restart: ${RESTART_POLICY:-unless-stopped}
-    depends_on:
-      openbao-bootstrap:
-        condition: service_completed_successfully
     ports:
       - "${HOST_PORT:-13200}:${AUTOPCR_SERVER_PORT:-13200}"
     environment:
@@ -103,45 +13,19 @@ services:
       - AUTOPCR_SERVER_SUPERUSER=${AUTOPCR_SERVER_SUPERUSER:-}
       - AUTOPCR_PUBLIC_ADDRESS=${AUTOPCR_PUBLIC_ADDRESS:-}
       - AUTOPCR_USE_HTTPS=${AUTOPCR_USE_HTTPS:-false}
-      - AUTOPCR_OPENBAO_ADDR=${AUTOPCR_OPENBAO_ADDR:-http://openbao:8200}
-      - AUTOPCR_OPENBAO_AUTH_METHOD=${AUTOPCR_OPENBAO_AUTH_METHOD:-approle}
-      - AUTOPCR_OPENBAO_TOKEN_FILE=${AUTOPCR_OPENBAO_TOKEN_FILE:-/run/openbao/app-token}
-      - AUTOPCR_OPENBAO_ROLE_ID_FILE=/run/openbao/role-id
-      - AUTOPCR_OPENBAO_SECRET_ID_FILE=/run/openbao/secret-id
-      - AUTOPCR_OPENBAO_APPROLE_MOUNT=${AUTOPCR_OPENBAO_APPROLE_MOUNT:-approle}
       - TZ=${TZ:-Asia/Shanghai}
     volumes:
       - autopcr_cache:/app/cache
       - autopcr_result:/app/result
       - autopcr_log:/app/log
-      - autopcr_audit:/app/audit
-      - autopcr_openbao_token:/run/openbao:ro
     healthcheck:
-      test:
-        [
-          "CMD",
-          "python3",
-          "-c",
-          "import urllib.request; urllib.request.urlopen('http://localhost:${AUTOPCR_SERVER_PORT:-13200}/daily/login')",
-        ]
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:${AUTOPCR_SERVER_PORT:-13200}/daily/login')"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
 
 volumes:
-  autopcr_openbao_data:
-    driver: local
-  autopcr_openbao_keys:
-    driver: local
-  autopcr_openbao_bootstrap:
-    driver: local
-  autopcr_openbao_token:
-    driver: local
-  autopcr_openbao_logs:
-    driver: local
-  autopcr_audit:
-    driver: local
   autopcr_cache:
     driver: local
   autopcr_result:

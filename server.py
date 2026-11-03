@@ -38,7 +38,7 @@ import secrets
 from .autopcr.util.pcr_data import get_id_from_name
 import traceback
 from .autopcr.util.logger import instance as logger
-from .autopcr.constants import PUBLIC_ADDRESS as ENV_PUBLIC_ADDRESS, USE_HTTPS
+from .autopcr.constants import OPENBAO_ENABLED, PUBLIC_ADDRESS as ENV_PUBLIC_ADDRESS, USE_HTTPS
 
 address = ENV_PUBLIC_ADDRESS or None  # 环境变量AUTOPCR_PUBLIC_ADDRESS，不填则会自动尝试获取
 useHttps = bool(USE_HTTPS)
@@ -120,8 +120,9 @@ sv = Service(
 @on_startup
 async def init():
     try:
-        await openbao.connect()
-        openbao.start_background_tasks()
+        if OPENBAO_ENABLED:
+            await openbao.connect()
+            openbao.start_background_tasks()
         await db_start()
         await usermgr.migrate_game_credentials()
         from .autopcr.module.crons import queue_crons

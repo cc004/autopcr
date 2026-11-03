@@ -11,7 +11,7 @@ from ..core.sdkclient import account, platform
 from .modulemgr import ModuleManager, TaskResult, ModuleResult, eResultStatus, TaskResultInfo, ModuleResultInfo, ResultInfo
 import os, re, shutil
 from typing import Any, Dict, Generator, Iterator, List, Optional, Tuple, Union
-from ..constants import CACHE_DIR, CLAN_BATTLE_FORBID_PATH, CONFIG_PATH, OLD_CONFIG_PATH, RESULT_DIR, BSDK, CHANNEL_OPTION, SUPERUSER
+from ..constants import CACHE_DIR, CLAN_BATTLE_FORBID_PATH, CONFIG_PATH, OLD_CONFIG_PATH, RESULT_DIR, BSDK, CHANNEL_OPTION, OPENBAO_ENABLED, SUPERUSER
 from asyncio import Lock
 import json
 from copy import deepcopy
@@ -25,7 +25,7 @@ import traceback
 from ..core.clientpool import instance as clientpool, PoolClientWrapper
 from ..sdk.sdkclients import create
 from ..util.logger import instance as logger
-from ..openbao import instance as openbao, OpenBaoError
+from ..openbao import instance as openbao
 from ..openbao_audit import OpenBaoAuditContext
 
 class AccountException(Exception):
@@ -83,6 +83,10 @@ class Account(ModuleManager):
                 raise AccountException("账号不存在")
             with open(self._filename, 'r') as f:
                 self.data: AccountData = AccountData.from_json(f.read())
+            self._local_credentials = (self.data.username, self.data.password)
+            if not self.load_credentials and not OPENBAO_ENABLED:
+                self.data.username = ""
+                self.data.password = ""
         self.old_data: AccountData = deepcopy(self.data)
 
         self.qq = qid
@@ -107,13 +111,21 @@ class Account(ModuleManager):
             logger.debug(f"Acquire lock {self._filename}")
             await self._lck.acquire()
         try:
-            if self.alias != BATCHINFO and self.load_credentials:
-                credentials = await openbao.read_game_credentials(self.qq, self.alias)
+            if (
+                self.alias != BATCHINFO
+                and self.load_credentials
+                and OPENBAO_ENABLED
+            ):
+                credentials = await openbao.read_game_credentials(
+                    self.qq, self.alias
+                )
                 if credentials is not None:
                     username = credentials.get("username", "")
                     password = credentials.get("password", "")
                     if not isinstance(username, str) or not isinstance(password, str):
-                        raise OpenBaoError("OpenBao returned invalid game credentials")
+                        raise AccountException(
+                            "Credential store returned invalid game credentials"
+                        )
                     self.data.username = username
                     self.data.password = password
             self.old_data = deepcopy(self.data)
@@ -152,7 +164,7 @@ class Account(ModuleManager):
         )
         if not isinstance(self.data.username, str) or not isinstance(self.data.password, str):
             raise AccountException("账号凭据必须是字符串")
-        if credentials_changed:
+        if credentials_changed and OPENBAO_ENABLED:
             if self.data.username or self.data.password:
                 await openbao.write_game_credentials(
                     self.qq,
@@ -164,15 +176,16 @@ class Account(ModuleManager):
                 await openbao.delete_game_credentials(self.qq, self.alias)
 
         stored_data = deepcopy(self.data)
-        stored_data.username = ""
-        stored_data.password = ""
+        if OPENBAO_ENABLED:
+            stored_data.username = ""
+            stored_data.password = ""
+        elif not self.load_credentials:
+            stored_data.username, stored_data.password = self._local_credentials
         self._write_data_file(stored_data)
         self.old_data = deepcopy(self.data)
 
     def _write_data_file(self, data: Optional[AccountData] = None):
         stored_data = deepcopy(data if data is not None else self.data)
-        stored_data.username = ""
-        stored_data.password = ""
         temporary = self._filename + ".tmp"
         with open(temporary, 'w') as f:
             f.write(stored_data.to_json())
@@ -275,6 +288,8 @@ class Account(ModuleManager):
 
     async def _ensure_credentials(self):
         if self.data.username or self.data.password:
+            return
+        if not OPENBAO_ENABLED:
             return
         credentials = await openbao.read_game_credentials(self.qq, self.alias)
         if credentials is not None:
@@ -500,7 +515,8 @@ class AccountManager:
         filename = self.path(account)
         if not self._parent.has_account(self.qid, account) or not os.path.isfile(filename):
             raise AccountException("账号不存在")
-        await openbao.delete_game_credentials(self.qid, account)
+        if OPENBAO_ENABLED:
+            await openbao.delete_game_credentials(self.qid, account)
         os.remove(filename)
         self._parent.unregister_account(self.qid, account)
         if self.secret.default_account == account:
@@ -559,14 +575,21 @@ class AccountManager:
                 current_alias = alias
                 with open(self.path(alias), 'x') as f:
                     created_files.append(self.path(alias))
-                    f.write(AccountData(channel = channel).to_json())
+                    data = AccountData(
+                        username="" if OPENBAO_ENABLED else username,
+                        password="" if OPENBAO_ENABLED else password,
+                        channel=channel,
+                    )
+                    f.write(data.to_json())
             for alias, username, password, _ in acc:
                 current_alias = alias
-                if username or password:
+                if OPENBAO_ENABLED and (username or password):
                     existing = await openbao.read_game_credentials(self.qid, alias)
                     if existing is not None:
                         raise AccountException(f'账号凭据已存在: {alias}')
-                    await openbao.write_game_credentials(self.qid, alias, username, password)
+                    await openbao.write_game_credentials(
+                        self.qid, alias, username, password
+                    )
                     written_credentials.append(alias)
             self._parent.register_accounts(self.qid, [alias for alias, *_ in acc])
         except FileExistsError:
@@ -670,6 +693,7 @@ class UserManager:
                 connection.execute(
                     "ALTER TABLE users ADD COLUMN batch_account TEXT NOT NULL DEFAULT '[]'"
                 )
+        os.chmod(self.auth_db_path, 0o600)
 
     @classmethod
     def _hash_password(cls, password: str, salt: Optional[bytes] = None) -> Tuple[bytes, bytes]:
@@ -993,6 +1017,9 @@ class UserManager:
             raise
 
     async def _migrate_game_credentials(self, qid: Optional[str] = None):
+        if not OPENBAO_ENABLED:
+            return
+
         user_ids = [qid] if qid is not None else list(self.qids())
         migrated_credentials = 0
         existing_credentials = 0
@@ -1017,12 +1044,32 @@ class UserManager:
                     continue
 
                 if credentials_present:
-                    existing = await openbao.read_game_credentials(user_id, account)
-                    if existing != {"username": data.username, "password": data.password}:
-                        await openbao.write_game_credentials(user_id, account, data.username, data.password)
-                        migrated_credentials += 1
-                    else:
+                    existing = await openbao.read_game_credentials(
+                        user_id, account
+                    )
+                    credentials = {"username": data.username, "password": data.password}
+                    if existing is not None and existing != credentials:
+                        raise AccountException(
+                            f'现有凭据与旧账号配置冲突: {user_id}/{account}'
+                        )
+                    if existing is None:
+                        await openbao.write_game_credentials(
+                            user_id,
+                            account,
+                            data.username,
+                            data.password,
+                        )
+                    if (
+                        await openbao.read_game_credentials(user_id, account)
+                        != credentials
+                    ):
+                        raise AccountException(
+                            f'账号凭据迁移校验失败: {user_id}/{account}'
+                        )
+                    if existing == credentials:
                         existing_credentials += 1
+                    else:
+                        migrated_credentials += 1
                 data.username = ""
                 data.password = ""
                 temporary = account_path + ".tmp"
@@ -1034,7 +1081,7 @@ class UserManager:
                 cleaned_configs += 1
                 if credentials_present:
                     logger.info(
-                        "Migrated legacy game credentials to OpenBao for account %s/%s",
+                        "Migrated legacy game credentials for account %s/%s",
                         user_id,
                         account,
                     )
@@ -1044,17 +1091,21 @@ class UserManager:
                         user_id,
                         account,
                     )
-        await self.migrate_game_sessions()
+        await self._migrate_game_sessions()
         if cleaned_configs:
             logger.info(
                 "Finished legacy game credential migration: %d credentials copied "
-                "to OpenBao, %d already present, %d account configs cleaned",
+                "to OpenBao, %d already present, "
+                "%d account configs cleaned",
                 migrated_credentials,
                 existing_credentials,
                 cleaned_configs,
             )
 
-    async def migrate_game_sessions(self):
+    async def _migrate_game_sessions(self):
+        if not OPENBAO_ENABLED:
+            return
+
         token_dir = os.path.join(CACHE_DIR, "token")
         if not os.path.isdir(token_dir):
             return
@@ -1085,16 +1136,26 @@ class UserManager:
             ):
                 raise AccountException(f'游戏登录缓存格式错误: {entry.name}')
 
+            session_data = {"uid": str(uid), "access_key": access_key}
             existing = await openbao.read_game_session(entry.name)
             if existing is None:
-                await openbao.write_game_session(entry.name, str(uid), access_key)
+                await openbao.write_game_session(
+                    entry.name, str(uid), access_key
+                )
                 migrated_sessions += 1
-            else:
+            elif existing == session_data:
                 existing_sessions += 1
+            else:
+                raise AccountException(
+                    f'本地缓存与现有游戏 session 冲突: {entry.name}'
+                )
+            if await openbao.read_game_session(entry.name) != session_data:
+                raise AccountException(f'游戏 session 迁移校验失败: {entry.name}')
             os.remove(entry.path)
         if migrated_sessions or existing_sessions:
             logger.info(
-                "Migrated legacy game login sessions to OpenBao: %d copied, "
+                "Migrated legacy game login sessions to OpenBao: "
+                "%d copied, "
                 "%d already present; removed local cache files",
                 migrated_sessions,
                 existing_sessions,
@@ -1330,8 +1391,9 @@ class UserManager:
         if account:
             await self.load(qid).delete(account)
         else:
-            for account_name in self.account_names(qid):
-                await openbao.delete_game_credentials(qid, account_name)
+            if OPENBAO_ENABLED:
+                for account_name in self.account_names(qid):
+                    await openbao.delete_game_credentials(qid, account_name)
             shutil.rmtree(self.qid_path(qid))
             with self._connect() as connection:
                 connection.execute("DELETE FROM users WHERE qid = ?", (qid,))

@@ -13,6 +13,7 @@ services:
 
   autopcr:
     environment:
+      - AUTOPCR_OPENBAO_ENABLED=true
       - AUTOPCR_OPENBAO_ADDR=${AUTOPCR_OPENBAO_ADDR:?Set AUTOPCR_OPENBAO_ADDR to the external OpenBao URL}
       - AUTOPCR_OPENBAO_AUTH_METHOD=${AUTOPCR_OPENBAO_AUTH_METHOD:-approle}
       - AUTOPCR_OPENBAO_TOKEN_FILE=${AUTOPCR_OPENBAO_TOKEN_FILE:-/run/openbao/app-token}

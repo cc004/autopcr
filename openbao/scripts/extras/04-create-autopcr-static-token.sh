@@ -2,11 +2,20 @@
 set -euo pipefail
 
 : "${BAO_ADDR:?Set BAO_ADDR to the external OpenBao URL}"
-: "${BAO_TOKEN:?Set BAO_TOKEN to an administrator token allowed to create application tokens}"
-: "${AUTOPCR_OPENBAO_TOKEN_FILE:=/run/openbao-app-token}"
+: "${AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR:=/run/openbao/admin}"
+: "${AUTOPCR_OPENBAO_TOKEN_FILE:=/run/openbao/app/app-token}"
 
+ADMIN_TOKEN_FILE="$AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR/admin-token"
 TOKEN_FILE="$AUTOPCR_OPENBAO_TOKEN_FILE"
 TOKEN_DIR="$(dirname "$TOKEN_FILE")"
+
+if [[ ! -s "$ADMIN_TOKEN_FILE" ]]; then
+  echo "Admin token is missing: $ADMIN_TOKEN_FILE" >&2
+  exit 1
+fi
+
+export BAO_TOKEN
+BAO_TOKEN="$(<"$ADMIN_TOKEN_FILE")"
 
 umask 077
 mkdir -p "$TOKEN_DIR"

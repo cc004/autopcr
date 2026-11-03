@@ -3,7 +3,7 @@
 set -euo pipefail
 
 : "${BAO_ADDR:?Set BAO_ADDR to the external OpenBao URL}"
-: "${AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR:=/run/openbao}"
+: "${AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR:=/run/openbao/admin}"
 
 TOKEN_FILE="$AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR/admin-token"
 

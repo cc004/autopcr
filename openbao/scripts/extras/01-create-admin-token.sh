@@ -5,7 +5,7 @@ set -euo pipefail
 : "${BAO_ADDR:?Set BAO_ADDR to the external OpenBao URL}"
 : "${BAO_TOKEN:?Use the initial root token only for admin-token creation}"
 
-TOKEN_DIR="${AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR:-/run/openbao}"
+TOKEN_DIR="${AUTOPCR_OPENBAO_ADMIN_TOKEN_DIR:-/run/openbao/admin}"
 TOKEN_FILE="$TOKEN_DIR/admin-token"
 READY_FILE="$TOKEN_DIR/ready"
 
