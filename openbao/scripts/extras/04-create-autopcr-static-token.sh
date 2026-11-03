@@ -38,31 +38,45 @@ sys.exit(0 if status.get("initialized") is True
 fi
 
 if ! bao policy read autopcr >/dev/null; then
-  echo "The autopcr policy is missing; run 02-setup-autopcr-kv.sh first" >&2
+  echo "Cannot read the autopcr policy; ensure the admin token has read access to sys/policies/acl/autopcr." >&2
+  echo "If the policy is missing, run 02-setup-autopcr-kv.sh first." >&2
   exit 1
 fi
 
 TOKEN_TEMP="$(mktemp "$TOKEN_DIR/.app-token.tmp.XXXXXX")"
-trap 'rm -f "$TOKEN_TEMP"' EXIT
+TOKEN_ERROR="$(mktemp "$TOKEN_DIR/.app-token.error.XXXXXX")"
+trap 'rm -f "$TOKEN_TEMP" "$TOKEN_ERROR"' EXIT
 
-bao token create \
+if ! TOKEN_RESPONSE="$(bao token create \
   -format=json \
   -policy=autopcr \
   -no-default-policy \
   -orphan \
   -renewable=false \
   -ttl=720h \
-  -explicit-max-ttl=720h |
-  python3 -c '
+  -explicit-max-ttl=720h 2>"$TOKEN_ERROR")"; then
+  cat "$TOKEN_ERROR" >&2
+  echo "Failed to create the AutoPCR token; the admin policy needs update and sudo access to auth/token/create-orphan." >&2
+  exit 1
+fi
+
+if ! printf '%s' "$TOKEN_RESPONSE" | python3 -c '
 import json, sys
-token = json.load(sys.stdin)["auth"]["client_token"]
-if not token:
+
+try:
+    token = json.load(sys.stdin)["auth"]["client_token"]
+except (KeyError, json.JSONDecodeError, TypeError) as error:
+    raise SystemExit("OpenBao returned an invalid token creation response") from error
+if not isinstance(token, str) or not token:
     raise SystemExit("OpenBao returned an empty token")
 print(token)
-' > "$TOKEN_TEMP"
+' > "$TOKEN_TEMP"; then
+  exit 1
+fi
 
 chmod 600 "$TOKEN_TEMP"
 mv "$TOKEN_TEMP" "$TOKEN_FILE"
+rm -f "$TOKEN_ERROR"
 trap - EXIT
 
 unset BAO_TOKEN

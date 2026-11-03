@@ -13,12 +13,11 @@ umask 077
 mkdir -p "$TOKEN_DIR"
 
 if [[ -s "$TOKEN_FILE" ]]; then
-  echo "Admin token already exists: $TOKEN_FILE" >&2
-  echo "Refusing to create another token or overwrite the existing one." >&2
-  exit 1
+  ADMIN_TOKEN_EXISTS=true
+else
+  ADMIN_TOKEN_EXISTS=false
+  rm -f "$READY_FILE"
 fi
-
-rm -f "$READY_FILE"
 
 STATUS="$(bao status -format=json || true)"
 
@@ -33,9 +32,7 @@ sys.exit(0 if status.get("initialized") is True
 fi
 
 POLICY_FILE="$(mktemp)"
-TOKEN_TEMP="$(mktemp "$TOKEN_DIR/admin-token.tmp.XXXXXX")"
-
-trap 'rm -f "$POLICY_FILE" "$TOKEN_TEMP"' EXIT
+trap 'rm -f "$POLICY_FILE"' EXIT
 
 cat > "$POLICY_FILE" <<'HCL'
 # Inspect existing secrets engines and create the AutoPCR KV mount.
@@ -49,7 +46,7 @@ path "sys/mounts/autopcr" {
 
 # Create or update the AutoPCR application policy.
 path "sys/policies/acl/autopcr" {
-  capabilities = ["create", "update", "sudo"]
+  capabilities = ["create", "read", "update", "sudo"]
 }
 
 # Inspect and enable AppRole authentication.
@@ -86,12 +83,31 @@ path "auth/token/lookup" {
   capabilities = ["update"]
 }
 
+path "auth/token/create" {
+  capabilities = ["update", "sudo"]
+}
+
+path "auth/token/create-orphan" {
+  capabilities = ["update", "sudo"]
+}
+
 path "auth/token/revoke" {
   capabilities = ["update"]
 }
 HCL
 
 bao policy write autopcr-bootstrap "$POLICY_FILE"
+
+if [[ "$ADMIN_TOKEN_EXISTS" == true ]]; then
+  : > "$READY_FILE"
+  chmod 600 "$READY_FILE"
+  unset BAO_TOKEN
+  printf 'Admin policy updated; existing token retained in %s\n' "$TOKEN_FILE"
+  exit 0
+fi
+
+TOKEN_TEMP="$(mktemp "$TOKEN_DIR/admin-token.tmp.XXXXXX")"
+trap 'rm -f "$POLICY_FILE" "$TOKEN_TEMP"' EXIT
 
 bao token create \
   -format=json \
