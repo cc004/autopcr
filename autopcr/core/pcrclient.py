@@ -1154,6 +1154,42 @@ class pcrclient(apiclient):
         req.mission_type = mission_type
         return await self.request(req)
 
+    async def mre_top(self, schedule_id: int):
+        req = MreTopRequest()
+        req.schedule_id = schedule_id
+        return await self.request(req)
+
+    async def mre_battle_skip(self, schedule_id: int, quest_id: int, times: int, ticket: int):
+        req = MreBattleSkipRequest()
+        req.schedule_id = schedule_id
+        req.quest_id = quest_id
+        req.exec_skip_num = times
+        req.current_boss_ticket_num = ticket
+        return await self.request(req)
+
+    async def mre_mission_index(self, schedule_id: int):
+        req = MreMissionIndexRequest()
+        req.schedule_id = schedule_id
+        return await self.request(req)
+
+    async def mre_mission_receive(self, schedule_id: int, mission_id_list: List[int]):
+        req = MreMissionAcceptRequest()
+        req.schedule_id = schedule_id
+        req.mission_id_list = mission_id_list
+        return await self.request(req)
+
+    async def mre_gacha_index(self, schedule_id: int):
+        req = MreGachaIndexRequest()
+        req.schedule_id = schedule_id
+        return await self.request(req)
+
+    async def mre_gacha_exec_multiple(self, schedule_id: int, gacha_times: int, current_cost_num: int):
+        req = MreGachaExecMultipleRequest()
+        req.schedule_id = schedule_id
+        req.gacha_times = gacha_times
+        req.current_cost_num = current_cost_num
+        return await self.request(req)
+
     async def get_hatsune_dear_top(self, event_id: int):
         req = HatsuneDearTopRequest()
         req.event_id = event_id

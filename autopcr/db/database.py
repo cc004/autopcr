@@ -560,6 +560,29 @@ class database():
             )
 
     @lazy_property
+    def mre_schedule_by_id(self) -> Dict[int, MreSchedule]:
+        with self.dbmgr.session() as db:
+            return MreSchedule.query(db).to_dict(lambda x: x.schedule_id, lambda x: x)
+
+    @lazy_property
+    def mre_setting(self) -> Dict[int, MreSetting]:
+        with self.dbmgr.session() as db:
+            return MreSetting.query(db).to_dict(lambda x: x.mre_id, lambda x: x)
+
+    @lazy_property
+    def mre_quest_data(self) -> Dict[int, List[MreQuestDatum]]:
+        with self.dbmgr.session() as db:
+            result = defaultdict(list)
+            for quest in MreQuestDatum.query(db).to_list():
+                result[quest.mre_id].append(quest)
+            return dict(result)
+
+    @lazy_property
+    def mre_story_data(self) -> Dict[int, MreStoryDatum]:
+        with self.dbmgr.session() as db:
+            return MreStoryDatum.query(db).to_dict(lambda x: x.story_id, lambda x: x)
+
+    @lazy_property
     def campaign_beginner_data(self) -> Dict[int, CampaignBeginnerDatum]:
         with self.dbmgr.session() as db:
             return (
@@ -2403,6 +2426,12 @@ class database():
     def get_active_seven(self) -> List[SevenSchedule]:
         now = apiclient.datetime
         return flow(self.seven_schedule.values()) \
+                .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.end_time)) \
+                .to_list()
+
+    def get_active_mre_schedules(self) -> List[MreSchedule]:
+        now = apiclient.datetime
+        return flow(self.mre_schedule_by_id.values()) \
                 .where(lambda x: now >= self.parse_time(x.start_time) and now <= self.parse_time(x.end_time)) \
                 .to_list()
 
