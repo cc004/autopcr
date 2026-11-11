@@ -86,6 +86,8 @@ class datamgr(BaseModel, Component[apiclient]):
 
     def update_stamina_recover(self):
         max_stamina = db.team_info[self.team_level].max_stamina
+        if self.stamina >= max_stamina:
+            return
         now = apiclient.time
         remain = max(0, self.stamina_full_recovery_time - now + self.settings.quest.recovery_time - 1) // self.settings.quest.recovery_time
         self.stamina = max_stamina - remain

@@ -407,6 +407,9 @@ unique_equip_2_pure_memory_id = [
         117201, # 水望
         117301, # 水千
         117401, # 水裁
+        117801, # 瓜扇
+        117701, # 瓜狗
+        117901, # 瓜爆
 ]
 @conditional_execution1("very_hard_sweep_run_time", ["vh庆典"])
 @description('储备专二需求的150碎片' + ','.join(db.get_unit_name(unit_id) for unit_id in unique_equip_2_pure_memory_id))
