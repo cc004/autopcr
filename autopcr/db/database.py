@@ -635,6 +635,14 @@ class database():
                 )
 
     @lazy_property
+    def unit_talent(self) -> Dict[int, int]:
+        with self.dbmgr.session() as db:
+            return (
+                UnitTalent.query(db)
+                .to_dict(lambda x: x.unit_id, lambda x: x.talent_id)
+            )
+
+    @lazy_property
     def unit_role_data(self) -> Dict[int, int]:
         with self.dbmgr.session() as db:
             return (

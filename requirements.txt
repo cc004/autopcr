@@ -19,3 +19,9 @@ dataclasses_json~=0.6.4
 PuLP~=2.8.0
 openpyxl~=3.1.5
 networkx
+
+# JJC Bot inference, nickname parsing and simulator DTOs
+pygtrie>=2.5,<3
+zhconv>=1.4.3,<2
+numpy~=1.26.4
+onnxruntime>=1.19,<2
