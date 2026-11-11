@@ -44,7 +44,23 @@ class HttpServer:
         RateLimiter(self.quart)
         self.register_cooldowns = {}
         Compress(self.quart)
-        self.quart.secret_key = secrets.token_urlsafe(16)
+        # 会话签名密钥持久化到 cache 卷：进程每次启动随机生成会让重启/崩溃后所有登录 cookie 失效（用户被莫名登出）
+        secret_path = os.path.join(CACHE_DIR, '.secret_key')
+        secret_key = ''
+        try:
+            with open(secret_path, 'r') as f:
+                secret_key = f.read().strip()
+        except Exception:
+            pass
+        if not secret_key:
+            secret_key = secrets.token_urlsafe(32)
+            try:
+                os.makedirs(CACHE_DIR, exist_ok=True)
+                with open(secret_path, 'w') as f:
+                    f.write(secret_key)
+            except Exception:
+                pass  # 写不进则退回进程内随机：仅重启掉登录，不影响服务
+        self.quart.secret_key = secret_key
 
         self.app.register_blueprint(self.web)
         self.app.register_blueprint(self.api)
@@ -577,7 +593,14 @@ data: {ret}\n\n'''
             if os.path.exists(os.path.join(str(self.web.static_folder), path)):
                 return await send_from_directory(str(self.web.static_folder), path, mimetype=("text/javascript" if path.endswith(".js") else None))
             else:
-                return await send_from_directory(str(self.web.static_folder), 'index.html')
+                # index.html 是前端唯一无内容哈希的入口。Quart 默认 SEND_FILE_MAX_AGE_DEFAULT=12h 会把它缓存住：
+                # 前端更新后用户最长 12 小时还在跑旧 JS，且被版本校验拒绝（「后端期望前端版本为X.Y，请更新」）。
+                # no-cache 强制每次回源校验；send_from_directory 自带 ETag/条件请求，未变化直接 304，无额外开销。
+                # 带哈希的静态资源（上一个分支）不受影响，仍走默认长缓存。
+                response = await send_from_directory(str(self.web.static_folder), 'index.html')
+                response.cache_control.no_cache = True
+                response.cache_control.max_age = 0
+                return response
 
     def run_forever(self, loop):
         self.quart.register_blueprint(self.app)
