@@ -1,0 +1,23 @@
+"""Copy this file to Hoshino's config/autopcr.py and edit the values."""
+
+# OpenBao is optional and disabled by default. When enabled, AutoPCR connects
+# to this service; the Hoshino plugin does not start or unseal OpenBao.
+# When disabled, game credentials remain in account JSON files and sessions
+# remain in local cache files. When enabled, they are migrated to OpenBao.
+# Switching it off later makes OpenBao-only data unavailable.
+AUTOPCR_OPENBAO_ENABLED = False
+
+# These settings are only needed when AUTOPCR_OPENBAO_ENABLED is True.
+AUTOPCR_OPENBAO_ADDR = "https://openbao.example.com:8200"
+
+# Basic static token authentication. Manage token rotation and expiration externally.
+AUTOPCR_OPENBAO_AUTH_METHOD = "token"
+AUTOPCR_OPENBAO_TOKEN_FILE = "/path/to/openbao/app-token"
+
+# To use AppRole instead, configure these and set AUTH_METHOD to "approle".
+# Store the Secret ID in a protected file readable only by the Hoshino
+# process. Do not put the Secret ID directly in this file.
+# AUTOPCR_OPENBAO_AUTH_METHOD = "approle"
+# AUTOPCR_OPENBAO_ROLE_ID = "replace-with-role-id"
+# AUTOPCR_OPENBAO_SECRET_ID_FILE = "/path/to/openbao/secret-id"
+# AUTOPCR_OPENBAO_APPROLE_MOUNT = "approle"

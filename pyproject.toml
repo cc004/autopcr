@@ -34,7 +34,7 @@ platforms = ["linux-64", "win-64"]
 
 [tool.pixi.tasks]
 download_web = { cmd = "python3 _download_web.py" }
-server = { cmd = "python3 _httpserver_test.py" }
+server = { cmd = "python3 httpserver_standalone.py" }
 
 [tool.pixi.dependencies]
 python = "3.10.*"

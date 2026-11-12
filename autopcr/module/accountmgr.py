@@ -5,22 +5,28 @@ from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json
 from werkzeug.exceptions import Forbidden
 from copy import copy
+from contextlib import contextmanager
 
 from ..core.sdkclient import account, platform
 from .modulemgr import ModuleManager, TaskResult, ModuleResult, eResultStatus, TaskResultInfo, ModuleResultInfo, ResultInfo
 import os, re, shutil
-from typing import Any, Dict, Iterator, List, Tuple, Union
-from ..constants import CLAN_BATTLE_FORBID_PATH, CONFIG_PATH, OLD_CONFIG_PATH, RESULT_DIR, BSDK, CHANNEL_OPTION, SUPERUSER
+from typing import Any, Dict, Generator, Iterator, List, Optional, Tuple, Union
+from ..constants import CACHE_DIR, CLAN_BATTLE_FORBID_PATH, CONFIG_PATH, OLD_CONFIG_PATH, RESULT_DIR, BSDK, CHANNEL_OPTION, OPENBAO_ENABLED, SUPERUSER
 from asyncio import Lock
 import json
 from copy import deepcopy
 import hashlib
+import hmac
+import secrets
+import sqlite3
 from ..db.database import db
 import datetime
 import traceback
 from ..core.clientpool import instance as clientpool, PoolClientWrapper
 from ..sdk.sdkclients import create
 from ..util.logger import instance as logger
+from ..openbao import instance as openbao
+from ..openbao_audit import OpenBaoAuditContext
 
 class AccountException(Exception):
     pass
@@ -40,7 +46,6 @@ class AccountData:
     config: Dict[str, Any] = field(default_factory=dict)
     daily_result: List[TaskResultInfo] = field(default_factory=list)
     single_result: Dict[str, List[ModuleResultInfo]] = field(default_factory=dict)
-    batch_accounts: List[str] = field(default_factory=list)
 
 @dataclass_json
 @dataclass
@@ -56,34 +61,80 @@ BATCHINFO = "BATCH_RUNNER"
 class Account(ModuleManager):
     _account_locks: Dict[str, Lock] = dict()
 
-    def __init__(self, parent: 'AccountManager', qid: str, account: str, readonly: bool = False):
+    def __init__(
+        self,
+        parent: 'AccountManager',
+        qid: str,
+        account: str,
+        readonly: bool = False,
+        load_credentials: bool = True,
+    ):
         self._filename = parent.path(account)
         self._lck = Account._account_locks.setdefault(self._filename, Lock())
         self._parent = parent
         self.readonly = readonly
+        self.load_credentials = load_credentials
         self._id = hashlib.md5(account.encode('utf-8')).hexdigest()
 
-        if not os.path.exists(self._filename):
-            if account == BATCHINFO:
-                with open(self._filename, 'w') as f:
-                    f.write(AccountData().to_json())
-            else:
+        if account == BATCHINFO:
+            self.data = parent._parent.load_batch_runner_data(qid)
+        else:
+            if not os.path.exists(self._filename):
                 raise AccountException("账号不存在")
-
-        with open(self._filename, 'r') as f:
-            self.data: AccountData = AccountData.from_json(f.read())
-            self.old_data: AccountData = deepcopy(self.data)
+            with open(self._filename, 'r') as f:
+                self.data: AccountData = AccountData.from_json(f.read())
+            self._local_credentials = (self.data.username, self.data.password)
+            if not self.load_credentials and not OPENBAO_ENABLED:
+                self.data.username = ""
+                self.data.password = ""
+        self.old_data: AccountData = deepcopy(self.data)
 
         self.qq = qid
         self.alias = account
         self.token = f"{self.qq}_{self.alias}"
         super().__init__(deepcopy(self.data.config))
 
+    @property
+    def batch_accounts(self) -> List[str]:
+        if self.alias != BATCHINFO:
+            return []
+        return self._parent._parent.get_batch_accounts(self.qq)
+
+    @batch_accounts.setter
+    def batch_accounts(self, accounts: List[str]):
+        if self.alias != BATCHINFO:
+            raise AccountException("只有批量账号可以设置批量账号列表")
+        self._parent._parent.save_batch_accounts(self.qq, accounts)
+
     async def _do_aenter(self):
         if not self.readonly:
             logger.debug(f"Acquire lock {self._filename}")
             await self._lck.acquire()
-            await super().__aenter__()
+        try:
+            if (
+                self.alias != BATCHINFO
+                and self.load_credentials
+                and OPENBAO_ENABLED
+            ):
+                credentials = await openbao.read_game_credentials(
+                    self.qq, self.alias
+                )
+                if credentials is not None:
+                    username = credentials.get("username", "")
+                    password = credentials.get("password", "")
+                    if not isinstance(username, str) or not isinstance(password, str):
+                        raise AccountException(
+                            "Credential store returned invalid game credentials"
+                        )
+                    self.data.username = username
+                    self.data.password = password
+            self.old_data = deepcopy(self.data)
+            if not self.readonly:
+                await super().__aenter__()
+        except Exception:
+            if not self.readonly:
+                self._lck.release()
+            raise
         return self
 
     async def __aenter__(self):
@@ -91,15 +142,56 @@ class Account(ModuleManager):
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if not self.readonly:
-            await super().__aexit__(exc_type, exc_val, exc_tb)
-            if self.data != self.old_data:
-                await self.save_data()
-            self._lck.release()
+            try:
+                await super().__aexit__(exc_type, exc_val, exc_tb)
+                if self.data != self.old_data:
+                    await self.save_data()
+            finally:
+                self._lck.release()
             logger.debug(f"Release lock {self._filename}")
 
     async def save_data(self):
-        with open(self._filename, 'w') as f:
-            f.write(self.data.to_json())
+        if self.alias == BATCHINFO:
+            self._write_data_file()
+            self.old_data = deepcopy(self.data)
+            return
+
+        if self.alias != BATCHINFO and not self._parent._parent.has_account(self.qq, self.alias):
+            raise AccountException("账号不存在")
+        credentials_changed = (
+            self.data.username != self.old_data.username
+            or self.data.password != self.old_data.password
+        )
+        if not isinstance(self.data.username, str) or not isinstance(self.data.password, str):
+            raise AccountException("账号凭据必须是字符串")
+        if credentials_changed and OPENBAO_ENABLED:
+            if self.data.username or self.data.password:
+                await openbao.write_game_credentials(
+                    self.qq,
+                    self.alias,
+                    self.data.username,
+                    self.data.password,
+                )
+            else:
+                await openbao.delete_game_credentials(self.qq, self.alias)
+
+        stored_data = deepcopy(self.data)
+        if OPENBAO_ENABLED:
+            stored_data.username = ""
+            stored_data.password = ""
+        elif not self.load_credentials:
+            stored_data.username, stored_data.password = self._local_credentials
+        self._write_data_file(stored_data)
+        self.old_data = deepcopy(self.data)
+
+    def _write_data_file(self, data: Optional[AccountData] = None):
+        stored_data = deepcopy(data if data is not None else self.data)
+        temporary = self._filename + ".tmp"
+        with open(temporary, 'w') as f:
+            f.write(stored_data.to_json())
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temporary, self._filename)
 
     async def push_result(self, result_list: List[Any], result: ResultInfo) -> List[Any]:
         while len(result_list) >= 4:
@@ -179,21 +271,45 @@ class Account(ModuleManager):
         return await self.get_android_client()
 
     async def get_ios_client(self) -> PoolClientWrapper: # Header TODO
-        client = await clientpool.get_client(create(self.data.channel, account(
-            self.data.username,
-            self.data.password,
-            platform.IOS,
-            self._parent.farmer
-        )))
+        await self._ensure_credentials()
+        client = await clientpool.get_client(
+            create(
+                self.data.channel,
+                account(
+                    self.data.username,
+                    self.data.password,
+                    platform.IOS,
+                    self._parent.farmer,
+                ),
+            ),
+            audit_context=OpenBaoAuditContext(self.qq, self.alias),
+        )
         return client
 
+    async def _ensure_credentials(self):
+        if self.data.username or self.data.password:
+            return
+        if not OPENBAO_ENABLED:
+            return
+        credentials = await openbao.read_game_credentials(self.qq, self.alias)
+        if credentials is not None:
+            self.data.username = credentials.get("username", "")
+            self.data.password = credentials.get("password", "")
+
     async def get_android_client(self) -> PoolClientWrapper:
-        client = await clientpool.get_client(create(self.data.channel, account(
-            self.data.username,
-            self.data.password,
-            platform.Android,
-            self._parent.farmer
-        )))
+        await self._ensure_credentials()
+        client = await clientpool.get_client(
+            create(
+                self.data.channel,
+                account(
+                    self.data.username,
+                    self.data.password,
+                    platform.Android,
+                    self._parent.farmer,
+                ),
+            ),
+            audit_context=OpenBaoAuditContext(self.qq, self.alias),
+        )
         return client
 
     def generate_info(self):
@@ -225,8 +341,8 @@ class Account(ModuleManager):
         info = super().generate_modules_info(key)
         return info
 
-    def delete(self):
-        self._parent.delete(self.alias)
+    async def delete(self):
+        await self._parent.delete(self.alias)
 
     def is_clan_battle_forbidden(self):
         username = self.data.username.lower()
@@ -238,7 +354,9 @@ class AccountBatch(Account):
         if force_use_all:
             self.enable_account = sorted(list(self._parent.accounts()))
         else:
-            self.enable_account = sorted(set([x for x in self.data.batch_accounts]) & set(self._parent.accounts()))
+            self.enable_account = sorted(
+                set(self.batch_accounts) & set(self._parent.accounts())
+            )
 
     def generate_info(self):
         accounts = list(self.enable_account)
@@ -310,9 +428,8 @@ class AccountManager:
         self.readonly = readonly
         self._lck = AccountManager._user_locks.setdefault(self.root, Lock())
         
-        with open(self.root + '/secret', 'r') as f:
-            self.secret: UserData = UserData.from_json(f.read())
-            self.old_secret = deepcopy(self.secret)
+        self.secret = parent.get_user_data(qid)
+        self.old_secret = deepcopy(self.secret)
 
         self.secret.clan |= self.qid.startswith('g')
 
@@ -323,26 +440,33 @@ class AccountManager:
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if not self.readonly:
-            if self.secret != self.old_secret:
-                self.save_secret()
-            self._lck.release()
+            try:
+                if self.secret != self.old_secret:
+                    self.save_secret()
+            finally:
+                self._lck.release()
 
     @property
     def farmer(self) -> bool:
         return not self.secret.clan and self.account_count() > 10
 
     def create_account(self, account: str) -> Account:
-        if not AccountManager.pathsyntax.fullmatch(account):
+        if not AccountManager.pathsyntax.fullmatch(account) or account.startswith(BATCHINFO):
             raise AccountException(f'非法账户名{account}')
-        if account in self.accounts():
-            raise AccountException('账号已存在')
-        with open(self.path(account), 'w') as f:
-            f.write(AccountData().to_json())
+        try:
+            with open(self.path(account), 'x') as f:
+                f.write(AccountData().to_json())
+            self._parent.register_accounts(self.qid, [account])
+        except FileExistsError as error:
+            raise AccountException('账号已存在') from error
+        except Exception:
+            if os.path.exists(self.path(account)):
+                os.remove(self.path(account))
+            raise
         return self.load(account)
 
     def save_secret(self):
-        with open(self.root + '/secret', 'w') as f:
-            f.write(self.secret.to_json())
+        self._parent.save_user_data(self.qid, self.secret)
 
     def set_default_account(self, account: str):
         if account not in self.accounts():
@@ -350,12 +474,18 @@ class AccountManager:
         self.secret.default_account = account
 
     def set_password(self, password: str):
-        self.secret.password = password
+        self._parent.set_password(self.qid, password)
 
     def validate_password(self, password: str) -> bool:
-        return self.secret.password == password
+        return self._parent.validate_password(self.qid, password)
 
-    def load(self, account: str = "", readonly = False, force_use_all: bool = False) -> Account:
+    def load(
+        self,
+        account: str = "",
+        readonly=False,
+        force_use_all: bool = False,
+        load_credentials: bool = True,
+    ) -> Account:
         if not AccountManager.pathsyntax.fullmatch(account):
             raise AccountException(f'非法账户名{account}')
         if account == BATCHINFO:
@@ -366,32 +496,47 @@ class AccountManager:
             account = list(self.accounts())[0]
         if not account:
             raise AccountException('No default account')
-        return Account(self, self.qid, account, readonly)
+        if account not in self.accounts():
+            raise AccountException("账号不存在")
+        return Account(
+            self,
+            self.qid,
+            account,
+            readonly,
+            load_credentials=load_credentials,
+        )
 
     def path(self, account: str) -> str:
         return os.path.join(self.root, account + '.json')
 
-    def delete(self, account: str): 
+    async def delete(self, account: str):
         if not AccountManager.pathsyntax.fullmatch(account):
             raise AccountException(f'非法账户名{account}')
-        os.remove(self.path(account))
+        filename = self.path(account)
+        if not self._parent.has_account(self.qid, account) or not os.path.isfile(filename):
+            raise AccountException("账号不存在")
+        if OPENBAO_ENABLED:
+            await openbao.delete_game_credentials(self.qid, account)
+        os.remove(filename)
+        self._parent.unregister_account(self.qid, account)
+        if self.secret.default_account == account:
+            self.secret.default_account = ""
+            self.save_secret()
 
-    def delete_all_accounts(self):
+    async def delete_all_accounts(self):
         for account in self.accounts():
-            self.delete(account)
+            await self.delete(account)
 
-    def delete_mgr(self):
-        self._parent.delete(self.qid)
+    async def delete_mgr(self):
+        await self._parent.delete(self.qid)
+        self.old_secret = deepcopy(self.secret)
 
     @property
     def default_account(self) -> str:
         return self.secret.default_account
 
     def accounts(self) -> Iterator[str]:
-        account_files = sorted(os.listdir(self.root))
-        for fn in account_files:
-            if fn.endswith('.json') and not fn.startswith(BATCHINFO):
-                yield fn[:-5]
+        yield from self._parent.account_names(self.qid)
 
     def account_count(self) -> int:
         return sum(1 for _ in self.accounts())
@@ -406,7 +551,7 @@ class AccountManager:
                 continue
             alias, username, password, *channel = line.split('\t')
 
-            if not AccountManager.pathsyntax.fullmatch(alias):
+            if not AccountManager.pathsyntax.fullmatch(alias) or alias.startswith(BATCHINFO):
                 ok = False
                 msg.append(f'非法昵称{alias}')
             if alias in exist_accounts:
@@ -422,9 +567,42 @@ class AccountManager:
         if not ok:
             return False, '\n'.join(msg)
 
-        for alias, username, password, channel in acc:
-            with open(self.path(alias), 'w') as f:
-                f.write(AccountData(username = username, password = password, channel = channel).to_json())
+        created_files = []
+        written_credentials = []
+        current_alias = ""
+        try:
+            for alias, username, password, channel in acc:
+                current_alias = alias
+                with open(self.path(alias), 'x') as f:
+                    created_files.append(self.path(alias))
+                    data = AccountData(
+                        username="" if OPENBAO_ENABLED else username,
+                        password="" if OPENBAO_ENABLED else password,
+                        channel=channel,
+                    )
+                    f.write(data.to_json())
+            for alias, username, password, _ in acc:
+                current_alias = alias
+                if OPENBAO_ENABLED and (username or password):
+                    existing = await openbao.read_game_credentials(self.qid, alias)
+                    if existing is not None:
+                        raise AccountException(f'账号凭据已存在: {alias}')
+                    await openbao.write_game_credentials(
+                        self.qid, alias, username, password
+                    )
+                    written_credentials.append(alias)
+            self._parent.register_accounts(self.qid, [alias for alias, *_ in acc])
+        except FileExistsError:
+            for filename in created_files:
+                os.remove(filename)
+            return False, f'昵称对应的JSON文件已存在: {current_alias}'
+        except Exception:
+            for alias in written_credentials:
+                await openbao.delete_game_credentials(self.qid, alias)
+            for filename in created_files:
+                if os.path.exists(filename):
+                    os.remove(filename)
+            raise
         return True, f'成功导入{len(acc)}个账号'
 
     async def generate_info(self):
@@ -454,14 +632,643 @@ class AccountManager:
 
 class UserManager:
     pathsyntax = re.compile(r'g?\d{5,12}')
+    PASSWORD_ITERATIONS = 600_000
+    PASSWORD_SALT_BYTES = 16
 
     def __init__(self, root: str):
         self.root = root
+        self.auth_db_path = os.path.join(root, 'users.db')
         self.clan_battle_forbidden = set()
 
-        # 初始不存在root目录，创建一下
         os.makedirs(self.root, exist_ok=True)
+        self._initialize_auth_db()
+        self._migrate_legacy_users()
+        for description, migration in (
+            ("account mappings", self._initialize_account_mapping),
+            ("batch-runner data", self._migrate_batch_runner_data),
+        ):
+            try:
+                migration()
+            except Exception:
+                logger.exception("Startup migration failed for %s", description)
+                raise
         self.load_clan_battle_forbidden()
+
+    @contextmanager
+    def _connect(self) -> Generator[sqlite3.Connection, None, None]:
+        connection = sqlite3.connect(self.auth_db_path, timeout=30)
+        connection.row_factory = sqlite3.Row
+        connection.execute("PRAGMA busy_timeout = 30000")
+        connection.execute("PRAGMA foreign_keys = ON")
+        try:
+            yield connection
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def _initialize_auth_db(self):
+        with self._connect() as connection:
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS users (
+                    qid TEXT PRIMARY KEY,
+                    password_hash BLOB NOT NULL,
+                    password_salt BLOB NOT NULL,
+                    password_iterations INTEGER NOT NULL,
+                    default_account TEXT NOT NULL DEFAULT '',
+                    clan INTEGER NOT NULL DEFAULT 0,
+                    admin INTEGER NOT NULL DEFAULT 0,
+                    disabled INTEGER NOT NULL DEFAULT 0
+                )
+                """
+            )
+            columns = {
+                row['name']
+                for row in connection.execute("PRAGMA table_info(users)").fetchall()
+            }
+            if 'batch_account' not in columns:
+                connection.execute(
+                    "ALTER TABLE users ADD COLUMN batch_account TEXT NOT NULL DEFAULT '[]'"
+                )
+        os.chmod(self.auth_db_path, 0o600)
+
+    @classmethod
+    def _hash_password(cls, password: str, salt: Optional[bytes] = None) -> Tuple[bytes, bytes]:
+        salt = salt or secrets.token_bytes(cls.PASSWORD_SALT_BYTES)
+        password_hash = hashlib.pbkdf2_hmac(
+            'sha256',
+            password.encode('utf-8'),
+            salt,
+            cls.PASSWORD_ITERATIONS,
+        )
+        return salt, password_hash
+
+    def _migrate_legacy_users(self):
+        legacy_users = [
+            qid for qid in os.listdir(self.root)
+            if os.path.isdir(self.qid_path(qid))
+            and os.path.isfile(os.path.join(self.qid_path(qid), 'secret'))
+        ]
+        if not legacy_users:
+            return
+
+        logger.info(
+            "Found %d legacy plaintext user credential files; migrating to SQLite",
+            len(legacy_users),
+        )
+        migrated_users = 0
+        removed_legacy_files = 0
+        for qid in legacy_users:
+            legacy_path = os.path.join(self.qid_path(qid), 'secret')
+
+            try:
+                migrated = False
+                with self._connect() as connection:
+                    connection.execute("BEGIN IMMEDIATE")
+                    existing = connection.execute(
+                        "SELECT 1 FROM users WHERE qid = ?", (qid,)
+                    ).fetchone()
+                    if existing is None:
+                        with open(legacy_path, 'r') as legacy_file:
+                            legacy_data = UserData.from_json(legacy_file.read())
+                        salt, password_hash = self._hash_password(legacy_data.password)
+                        connection.execute(
+                            """
+                            INSERT INTO users (
+                                qid, password_hash, password_salt, password_iterations,
+                                default_account, clan, admin, disabled
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                            """,
+                            (
+                                qid,
+                                password_hash,
+                                salt,
+                                self.PASSWORD_ITERATIONS,
+                                legacy_data.default_account,
+                                int(legacy_data.clan or qid.startswith('g')),
+                                int(legacy_data.admin),
+                                int(legacy_data.disabled),
+                            ),
+                        )
+                        migrated = True
+
+                if migrated:
+                    migrated_users += 1
+                    logger.info(
+                        "Migrated legacy user credentials to SQLite for user %s",
+                        qid,
+                    )
+                else:
+                    logger.info(
+                        "SQLite credentials already exist for user %s; "
+                        "removing the legacy plaintext file",
+                        qid,
+                    )
+
+                os.remove(legacy_path)
+                removed_legacy_files += 1
+            except FileNotFoundError:
+                # Another server process may have completed this migration.
+                pass
+            except Exception:
+                logger.exception(
+                    "Failed to migrate legacy user credentials for user %s",
+                    qid,
+                )
+                raise
+
+        logger.info(
+            "Finished legacy user credential migration: %d users imported, "
+            "%d plaintext files removed",
+            migrated_users,
+            removed_legacy_files,
+        )
+
+    def _initialize_account_mapping(self):
+        migrated_accounts = 0
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            table_exists = connection.execute(
+                """
+                SELECT name FROM sqlite_master
+                WHERE type = 'table' AND name = 'user_accounts'
+                """
+            ).fetchone() is not None
+            if table_exists:
+                columns = {
+                    row['name']
+                    for row in connection.execute(
+                        "PRAGMA table_info(user_accounts)"
+                    ).fetchall()
+                }
+                if columns == {'qid', 'filename', 'display_name'}:
+                    rows = connection.execute(
+                        """
+                        SELECT qid, filename, display_name
+                        FROM user_accounts
+                        """
+                    ).fetchall()
+                    for row in rows:
+                        if (
+                            row['filename'] != f"{row['display_name']}.json"
+                            or not AccountManager.pathsyntax.fullmatch(
+                                row['display_name']
+                            )
+                        ):
+                            raise UserException(
+                                "账号映射无法安全迁移: "
+                                f"{row['qid']}/{row['display_name']}"
+                            )
+                    connection.execute(
+                        """
+                        CREATE TABLE user_accounts_new (
+                            qid TEXT NOT NULL REFERENCES users(qid) ON DELETE CASCADE,
+                            display_name TEXT NOT NULL,
+                            PRIMARY KEY (qid, display_name)
+                        )
+                        """
+                    )
+                    connection.executemany(
+                        """
+                        INSERT INTO user_accounts_new (qid, display_name)
+                        VALUES (?, ?)
+                        """,
+                        [(row['qid'], row['display_name']) for row in rows],
+                    )
+                    connection.execute("DROP TABLE user_accounts")
+                    connection.execute(
+                        "ALTER TABLE user_accounts_new RENAME TO user_accounts"
+                    )
+                    logger.info(
+                        "Migrated the legacy user_accounts schema to SQLite "
+                        "for %d accounts",
+                        len(rows),
+                    )
+                    return
+                if columns != {'qid', 'display_name'}:
+                    raise UserException(
+                        "user_accounts 表结构不受支持，无法自动迁移"
+                    )
+
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS user_accounts (
+                    qid TEXT NOT NULL REFERENCES users(qid) ON DELETE CASCADE,
+                    display_name TEXT NOT NULL,
+                    PRIMARY KEY (qid, display_name)
+                )
+                """
+            )
+            if table_exists:
+                return
+
+            for qid_row in connection.execute("SELECT qid FROM users").fetchall():
+                qid = qid_row['qid']
+                user_root = self.qid_path(qid)
+                if not os.path.isdir(user_root):
+                    continue
+                filenames = sorted(
+                    filename for filename in os.listdir(user_root)
+                    if filename.endswith('.json') and not filename.startswith(BATCHINFO)
+                )
+                display_names = set()
+                for filename in filenames:
+                    display_name = filename[:-5]
+                    if not AccountManager.pathsyntax.fullmatch(display_name):
+                        raise UserException(f'非法账户名{display_name}')
+                    if display_name in display_names:
+                        raise UserException(f'用户{qid}下存在重复账号名{display_name}')
+                    display_names.add(display_name)
+                    connection.execute(
+                        """
+                        INSERT INTO user_accounts (qid, display_name)
+                        VALUES (?, ?)
+                        """,
+                        (qid, display_name),
+                    )
+                    migrated_accounts += 1
+
+        if migrated_accounts:
+            logger.info(
+                "Migrated %d account mappings from existing account JSON files to SQLite",
+                migrated_accounts,
+            )
+
+    @staticmethod
+    def _parse_batch_accounts(value) -> List[str]:
+        try:
+            accounts = json.loads(value) if isinstance(value, str) else value
+        except json.JSONDecodeError as error:
+            raise AccountException("批量账号列表格式错误") from error
+        if not isinstance(accounts, list) or any(
+            not isinstance(account, str) for account in accounts
+        ):
+            raise AccountException("批量账号列表格式错误")
+        return accounts
+
+    @classmethod
+    def _parse_batch_runner_data(cls, payload: str):
+        try:
+            raw_data = json.loads(payload)
+        except json.JSONDecodeError as error:
+            raise AccountException(f'{BATCHINFO}.json 格式错误') from error
+        if not isinstance(raw_data, dict):
+            raise AccountException(f'{BATCHINFO}.json 格式错误')
+        has_legacy_batch_accounts = 'batch_accounts' in raw_data
+        batch_accounts = cls._parse_batch_accounts(raw_data.pop('batch_accounts', []))
+        return (
+            AccountData.from_json(json.dumps(raw_data)),
+            batch_accounts,
+            has_legacy_batch_accounts,
+        )
+
+    def _migrate_batch_runner_data(self):
+        staged_files = []
+        with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            for row in connection.execute(
+                "SELECT qid, batch_account FROM users"
+            ).fetchall():
+                path = os.path.join(self.qid_path(row['qid']), f"{BATCHINFO}.json")
+                if os.path.isfile(path):
+                    with open(path, 'r', encoding='utf-8') as batch_file:
+                        (
+                            data,
+                            file_accounts,
+                            has_legacy_batch_accounts,
+                        ) = self._parse_batch_runner_data(batch_file.read())
+                        current_batch_accounts = self._parse_batch_accounts(
+                            row['batch_account']
+                        )
+                        if not current_batch_accounts and file_accounts:
+                            connection.execute(
+                                "UPDATE users SET batch_account = ? WHERE qid = ?",
+                                (
+                                    json.dumps(file_accounts, ensure_ascii=False),
+                                    row['qid'],
+                                ),
+                            )
+
+                        if has_legacy_batch_accounts or data.username or data.password:
+                            data.username = ""
+                            data.password = ""
+                            temporary = path + ".tmp"
+                            with open(
+                                temporary, 'w', encoding='utf-8'
+                            ) as batch_file:
+                                batch_file.write(data.to_json())
+                                batch_file.flush()
+                                os.fsync(batch_file.fileno())
+                            staged_files.append((temporary, path))
+
+        for temporary, path in staged_files:
+            os.replace(temporary, path)
+        if staged_files:
+            logger.info(
+                "Migrated legacy batch-runner JSON for %d users",
+                len(staged_files),
+            )
+
+    def load_batch_runner_data(self, qid: str) -> AccountData:
+        path = os.path.join(self.qid_path(qid), f"{BATCHINFO}.json")
+        if os.path.isfile(path):
+            with open(path, 'r', encoding='utf-8') as batch_file:
+                data, _, _ = self._parse_batch_runner_data(batch_file.read())
+        else:
+            data = AccountData()
+        data.username = ""
+        data.password = ""
+        return data
+
+    def get_batch_accounts(self, qid: str) -> List[str]:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT batch_account FROM users WHERE qid = ?",
+                (qid,),
+            ).fetchone()
+        if row is None:
+            raise UserException('用户不存在')
+        return self._parse_batch_accounts(row['batch_account'])
+
+    def save_batch_accounts(self, qid: str, accounts: List[str]):
+        if not isinstance(accounts, list) or any(
+            not isinstance(account, str) for account in accounts
+        ):
+            raise AccountException("批量账号列表格式错误")
+        with self._connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE users SET batch_account = ?
+                WHERE qid = ?
+                """,
+                (json.dumps(accounts, ensure_ascii=False), qid),
+            )
+        if cursor.rowcount == 0:
+            raise UserException('用户不存在')
+
+    async def migrate_game_credentials(self, qid: Optional[str] = None):
+        try:
+            await self._migrate_game_credentials(qid)
+        except Exception:
+            logger.exception("Failed to migrate legacy game credentials and sessions")
+            raise
+
+    async def _migrate_game_credentials(self, qid: Optional[str] = None):
+        if not OPENBAO_ENABLED:
+            return
+
+        user_ids = [qid] if qid is not None else list(self.qids())
+        migrated_credentials = 0
+        existing_credentials = 0
+        cleaned_configs = 0
+        for user_id in user_ids:
+            for account in self.account_names(user_id):
+                account_path = os.path.join(
+                    self.qid_path(user_id),
+                    f"{account}.json",
+                )
+                with open(account_path, 'r') as account_file:
+                    raw_data = json.load(account_file)
+                if not isinstance(raw_data, dict):
+                    raise AccountException(f'账号配置格式错误: {user_id}/{account}')
+                obsolete_batch_field = 'batch_accounts' in raw_data
+                raw_data.pop('batch_accounts', None)
+                data = AccountData.from_json(json.dumps(raw_data))
+                if not isinstance(data.username, str) or not isinstance(data.password, str):
+                    raise AccountException(f'账号凭据格式错误: {user_id}/{account}')
+                credentials_present = bool(data.username or data.password)
+                if not credentials_present and not obsolete_batch_field:
+                    continue
+
+                if credentials_present:
+                    existing = await openbao.read_game_credentials(
+                        user_id, account
+                    )
+                    credentials = {"username": data.username, "password": data.password}
+                    if existing is not None and existing != credentials:
+                        raise AccountException(
+                            f'现有凭据与旧账号配置冲突: {user_id}/{account}'
+                        )
+                    if existing is None:
+                        await openbao.write_game_credentials(
+                            user_id,
+                            account,
+                            data.username,
+                            data.password,
+                        )
+                    if (
+                        await openbao.read_game_credentials(user_id, account)
+                        != credentials
+                    ):
+                        raise AccountException(
+                            f'账号凭据迁移校验失败: {user_id}/{account}'
+                        )
+                    if existing == credentials:
+                        existing_credentials += 1
+                    else:
+                        migrated_credentials += 1
+                data.username = ""
+                data.password = ""
+                temporary = account_path + ".tmp"
+                with open(temporary, 'w') as account_file:
+                    account_file.write(data.to_json())
+                    account_file.flush()
+                    os.fsync(account_file.fileno())
+                os.replace(temporary, account_path)
+                cleaned_configs += 1
+                if credentials_present:
+                    logger.info(
+                        "Migrated legacy game credentials for account %s/%s",
+                        user_id,
+                        account,
+                    )
+                elif obsolete_batch_field:
+                    logger.info(
+                        "Removed obsolete batch_accounts field from account config %s/%s",
+                        user_id,
+                        account,
+                    )
+        await self._migrate_game_sessions()
+        if cleaned_configs:
+            logger.info(
+                "Finished legacy game credential migration: %d credentials copied "
+                "to OpenBao, %d already present, "
+                "%d account configs cleaned",
+                migrated_credentials,
+                existing_credentials,
+                cleaned_configs,
+            )
+
+    async def _migrate_game_sessions(self):
+        if not OPENBAO_ENABLED:
+            return
+
+        token_dir = os.path.join(CACHE_DIR, "token")
+        if not os.path.isdir(token_dir):
+            return
+
+        migrated_sessions = 0
+        existing_sessions = 0
+        for entry in os.scandir(token_dir):
+            if (
+                not entry.is_file(follow_symlinks=False)
+                or not re.fullmatch(r"[a-f0-9]{32}", entry.name)
+            ):
+                continue
+            with open(entry.path, "r") as session_file:
+                try:
+                    session = json.load(session_file)
+                except json.JSONDecodeError as error:
+                    raise AccountException(
+                        f'游戏登录缓存格式错误: {entry.name}'
+                    ) from error
+            if not isinstance(session, dict):
+                raise AccountException(f'游戏登录缓存格式错误: {entry.name}')
+            uid = session.get("uid")
+            access_key = session.get("access_key")
+            if (
+                not isinstance(uid, (str, int))
+                or isinstance(uid, bool)
+                or not isinstance(access_key, str)
+            ):
+                raise AccountException(f'游戏登录缓存格式错误: {entry.name}')
+
+            session_data = {"uid": str(uid), "access_key": access_key}
+            existing = await openbao.read_game_session(entry.name)
+            if existing is None:
+                await openbao.write_game_session(
+                    entry.name, str(uid), access_key
+                )
+                migrated_sessions += 1
+            elif existing == session_data:
+                existing_sessions += 1
+            else:
+                raise AccountException(
+                    f'本地缓存与现有游戏 session 冲突: {entry.name}'
+                )
+            if await openbao.read_game_session(entry.name) != session_data:
+                raise AccountException(f'游戏 session 迁移校验失败: {entry.name}')
+            os.remove(entry.path)
+        if migrated_sessions or existing_sessions:
+            logger.info(
+                "Migrated legacy game login sessions to OpenBao: "
+                "%d copied, "
+                "%d already present; removed local cache files",
+                migrated_sessions,
+                existing_sessions,
+            )
+
+    def account_names(self, qid: str) -> List[str]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT display_name FROM user_accounts
+                WHERE qid = ? ORDER BY display_name
+                """,
+                (qid,),
+            ).fetchall()
+        return [row['display_name'] for row in rows]
+
+    def has_account(self, qid: str, display_name: str) -> bool:
+        with self._connect() as connection:
+            return connection.execute(
+                """
+                SELECT 1 FROM user_accounts
+                WHERE qid = ? AND display_name = ?
+                """,
+                (qid, display_name),
+            ).fetchone() is not None
+
+    def register_accounts(self, qid: str, display_names: List[str]):
+        try:
+            with self._connect() as connection:
+                connection.executemany(
+                    """
+                    INSERT INTO user_accounts (qid, display_name)
+                    VALUES (?, ?)
+                    """,
+                    [
+                        (qid, display_name) for display_name in display_names
+                    ],
+                )
+        except sqlite3.IntegrityError as error:
+            raise AccountException('账号名重复或用户不存在') from error
+
+    def unregister_account(self, qid: str, display_name: str):
+        with self._connect() as connection:
+            cursor = connection.execute(
+                """
+                DELETE FROM user_accounts
+                WHERE qid = ? AND display_name = ?
+                """,
+                (qid, display_name),
+            )
+        if cursor.rowcount == 0:
+            raise AccountException("账号不存在")
+
+    def get_user_data(self, qid: str) -> UserData:
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT default_account, clan, admin, disabled
+                FROM users WHERE qid = ?
+                """,
+                (qid,),
+            ).fetchone()
+        if row is None:
+            raise UserException('用户不存在')
+        return UserData(
+            default_account=row['default_account'],
+            clan=bool(row['clan']),
+            admin=bool(row['admin']),
+            disabled=bool(row['disabled']),
+        )
+
+    def save_user_data(self, qid: str, user_data: UserData):
+        with self._connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE users
+                SET default_account = ?, clan = ?, admin = ?, disabled = ?
+                WHERE qid = ?
+                """,
+                (
+                    user_data.default_account,
+                    int(user_data.clan),
+                    int(user_data.admin),
+                    int(user_data.disabled),
+                    qid,
+                ),
+            )
+        if cursor.rowcount == 0:
+            raise UserException('用户不存在')
+
+    def set_password(self, qid: str, password: str):
+        salt, password_hash = self._hash_password(password)
+        with self._connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE users
+                SET password_hash = ?, password_salt = ?, password_iterations = ?
+                WHERE qid = ?
+                """,
+                (password_hash, salt, self.PASSWORD_ITERATIONS, qid),
+            )
+        if cursor.rowcount == 0:
+            raise UserException('用户不存在')
+
+    @staticmethod
+    def _verify_password(row: sqlite3.Row, password: str) -> bool:
+        password_hash = hashlib.pbkdf2_hmac(
+            'sha256',
+            password.encode('utf-8'),
+            row['password_salt'],
+            row['password_iterations'],
+        )
+        return hmac.compare_digest(password_hash, row['password_hash'])
 
     def load_clan_battle_forbidden(self):
         if os.path.exists(CLAN_BATTLE_FORBID_PATH):
@@ -481,22 +1288,22 @@ class UserManager:
         self.load_clan_battle_forbidden()
 
     def validate_password(self, qid: str, password: str) -> bool:
-        try:
-            if qid not in self.qids():
-                return False
-            return self.load(qid).validate_password(password)
-        except Exception as e:
-            logger.exception(e)
-            return False
+        with self._connect() as connection:
+            row = connection.execute(
+                """
+                SELECT password_hash, password_salt, password_iterations
+                FROM users WHERE qid = ?
+                """,
+                (qid,),
+            ).fetchone()
+        return row is not None and self._verify_password(row, password)
 
     def check_enabled(self, qid: str) -> bool:
-        try:
-            if qid not in self.qids():
-                return False
-            return not self.load(qid, readonly=True).secret.disabled
-        except Exception as e:
-            logger.exception(e)
-            return False
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT disabled FROM users WHERE qid = ?", (qid,)
+            ).fetchone()
+        return row is not None and not bool(row['disabled'])
 
     def qid_path(self, qid: str) -> str:
         return os.path.join(self.root, qid)
@@ -504,42 +1311,96 @@ class UserManager:
     def create(self, qid: str, password: str) -> AccountManager:
         if not UserManager.pathsyntax.fullmatch(qid):
             raise UserException('无效的QQ号')
-        if qid in self.qids():
-            raise UserException('QQ号已存在')
-        os.makedirs(self.qid_path(qid))
-        with open(self.qid_path(qid) + '/secret', 'w') as f:
-            f.write(UserData(password=password).to_json())
-        self.shift_old_accounts(qid)
+        user_root = self.qid_path(qid)
+        try:
+            os.mkdir(user_root)
+        except FileExistsError as error:
+            raise UserException('QQ号已存在') from error
+
+        salt, password_hash = self._hash_password(password)
+        try:
+            with self._connect() as connection:
+                connection.execute(
+                    """
+                    INSERT INTO users (
+                        qid, password_hash, password_salt, password_iterations
+                    ) VALUES (?, ?, ?, ?)
+                    """,
+                    (qid, password_hash, salt, self.PASSWORD_ITERATIONS),
+                )
+        except sqlite3.IntegrityError as error:
+            os.rmdir(user_root)
+            raise UserException('QQ号已存在') from error
+        except Exception:
+            os.rmdir(user_root)
+            raise
+
+        try:
+            self.shift_old_accounts(qid)
+        except Exception:
+            shutil.rmtree(user_root)
+            with self._connect() as connection:
+                connection.execute("DELETE FROM users WHERE qid = ?", (qid,))
+            raise
         logger.info(f"Create user {qid}")
         return AccountManager(self, qid)
 
     def shift_old_accounts(self, qid: str):
         import glob
+        migrations = []
+        aliases = set()
         for config in glob.glob(os.path.join(OLD_CONFIG_PATH, "*.json")):
-            ok = False
             with open(config, 'r') as f:
                 data = json.load(f)
-                if str(data.get('qq', '')) == qid:
-                    ok = True
-            if ok:
-                os.rename(config, os.path.join(self.qid_path(qid), data['alian'] + '.json'))
+            if str(data.get('qq', '')) != qid:
+                continue
+            alias = data['alian']
+            if not AccountManager.pathsyntax.fullmatch(alias) or alias.startswith(BATCHINFO):
+                raise UserException(f'非法账户名{alias}')
+            if alias in aliases or os.path.exists(os.path.join(self.qid_path(qid), alias + '.json')):
+                raise AccountException(f'账号已存在: {alias}')
+            aliases.add(alias)
+            migrations.append((config, os.path.join(self.qid_path(qid), alias + '.json'), alias))
+
+        moved = []
+        try:
+            for source, destination, _ in migrations:
+                os.rename(source, destination)
+                moved.append((source, destination))
+            if migrations:
+                self.register_accounts(qid, [alias for _, _, alias in migrations])
+                logger.info(
+                    "Migrated %d legacy account configs for user %s",
+                    len(migrations),
+                    qid,
+                )
+        except Exception:
+            logger.exception("Failed to migrate legacy account configs for user %s", qid)
+            for source, destination in reversed(moved):
+                os.rename(destination, source)
+            raise
 
     def load(self, qid: str, readonly: bool = False) -> AccountManager:
         if not UserManager.pathsyntax.fullmatch(qid):
             raise UserException('无效的QQ号')
         return AccountManager(self, qid, readonly)
 
-    def delete(self, qid: str, account: str = ""):
+    async def delete(self, qid: str, account: str = ""):
         if not UserManager.pathsyntax.fullmatch(qid):
             raise AccountException('无效的QQ号')
         if account:
-            self.load(qid).delete(account)
+            await self.load(qid).delete(account)
         else:
+            if OPENBAO_ENABLED:
+                for account_name in self.account_names(qid):
+                    await openbao.delete_game_credentials(qid, account_name)
             shutil.rmtree(self.qid_path(qid))
+            with self._connect() as connection:
+                connection.execute("DELETE FROM users WHERE qid = ?", (qid,))
 
     def qids(self) -> Iterator[str]:
-        for fn in os.listdir(self.root):
-            if os.path.isdir(os.path.join(self.root, fn)):
-                yield fn
+        with self._connect() as connection:
+            rows = connection.execute("SELECT qid FROM users ORDER BY qid").fetchall()
+        yield from (row['qid'] for row in rows)
 
 instance = UserManager(os.path.join(CONFIG_PATH))

@@ -1,3 +1,7 @@
+import os
+
+os.environ["AUTOPCR_HOSHINO_PLUGIN_MODE"] = "true"
+
 from collections import Counter
 from typing import Any, Callable, Coroutine, Dict, List, Tuple, Union
 from pathlib import Path
@@ -11,6 +15,7 @@ from .autopcr.http_server.httpserver import HttpServer
 from .autopcr.db.database import db
 from .autopcr.util.unit_recognizer import instance as unit_recognizer
 from .autopcr.module.accountmgr import Account, AccountManager, instance as usermgr
+from .autopcr.openbao import instance as openbao
 from .autopcr.db.dbstart import db_start
 from .autopcr.core.clientpool import instance as clientpool
 from .autopcr.util.draw import instance as drawer
@@ -33,7 +38,7 @@ import secrets
 from .autopcr.util.pcr_data import get_id_from_name
 import traceback
 from .autopcr.util.logger import instance as logger
-from .autopcr.constants import PUBLIC_ADDRESS as ENV_PUBLIC_ADDRESS, USE_HTTPS
+from .autopcr.constants import OPENBAO_ENABLED, PUBLIC_ADDRESS as ENV_PUBLIC_ADDRESS, USE_HTTPS
 
 address = ENV_PUBLIC_ADDRESS or None  # 环境变量AUTOPCR_PUBLIC_ADDRESS，不填则会自动尝试获取
 useHttps = bool(USE_HTTPS)
@@ -114,9 +119,19 @@ sv = Service(
 
 @on_startup
 async def init():
-    await db_start()
-    from .autopcr.module.crons import queue_crons
-    queue_crons()
+    try:
+        if OPENBAO_ENABLED:
+            await openbao.connect()
+            openbao.start_background_tasks()
+        await db_start()
+        await usermgr.migrate_game_credentials()
+        from .autopcr.module.crons import queue_crons
+        queue_crons()
+    except Exception:
+        sv.logger.error(
+            "AutoPCR Hoshino plugin initialization failed!",
+            exc_info=True,
+        )
 
 class BotEvent:
     def __init__(self): ...
@@ -569,7 +584,7 @@ async def clean_ghost(botev: BotEvent):
         msg.append("未找到内鬼")
     else:
         for qq in msg:
-            usermgr.delete(qq)
+            await usermgr.delete(qq)
         msg = [f"已清除{len(msg)}个内鬼:"] + msg
     await botev.finish(" ".join(msg))
 

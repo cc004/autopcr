@@ -14,7 +14,7 @@ from quart_rate_limiter import RateLimiter, rate_limit, RateLimitExceeded
 
 from .validator import validate_dict, ValidateInfo, validate_ok_dict, enable_manual_validator
 from ..constants import CACHE_DIR, ALLOW_REGISTER, SUPERUSER
-from ..module.accountmgr import Account, AccountManager, instance as usermgr, AccountException, UserData, \
+from ..module.accountmgr import Account, AccountManager, BATCHINFO, instance as usermgr, AccountException, UserData, \
     PermissionLimitedException, UserDisabledException, UserException
 from ..util.draw import instance as drawer
 from ..util.logger import instance as logger
@@ -287,7 +287,7 @@ class HttpServer:
         @HttpServer.login_required()
         @HttpServer.wrapaccountmgr()
         async def delete_qq(accountmgr: AccountManager):
-            accountmgr.delete_mgr()
+            await accountmgr.delete_mgr()
             logout_user()
             return "删除QQ成功", 200
 
@@ -295,7 +295,7 @@ class HttpServer:
         @HttpServer.login_required()
         @HttpServer.wrapaccountmgr()
         async def delete_account(accountmgr: AccountManager):
-            accountmgr.delete_all_accounts()
+            await accountmgr.delete_all_accounts()
             return "删除账号成功", 200
 
         @self.api.route('/account/sync', methods = ["POST"])
@@ -333,11 +333,11 @@ class HttpServer:
                     account.data.password = data['password']
                 if 'channel' in data:
                     account.data.channel = data['channel']
-                if 'batch_accounts' in data:
-                    account.data.batch_accounts = data['batch_accounts']
+                if 'batch_accounts' in data and account.alias == BATCHINFO:
+                    account.batch_accounts = data['batch_accounts']
                 return "保存账户信息成功", 200
             elif request.method == "DELETE":
-                account.delete()
+                await account.delete()
                 return "删除账户信息成功", 200
             else:
                 return "", 404
@@ -456,8 +456,14 @@ class HttpServer:
             if userdata.admin and current_user.auth_id != SUPERUSER:
                 # 仅超管可创建管理员
                 raise PermissionLimitedException()
-            async with usermgr.create(qid, userdata.admin) as mgr:
-                mgr.secret = userdata
+            async with usermgr.create(qid, userdata.password) as mgr:
+                mgr.secret = UserData(
+                    default_account=userdata.default_account,
+                    clan=userdata.clan,
+                    admin=userdata.admin,
+                    disabled=userdata.disabled,
+                )
+            await usermgr.migrate_game_credentials(qid)
             return "创建用户成功", 200
 
         @self.api.route('/user/<string:qid>', methods = ['PUT'])
@@ -481,7 +487,7 @@ class HttpServer:
                         return "无法禁用自己", 403
                     mgr.secret.disabled = data['disabled']
                 if 'password' in data:
-                    mgr.secret.password = data['password']
+                    mgr.set_password(str(data['password']))
                 if 'clan' in data:
                     mgr.secret.clan = data['clan']
             return "更新用户信息成功", 200
@@ -494,7 +500,7 @@ class HttpServer:
                 return "无法删除自己", 403
             if qid == SUPERUSER:
                 return "不可删除超级管理员", 403
-            usermgr.delete(qid)
+            await usermgr.delete(qid)
             return "删除用户成功", 200
 
         @self.api.route('/query_validate', methods = ['GET'])
@@ -575,6 +581,7 @@ data: {ret}\n\n'''
             password = str(password)
             self.consume_register_rate_limit()
             usermgr.create(qq, password)
+            await usermgr.migrate_game_credentials(qq)
             login_user(AuthUser(qq))
             return "欢迎回来，" + qq, 200
 

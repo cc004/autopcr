@@ -72,7 +72,11 @@ async def _run_crons(cur: datetime.datetime):
         try:
             accounts_to_run = []
             for account in accountmgr.accounts():
-                async with accountmgr.load(account, readonly=True) as mgr:
+                async with accountmgr.load(
+                    account,
+                    readonly=True,
+                    load_credentials=False,
+                ) as mgr:
                     if await mgr.is_cron_run(cur.hour, cur.minute):
                         accounts_to_run.append(account)
             

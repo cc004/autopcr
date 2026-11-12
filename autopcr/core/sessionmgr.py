@@ -1,37 +1,50 @@
+import json
+import os
+
 from .base import Component, RequestHandler
 from .apiclient import apiclient, ApiException
 from .sdkclient import sdkclient
-import json, os, random
+import random
 from ..model.models import *
-from ..constants import CACHE_DIR
 from ..util.logger import instance as logger
+from ..constants import CACHE_DIR, OPENBAO_ENABLED
+from ..openbao import instance as openbao
+from ..openbao_audit import OpenBaoAuditContext
 import hashlib
 
 class sessionmgr(Component[apiclient]):
-    def __init__(self, sdk: sdkclient):
+    def __init__(
+        self, sdk: sdkclient, audit_context: OpenBaoAuditContext | None = None
+    ):
         super().__init__()
-        self.cacheDir = os.path.join(CACHE_DIR, 'token')
         self.sdk = sdk
+        self.audit_context = audit_context
         self._logged = False
         self.auto_relogin = True
         self._sdkaccount = None
         self.session_expire_time = 0
         self.id = hashlib.md5(self.sdk.account.encode('utf-8')).hexdigest()
-        if not os.path.exists(self.cacheDir):
-            os.makedirs(self.cacheDir)
-
-    @property
-    def cacheFile(self):
-        return os.path.join(self.cacheDir, self.sdk.id)
+        self.cache_dir = os.path.join(CACHE_DIR, "token")
+        self.cache_file = os.path.join(self.cache_dir, self.sdk.id)
+        if not OPENBAO_ENABLED:
+            os.makedirs(self.cache_dir, exist_ok=True)
 
     async def _bililogin(self):
         uid, access_key = await self.sdk.login()
-        self._sdkaccount = {
-                'uid': uid,
-                'access_key': access_key
-        }
-        with open(self.cacheFile, 'w') as fp:
-            json.dump(self._sdkaccount, fp)
+        self._sdkaccount = {"uid": str(uid), "access_key": access_key}
+        if OPENBAO_ENABLED:
+            await openbao.write_game_session(
+                self.sdk.id,
+                uid,
+                access_key,
+                audit_qq=self.audit_context.qq if self.audit_context else None,
+                audit_display_name=(
+                    self.audit_context.display_name if self.audit_context else None
+                ),
+            )
+        else:
+            with open(self.cache_file, "w") as session_file:
+                json.dump(self._sdkaccount, session_file)
 
     async def _ensure_token(self, next: RequestHandler):
         try:
@@ -79,9 +92,17 @@ class sessionmgr(Component[apiclient]):
             await self.sdk.invoke_post_login()
 
     async def _login(self, next: RequestHandler):
-        if os.path.exists(self.cacheFile):
-            with open(self.cacheFile, 'r') as fp:
-                self._sdkaccount = json.load(fp)
+        if OPENBAO_ENABLED:
+            self._sdkaccount = await openbao.read_game_session(
+                self.sdk.id,
+                audit_qq=self.audit_context.qq if self.audit_context else None,
+                audit_display_name=(
+                    self.audit_context.display_name if self.audit_context else None
+                ),
+            )
+        elif os.path.exists(self.cache_file):
+            with open(self.cache_file, "r") as session_file:
+                self._sdkaccount = json.load(session_file)
         for _ in range(5):
             try:
                 current = self._container.servers[self._container.active_server]

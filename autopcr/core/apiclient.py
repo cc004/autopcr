@@ -102,6 +102,20 @@ class apiclient(Container["apiclient"]):
         else:
             return obj
 
+    @staticmethod
+    def _redact_access_keys(obj):
+        if isinstance(obj, dict):
+            return {
+                key: "****"
+                if isinstance(key, str)
+                and key.casefold().replace("_", "").replace("-", "").endswith("accesskey")
+                else apiclient._redact_access_keys(value)
+                for key, value in obj.items()
+            }
+        if isinstance(obj, list):
+            return [apiclient._redact_access_keys(value) for value in obj]
+        return obj
+
     @freqlimiter.RunningLimiter(MAX_API_RUNNING)
     async def _request_internal(self, request: Request[TResponse]) -> TResponse:
         if not request: return None
@@ -132,11 +146,11 @@ class apiclient(Container["apiclient"]):
         if DEBUG_LOG:
             with open('req.log', 'a') as fp:
                 fp.write(f'{self.user_name} requested {request.__class__.__name__} at /{request.url}\n')
-                fp.write(json.dumps(self._headers, indent=4, ensure_ascii=False) + '\n')
-                fp.write(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
+                fp.write(json.dumps(apiclient._redact_access_keys(self._headers), indent=4, ensure_ascii=False) + '\n')
+                fp.write(json.dumps(apiclient._redact_access_keys(json.loads(request.json(by_alias=True))), indent=4, ensure_ascii=False) + '\n')
                 fp.write(f'response from {urlroot}\n')
                 fp.write(json.dumps(dict(resp.headers), indent=4, ensure_ascii=False) + '\n')
-                fp.write(json.dumps(response0, indent=4, ensure_ascii=False) + '\n')
+                fp.write(json.dumps(apiclient._redact_access_keys(response0), indent=4, ensure_ascii=False) + '\n')
 
         response: Response[TResponse] = Response[cls].parse_obj(response1)
 
@@ -178,11 +192,11 @@ class apiclient(Container["apiclient"]):
         if response.data and response.data.server_error:
             logger.error(f'pcrclient: /{request.url} api failed={response.data_headers.result_code} {response.data.server_error}')
             logger.error(f'{self.user_name} requested {request.__class__.__name__} at /{request.url}\n')
-            logger.error(json.dumps(self._headers, indent=4, ensure_ascii=False) + '\n')
-            logger.error(json.dumps(json.loads(request.json(by_alias=True)), indent=4, ensure_ascii=False) + '\n')
+            logger.error(json.dumps(apiclient._redact_access_keys(self._headers), indent=4, ensure_ascii=False) + '\n')
+            logger.error(json.dumps(apiclient._redact_access_keys(json.loads(request.json(by_alias=True))), indent=4, ensure_ascii=False) + '\n')
             logger.error(f'response from {urlroot}\n')
             logger.error(json.dumps(dict(resp.headers), indent=4, ensure_ascii=False) + '\n')
-            logger.error(json.dumps(response0, indent=4, ensure_ascii=False) + '\n')
+            logger.error(json.dumps(apiclient._redact_access_keys(response0), indent=4, ensure_ascii=False) + '\n')
 
             if response.data_headers.result_code == 203:
                 raise PanicError(f"{response.data.server_error.message}")
