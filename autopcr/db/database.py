@@ -1,6 +1,7 @@
 from typing import Callable, List, Dict, Set, Tuple, Union, Optional
 import typing
 import asyncio
+import re
 from ..model.enums import eCampaignCategory, eParamType
 from ..model.common import ExtraEquipInfo, ExtraEquipSubStatus, UnitData, eInventoryType, RoomUserItem, InventoryInfo
 from ..model.custom import ItemType, eDifficulty
@@ -657,6 +658,14 @@ class database():
                 )
 
     @lazy_property
+    def unit_talent(self) -> Dict[int, int]:
+        with self.dbmgr.session() as db:
+            return (
+                UnitTalent.query(db)
+                .to_dict(lambda x: x.unit_id, lambda x: x.talent_id)
+            )
+
+    @lazy_property
     def unit_role_data(self) -> Dict[int, int]:
         with self.dbmgr.session() as db:
             return (
@@ -671,6 +680,141 @@ class database():
                 UnitRoleGachaLevel.query(db)
                 .to_dict(lambda x: x.gacha_level, lambda x: x)
             )
+
+    @lazy_property
+    def unit_role_mastery_id(self) -> Dict[int, Dict[int, UnitRoleMasteryId]]:
+        with self.dbmgr.session() as db:
+            return (
+                UnitRoleMasteryId.query(db)
+                .group_by(lambda x: x.unit_role_id)
+                .to_dict(
+                    lambda x: x.key,
+                    lambda x: x.to_dict(lambda x: x.slot_id, lambda x: x),
+                )
+            )
+
+    @lazy_property
+    def unit_role_mastery_item_data(self) -> Dict[int, Dict[int, UnitRoleMasteryItemDatum]]:
+        with self.dbmgr.session() as db:
+            return (
+                UnitRoleMasteryItemDatum.query(db)
+                .group_by(lambda x: x.mastery_id)
+                .to_dict(
+                    lambda x: x.key,
+                    lambda x: x.to_dict(lambda x: x.slot_level, lambda x: x),
+                )
+            )
+
+    @lazy_property
+    def unit_role_mastery_level(self) -> Dict[int, Dict[Tuple[int, int], UnitRoleMasteryLevel]]:
+        with self.dbmgr.session() as db:
+            return (
+                UnitRoleMasteryLevel.query(db)
+                .group_by(lambda x: x.mastery_id)
+                .to_dict(
+                    lambda x: x.key,
+                    lambda x: x.to_dict(
+                        lambda x: (x.slot_level, x.enhance_level),
+                        lambda x: x,
+                    ),
+                )
+            )
+
+    @lazy_property
+    def unit_role_mastery_slot_data(self) -> Dict[int, Dict[int, UnitRoleMasterySlotDatum]]:
+        with self.dbmgr.session() as db:
+            return (
+                UnitRoleMasterySlotDatum.query(db)
+                .group_by(lambda x: x.mastery_id)
+                .to_dict(
+                    lambda x: x.key,
+                    lambda x: x.to_dict(lambda x: x.slot_level, lambda x: x),
+                )
+            )
+
+    @lazy_property
+    def unit_role_mastery_universal_items(self) -> Dict[int, ItemDatum]:
+        with self.dbmgr.session() as db:
+            items = (
+                ItemDatum.query(db)
+                .where(lambda x: x.item_type == 35)
+                .to_list()
+            )
+        result = {}
+        for item in items:
+            level_match = re.search(r"等级(\d+)$", item.item_name)
+            if level_match:
+                result[int(level_match.group(1))] = item
+        return result
+
+    def build_role_mastery_catalog(self) -> Dict[str, typing.Any]:
+        role_names = {
+            role_id: role.unit_role_name
+            for role_id, role in self.unit_role_type.items()
+            if role_id > 0
+        }
+        nodes = {}
+        for role_id, slot_rows in self.unit_role_mastery_id.items():
+            if role_id not in role_names:
+                continue
+            for slot_id, mastery in slot_rows.items():
+                mastery_id = mastery.mastery_id
+                material_rows = self.unit_role_mastery_item_data.get(mastery_id, {})
+                cost_rows = self.unit_role_mastery_level.get(mastery_id, {})
+                name_rows = self.unit_role_mastery_slot_data.get(mastery_id, {})
+                if not material_rows or not cost_rows:
+                    continue
+
+                first_name_row = name_rows[min(name_rows)] if name_rows else None
+                node_name = first_name_row.name if first_name_row else "未知节点"
+                node_name = node_name.replace(f"【{role_names[role_id]}】", "")
+                node_name = re.sub(r"Lv\d+$", "", node_name)
+                nodes[(role_id, slot_id)] = {
+                    "role_id": role_id,
+                    "role_name": role_names[role_id],
+                    "slot_id": slot_id,
+                    "mastery_id": mastery_id,
+                    "node_name": node_name,
+                    "material_item_ids": {
+                        level: row.item_id_1
+                        for level, row in material_rows.items()
+                    },
+                    "state_costs": {
+                        state: row.num
+                        for state, row in cost_rows.items()
+                    },
+                }
+
+        role_slots = {
+            role_id: tuple(sorted(
+                slot_id
+                for node_role_id, slot_id in nodes
+                if node_role_id == role_id
+            ))
+            for role_id in role_names
+        }
+        return {
+            "role_names": role_names,
+            "role_ids_by_name": {
+                role_name: role_id
+                for role_id, role_name in role_names.items()
+            },
+            "role_slots": role_slots,
+            "nodes": nodes,
+            "universal_item_ids": {
+                level: item.item_id
+                for level, item in self.unit_role_mastery_universal_items.items()
+            },
+            "universal_item_names": {
+                level: item.item_name
+                for level, item in self.unit_role_mastery_universal_items.items()
+            },
+        }
+
+    @lazy_property
+    def unit_role_mastery_catalog(self) -> Dict[str, typing.Any]:
+        return self.build_role_mastery_catalog()
+
 
     @lazy_property
     def unique_equipment_enhance_data(self) -> Dict[int, Dict[int, UniqueEquipmentEnhanceDatum]]:

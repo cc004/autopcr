@@ -1,0 +1,22 @@
+{
+  "format": "autopcr_jjc_onnx_v1",
+  "model_version": "2026-09-02T01:05:42.904177+08:00",
+  "training_completed_at": 1788282342.904177,
+  "source_checkpoint_sha256": {
+    "generator": "545843707482eaa45b1062d978cdb0758fd78ffa91f02ada2149506db1d08f9a",
+    "critic": "191f9232b3d472a9e5bfd610c900ed2e2bd5841668a35b92bd2753f9576cfd5d"
+  },
+  "files": {
+    "generator.onnx": "2fca0cfb94ff0bbd06463d881dde57ec1fcf530726bd61d8948cf08657736dfc",
+    "critic.onnx": "239bc96e96c7508d75f76d9ee4b8d421e691b4f19d5a19d294ce1cc4ac476717",
+    "vocabulary.json": "9c6e1b28554f3a16b291b582dc42e70c21022e780b2e500dacb6b764e1845ae8"
+  },
+  "outcome_names": [
+    "win_0_15",
+    "win_15_30",
+    "win_30_60",
+    "win_60_90",
+    "loss",
+    "timeout"
+  ]
+}
