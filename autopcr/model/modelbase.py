@@ -1,27 +1,56 @@
 #type: ignore
 from inspect import get_annotations
 from typing import ClassVar, Generic, TypeVar, Optional
-from pydantic import BaseModel as PydanticBaseModel, ConfigDict, model_validator
-from pydantic.fields import FieldInfo
+from pydantic import VERSION as PYDANTIC_VERSION
+from pydantic import BaseModel as PydanticBaseModel
 
-class BaseModel(PydanticBaseModel):
-    """Keep the generated models' implicit nullable defaults."""
-    model_config = ConfigDict(coerce_numbers_to_str=True, validate_by_name=True)
+PYDANTIC_V2 = PYDANTIC_VERSION.split(".", 1)[0] == "2"
 
-    @model_validator(mode="before")
-    @classmethod
-    def normalize_empty_model(cls, value):
-        return {} if isinstance(value, list) and not value else value
+if PYDANTIC_V2:
+    from pydantic import ConfigDict, model_validator
+    from pydantic.fields import FieldInfo
 
-    def __init_subclass__(cls, **kwargs):
-        # Normalize annotations before Pydantic builds nested model schemas.
-        annotations = get_annotations(cls)
-        for name, annotation in annotations.items():
-            default = cls.__dict__.get(name, ...)
-            if default is None or isinstance(default, FieldInfo) and default.default is None:
-                annotations[name] = Optional[annotation]
-        cls.__annotations__ = annotations
-        super().__init_subclass__(**kwargs)
+    class BaseModel(PydanticBaseModel):
+        """Keep the generated models' implicit nullable defaults."""
+        model_config = ConfigDict(coerce_numbers_to_str=True, validate_by_name=True)
+
+        @model_validator(mode="before")
+        @classmethod
+        def normalize_empty_model(cls, value):
+            return {} if isinstance(value, list) and not value else value
+
+        def __init_subclass__(cls, **kwargs):
+            # Normalize annotations before Pydantic builds nested model schemas.
+            annotations = get_annotations(cls)
+            for name, annotation in annotations.items():
+                default = cls.__dict__.get(name, ...)
+                if default is None or isinstance(default, FieldInfo) and default.default is None:
+                    annotations[name] = Optional[annotation]
+            cls.__annotations__ = annotations
+            super().__init_subclass__(**kwargs)
+else:
+    from pydantic.generics import GenericModel as PydanticGenericModel
+
+    class BaseModel(PydanticBaseModel):
+        class Config:
+            allow_population_by_field_name = True
+            smart_union = True
+
+        def model_dump(self, **kwargs):
+            return self.dict(**kwargs)
+
+        def model_dump_json(self, **kwargs):
+            return self.json(**kwargs)
+
+        @classmethod
+        def model_validate(cls, value):
+            return cls.parse_obj(value)
+
+if PYDANTIC_V2:
+    GenericModel = BaseModel
+else:
+    class GenericModel(PydanticGenericModel, BaseModel):
+        pass
 
 class ErrorInfo(BaseModel):
     title: str = None
@@ -46,11 +75,11 @@ class ResponseHeader(BaseModel):
     result_code: int = -1
     short_udid: str | bool = None
 
-class Response(BaseModel, Generic[TResponse]):
+class Response(GenericModel, Generic[TResponse]):
     data_headers: ResponseHeader = None
     data: Optional[TResponse] = None
 
-class Request(BaseModel, Generic[TResponse]):
+class Request(GenericModel, Generic[TResponse]):
     response_type: ClassVar[type[ResponseBase]]
     viewer_id: str = None
 

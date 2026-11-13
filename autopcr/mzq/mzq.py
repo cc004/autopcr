@@ -10,8 +10,9 @@ from enum import IntEnum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
+from ..model.modelbase import BaseModel
 from ..util import aiorequests
 from ..util.logger import instance as perf_logging, logging
 from .models import UnitData as UnitDTO, GuildRandomData as GuildBattleSettingData
