@@ -181,8 +181,8 @@ def record_to_payload(record: JJCRecord) -> Dict[str, Any]:
             }
             for result in record.results
         ],
-        "player_info": [unit.dict() for unit in (sample.player_info if sample else [])],
-        "enemy_info": [unit.dict() for unit in (sample.enemy_info if sample else [])],
+        "player_info": [unit.model_dump() for unit in (sample.player_info if sample else [])],
+        "enemy_info": [unit.model_dump() for unit in (sample.enemy_info if sample else [])],
         "talent_level": sample.talent_level if sample else "",
         "talent_skill": sample.talent_skill if sample else "",
         "team_skill": sample.team_skill if sample else "",
@@ -191,8 +191,8 @@ def record_to_payload(record: JJCRecord) -> Dict[str, Any]:
 
 def record_from_payload(payload: Dict[str, Any]) -> JJCRecord:
     """Restore the compact cache/API representation into the shared domain type."""
-    player_info = [UnitDTO.parse_obj(value) for value in payload.get("player_info", [])]
-    enemy_info = [UnitDTO.parse_obj(value) for value in payload.get("enemy_info", [])]
+    player_info = [UnitDTO.model_validate(value) for value in payload.get("player_info", [])]
+    enemy_info = [UnitDTO.model_validate(value) for value in payload.get("enemy_info", [])]
     results = [
         JJCResult(
             duration=float(value.get("duration", 0.0)),
