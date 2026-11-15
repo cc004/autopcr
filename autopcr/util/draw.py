@@ -4,13 +4,13 @@ from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 from types import SimpleNamespace
 from PIL import Image, ImageFont, ImageDraw
 
-from ..constants import CACHE_DIR, DATA_DIR
+from ..constants import DATA_DIR
 from .draw_table import grid2img, json2img
 
 if TYPE_CHECKING:
     from ..mzq.mzq import UnitDTO
 
-JJC_IMAGE_PATH = os.path.join(CACHE_DIR, "jjc_image")
+JJC_IMAGE_PATH = os.path.join(DATA_DIR, "jjc_image")
 STAR_IMAGE_PATH = os.path.join(JJC_IMAGE_PATH, "star")
 UNIQUE_EQ_IMAGE_PATH = os.path.join(JJC_IMAGE_PATH, "uniqueEq")
 ROLE_IMAGE_PATH = os.path.join(JJC_IMAGE_PATH, "role")
