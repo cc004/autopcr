@@ -20,6 +20,7 @@ AssetRegistry = Dict[str, AssetEntry]
 COMPACT_MANIFEST_FORMAT = 1
 MANIFEST_CATEGORY = "AssetBundles/Android"
 ROOT_MANIFEST = "manifest/manifest_assetmanifest"
+MASTERDATA_ASSET_URL = "a/masterdata_master.unity3d"
 
 
 class assetmgr:
@@ -165,12 +166,14 @@ class assetmgr:
             if len(fields) < 4:
                 raise ValueError(f'invalid manifest line {manifest_url}:{line_number}')
 
-            url, md5 = fields[0], fields[1]
+            url = fields[0]
             if not url:
                 raise ValueError(f'empty asset URL at {manifest_url}:{line_number}')
             if url.startswith('manifest/'):
                 await self._fetch_manifest(urlroot, url, category, registry, visited)
             else:
+                # 长格式在 pool key 前多一列，短格式直接把 key 放在 URL 后。
+                md5 = fields[2] if len(fields) > 5 else fields[1]
                 if not md5:
                     raise ValueError(f'empty asset md5 at {manifest_url}:{line_number}')
                 registry[url] = (md5, category)
@@ -189,21 +192,22 @@ class assetmgr:
             raise ValueError(f'remote manifest {ver} contains no assets')
         return registry
 
-    async def _load_registry(self, ver: int) -> AssetRegistry:
+    async def _load_registry(self, ver: int, *, refresh: bool = False) -> AssetRegistry:
         os.makedirs(self._manifest_dir(), exist_ok=True)
         compact_path = self._compact_cache_path(ver)
         legacy_path = self._legacy_cache_path(ver)
         registry = None
 
-        try:
-            registry = self._load_compact_cache(compact_path, ver)
-            logger.info(f'compact manifest version {ver} loaded from cache')
-        except FileNotFoundError:
-            pass
-        except (OSError, ValueError, TypeError, msgpack.ExtraData, msgpack.FormatError, msgpack.StackError) as e:
-            logger.warning(f'failed to load compact manifest version {ver}: {e}')
+        if not refresh:
+            try:
+                registry = self._load_compact_cache(compact_path, ver)
+                logger.info(f'compact manifest version {ver} loaded from cache')
+                return registry
+            except FileNotFoundError:
+                pass
+            except (OSError, ValueError, TypeError, msgpack.ExtraData, msgpack.FormatError, msgpack.StackError) as e:
+                logger.warning(f'failed to load compact manifest version {ver}: {e}')
 
-        if registry is None:
             try:
                 registry = self._load_legacy_cache(legacy_path, ver)
                 logger.info(f'legacy manifest version {ver} loaded from cache')
@@ -212,15 +216,15 @@ class assetmgr:
             except (OSError, ValueError, TypeError, json.JSONDecodeError) as e:
                 logger.warning(f'failed to load legacy manifest version {ver}: {e}')
 
-            if registry is None:
-                registry = await self._fetch_registry(ver)
-                logger.info(f'manifest version {ver} loaded from remote')
+        if registry is None:
+            registry = await self._fetch_registry(ver)
+            logger.info(f'manifest version {ver} loaded from remote')
 
-            # registry 已在内存可用，缓存写失败（如磁盘满）不应阻断本次加载
-            try:
-                self._write_compact_cache(compact_path, ver, registry)
-            except OSError as e:
-                logger.warning(f'failed to write compact manifest version {ver}: {e}')
+        # registry 已在内存可用，缓存写失败（如磁盘满）不应阻断本次加载
+        try:
+            self._write_compact_cache(compact_path, ver, registry)
+        except OSError as e:
+            logger.warning(f'failed to write compact manifest version {ver}: {e}')
 
         return registry
 
@@ -263,10 +267,25 @@ class assetmgr:
 
         md5, category = await self._resolve_asset(url)
         download_url = f'{self.pool}/{category}/{md5[:2]}/{md5}'
-        return await (await aiorequests.get(download_url)).content
+        response = await aiorequests.get(download_url)
+        response.raise_for_status()
+        return await response.content
 
     async def db(self) -> bytes:
-        ab = UnityPy.load(await self.download('a/masterdata_master.unity3d'))
+        ver = self.ver
+        try:
+            data = await self.download(MASTERDATA_ASSET_URL)
+        except (KeyError, aiorequests.HTTPError) as e:
+            if isinstance(e, aiorequests.HTTPError) and e.response.status_code != 404:
+                raise
+            # 旧缓存可能缺少 masterdata 或已存入取错列的 pool key。
+            async with self._manifest_lock:
+                if self.ver != ver:
+                    raise
+                self.registries = await self._load_registry(ver, refresh=True)
+                self._loaded_ver = ver
+            data = await self.download(MASTERDATA_ASSET_URL)
+        ab = UnityPy.load(data)
         asset = ab.objects[0].read()
         return asset.script
 
