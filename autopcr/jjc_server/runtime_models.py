@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from enum import IntEnum
+from typing import Optional, Union
 
 import numpy as np
 
@@ -25,7 +26,7 @@ class Goal(IntEnum):
     STALL_DEFENSE = 1
 
     @classmethod
-    def parse(cls, value: str | int | "Goal") -> "Goal":
+    def parse(cls, value: Union[str, int, "Goal"]) -> "Goal":
         if isinstance(value, cls):
             return value
         if isinstance(value, int):
@@ -72,7 +73,7 @@ def outcome_class(result: int, duration: float) -> OutcomeClass:
     return OutcomeClass.WIN_60_90
 
 
-def critic_utility(probabilities: np.ndarray, goal: Goal | int) -> np.ndarray:
+def critic_utility(probabilities: np.ndarray, goal: Union[Goal, int]) -> np.ndarray:
     probabilities = np.asarray(probabilities, dtype=np.float32)
     if probabilities.shape[-1] != len(OutcomeClass):
         raise ValueError("critic probabilities must have six outcome columns")
@@ -83,7 +84,7 @@ class UnitVocabulary:
     PAD = 0
     BOS = 1
 
-    def __init__(self, unit_ids: list[int] | tuple[int, ...]) -> None:
+    def __init__(self, unit_ids: Union[list[int], tuple[int, ...]]) -> None:
         canonical = tuple(sorted({int(value) for value in unit_ids}))
         if not canonical:
             raise ValueError("unit vocabulary cannot be empty")
@@ -98,7 +99,7 @@ class UnitVocabulary:
     def contains(self, unit_id: int) -> bool:
         return int(unit_id) in self._unit_to_index
 
-    def encode_team(self, team: list[int] | tuple[int, ...]) -> np.ndarray:
+    def encode_team(self, team: Union[list[int], tuple[int, ...]]) -> np.ndarray:
         canonical = tuple(sorted(int(value) for value in team))
         if len(canonical) != TEAM_SIZE or len(set(canonical)) != TEAM_SIZE:
             raise ValueError("a team must contain five distinct unit IDs")
@@ -110,7 +111,7 @@ class UnitVocabulary:
         except KeyError as exc:
             raise ValueError(f"unknown unit ID: {exc.args[0]}") from exc
 
-    def decode_team(self, indices: list[int] | np.ndarray) -> tuple[int, ...]:
+    def decode_team(self, indices: Union[list[int], np.ndarray]) -> tuple[int, ...]:
         values = tuple(int(value) for value in indices)
         if len(values) != TEAM_SIZE or any(
             value < 2 or value >= len(self) for value in values
@@ -123,7 +124,7 @@ class UnitVocabulary:
 
     def encode_available(
         self,
-        unit_ids: list[int] | tuple[int, ...] | None,
+        unit_ids: Optional[Union[list[int], tuple[int, ...]]],
     ) -> list[int]:
         if unit_ids is None:
             return list(range(2, len(self)))

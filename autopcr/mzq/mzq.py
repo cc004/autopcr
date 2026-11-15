@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import IntEnum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from pydantic import BaseModel, Field
 
@@ -136,7 +136,7 @@ simulation_trace_id: ContextVar[Optional[str]] = ContextVar(
 class MzqDebugExchangeStore:
     """Append raw MZQ simulation request/response exchanges to a text file."""
 
-    def __init__(self, path: str | Path):
+    def __init__(self, path: Union[str, Path]):
         self.path = Path(path)
         self._lock = threading.Lock()
 

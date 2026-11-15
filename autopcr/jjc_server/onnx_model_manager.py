@@ -9,7 +9,7 @@ import logging
 import math
 import random
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Optional, Sequence, Union
 
 import numpy as np
 
@@ -36,8 +36,8 @@ class JJCModelManager:
 
     def __init__(
         self,
-        transformer_checkpoint: str | Path,
-        critic_checkpoint: str | Path,
+        transformer_checkpoint: Union[str, Path],
+        critic_checkpoint: Union[str, Path],
         device: str = "auto",
     ) -> None:
         if device not in {"auto", "cpu"}:
@@ -47,10 +47,10 @@ class JJCModelManager:
         self.set_checkpoints(transformer_checkpoint, critic_checkpoint)
         self.transformer: Any = None
         self.critic: Any = None
-        self.vocabulary: UnitVocabulary | None = None
+        self.vocabulary: Optional[UnitVocabulary] = None
         self.metadata: dict[str, Any] = {}
         self.device = "cpu"
-        self._loaded_checkpoint_paths: tuple[Path, Path] | None = None
+        self._loaded_checkpoint_paths: Optional[tuple[Path, Path]] = None
 
     @property
     def checkpoint_paths(self) -> tuple[Path, Path]:
@@ -60,7 +60,7 @@ class JJCModelManager:
     def is_loaded(self) -> bool:
         return self.transformer is not None and self.critic is not None and self.vocabulary is not None
 
-    def set_checkpoints(self, transformer_checkpoint: str | Path, critic_checkpoint: str | Path) -> None:
+    def set_checkpoints(self, transformer_checkpoint: Union[str, Path], critic_checkpoint: Union[str, Path]) -> None:
         generator = Path(transformer_checkpoint).expanduser().resolve()
         critic = Path(critic_checkpoint).expanduser().resolve()
         if generator == critic:
@@ -69,8 +69,8 @@ class JJCModelManager:
 
     def load(
         self,
-        transformer_checkpoint: str | Path | None = None,
-        critic_checkpoint: str | Path | None = None,
+        transformer_checkpoint: Optional[Union[str, Path]] = None,
+        critic_checkpoint: Optional[Union[str, Path]] = None,
         *,
         force: bool = False,
     ) -> dict[str, Any]:
@@ -154,7 +154,7 @@ class JJCModelManager:
         opponent: Sequence[int],
         goal: Any,
         *,
-        roster: Sequence[int] | None = None,
+        roster: Optional[Sequence[int]] = None,
         candidate_count: int = 256,
         generation_batch_size: int = 64,
         temperature: float = 1.0,
@@ -237,7 +237,7 @@ class JJCModelManager:
         return probabilities, critic_utility(probabilities, parsed_goal)
 
     def infer(
-        self, opponent: Sequence[int], goal: Any, *, roster: Sequence[int] | None = None,
+        self, opponent: Sequence[int], goal: Any, *, roster: Optional[Sequence[int]] = None,
         candidates: int = 256, simulate_candidates: int = DEFAULT_SIMULATE_CANDIDATES,
         exploration_candidates: int = DEFAULT_EXPLORATION_CANDIDATES,
         generation_batch_size: int = 64, batch_size: int = 128,

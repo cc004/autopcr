@@ -7,16 +7,16 @@ import time
 from contextlib import contextmanager
 from contextvars import ContextVar
 from functools import wraps
-from typing import Any, Awaitable, Callable, Iterator
+from typing import Any, Awaitable, Callable, Iterator, Optional
 
 from ..util.logger import instance as logging
 
 
-_trace_id: ContextVar[str | None] = ContextVar("jjc_suggestion_trace_id", default=None)
-_mode: ContextVar[str | None] = ContextVar("jjc_suggestion_mode", default=None)
+_trace_id: ContextVar[Optional[str]] = ContextVar("jjc_suggestion_trace_id", default=None)
+_mode: ContextVar[Optional[str]] = ContextVar("jjc_suggestion_mode", default=None)
 
 
-def current_trace_id() -> str | None:
+def current_trace_id() -> Optional[str]:
     return _trace_id.get()
 
 

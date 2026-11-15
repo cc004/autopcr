@@ -370,8 +370,8 @@ class MatchupObservation:
 @dataclass(frozen=True)
 class ModelState:
     active_buffer: str
-    transformer_checkpoint: str | None
-    critic_checkpoint: str | None
+    transformer_checkpoint: Optional[str]
+    critic_checkpoint: Optional[str]
 
 
 class JJCRecordManager:
@@ -379,9 +379,9 @@ class JJCRecordManager:
 
     def __init__(
         self,
-        db_path: str | Path | None = None,
-        transformer_checkpoint: str | Path = TRANSFORMER_CHECKPOINT,
-        critic_checkpoint: str | Path = CRITIC_CHECKPOINT,
+        db_path: Optional[Union[str, Path]] = None,
+        transformer_checkpoint: Union[str, Path] = TRANSFORMER_CHECKPOINT,
+        critic_checkpoint: Union[str, Path] = CRITIC_CHECKPOINT,
         device: str = "auto",
     ) -> None:
         resolved = Path(db_path or JJC_RECORD_DATABASE).expanduser().resolve()
@@ -423,7 +423,7 @@ class JJCRecordManager:
         return conn
 
     @staticmethod
-    def _checkpoint_reference(path: str | Path) -> str:
+    def _checkpoint_reference(path: Union[str, Path]) -> str:
         """Store portable references to data assets and cache-local checkpoints."""
         resolved = Path(path).expanduser().resolve()
         try:
@@ -437,8 +437,8 @@ class JJCRecordManager:
 
     @staticmethod
     def _resolve_checkpoint_reference(
-        reference: str | None,
-        fallback: str | Path,
+        reference: Optional[str],
+        fallback: Union[str, Path],
     ) -> Path:
         """Resolve portable state and rebase stale cache paths from another host."""
         fallback_path = Path(fallback).expanduser().resolve()
@@ -477,7 +477,7 @@ class JJCRecordManager:
 
     def _active_checkpoint_paths(
         self,
-        state: ModelState | None = None,
+        state: Optional[ModelState] = None,
     ) -> tuple[Path, Path]:
         current = state or self.model_state()
         return (
@@ -493,8 +493,8 @@ class JJCRecordManager:
 
     def _store_active_checkpoint_references(
         self,
-        transformer_checkpoint: str | Path,
-        critic_checkpoint: str | Path,
+        transformer_checkpoint: Union[str, Path],
+        critic_checkpoint: Union[str, Path],
     ) -> None:
         transformer_reference = self._checkpoint_reference(transformer_checkpoint)
         critic_reference = self._checkpoint_reference(critic_checkpoint)
@@ -1037,7 +1037,7 @@ class JJCRecordManager:
         team: List[int],
         pick_per_levels: Sequence[int] = DEFAULT_PICK_PER_LEVELS,
         include_hot_team: bool = False,
-        suggestion_limit: int | None = None,
+        suggestion_limit: Optional[int] = None,
     ) -> List[List[int]]:
         """Recall tiered history plus model teams, preserving exact-match winners."""
         opponent = self._canonical_team(team)
@@ -1214,7 +1214,7 @@ class JJCRecordManager:
 
     async def clear_suggestion_cache(
         self,
-        defend: Sequence[int] | None = None,
+        defend: Optional[Sequence[int]] = None,
     ) -> int:
         """Clear all cached suggestions, or only the normalized defense requested."""
         async with self._lock:
@@ -1263,7 +1263,7 @@ class JJCRecordManager:
                 return cached
             started = time.perf_counter()
             trace_token = simulation_trace_id.set(current_trace_id())
-            records: List[JJCRecord] | None = None
+            records: Optional[List[JJCRecord]] = None
             try:
                 records = await self.simulate_battle_batch_single_enemy(
                     candidates,
@@ -1307,7 +1307,7 @@ class JJCRecordManager:
         defends: Sequence[Sequence[int]],
         *,
         defend_mode: bool = False,
-        limit: int | None = 10,
+        limit: Optional[int] = 10,
     ) -> List[List[JJCRecord]]:
         """Combine cached per-defense results without caching final PJJC groups."""
         started = time.perf_counter()
@@ -1677,8 +1677,8 @@ class JJCRecordManager:
         self,
         simulator_url: str,
         *,
-        batch_size: int | None = None,
-        timeout: int | None = None,
+        batch_size: Optional[int] = None,
+        timeout: Optional[int] = None,
     ) -> str:
         """Configure the shared MZQ transport behind the manager boundary."""
         endpoint = str(simulator_url).rstrip("/")
