@@ -5,7 +5,8 @@ from ..db.models import UnitStatusCoefficient
 from .enums import eInventoryType, eParamType
 from typing import List, Optional, Tuple, Counter as CounterType, Union
 from collections import Counter
-from pydantic import BaseModel, Field
+from pydantic import Field
+from .modelbase import BaseModel
 from dataclasses import dataclass
 from decimal import ROUND_CEILING, Decimal, ROUND_HALF_UP
 
@@ -256,7 +257,7 @@ class ArenaQueryData(BaseModel):
 class ArenaQueryResponse(BaseModel):
     code: int 
     message: str
-    data: Optional[ArenaQueryData]
+    data: Optional[ArenaQueryData] = None
     version: str
 
 class eRedeemUnitUnlockCondition(IntEnum):

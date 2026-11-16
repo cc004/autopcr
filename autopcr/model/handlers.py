@@ -1,8 +1,3 @@
-from pydantic.class_validators import make_generic_validator
-from pydantic.fields import ModelField
-from pydantic.validators import int_validator
-
-from ..model.custom import TalentQuestData
 from . import responses, sdkrequests
 from .common import *
 from .requests import *
@@ -1690,50 +1685,3 @@ class UnitRoleGachaExecResponse(responses.UnitRoleGachaExecResponse):
 #         original_dict['action_type'] = {"value__": self.action_type.value}
 #     return original_dict
 # TravelStartRequest.dict = custom_dict
-
-HatsuneTopResponse.__annotations__['event_status'] = HatsuneEventStatus
-HatsuneTopResponse.__fields__['event_status'].type_ = Optional[HatsuneEventStatus]
-HatsuneTopResponse.__fields__['event_status'].outer_type_ = Optional[HatsuneEventStatus]
-HatsuneTopResponse.__fields__['event_status'].annotation = HatsuneEventStatus
-HatsuneTopResponse.__fields__['event_status'].shape = 1 # singleton
-
-DungeonUnit.__annotations__['skill_limit_counter'] = int
-DungeonUnit.__fields__['skill_limit_counter'].type_ = Optional[int]
-DungeonUnit.__fields__['skill_limit_counter'].outer_type_ = Optional[int]
-DungeonUnit.__fields__['skill_limit_counter'].validators = [make_generic_validator(int_validator)] # singleton
-DungeonUnit.__fields__['skill_limit_counter'].annotation = int
-DungeonUnit.__fields__['skill_limit_counter'].sub_fields = None 
-DungeonUnit.__fields__['skill_limit_counter'].shape = 1 # singleton
-
-CaravanCoinShopData.__annotations__['season_id'] = Optional[int]
-field = ModelField.infer(
-    name='season_id',
-    value=None,
-    annotation=int,
-    class_validators=None,
-    config=CaravanCoinShopData.__config__,
-)
-CaravanCoinShopData.__fields__['season_id'] = field
-setattr(CaravanCoinShopData, 'season_id', None)
-
-ExtraEquipSlot.__annotations__['slot'] = Optional[int]
-field = ModelField.infer(
-    name='slot',
-    value=None,
-    annotation=int,
-    class_validators=None,
-    config=ExtraEquipSlot.__config__,
-)
-ExtraEquipSlot.__fields__['slot'] = field
-setattr(ExtraEquipSlot, 'slot', None)
-
-ProfileQuestInfo.__annotations__['talent_quest'] = Optional[List[TalentQuestData]]
-field = ModelField.infer(
-    name='talent_quest',
-    value=None,
-    annotation=List[TalentQuestData],
-    class_validators=None,
-    config=ProfileQuestInfo.__config__,
-)
-ProfileQuestInfo.__fields__['talent_quest'] = field
-setattr(ProfileQuestInfo, 'talent_quest', None)

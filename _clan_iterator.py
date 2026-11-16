@@ -98,7 +98,7 @@ def run_task():
                     resp = await client.request(req)
                     async with fout_lck:
                         last_ok = max(last_ok, id)
-                        fout.write(f'{resp.json()}\n')
+                        fout.write(f'{resp.model_dump_json()}\n')
                     print(f'[{id}] {resp.clan.detail.clan_name}')
                     break
                 except ApiException as ex:

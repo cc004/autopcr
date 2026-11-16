@@ -5000,20 +5000,20 @@ class PrincessKnightMissionIndexRequest(Request[PrincessKnightMissionIndexRespon
     def url(self) -> str:
         return "princess_knight/mission_index"
 class ProfilePictureFrameShopBuyBulkRequest(Request[ProfilePictureFrameShopBuyBulkResponse]):
-    viewer_id: int = None
+    viewer_id: str = None
     buy_item_list: List[ProfilePictureFrameShopBuyBulkItem] = None
     @property
     def url(self) -> str:
         return "profile_picture_frame_shop/buy_bulk"
 class ProfilePictureFrameShopBuyCoinRequest(Request[ProfilePictureFrameShopBuyCoinResponse]):
-    viewer_id: int = None
+    viewer_id: str = None
     coin_count: int = None
     current_currency_num: int = None
     @property
     def url(self) -> str:
         return "profile_picture_frame_shop/buy_coin"
 class ProfilePictureFrameShopBuyRequest(Request[ProfilePictureFrameShopBuyResponse]):
-    viewer_id: int = None
+    viewer_id: str = None
     lineup_type: int = None
     slot_id: int = None
     buy_count: int = None
@@ -5021,7 +5021,7 @@ class ProfilePictureFrameShopBuyRequest(Request[ProfilePictureFrameShopBuyRespon
     def url(self) -> str:
         return "profile_picture_frame_shop/buy"
 class ProfilePictureFrameShopIndexRequest(Request[ProfilePictureFrameShopIndexResponse]):
-    viewer_id: int = None
+    viewer_id: str = None
     @property
     def url(self) -> str:
         return "profile_picture_frame_shop/index"

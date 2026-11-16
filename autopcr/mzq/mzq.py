@@ -10,8 +10,9 @@ from enum import IntEnum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
+from ..model.modelbase import BaseModel
 from ..util import aiorequests
 from ..util.logger import instance as perf_logging, logging
 from .models import UnitData as UnitDTO, GuildRandomData as GuildBattleSettingData
@@ -466,9 +467,9 @@ class MzqServer:
                         stats = item.get("Stats")
                         if isinstance(stats, dict) and "TotalDamage" in stats:
                             compact["Stats"] = {"TotalDamage": stats["TotalDamage"]}
-                        result = BattleSimulationResultDTO.parse_obj(compact)
+                        result = BattleSimulationResultDTO.model_validate(compact)
                     else:
-                        result = BattleSimulationResultDTO.parse_obj(item)
+                        result = BattleSimulationResultDTO.model_validate(item)
                     if not pending.future.done():
                         pending.future.set_result(result)
                     ok_count += 1
@@ -599,7 +600,7 @@ class MzqServer:
             RepeatCount=repeat_count,
         )
 
-        data = req_dto.dict()
+        data = req_dto.model_dump()
         if self.debug_mode:
             logging.debug("Request: %s", data)
         result = await self._enqueue_request(data)

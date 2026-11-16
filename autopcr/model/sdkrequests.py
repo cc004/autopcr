@@ -11,7 +11,7 @@ class ToolSdkLoginRequest(Request[ToolSdkLoginResponse]):
     platform: str = None
     channel_id: str = None
     challenge: str = None
-    validate_: Optional[str] = Field(alias='validate')
+    validate_: Optional[str] = Field(default=None, alias='validate')
     seccode: str = None
     captcha_type: str = None
     image_token: str = None
@@ -41,7 +41,7 @@ class SourceIniIndexRequest(Request[SourceIniIndexResponse]):
         return False
 
 class SourceIniGetMaintenanceStatusResponse(ResponseBase):
-    _json: int = Field(alias='json')
+    json_: int = Field(default=None, alias='json')
     encrypt: int = None
     res_http_type: int = None
     node_type: int = None
