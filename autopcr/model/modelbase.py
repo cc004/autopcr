@@ -1,10 +1,32 @@
 #type: ignore
 import inspect
-from typing import ClassVar, Generic, TypeVar, Optional, Type, Union
+from importlib import import_module
+from typing import ClassVar, Generic, TypeVar, Optional, Type, Union, List
 from pydantic import VERSION as PYDANTIC_VERSION
 from pydantic import BaseModel as PydanticBaseModel
 
 PYDANTIC_V2 = PYDANTIC_VERSION.split(".", 1)[0] == "2"
+
+_MODEL_FIELD_FIXES = {
+    ("responses", "HatsuneTopResponse"): lambda: {
+        "event_status": import_module(".common", __spec__.parent).HatsuneEventStatus,
+    },
+    ("common", "DungeonUnit"): lambda: {"skill_limit_counter": int},
+    ("common", "CaravanCoinShopData"): lambda: {"season_id": int},
+    ("common", "ExtraEquipSlot"): lambda: {"slot": int},
+    ("common", "ProfileQuestInfo"): lambda: {
+        "talent_quest": List[import_module(".custom", __spec__.parent).TalentQuestData],
+    },
+}
+
+
+def _model_field_fixes(model):
+    package, _, module_name = model.__module__.rpartition(".")
+    if package != __spec__.parent:
+        return {}
+    factory = _MODEL_FIELD_FIXES.get((module_name, model.__name__))
+    return factory() if factory is not None else {}
+
 
 if PYDANTIC_V2:
     from pydantic import ConfigDict, model_validator
@@ -25,6 +47,9 @@ if PYDANTIC_V2:
                 inspect.get_annotations(cls) if hasattr(inspect, "get_annotations")
                 else dict(cls.__dict__.get("__annotations__", {}))
             )
+            for name, annotation in _model_field_fixes(cls).items():
+                annotations[name] = annotation
+                setattr(cls, name, None)
             for name, annotation in annotations.items():
                 default = cls.__dict__.get(name, ...)
                 if default is None or isinstance(default, FieldInfo) and default.default is None:
@@ -33,8 +58,27 @@ if PYDANTIC_V2:
             super().__init_subclass__(**kwargs)
 else:
     from pydantic.generics import GenericModel as PydanticGenericModel
+    from pydantic.fields import ModelField
 
     class BaseModel(PydanticBaseModel):
+        def __init_subclass__(cls, **kwargs):
+            fixes = _model_field_fixes(cls)
+            if fixes:
+                annotations = (
+                    inspect.get_annotations(cls) if hasattr(inspect, "get_annotations")
+                    else dict(cls.__dict__.get("__annotations__", {}))
+                )
+                for name, annotation in fixes.items():
+                    annotation = Optional[annotation]
+                    annotations[name] = annotation
+                    cls.__fields__[name] = ModelField.infer(
+                        name=name, value=None, annotation=annotation,
+                        class_validators=None, config=cls.__config__,
+                    )
+                    setattr(cls, name, None)
+                cls.__annotations__ = annotations
+            super().__init_subclass__(**kwargs)
+
         class Config:
             allow_population_by_field_name = True
             smart_union = True
