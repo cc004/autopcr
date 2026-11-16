@@ -497,8 +497,10 @@ class ArenaInfo(Module):
                 if info.rank > 51:
                     break
                 user_name = await self.get_user_info(client, info.viewer_id)
+                avatar_id = info.favorite_unit.id if info.favorite_unit else None
+                avatar = f"[{db.get_unit_name(avatar_id)}]" if avatar_id else ""
                 you = " <--- 你" if info.viewer_id == client.data.uid else ""
-                self._log(f"{info.rank:02}: ({info.viewer_id}){user_name}{you}")
+                self._log(f"{info.rank:02}: ({info.viewer_id}){avatar}{user_name}{you}")
 
 @booltype("jjc_info_cache", "使用缓存信息", True)
 @description('jjc透视前51名玩家的名字')
