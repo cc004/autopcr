@@ -869,3 +869,844 @@ class return_jewel(Module):
         self._log(f"当前处于最大突破等级角色数: {count_max_level}")
         self._log(f"返钻数量: {return_jewel_count} (向上取整实际获得: {return_jewel_count_10})")
         self._log(f"当前box最多返钻数量: {max_return_jewel_count}")
+
+async def _remove_unit_from_other_supports(client: pcrclient, support_info, unit_ids, target_support_type, target_positions, now, log_func, warn_func):  
+    """  
+    检查 unit_ids 中的角色是否在其他类型的支援位中，如果在则先撤下。  
+    返回因冷却无法移除的 unit_id 集合。  
+  
+    支援位分类：  
+    - 地下城: clan_support_units 中 position 1/2, API support_type=1  
+    - 会战:   clan_support_units 中 position 3/4, API support_type=1  
+    - 好友:   friend_support_units 中 position 1/2, API support_type=2  
+    """  
+    SUPPORT_COOLDOWN = 1800  
+    blocked_units = set()  
+  
+    dungeon_positions = {eClanSupportMemberType.DUNGEON_SUPPORT_UNIT_1,  
+                         eClanSupportMemberType.DUNGEON_SUPPORT_UNIT_2}  
+    cb_positions = {eClanSupportMemberType.CLAN_BATTLE_SUPPORT_UNIT_1,  
+                    eClanSupportMemberType.CLAN_BATTLE_SUPPORT_UNIT_2}  
+    friend_positions = {1, 2}  
+  
+    # 构建"其他类型"的支援列表: (support_setting, api_support_type, type_name)  
+    other_supports = []  
+  
+    for support in (support_info.clan_support_units or []):  
+        if support.unit_id and support.unit_id != 0:  
+            # 判断是否属于当前目标类型（目标类型不算"其他"）  
+            is_target = (target_support_type == 1 and support.position in target_positions)  
+            if not is_target:  
+                if support.position in dungeon_positions:  
+                    other_supports.append((support, 1, "地下城"))  
+                elif support.position in cb_positions:  
+                    other_supports.append((support, 1, "会战"))  
+  
+    for support in (support_info.friend_support_units or []):  
+        if support.unit_id and support.unit_id != 0:  
+            is_target = (target_support_type == 2 and support.position in target_positions)  
+            if not is_target:  
+                other_supports.append((support, 2, "好友"))  
+  
+    # 检查目标角色是否在其他类型中  
+    for uid in unit_ids:  
+        for support, api_type, type_name in other_supports:  
+            if support.unit_id == uid:  
+                unit_name = db.get_unit_name(uid)  
+                if support.support_start_time and now - support.support_start_time < SUPPORT_COOLDOWN:  
+                    remaining = SUPPORT_COOLDOWN - (now - support.support_start_time)  
+                    warn_func(f"{unit_name}当前在{type_name}支援中，且挂上不足30分钟（剩余{remaining // 60}分{remaining % 60}秒），跳过该角色")  
+                    blocked_units.add(uid)  
+                else:  
+                    log_func(f"{unit_name}当前在{type_name}支援中，正在移除...")  
+                    await client.support_unit_change_setting(api_type, support.position, 2, support.unit_id)  
+                    log_func(f"已将{unit_name}从{type_name}支援中移除")  
+  
+    return blocked_units
+
+@name('挂会战支援')    
+@default(True)    
+@inttype("set_cb_support_star_2", "角色2星级", 0, [0, 3, 4, 5])  
+@inttype("set_cb_support_star_1", "角色1星级", 0, [0, 3, 4, 5])  
+@unitchoice("set_cb_support_unit_id_2", "角色2（选填）")    
+@unitchoice("set_cb_support_unit_id_1", "角色1")    
+@description('设置指定角色为会战支援（最多2个），并自动穿满会战EX装备，支持调星级')    
+class set_cb_support(Module):  
+    async def do_task(self, client: pcrclient):  
+        SUPPORT_COOLDOWN = 1800  
+  
+        unit_id_1 = int(self.get_config('set_cb_support_unit_id_1'))  
+        unit_id_2 = int(self.get_config('set_cb_support_unit_id_2'))  
+  
+        unit_ids = []  
+        if unit_id_1 and unit_id_1 in client.data.unit:  
+            unit_ids.append(unit_id_1)  
+        if unit_id_2 and unit_id_2 in client.data.unit and unit_id_2 != unit_id_1:  
+            unit_ids.append(unit_id_2)  
+  
+        if not unit_ids:  
+            raise AbortError("请指定至少一个角色")  
+  
+        positions = [eClanSupportMemberType.CLAN_BATTLE_SUPPORT_UNIT_1,  
+                     eClanSupportMemberType.CLAN_BATTLE_SUPPORT_UNIT_2]  
+  
+        support_info = await client.support_unit_get_setting()  
+        now = apiclient.time  
+  
+        # 跨类型冲突检测：从其他支援类型中移除目标角色  
+        blocked = await _remove_unit_from_other_supports(  
+            client, support_info, unit_ids,  
+            target_support_type=1,  
+            target_positions=set(positions),  
+            now=now, log_func=self._log, warn_func=self._warn  
+        )  
+        unit_ids = [uid for uid in unit_ids if uid not in blocked]  
+  
+        if not unit_ids:  
+            if not self.log:  
+                raise SkipError("无操作")  
+            return  
+  
+        # 重新获取支援信息  
+        support_info = await client.support_unit_get_setting()  
+  
+        # 识别冷却中的槽位  
+        cooldown_positions = set()  
+        for support in support_info.clan_support_units:  
+            if support.position in positions and support.unit_id and support.unit_id != 0:  
+                if support.support_start_time and now - support.support_start_time < SUPPORT_COOLDOWN:  
+                    cooldown_positions.add(support.position)  
+  
+        # 统计当前状态  
+        already_placed = set()  
+        non_target_supports = []  
+        occupied_positions = set()  
+        for support in support_info.clan_support_units:  
+            if support.position in positions and support.unit_id and support.unit_id != 0:  
+                occupied_positions.add(support.position)  
+                if support.unit_id in unit_ids:  
+                    already_placed.add(support.unit_id)  
+                else:  
+                    non_target_supports.append(support)  
+  
+        empty_positions = [pos for pos in positions if pos not in occupied_positions and pos not in cooldown_positions]  
+        need_placement = [uid for uid in unit_ids if uid not in already_placed]  
+        slots_to_free = max(0, len(need_placement) - len(empty_positions))  
+  
+        removed = 0  
+        for support in non_target_supports:  
+            if removed >= slots_to_free:  
+                break  
+            if support.position in cooldown_positions:  
+                remaining = SUPPORT_COOLDOWN - (now - support.support_start_time)  
+                self._warn(f"支援位{support.position - 2}的{db.get_unit_name(support.unit_id)}在冷却中（剩余{remaining // 60}分{remaining % 60}秒），无法移除")  
+            else:  
+                self._log(f"移除旧支援{db.get_unit_name(support.unit_id)}")  
+                await client.support_unit_change_setting(1, support.position, 2, support.unit_id)  
+                removed += 1  
+  
+        support_info = await client.support_unit_get_setting()  
+  
+        already_set = {}  
+        occupied_positions = set()  
+        for support in support_info.clan_support_units:  
+            if support.position in positions and support.unit_id and support.unit_id != 0:  
+                already_set[support.unit_id] = support.position  
+                occupied_positions.add(support.position)  
+  
+        for uid in unit_ids:  
+            unit_name = db.get_unit_name(uid)  
+            if uid in already_set:  
+                self._log(f"{unit_name}已经是会战支援位{already_set[uid] - 2}")  
+                continue  
+  
+            target_pos = None  
+            for pos in positions:  
+                if pos not in occupied_positions and pos not in cooldown_positions:  
+                    target_pos = pos  
+                    break  
+  
+            if target_pos is None:  
+                self._warn(f"没有可用的支援位给{unit_name}（槽位被占用或在冷却中）")  
+                continue  
+  
+            await client.support_unit_change_setting(1, target_pos, 1, uid)  
+            already_set[uid] = target_pos  
+            occupied_positions.add(target_pos)  
+            self._log(f"已设置{unit_name}为会战支援位{target_pos - 2}")  
+  
+        # Step 2: Equip CB EX equipment for all set units  
+        use_ex_equip = set(  
+            ex_slot.serial_id  
+            for u in client.data.unit.values()  
+            for ex_slot in u.cb_ex_equip_slot  
+            if ex_slot.serial_id != 0  
+        ) | client.data.user_clan_battle_ex_equip_restriction.keys()  
+  
+        for uid in unit_ids:  
+            try:  
+                unit_name = db.get_unit_name(uid)  
+                unit = client.data.unit[uid]  
+                slot_data = db.unit_ex_equipment_slot[uid]  
+                exchange_list = []  
+                equipped_names = []  
+  
+                for slot_id, ex_category in enumerate(  
+                    [slot_data.slot_category_1, slot_data.slot_category_2, slot_data.slot_category_3], start=1  
+                ):  
+                    cb_slot = unit.cb_ex_equip_slot[slot_id - 1]  
+  
+                    if cb_slot.serial_id != 0:  
+                        equipped_names.append(f"槽{slot_id}: 已装备")  
+                        continue  
+  
+                    candidates = sorted(  
+                        [ex for ex in client.data.ex_equips.values()  
+                         if db.ex_equipment_data[ex.ex_equipment_id].category == ex_category  
+                         and ex.serial_id not in use_ex_equip],  
+                        key=lambda ex: (  
+                            db.ex_equipment_data[ex.ex_equipment_id].clan_battle_equip_flag,  
+                            db.ex_equipment_data[ex.ex_equipment_id].rarity,  
+                            ex.enhancement_pt,  
+                        ),  
+                        reverse=True  
+                    )  
+  
+                    if candidates:  
+                        best = candidates[0]  
+                        use_ex_equip.add(best.serial_id)  
+                        exchange_list.append(ExtraEquipChangeSlot(slot=slot_id, serial_id=best.serial_id))  
+                        equipped_names.append(f"槽{slot_id}: {db.get_ex_equip_name(best.ex_equipment_id)}")  
+                    else:  
+                        equipped_names.append(f"槽{slot_id}: 无可用装备")  
+  
+                if exchange_list:  
+                    await client.unit_equip_ex([ExtraEquipChangeUnit(  
+                        unit_id=uid,  
+                        ex_equip_slot=None,  
+                        cb_ex_equip_slot=exchange_list  
+                    )])  
+                    self._log(f"已为{unit_name}装备会战EX装:\n" + "\n".join(equipped_names))  
+                elif equipped_names:  
+                    self._log(f"{unit_name}会战EX装状态:\n" + "\n".join(equipped_names))  
+            except Exception as e:  
+                self._warn(f"{db.get_unit_name(uid)} EX装备失败: {e}")  
+  
+        # 调整星级  
+        star_map = {}  
+        if unit_id_1 and unit_id_1 in client.data.unit:  
+            star_map[unit_id_1] = int(self.get_config('set_cb_support_star_1'))  
+        if unit_id_2 and unit_id_2 in client.data.unit and unit_id_2 != unit_id_1:  
+            star_map[unit_id_2] = int(self.get_config('set_cb_support_star_2'))  
+          
+        change_rarity_list = []  
+        for uid in unit_ids:  
+            target_star = star_map.get(uid, 0)  
+            if target_star == 0:  
+                continue  
+            if uid not in client.data.unit:  
+                continue  
+            unit_data = client.data.unit[uid]  
+            if unit_data.unit_rarity != 5:  
+                self._warn(f"{db.get_unit_name(uid)}不是5星角色，无法调星")  
+                continue  
+            now_star = unit_data.battle_rarity if unit_data.battle_rarity else unit_data.unit_rarity  
+            if target_star == now_star:  
+                continue  
+            if 3 <= target_star <= 5 and 3 <= now_star <= 5:  
+                change_rarity_list.append(ChangeRarityUnit(unit_id=uid, battle_rarity=target_star))  
+                self._log(f"将{db.get_unit_name(uid)}星级从{now_star}调至{target_star}")  
+            else:  
+                self._warn(f"{db.get_unit_name(uid)}星级无法从{now_star}调至{target_star}")  
+        if change_rarity_list:  
+            await client.unit_change_rarity(change_rarity_list)
+            
+        if not self.log:  
+            raise SkipError("无操作")
+       
+@name('挂地下城支援')    
+@default(True)    
+@inttype("set_dungeon_support_star_2", "角色2星级", 0, [0, 3, 4, 5])  
+@inttype("set_dungeon_support_star_1", "角色1星级", 0, [0, 3, 4, 5])  
+@unitchoice("set_dungeon_support_unit_id_2", "角色2（选填）")    
+@unitchoice("set_dungeon_support_unit_id_1", "角色1")    
+@description('设置指定角色为地下城支援（最多2个），支持调星级') 
+class set_dungeon_support(Module):  
+    async def do_task(self, client: pcrclient):  
+        SUPPORT_COOLDOWN = 1800  
+  
+        unit_id_1 = int(self.get_config('set_dungeon_support_unit_id_1'))  
+        unit_id_2 = int(self.get_config('set_dungeon_support_unit_id_2'))  
+  
+        unit_ids = []  
+        if unit_id_1 and unit_id_1 in client.data.unit:  
+            unit_ids.append(unit_id_1)  
+        if unit_id_2 and unit_id_2 in client.data.unit and unit_id_2 != unit_id_1:  
+            unit_ids.append(unit_id_2)  
+  
+        if not unit_ids:  
+            raise AbortError("请指定至少一个角色")  
+  
+        positions = [eClanSupportMemberType.DUNGEON_SUPPORT_UNIT_1,  
+                     eClanSupportMemberType.DUNGEON_SUPPORT_UNIT_2]  
+  
+        support_info = await client.support_unit_get_setting()  
+        now = apiclient.time  
+  
+        # 跨类型冲突检测：从其他支援类型中移除目标角色  
+        blocked = await _remove_unit_from_other_supports(  
+            client, support_info, unit_ids,  
+            target_support_type=1,  
+            target_positions=set(positions),  
+            now=now, log_func=self._log, warn_func=self._warn  
+        )  
+        unit_ids = [uid for uid in unit_ids if uid not in blocked]  
+  
+        if not unit_ids:  
+            if not self.log:  
+                raise SkipError("无操作")  
+            return  
+  
+        support_info = await client.support_unit_get_setting()  
+  
+        cooldown_positions = set()  
+        for support in support_info.clan_support_units:  
+            if support.position in positions and support.unit_id and support.unit_id != 0:  
+                if support.support_start_time and now - support.support_start_time < SUPPORT_COOLDOWN:  
+                    cooldown_positions.add(support.position)  
+  
+        already_placed = set()  
+        non_target_supports = []  
+        occupied_positions = set()  
+        for support in support_info.clan_support_units:  
+            if support.position in positions and support.unit_id and support.unit_id != 0:  
+                occupied_positions.add(support.position)  
+                if support.unit_id in unit_ids:  
+                    already_placed.add(support.unit_id)  
+                else:  
+                    non_target_supports.append(support)  
+  
+        empty_positions = [pos for pos in positions if pos not in occupied_positions and pos not in cooldown_positions]  
+        need_placement = [uid for uid in unit_ids if uid not in already_placed]  
+        slots_to_free = max(0, len(need_placement) - len(empty_positions))  
+  
+        removed = 0  
+        for support in non_target_supports:  
+            if removed >= slots_to_free:  
+                break  
+            if support.position in cooldown_positions:  
+                remaining = SUPPORT_COOLDOWN - (now - support.support_start_time)  
+                self._warn(f"支援位{support.position}的{db.get_unit_name(support.unit_id)}在冷却中（剩余{remaining // 60}分{remaining % 60}秒），无法移除")  
+            else:  
+                self._log(f"移除旧支援{db.get_unit_name(support.unit_id)}")  
+                await client.support_unit_change_setting(1, support.position, 2, support.unit_id)  
+                removed += 1  
+  
+        support_info = await client.support_unit_get_setting()  
+  
+        already_set = {}  
+        occupied_positions = set()  
+        for support in support_info.clan_support_units:  
+            if support.position in positions and support.unit_id and support.unit_id != 0:  
+                already_set[support.unit_id] = support.position  
+                occupied_positions.add(support.position)  
+  
+        for uid in unit_ids:  
+            unit_name = db.get_unit_name(uid)  
+            if uid in already_set:  
+                self._log(f"{unit_name}已经是地下城支援位{already_set[uid]}")  
+                continue  
+  
+            target_pos = None  
+            for pos in positions:  
+                if pos not in occupied_positions and pos not in cooldown_positions:  
+                    target_pos = pos  
+                    break  
+  
+            if target_pos is None:  
+                self._warn(f"没有可用的支援位给{unit_name}（槽位被占用或在冷却中）")  
+                continue  
+  
+            await client.support_unit_change_setting(1, target_pos, 1, uid)  
+            already_set[uid] = target_pos  
+            occupied_positions.add(target_pos)  
+            self._log(f"已设置{unit_name}为地下城支援位{target_pos}")             
+  
+        # 调整星级  
+        star_configs = {  
+            unit_id_1: int(self.get_config('set_dungeon_support_star_1')),  
+            unit_id_2: int(self.get_config('set_dungeon_support_star_2')),  
+        }  
+        change_rarity_list = []  
+        for uid in unit_ids:  
+            target_star = star_configs.get(uid, 0)  
+            if target_star == 0:  
+                continue  
+            if uid not in client.data.unit:  
+                continue  
+            unit_data = client.data.unit[uid]  
+            if unit_data.unit_rarity != 5:  
+                self._warn(f"{db.get_unit_name(uid)}不是5星角色，无法调星")  
+                continue  
+            now_star = unit_data.battle_rarity if unit_data.battle_rarity else unit_data.unit_rarity  
+            if target_star == now_star:  
+                continue  
+            if 3 <= target_star <= 5 and 3 <= now_star <= 5:  
+                change_rarity_list.append(ChangeRarityUnit(unit_id=uid, battle_rarity=target_star))  
+                self._log(f"将{db.get_unit_name(uid)}星级从{now_star}调至{target_star}")  
+            else:  
+                self._warn(f"{db.get_unit_name(uid)}星级无法从{now_star}调至{target_star}")  
+        if change_rarity_list:  
+            await client.unit_change_rarity(change_rarity_list)
+            
+        if not self.log:  
+            raise SkipError("无操作")
+            
+            
+@name('挂好友支援')    
+@default(True)    
+@inttype("set_friend_support_star_2", "角色2星级", 0, [0, 3, 4, 5])  
+@inttype("set_friend_support_star_1", "角色1星级", 0, [0, 3, 4, 5])  
+@unitchoice("set_friend_support_unit_id_2", "角色2（选填）")    
+@unitchoice("set_friend_support_unit_id_1", "角色1")    
+@description('设置指定角色为好友支援（最多2个），好友可在关卡中借用，支持调星级')
+class set_friend_support(Module):  
+    async def do_task(self, client: pcrclient):  
+        SUPPORT_COOLDOWN = 1800  
+  
+        unit_id_1 = int(self.get_config('set_friend_support_unit_id_1'))  
+        unit_id_2 = int(self.get_config('set_friend_support_unit_id_2'))  
+  
+        unit_ids = []  
+        if unit_id_1 and unit_id_1 in client.data.unit:  
+            unit_ids.append(unit_id_1)  
+        if unit_id_2 and unit_id_2 in client.data.unit and unit_id_2 != unit_id_1:  
+            unit_ids.append(unit_id_2)  
+  
+        if not unit_ids:  
+            raise AbortError("请指定至少一个角色")  
+  
+        positions = [1, 2]  # friend_support_units 的 position  
+  
+        support_info = await client.support_unit_get_setting()  
+        now = apiclient.time  
+  
+        # 跨类型冲突检测：从其他支援类型中移除目标角色  
+        blocked = await _remove_unit_from_other_supports(  
+            client, support_info, unit_ids,  
+            target_support_type=2,  
+            target_positions=set(positions),  
+            now=now, log_func=self._log, warn_func=self._warn  
+        )  
+        unit_ids = [uid for uid in unit_ids if uid not in blocked]  
+  
+        if not unit_ids:  
+            if not self.log:  
+                raise SkipError("无操作")  
+            return  
+  
+        support_info = await client.support_unit_get_setting()  
+  
+        cooldown_positions = set()  
+        for support in support_info.friend_support_units:  
+            if support.position in positions and support.unit_id and support.unit_id != 0:  
+                if support.support_start_time and now - support.support_start_time < SUPPORT_COOLDOWN:  
+                    cooldown_positions.add(support.position)  
+  
+        already_placed = set()  
+        non_target_supports = []  
+        occupied_positions = set()  
+        for support in support_info.friend_support_units:  
+            if support.position in positions and support.unit_id and support.unit_id != 0:  
+                occupied_positions.add(support.position)  
+                if support.unit_id in unit_ids:  
+                    already_placed.add(support.unit_id)  
+                else:  
+                    non_target_supports.append(support)  
+  
+        empty_positions = [pos for pos in positions if pos not in occupied_positions and pos not in cooldown_positions]  
+        need_placement = [uid for uid in unit_ids if uid not in already_placed]  
+        slots_to_free = max(0, len(need_placement) - len(empty_positions))  
+  
+        removed = 0  
+        for support in non_target_supports:  
+            if removed >= slots_to_free:  
+                break  
+            if support.position in cooldown_positions:  
+                remaining = SUPPORT_COOLDOWN - (now - support.support_start_time)  
+                self._warn(f"支援位{support.position}的{db.get_unit_name(support.unit_id)}在冷却中（剩余{remaining // 60}分{remaining % 60}秒），无法移除")  
+            else:  
+                self._log(f"移除旧支援{db.get_unit_name(support.unit_id)}")  
+                await client.support_unit_change_setting(2, support.position, 2, support.unit_id)  
+                removed += 1  
+  
+        support_info = await client.support_unit_get_setting()  
+  
+        already_set = {}  
+        occupied_positions = set()  
+        for support in support_info.friend_support_units:  
+            if support.position in positions and support.unit_id and support.unit_id != 0:  
+                already_set[support.unit_id] = support.position  
+                occupied_positions.add(support.position)  
+  
+        for uid in unit_ids:  
+            unit_name = db.get_unit_name(uid)  
+            if uid in already_set:  
+                self._log(f"{unit_name}已经是好友支援位{already_set[uid]}")  
+                continue  
+  
+            target_pos = None  
+            for pos in positions:  
+                if pos not in occupied_positions and pos not in cooldown_positions:  
+                    target_pos = pos  
+                    break  
+  
+            if target_pos is None:  
+                self._warn(f"没有可用的支援位给{unit_name}（槽位被占用或在冷却中）")  
+                continue  
+  
+            await client.support_unit_change_setting(2, target_pos, 1, uid)  
+            already_set[uid] = target_pos  
+            occupied_positions.add(target_pos)  
+            self._log(f"已设置{unit_name}为好友支援位{target_pos}")  
+  
+        # 调整星级  
+        star_configs = {  
+            unit_id_1: int(self.get_config('set_friend_support_star_1')),  
+            unit_id_2: int(self.get_config('set_friend_support_star_2')),  
+        }  
+        change_rarity_list = []  
+        for uid in unit_ids:  
+            target_star = star_configs.get(uid, 0)  
+            if target_star == 0:  
+                continue  
+            if uid not in client.data.unit:  
+                continue  
+            unit_data = client.data.unit[uid]  
+            if unit_data.unit_rarity != 5:  
+                self._warn(f"{db.get_unit_name(uid)}不是5星角色，无法调星")  
+                continue  
+            now_star = unit_data.battle_rarity if unit_data.battle_rarity else unit_data.unit_rarity  
+            if target_star == now_star:  
+                continue  
+            if 3 <= target_star <= 5 and 3 <= now_star <= 5:  
+                change_rarity_list.append(ChangeRarityUnit(unit_id=uid, battle_rarity=target_star))  
+                self._log(f"将{db.get_unit_name(uid)}星级从{now_star}调至{target_star}")  
+            else:  
+                self._warn(f"{db.get_unit_name(uid)}星级无法从{now_star}调至{target_star}")  
+        if change_rarity_list:  
+            await client.unit_change_rarity(change_rarity_list)
+            
+        if not self.log:  
+            raise SkipError("无操作")          
+          
+
+@name('一键穿ex')  
+@default(True)  
+@texttype('one_click_ex_selection', '选择(试穿/数字如 1 1 2)', '试穿')  
+@unitchoice('one_click_ex_unit_id', '角色')  
+@description('试穿模式：显示每个槽位可选的EX装备及属性。数字模式(如 1 1 2)：选择每个槽位的第N个装备并穿上，0表示不改动。多件在他人身上时可用字母后缀指定从谁换(如 1A 1 2)。从其他角色拿装备时会互换而非卸下。')  
+class one_click_ex_equip(Module):  
+    async def do_task(self, client: pcrclient):  
+        unit_id = int(self.get_config('one_click_ex_unit_id'))  
+        selection = str(self.get_config('one_click_ex_selection')).strip()  
+  
+        if unit_id not in client.data.unit:  
+            raise AbortError(f"未拥有角色{db.get_unit_name(unit_id)}")  
+  
+        unit = client.data.unit[unit_id]  
+        unit_name = db.get_unit_name(unit_id)  
+        slot_data = db.unit_ex_equipment_slot[unit_id]  
+  
+        read_story = set(client.data.read_story_ids)  
+        unit_attr = db.calc_unit_attribute(unit, read_story, client.data.ex_equips, exclude_ex_equip=True)  
+        coefficient = db.unit_status_coefficient[1]  
+  
+        # Build mapping: serial_id -> (owner_unit_id, slot_index_1based)  
+        equip_on_unit = {}  
+        for uid, u in client.data.unit.items():  
+            for slot_idx, ex_slot in enumerate(u.ex_equip_slot):  
+                if ex_slot.serial_id != 0:  
+                    equip_on_unit[ex_slot.serial_id] = (uid, slot_idx + 1)  
+  
+        # Build candidates per slot  
+        from collections import defaultdict  
+        slot_candidates = {}  
+  
+        for slot_id, ex_category in enumerate(  
+            [slot_data.slot_category_1, slot_data.slot_category_2, slot_data.slot_category_3], start=1  
+        ):  
+            candidates = []  
+            equip_groups = defaultdict(list)  
+            for ex in client.data.ex_equips.values():  
+                if db.ex_equipment_data[ex.ex_equipment_id].category != ex_category:  
+                    continue  
+                star = db.get_ex_equip_star_from_pt(ex.ex_equipment_id, ex.enhancement_pt)  
+                equip_groups[(ex.ex_equipment_id, star)].append(ex)  
+  
+            for (ex_id, star), ex_list in sorted(  
+                equip_groups.items(),  
+                key=lambda kv: (  
+                    db.ex_equipment_data[kv[0][0]].rarity,  
+                    kv[0][1],  
+                    kv[0][0],  
+                ),  
+                reverse=True,  
+            ):  
+                rarity = db.ex_equipment_data[ex_id].rarity  
+                attr = db.ex_equipment_data[ex_id].get_unit_attribute(star)  
+                bonus = unit_attr.ex_equipment_mul(attr).ceil()  
+                power = int(bonus.get_power(coefficient) + 0.5)  
+  
+                attr_parts = []  
+                for param_type, ch_name in UnitAttribute.index2ch.items():  
+                    en_name = UnitAttribute.index2name.get(param_type)  
+                    if en_name:  
+                        val = getattr(bonus, en_name, 0)  
+                        if val and val != 0:  
+                            attr_parts.append(f"{ch_name}{int(val)}")  
+                attr_str = "/".join(attr_parts) if attr_parts else "无属性"  
+  
+                equip_name = db.get_ex_equip_name(ex_id)  
+  
+                if rarity == 5:  
+                    # 彩装：每件单独列出，附带词条  
+                    for ex in sorted(ex_list, key=lambda e: e.serial_id in equip_on_unit):  
+                        sub_str = db.get_ex_equip_sub_status_str(ex.ex_equipment_id, ex.sub_status or [])  
+                        sid = ex.serial_id  
+                        on_others = [  
+                            (equip_on_unit[sid], sid)  
+                            for sid in [sid]  
+                            if sid in equip_on_unit and equip_on_unit[sid][0] != unit_id  
+                        ]  
+                        candidates.append((ex_id, star, equip_name, attr_str, power, [sid], on_others, sub_str))  
+                else:  
+                    # 非彩装：保持原有分组逻辑  
+                    serial_ids = sorted(  
+                        [e.serial_id for e in ex_list],  
+                        key=lambda sid: sid in equip_on_unit,  
+                    )  
+                    on_others = [(equip_on_unit[sid], sid) for sid in serial_ids if sid in equip_on_unit and equip_on_unit[sid][0] != unit_id]  
+                    candidates.append((ex_id, star, equip_name, attr_str, power, serial_ids, on_others, ""))  
+  
+            slot_candidates[slot_id] = candidates  
+  
+        is_preview = selection == '试穿'  
+  
+        if is_preview:  
+            self._log(f"=== {unit_name} EX装备试穿 ===")  
+  
+            # 显示当前3个槽位的EX装备  
+            self._log(f"\n【当前装备】")  
+            for slot_id in [1, 2, 3]:  
+                ex_slot = unit.ex_equip_slot[slot_id - 1]  
+                if not ex_slot.serial_id:  
+                    self._log(f"  槽位{slot_id}: -")  
+                else:  
+                    ex = client.data.ex_equips[ex_slot.serial_id]  
+                    star = db.get_ex_equip_star_from_pt(ex.ex_equipment_id, ex.enhancement_pt)  
+                    name = db.get_ex_equip_name(ex.ex_equipment_id)  
+                    # 计算当前装备的战力加成  
+                    cur_attr = db.ex_equipment_data[ex.ex_equipment_id].get_unit_attribute(star)  
+                    cur_bonus = unit_attr.ex_equipment_mul(cur_attr).ceil()  
+                    cur_power = int(cur_bonus.get_power(coefficient) + 0.5)  
+                    cur_attr_parts = []  
+                    for param_type, ch_name in UnitAttribute.index2ch.items():  
+                        en_name = UnitAttribute.index2name.get(param_type)  
+                        if en_name:  
+                            val = getattr(cur_bonus, en_name, 0)  
+                            if val and val != 0:  
+                                cur_attr_parts.append(f"{ch_name}{int(val)}")  
+                    cur_attr_str = "/".join(cur_attr_parts) if cur_attr_parts else "无属性"  
+                    # 彩装额外显示词条  
+                    if db.ex_equipment_data[ex.ex_equipment_id].rarity == 5:  
+                        sub_str = db.get_ex_equip_sub_status_str(ex.ex_equipment_id, ex.sub_status or [])  
+                        self._log(f"[ex:{ex.ex_equipment_id}]  槽位{slot_id}: {name}★{star} 战力+{cur_power} ({cur_attr_str}) 词条:{sub_str}") 
+                    else:  
+                        self._log(f"[ex:{ex.ex_equipment_id}]  槽位{slot_id}: {name}★{star} 战力+{cur_power} ({cur_attr_str})") 
+  
+            for slot_id in [1, 2, 3]:  
+                cands = slot_candidates[slot_id]  
+                self._log(f"\n【槽位{slot_id}】共{len(cands)}种穿法：")  
+                for idx, (ex_id, star, name, attr_str, power, serial_ids, on_others, sub_str) in enumerate(cands, start=1):  
+                    owner_info = ""  
+                    if on_others:    
+                        # 给每个在他人身上的装备加字母标记    
+                        MAX_OWNER_DISPLAY = 7  
+                        owner_parts = []    
+                        for letter_idx, ((oid, oslot), _sid) in enumerate(on_others):    
+                            letter = chr(ord('A') + letter_idx)    
+                            owner_parts.append(f"{letter}:{db.get_unit_name(oid)}槽{oslot}")    
+                        on_self_cnt = sum(1 for sid in serial_ids if sid in equip_on_unit and equip_on_unit[sid][0] == unit_id)    
+                        free_cnt = len(serial_ids) - len(on_others) - on_self_cnt    
+                        owner_info = f" [共{len(serial_ids)}件"    
+                        if on_self_cnt > 0:    
+                            owner_info += f", {on_self_cnt}件已穿戴"    
+                        if free_cnt > 0:    
+                            owner_info += f", {free_cnt}件空闲"  
+                        if len(owner_parts) > MAX_OWNER_DISPLAY:  
+                            displayed = ', '.join(owner_parts[:MAX_OWNER_DISPLAY])  
+                            owner_info += f", {displayed}, ...等{len(owner_parts)}人穿戴]"  
+                        else:  
+                            owner_info += f", {', '.join(owner_parts)}]" 
+                    sub_info = f" 词条:{sub_str}" if sub_str else ""  
+                    self._log(f"[ex:{ex_id}]  {idx}. {name}★{star} 战力+{power} ({attr_str}){sub_info}{owner_info}") 
+                if not cands:  
+                    self._log(f"  无可用装备")  
+        else:  
+            # Equip mode: parse space-separated selection like "1 1 2" or "1A 1 2"  
+            import re as _re  
+            parts = selection.split()  
+            if len(parts) != 3:  
+                raise AbortError(f"选择格式错误：请输入3个空格分隔的数字(如 1 1 2)或'试穿'，当前输入: {selection}")  
+  
+            used_serial_ids = set()  
+            selected = []  # list of (slot_id, serial_id, name, star, power)  
+  
+            for slot_id, part in enumerate(parts, start=1):  
+                cands = slot_candidates[slot_id]  
+  
+                if part == '0':  
+                    continue  
+  
+                # 解析数字和可选字母后缀  
+                m = _re.match(r'^(\d+)([A-Za-z]?)$', part)  
+                if not m:  
+                    raise AbortError(f"槽位{slot_id}选择格式错误: {part}，请输入数字或数字+字母(如 1A)")  
+  
+                choice = int(m.group(1))  
+                letter = m.group(2).upper()  # '' or 'A'-'Z'  
+  
+                if choice < 1 or choice > len(cands):  
+                    raise AbortError(f"槽位{slot_id}只有{len(cands)}种装备，无法选择第{choice}个")  
+  
+                ex_id, star, name, attr_str, power, serial_ids, on_others, sub_str = cands[choice - 1]  
+  
+                target_serial = None  
+  
+                if letter:  
+                    # 用户指定了字母，从 on_others 中按字母索引选择  
+                    letter_index = ord(letter) - ord('A')  
+                    if letter_index < 0 or letter_index >= len(on_others):  
+                        available = [chr(ord('A') + i) + ':' + db.get_unit_name(oid) for i, ((oid, oslot), _sid) in enumerate(on_others)]  
+                        if not available:  
+                            raise AbortError(f"槽位{slot_id}编号{choice}没有在他人身上的装备，不需要字母后缀")  
+                        raise AbortError(f"槽位{slot_id}编号{choice}字母{letter}超出范围，可选: {', '.join(available)}")  
+                    (owner_uid, owner_slot), target_serial = on_others[letter_index]  
+                    if target_serial in used_serial_ids:  
+                        raise AbortError(f"槽位{slot_id}: {name}★{star} 的{letter}号装备已被其他槽位选用")  
+                else:  
+                    # 无字母，按原逻辑选第一个可用的  
+                    for sid in serial_ids:  
+                        if sid not in used_serial_ids:  
+                            target_serial = sid  
+                            break  
+  
+                if target_serial is None:  
+                    raise AbortError(f"槽位{slot_id}: {name}★{star} 无可用装备(已被其他槽位选用)")  
+  
+                used_serial_ids.add(target_serial)  
+                selected.append((slot_id, target_serial, name, star, power))  
+                self._log(f"槽位{slot_id}: {name}★{star} 战力+{power}")  
+  
+            if not selected:  
+                raise SkipError("无需操作")  
+  
+            # Collect swap pairs: (other_uid, other_slot, old_serial_id_from_target)  
+            # When we take equip_X from another character, we give them the target's current equip in return  
+            swap_pairs = []  # list of (owner_uid, owner_slot, target_old_serial_id)  
+            slots_to_change = set(s[0] for s in selected)  
+  
+            for slot_id, sid, name, star, power in selected:  
+                if sid in equip_on_unit:  
+                    owner_uid, owner_slot = equip_on_unit[sid]  
+                    if owner_uid != unit_id:  
+                        # Get what the target character currently has in this slot  
+                        target_old_serial = unit.ex_equip_slot[slot_id - 1].serial_id  
+                        if target_old_serial != 0:  
+                            swap_pairs.append((owner_uid, owner_slot, target_old_serial))  
+                            self._log(f"与{db.get_unit_name(owner_uid)}槽{owner_slot}互换装备")  
+                        else:  
+                            swap_pairs.append((owner_uid, owner_slot, 0))  
+                            self._log(f"从{db.get_unit_name(owner_uid)}的槽{owner_slot}取下{name}")  
+  
+            # Step 1: Unequip selected serial_ids from OTHER characters  
+            for slot_id, sid, name, star, power in selected:  
+                if sid in equip_on_unit:  
+                    owner_uid, owner_slot = equip_on_unit[sid]  
+                    if owner_uid != unit_id:  
+                        await client.unit_equip_ex([ExtraEquipChangeUnit(  
+                            unit_id=owner_uid,  
+                            ex_equip_slot=[ExtraEquipChangeSlot(slot=owner_slot, serial_id=0)],  
+                            cb_ex_equip_slot=None  
+                        )])  
+  
+            # Step 2: Clear target character's slots that will be changed  
+            clear_list = []  
+            for ex_slot in unit.ex_equip_slot:  
+                if ex_slot.serial_id != 0 and (ex_slot.slot in slots_to_change or ex_slot.serial_id in used_serial_ids):  
+                    clear_list.append(ExtraEquipChangeSlot(slot=ex_slot.slot, serial_id=0))  
+            if clear_list:  
+                await client.unit_equip_ex([ExtraEquipChangeUnit(  
+                    unit_id=unit_id,  
+                    ex_equip_slot=clear_list,  
+                    cb_ex_equip_slot=None  
+                )])  
+  
+            # Step 3: Equip the new selections on target character  
+            exchange_list = [ExtraEquipChangeSlot(slot=slot_id, serial_id=sid) for slot_id, sid, _, _, _ in selected]  
+            await client.unit_equip_ex([ExtraEquipChangeUnit(  
+                unit_id=unit_id,  
+                ex_equip_slot=exchange_list,  
+                cb_ex_equip_slot=None  
+            )])  
+  
+            # Step 4: Swap — equip the target's old equipment onto the other characters  
+            for owner_uid, owner_slot, old_serial in swap_pairs:  
+                if old_serial != 0:  
+                    await client.unit_equip_ex([ExtraEquipChangeUnit(  
+                        unit_id=owner_uid,  
+                        ex_equip_slot=[ExtraEquipChangeSlot(slot=owner_slot, serial_id=old_serial)],  
+                        cb_ex_equip_slot=None  
+                    )])  
+  
+            self._log(f"已为{unit_name}装备完成！")
+           
+@texttype("add_friend_viewer_id", "玩家UID", "")  
+@description('通过玩家UID发送好友申请')  
+@name('添加好友')  
+@default(False)  
+class add_friend(Module):  
+    async def do_task(self, client: pcrclient):  
+        viewer_id_str: str = self.get_config("add_friend_viewer_id").strip()  
+  
+        if not viewer_id_str:  
+            raise AbortError("请输入玩家UID")  
+  
+        if not viewer_id_str.isdigit():  
+            raise AbortError("玩家UID必须是数字")  
+  
+        viewer_id: int = int(viewer_id_str)  
+  
+        if viewer_id <= 0:  
+            raise AbortError("请输入有效的玩家UID")  
+  
+        self._log(f"正在向玩家UID: {viewer_id} 发送好友申请...")  
+  
+        try:  
+            from ...model.requests import FriendRequestRequest  
+            req = FriendRequestRequest()  
+            req.target_viewer_id = viewer_id  
+            resp = await client.request(req)  
+            self._log(f"已成功向玩家 {viewer_id} 发送好友申请！")  
+        except Exception as e:  
+            error_msg = str(e)  
+            if "已经是好友" in error_msg or "ALREADY_FRIEND" in error_msg.upper():  
+                raise AbortError(f"玩家 {viewer_id} 已经是你的好友")  
+            elif "申请已发送" in error_msg or "PENDING" in error_msg.upper():  
+                raise AbortError(f"已经向玩家 {viewer_id} 发送过好友申请，请等待对方处理")  
+            elif "好友已满" in error_msg or "LIMIT" in error_msg.upper():  
+                raise AbortError(f"好友数量已达上限，无法发送申请")  
+            else:  
+                self._log(f"发送好友申请失败: {e}")  
+                raise AbortError(f"无法向玩家 {viewer_id} 发送好友申请: {e}")    
