@@ -869,3 +869,43 @@ class return_jewel(Module):
         self._log(f"当前处于最大突破等级角色数: {count_max_level}")
         self._log(f"返钻数量: {return_jewel_count} (向上取整实际获得: {return_jewel_count_10})")
         self._log(f"当前box最多返钻数量: {max_return_jewel_count}")
+
+
+@texttype("add_friend_viewer_id", "玩家UID", "")  
+@description('通过玩家UID发送好友申请')  
+@name('添加好友')  
+@default(False)  
+class add_friend(Module):  
+    async def do_task(self, client: pcrclient):  
+        viewer_id_str: str = self.get_config("add_friend_viewer_id").strip()  
+  
+        if not viewer_id_str:  
+            raise AbortError("请输入玩家UID")  
+  
+        if not viewer_id_str.isdigit():  
+            raise AbortError("玩家UID必须是数字")  
+  
+        viewer_id: int = int(viewer_id_str)  
+  
+        if viewer_id <= 0:  
+            raise AbortError("请输入有效的玩家UID")  
+  
+        self._log(f"正在向玩家UID: {viewer_id} 发送好友申请...")  
+  
+        try:  
+            from ...model.requests import FriendRequestRequest  
+            req = FriendRequestRequest()  
+            req.target_viewer_id = viewer_id  
+            resp = await client.request(req)  
+            self._log(f"已成功向玩家 {viewer_id} 发送好友申请！")  
+        except Exception as e:  
+            error_msg = str(e)  
+            if "已经是好友" in error_msg or "ALREADY_FRIEND" in error_msg.upper():  
+                raise AbortError(f"玩家 {viewer_id} 已经是你的好友")  
+            elif "申请已发送" in error_msg or "PENDING" in error_msg.upper():  
+                raise AbortError(f"已经向玩家 {viewer_id} 发送过好友申请，请等待对方处理")  
+            elif "好友已满" in error_msg or "LIMIT" in error_msg.upper():  
+                raise AbortError(f"好友数量已达上限，无法发送申请")  
+            else:  
+                self._log(f"发送好友申请失败: {e}")  
+                raise AbortError(f"无法向玩家 {viewer_id} 发送好友申请: {e}")    
